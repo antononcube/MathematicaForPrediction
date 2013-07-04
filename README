@@ -1,0 +1,29 @@
+
+
+This open source project is for Mathematica implementations of machine learning algorithms that are used or can be used for prediction and personalization systems. (For prediction and facilitation of the behaviour of users, customers, clients, etc.) 
+
+The algorithms implementations are given in Mathematica package files ("*.m"). Explanations or presentations about the algorithms are given in Mathematica notebook files ("*.nb"). 
+
+The original set of algorithms is:
+1. k-means and bisecting k-means;
+2. associative rules finding;
+3. decision trees;
+4. non-negative matrix factorization;
+5. prefix trees;
+6. naive Bayesian classifiers generator;
+7. a framework for linear vector space representations of document collections;
+8. an item-item recommender framework based on sparse linear algebra.
+
+In the future are going to be added algorithms for 
+9. quantile regression,
+10. self-organizing maps,
+11. hierarchical clustering,
+12. n-gram language models.
+
+Also in this repository are going to be placed example or demonstrations notebooks for different applications of the algorithms listed above.
+
+There is blog associated with this project: http://mathematicaforprediction.wordpress.com .
+
+Anton Antonov
+04.07.2013, Florida, USA
+
