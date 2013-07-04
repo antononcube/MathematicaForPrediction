@@ -7,7 +7,7 @@ The algorithms implementations are given in Mathematica package files ("*.m"). E
 The original set of algorithms is:
 1. k-means and bisecting k-means;
 2. associative rules finding;
-3. decision trees;
+3. decision trees and random forests;
 4. non-negative matrix factorization;
 5. prefix trees;
 6. naive Bayesian classifiers generator;
