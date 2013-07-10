@@ -22,6 +22,17 @@
 	Windermere, Florida, USA.
 *)
 
+(*
+    Mathematica is (C) Copyright 1988-2012 Wolfram Research, Inc.
+
+    Protected by copyright law and international treaties.
+
+    Unauthorized reproduction or distribution subject to severe civil
+    and criminal penalties.
+
+    Mathematica is a registered trademark of Wolfram Research, Inc.
+*)
+
 (* Version 0.8 *)
 (* This version contains functions to build decision trees and forests and classify with them. The building functions take options to control the recursive process. *)
 
@@ -38,6 +49,11 @@ DecisionForestClassify::usage = "DecisionForestClassify[dtForest,rec] predicts t
 DecisionTreeToRules::usage = "DecisionTreeToRules[dTree] transforms a decision tree into rules to be given to GraphPlot and related functions."
 
 CentralizeDataMatrix::usage = "CentralizeDataMatrix[mat,colIndexes] transforms each of the specified columns of mat. The data of each of the specified columns is translated at the median and divided by the quartile distance. The returned result is a two element list of the data matrix with centralized columns and centralizing parameters. The centralizing parameters is a list of median and quartile distance pairs."
+
+DecisionTreeClassificationSuccess::usage = "DecisionTreeClassificationSuccess[dTree, testDataArray, lbls] finds the classification success using dTree over the test data testDataArray for each classification label in lbls. If the last argument, lbls, is omitted then Union[testDataArray[[All,-1]]] is taken as the set of labels. The returned result is a set of rules {{_,True|False}->_?NumberQ..}. The rules {_,True}->_ are for the fractions of correct guesses; the rules {_,False}->_ are for the fractions of incorrect guesses. The rules {_,All}->_ are for the classification success fractions using all records of testDataArray."
+
+DecisionForestClassificationSuccess::usage = "DecisionForestClassificationSuccess[dForest, testDataArray, lbls] finds the classification success using dForest over the test data testDataArray for each classification label in lbls. If the last argument, lbls, is omitted then Union[testDataArray[[All,-1]]] is taken as the set of labels. The returned result is a set of rules {{_,True|False}->_?NumberQ..}. The rules {_,True}->_ are for the fractions of correct guesses; the rules {_,False}->_ are for the fractions of incorrect guesses. The rules {_,All}->_ are for the classification success fractions using all records of testDataArray."
+
 
 Begin["`Private`"]
 
@@ -430,6 +446,37 @@ CentralizeDataMatrix[dataArg_?MatrixQ, indsArg : ({_Integer ..} | All)] :=
     , {i, inds}];
    {data, centralizers}
    ];
+
+
+(* DecisionTreeClassificationSuccess *)
+
+Clear[DecisionTreeOrForestClassificationSuccess, DecisionTreeClassificationSuccess, DecisionForestClassificationSuccess]
+DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | DecisionForestClassify), dTreeOrForest_, dataArr_?MatrixQ] := DecisionTreeOrForestClassificationSuccess[classFunc, dTreeOrForest, dataArr, Union[dataArr[[All, -1]]]];
+DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | DecisionForestClassify), dTreeOrForest_, dataArr_?MatrixQ, labels_?VectorQ] :=
+  Block[{guesses, guessStats, tdata, t},
+   t =
+    Table[
+     (tdata = Select[dataArr, #[[-1]] == lbl &];
+      guesses = classFunc[dTreeOrForest, Most[#]][[1, 2]] & /@ tdata;
+      guessStats = MapThread[Equal, {guesses, tdata[[All, -1]]}];
+      {Count[guessStats, True], Count[guessStats, False]}/
+        Length[tdata] // N)
+     , {lbl, labels}];
+   t = MapThread[{{#1, True} -> #2[[1]], {#1, False} -> #2[[
+         2]]} &, {labels, t}];
+   guesses = classFunc[dTreeOrForest, Most[#]][[1, 2]] & /@ dataArr;
+   guessStats = MapThread[Equal, {guesses, dataArr[[All, -1]]}];
+   Flatten[#, 1] &@
+    Join[t, {{All, 
+        True} -> (Count[guessStats, True]/Length[dataArr] // N), {All,
+         False} -> (Count[guessStats, False]/Length[dataArr] // N)}]
+  ];
+
+DecisionTreeClassificationSuccess[dTreeOrForest_, dataArr_?MatrixQ, x___] := 
+  DecisionTreeOrForestClassificationSuccess[DecisionTreeClassify, dTreeOrForest, dataArr, x];
+
+DecisionForestClassificationSuccess[dTreeOrForest_, dataArr_?MatrixQ, x___] := 
+  DecisionTreeOrForestClassificationSuccess[DecisionForestClassify, dTreeOrForest, dataArr, x];
 
 End[]
 
