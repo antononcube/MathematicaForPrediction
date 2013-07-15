@@ -211,7 +211,7 @@ AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ,
       
       (* check is the set too pure *)
       
-      If[Length[numDataRecs] > 0.1*linCombMinRecs,
+      If[Length[numDataRecs] > 0.1*linCombMinRecs && Length[numDataRecs] > svdRank,
        PRINT["AVCSplitSelection:: Dimensions[numDataRecs] = ", Dimensions[numDataRecs]];
        
        (* find splitting directions using SVD *)
@@ -220,22 +220,19 @@ AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ,
         AbsoluteTiming[
          (* the union is needed in order to avoid singular matrices *)
        
-           numDataRecs = Union[numDataRecs[[All, numAxes]]];
-         {U, S, V} = 
-          SingularValueDecomposition[numDataRecs, Tolerance -> 0.01];
+         numDataRecs = Union[numDataRecs[[All, numAxes]]];
+         {U, S, V} = SingularValueDecomposition[numDataRecs, svdRank, Tolerance -> 0.01];
          ]
         ];
        
        (* compute the variable columns of the linear combinations *)
        
        numDataRecs = dataRecs[[All, numAxes]].V;
-       numAvcs = 
-        Map[AVC[numDataRecs[[All, #]], classLabels] &, Range[Length[numAxes]]];
+       numAvcs = Map[AVC[numDataRecs[[All, #]], classLabels] &, Range[svdRank]];
        PRINT["AVCSplitSelection:: Length/@numAvcs = ", Length /@ numAvcs];
        numRes = 
         Table[Append[
-          AVCFindBestSplitValue[numAvcs[[i]], Number, nStrata, 
-           impFunc], {numAxes, V[[All, i]]}], {i, Length[numAxes]}];
+          AVCFindBestSplitValue[numAvcs[[i]], Number, nStrata, impFunc], {numAxes, V[[All, i]]}], {i, svdRank}];
        ];
       ];
      ];
@@ -270,8 +267,12 @@ BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPatt
      linCombMinRecs, svdRank},
     
     (* Options handling *)
-    {linCombMinRecs, 
-      svdRank} = {"MinRecords", "SVDRank"} /. linComb /. {"MinRecords" -> 200, "SVDRank" -> 2};
+    {linCombMinRecs, svdRank} = {"MinRecords", "SVDRank"} /. linComb /. {"MinRecords" -> 200, "SVDRank" -> 2};
+
+    Which[
+      TrueQ[svdRank === All], svdRank = Count[columnTypes, Number],
+      ! IntegerQ[svdRank], svdRank = 0
+    ];
 
 	impFunc = If[ TrueQ[ impFunc == "Entropy"], AVCEntropy, AVCGini ];    
 
@@ -296,8 +297,7 @@ BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPatt
      
      (* Recursive calling *)
      Which[
-      (*res[[1]]<=impurityTh,{{{Length[
-      data],data[[1,-1]]}}},*)
+      (*res[[1]]<=impurityTh,{{{Length[data],data[[1,-1]]}}},*)
       
       res[[1]] <= impurityTh || Length[data] < Theta,
       {SortBy[Reverse /@ Tally[data[[All, -1]]], -#[[1]] &]},
