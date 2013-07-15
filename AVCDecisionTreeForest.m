@@ -256,7 +256,7 @@ RandomAxes[nDimensions_] :=
 Clear[BuildDecisionTree]
 Options[BuildDecisionTree] = {"RandomAxes" -> False, "ImpurityFunction" -> "Gini", 
    "ImpurityThreshold" -> 0, "NumberOfStrata" -> 100, 
-   "LinearCombinations" -> {"MinRecords" -> 200, "SVDRank" -> 2}};
+   "LinearCombinations" -> {"MinSize" -> 200, "SVDRank" -> 2}};
 BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPattern[]] :=
   Block[{res, d1, d2, axesArg,
      randomAxes = OptionValue[BuildDecisionTree, "RandomAxes"],
@@ -267,7 +267,7 @@ BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPatt
      linCombMinRecs, svdRank},
     
     (* Options handling *)
-    {linCombMinRecs, svdRank} = {"MinRecords", "SVDRank"} /. linComb /. {"MinRecords" -> 200, "SVDRank" -> 2};
+    {linCombMinRecs, svdRank} = {"MinSize", "SVDRank"} /. linComb /. {"MinSize" -> 200, "SVDRank" -> 2};
 
     Which[
       TrueQ[svdRank === All], svdRank = Count[columnTypes, Number],
