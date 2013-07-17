@@ -163,12 +163,16 @@ AVCFindBestSplitValueNumerical[avcTally_, nStrata_Integer, impFunc_] :=
     Return[{0, Max[varVals]}]
     ];
    (*h=Min[Differences[Sort[varVals]]];*)
-   
    h = (Max[varVals] - Min[varVals])/nStrata;
    First@SortBy[
      Map[{AVCNumericalImpurity[avcTally, #, impFunc], #} &, 
       Range[Min[varVals], Max[varVals], h]], -#[[1]] &]
-   ];
+  ];
+AVCFindBestSplitValueNumerical[avcTally_, 0, impFunc_] :=
+  Block[{varVals},
+   varVals = Union[avcTally[[All, 1]]];
+   First@SortBy[Map[{AVCNumericalImpurity[avcTally, #, impFunc], #} &, varVals], -#[[1]] &]
+  ];
 
 Clear[AVCFindBestSplitValue]
 AVCFindBestSplitValue[avcTally_, varType_, nStrata_Integer, impFunc_] :=
@@ -179,22 +183,50 @@ AVCFindBestSplitValue[avcTally_, varType_, nStrata_Integer, impFunc_] :=
     ]
    ];
 
+Clear[Stratify]
+Stratify[data : {_?NumberQ ..}, nStrata_Integer] :=
+  Block[{t, min, max, h},
+   {min, max} = {Min[data], Max[data]};
+   If[min == max,
+    data,
+    h = (max - min)/nStrata;
+    Map[Floor[(# - min)/h]*h + min &, data]
+    ]
+   ];
+Stratify[data_, nStrata_Integer] := data;
+
 Clear[AVCSplitSelection]
 AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ, 
-   columnTypes_?VectorQ, axesArg : (All | {_Integer ..}), nStrata_Integer, 
-   impFunc_, {linCombMinRecs_Integer, svdRank_Integer}] :=
-  Block[{avcs, res, axes = axesArg, numAxes, numAvcs, numDataRecs, U, S, V, 
-     numRes = {}},
+   columnTypes_?VectorQ, axesArg : (All | {_Integer ..}), 
+   nStrata_Integer, 
+   impFunc_, {linCombMinRecs_Integer, svdRank_Integer}, 
+   preStratifyQ : (True | False)] :=
+  
+  Block[{avcs, res, axes = axesArg, numAxes, numAvcs, numDataRecs, U, S, V, numRes = {}},
+
     If[axes === All,
      axes = Range[1, Dimensions[dataRecs][[2]]]
-     ];
-    (* should we do the AVC before the quantization of the numerical variables? *)
-    avcs = Map[AVC[dataRecs[[All, #]], classLabels] &, axes];
-    res = Table[
-      Append[AVCFindBestSplitValue[avcs[[i]], columnTypes[[axes[[i]]]], 
-        nStrata, impFunc], axes[[i]]], {i, Length[axes]}];
+    ];
+    
+    If[preStratifyQ,
+     avcs = 
+      MapThread[
+       If[TrueQ[#2 === Number], 
+         AVC[Stratify[dataRecs[[All, #1]], nStrata], classLabels], 
+         AVC[dataRecs[[All, #1]], classLabels]] &, {axes, columnTypes[[axes]]}];
+     res = 
+      Table[Append[
+        AVCFindBestSplitValue[avcs[[i]], columnTypes[[axes[[i]]]], 0, impFunc], axes[[i]]], {i, Length[axes]}],
+     (*ELSE*)
+     (* should we do the AVC before the stratification of the numerical variables? *)
+     avcs = Map[AVC[dataRecs[[All, #]], classLabels] &, axes];
+     res = 
+      Table[Append[
+        AVCFindBestSplitValue[avcs[[i]], columnTypes[[axes[[i]]]], nStrata, impFunc], axes[[i]]], {i, Length[axes]}];
+    ];
     
     (* select linear combination of numerical variables (axes) using thin SVD *)
+    
     If[svdRank > 0 && Dimensions[dataRecs][[1]] > linCombMinRecs,
      numAxes = Pick[axes, Map[# === Number &, columnTypes[[axes]]]];
      If[Length[numAxes] >= svdRank,
@@ -202,37 +234,47 @@ AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ,
       
       numAvcs = SortBy[Tally[classLabels], -#[[2]] &];
       PRINT["AVCSplitSelection:: splitting class ratio=", 
-       N[numAvcs[[1, 2]]/Total[numAvcs[[All, 2]]]]];
-      If[numAvcs[[1, 2]]/Total[numAvcs[[All, 2]]] <= 1/2,
+       N[numAvcs[[1, 2]]/Length[classLabels]]];
+      If[numAvcs[[1, 2]]/Length[classLabels] <= 1/2,
        numDataRecs = 
         Pick[dataRecs, Map[# == numAvcs[[1, 1]] &, classLabels]],
-       numDataRecs = Pick[dataRecs, Map[# != numAvcs[[1, 1]] &, classLabels]]
+       numDataRecs = 
+        Pick[dataRecs, Map[# != numAvcs[[1, 1]] &, classLabels]]
        ];
       
-      (* check is the set too pure *)
+      (* check is the one-label subset too pure or too small *)
       
-      If[Length[numDataRecs] > 0.1*linCombMinRecs && Length[numDataRecs] > svdRank,
-       PRINT["AVCSplitSelection:: Dimensions[numDataRecs] = ", Dimensions[numDataRecs]];
+      If[Length[numDataRecs] > 0.1*linCombMinRecs && 
+        Length[numDataRecs] > svdRank,
+       PRINT["AVCSplitSelection:: Dimensions[numDataRecs] = ", 
+        Dimensions[numDataRecs]];
        
        (* find splitting directions using SVD *)
        
        PRINT["AVCSplitSelection:: SVD timing",
         AbsoluteTiming[
          (* the union is needed in order to avoid singular matrices *)
-       
+
          numDataRecs = Union[numDataRecs[[All, numAxes]]];
          {U, S, V} = SingularValueDecomposition[numDataRecs, svdRank, Tolerance -> 0.01];
          ]
         ];
-       
+       PRINT["AVCSplitSelection:: Dimensions[V]=", Dimensions[V]];
        (* compute the variable columns of the linear combinations *)
-       
+ 
        numDataRecs = dataRecs[[All, numAxes]].V;
-       numAvcs = Map[AVC[numDataRecs[[All, #]], classLabels] &, Range[svdRank]];
-       PRINT["AVCSplitSelection:: Length/@numAvcs = ", Length /@ numAvcs];
-       numRes = 
-        Table[Append[
-          AVCFindBestSplitValue[numAvcs[[i]], Number, nStrata, impFunc], {numAxes, V[[All, i]]}], {i, svdRank}];
+       Assert[Dimensions[numDataRecs][[2]] == svdRank];
+       If[preStratifyQ,
+        numAvcs = Map[AVC[Stratify[numDataRecs[[All, #]], nStrata], classLabels] &, Range[svdRank]];
+        numRes = 
+         Table[Append[AVCFindBestSplitValue[numAvcs[[i]], Number, 0, impFunc], {numAxes, V[[All, i]]}], {i, svdRank}],
+        (* ELSE *)
+        PRINT["AVCSplitSelection:: Dimensions[numDataRecs]=", Dimensions[numDataRecs]];
+        numAvcs = Map[AVC[numDataRecs[[All, #]], classLabels] &, Range[svdRank]];
+        PRINT["AVCSplitSelection:: Length/@numAvcs = ", Length /@ numAvcs];
+        numRes = 
+         Table[Append[AVCFindBestSplitValue[numAvcs[[i]], Number, nStrata, impFunc], {numAxes, V[[All, i]]}], {i, svdRank}]
+        ];
        ];
       ];
      ];
@@ -256,7 +298,7 @@ RandomAxes[nDimensions_] :=
 Clear[BuildDecisionTree]
 Options[BuildDecisionTree] = {"RandomAxes" -> False, "ImpurityFunction" -> "Gini", 
    "ImpurityThreshold" -> 0, "NumberOfStrata" -> 100, 
-   "LinearCombinations" -> {"MinSize" -> 200, "SVDRank" -> 2}};
+   "LinearCombinations" -> {"MinSize" -> 200, "SVDRank" -> 2}, "PreStratify" -> False};
 BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPattern[]] :=
   Block[{res, d1, d2, axesArg,
      randomAxes = OptionValue[BuildDecisionTree, "RandomAxes"],
@@ -264,6 +306,7 @@ BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPatt
      impurityTh = OptionValue[BuildDecisionTree, "ImpurityThreshold"],
      nStrata = OptionValue[BuildDecisionTree, "NumberOfStrata"],
      linComb = OptionValue[BuildDecisionTree, "LinearCombinations"],
+     preStratifyQ = TrueQ[OptionValue[BuildDecisionTree, "PreStratify"]],
      linCombMinRecs, svdRank},
     
     (* Options handling *)
@@ -291,9 +334,7 @@ BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPatt
      
      (* Splitting axis and value finding *)
      
-     res = AVCSplitSelection[data[[All, 1 ;; -2]], data[[All, -1]], 
-       Most[columnTypes], axesArg, nStrata, 
-       impFunc, {linCombMinRecs, svdRank}];
+     res = AVCSplitSelection[data[[All, 1 ;; -2]], data[[All, -1]], Most[columnTypes], axesArg, nStrata, impFunc, {linCombMinRecs, svdRank}, preStratifyQ];
      
      (* Recursive calling *)
      Which[
@@ -314,7 +355,7 @@ BuildDecisionTree[data_, columnTypes_, level_Integer, Theta_, opts : OptionsPatt
        True,
        d1 = Select[data, #[[res[[3]]]] === res[[2]] &];
        d2 = Select[data, #[[res[[3]]]] =!= res[[2]] &]
-       ];
+      ];
       {Join[
         res, {If[MatrixQ[res[[3]], NumberQ], Dot, columnTypes[[res[[3]]]]], 
          Length[data]}],
@@ -445,7 +486,7 @@ CentralizeDataMatrix[dataArg_?MatrixQ, indsArg : ({_Integer ..} | All)] :=
     AppendTo[centralizers, {m, qd}]
     , {i, inds}];
    {data, centralizers}
-   ];
+  ];
 
 
 (* DecisionTreeClassificationSuccess *)
@@ -459,17 +500,14 @@ DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | De
      (tdata = Select[dataArr, #[[-1]] == lbl &];
       guesses = classFunc[dTreeOrForest, Most[#]][[1, 2]] & /@ tdata;
       guessStats = MapThread[Equal, {guesses, tdata[[All, -1]]}];
-      {Count[guessStats, True], Count[guessStats, False]}/
-        Length[tdata] // N)
+      {Count[guessStats, True], Count[guessStats, False]}/Length[tdata] // N)
      , {lbl, labels}];
-   t = MapThread[{{#1, True} -> #2[[1]], {#1, False} -> #2[[
-         2]]} &, {labels, t}];
+   t = MapThread[{{#1, True} -> #2[[1]], {#1, False} -> #2[[2]]} &, {labels, t}];
    guesses = classFunc[dTreeOrForest, Most[#]][[1, 2]] & /@ dataArr;
    guessStats = MapThread[Equal, {guesses, dataArr[[All, -1]]}];
    Flatten[#, 1] &@
-    Join[t, {{All, 
-        True} -> (Count[guessStats, True]/Length[dataArr] // N), {All,
-         False} -> (Count[guessStats, False]/Length[dataArr] // N)}]
+    Join[t, {{All, True} -> (Count[guessStats, True]/Length[dataArr] // N), 
+             {All, False} -> (Count[guessStats, False]/Length[dataArr] // N)}]
   ];
 
 DecisionTreeClassificationSuccess[dTreeOrForest_, dataArr_?MatrixQ, x___] := 
