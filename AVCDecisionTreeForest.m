@@ -190,7 +190,7 @@ Stratify[data : {_?NumberQ ..}, nStrata_Integer] :=
    If[min == max,
     data,
     h = (max - min)/nStrata;
-    Map[Floor[(# - min)/h]*h + min &, data]
+    Map[Round[(# - min), h] + min &, data]
     ]
    ];
 Stratify[data_, nStrata_Integer] := data;
