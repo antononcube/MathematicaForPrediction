@@ -435,37 +435,49 @@ ParallelDecisionForestClassify[forest_, record_] :=
 
 (* This function transforms a decision tree into rules to be given to GraphPlot and related functions. *)
 
+Clear[MakeIDGenerator]
+MakeIDGenerator[] :=
+  Module[{i = 0},
+   Clear[NewID, ReetID];
+   NewID[] := i++;
+   ResetID[] := (i = 0);
+  ];
+
+Clear[TreeToRulesRecStep, LeafNodeDecoration]
+LeafNodeDecoration[node_] := If[MatrixQ[node], Column[{Row[{"leaf ", NewID[]}], Grid[node]}], node];
+TreeToRulesRecStep[tree_] :=
+  Which[
+   tree === {}, {},
+   Rest[tree] === {}, {},
+   MatrixQ[tree] && Dimensions[tree][[2]] == 2, {},
+   Length[Rest[tree]] == 2,
+   Join[
+    MapThread[
+     Which[
+       #2 == "True" && Length[tree[[1]]] >= 4 && (tree[[1, 4]] === Number || tree[[1, 4]] === Dot), 
+         {tree[[1]] -> LeafNodeDecoration[#1[[1]]], "\[LessEqual] " <> ToString[NumberForm[tree[[1, 2]], 2]]},
+       #2 == "False" && Length[tree[[1]]] >= 4 && (tree[[1, 4]] === Number || tree[[1, 4]] === Dot), 
+         {tree[[1]] -> LeafNodeDecoration[#1[[1]]], "> " <> ToString[NumberForm[tree[[1, 2]], 2]]},
+       #2 == "True" && Length[tree[[1]]] >= 4 && tree[[1, 4]] === Symbol, 
+         {tree[[1]] -> LeafNodeDecoration[#1[[1]]], "= " <> ToString[tree[[1, 2]]]},
+       #2 == "False" && Length[tree[[1]]] >= 4 && tree[[1, 4]] === Symbol, 
+         {tree[[1]] -> LeafNodeDecoration[#1[[1]]], "\[NotEqual] " <> ToString[tree[[1, 2]]]},
+       True, 
+         {tree[[1]] -> LeafNodeDecoration[#1[[1]]], #2}
+       ] &, {Rest[tree], {"True", "False"}}, 1],
+    Flatten[TreeToRulesRecStep[#] & /@ Rest[tree], 1]
+   ],
+   True,
+   Join[Map[{tree[[1]] -> LeafNodeDecoration[#1[[1]]]} &, Rest[tree], {1}], Flatten[TreeToRulesRecStep[#] & /@ Rest[tree], 1]]
+  ];
+
 Clear[DecisionTreeToRules]
 DecisionTreeToRules[tree_] :=
-  Which[
-    tree === {}, {},
-    Rest[tree] === {}, {},
-    MatrixQ[tree] && Dimensions[tree][[2]] == 2, {},
-    Length[Rest[tree]] == 2,
-    Join[
-     MapThread[
-      Which[
-        #2 == "True" && Length[tree[[1]]] >= 4 && 
-         (tree[[1, 4]] === Number || tree[[1, 4]] === Dot), {tree[[1]] -> #1[[1]], 
-         "\[LessEqual] " <> ToString[NumberForm[tree[[1, 2]], 2]]},
-        #2 == "False" && Length[tree[[1]]] >= 4 && 
-         (tree[[1, 4]] === Number || tree[[1, 4]] === Dot), {tree[[1]] -> #1[[1]], 
-         "> " <> ToString[NumberForm[tree[[1, 2]], 2]]},
-        #2 == "True" && Length[tree[[1]]] >= 4 && 
-         tree[[1, 4]] === Symbol, {tree[[1]] -> #1[[1]], 
-         "= " <> ToString[tree[[1, 2]]]},
-        #2 == "False" && Length[tree[[1]]] >= 4 && 
-         tree[[1, 4]] === Symbol, {tree[[1]] -> #1[[1]], 
-         "\[NotEqual] " <> ToString[tree[[1, 2]]]},
-        True, {tree[[1]] -> #1[[1]], #2}
-        ] &, {Rest[tree], {"True", "False"}}, 1],
-     Flatten[DecisionTreeToRules[#] & /@ Rest[tree], 1]
-     ],
-    True,
-    Join[Map[{tree[[1]] -> #[[1]]} &, Rest[tree], {1}], 
-     Flatten[DecisionTreeToRules[#] & /@ Rest[tree], 1]]
-    ] /. {{r_Rule, edge_String} :> {r, 
-      Style[edge, Background -> White, FontSlant -> Plain]}};
+  Block[{},
+    MakeIDGenerator[];
+    TreeToRulesRecStep[tree]
+  ] /. {{r_Rule, edge_String} :> {r, Style[StandardForm[edge], Background -> White, FontSlant -> Plain]}};
+
 
 (* Centralize data *)
 
