@@ -221,14 +221,11 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
      Which[
       TrueQ[svdLabels === Automatic],
       If[numAvcs[[1, 2]]/Length[classLabels] <= 1/2,
-       numDataRecs = 
-        Pick[dataRecs, Map[# == numAvcs[[1, 1]] &, classLabels]],
-       numDataRecs = 
-        Pick[dataRecs, Map[# != numAvcs[[1, 1]] &, classLabels]]
-       ],
+       numDataRecs = Pick[dataRecs, Map[# == numAvcs[[1, 1]] &, classLabels]],
+       numDataRecs = Pick[dataRecs, Map[# != numAvcs[[1, 1]] &, classLabels]]
+      ],
       ListQ[svdLabels],
-      inRules = 
-       Dispatch[Append[Thread[svdLabels -> True], _?AtomQ -> False]];
+      inRules = Dispatch[Append[Thread[svdLabels -> True], _?AtomQ -> False]];
       numDataRecs = Pick[dataRecs, classLabels /. inRules],
       True,
       numDataRecs = {}
@@ -247,7 +244,7 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
         numDataRecs = Union[numDataRecs[[All, numAxes]]];
         {U, S, V} = SingularValueDecomposition[numDataRecs, svdRank, Tolerance -> 0.01];
         If[cdSVDRank > 0,
-         {numDataRecs, crs} = CentralizeDataMatrix[numDataRecs, All];
+         {numDataRecs, crs} = MedianCentralizeDataMatrix[numDataRecs, All];
          {cU, cS, cV} = SingularValueDecomposition[numDataRecs, cdSVDRank, Tolerance -> 0.01];
          ];
         ]
@@ -563,6 +560,19 @@ CentralizeDataMatrix[dataArg_?MatrixQ, indsArg : ({_Integer ..} | All)] :=
      data[[All, i]] = (data[[All, i]] - m)
     ];
     AppendTo[centralizers, {m, qd}]
+    , {i, inds}];
+   {data, centralizers}
+  ];
+
+Clear[MedianCentralizeDataMatrix]
+MedianCentralizeDataMatrix[dataArg_?MatrixQ] := MedianCentralizeDataMatrix[dataArg, All];
+MedianCentralizeDataMatrix[dataArg_?MatrixQ, indsArg : ({_Integer ..} | All)] :=
+  Block[{data = dataArg, m, qd, inds = indsArg, centralizers = {}},
+   If[inds === All, inds = Range[Dimensions[data][[2]]]];
+   Do[
+    m = Median[data[[All, i]]];
+    data[[All, i]] = (data[[All, i]] - m);
+    AppendTo[centralizers, {m, 1}]
     , {i, inds}];
    {data, centralizers}
   ];
