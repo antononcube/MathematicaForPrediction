@@ -200,7 +200,7 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
    columnTypes_?VectorQ, axesArg : (All | {_Integer ..}), 
    nStrata_Integer, 
    impFunc_, {linCombMinRecs_Integer, svdRank_Integer, 
-    cdSVDRank_Integer, svdLabels : (Automatic | _List)}, 
+    cdSVDRank_Integer, svdLabels : (All | Automatic | _List)}, 
    preStratifyQ : (True | False)] :=
   
   Block[{axes = axesArg, numAxes, numAvcs, numDataRecs, U, S, V, cU, 
@@ -219,6 +219,8 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
      PRINT["AVCSplitSelection:: splitting class ratio=", N[numAvcs[[1, 2]]/Length[classLabels]]];
      
      Which[
+      TrueQ[svdLabels === All],
+      numDataRecs = dataRecs,
       TrueQ[svdLabels === Automatic],
       If[numAvcs[[1, 2]]/Length[classLabels] <= 1/2,
        numDataRecs = Pick[dataRecs, Map[# == numAvcs[[1, 1]] &, classLabels]],
@@ -292,7 +294,7 @@ AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ,
    columnTypes_?VectorQ, axesArg : (All | {_Integer ..}), 
    nStrata_Integer, 
    impFunc_, {linCombMinRecs_Integer, svdRank_Integer, 
-    crSVDRank_Integer, svdLabels : (Automatic | _List)}, 
+    crSVDRank_Integer, svdLabels : (All | Automatic | _List)}, 
    preStratifyQ : (True | False)] :=
   Block[{avcs, res, axes = axesArg, numAxes, numRes = {}, numAvcs, 
      numDataRecs},
