@@ -322,12 +322,14 @@ AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ,
 
 Clear[RandomAxes]
 RandomAxes[nDimensions_] :=
-  Which[
-   nDimensions > 10, RandomSample[Range[nDimensions], 5],
-   nDimensions > 5, RandomSample[Range[nDimensions], 3],
-   nDimensions > 2, RandomSample[Range[nDimensions], 2],
-   True, Range[nDimensions]
-   ];
+  Sort[
+    Which[
+      nDimensions > 10, RandomSample[Range[nDimensions], 5],
+      nDimensions > 5, RandomSample[Range[nDimensions], 3],
+      nDimensions > 2, RandomSample[Range[nDimensions], 2],
+      True, Range[nDimensions]
+    ]
+  ];
 
 Clear[BuildDecisionTree]
 Options[BuildDecisionTree] = {"RandomAxes" -> False, 
