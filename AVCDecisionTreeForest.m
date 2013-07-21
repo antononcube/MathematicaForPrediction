@@ -204,7 +204,7 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
    preStratifyQ : (True | False)] :=
   
   Block[{axes = axesArg, numAxes, numAvcs, numDataRecs, U, S, V, cU, 
-    cS, cV, numRes = {}, numResCentered = {}, crs, inRules},
+    cS, cV, numRes = {}, crs, inRules},
    
    (* select linear combination of numerical variables (axes) using thin SVD *)
    
@@ -253,14 +253,16 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
        ];
       PRINT["AVCSplitSelection:: Dimensions[V]=", Dimensions[V]];
       PRINT["AVCSplitSelection:: Dimensions[cV]=", Dimensions[cV]];
-      {numRes, numResCentered} =
+      V = Transpose[Union[Join[Transpose[V], Transpose[cV]], SameTest -> (Abs[#1.#2] >= 0.98 &)]];
+      PRINT["AVCSplitSelection:: After union of directions Dimensions[V]=", Dimensions[V]];
+      {numRes} =
        MapThread[
         Function[{V, rank},
          If[rank == 0, {},
           (* compute the variable columns of the linear combinations *)
-
-                    numDataRecs = dataRecs[[All, numAxes]].V;
-          Assert[Dimensions[numDataRecs][[2]] == rank];
+          Assert[numAxes == Dimensions[V][[1]]];
+          numDataRecs = dataRecs[[All, numAxes]].V;
+          A
           If[preStratifyQ,
            
            numAvcs = Map[AVC[Stratify[numDataRecs[[All, #]], nStrata], classLabels] &, Range[rank]];
@@ -282,11 +284,11 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
               AVCFindBestSplitValue[numAvcs[[i]], Number, nStrata, 
                impFunc], {numAxes, V[[All, i]]}], {i, rank}]
            ]]],
-        {{V, cV}, {svdRank, cdSVDRank}}];
+        {{V}, {Dimensions[V][[2]]}}];
       ];
      ];
     ];
-   Join[numRes, numResCentered]
+   Join[numRes]
    ];
 
 Clear[AVCSplitSelection]
