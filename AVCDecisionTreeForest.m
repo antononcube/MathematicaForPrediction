@@ -496,10 +496,10 @@ DecisionTreeClassify[dTree_, record_] :=
 
 (* Classify by forest *)
 Clear[DecisionForestClassify]
-Options[DecisionForestClassify] = {"Weighted" -> False};
+Options[DecisionForestClassify] = {"Weighted" -> True};
 DecisionForestClassify[forest_, record_, opts : OptionsPattern[]] :=
   Block[{res, weightedQ = OptionValue[DecisionForestClassify, "Weighted"]},
-   res = TreeClassify[#, record] & /@ forest;
+   res = DecisionTreeClassify[#, record] & /@ forest;
    res = Flatten[res, 1];
    If[TrueQ[weightedQ],
     res = GatherBy[res, #[[2]] &];
@@ -514,7 +514,7 @@ Clear[ParallelDecisionForestClassify]
 Options[ParallelDecisionForestClassify] = {"Weighted" -> False};
 ParallelDecisionForestClassify[forest_, record_] := 
   Block[{res, weightedQ = OptionValue[ParallelDecisionForestClassify, "Weighted"]},
-   res = ParallelMap[TreeClassify[#, record] &, forest, Method -> "CoarsestGrained", DistributedContexts -> Automatic];
+   res = ParallelMap[DecisionTreeClassify[#, record] &, forest, Method -> "CoarsestGrained", DistributedContexts -> Automatic];
    res = Flatten[res, 1];
    If[TrueQ[weightedQ],
     res = GatherBy[res, #[[2]] &];
