@@ -462,11 +462,11 @@ BuildDecisionTree[data_, th_: 1, opts : OptionsPattern[]] :=
 
 Clear[BuildDecisionForest]
 BuildDecisionForest[data_, th_, n_Integer, opts : OptionsPattern[]] :=
-  Table[BuildDecisionTree[data, th, "RandomAxes" -> True, opts], {n}];
+  Table[BuildDecisionTree[data, th, Sequence @@ Append[{opts}, "RandomAxes" -> True]], {n}];
 
 Clear[ParallelBuildDecisionForest]
 ParallelBuildDecisionForest[data_, th_, n_Integer, opts : OptionsPattern[]] :=
-  ParallelTable[BuildDecisionTree[data, th, "RandomAxes" -> True, opts], {n}];
+  ParallelTable[BuildDecisionTree[data, th, Sequence @@ Append[{opts}, "RandomAxes" -> True]], {n}];
 
 (* Classify by tree *)
 
