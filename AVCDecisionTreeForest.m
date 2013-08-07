@@ -331,10 +331,10 @@ RandomAxes[nDimensions_] :=
     ]
   ];
 
-
 Clear[BuildTreeRecStep]
-BuildTreeRecStep[data_, columnTypes_, level_Integer, \[Theta]_Integer,
-    axes : (All | {_Integer ..}), nStrata_Integer, impFunc_, 
+BuildTreeRecStep[data_, columnTypes_, level_Integer, 
+   minSizeTh_Integer, axes : (All | {_Integer ..}), nStrata_Integer, 
+   impFunc_, 
    impurityTh_?NumberQ, {linCombMinRecs_Integer, svdRank_Integer, 
     cdSVDRank_Integer, svdLabels_}, preStratifyQ : (False | True)] :=
 
@@ -359,12 +359,14 @@ BuildTreeRecStep[data_, columnTypes_, level_Integer, \[Theta]_Integer,
       impurityTh,{{{Length[data],
       data\[LeftDoubleBracket]1,-1\[RightDoubleBracket]}}},*)
       
-      res[[1]] <= impurityTh || Length[data] < \[Theta],
+      res[[1]] <= impurityTh || Length[data] < minSizeTh,
       {SortBy[Reverse /@ Tally[data[[All, -1]]], -#[[1]] &]},
       True,
       Which[
        MatrixQ[res[[3]], NumberQ],
-       PRINT["BuildTreeRecStep:: res\[LeftDoubleBracket]3\[RightDoubleBracket]=", res[[3]]];
+       PRINT[
+        "BuildTree:: res\[LeftDoubleBracket]3\[RightDoubleBracket]=", 
+        res[[3]]];
        d1 = Select[data, #[[res[[3, 1]]]].res[[3, 2]] <= res[[2]] &];
        d2 = Select[data, #[[res[[3, 1]]]].res[[3, 2]] > res[[2]] &],
        columnTypes[[res[[3]]]] === Number,
@@ -377,45 +379,39 @@ BuildTreeRecStep[data_, columnTypes_, level_Integer, \[Theta]_Integer,
       {Join[
         res, {If[MatrixQ[res[[3]], NumberQ], Dot, 
           columnTypes[[res[[3]]]]], Length[data]}],
-       BuildTreeRecStep[d1, columnTypes, level + 1, \[Theta], axes, 
+       BuildTreeRecStep[d1, columnTypes, level + 1, minSizeTh, axes, 
         nStrata, impFunc, 
         impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
         preStratifyQ],
-       BuildTreeRecStep[d2, columnTypes, level + 1, \[Theta], axes, 
+       BuildTreeRecStep[d2, columnTypes, level + 1, minSizeTh, axes, 
         nStrata, impFunc, 
         impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
         preStratifyQ]}
       ]
      ]
-    ] /; \[Theta] > 0;
+    ] /; minSizeTh > 0;
 
 Clear[BuildDecisionTree]
 Options[BuildDecisionTree] = {"RandomAxes" -> False, 
-   "ImpurityFunction" -> "Gini", "ImpurityThreshold" -> 0, 
-   "NumberOfStrata" -> 100, 
-   "LinearCombinations" -> {"MinSize" -> 200, "SVDRank" -> 2, 
-     "CentralizedDataSVDRank" -> Automatic, "SVDLabels" -> Automatic},
-    "PreStratify" -> False};
-BuildDecisionTree[data_, columnTypes_, \[Theta]_, opts : OptionsPattern[]] :=
-
-    Block[{res, d1, d2, axesArg,
+   "ImpurityFunction" -> "Gini", "Strata" -> 100, 
+   "LinearCombinations" -> {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic}, 
+   "PreStratify" -> False};
+BuildDecisionTree[data_, columnTypes_, {minSizeTh_Integer, impurityTh_?NumberQ}, opts : OptionsPattern[]] :=
+  Block[{res, d1, d2, axesArg,
      randomAxes = OptionValue[BuildDecisionTree, "RandomAxes"],
      impFunc = OptionValue[BuildDecisionTree, "ImpurityFunction"],
-     impurityTh = OptionValue[BuildDecisionTree, "ImpurityThreshold"],
-     nStrata = OptionValue[BuildDecisionTree, "NumberOfStrata"],
+     nStrata = OptionValue[BuildDecisionTree, "Strata"],
      linComb = OptionValue[BuildDecisionTree, "LinearCombinations"],
      preStratifyQ = TrueQ[OptionValue[BuildDecisionTree, "PreStratify"]],
      linCombMinRecs, svdRank, cdSVDRank, svdLabels},
     
     (* Options handling *)
-    {linCombMinRecs, svdRank, cdSVDRank, 
-      svdLabels} = {"MinSize", "SVDRank", "CentralizedDataSVDRank", 
-        "SVDLabels"} /. linComb /. {"MinSize" -> 200, "SVDRank" -> 2, 
-       "CentralizedDataSVDRank" -> Automatic, 
-       "SVDLabels" -> Automatic};
+    {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic};
+    If[TrueQ[linCombMinRecs === Automatic], 
+     linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
     If[TrueQ[cdSVDRank === Automatic], cdSVDRank = svdRank];
     
-    PRINT["BuildDecisionTree:: {linCombMinRecs,svdRank,cdSVDRank,svdLabels}=", {linCombMinRecs, svdRank, cdSVDRank, svdLabels}];
+    PRINT["BuildTree:: {linCombMinRecs,svdRank,cdSVDRank,svdLabels}=", {linCombMinRecs, svdRank, cdSVDRank, svdLabels}];
     
     {svdRank, cdSVDRank} =
      Map[
@@ -441,34 +437,38 @@ BuildDecisionTree[data_, columnTypes_, \[Theta]_, opts : OptionsPattern[]] :=
       ];
     
     PRINT[
-     "BuildDecisionTree:: ", {Max[\[Theta], 1], axesArg, nStrata, impFunc, 
+     "BuildTree:: ", {Max[minSizeTh, 1], axesArg, nStrata, impFunc, 
       impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
       preStratifyQ}];
     
     (* Recursive call *)
     
-    BuildTreeRecStep[data, columnTypes, 0, \[Theta], axesArg, nStrata, impFunc, impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, preStratifyQ]
+    BuildTreeRecStep[data, columnTypes, 0, minSizeTh, axesArg, nStrata, impFunc, impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, preStratifyQ]
     
     ] /; Length[data[[1]]] == Length[columnTypes];
 
-BuildDecisionTree[data_, th_: 1, opts : OptionsPattern[]] :=
+BuildDecisionTree[data_, minSizeTh_: 1, opts : OptionsPattern[]] :=
+  BuildDecisionTree[data, {minSizeTh, 0.}, opts] /; NumberQ[minSizeTh];
+
+BuildDecisionTree[data_, {minSizeTh_Integer, impurityTh_?NumberQ}, opts : OptionsPattern[]] :=
   Block[{columnTypes},
-    columnTypes = Map[Apply[And, NumericQ /@ data[[All, #]]] &, Range[1, Length[data[[1]]]]];
-    columnTypes = columnTypes /. {True -> Number, False -> Symbol};
-    BuildDecisionTree[data, columnTypes, Max[th, 1], opts]
-  ] /; NumberQ[th];
+   columnTypes = Map[Apply[And, NumericQ /@ data[[All, #]]] &, Range[1, Length[data[[1]]]]];
+   columnTypes = columnTypes /. {True -> Number, False -> Symbol};
+   BuildDecisionTree[data, columnTypes, {Max[minSizeTh, 1], impurityTh}, opts]
+  ];
 
 (* Forest *)
-
 Clear[BuildDecisionForest]
-BuildDecisionForest[data_, th_, n_Integer, opts : OptionsPattern[]] :=
-  Table[BuildDecisionTree[data, th, Sequence @@ Append[{opts}, "RandomAxes" -> True]], {n}];
+BuildDecisionForest[data_, minSizeTh_Integer, n_Integer, opts : OptionsPattern[]] :=
+   BuildDecisionForest[data, {minSizeTh, 0.}, n, opts];
+BuildDecisionForest[data_, {minSizeTh_Integer, impurityTh_?NumberQ}, n_Integer, opts : OptionsPattern[]] :=
+  Table[BuildDecisionTree[data, {minSizeTh, impurityTh}, Sequence @@ Append[{opts}, "RandomAxes" -> True]], {n}];
 
 Clear[ParallelBuildDecisionForest]
-ParallelBuildDecisionForest[data_, th_, n_Integer, opts : OptionsPattern[]] :=
-  ParallelTable[BuildDecisionTree[data, th, Sequence @@ Append[{opts}, "RandomAxes" -> True]], {n}];
-
-(* Classify by tree *)
+ParallelBuildDecisionForest[data_, minSizeTh_Integer, n_Integer, opts : OptionsPattern[]] :=
+  ParallelBuildDecisionForest[data, {minSizeTh, 0.}, n, opts];
+ParallelBuildDecisionForest[data_, {minSizeTh_Integer, impurityTh_?NumberQ}, n_Integer, opts : OptionsPattern[]] :=
+  ParallelTable[BuildDecisionTree[data, {minSizeTh, impurityTh}, Sequence @@ Append[{opts}, "RandomAxes" -> True]], {n}];
 
 (*
 Each node of the tree has the following signature
