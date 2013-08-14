@@ -391,25 +391,44 @@ BuildTreeRecStep[data_, columnTypes_, level_Integer,
      ]
     ] /; minSizeTh > 0;
 
+BuildDecisionTree::fvalopt = "The value of `1` should have the form `2`.";
+
+BuildDecisionTree::ivalopt = "The value of `1` should be a positive integer.";
+
+BuildDecisionTree::iavalopt = "The value of `1` should be Automatic or an integer between `2` and `3`.";
+
+BuildDecisionTree::rvalopt = "The value of `1` should be a positive real number.";
+
+BuildDecisionTree::lvalopt = "The value of `1` should be Automatic, All, or a subset of the class labels `2`.";
+
 Clear[BuildDecisionTree]
 Options[BuildDecisionTree] = {"RandomAxes" -> False, 
    "ImpurityFunction" -> "Gini", "Strata" -> 100, 
-   "LinearCombinations" -> {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic}, 
+   "LinearCombinations" -> {"MinSize" -> Automatic, "Rank" -> 2, 
+     "CentralizedDataRank" -> Automatic, "Labels" -> Automatic}, 
    "PreStratify" -> False};
-BuildDecisionTree[data_, columnTypes_, {minSizeTh_Integer, impurityTh_?NumberQ}, opts : OptionsPattern[]] :=
+BuildDecisionTree[data_, 
+   columnTypes_, {minSizeTh_Integer, impurityTh_?NumberQ}, 
+   opts : OptionsPattern[]] :=
   Block[{res, d1, d2, axesArg,
      randomAxes = OptionValue[BuildDecisionTree, "RandomAxes"],
      impFunc = OptionValue[BuildDecisionTree, "ImpurityFunction"],
      nStrata = OptionValue[BuildDecisionTree, "Strata"],
      linComb = OptionValue[BuildDecisionTree, "LinearCombinations"],
-     preStratifyQ = TrueQ[OptionValue[BuildDecisionTree, "PreStratify"]],
-     linCombMinRecs, svdRank, cdSVDRank, svdLabels},
+     preStratifyQ = OptionValue[BuildDecisionTree, "PreStratify"],
+     linCombMinRecs, svdRank, cdSVDRank, svdLabels, nNumVars, lbls},
     
     (* Options handling *)
+    nNumVars = Count[columnTypes, Number];
+    lbls = Union[data[[All, -1]]];
     {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic};
-    If[TrueQ[linCombMinRecs === Automatic], 
-     linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
+    If[TrueQ[linCombMinRecs === Automatic], linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
     If[TrueQ[cdSVDRank === Automatic], cdSVDRank = svdRank];
+    If[! (IntegerQ[linCombMinRecs] && linCombMinRecs > 0), Message[BuildDecisionTree::iavalopt, "MinSize"]; Return[{}]];
+    If[! (IntegerQ[svdRank] && 0 <= svdRank <= nNumVars), Message[BuildDecisionTree::iavalopt, "Rank", 0, nNumVars]; Return[{}]];
+    If[! (IntegerQ[cdSVDRank] && 0 <= cdSVDRank <= nNumVars), Message[BuildDecisionTree::iavalopt, "CentralizedDataRank", 0, nNumVars]; Return[{}]];
+    If[AtomQ[svdLabels] && !TrueQ[svdLabels === Automatic] && !TrueQ[svdLabels === All], svdLabels = {svdLabels}];
+    If[! (TrueQ[svdLabels === Automatic] || TrueQ[svdLabels === All] || Apply[And, Map[MemberQ[lbls, #] &, svdLabels]]), Message[BuildDecisionTree::lvalopt, "Labels", lbls]; Return[{}]];
     
     PRINT["BuildTree:: {linCombMinRecs,svdRank,cdSVDRank,svdLabels}=", {linCombMinRecs, svdRank, cdSVDRank, svdLabels}];
     
@@ -423,18 +442,28 @@ BuildDecisionTree[data_, columnTypes_, {minSizeTh_Integer, impurityTh_?NumberQ},
       {svdRank, cdSVDRank}];
     PRINT["svdRank=", svdRank, " cdSVDRank=", cdSVDRank];
     
+    If[! (TrueQ[impFunc == "Entropy"] || TrueQ[impFunc == "Gini"]),
+     Message[BuildDecisionTree::fvalopt, "ImpurityFunction", "\"Gini\"|\"Entropy\""];
+     Return[{}]
+    ];
     impFunc = If[TrueQ[impFunc == "Entropy"], AVCEntropy, AVCGini];
     
     axesArg =
      Which[
-      TrueQ[randomAxes] || 
-       IntegerQ[randomAxes] && randomAxes >= Length[data[[1]]] - 1,
+      TrueQ[randomAxes] || IntegerQ[randomAxes] && randomAxes >= Length[data[[1]]] - 1,
       RandomAxes[Length[data[[1]]] - 1],
       IntegerQ[randomAxes],
       Sort[RandomSample[Range[Length[data[[1]]] - 1], randomAxes]],
+      TrueQ[randomAxes === All] || TrueQ[! randomAxes],
+      All,
       True,
+      Message[BuildDecisionTree::fvalopt, "RandomAxes", "All|False|True|_Integer"];
       All
       ];
+    
+    If[! (IntegerQ[nStrata] && nStrata > 0), Message[BuildDecisionTree::ivalopt, "Strata"]; Return[{}]];
+    
+    If[! MatchQ[preStratifyQ, False | True], Message[BuildDecisionTree::fvalopt, "PreStratify", "False|True"]; Return[{}]];
     
     PRINT[
      "BuildTree:: ", {Max[minSizeTh, 1], axesArg, nStrata, impFunc, 
@@ -443,16 +472,18 @@ BuildDecisionTree[data_, columnTypes_, {minSizeTh_Integer, impurityTh_?NumberQ},
     
     (* Recursive call *)
     
-    BuildTreeRecStep[data, columnTypes, 0, minSizeTh, axesArg, nStrata, impFunc, impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, preStratifyQ]
+    BuildTreeRecStep[data, columnTypes, 0, minSizeTh, axesArg, 
+     nStrata, impFunc, 
+     impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
+     preStratifyQ]
     
     ] /; Length[data[[1]]] == Length[columnTypes];
-
 BuildDecisionTree[data_, minSizeTh_: 1, opts : OptionsPattern[]] :=
   BuildDecisionTree[data, {minSizeTh, 0.}, opts] /; NumberQ[minSizeTh];
-
 BuildDecisionTree[data_, {minSizeTh_Integer, impurityTh_?NumberQ}, opts : OptionsPattern[]] :=
   Block[{columnTypes},
-   columnTypes = Map[Apply[And, NumericQ /@ data[[All, #]]] &, Range[1, Length[data[[1]]]]];
+   columnTypes = 
+    Map[Apply[And, NumericQ /@ data[[All, #]]] &, Range[1, Length[data[[1]]]]];
    columnTypes = columnTypes /. {True -> Number, False -> Symbol};
    BuildDecisionTree[data, columnTypes, {Max[minSizeTh, 1], impurityTh}, opts]
   ];
