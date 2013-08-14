@@ -645,28 +645,39 @@ MedianCentralizeDataMatrix[dataArg_?MatrixQ, indsArg : ({_Integer ..} | All)] :=
 
 Clear[DecisionTreeOrForestClassificationSuccess, DecisionTreeClassificationSuccess, DecisionForestClassificationSuccess]
 DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | DecisionForestClassify), dTreeOrForest_, dataArr_?MatrixQ] := DecisionTreeOrForestClassificationSuccess[classFunc, dTreeOrForest, dataArr, Union[dataArr[[All, -1]]]];
-DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | DecisionForestClassify), dTreeOrForest_, dataArr_?MatrixQ, labels_?VectorQ] :=
-  Block[{guesses, guessStats, tdata, t},
+DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | DecisionForestClassify), dTreeOrForest_, dataArr_?MatrixQ, labels_?VectorQ, selectionFunc_: First] :=
+  Block[{guesses, guessStats, tdata, t, dataLabels=Union[dataArr[[All, -1]]]},
    t =
     Table[
-     (tdata = Select[dataArr, #[[-1]] == lbl &];
-      guesses = classFunc[dTreeOrForest, Most[#]][[1, 2]] & /@ tdata;
+     If[ !MemberQ[ dataLabels, lbl],
+     If[ TrueQ[classFunc === DecisionTreeClassify],
+      Message[DecisionTreeClassificationSuccess::nlbl, lbl, dataLabels],
+      Message[DecisionForestClassificationSuccess::nlbl, lbl, dataLabels],
+     ];
+     {0,0},
+     tdata = Select[dataArr, #[[-1]] == lbl &];
+      guesses = selectionFunc[classFunc[dTreeOrForest, Most[#]]][[2]] & /@ tdata;
       guessStats = MapThread[Equal, {guesses, tdata[[All, -1]]}];
-      {Count[guessStats, True], Count[guessStats, False]}/Length[tdata] // N)
+      {Count[guessStats, True], Count[guessStats, False]}/Length[tdata] // N
+     ]
      , {lbl, labels}];
    t = MapThread[{{#1, True} -> #2[[1]], {#1, False} -> #2[[2]]} &, {labels, t}];
    guesses = classFunc[dTreeOrForest, Most[#]][[1, 2]] & /@ dataArr;
    guessStats = MapThread[Equal, {guesses, dataArr[[All, -1]]}];
-   Flatten[#, 1] &@
-    Join[t, {{All, True} -> (Count[guessStats, True]/Length[dataArr] // N), 
-             {All, False} -> (Count[guessStats, False]/Length[dataArr] // N)}]
+   Flatten[#, 1] &@ Join[t, {{All, True} -> (Count[guessStats, True]/Length[dataArr] // N), {All, False} -> (Count[guessStats, False]/Length[dataArr] // N)}]
   ];
 
+DecisionTreeClassificationSuccess::nlbl = "The specified label `1` is not one of the data array labels `2`."
+DecisionTreeClassificationSuccess::wsig = "The first two arguments are expected to be a decision tree and a data array.";
 DecisionTreeClassificationSuccess[dTreeOrForest_, dataArr_?MatrixQ, x___] := 
   DecisionTreeOrForestClassificationSuccess[DecisionTreeClassify, dTreeOrForest, dataArr, x];
+DecisionTreeClassificationSuccess[___]:=Message[DecisionTreeClassificationSuccess::wsig];
 
+DecisionForestClassificationSuccess::nlbl = "The specified label `1` is not one of the data array labels `2`."
+DecisionForestClassificationSuccess::wsig = "The first two arguments are expected to be a decision forest and a data array.";
 DecisionForestClassificationSuccess[dTreeOrForest_, dataArr_?MatrixQ, x___] := 
   DecisionTreeOrForestClassificationSuccess[DecisionForestClassify, dTreeOrForest, dataArr, x];
+DecisionForestClassificationSuccess[___]:=Message[DecisionForestClassificationSuccess::wsig];
 
 End[]
 
