@@ -652,7 +652,7 @@ DecisionTreeOrForestClassificationSuccess[classFunc : (DecisionTreeClassify | De
      If[ !MemberQ[ dataLabels, lbl],
      If[ TrueQ[classFunc === DecisionTreeClassify],
       Message[DecisionTreeClassificationSuccess::nlbl, lbl, dataLabels],
-      Message[DecisionForestClassificationSuccess::nlbl, lbl, dataLabels],
+      Message[DecisionForestClassificationSuccess::nlbl, lbl, dataLabels]
      ];
      {0,0},
      tdata = Select[dataArr, #[[-1]] == lbl &];
