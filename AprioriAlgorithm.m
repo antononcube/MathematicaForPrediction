@@ -1,5 +1,3 @@
-
-
 (*
     Implementation of the Apriori algorithm in Mathematica
     Copyright (C) 2013  Anton Antonov
@@ -43,9 +41,9 @@ AprioriApplication::usage = "AprioriApplication[itemLists,minProb,opts] returns 
 
 AssociationRules::usage = "AssociationRules[setOfBaskets,basket,confidence] finds the possible association rules for basket using setOfBaskets and calculates for each of the rules measures: Confidence, Lift, Leverage, Conviction, Condition, Implication."
 
-QuantileReplacementFunc:: = "QuantileReplacementFunc[qBoundaries] makes a piece-wise function for mapping of a real value to the enumerated intervals Partition[Join[{-Infinity}, qBoundaries, {Infinity}], 2, 1]."
+QuantileReplacementFunc::usage = "QuantileReplacementFunc[qBoundaries] makes a piece-wise function for mapping of a real value to the enumerated intervals Partition[Join[{-Infinity}, qBoundaries, {Infinity}], 2, 1]."
 
-Package["`Package`"]
+Begin["`Private`"]
 
 (* Rymon tree *)
 Clear[RymonTree, RymonChildren]
