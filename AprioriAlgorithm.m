@@ -37,11 +37,17 @@
 
 BeginPackage["AprioriAlgorithm`"]
 
-AprioriApplication::usage = "AprioriApplication[itemLists,minProb,opts] returns a list of three elements: the association sets with indexes, the item to indexes rules, and the indexes to item rules. The association sets appear in itemLists with frequency at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) ."
+AprioriApplication::usage = "AprioriApplication[setOfItemSets,minProb,opts] returns a list of three elements: the association sets with indexes, the item to indexes rules, and the indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) ."
 
-AssociationRules::usage = "AssociationRules[setOfBaskets,basket,confidence] finds the possible association rules for basket using setOfBaskets and calculates for each of the rules measures: Confidence, Lift, Leverage, Conviction, Condition, Implication."
+AssociationRules::usage = "AssociationRules[setOfItemSets,itemSet,confidence] finds the possible association rules for itemSet using setOfItemSets and calculates for each of the rules the measures: Confidence, Lift, Leverage, and Conviction."
+
+Support::usage = "Support[setOfItemSets, itemSet] gives the fraction of the sets in setOfItemSets that contain itemSet."
 
 QuantileReplacementFunc::usage = "QuantileReplacementFunc[qBoundaries] makes a piece-wise function for mapping of a real value to the enumerated intervals Partition[Join[{-Infinity}, qBoundaries, {Infinity}], 2, 1]."
+
+RymonTree::usage = "RymonTree[numberOfItems] gives the Rymon tree for numberOfItems."
+
+TreeToRules::usage = "TreeToRules[tree] returns rules for the argument tree that can be used in GraphPlot."
 
 Begin["`Private`"]
 
