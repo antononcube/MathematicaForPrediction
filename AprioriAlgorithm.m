@@ -22,7 +22,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2012 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -39,7 +39,7 @@ BeginPackage["AprioriAlgorithm`"]
 
 AprioriApplication::usage = "AprioriApplication[setOfItemSets,minProb,opts] returns a list of three elements: the association sets with indexes, the item to indexes rules, and the indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) ."
 
-AssociationRules::usage = "AssociationRules[setOfItemSets,itemSet,confidence] finds the possible association rules for itemSet using setOfItemSets and calculates for each of the rules the measures: Confidence, Lift, Leverage, and Conviction."
+AssociationRules::usage = "AssociationRules[setOfItemSets,assocItemSet,minConfidence] finds the possible association rules for assocItemSet using setOfItemSets that have confidence at least minConfidence and calculates for each of the rules the measures: Support, Confidence, Lift, Leverage, and Conviction. AssociationRules[setOfItemSets,assocItemSets,minConfidence,minSupport] takes the association sets from assocItemSets that have support at least minSupport and finds the association rules for them."
 
 Support::usage = "Support[setOfItemSets, itemSet] gives the fraction of the sets in setOfItemSets that contain itemSet."
 
@@ -140,10 +140,12 @@ AprioriAlgorithm[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPattern[]]
 Confidence, Lift, Leverage, Conviction, Condition, Implication *)
 
 Clear[AssociationRules]
-AssociationRules[T : {{_Integer ...} ...}, basket : {_Integer ...}, confidence_?NumberQ] :=
-  Block[{basketSupport = Support[T, basket], antecedents, consequents},
+AssociationRules[T : {{_Integer ...} ...}, basketArg : {_Integer ...}, confidence_?NumberQ] :=
+  Block[{basket = Sort[basketArg], basketSupport, antecedents, consequents, t},
+   basketSupport = N[Support[T, basket]];
    antecedents = Most@Rest@Subsets[basket];
    consequents = Complement[basket, #] & /@ antecedents;
+   t =
    SortBy[
     Select[
      MapThread[{N[basketSupport/Support[T, #1]], 
@@ -153,7 +155,20 @@ AssociationRules[T : {{_Integer ...} ...}, basket : {_Integer ...}, confidence_?
           1000, (1 - Support[T, #2])/(1 - 
              basketSupport/Support[T, #1])]], #1, #2} &, {antecedents, 
        consequents}], #[[1]] >= confidence &],
-    -#[[1]] &]
+    -#[[1]] &];
+    Prepend[#,basketSupport]& /@ t
+   ];
+
+AssociationRules[dataWithIDs : {{_Integer ..} ..}, aprioriResRecs : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] := 
+   Block[{eligible},
+    eligible = Select[Transpose[{aprioriResRecs, N[Support[dataWithIDs, #] & /@ aprioriResRecs]}], #[[2]] >= minSupport &];
+    If[Length[eligible] == 0, {},
+     MapThread[
+      Function[{assoc, supp},
+         DeleteCases[AssociationRules[dataWithIDs, assoc, minConfidence], {}]],
+      Transpose[eligible]
+     ]
+    ]
    ];
 
 (* AprioriApplcation *)
