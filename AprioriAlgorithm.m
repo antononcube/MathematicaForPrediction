@@ -159,10 +159,11 @@ AssociationRules[T : {{_Integer ...} ...}, basketArg : {_Integer ...}, confidenc
     Prepend[#,basketSupport]& /@ t
    ];
 
-AssociationRules[dataWithIDs : {{_Integer ..} ..}, aprioriResRecs : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] := 
-   Block[{eligible},
+AssociationRules[dataWithIDs : {{_Integer ..} ..}, aprioriResRecsArg : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] := 
+   Block[{eligible,aprioriResRecs=Sort/@aprioriResRecsArg},
     eligible = Select[Transpose[{aprioriResRecs, N[Support[dataWithIDs, #] & /@ aprioriResRecs]}], #[[2]] >= minSupport &];
     If[Length[eligible] == 0, {},
+     Flatten[#,1]& @
      MapThread[
       Function[{assoc, supp},
          DeleteCases[AssociationRules[dataWithIDs, assoc, minConfidence], {}]],
