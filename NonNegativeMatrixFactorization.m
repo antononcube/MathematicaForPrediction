@@ -52,14 +52,14 @@ Begin["`Private`"]
 
 Clear[GDCLS]
 Options[GDCLS] = {"MaxSteps" -> 200, "NonNegative" -> True, "Epsilon" -> 10^-9., "RegularizationParameter" -> 0.01, PrecisionGoal -> Automatic, "PrintProfilingInfo" -> False};
-GDCLS[V_?MatrixQ, k_?IntegerQ, opts___] :=
+GDCLS[V_?MatrixQ, k_?IntegerQ, opts:OptionsPattern[]] :=
   Block[{t, fls, A, W, H, T, m, n, b, diffNorm, normV, nSteps = 0,
-    nonnegQ = "NonNegative" /. {opts} /. Options[GDCLS],
-    maxSteps = "MaxSteps" /. {opts} /. Options[GDCLS],
-    eps = "Epsilon" /. {opts} /. Options[GDCLS],
-    lbd = "RegularizationParameter" /. {opts} /. Options[GDCLS],
-    pgoal = PrecisionGoal /. {opts} /. Options[GDCLS],
-    PRINT = If[TrueQ["PrintProfilingInfo" /. {opts}] /. Options[GDCLS], Print, None]},
+    nonnegQ = OptionValue[GDCLS,"NonNegative"],
+    maxSteps = OptionValue[GDCLS,"MaxSteps"],
+    eps = OptionValue[GDCLS,"Epsilon"],
+    lbd = OptionValue[GDCLS,"RegularizationParameter"],
+    pgoal = OptionValue[GDCLS,PrecisionGoal],
+    PRINT = If[TrueQ[OptionValue[GDCLS,"PrintProfilingInfo"]], Print, None]},
    {m, n} = Dimensions[V];
    W = RandomReal[{0, 1}, {m, k}];
    H = ConstantArray[0, {k, n}];
@@ -83,44 +83,46 @@ GDCLS[V_?MatrixQ, k_?IntegerQ, opts___] :=
       If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t, " relative error=", diffNorm/normV]],
       If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t]]
      ];
-    ];
-   {W, H}
    ];
+   {W, H}
+  ];
 
 Clear[GDCLSGlobal]
-GDCLSGlobal[V_?MatrixQ, opts___] :=
-  Block[{t, fls, A, W, H, T, m, n, b, k, diffNorm, normV, nSteps = 0,
-     nonnegQ = "NonNegative" /. {opts} /. Options[GDCLS],
-     maxSteps = "MaxSteps" /. {opts} /. Options[GDCLS],
-     eps = "Epsilon" /. {opts} /. Options[GDCLS],
-     lbd = "RegularizationParameter" /. {opts} /. Options[GDCLS],
-     pgoal = PrecisionGoal /. {opts} /. Options[GDCLS],
-     PRINT = If[TrueQ["PrintProfilingInfo" /. {opts}] /. Options[GDCLS], Print, None]},
-    {m, n} = Dimensions[V];
-    k = Dimensions[H][[1]];
-    normV = Norm[V, "Frobenius"]; diffNorm = 10 normV;
-    While[nSteps < maxSteps && TrueQ[! NumberQ[pgoal] || NumberQ[pgoal] && (normV > 0) && diffNorm/normV > 10^(-pgoal)],
-     nSteps++;
-     t =
-      Timing[
-       A = Transpose[W].W + lbd*IdentityMatrix[k];
-       T = Transpose[W];
-       fls = LinearSolve[A];
-       H = Table[(b = T.V[[All, i]]; fls[b]), {i, 1, n}];
-       H = SparseArray[Transpose[H]];
-       If[nonnegQ,
-        H = Clip[H, {0, Max[H]}]
-        ];
-       W = W*(V.Transpose[H])/(W.(H.Transpose[H]) + eps);
+Options[GDCLSGlobal] = Options[GDCLS];
+SetAttributes[GDCLSGlobal,HoldAll]
+GDCLSGlobal[V_, W_, H_, opts:OptionsPattern[]] :=
+  Block[{t, fls, A, k, T, m, n, b, diffNorm, normV, nSteps = 0,
+    nonnegQ = OptionValue[GDCLSGlobal,"NonNegative"],
+    maxSteps = OptionValue[GDCLSGlobal,"MaxSteps"],
+    eps = OptionValue[GDCLSGlobal,"Epsilon"],
+    lbd = OptionValue[GDCLSGlobal,"RegularizationParameter"],
+    pgoal = OptionValue[GDCLSGlobal,PrecisionGoal],
+    PRINT = If[TrueQ[OptionValue[GDCLSGlobal,"PrintProfilingInfo"]], Print, None]},
+   {m, n} = Dimensions[V];
+   k = Dimensions[H][[1]];
+   normV = Norm[V, "Frobenius"]; diffNorm = 10 normV;
+   While[nSteps < maxSteps && TrueQ[! NumberQ[pgoal] || NumberQ[pgoal] && (normV > 0) && diffNorm/normV > 10^(-pgoal)],
+    nSteps++;
+    t =
+     Timing[
+      A = Transpose[W].W + lbd*IdentityMatrix[k];
+      T = Transpose[W];
+      fls = LinearSolve[A];
+      H = Table[(b = T.V[[All, i]]; fls[b]), {i, 1, n}];
+      H = SparseArray[Transpose[H]];
+      If[nonnegQ,
+       H = Clip[H, {0, Max[H]}]
        ];
-     If[NumberQ[pgoal],
+      W = W*(V.Transpose[H])/(W.(H.Transpose[H]) + eps);
+      ];
+    If[NumberQ[pgoal],
       diffNorm = Norm[V - W.H, "Frobenius"];
       If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t, " relative error=", diffNorm/normV]],
       If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t]]
-      ]
      ];
-    {W, H}
-    ] /; MatrixQ[W] && MatrixQ[H] && Length[W[[1]]] == Length[H];
+   ];
+   {W, H}
+  ] /; MatrixQ[W] && MatrixQ[H] && Dimensions[W][[2]] == Dimensions[H][[1]];
 
 (* ::Subsection:: *)
 (*Normalize matrices*)
