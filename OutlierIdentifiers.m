@@ -1,0 +1,142 @@
+(*
+    Implementation of one dimensional outlier identifying algorithms in Mathematica
+    Copyright (C) 2013  Anton Antonov
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	Written by Anton Antonov, 
+	antononcube@gmail.com, 
+	7320 Colbury Ave, 
+	Windermere, Florida, USA.
+*)
+
+(*
+    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
+
+    Protected by copyright law and international treaties.
+
+    Unauthorized reproduction or distribution subject to severe civil
+    and criminal penalties.
+
+    Mathematica is a registered trademark of Wolfram Research, Inc.
+*)
+
+(* Version 1.0 *)
+(* This package contains definitions for detection and visualization of outliers in a list of numbers. *)
+
+BeginPackage["OutlierIdentifiers`"]
+
+HampelIdentifierParameters::usage = "Returns Hampel identifier parameters {L,U} for a list of numbers."
+
+QuartileIdentifierParameters::usage = "Returns quartile identifier parameters {L,U} for a list of numbers."
+
+SPLUSQuartileIdentifierParameters::usage = "Returns SPLUS quartile identifier parameters {L,U} for a list of numbers."
+
+OutlierIdentifier::usage = "OutlierIdentifier[dataArg:{_?NumberQ..},olParams] applies outlier identifier parameters olParams to a list of numbers dataArg."
+
+OutlierIdentifierLess::usage = "OutlierIdentifierLess[dataArg:{_?NumberQ..},olParams] applies outlier identifier parameters olParams to a list of numbers dataArg and takes the outliers with smallest values."
+
+TopOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {-Infinity,U}."
+
+BottomOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {L,Infinity}."
+
+HampelIdentifier::usage = "Shortcut for OutlierIdentifier[#,HampelIdentifierParameters]& ."
+
+OutlierPosition::usage = "OutlierPosition[dataArg:{_?NumberQ...},olParams] gives the positions of the outliers in dataArg using the outlier identifier parameters olParams."
+
+ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPlot."
+
+
+Begin["`Private`"]
+
+Clear[HampelIdentifierParameters]
+HampelIdentifierParameters[data:{_?NumberQ...}]:=
+  Block[{x0=Median[data],md},
+    md=1.4826*Median[Abs[data-x0]];
+    {x0-md,x0+md}
+  ];
+
+
+Clear[QuartileIdentifierParameters]
+QuartileIdentifierParameters[data:{_?NumberQ...}]:=
+  Block[{xL,xU,x0},
+    {xL,x0,xU}=Quantile[data,{1/4,1/2,3/4}];
+    {x0-(xU-xL),x0+(xU-xL)}
+   ];
+
+
+Clear[SPLUSQuartileIdentifierParameters]
+SPLUSQuartileIdentifierParameters[data:{_?NumberQ...}]:=
+  Block[{xL,xU},
+    If[Length[data]<=4,Return[{Min[data],Max[data]}]];
+    {xL,xU}=Quantile[data,{1/4,3/4}];
+    {xL-1.5(xU-xL),xU+1.5(xU-xL)}
+  ];
+
+
+(***********::Section:: ***********)
+(* Identifiers                    *)
+
+
+Clear[OutlierIdentifier,OutlierIdentifierLess];
+OutlierIdentifier[data:{_?NumberQ...},outlierIdentifierParameters_]:=
+  Block[{xL,xU},
+    {xL,xU}=outlierIdentifierParameters[data];
+    Select[data,#<xL||xU<#&]
+  ];
+
+OutlierIdentifierLess[data:{_?NumberQ...},outlierIdentifierParameters_]:=
+  Block[{xL,xU},
+    {xL,xU}=outlierIdentifierParameters[data];
+    Select[data,#<xL&]
+  ];
+
+
+TopOutliers[{xL_,xU_}]:={-Infinity,xU};
+BottomOutliers[{xL_,xU_}]:={xL,Infinity};
+
+
+Clear[HampelIdentifier]
+HampelIdentifier[data__]:=OutlierIdentifier[data,HampelIdentifierParameters];
+
+
+Clear[OutlierPosition]
+OutlierPosition[data:{_?NumberQ...},outlierIdentifier_:HampelIdentifierParameters]:=
+  Block[{cls,t},
+    cls=OutlierIdentifier[data,outlierIdentifier];
+    t=Select[Transpose[{data,Range[Length[data]]}],MemberQ[cls,#[[1]]]&];
+    If[t==={},{},t[[All,2]]]
+  ];
+
+
+(*********** ::Section:: ***********)
+(*Plot definitions*)
+
+Clear[ListPlotOutliers];
+Options[ListPlotOutliers]={PlotStyle->{PointSize[0.015]},PlotRange->All,ImageSize->300};
+ListPlotOutliers[ds_,outlierParameters_,optsArg___]:=
+  Block[{outliers,opts=optsArg,positionedOutliers},
+    If[!OptionQ[{opts}],opts=Options[ListPlotOutliers]];
+    outliers=OutlierIdentifier[ds,outlierParameters];
+    If[outliers==={},
+      ListPlot[Transpose[{Range[Length[ds]],ds}],opts],
+      positionedOutliers=Select[Transpose[{Range[Length[ds]],ds}],MemberQ[outliers,#[[2]]]&];
+      ListPlot[{Transpose[{Range[Length[ds]],ds}],positionedOutliers},opts]
+    ]
+  ];
+
+
+End[]
+
+EndPackage[]
