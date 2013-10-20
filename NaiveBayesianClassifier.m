@@ -44,7 +44,11 @@ MakeBayesianClassifiers::usage = "MakeBayesianClassifiers[dataArg_?ArrayQ, nbins
 
 NBCClassify::usage = "NBCClassify[{cf_,cfLabel_}, {ncf_,ncfLabel_}, thA_?NumberQ, thNA_?NumberQ, x_?VectorQ, inds:(All|{_Integer..})] applies two piece-wise functions, cf and ncf, derived from data with two labels {cfLabel,ncfLabel} to x[[inds]]. The values cf[x[[inds]]] and ncf[x[[inds]]] are for the probabilities to get cfLabel and ncfLabel respectively. The tuning parameters thA and thNA are used to decide is the overall classification result -- see the function definition."
 
-NBCClassificationStatistics::usage = "NBCClassificationStatistics[{cf_,cfLabel_}, {ncf_,ncfLabel_}, thA_?NumberQ, thNA_?NumberQ, testData_?ArrayQ, inds:(All|{_Integer..})] computes statistics for the performance of a naive Bayesian classifier made of cf and ncf over test data. The function NBCClassify is used internally."
+NBCClassificationStatistics::usage = "NBCClassificationStatistics[{cf_,cfLabel_}, {ncf_,ncfLabel_}, thA_?NumberQ, thNA_?NumberQ, testData_?ArrayQ, inds:(All|{_Integer..})] computes statistics for the performance of a naive Bayesian classifier made of cf and ncf over test data. The function NBCClassify is used internally. This function is superseded by NBCClassificationSuccess, which has a different signature."
+
+NBCClassificationSuccess::usage = "NBCClassificationSuccess[classFunc, testDataArray, lbls] finds the classification success using classFunc over the test data testDataArray for each classification label in lbls. If the last argument, lbls, is omitted then Union[testDataArray[[All,-1]]] is taken as the set of labels. The returned result is a set of rules {{_,True|False}->_?NumberQ ..}. The rules {_,True}->_ are for the fractions of correct guesses; the rules {_,False}->_ are for the fractions of incorrect guesses. The rules {_,All}->_ are for the classification success fractions using all records of testDataArray."
+
+NBCClassificationSuccessCounts::usage = "NBCClassificationSuccessCounts[classFunc, testDataArray, lbls] finds number of successful classifications using classFunc over the test data testDataArray for each classification label in lbls. If the last argument, lbls, is omitted then Union[testDataArray[[All,-1]]] is taken as the set of labels. The returned result is a set of rules {{_,True|False}->_Integer ..}. The rules {_,True}->_ are for the number of correct guesses; the rules {_,False}->_ are for the number of incorrect guesses. The rules {_,All}->_ are for the number of successful classifications using all records of testDataArray."
 
 Begin["`Private`"]
 
@@ -174,6 +178,48 @@ NBCClassificationStatistics[{cf_,cfLabel_}, {ncf_,ncfLabel_}, thA_?NumberQ, thNA
    Transpose[{
     {"all records", Row[{cfLabel, " records"}], Row[{ncfLabel, " records"}]},
     N@{ncAll, ncTrue, ncFalse}}]
+  ];
+
+NBCClassificationSuccess::nlbl = 
+  NBCClassificationSuccessCounts::nlbl = 
+   "The specified label `1` is not one of the data array labels `2`.";
+
+NBCClassificationSuccessCountsInternal[classFunc_, dataArr_?MatrixQ, labels_, mHead_] :=  
+  Block[{guesses, guessStats, tdata, t, dataLabels = Union[dataArr[[All, -1]]]},
+   t =
+    Table[
+     If[! MemberQ[dataLabels, lbl],
+      Message[mHead::nlbl, lbl, dataLabels];
+      {0, 0},
+      (*ELSE*)
+      tdata = Select[dataArr, #[[-1]] == lbl &];
+      guesses = classFunc[Most[#]] & /@ tdata;
+      guessStats = MapThread[Equal, {guesses, tdata[[All, -1]]}];
+      {Count[guessStats, True], Count[guessStats, False]}
+     ], {lbl, labels}];
+   t = MapThread[{{#1, True} -> #2[[1]], {#1, False} -> #2[[2]]} &, {labels, t}];
+   guesses = classFunc[Most[#]] & /@ dataArr;
+   guessStats = MapThread[Equal, {guesses, dataArr[[All, -1]]}];
+   Flatten[#, 1] &@
+    Join[t, {{All, True} -> (Count[guessStats, True]), {All, False} -> (Count[guessStats, False])}]
+  ];
+
+NBCClassificationSuccessCounts[classFunc_, dataArr_?MatrixQ] :=
+ NBCClassificationSuccessCounts[classFunc, dataArr, Union[dataArr[[All, -1]]] ];
+
+NBCClassificationSuccessCounts[classFunc_, dataArr_?MatrixQ, labels_?VectorQ] := 
+ NBCClassificationSuccessCountsInternal[classFunc, dataArr, labels, NBCClassificationSuccessCounts]
+
+NBCClassificationSuccess[classFunc_, dataArr_?MatrixQ] :=
+ NBCClassificationSuccess[classFunc, dataArr, Union[dataArr[[All, -1]]] ];
+
+NBCClassificationSuccess[classFunc_, dataArr_?MatrixQ, labels_?VectorQ] :=
+  Block[{countRules, tdata},
+   countRules = 
+    NBCClassificationSuccessCountsInternal[classFunc, dataArr, labels, NBCClassificationSuccess];
+   sizeRules = 
+    Map[# -> If[# === All, Length[dataArr], Count[dataArr[[All, -1]], #]] &, Union[countRules[[All, 1, 1]]]];
+   Map[#[[1]] -> #[[2]]/N[#[[1, 1]] /. sizeRules] &, countRules]
   ];
 
 End[]
