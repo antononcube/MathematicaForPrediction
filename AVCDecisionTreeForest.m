@@ -424,7 +424,10 @@ BuildDecisionTree[data_,
     {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic};
     If[TrueQ[linCombMinRecs === Automatic], linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
     If[TrueQ[cdSVDRank === Automatic], cdSVDRank = svdRank];
-    If[! (IntegerQ[linCombMinRecs] && linCombMinRecs > 0), Message[BuildDecisionTree::iavalopt, "MinSize"]; Return[{}]];
+    If[! (IntegerQ[linCombMinRecs] && linCombMinRecs > 0), 
+      Message[BuildDecisionTree::iavalopt, "MinSize", 1, Length[data]]; 
+      Return[{}]
+    ];
     If[! (IntegerQ[svdRank] && 0 <= svdRank <= nNumVars), Message[BuildDecisionTree::iavalopt, "Rank", 0, nNumVars]; Return[{}]];
     If[! (IntegerQ[cdSVDRank] && 0 <= cdSVDRank <= nNumVars), Message[BuildDecisionTree::iavalopt, "CentralizedDataRank", 0, nNumVars]; Return[{}]];
     If[AtomQ[svdLabels] && !TrueQ[svdLabels === Automatic] && !TrueQ[svdLabels === All], svdLabels = {svdLabels}];
