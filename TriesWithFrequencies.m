@@ -1,5 +1,5 @@
 (*
-	Tries with frequencies functions in Mathematica
+	Tries with frequencies Mathematica package
     Copyright (C) 2013  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -183,8 +183,16 @@ TrieToRules[tree_, level_, order_] :=
    ]
   ];
 
+Clear[GrFramed]
+GrFramed[text_] := 
+  Framed[text, {Background -> RGBColor[1, 1, 0.8], 
+    FrameStyle -> RGBColor[0.94, 0.85, 0.36], 
+    FrameMargins -> Automatic}];
+
 Clear[TrieForm]
-TrieForm[mytrie_] := Map[Append[#[[1]], #[[2, 2]]] &, TrieToRules[TrieShrink[mytrie]], {2}];
+TrieForm[mytrie_] := 
+  LayeredGraphPlot[TrieToRules[mytrie], 
+   VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &)];
 
 TrieNodeProbabilities::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency."
 
