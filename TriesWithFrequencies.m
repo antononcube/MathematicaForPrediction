@@ -97,18 +97,17 @@ TrieMerge[t1_, t2_] :=
      Select[Rest[t2], ! MemberQ[Rest[t1][[All, 1, 1]], #[[1, 1]]] &],
      DeleteCases[
       Flatten[
-       Outer[If[#1[[1, 1]] == #2[[1, 1]], TrieMerge[#1, #2], {}] &, Rest[t1], 
-        Rest[t2], 1],
+       Outer[If[#1[[1, 1]] == #2[[1, 1]], TrieMerge[#1, #2], {}] &, Rest[t1], Rest[t2], 1],
        1], {}]
      ], {t1[[1, 1]], t1[[1, 2]] + t2[[1, 2]]}],
    Rest[t1] === {}, t2,
    Rest[t2] === {}, t1
   ];
 
-TrieInsert[t_, word : (_String | _List)] := TrieMerge[t, {{{}, 0}, MakeTrie[word]}];
+TrieInsert[t_, word : (_String | _List)] := TrieMerge[t, {{{}, 1}, MakeTrie[word]}];
 
 TrieCreate[words : {(_String | _List) ...}] :=
-  Fold[TrieInsert, {{{}, Length[words]}, MakeTrie[First[words]]}, Rest@words];
+  Fold[TrieInsert, {{{}, 1}, MakeTrie[First[words]]}, Rest@words];
 
 Clear[TrieRemoveFrequencies]
 TrieRemoveFrequencies[t_] :=
@@ -190,9 +189,9 @@ GrFramed[text_] :=
     FrameMargins -> Automatic}];
 
 Clear[TrieForm]
-TrieForm[mytrie_] := 
+TrieForm[mytrie_, opts:OptionsPattern[]] := 
   LayeredGraphPlot[TrieToRules[mytrie], 
-   VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &)];
+   VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
 
 TrieNodeProbabilities::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency."
 
