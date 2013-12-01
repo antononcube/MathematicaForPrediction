@@ -22,7 +22,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2012 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -35,13 +35,15 @@
 (* Version 0.8 *)
 (* This version contains functions to build, shrink, and retrieve nodes of tries (also known as "prefix trees"). The implementations are geared toward utilization of data mining algorithms, like frequent sequence occurrences. *)
 (* TODO: 
-  1. Enhance the functionality of TrieFind to work over shrunk tries. 
+  1. Enhance the functionality of TriePosition to work over shrunk tries. 
   2. Enhance the signature and functionality of TrieLeafProbabilities to take a second argument of a "word" for which the leaf probabilities have to be found.
 *)
 
 BeginPackage["TriesWithFrequencies`"]
 
-TrieFind::usage = "TrieFind[t_, w :(_String | _List)] finds the \"word\" w in the trie t. Strings are converted to lists first."
+TriePosition::usage = "TriePosition[t_, w :(_String | _List)] gives the position node corresponding to the last \"character\" of the \"word\" w in the trie t. Strings are converted to lists first."
+
+TrieRetrieve::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the node corresponding to the last \"character\" of the \"word\" w in the trie t. Strings are converted to lists first."
 
 TrieCreate::usage = "TrieCreate[words:{(_String|_List)..}] creates a trie from a list of strings or a list of lists."
 
@@ -68,17 +70,42 @@ TriePathFromPosition::usage = "TriePathFromPosition[trie_,pos_] gives a list of 
 Begin["`Private`"]
 
 
-Clear[TrieFind]
-TrieFind[t_, word_String] := TrieFind[t, Characters[word]];
-TrieFind[t_, {}] := {};
-TrieFind[{}, _] := {};
-TrieFind[{_}, _] := {};
-TrieFind[t_, chars_] :=
+Clear[TriePosition]
+TriePosition[t_, word_String] := TriePosition[t, Characters[word]];
+TriePosition[t_, {}] := {};
+TriePosition[{}, _] := {};
+TriePosition[{_}, _] := {};
+TriePosition[t_, chars_] :=
   Block[{i = 2},
    While[i <= Length[t] && t[[i, 1, 1]] =!= chars[[1]], i++];
    If[i > Length[t], {},
-    Join[{i}, TrieFind[t[[i]], Rest[chars]]]
+    Join[{i}, TriePosition[t[[i]], Rest[chars]]]
    ]
+  ];
+
+TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
+TrieRetrieve[t_, chars_] :=
+  Block[{pos},
+   pos = TriePosition[t, chars];
+   Which[
+    Length[pos] == 0, {},
+    Length[pos] == Length[chars], t[[Sequence @@ pos, 1]],
+    True, {}
+   ]
+  ];
+
+TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
+TrieRetrieve[t_, {}] := {};
+TrieRetrieve[{}, _] := {};
+TrieRetrieve[{_}, _] := {};
+TrieRetrieve[t_, chars_] :=
+  Block[{pos},
+    pos = TriePosition[t, chars];
+    Which[ 
+      Length[pos] == 0, {},
+      Length[pos] == t, t[[ Sequence@@pos, 1 ]],
+      True, {}
+    ]
   ];
 
 Clear[MakeTrie]
