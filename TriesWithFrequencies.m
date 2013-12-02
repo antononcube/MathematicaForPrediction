@@ -47,7 +47,7 @@ TrieRetrieve::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the node cor
 
 TrieCreate::usage = "TrieCreate[words:{(_String|_List)..}] creates a trie from a list of strings or a list of lists."
 
-TrieInsert::usage = "TrieInsert[t_, w : (_String | _List)] insert a \"word\" to the trie t."
+TrieInsert::usage = "TrieInsert[t_, w : (_String | _List)] insert a \"word\" to the trie t. TrieInsert[t_, w : (_String | _List), val_] inserts a key and a corresponding value."
 
 TrieMerge::usage = "TrieMerge[t1_, t2_] merges two tries."
 
@@ -96,8 +96,10 @@ TrieRetrieve[t_, chars_] :=
 
 
 Clear[MakeTrie]
-MakeTrie[word_String] := With[{chars = Characters[word]}, MakeTrie[chars]];
-MakeTrie[chars_List] := Fold[{{#2, 1}, #1} &, {{Last[chars], 1}}, Reverse@Most@chars];
+MakeTrie[word_String] := MakeTrie[word, 1];
+MakeTrie[word_String, v_Integer] := With[{chars = Characters[word]}, MakeTrie[chars,v]];
+MakeTrie[chars_List] := MakeTrie[chars, 1];
+MakeTrie[chars_List, v_Integer] := Fold[{{#2, v}, #1} &, {{Last[chars], v}}, Reverse@Most@chars];
 
 Clear[TrieMerge]
 TrieMerge[{}, {}] := {};
@@ -118,8 +120,18 @@ TrieMerge[t1_, t2_] :=
    Rest[t2] === {}, t1
   ];
 
+Clear[TrieInsert]
+
 TrieInsert[t_, word : (_String | _List)] := TrieMerge[t, {{{}, 1}, MakeTrie[word]}];
 
+TrieInsert[t_, wordKey : (_String | _List), value_] := 
+  Block[{mt},
+    mt = MakeTrie[wordKey,0];
+    mt[[Sequence @@ Join[Table[2, {Depth[mt] - 3}], {1, 2}]]] = value;
+    TrieMerge[t, {{{}, 0}, mt}]
+  ];
+
+TrieCreate[ {}] := {{{}, 0}}; 
 TrieCreate[words : {(_String | _List) ...}] :=
   Fold[TrieInsert, {{{}, 1}, MakeTrie[First[words]]}, Rest@words];
 
