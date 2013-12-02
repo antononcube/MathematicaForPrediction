@@ -94,19 +94,6 @@ TrieRetrieve[t_, chars_] :=
    ]
   ];
 
-TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
-TrieRetrieve[t_, {}] := {};
-TrieRetrieve[{}, _] := {};
-TrieRetrieve[{_}, _] := {};
-TrieRetrieve[t_, chars_] :=
-  Block[{pos},
-    pos = TriePosition[t, chars];
-    Which[ 
-      Length[pos] == 0, {},
-      Length[pos] == t, t[[ Sequence@@pos, 1 ]],
-      True, {}
-    ]
-  ];
 
 Clear[MakeTrie]
 MakeTrie[word_String] := With[{chars = Characters[word]}, MakeTrie[chars]];
