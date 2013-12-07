@@ -131,9 +131,23 @@ TrieInsert[t_, wordKey : (_String | _List), value_] :=
     TrieMerge[t, {{{}, 0}, mt}]
   ];
 
+TrieCreate1[ {}] := {{{}, 0}}; 
+TrieCreate1[words : {(_String | _List) ...}] :=
+  Fold[TrieInsert, {{{}, 1}, MakeTrie[First[words]]}, Rest@words];
+
+Clear[TrieCreate]
 TrieCreate[ {}] := {{{}, 0}}; 
 TrieCreate[words : {(_String | _List) ...}] :=
-  Fold[TrieInsert, {{{}, 1}, MakeTrie[First[words]]}, Rest@words];
+  Block[{},
+   If[
+    Length[words] <= 5, TrieCreate1[words],
+    (*ELSE*)
+    TrieMerge[
+     TrieCreate[Take[words, Floor[Length[words]/2]]],
+     TrieCreate[Take[words, {Floor[Length[words]/2] + 1, Length[words]}]]
+    ]
+   ]
+  ];
 
 Clear[TrieRemoveFrequencies]
 TrieRemoveFrequencies[t_] :=
