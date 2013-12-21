@@ -32,13 +32,15 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* Version 1.0 *)
+(* Version 1.01 *)
 (* 
   This package has only one function, QuantileRegression. The arguments and the result of QuantileRegression are very similar to those of the function Fit. In order to find the quantile functions that fit through the data QuantileRegression can use both LinearProgramming or Minimize through the Method option, e.g. Method->Minimize or Method->{LinearProgramming, Method->"Simplex", Tolerance->10^-6.0} . Using Minimize can be very slow for large data sets -- that method is included for didactic purposes.
 
   The linear programming implementation is based on the (non-dual) formulation in the article 
  
   Roger Koenker, Gilbert Bassett, Jr., "Regression Quantiles", Econometrica, Vol. 46, No. 1. (Jan., 1978), pp. 33-50.
+
+  I experimented with using DualLinearProgramming (provided by Mathematica) and with the dozen experiments I made I obtained the same results for the same computing time.
 
 *)
 
@@ -78,14 +80,14 @@ QuantileRegression[data_, funcs_, var_, qs_, opts : OptionsPattern[]] :=
    ];
    mOptVal = OptionValue[QuantileRegression, Method];
    Which[
-    mOptVal === LinearProgramming,
+    TrueQ[mOptVal === LinearProgramming],
     LPQuantileRegression[data, funcs, var, qs],
-    ListQ[mOptVal] && mOptVal[[1]] === LinearProgramming,
+    ListQ[mOptVal] && TrueQ[mOptVal[[1]] === LinearProgramming],
     LPQuantileRegression[data, funcs, var, qs, Rest[mOptVal]],
-    mOptVal === Minimize,
-    MinimizeQuantileRegression[data, funcs, var, qs],
-    ListQ[mOptVal] && mOptVal[[1]] === Minimize,
-    MinimizeQuantileRegression[data, funcs, var, qs, Rest[mOptVal]],
+    TrueQ[mOptVal === Minimize || mOptVal === NMinimize],
+    MinimizeQuantileRegression[mOptVal, data, funcs, var, qs],
+    ListQ[mOptVal] && TrueQ[mOptVal[[1]] === Minimize || mOptVal[[1]] === NMinimize],
+    MinimizeQuantileRegression[mOptVal[[1]], data, funcs, var, qs, Rest[mOptVal]],
     True,
     Message[QuantileRegression::"nmeth"]; Return[{}]
    ]
@@ -106,7 +108,8 @@ LPQuantileRegression[dataArg_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..}, 
     pfuncs = Map[Function[{fb}, With[{f = fb /. (var -> Slot[1])}, f &]], funcs];
     mat = Map[Function[{f}, f /@ data[[All, 1]]], pfuncs];
     mat = Map[Flatten, Transpose[Join[mat, {IdentityMatrix[n], -IdentityMatrix[n]}]]];
-    
+    mat = N[SparseArray[mat]];
+
     qrSolutions =
      Table[
       c = Join[ConstantArray[0, Length[funcs]], ConstantArray[1, n] q, ConstantArray[1, n] (1 - q)];
@@ -122,7 +125,7 @@ LPQuantileRegression[dataArg_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..}, 
    ];
 
 Clear[MinimizeQuantileRegression]
-MinimizeQuantileRegression[data_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..}, opts : OptionsPattern[]] :=  
+MinimizeQuantileRegression[methodFunc_, data_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..}, opts : OptionsPattern[]] :=  
   Block[{minFunc, Tilted, QRModel, b, bvars, qrSolutions},
    
    If[Length[data] > 300,
@@ -137,7 +140,7 @@ MinimizeQuantileRegression[data_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..
    qrSolutions =
     Table[
      minFunc = Total[(Tilted[q, #1[[2]] - QRModel[#1[[1]]]] &) /@ data];
-     Minimize[{minFunc}, bvars, opts]
+     methodFunc[{minFunc}, bvars, opts]
      , {q, qs}];
 
    Map[funcs.# &, qrSolutions[[All, 2, All, 2]]]
