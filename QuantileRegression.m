@@ -96,7 +96,7 @@ QuantileRegressionFit[data_, funcs_, var_?AtomQ, qs_, opts : OptionsPattern[]] :
    (*This check should not be applied because the first function can be a constant.*)
    (*!Apply[And,Map[!FreeQ[#,var]&,funcs]],Message[QuantileRegressionFit::\"fvfree\"],*)
    Which[
-    ! ( MatrixQ[data] && Dimensions[data][[2]] >= 2 ),
+    ! ( MatrixQ[data,NumericQ] && Dimensions[data][[2]] >= 2 ),
     Message[QuantileRegressionFit::"nmat"]; Return[{}],
     Length[funcs] < 1,
     Message[QuantileRegressionFit::"fvlen"]; Return[{}],
@@ -207,7 +207,7 @@ Options[QuantileRegression] = {InterpolationOrder -> 3, Method -> LinearProgramm
 QuantileRegression[data_, knots_, qs_, opts : OptionsPattern[]] :=
   Block[{mOptVal, intOrdOptVal},
    Which[
-    ! ( MatrixQ[data] && Dimensions[data][[2]] >= 2 ),
+    ! ( MatrixQ[data,NumericQ] && Dimensions[data][[2]] >= 2 ),
     Message[QuantileRegression::"nmat"]; Return[{}],
     !(IntegerQ[knots] && knots > 0 || VectorQ[knots,NumericQ]),
     Message[QuantileRegression::"knspec"]; Return[{}],
