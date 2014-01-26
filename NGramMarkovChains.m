@@ -101,7 +101,7 @@ NGramMarkovChainModel[textWords_List, numberOfPreviousWords_Integer, opts : Opti
     ];
 
     NGramModel[markovMat, wordToIndexRules, indexToWordRules]
-  ] /; 1 <= numberOfPreviousWords <= 5;
+  ];
 
 Clear[NGramMarkovChainGenerate]
 NGramMarkovChainGenerate[
