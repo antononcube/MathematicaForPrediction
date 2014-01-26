@@ -41,6 +41,10 @@
    For the building of an N-gram model of a list or text an N-1 dimensional sparse array is used.
    Note that dimensions up to 5 are allowed, but that can be easily changed.
 *)
+(* TODO
+ 1. It is a good idea to add working precision option to NGramMarkovChainModel.
+ 2. I need to profile and experiment with other ways of making the model arrays column stochastic. Both methods I have programmed so far are slow for larger number of words because of the unpacking of the sparse array of the n-gram model. That is for by default "ColumnStochastic"->False.
+*)
 
 BeginPackage["NGramMarkovChain`"]
 
@@ -50,22 +54,43 @@ NGramMarkovChainGenerate::usage = "NGramMarkovChainGenerate[m_NGramModel, s_List
 
 NGramMarkovChainText::usage = "NGramMarkovChainText[textArg_String, ngram_Integer, startWords:{_String..}, nwords_Integer] splits the string textArg according to the value given to the option WordSeparators, finds the ngram Markov chain probabilities, and generates text of nwords."
 
+NGramModel::usage = "Symbol for holding the n-gram model data."
+
+MakeColumnStochastic::usage = "MakeColumnStochastic[m_?ArrayQ] makes the array m column stochastic."
+
 Begin["`Private`"]
 
+Clear[MakeColumnStochastic]
+MakeColumnStochastic[mat_SparseArray] :=
+  Block[{t, csmat},
+   csmat = Transpose[mat, RotateLeft[Range[Length[Dimensions[mmat]]]]];
+   csmat = Total[csmat] /. {0 -> 1, 0. -> 1.};
+   csmat = Transpose[SparseArray[Table[csmat, {Dimensions[mat][[-1]]}]], RotateRight[Range[Length[Dimensions[mmat]]]]];
+   Quiet[mat/csmat]
+  ];
+
 Clear[NGramMarkovChainModel]
-NGramMarkovChainModel[textWords_List, numberOfPreviousWords_Integer] :=
-  Module[{words, PickWord, markovMat, wordToIndexRules, indexToWordRules, ntuples, inds, randomTextWords},
-   words = Union[textWords];
-   wordToIndexRules = Dispatch[Thread[words -> Range[Length[words]]]];
-   indexToWordRules = Dispatch[Thread[Range[Length[words]] -> words]];
-   ntuples = Partition[textWords, numberOfPreviousWords + 1, 1];
-   markovMat = SparseArray[{}, Table[Length[words], {numberOfPreviousWords + 1}]];
-   Do[
-    inds = Apply[Sequence, t /. wordToIndexRules];
-    markovMat[[inds]] = markovMat[[inds]] + 1,
-    {t, ntuples}];
-   NGramModel[markovMat, wordToIndexRules, indexToWordRules]
-  ] /; 2 <= numberOfPreviousWords <= 5;
+Options[NGramMarkovChainModel] = {"ColumnStochastic" -> False};
+NGramMarkovChainModel[textWords_List, numberOfPreviousWords_Integer, opts : OptionsPattern[]] :=
+  Module[{words, PickWord, markovMat, wordToIndexRules, indexToWordRules, ntuples, inds, randomTextWords, columnStochasticOpt},
+    columnStochasticOpt = OptionValue[NGramMarkovChainModel, "ColumnStochastic"];
+    words = Union[textWords];
+    wordToIndexRules = Dispatch[Thread[words -> Range[Length[words]]]];
+    indexToWordRules = Dispatch[Thread[Range[Length[words]] -> words]];
+    ntuples = Partition[textWords, numberOfPreviousWords + 1, 1];
+
+    markovMat = SparseArray[{}, Table[Length[words], {numberOfPreviousWords + 1}]];
+    Do[
+     inds = Apply[Sequence, t /. wordToIndexRules];
+     markovMat[[inds]] = markovMat[[inds]] + 1,
+     {t, ntuples}];
+
+    If[TrueQ[columnStochasticOpt],
+     markovMat = MakeColumnStochastic[N[markovMat]];
+    ];
+
+    NGramModel[markovMat, wordToIndexRules, indexToWordRules]
+  ] /; 1 <= numberOfPreviousWords <= 5;
 
 Clear[NGramMarkovChainGenerate]
 NGramMarkovChainGenerate[
@@ -102,10 +127,10 @@ NGramMarkovChainText[text_String, numberOfPreviousWords_Integer, startWords : {_
   Module[{textWords, randomTextWords, wordSeparators, ngMod},
    wordSeparators = OptionValue[NGramMarkovChainText, WordSeparators];
    textWords = StringSplit[text, wordSeparators];
-   ngMod = NGramMarkovChainModel[textWords, numberOfPreviousWords]; 
+   ngMod = NGramMarkovChainModel[textWords, numberOfPreviousWords, "ColumnStochastic" -> False]; 
    randomTextWords = NGramMarkovChainGenerate[ngMod, startWords, numberOfWords];
    StringJoin @@ Riffle[randomTextWords, " "]
-  ] /; 2 <= numberOfPreviousWords <= 5;
+  ] /; 1 <= numberOfPreviousWords <= 5;
 
 End[]
 
