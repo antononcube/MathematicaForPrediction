@@ -44,58 +44,68 @@
 
 BeginPackage["NGramMarkovChain`"]
 
-NGramMarkovChain::usage = "NGramMarkovChain[ws_Lists, ngram_Integer, nwords_Integer] finds Markov chain probabilities from ws for each ngram number of words and using those probabilities generates a list of nwords."
+NGramMarkovChainModel::usage = "NGramMarkovChainModel[ws_Lists, ngram_Integer] finds Markov chain probabilities from ws for each ngram number of words and using those probabilities generates a list of nwords."
 
-NGramMarkovChainText::usage = "NGramMarkovChainText[textArg_String, ngram_Integer, nwords_Integer] splits the string textArg according to the value given to the option WordSeparators, finds the ngram Markov chain probabilities, and generates text of nwords."
+NGramMarkovChainGenerate::usage = "NGramMarkovChainGenerate[m_NGramModel, s_List, n_Integer] generates a list of n using the n-gram model m starting with sequence s."
+
+NGramMarkovChainText::usage = "NGramMarkovChainText[textArg_String, ngram_Integer, startWords:{_String..}, nwords_Integer] splits the string textArg according to the value given to the option WordSeparators, finds the ngram Markov chain probabilities, and generates text of nwords."
 
 Begin["`Private`"]
 
-Clear[NGramMarkovChain]
-Options[NGramMarkovChain] = {"StartNGram" -> Automatic};
-NGramMarkovChain[textWords_List, numberOfPreviousWords_Integer, numberOfWords_Integer, opts : OptionsPattern[]] :=
-  Module[{words, PickWord, markovMat, wordToIndexRules, indexToWordRules, ntuples, inds, randomTextWords, startNGram, startNGramOpt = OptionValue["StartNGram"]},
-    words = Union[textWords];
-    wordToIndexRules = Dispatch[Thread[words -> Range[Length[words]]]];
-    indexToWordRules = Dispatch[Thread[Range[Length[words]] -> words]];
-    PickWord[inds_] := RandomSample[Normal[markovMat[[Sequence @@ inds]]] -> words, 1][[1]];
-    PickWord[ss : {_String ..}] := PickWord[ss /. wordToIndexRules];
-    ntuples = Partition[textWords, numberOfPreviousWords + 1, 1];
-    
-    markovMat = 
-     SparseArray[{}, 
-      Table[Length[words], {numberOfPreviousWords + 1}]];
-
-    Do[
-     inds = Apply[Sequence, t /. wordToIndexRules];
-     markovMat[[inds]] = markovMat[[inds]] + 1,
-     {t, ntuples}];
-
-    startNGram = 
-     If[NumberQ[startNGramOpt] && startNGramOpt <= Length[ntuples], 
-      ntuples[[startNGramOpt]], 
-      RandomSample[ntuples, 1][[1]]
-     ];
-
-    randomTextWords = 
-     Nest[Append[#, PickWord[Take[#, -numberOfPreviousWords]]] &, Most@startNGram, numberOfWords];
-    randomTextWords
+Clear[NGramMarkovChainModel]
+NGramMarkovChainModel[textWords_List, numberOfPreviousWords_Integer] :=
+  Module[{words, PickWord, markovMat, wordToIndexRules, indexToWordRules, ntuples, inds, randomTextWords},
+   words = Union[textWords];
+   wordToIndexRules = Dispatch[Thread[words -> Range[Length[words]]]];
+   indexToWordRules = Dispatch[Thread[Range[Length[words]] -> words]];
+   ntuples = Partition[textWords, numberOfPreviousWords + 1, 1];
+   markovMat = SparseArray[{}, Table[Length[words], {numberOfPreviousWords + 1}]];
+   Do[
+    inds = Apply[Sequence, t /. wordToIndexRules];
+    markovMat[[inds]] = markovMat[[inds]] + 1,
+    {t, ntuples}];
+   NGramModel[markovMat, wordToIndexRules, indexToWordRules]
   ] /; 2 <= numberOfPreviousWords <= 5;
 
+Clear[NGramMarkovChainGenerate]
+NGramMarkovChainGenerate[
+   NGramModel[markovMat_SparseArray, 
+    wordToIndexRules : (_Dispatch | {_Rule ..}), 
+    indexToWordRules : (_Dispatch | {_Rule ..})], startWords_List, 
+   numberOfWords_Integer] :=
+  Module[{words, numberOfPreviousWords, randomTextWords, PickWord, startNGram},
+   words = If[TrueQ[Head[wordToIndexRules] === Dispatch], wordToIndexRules[[1, All, 1]], wordToIndexRules[[All, 1]]];
+   PickWord[inds_] := RandomSample[Normal[markovMat[[Sequence @@ inds]]] -> words, 1][[1]];
+   PickWord[ss : {_String ..}] := PickWord[ss /. wordToIndexRules];
+   numberOfPreviousWords = Length[Dimensions[markovMat]] - 1;
+   startNGram = startWords;
+   If[Length[startNGram] < numberOfPreviousWords,
+    startNGram = 
+      Join @@ Table[
+        startNGram, {Ceiling[
+          numberOfPreviousWords/Length[startNGram]]}]
+   ];
+   startNGram = Take[startNGram, -numberOfPreviousWords];
+   randomTextWords = Nest[Append[#, PickWord[Take[#, -numberOfPreviousWords]]] &, startNGram, numberOfWords];
+   randomTextWords
+  ] /; Equal @@ Join[
+      Dimensions[markovMat],
+      {If[TrueQ[Head[wordToIndexRules] === Dispatch], 
+        Length[wordToIndexRules[[1]]], Length[wordToIndexRules]],
+       If[TrueQ[Head[indexToWordRules] === Dispatch], 
+        Length[indexToWordRules[[1]]], Length[indexToWordRules]]}] && 
+    numberOfWords > 0;
 
 Clear[NGramMarkovChainText]
-Options[NGramMarkovChainText] = {
-   "StartNGram" -> Automatic, 
-   WordSeparators -> {Whitespace, "\n", " ", ".", ",", "!", "?", ";", ":", "-", "\"", "\'"}
-};
-NGramMarkovChainText[text_String, numberOfPreviousWords_Integer, numberOfWords_Integer, opts : OptionsPattern[]] :=
-  Module[{textWords, randomTextWords, wordSeparators},
-    wordSeparators = OptionValue[NGramMarkovChainText, WordSeparators];
-    textWords = StringSplit[text, wordSeparators];
-    randomTextWords = 
-     NGramMarkovChain[textWords, numberOfPreviousWords, numberOfWords, DeleteCases[{opts}, WordSeparators -> _]];
-    StringJoin @@ Riffle[randomTextWords, " "]
+Options[NGramMarkovChainText] = {WordSeparators -> {Whitespace, "\n", " ", ".", ",", "!", "?", ";", ":", "-", "\"", "\'"}};
+NGramMarkovChainText[text_String, numberOfPreviousWords_Integer, startWords : {_String ..}, numberOfWords_Integer, opts : OptionsPattern[]] :=
+  Module[{textWords, randomTextWords, wordSeparators, ngMod},
+   wordSeparators = OptionValue[NGramMarkovChainText, WordSeparators];
+   textWords = StringSplit[text, wordSeparators];
+   ngMod = NGramMarkovChainModel[textWords, numberOfPreviousWords]; 
+   randomTextWords = NGramMarkovChainGenerate[ngMod, startWords, numberOfWords];
+   StringJoin @@ Riffle[randomTextWords, " "]
   ] /; 2 <= numberOfPreviousWords <= 5;
-
 
 End[]
 
