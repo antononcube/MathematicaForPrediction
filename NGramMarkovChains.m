@@ -60,13 +60,24 @@ MakeColumnStochastic::usage = "MakeColumnStochastic[m_?ArrayQ] makes the array m
 
 Begin["`Private`"]
 
+(* direct, easy to understand, in place *)
 Clear[MakeColumnStochastic]
-MakeColumnStochastic[mat_SparseArray] :=
-  Block[{t, csmat},
-   csmat = Transpose[mat, RotateLeft[Range[Length[Dimensions[mmat]]]]];
-   csmat = Total[csmat] /. {0 -> 1, 0. -> 1.};
-   csmat = Transpose[SparseArray[Table[csmat, {Dimensions[mat][[-1]]}]], RotateRight[Range[Length[Dimensions[mmat]]]]];
-   Quiet[mat/csmat]
+MakeColumnStochastic[mat_?ArrayQ] :=
+  Block[{t, inds, IVar, iseq, csmat},
+   inds = Array[IVar, Length[Dimensions[mat]] - 1];
+   csmat = mat;
+   Do[
+    iseq = Sequence @@ Append[inds, All];
+    t = Total[csmat[[iseq]]];
+    If[t > 0,
+     csmat[[iseq]] = csmat[[iseq]]/t
+    ],
+    Evaluate[Sequence @@ Transpose[{inds, Most@Dimensions[mat]}]]
+   ];
+   If[Head[mat] === SparseArray,
+    SparseArray[csmat],
+    csmat
+   ]
   ];
 
 Clear[NGramMarkovChainModel]
