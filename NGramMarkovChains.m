@@ -80,11 +80,25 @@ MakeColumnStochastic[mat_?ArrayQ] :=
    ]
   ];
 
+NGramMarkovChainModel::farg = "A list is expected as a first argument.";
+NGramMarkovChainModel::sarg = "A positive integer is expected as a second argument.";
+
 Clear[NGramMarkovChainModel]
 Options[NGramMarkovChainModel] = {"ColumnStochastic" -> False};
-NGramMarkovChainModel[textWords_List, numberOfPreviousWords_Integer, opts : OptionsPattern[]] :=
+NGramMarkovChainModel[textWords_, numberOfPreviousWords_, opts : OptionsPattern[]] :=
   Module[{words, PickWord, markovMat, wordToIndexRules, indexToWordRules, ntuples, inds, randomTextWords, columnStochasticOpt},
+
+    If[ ! ListQ[ textWords ],
+      Message[NGramMarkovChainModel::farg];
+      Return[{}]
+    ];
+    If[ !(IntegerQ[numberOfPreviousWords] && numberOfPreviousWords > 0 ),
+      Message[NGramMarkovChainModel::sarg];
+      Return[{}]
+    ];
+
     columnStochasticOpt = OptionValue[NGramMarkovChainModel, "ColumnStochastic"];
+
     words = Union[textWords];
     wordToIndexRules = Dispatch[Thread[words -> Range[Length[words]]]];
     indexToWordRules = Dispatch[Thread[Range[Length[words]] -> words]];
