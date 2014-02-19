@@ -40,7 +40,7 @@ BeginPackage["AVCDecisionTreeForest`"]
 
 BuildDecisionTree::usage = "BuildDecisionTree[dataMat,th,opts] makes a decision tree of the matrix dataMat the last column of which has the classification labels. BuildDecisionTree takes options to specify the impurity threshold at which the recursive process stops, should linear combinations of the variable be used as decision axes, the number of strata into which the ranges of the real variables are partitioned at each recursive step, and should the decision axis be determined looking into all axes or at a random sample of them."
 
-BuildDecisionForest::usage = "BuildDecisionForest[dataMat,n,opts] makes a forest of n decision trees of the matrix dataMat the last column of which has the classification labels."
+BuildDecisionForest::usage = "BuildDecisionForest[dataMat,{minSizeTh,imp},n,opts] makes a forest of n decision trees of the matrix dataMat the last column of which has the classification labels. The recursive tree building stops when the data set length is less than minSizeTh or the data set impurity is less than imp. BuildDecisionForest[dataMat,minSizeTh,n,opts] calls BuildDecisionForest[dataMat,{minSizeTh,0},n,opts] ."
 
 DecisionTreeClassify::usage = "DecisionTreeClassify[dTree,rec] predicts the label for the record rec using the decision tree dTree."
 
@@ -421,7 +421,13 @@ BuildDecisionTree[data_,
     (* Options handling *)
     nNumVars = Count[columnTypes, Number];
     lbls = Union[data[[All, -1]]];
-    {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic};
+    If[ ! TrueQ[ linComb==False || linComb==None ],
+      {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic},
+      {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], 0, 0, {}}
+    ];
+    If[ nNumVars==0, 
+      {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], 0, 0, {}}
+    ];
     If[TrueQ[linCombMinRecs === Automatic], linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
     If[TrueQ[cdSVDRank === Automatic], cdSVDRank = svdRank];
     If[! (IntegerQ[linCombMinRecs] && linCombMinRecs > 0), 
@@ -611,6 +617,7 @@ DecisionTreeToRules[tree_] :=
 
 (*
 This function takes as arguments a data matrix and specified indexes of numerical columns. The data of each of the specified columns is translated at the median and dividied by the quartile distance. The returned result is the data matrix with centralized columns and the centralizing parameters, a list of pairs median and quartile distance.
+It should be re-written using Mathematica's built-in function Standardize.
 *)
 
 Clear[CentralizeDataMatrix]
