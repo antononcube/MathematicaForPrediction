@@ -1,6 +1,6 @@
 (*
     Implementation of the Apriori algorithm in Mathematica
-    Copyright (C) 2013  Anton Antonov
+    Copyright (C) 2014  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -32,12 +32,34 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* Version 1.0 *)
+(* Version 2.0 *)
 (* This package contains definitions for the Apriori algorithm application. *)
+
+(* February, 20, 2014 
+
+   Updated the package with a faster implementation of the Apriori algorithm that uses sparse algebra operations.
+   The most significant change is of the function Support.
+
+   The new definition scales quite well with the number of baskets. 
+   For example, the timing for 20,000 baskets was only ~12% larger than the timing for 2000 baskets, both sets having the same 1355 items.
+
+   Renamed the functions of the older, original version into "Appriori*Original" .
+
+   Overloaded the definition of Support.
+
+   At this time it is not clear to me what is the best interface of AssociationRules for the end user.
+   Nevertheless, I made AssociationRules to take both a list of integer sets and a list of sparse arrays.
+
+   Added a new function, AprioriSparseArrayRepresentation, the result of which can be used with the overloaded version of Support, and for AssociationRules.
+*)
 
 BeginPackage["AprioriAlgorithm`"]
 
-AprioriApplication::usage = "AprioriApplication[setOfItemSets,minProb,opts] returns a list of three elements: the association sets with indexes, the item to indexes rules, and the indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) ."
+AprioriApplication::usage = "AprioriApplication[setOfItemSets,minProb,opts] returns a list of three elements: association sets with indexes, item to indexes rules, and indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) ."
+
+AprioriApplicationOriginal::usage = "AprioriApplicationOriginal[setOfItemSets,minProb,opts] returns a list of three elements: association sets with indexes, item to indexes rules, and indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) . This is the original, slower version of AprioriApplication."
+
+AprioriSparseArrayRepresentation::usage = "AprioriSparseArrayRepresentation[setOfItemSets] returns a list of three elements: (1) a 0-1 matrix M (a list of sparse arrays) for which M[[i,j]]==1 if the i-th item belongs to setOfItemSets[[j]], (2) item to indexes rules, and (3) indexes to item rules."
 
 AssociationRules::usage = "AssociationRules[setOfItemSets,assocItemSet,minConfidence] finds the possible association rules for assocItemSet using setOfItemSets that have confidence at least minConfidence and calculates for each of the rules the measures: Support, Confidence, Lift, Leverage, and Conviction. AssociationRules[setOfItemSets,assocItemSets,minConfidence,minSupport] takes the association sets from assocItemSets that have support at least minSupport and finds the association rules for them."
 
@@ -89,7 +111,7 @@ TreeToRules[tree_] :=
 
 (* AprioriGenerator *)
 
-(* It assumed that the item sets are sorted and i.e. come from a Rymon tree. (See the "Most[F[[i]]] == Most[F[[j]]]" line.) *)
+(* It is assumed that the item sets are sorted and i.e. come from a Rymon tree. (See the "Most[F[[i]]] == Most[F[[j]]]" line.) *)
 
 Clear[AprioriGenerator];
 AprioriGenerator[Mu_, F_] :=
@@ -108,17 +130,17 @@ AprioriGenerator[Mu_, F_] :=
    Select[res, Apply[And, MemberQ[F, #] & /@ Subsets[#, {Length[#] - 1}]] &]
    ];
 
-(* AprioriAlgorithm *)
+(* AprioriAlgorithmOriginal *)
 
-Clear[Support, AprioriAlgorithm]
+Clear[Support, AprioriAlgorithmOriginal]
 
 Support[T_, s_] := 
   Support[T, s] = Count[T, d_ /; Intersection[d, s] == s]/Length[T];
 
-Options[AprioriAlgorithm] = {"MaxNumberOfItems" -> All};
-AprioriAlgorithm[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
+Options[AprioriAlgorithmOriginal] = {"MaxNumberOfItems" -> All};
+AprioriAlgorithmOriginal[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
  Block[{CSet, FSet, i = 1, F = {}, contQ = True, 
-    maxNumberOfItems = OptionValue[AprioriAlgorithm, "MaxNumberOfItems"]},
+    maxNumberOfItems = OptionValue[AprioriAlgorithmOriginal, "MaxNumberOfItems"]},
    If[maxNumberOfItems === All, maxNumberOfItems = \[Infinity]];
    CSet = List /@ Range[Min[T], Max[T]];
    While[CSet =!= {} && contQ,
@@ -129,7 +151,40 @@ AprioriAlgorithm[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPattern[]]
      contQ = False
      ];
     i++
+   ];
+   F
+  ];
+
+
+(* AprioriAlgorithmOriginal *)
+(* These two functions provide the sparse array implementation. *)
+
+Clear[AprioriAlgorithm]
+
+(* I overloaded the non-sparse array Support definition with this one because Support is provided as package function. *) 
+Support[Tcolumns : {_SparseArray ..}, s : {_Integer ..}] :=
+  If[Length[s] == 1,
+    Total[Tcolumns[[s[[1]]]]],
+    Total[Fold[Times[#1, Tcolumns[[#2]]] &, Tcolumns[[s[[1]]]], Rest[s]]]
+  ]/Length[Tcolumns[[1]]];
+
+(* This definition is almost exact copy of the previous one, AprioriAlgorithmOriginal, given above. *)
+Options[AprioriAlgorithm] = {"MaxNumberOfItems" -> All};
+AprioriAlgorithm[Tcolumns : {_SparseArray ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
+  Block[{CSet, FSet, i = 1, F = {}, contQ = True, 
+    maxNumberOfItems = OptionValue[AprioriAlgorithm, "MaxNumberOfItems"]},
+   If[maxNumberOfItems === All, maxNumberOfItems = \[Infinity]];
+   CSet = List /@ Range[1, Length[Tcolumns]];
+   While[CSet =!= {} && contQ,
+    FSet = 
+     Pick[CSet, Support[Tcolumns, #] >= Mu & /@ CSet];
+    AppendTo[F, FSet];
+    If[FSet =!= {} && Length[FSet[[-1]]] < maxNumberOfItems,
+     CSet = AprioriGenerator[Mu, FSet],
+     contQ = False
     ];
+    i++
+   ];
    F
   ];
 
@@ -140,7 +195,7 @@ AprioriAlgorithm[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPattern[]]
 Confidence, Lift, Leverage, Conviction, Condition, Implication *)
 
 Clear[AssociationRules]
-AssociationRules[T : {{_Integer ...} ...}, basketArg : {_Integer ...}, confidence_?NumberQ] :=
+AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), basketArg : {_Integer ...}, confidence_?NumberQ] :=
   Block[{basket = Sort[basketArg], basketSupport, antecedents, consequents, t},
    basketSupport = N[Support[T, basket]];
    antecedents = Most@Rest@Subsets[basket];
@@ -157,37 +212,68 @@ AssociationRules[T : {{_Integer ...} ...}, basketArg : {_Integer ...}, confidenc
        consequents}], #[[1]] >= confidence &],
     -#[[1]] &];
     Prepend[#,basketSupport]& /@ t
-   ];
+   ]/; If[! MatchQ[T, {_SparseArray ..}], True, Apply[And, Map[1 <= # <= Length[T] &, basketArg]]];
 
-AssociationRules[dataWithIDs : {{_Integer ..} ..}, aprioriResRecsArg : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] := 
+AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), aprioriResRecsArg : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] := 
    Block[{eligible,aprioriResRecs=Sort/@aprioriResRecsArg},
-    eligible = Select[Transpose[{aprioriResRecs, N[Support[dataWithIDs, #] & /@ aprioriResRecs]}], #[[2]] >= minSupport &];
+    eligible = Select[Transpose[{aprioriResRecs, N[Support[T, #] & /@ aprioriResRecs]}], #[[2]] >= minSupport &];
     If[Length[eligible] == 0, {},
      Flatten[#,1]& @
      MapThread[
       Function[{assoc, supp},
-         DeleteCases[AssociationRules[dataWithIDs, assoc, minConfidence], {}]],
+         DeleteCases[AssociationRules[T, assoc, minConfidence], {}]],
       Transpose[eligible]
      ]
     ]
    ];
 
-(* AprioriApplcation *)
+(* AprioriApplcationOriginal *)
 
 (* Returns the association sets with indexes, the item to idexes rules, and the idexes to item rules. *)
+(* This is the original implementation that does not use sparse algebra, hence it is much slower. *)
 
-Clear[AprioriApplication];
-AprioriApplication[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]] := 
+Clear[AprioriApplicationOriginal];
+AprioriApplicationOriginal[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]] := 
   Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs},
     uniqueItems = Union[Flatten[itemLists]];
     uniqueItemToIDRules = 
      Dispatch[Thread[uniqueItems -> Range[1, Length[uniqueItems]]]];
     dataWithIDs = itemLists /. uniqueItemToIDRules;
     dataWithIDs = Sort /@ (dataWithIDs);
-    {AprioriAlgorithm[dataWithIDs, Mu, opts], uniqueItemToIDRules, 
+    {AprioriAlgorithmOriginal[dataWithIDs, Mu, opts], uniqueItemToIDRules, 
      Dispatch[Reverse /@ uniqueItemToIDRules[[1]]]}
     ] /; 0 < Mu < 1;
 
+(* AprioriApplcation *)
+
+(* Returns the association sets with indexes, the item to idexes rules, and the idexes to item rules. *)
+(* This definition is almost the same as the original one above. I don't see the point having the two 
+  definitions accessed through an option value, so I kept the definitions separated. *)
+
+Clear[AprioriSparseArrayRepresentation]
+AprioriSparseArrayRepresentation[itemLists : {_List ...}] :=
+  Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs, arrayRules, Tcolumns},
+   uniqueItems = Union[Flatten[itemLists]];
+   uniqueItemToIDRules = 
+    Dispatch[Thread[uniqueItems -> Range[1, Length[uniqueItems]]]];
+   dataWithIDs = itemLists /. uniqueItemToIDRules;
+   dataWithIDs = Sort /@ (dataWithIDs);
+   arrayRules = 
+    Flatten[MapIndexed[Thread[Thread[{#2[[1]], #1}] -> 1] &, dataWithIDs], 1];
+   Tcolumns = Map[# &, Transpose[SparseArray[arrayRules]]];
+   {Tcolumns, uniqueItemToIDRules, Dispatch[Reverse /@ uniqueItemToIDRules[[1]]]}
+  ];
+
+Clear[AprioriApplication];
+Options[AprioriApplication] = {"MaxNumberOfItems" -> All};
+AprioriApplication[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
+  Block[{Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules, mni},
+    mni = OptionValue[AprioriApplication, "MaxNumberOfItems"];
+    {Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules} = 
+     AprioriSparseArrayRepresentation[itemLists];
+    {AprioriAlgorithm[Tcolumns, Mu, "MaxNumberOfItems" -> mni], uniqueItemToIDRules, 
+     Dispatch[Reverse /@ uniqueItemToIDRules[[1]]]}
+    ] /; 0 < Mu < 1;
 
 (* Supporting Defintions *)
 
