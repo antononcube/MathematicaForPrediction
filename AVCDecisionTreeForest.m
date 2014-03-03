@@ -199,7 +199,7 @@ Clear[AVCSplitSelectionLC]
 AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ, 
    columnTypes_?VectorQ, axesArg : (All | {_Integer ..}), 
    nStrata_Integer, 
-   impFunc_, {linCombMinRecs_Integer, svdRank_Integer, 
+   impFunc_, {linCombMinRecs_Integer, linCombMaxRecs_Integer, svdRank_Integer, 
     cdSVDRank_Integer, svdLabels : (All | Automatic | _List)}, 
    preStratifyQ : (True | False)] :=
   
@@ -207,7 +207,7 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
    
    (* select linear combination of numerical variables (axes) using thin SVD *)
    
-   If[(svdRank > 0 || cdSVDRank > 0) && Dimensions[dataRecs][[1]] > linCombMinRecs,
+   If[(svdRank > 0 || cdSVDRank > 0) && Dimensions[dataRecs][[1]] > linCombMinRecs && Dimensions[dataRecs][[1]] <= linCombMaxRecs,
 
     numAxes = Pick[axes, Map[# === Number &, columnTypes[[axes]]]];
 
@@ -238,7 +238,7 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
       PRINT["AVCSplitSelection:: Dimensions[numDataRecs] = ", Dimensions[numDataRecs]];
       
       (* find splitting directions using SVD *)
-      
+,      
       PRINT["AVCSplitSelection:: SVD timing",
        AbsoluteTiming[
         (* the union is needed in order to avoid singular matrices *)
@@ -280,7 +280,7 @@ Clear[AVCSplitSelection]
 AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ, 
    columnTypes_?VectorQ, axesArg : (All | {_Integer ..}), 
    nStrata_Integer, 
-   impFunc_, {linCombMinRecs_Integer, svdRank_Integer, 
+   impFunc_, {linCombMinRecs_Integer, linCombMaxRecs_Integer, svdRank_Integer, 
     crSVDRank_Integer, svdLabels : (All | Automatic | _List)}, 
    preStratifyQ : (True | False)] :=
   Block[{avcs, res, axes = axesArg, numAxes, numRes = {}, numAvcs, 
@@ -310,7 +310,7 @@ AVCSplitSelection[dataRecs_?MatrixQ, classLabels_?VectorQ,
     numRes = 
      AVCSplitSelectionLC[dataRecs, classLabels, columnTypes, axes, 
       nStrata, 
-      impFunc, {linCombMinRecs, svdRank, crSVDRank, svdLabels}, 
+      impFunc, {linCombMinRecs, linCombMaxRecs, svdRank, crSVDRank, svdLabels}, 
       preStratifyQ];
     
     res = SortBy[Join[res, numRes], -#[[1]] &];
@@ -335,7 +335,7 @@ Clear[BuildTreeRecStep]
 BuildTreeRecStep[data_, columnTypes_, level_Integer, 
    minSizeTh_Integer, axes : (All | {_Integer ..}), nStrata_Integer, 
    impFunc_, 
-   impurityTh_?NumberQ, {linCombMinRecs_Integer, svdRank_Integer, 
+   impurityTh_?NumberQ, {linCombMinRecs_Integer, linCombMaxRecs_Integer, svdRank_Integer, 
     cdSVDRank_Integer, svdLabels_}, preStratifyQ : (False | True)] :=
 
     Block[{res, d1, d2},
@@ -350,7 +350,7 @@ BuildTreeRecStep[data_, columnTypes_, level_Integer,
      
      res = AVCSplitSelection[data[[All, 1 ;; -2]], data[[All, -1]], 
        Most[columnTypes], axes, nStrata, 
-       impFunc, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
+       impFunc, {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels}, 
        preStratifyQ];
      
      (* Recursive calling *)
@@ -381,11 +381,11 @@ BuildTreeRecStep[data_, columnTypes_, level_Integer,
           columnTypes[[res[[3]]]]], Length[data]}],
        BuildTreeRecStep[d1, columnTypes, level + 1, minSizeTh, axes, 
         nStrata, impFunc, 
-        impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
+        impurityTh, {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels}, 
         preStratifyQ],
        BuildTreeRecStep[d2, columnTypes, level + 1, minSizeTh, axes, 
         nStrata, impFunc, 
-        impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
+        impurityTh, {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels}, 
         preStratifyQ]}
       ]
      ]
@@ -416,22 +416,27 @@ BuildDecisionTree[data_,
      nStrata = OptionValue[BuildDecisionTree, "Strata"],
      linComb = OptionValue[BuildDecisionTree, "LinearCombinations"],
      preStratifyQ = OptionValue[BuildDecisionTree, "PreStratify"],
-     linCombMinRecs, svdRank, cdSVDRank, svdLabels, nNumVars, lbls},
+     linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels, nNumVars, lbls},
     
     (* Options handling *)
     nNumVars = Count[columnTypes, Number];
     lbls = Union[data[[All, -1]]];
     If[ ! TrueQ[ linComb==False || linComb==None ],
-      {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic},
-      {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], 0, 0, {}}
+      {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "MaxSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "MaxSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic},
+      {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], Length[data], 0, 0, {}}
     ];
     If[ nNumVars==0, 
-      {linCombMinRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], 0, 0, {}}
+      {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], Length[data], 0, 0, {}}
     ];
     If[TrueQ[linCombMinRecs === Automatic], linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
+    If[TrueQ[linCombMaxRecs === Automatic], linCombMaxRecs = Dimensions[data][[1]]];
     If[TrueQ[cdSVDRank === Automatic], cdSVDRank = svdRank];
     If[! (IntegerQ[linCombMinRecs] && linCombMinRecs > 0), 
       Message[BuildDecisionTree::iavalopt, "MinSize", 1, Length[data]]; 
+      Return[{}]
+    ];
+    If[! (IntegerQ[linCombMaxRecs] && linCombMaxRecs >= linCombMinRecs && linCombMaxRecs <= Dimensions[data][[1]] ), 
+      Message[BuildDecisionTree::iavalopt, "MaxSize", linCombMinRecs, Length[data]]; 
       Return[{}]
     ];
     If[! (IntegerQ[svdRank] && 0 <= svdRank <= nNumVars), Message[BuildDecisionTree::iavalopt, "Rank", 0, nNumVars]; Return[{}]];
@@ -439,7 +444,7 @@ BuildDecisionTree[data_,
     If[AtomQ[svdLabels] && !TrueQ[svdLabels === Automatic] && !TrueQ[svdLabels === All], svdLabels = {svdLabels}];
     If[! (TrueQ[svdLabels === Automatic] || TrueQ[svdLabels === All] || Apply[And, Map[MemberQ[lbls, #] &, svdLabels]]), Message[BuildDecisionTree::lvalopt, "Labels", lbls]; Return[{}]];
     
-    PRINT["BuildTree:: {linCombMinRecs,svdRank,cdSVDRank,svdLabels}=", {linCombMinRecs, svdRank, cdSVDRank, svdLabels}];
+    PRINT["BuildTree:: {linCombMinRecs,linCombMaxRecs,svdRank,cdSVDRank,svdLabels}=", {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels}];
     
     {svdRank, cdSVDRank} =
      Map[
@@ -476,14 +481,14 @@ BuildDecisionTree[data_,
     
     PRINT[
      "BuildTree:: ", {Max[minSizeTh, 1], axesArg, nStrata, impFunc, 
-      impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
+      impurityTh, {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels}, 
       preStratifyQ}];
     
     (* Recursive call *)
     
     BuildTreeRecStep[data, columnTypes, 0, minSizeTh, axesArg, 
      nStrata, impFunc, 
-     impurityTh, {linCombMinRecs, svdRank, cdSVDRank, svdLabels}, 
+     impurityTh, {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels}, 
      preStratifyQ]
     
     ] /; Length[data[[1]]] == Length[columnTypes];
