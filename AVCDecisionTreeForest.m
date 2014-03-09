@@ -422,8 +422,12 @@ BuildDecisionTree[data_,
     (* Options handling *)
     nNumVars = Count[columnTypes, Number];
     lbls = Union[data[[All, -1]]];
-    If[ ! TrueQ[ linComb==False || linComb==None ],
-      {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "MaxSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "MaxSize" -> Automatic, "Rank" -> 2, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic},
+    Which[
+      TrueQ[ linComb === Automatic ],
+      {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {Automatic, Automatic, Automatic, Automatic, Automatic},
+      ! TrueQ[ linComb==False || linComb==None ],
+      {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {"MinSize", "MaxSize", "Rank", "CentralizedDataRank", "Labels"} /. linComb /. {"MinSize" -> Automatic, "MaxSize" -> Automatic, "Rank" -> Automatic, "CentralizedDataRank" -> Automatic, "Labels" -> Automatic},
+      True,
       {linCombMinRecs, linCombMaxRecs, svdRank, cdSVDRank, svdLabels} = {Length[data], Length[data], 0, 0, {}}
     ];
     If[ nNumVars==0, 
@@ -431,6 +435,7 @@ BuildDecisionTree[data_,
     ];
     If[TrueQ[linCombMinRecs === Automatic], linCombMinRecs = Floor[0.1 Dimensions[data][[1]]]];
     If[TrueQ[linCombMaxRecs === Automatic], linCombMaxRecs = Dimensions[data][[1]]];
+    If[TrueQ[svdRank === Automatic], svdRank = 2];
     If[TrueQ[cdSVDRank === Automatic], cdSVDRank = svdRank];
     If[! (IntegerQ[linCombMinRecs] && linCombMinRecs > 0), 
       Message[BuildDecisionTree::iavalopt, "MinSize", 1, Length[data]]; 
