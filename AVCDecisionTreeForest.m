@@ -237,12 +237,13 @@ AVCSplitSelectionLC[dataRecs_?MatrixQ, classLabels_?VectorQ,
      If[Length[numDataRecs] > 0.1*linCombMinRecs && (Length[numDataRecs] > Max[svdRank, cdSVDRank]),
       PRINT["AVCSplitSelection:: Dimensions[numDataRecs] = ", Dimensions[numDataRecs]];
       
-      (* find splitting directions using SVD *)
-,      
+      (* find splitting directions using SVD *)      
       PRINT["AVCSplitSelection:: SVD timing",
        AbsoluteTiming[
-        (* the union is needed in order to avoid singular matrices *)
-        numDataRecs = Union[numDataRecs[[All, numAxes]]];
+        (* The union is needed in order to avoid singular matrices. *)
+        (* Note that N is applied to the matrix -- I do not see why high precision would be used, *)
+        (* this is just a heuristic for finding a direction. *)
+        numDataRecs = N[Union[numDataRecs[[All, numAxes]]]];
         {U, S, V} = SingularValueDecomposition[numDataRecs, svdRank, Tolerance -> 0.01];
         If[cdSVDRank > 0,
          {numDataRecs, crs} = MedianCentralizeDataMatrix[numDataRecs, All];
