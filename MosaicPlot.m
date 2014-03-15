@@ -77,6 +77,18 @@ TrieSortNodes[trie_] :=
    Join[{trie[[1]]}, TrieSortNodes /@ SortBy[Rest[trie], #[[1, 1]] &]]
   ];
 
+Clear[TriePruneNumericalLevel]
+TriePruneNumericalLevel[trie_, pruneLevel_Integer] := TriePruneNumericalLevel[trie, pruneLevel, 1];
+TriePruneNumericalLevel[trie_, pruneLevel_Integer, level_Integer] :=
+  Block[{t},
+   Which[
+    Length[trie] == 1 || pruneLevel < level, trie,
+    pruneLevel == level && VectorQ[Rest[trie][[All, 1, 1]], NumberQ], {{trie[[1, 1]], Total[Rest[trie][[All, 1, 1]]]}},
+    t = TriePruneNumericalLevel[#, pruneLevel, level + 1] & /@ Rest[trie];
+    True, Join[{{trie[[1, 1]], Total[t[[All, 1, 2]]]}}, t]
+   ]
+  ];
+
 Clear[RectanglePartition]
 Options[RectanglePartition] = {"Gap" -> 0.01, "ZeroWidth" -> 0.001, "SortNodes" -> False};
 RectanglePartition[trie_, 
@@ -163,15 +175,19 @@ MosaicPlot::nlr = "The value of the option \"LabelRotation\" should be a pair of
 
 Clear[MosaicPlot]
 Options[MosaicPlot] = 
-  Join[{"ColumnNames" -> None, "Gap" -> 0.02, "ZeroProbability" -> 0.001, "FirstAxis" -> "y", "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {}}, 
-       Options[Graphics]];
+  Join[{"ColumnNames" -> None, "Gap" -> 0.02, 
+    "ZeroProbability" -> 0.001, "FirstAxis" -> "y", 
+    "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {}, 
+    "ExpandLastColumn" -> False}, Options[Graphics]];
 MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
   Block[{trie, rs, gap = OptionValue[MosaicPlot, "Gap"], 
     zwidth = OptionValue[MosaicPlot, "ZeroProbability"], 
     firstAxis = OptionValue[MosaicPlot, "FirstAxis"], 
     labelRotation = OptionValue[MosaicPlot, "LabelRotation"], 
     labelStyle = OptionValue[MosaicPlot, "LabelStyle"], 
-    columnNames = OptionValue[MosaicPlot, "ColumnNames"], LABELS = {}},
+    columnNames = OptionValue[MosaicPlot, "ColumnNames"], 
+    expandLastColumnQ = TrueQ[OptionValue[MosaicPlot, "ExpandLastColumn"]], 
+    LABELS = {}},
    
    If[! ArrayQ[dataRecords],
     Message[MosaicPlot::nargs];
@@ -192,7 +208,8 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     TrueQ[firstAxis == "x" || firstAxis == "X" || firstAxis == "Top"], firstAxis = "x",
     TrueQ[firstAxis == "y" || firstAxis == "Y" || firstAxis == "Left"], firstAxis = "y",
     True,
-    Message[MosaicPlot::nfax]; firstAxis = "y"
+    Message[MosaicPlot::nfax];
+    firstAxis = "y"
    ];
    
    If[VectorQ[labelRotation, NumberQ] && Length[labelRotation] == 2, labelRotation = {labelRotation, labelRotation}];
@@ -205,16 +222,21 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
    If[TrueQ[labelStyle === None], labelStyle = {}];
    
    trie = TrieCreate[dataRecords];
-   trie = TrieNodeProbabilities[trie];
-   trie = TrieAddMissingValues[trie, dataRecords];
+   If[expandLastColumnQ,
+    trie = TriePruneNumericalLevel[trie, Dimensions[dataRecords][[2]]];
+    trie = TrieNodeProbabilities[trie];
+    trie = TrieAddMissingValues[trie, dataRecords[[All, 1 ;; Dimensions[dataRecords][[2]] - 1]]],
+    (* ELSE *)
+    trie = TrieNodeProbabilities[trie];
+    trie = TrieAddMissingValues[trie, dataRecords]
+   ];
    trie = TrieSortNodes[trie];
    rs = TrieMosaicRec[trie, Rectangle[{0, 0}, {1, 1}], firstAxis, firstAxis /. {"x" -> Top, "y" -> Left}, gap, zwidth, labelRotation, labelStyle];
    
-   Graphics[{Map[{FaceForm[GrayLevel[0.7]], #} &, Flatten[rs]], Black, LABELS}, 
-    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation") -> _]]
+   Graphics[{Map[{FaceForm[GrayLevel[0.7]], #} &, Flatten[rs]], Black,LABELS}, 
+    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn") -> _]]
    
   ];
-
 MosaicPlot[___] := Block[{}, Message[MosaicPlot::nargs]; {}];
 
 End[]
