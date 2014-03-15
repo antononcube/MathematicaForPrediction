@@ -44,12 +44,9 @@
 
   The mosaic plot is made within the rectangle {{0,0},{1,1}}. Using the options PlotRange and Frame one make a frame that encompasses the rotated labels.
 
-
   TODO
-  1. Labels for the column names.
-  2. Pearson chi-squared correlation coloring.
-  3. Combining a numerical column with the last (categorical) column.
-  4. Better description of the functionalities.
+  1. Pearson chi-squared correlation coloring.
+  2. Better description of the functionalities.
 *)
 
 BeginPackage["MosaicPlot`"]
@@ -168,6 +165,7 @@ TrieMosaicRec[trie_, r_Rectangle, axis : ("x" | "y"),
 MosaicPlot::nargs = "MosaicPlot takes as an argument a full array (that is list of records).";
 MosaicPlot::nfa = "The first argument is expected to be a full array (a list of records).";
 MosaicPlot::inl = "The number of indices and the number of column names should be the same.";
+MosaicPlot::ncno = "The value of the option \"ColumnNamesOffset\" should be a number.";
 MosaicPlot::ngap = "The value of the option \"Gap\" should be a number.";
 MosaicPlot::nzp = "The value of the option \"ZeroProbability\" should be a number."; 
 MosaicPlot::nfax = "The value of the option \"FirstAxis\" should be either \"x\" or \"y\".";
@@ -175,7 +173,7 @@ MosaicPlot::nlr = "The value of the option \"LabelRotation\" should be a pair of
 
 Clear[MosaicPlot]
 Options[MosaicPlot] = 
-  Join[{"ColumnNames" -> None, "Gap" -> 0.02, 
+  Join[{"ColumnNames" -> None, "ColumnNamesOffset"->0.05, "Gap" -> 0.02, 
     "ZeroProbability" -> 0.001, "FirstAxis" -> "y", 
     "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {}, 
     "ExpandLastColumn" -> False}, Options[Graphics]];
@@ -187,9 +185,9 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     labelStyle = OptionValue[MosaicPlot, "LabelStyle"], 
     columnNames = OptionValue[MosaicPlot, "ColumnNames"], 
     expandLastColumnQ = TrueQ[OptionValue[MosaicPlot, "ExpandLastColumn"]], 
-    LABELS = {}},
+    LABELS = {}, frameLabels, frameLabelCoords, frameLabelRotation, frameLabelOffset = OptionValue[MosaicPlot, "ColumnNamesOffset"]},
    
-   If[! ArrayQ[dataRecords],
+   If[! (ArrayQ[dataRecords] && Length[Dimensions[dataRecords]]==2),
     Message[MosaicPlot::nargs];
     Return[{}]
    ];
@@ -221,6 +219,24 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
    
    If[TrueQ[labelStyle === None], labelStyle = {}];
    
+   If[! NumberQ[frameLabelOffset],
+    Message[MosaicPlot::ncno];
+    frameLabelOffset = 0.05;
+   ];
+   
+   If[Length[columnNames] == 0,
+    frameLabels = {},
+    (*ELSE*)
+    frameLabelCoords = {{-frameLabelOffset, 0.5}, {0.5, 1 + frameLabelOffset}, {1 + frameLabelOffset, 0.5}, {0.5, -frameLabelOffset}};
+    frameLabelRotation = {{0, 1}, {1, 0}, {0, -1}, {1, 0}};
+    If[firstAxis == "x",
+      frameLabelCoords = RotateLeft[frameLabelCoords, 1];
+      frameLabelRotation = RotateLeft[frameLabelRotation, 1];
+    ];
+    frameLabels = MapThread[Text[#1, #2, {0, 0}, #3] &, 
+      {If[Length[columnNames] >= 4, columnNames[[1 ;; 4]], Join[columnNames, Table["", {4 - Length[columnNames]}]]], frameLabelCoords, frameLabelRotation}];
+   ];
+
    trie = TrieCreate[dataRecords];
    If[expandLastColumnQ,
     trie = TriePruneNumericalLevel[trie, Dimensions[dataRecords][[2]]];
@@ -233,8 +249,8 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
    trie = TrieSortNodes[trie];
    rs = TrieMosaicRec[trie, Rectangle[{0, 0}, {1, 1}], firstAxis, firstAxis /. {"x" -> Top, "y" -> Left}, gap, zwidth, labelRotation, labelStyle];
    
-   Graphics[{Map[{FaceForm[GrayLevel[0.7]], #} &, Flatten[rs]], Black,LABELS}, 
-    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn") -> _]]
+   Graphics[{Map[{FaceForm[GrayLevel[0.7]], #} &, Flatten[rs]], Black, LABELS, frameLabels}, 
+    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn" | "ColumnNames" | "ColumnNamesOffset") -> _]]
    
   ];
 MosaicPlot[___] := Block[{}, Message[MosaicPlot::nargs]; {}];
