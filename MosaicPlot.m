@@ -34,7 +34,7 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* Version 0.8 *)
+(* Version 1.0 *)
 (* 
   This package defines the function MosaicPlot that summarizes the conditional probabilities of co-occurrence of the categorical values in a list of records of the same length. (The list of records is assumed to be a full array and the columns to represent categorical values.) Note, that if a column is numerical but has a small number of different values it can be seen as categorical.
 
@@ -144,16 +144,14 @@ TrieMosaicRec[trie_, r_Rectangle, axis : ("x" | "y"),
       AppendTo[LABELS, 
        MapThread[
         Text[Style[#1, labelStyle], {Mean[{#2[[1, 1]], #2[[2, 1]]}], c}, 
-          If[side === Top, -{0, 2}, {0, 2}], xLabelRotation] &, {Rest[trie][[
-          All, 1, 1]], rs}]]],
+          If[side === Top, -{0, 2}, {0, 2}], xLabelRotation] &, {Rest[trie][[All, 1, 1]], rs}]]],
      (*ELSE*)
      t = Select[rs, #[[1, 1]] == c || #[[2, 1]] == c &];
      If[Length[t] == Length[rs], 
       AppendTo[LABELS, 
        MapThread[
         Text[Style[#1, labelStyle], {c, Mean[{#2[[1, 2]], #2[[2, 2]]}]}, 
-          If[side === Left, -{0, 2}, {0, 2}], yLabelRotation] &, {Rest[trie][[
-          All, 1, 1]], rs}]]]
+          If[side === Left, -{0, 2}, {0, 2}], yLabelRotation] &, {Rest[trie][[All, 1, 1]], rs}]]]
     ];
     MapThread[
      TrieMosaicRec[#1, #2, axis /. {"x" -> "y", "y" -> "x"}, 
@@ -235,8 +233,9 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     ];
     frameLabels = MapThread[Text[#1, #2, {0, 0}, #3] &, 
       {If[Length[columnNames] >= 4, columnNames[[1 ;; 4]], Join[columnNames, Table["", {4 - Length[columnNames]}]]], frameLabelCoords, frameLabelRotation}];
+    frameLabels = Select[frameLabels, !TrueQ[#[[1]]==""]&];
    ];
-
+   
    trie = TrieCreate[dataRecords];
    If[expandLastColumnQ,
     trie = TriePruneNumericalLevel[trie, Dimensions[dataRecords][[2]]];
