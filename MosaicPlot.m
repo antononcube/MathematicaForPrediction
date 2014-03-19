@@ -124,17 +124,43 @@ TrieMosaicRec[trie_, r_Rectangle, axis : ("x" | "y"), gap_?NumberQ, zwidth_?Numb
 
 *)
 
+
+Clear[MakeTooltipTable]
+MakeTooltipTable[triePath_] :=
+  Block[{t},
+   t =
+    DeleteCases[
+     Join @@ Table[{triePath[[1 ;; i, 1]], triePath[[i + 1 ;; j, 1]],
+        Apply[Times, triePath[[i ;; j, 2]]]/triePath[[i, 2]]},
+       {j, 2, Length[triePath]}, {i, 1, j - 1}],
+     {}, 3];
+   
+   t = Map[{If[Length[#[[1]]] == 0, "", 
+        DisplayForm[
+         FormBox[RowBox[
+           Riffle[If[StringQ[#], "\"" <> # <> "\"", #] & /@ #[[1]], 
+            "\[Intersection]"]], TraditionalForm]]], 
+       DisplayForm[
+        FormBox[RowBox[
+          Riffle[If[StringQ[#], "\"" <> # <> "\"", #] & /@ #[[2]], 
+           "\[Intersection]"]], TraditionalForm]], #[[3]]} &, t];
+
+   Grid[Prepend[t, Style[#, Blue, FontFamily -> "Times"] & /@ {"condition", "event", "probability"}], Alignment -> Left, 
+    Dividers -> {None, {False, True, False}}]
+  ];
+
 SIDEChangeRules = {Left -> Top, Top -> Right, Right -> Bottom, Bottom -> Left};
 SIDEToCoordinateRules = {Left -> 0, Right -> 1, Top -> 1, Bottom -> 0};
 
 Clear[TrieMosaicRec]
-TrieMosaicRec[trie_, r_Rectangle, axis : ("x" | "y"), 
+TrieMosaicRec[trie_, triePath_, r_Rectangle, axis : ("x" | "y"), 
    side : (Top | Bottom | Left | Right), gap_?NumberQ, 
-   zwidth_?NumberQ, {xLabelRotation_, yLabelRotation_}, labelStyle_] :=
+   zwidth_?NumberQ, {xLabelRotation_, yLabelRotation_}, labelStyle_, addTooltipQ_] :=
 
   Block[{rs, t, c = side /. SIDEToCoordinateRules},
 
-   If[Length[trie] == 1 || r[[2, 1]] - r[[1, 1]] <= gap || r[[2, 2]] - r[[1, 2]] <= gap, r,
+   If[Length[trie] == 1 || r[[2, 1]] - r[[1, 1]] <= gap || r[[2, 2]] - r[[1, 2]] <= gap,
+    If[ TrueQ[addTooltipQ], Tooltip[r, MakeTooltipTable[Append[triePath, trie[[1]]]]], r],
     (* ELSE *)
     rs = RectanglePartition[trie, r, axis, "Gap" -> gap, "ZeroWidth" -> zwidth];
 
@@ -154,9 +180,9 @@ TrieMosaicRec[trie_, r_Rectangle, axis : ("x" | "y"),
           If[side === Left, -{0, 2}, {0, 2}], yLabelRotation] &, {Rest[trie][[All, 1, 1]], rs}]]]
     ];
     MapThread[
-     TrieMosaicRec[#1, #2, axis /. {"x" -> "y", "y" -> "x"}, 
+     TrieMosaicRec[#1, Append[triePath, trie[[1]]], #2, axis /. {"x" -> "y", "y" -> "x"}, 
        side /. SIDEChangeRules, gap/2, 
-       zwidth, {xLabelRotation, yLabelRotation}, labelStyle] &, {Rest[trie], rs}, 1]
+       zwidth, {xLabelRotation, yLabelRotation}, labelStyle, addTooltipQ] &, {Rest[trie], rs}, 1]
    ]
   ];
 
@@ -174,7 +200,7 @@ Options[MosaicPlot] =
   Join[{"ColumnNames" -> None, "ColumnNamesOffset"->0.05, "Gap" -> 0.02, 
     "ZeroProbability" -> 0.001, "FirstAxis" -> "y", 
     "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {}, 
-    "ExpandLastColumn" -> False}, Options[Graphics]];
+    "ExpandLastColumn" -> False, "Tooltips"->True}, Options[Graphics]];
 MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
   Block[{trie, rs, gap = OptionValue[MosaicPlot, "Gap"], 
     zwidth = OptionValue[MosaicPlot, "ZeroProbability"], 
@@ -183,6 +209,7 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     labelStyle = OptionValue[MosaicPlot, "LabelStyle"], 
     columnNames = OptionValue[MosaicPlot, "ColumnNames"], 
     expandLastColumnQ = TrueQ[OptionValue[MosaicPlot, "ExpandLastColumn"]], 
+    addTooltipQ = TrueQ[OptionValue[MosaicPlot, "Tooltips"]], 
     LABELS = {}, frameLabels, frameLabelCoords, frameLabelRotation, frameLabelOffset = OptionValue[MosaicPlot, "ColumnNamesOffset"]},
    
    If[! (ArrayQ[dataRecords] && Length[Dimensions[dataRecords]]==2),
@@ -246,10 +273,10 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     trie = TrieAddMissingValues[trie, dataRecords]
    ];
    trie = TrieSortNodes[trie];
-   rs = TrieMosaicRec[trie, Rectangle[{0, 0}, {1, 1}], firstAxis, firstAxis /. {"x" -> Top, "y" -> Left}, gap, zwidth, labelRotation, labelStyle];
+   rs = TrieMosaicRec[trie, {}, Rectangle[{0, 0}, {1, 1}], firstAxis, firstAxis /. {"x" -> Top, "y" -> Left}, gap, zwidth, labelRotation, labelStyle, addTooltipQ];
    
    Graphics[{Map[{FaceForm[GrayLevel[0.7]], #} &, Flatten[rs]], Black, LABELS, frameLabels}, 
-    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn" | "ColumnNames" | "ColumnNamesOffset") -> _]]
+    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn" | "ColumnNames" | "ColumnNamesOffset" | "Tooltips") -> _]]
    
   ];
 MosaicPlot[___] := Block[{}, Message[MosaicPlot::nargs]; {}];
