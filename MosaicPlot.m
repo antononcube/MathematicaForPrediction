@@ -92,7 +92,7 @@ RectanglePartition[trie_,
    Rectangle[{x0_?NumberQ, y0_?NumberQ}, {x1_?NumberQ, y1_?NumberQ}], 
    axis : ("x" | "y"), opts : OptionsPattern[]] :=
   
-  Block[{ps, aps, xs, ys, gap = OptionValue["Gap"], 
+  Block[{ps, aps, xs, ys, gap = OptionValue["Gap"],
     zwidth = OptionValue["ZeroWidth"], sortQ = OptionValue["SortNodes"]},
    If[TrueQ[sortQ],
     ps = #[[1, 2]] & /@ SortBy[Rest[trie], #[[1]] &],
@@ -154,7 +154,7 @@ SIDEToCoordinateRules = {Left -> 0, Right -> 1, Top -> 1, Bottom -> 0};
 
 Clear[TrieMosaicRec]
 TrieMosaicRec[trie_, triePath_, r_Rectangle, axis : ("x" | "y"), 
-   side : (Top | Bottom | Left | Right), gap_?NumberQ, 
+   side : (Top | Bottom | Left | Right), gap_?NumberQ, gapFactor_?NumberQ, 
    zwidth_?NumberQ, {xLabelRotation_, yLabelRotation_}, labelStyle_, addTooltipQ_] :=
 
   Block[{rs, t, c = side /. SIDEToCoordinateRules},
@@ -181,28 +181,27 @@ TrieMosaicRec[trie_, triePath_, r_Rectangle, axis : ("x" | "y"),
     ];
     MapThread[
      TrieMosaicRec[#1, Append[triePath, trie[[1]]], #2, axis /. {"x" -> "y", "y" -> "x"}, 
-       side /. SIDEChangeRules, gap/2, 
+       side /. SIDEChangeRules, gap * gapFactor, gapFactor, 
        zwidth, {xLabelRotation, yLabelRotation}, labelStyle, addTooltipQ] &, {Rest[trie], rs}, 1]
    ]
   ];
 
 MosaicPlot::nargs = "MosaicPlot takes as an argument a full array (that is list of records).";
-MosaicPlot::nfa = "The first argument is expected to be a full array (a list of records).";
-MosaicPlot::inl = "The number of indices and the number of column names should be the same.";
 MosaicPlot::ncno = "The value of the option \"ColumnNamesOffset\" should be a number.";
-MosaicPlot::ngap = "The value of the option \"Gap\" should be a number.";
-MosaicPlot::nzp = "The value of the option \"ZeroProbability\" should be a number."; 
+MosaicPlot::npnum = "The value of the option `1` should be a positive number.";
 MosaicPlot::nfax = "The value of the option \"FirstAxis\" should be either \"x\" or \"y\".";
 MosaicPlot::nlr = "The value of the option \"LabelRotation\" should be a pair of numbers or two pairs of numbers.";
 
 Clear[MosaicPlot]
 Options[MosaicPlot] = 
-  Join[{"ColumnNames" -> None, "ColumnNamesOffset"->0.05, "Gap" -> 0.02, 
+  Join[{"ColumnNames" -> None, "ColumnNamesOffset"->0.05, "Gap" -> 0.02, "GapFactor" -> 0.5,  
     "ZeroProbability" -> 0.001, "FirstAxis" -> "y", 
     "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {}, 
     "ExpandLastColumn" -> False, "Tooltips"->True}, Options[Graphics]];
 MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
-  Block[{trie, rs, gap = OptionValue[MosaicPlot, "Gap"], 
+  Block[{trie, rs, 
+    gap = OptionValue[MosaicPlot, "Gap"],
+    gapFactor = OptionValue[MosaicPlot, "GapFactor"], 
     zwidth = OptionValue[MosaicPlot, "ZeroProbability"], 
     firstAxis = OptionValue[MosaicPlot, "FirstAxis"], 
     labelRotation = OptionValue[MosaicPlot, "LabelRotation"], 
@@ -217,13 +216,18 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     Return[{}]
    ];
    
-   If[! NumberQ[gap],
-    Message[MosaicPlot::ngap];
+   If[! TrueQ[ NumberQ[gap] && gap > 0 ],
+    Message[MosaicPlot::npnum, "\"Gap\""];
     gap = 0.02;
    ];
-   
-   If[! NumberQ[zwidth],
-    Message[MosaicPlot::nzp];
+
+   If[! TrueQ[ NumberQ[gapFactor] && gapFactor > 0 ],
+    Message[MosaicPlot::npnum, "\"GapFactor\""];
+    gapFactor = 0.5;
+   ];
+      
+   If[! TrueQ[ NumberQ[zwidth] && zwidth > 0 ],
+    Message[MosaicPlot::npnum, "\"ZeroProbability\""];
     zwidth = 0.001;
    ];
    
@@ -273,10 +277,10 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     trie = TrieAddMissingValues[trie, dataRecords]
    ];
    trie = TrieSortNodes[trie];
-   rs = TrieMosaicRec[trie, {}, Rectangle[{0, 0}, {1, 1}], firstAxis, firstAxis /. {"x" -> Top, "y" -> Left}, gap, zwidth, labelRotation, labelStyle, addTooltipQ];
+   rs = TrieMosaicRec[trie, {}, Rectangle[{0, 0}, {1, 1}], firstAxis, firstAxis /. {"x" -> Top, "y" -> Left}, gap, gapFactor, zwidth, labelRotation, labelStyle, addTooltipQ];
    
    Graphics[{Map[{FaceForm[GrayLevel[0.7]], #} &, Flatten[rs]], Black, LABELS, frameLabels}, 
-    DeleteCases[{opts}, ("Gap" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn" | "ColumnNames" | "ColumnNamesOffset" | "Tooltips") -> _]]
+    DeleteCases[{opts}, ("Gap" | "GapFactor" | "ZeroProbability" | "FirstAxis" | "LabelRotation" | "ExpandLastColumn" | "ColumnNames" | "ColumnNamesOffset" | "Tooltips") -> _]]
    
   ];
 MosaicPlot[___] := Block[{}, Message[MosaicPlot::nargs]; {}];
