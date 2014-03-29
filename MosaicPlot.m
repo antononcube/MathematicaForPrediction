@@ -24,7 +24,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2012 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -36,17 +36,157 @@
 
 (* Version 1.0 *)
 (* 
-  This package defines the function MosaicPlot that summarizes the conditional probabilities of co-occurrence of the categorical values in a list of records of the same length. (The list of records is assumed to be a full array and the columns to represent categorical values.) Note, that if a column is numerical but has a small number of different values it can be seen as categorical.
+  This package defines the function MosaicPlot that summarizes the
+  conditional probabilities of co-occurrence of the categorical values
+  in a list of records of the same length. (The list of records is
+  assumed to be a full array and the columns to represent categorical
+  values.) Note, that if a column is numerical but has a small number
+  of different values it can be seen as categorical.
 
-  Descriptions of the mosaic plots can be found in books about programming and statistics with R. See for example "R in Action" by Robert Kabacoff.
+  Descriptions of the mosaic plots can be found in books about
+  programming and statistics with R. See for example "R in Action" by
+  Robert Kabacoff.  
+  See also the document in "Mosaic plots for data visualization" at
+  https://github.com/antononcube/MathematicaForPrediction/tree/master/Documentation .
 
-  MosaicPlot has options for adjusting the gap between the rectangles, the style of the labels, the rotation of the labels, and from which side to start the rectangle splitting. MosaicPlot also takes all the options of Graphics (because MosaicPlot is implemented with Graphics).
+  OPTIONS:
 
-  The mosaic plot is made within the rectangle {{0,0},{1,1}}. Using the options PlotRange and Frame one make a frame that encompasses the rotated labels.
+  MosaicPlot has options for adjusting the gap between the rectangles,
+  the style of the labels, the rotation of the labels, and from which
+  side to start the rectangle splitting, and the color of the
+  rectangles. MosaicPlot also takes all the options of
+  Graphics. (Because MosaicPlot is implemented with Graphics).
 
-  TODO
-  1. Pearson chi-squared correlation coloring.
-  2. Better description of the functionalities.
+  The mosaic plot is made within the rectangle {{0,0},{1,1}}. Using
+  the options PlotRange and Frame one make a frame that encompasses
+  the rotated labels.
+
+  MosaicPlot takes the following options:
+
+  {"ColumnNames" -> None, "ColumnNamesOffset" -> 0.05, 
+   "ExpandLastColumn" -> False, "FirstAxis" -> "y", "Gap" -> 0.02, 
+   "GapFactor" -> 0.5, "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {},
+   "Tooltips" -> True, "ZeroProbability" -> 0.001, ColorRules -> Automatic}
+
+  In addition, MosaicPlot takes all the options of Graphics.
+
+  The options are explained below.
+
+  (o) "ExpandLastColumn" -- visualizing categorical columns + a numerical column
+
+      If the last data column is numerical then MosaicPlot can use it
+      as pre-computed contingency statistics. This functionality is
+      specified with the option "ExpandLastColumn"->True.
+
+      sData = {{"blond", "blue", 3}, {"blond", "brown", 1},
+               {"dark", "blue", 1}, {"dark", "brown", 4}};
+      MosaicPlot[sData, "ExpandLastColumn" -> True]
+
+  (o) "Gap" and "GapFactor" -- controlling the size of the gap between the rectangles
+
+      The size of the gaps between the rectangles is controlled with
+      the options "Gap" and "GapFactor". The value "Gap" specifies the
+      size of the gap between the rectangles derived from the first
+      column. MosaicPlot splits the data into rectangles
+      recursively. In order to derive the gaps for the subsequent data
+      column the values of "Gap" and "GapFactor" are multiplied. In
+      other words, if MosaicPlot is given the options
+      {"Gap"->g,"GapFactor"->f} then the gap between the rectangles
+      corresponding to the i-th column have the size is g f^(i-1).
+
+  (o) "LabelRotation" and "LabelStyle" -- contingency values labels
+
+      The labels derived from the distinct values (levels) of each
+      column of the data can be rotated and given style options.
+
+      The option "LabelRotation" takes directional specification for
+      Text (the fourth argument of Text). The option "LabelStyle"
+      takes options and arguments for the function Style.
+
+      MosaicPlot[censusData[[All, {8, 14}]], "LabelRotation" -> {{1, 0}, {1, 1}}, 
+        "LabelStyle" -> {Bold, Red, FontFamily -> "Times"}]
+
+  (o) "ColumnNames" and "ColumnNamesOffset" -- labels for categorical variables
+
+      The names of the data columns (data's variables) are specified
+      with the option "ColumnNames". (The list of names given to
+      "ColumnNames" can be formatted with Style.) The distance of the
+      column names from the rectangles is specified with the option
+      "ColumnNamesOffset".
+
+  (o) "FirstAxis" -- start of the rectangle splitting
+
+      The starting axis of the data splitting is specified by "FirstAxis".
+
+      MosaicPlot[censusData[[All, {9, 14}]], "FirstAxis" -> #] & /@ {"x", "y"}
+
+  (o) "Tooltips" -- tooltips with exact contingency statistics
+
+      MosaicPlot has an interactive feature using Tooltip that gives a
+      table with the exact co-occurrence (contingency) values when
+      hovering with the mouse over the rectangles. The option
+      "Tooltips" takes the values True or False.
+
+  (o) Visualizing non-existing contingencies ("ZeroProbability")
+
+      The non-existing contingencies have to be represented in the
+      mosaic plot. MosaicPlot uses very thin rectangles for them and
+      the size of these rectangles is controlled with the option
+      "ZeroProbability".
+
+  (o) Coloring of the rectangles (ColorRules)
+
+      The rectangles can be colored using the option ColorRules which
+      specifies how the colors of the rectangles are determined from
+      the indices of the data columns.
+
+      More precisely, the values of the option ColorRules should be a
+      list of rules, {i1->c1, i2->c2,...}, matching the form
+
+      {(_Integer->(_RGBColor|_GrayLevel))..}. 
+
+      The column indices Subscript[i, k] can be negative (-1 meaning the last column).
+
+      If coloring for only one column index is specified the value of
+      ColorRules can be of the form
+
+      {_Integer->{(_RGBColor|_GrayLevel)..}}. 
+
+      The colors are used with Blend in order to color the rectangles
+      according to the order of the unique values of the specified
+      data columns.
+
+      The default value for ColorRules is Automatic. When Automatic is
+      given to ColorRules, MosaicPlot finds the data column with the
+      largest number of unique values and colors them according to
+      their order using ColorData[7,"ColorList"].
+
+      The grid of plots below shows mosaic plots of the same data with
+      different values for the option ColorRules (given as plot
+      labels).
+
+      sData = Table[{RandomChoice[{1, 4, 5, 2} -> {"a", "b", "c", "d"}], 
+        RandomChoice[{4, 1, 5} -> {"A", "B", "C"}], 
+        RandomChoice[{1, 2} -> {"1", "2"}]}, {60}];
+      t = MosaicPlot[sData, PlotLabel -> If[TrueQ[# === None], "None", #], 
+          ColorRules -> ReleaseHold[#], "Gap" -> 0.025, "GapFactor" -> 0.6,
+          ImageSize -> 200] & /@ {{}, None, 
+            Automatic, {_ -> GrayLevel[0.7]}, 
+            HoldForm[{1 -> Green, 2 -> Blue, 3 -> Red}], 
+            HoldForm[{-2 -> Blue, -1 -> Red}], HoldForm[{2 -> Blue}], 
+            HoldForm[{2 -> {Pink, Blue}}], 
+            HoldForm[{2 -> ColorData[11, "ColorList"]}]};
+      Grid[ArrayReshape[t, {3, 3}, ""], Dividers -> All]
+
+
+  TIPS: * When the number of unique values in a categorical column is
+  large the gaps between the rectangles might "eat" the recntagles
+  areas. Use smaller gap size for the option "Gap".
+
+  TODO 
+  1. Pearson chi-squared correlation coloring. (After I
+  implemented the option ColorRules this TODO item has low priority.)
+
 *)
 
 BeginPackage["MosaicPlot`"]
