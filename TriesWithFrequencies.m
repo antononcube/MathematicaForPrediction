@@ -67,6 +67,8 @@ TriePositionParts::usage = "Transforms a list of the form {a[1],a[2],...,a[n],1}
 
 TriePathFromPosition::usage = "TriePathFromPosition[trie_,pos_] gives a list of nodes from the root of a trie to the node at a specified position."
 
+TrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the root node to the leaf nodes."
+
 Begin["`Private`"]
 
 
@@ -323,6 +325,18 @@ TriePathFromPosition[trie_, pos : {_Integer ...}] :=
   Block[{ps},
    ps = FoldList[Append[#1, #2] &, {First[pos]}, Rest[pos]];
    Fold[Append[#1, trie[[Sequence @@ Append[#2, 1]]]] &, {}, Most[ps]]
+  ];
+
+Clear[TrieRootToLeafPaths]
+TrieRootToLeafPaths[trie_] :=
+  Block[{rows = {}, TrieRows},
+   TrieRows[t_, r_] :=
+    Which[
+     Length[Rest[t]] == 0, AppendTo[rows, Append[r, t[[1]]]],
+     True, Map[TrieRows[#, Append[r, t[[1]]]] &, Rest[t]]
+    ];
+   TrieRows[trie, {}];
+   rows
   ];
 
 End[]
