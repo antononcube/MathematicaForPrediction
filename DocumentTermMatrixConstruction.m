@@ -22,7 +22,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -59,18 +59,15 @@ ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch), stopWords_List}, opts
 
 ToBagOfWords[docs : {_String ..}, {stemmingRules:(_List|_Dispatch), stopWords_List}, opts : OptionsPattern[]] :=  
   Block[{docTerms, splittingCharaters, pSPred},
-   splittingCharaters = OptionValue[ToBagOfWords, "SplittingCharacters"];
-   pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
-   If[TrueQ[pSPred === None],
-    docTerms = Flatten[StringSplit[#, splittingCharaters]] & /@ docs,
-    docTerms = Select[Flatten[StringSplit[#, splittingCharaters]], pSPred] & /@ docs
-   ];
-   docTerms = 
-    Flatten[Fold[
-        If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ 
-     docTerms;
-   docTerms = docTerms /. stemmingRules;
-   docTerms
+    splittingCharaters = OptionValue[ToBagOfWords, "SplittingCharacters"];
+    pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
+    If[TrueQ[pSPred === None],
+      docTerms = Flatten[StringSplit[#, splittingCharaters]] & /@ docs,
+      docTerms = Select[Flatten[StringSplit[#, splittingCharaters]], pSPred] & /@ docs
+    ];
+    docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms;
+    docTerms = docTerms /. stemmingRules;
+    docTerms
   ];
 
 Clear[DocumentTermMatrix]
@@ -78,23 +75,23 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules:(_List|_Dispatch), stopW
   Block[{terms, mat, docTerms, nDocuments, splittingCharaters, 
     n = Length[docs], globalWeights, termToIndexRules},
    
-   (* for the construction of the doc*term matrix*)   
-   docTerms = ToBagOfWords[docs, {stemmingRules, stopWords}, opts];
+    (* for the construction of the doc*term matrix*)   
+    docTerms = ToBagOfWords[docs, {stemmingRules, stopWords}, opts];
    
-   (* find all unique terms *)
-   terms = Union[Flatten[docTerms]];
+    (* find all unique terms *)
+    terms = Union[Flatten[docTerms]];
    
-   (* matrix of term occurances *)   
-   termToIndexRules = Dispatch[Thread[terms -> Range[Length[terms]]]];
-   mat = Map[SparseArray[Rule @@@ (Tally[#] /. termToIndexRules), Length[terms]] &, docTerms];
-   mat = SparseArray[mat];
-   {mat, terms}
+    (* matrix of term occurances *)   
+    termToIndexRules = Dispatch[Thread[terms -> Range[Length[terms]]]];
+    mat = Map[SparseArray[Rule @@@ (Tally[#] /. termToIndexRules), Length[terms]] &, docTerms];
+    mat = SparseArray[mat];
+    {mat, terms}
   ];
 
 DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWeightFunc_, localWeightFunc_, normalizerFunc_}, opts : OptionsPattern[]] :=
   Block[{terms, mat},
-   {mat, terms} = DocumentTermMatrix[docs, {stemmingRules, stopWords}, opts];
-   {WeightTerms[mat, globalWeightFunc, localWeightFunc, normalizerFunc], terms}
+    {mat, terms} = DocumentTermMatrix[docs, {stemmingRules, stopWords}, opts];
+    {WeightTerms[mat, globalWeightFunc, localWeightFunc, normalizerFunc], terms}
   ];
 
 Clear[WeightTerms]
@@ -103,121 +100,109 @@ WeightTerms[docTermMat_?MatrixQ] :=
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] := 
   Block[{mat, nDocuments, n, m, globalWeights, diagMat},
-   {n, m} = Dimensions[docTermMat];
-   mat = N[SparseArray[docTermMat]];
-   nDocuments = Map[Total, mat];
-   PRINT@AbsoluteTiming[
-     mat = Transpose[mat];(* term * document matrix *)
+    {n, m} = Dimensions[docTermMat];
+    mat = N[SparseArray[docTermMat]];
+    
+    (* number of documents per term *)
+    nDocuments = Map[Total, mat];
+    
+    mat = Transpose[mat]; (* term * document matrix *)
      
-     globalWeights = Map[globalWeightFunc[#, nDocuments] &, mat];
-     mat = Transpose[SparseArray[mat]];(* document * term matrix *)
-     ];
-   PRINT[Length[Select[globalWeights, ! NumberQ[#] &]]];
-   PRINT["WeightTerms::globalWeights : ", 
-    Through[{Min, Max, Mean, Median}[globalWeights]]];
+    globalWeights = Map[globalWeightFunc[#, nDocuments] &, mat];
+    mat = Transpose[SparseArray[mat]]; (* document * term matrix *)
+
+    (* PRINT[Length[Select[globalWeights, ! NumberQ[#] &]]]; *)
+    (* PRINT["WeightTerms::globalWeights : ", Through[{Min, Max, Mean, Median}[globalWeights]]]; *)
    
-   PRINT@AbsoluteTiming[
-     If[TrueQ[
-        localWeightFunc === Identity || 
-         localWeightFunc == Function[#]],
-       
-       diagMat = 
-        SparseArray[
-         MapThread[{#1, #2} -> #3 &, {Range[1, m], Range[1, m], 
-           globalWeights}], {m, m}];
-       PRINT[diagMat, " ", MatrixQ[diagMat, NumberQ]];
-       mat = mat.diagMat,
-       mat = 
-        Map[SparseArray[Map[localWeightFunc, #]*globalWeights] &, 
-         mat]
-       ];
-     ];
-   PRINT@AbsoluteTiming[
-     If[TrueQ[
-        normalizerFunc === Identity || 
-         normalizerFunc == Function[#]],
-       mat = SparseArray[mat],
-       mat = SparseArray[Map[normalizerFunc[#] &, mat]];
-       ];
-     ];
-   mat
-   ];
+    If[TrueQ[localWeightFunc === Identity || localWeightFunc == Function[#]], 
+      diagMat = SparseArray[MapThread[{#1, #2} -> #3 &, {Range[1, m], Range[1, m], globalWeights}], {m, m}];
+      (* PRINT[diagMat, " ", MatrixQ[diagMat, NumberQ]]; *)
+      mat = mat.diagMat,
+      (* ELSE *)
+      mat = Map[SparseArray[Map[localWeightFunc, #]*globalWeights] &, mat]
+    ];
+
+    If[TrueQ[normalizerFunc === Identity || normalizerFunc == Function[#]],
+      mat = SparseArray[mat],
+      mat = SparseArray[Map[normalizerFunc[#] &, mat]];
+    ];
+    mat
+  ];
 
 Clear[GlobalTermWeight]
 (*SetAttributes[GlobalTermWeight,HoldAll]*)
 ZEROFREQUENCYWEIGHT = 10^4;
 GlobalTermWeight["None", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), d_] := 1;
+
+GlobalTermWeight["None", termVec_SparseArray, nDocuments_List] := 1; 
+
 GlobalTermWeight["Entropy", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] :=
-   Block[{ps, n = Dimensions[termDoc][[2]]},
-   ps = MapThread[
-     If[#2 > 0, #1/#2, 1.0] &, {termDoc[[termIndex]] // Normal, 
-      nDocuments}];
-   1.0 + Total[Map[If[# == 0, 0, #*Log[#]] &, ps]]/Log[n]
-   ];
+  Block[{ps, n = Dimensions[termDoc][[2]]},
+    ps = MapThread[If[#2 > 0, #1/#2, 1.0] &, {termDoc[[termIndex]] // Normal, nDocuments}];
+    1.0 + Total[Map[If[# == 0, 0, #*Log[#]] &, ps]]/Log[n]
+  ];
 
 GlobalTermWeight["IDF", termVec_SparseArray, nDocuments_List] :=  
   Block[{nfs},
-   nfs = Total[Clip[termVec]];
-   If[nfs > 0, Log[Dimensions[termVec][[1]]/nfs],
-    ZEROFREQUENCYWEIGHT
+    nfs = Total[Clip[termVec]];
+    If[nfs > 0, Log[Dimensions[termVec][[1]]/nfs],
+      ZEROFREQUENCYWEIGHT
     ]
-   ];
+  ];
 
 GlobalTermWeight["IDF", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] :=
    Block[{nfs, n = Dimensions[termDoc][[2]]},
-   nfs = Total[Clip[termDoc[[termIndex]]]];
-   If[nfs > 0, Log[n/nfs],
-    ZEROFREQUENCYWEIGHT
-    ]
+     nfs = Total[Clip[termDoc[[termIndex]]]];
+     If[nfs > 0, Log[n/nfs],
+       ZEROFREQUENCYWEIGHT
+     ]
    ];
 
 GlobalTermWeight["GFIDF", termVec_SparseArray, nDocuments_List] :=  
   Block[{nfs, fs, n = Dimensions[termVec][[1]]},
-   nfs = Total[Clip[fs]];
-   fs = Total[termVec];
-   If[nfs > 0, fs/nfs,
-    ZEROFREQUENCYWEIGHT
+    nfs = Total[Clip[fs]];
+    fs = Total[termVec];
+    If[nfs > 0, fs/nfs,
+      ZEROFREQUENCYWEIGHT
     ]
-   ];
+  ];
 
 GlobalTermWeight["GFIDF", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] := 
    Block[{nfs, fs, n = Dimensions[termDoc][[2]]},
-   fs = termDoc[[termIndex]];
-   nfs = Total[Clip[fs]];
-   fs = Total[fs];
-   If[nfs > 0, fs/nfs,
-    ZEROFREQUENCYWEIGHT
-    ]
+     fs = termDoc[[termIndex]];
+     nfs = Total[Clip[fs]];
+     fs = Total[fs];
+     If[nfs > 0, fs/nfs,
+       ZEROFREQUENCYWEIGHT
+     ]
    ];
 
 GlobalTermWeight["Normal", termVec_SparseArray, nDocuments_List] :=  
   Block[{nfs},
-   nfs = Norm[termVec];
-   If[nfs > 0, 1/nfs,
-    ZEROFREQUENCYWEIGHT]
-   ];
+    nfs = Norm[termVec];
+    If[nfs > 0, 1/nfs, ZEROFREQUENCYWEIGHT]
+  ];
 
 GlobalTermWeight["Normal", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] :=
    Block[{nfs},
-   nfs = Norm[termDoc[[termIndex]]];
-   If[nfs > 0, 1/nfs,
-    ZEROFREQUENCYWEIGHT]
+     nfs = Norm[termDoc[[termIndex]]];
+     If[nfs > 0, 1/nfs, ZEROFREQUENCYWEIGHT]
    ];
 
 GlobalTermWeight["ProbabilisticInverse", termVec : _SparseArray, nDocuments_List] :=
   Block[{nfs, n = Dimensions[termVec][[1]]},
-   nfs = Total[Clip[termVec]];
-   If[nfs > 0 && n - nfs > 0, Log[(n - nfs)/nfs],
-    ZEROFREQUENCYWEIGHT
+    nfs = Total[Clip[termVec]];
+    If[nfs > 0 && n - nfs > 0, Log[(n - nfs)/nfs],
+      ZEROFREQUENCYWEIGHT
     ]
-   ];
+  ];
 
 GlobalTermWeight["ProbabilisticInverse", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] :=
    Block[{nfs, n = Dimensions[termDoc][[2]]},
-   nfs = Total[Clip[termDoc[[termIndex]]]];
-   If[nfs > 0 && n - nfs > 0, Log[(n - nfs)/nfs],
-    ZEROFREQUENCYWEIGHT
-    ]
+     nfs = Total[Clip[termDoc[[termIndex]]]];
+     If[nfs > 0 && n - nfs > 0, Log[(n - nfs)/nfs],
+       ZEROFREQUENCYWEIGHT
+     ]
    ];
 
 End[]
