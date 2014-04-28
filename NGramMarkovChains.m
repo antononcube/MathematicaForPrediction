@@ -48,9 +48,9 @@
 
 BeginPackage["NGramMarkovChain`"]
 
-NGramMarkovChainModel::usage = "NGramMarkovChainModel[ws_Lists, ngram_Integer] finds Markov chain probabilities from ws for each ngram number of words and using those probabilities generates a list of nwords."
+NGramMarkovChainModel::usage = "NGramMarkovChainModel[ws_List, ngram_Integer] finds Markov chain probabilities from ws for each ngram number of words."
 
-NGramMarkovChainGenerate::usage = "NGramMarkovChainGenerate[m_NGramModel, s_List, n_Integer] generates a list of n using the n-gram model m starting with sequence s."
+NGramMarkovChainGenerate::usage = "NGramMarkovChainGenerate[m_NGramModel, s_List, n_Integer] generates a list of n words using the n-gram model m starting with the sequence s."
 
 NGramMarkovChainText::usage = "NGramMarkovChainText[textArg_String, ngram_Integer, startWords:{_String..}, nwords_Integer] splits the string textArg according to the value given to the option WordSeparators, finds the ngram Markov chain probabilities, and generates text of nwords."
 
