@@ -47,6 +47,8 @@ DataColumnsSummary::usage = "Summary of a list of data columns."
 
 RecordsSummary::usage = "Summary of a list of records that form a full two dimensional array."
 
+GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimics TableForm by using Grid (and producing fancier outlook)."
+
 Begin["`Private`"]
 
 Clear[ClassificationSuccessTableForm]
@@ -113,6 +115,31 @@ RecordsSummary[dataRecords_, opts : OptionsPattern[]] :=
   DataColumnsSummary[Transpose[dataRecords], opts];
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
   DataColumnsSummary[Transpose[dataRecords], columnNames, opts];
+
+
+Clear[GridTableForm]
+Options[GridTableForm] = {TableHeadings -> None};
+GridTableForm[data_, opts : OptionsPattern[]] :=
+  Block[{gridData, gridHeadings},
+   gridHeadings = OptionValue[GridTableForm, TableHeadings];
+   gridData = SortBy[Flatten /@ data, -#[[1]] &];
+   gridData = Map[Join[#, Table["", {Max[Length /@ gridData] - Length[#]}]] &, gridData];
+   gridData = MapIndexed[Prepend[#1, #2[[1]]] &, gridData];
+   If[gridHeadings === None || ! ListQ[gridHeadings],
+    gridHeadings = Join[{"#"}, Range[1, Length[gridData[[1]]] - 1]],
+    (*ELSE*)
+    gridHeadings = Join[{"#"}, gridHeadings];
+    If[Length[gridHeadings] < Length[gridData[[1]]],
+     gridHeadings = Append[gridHeadings, SpanFromLeft];
+    ]
+   ];
+   gridHeadings = Map[Style[#, Blue, FontFamily -> "Times"] &, gridHeadings];
+   gridData = Prepend[gridData, gridHeadings];
+   Grid[gridData, Alignment -> Left, 
+    Dividers -> {Join[{1 -> Black, 2 -> Black}, 
+       Thread[Range[3, Length[gridData[[2]]] + 1] -> GrayLevel[0.8]], {Length[gridData[[2]]] + 1 -> Black}], {True, True, {False}, True}}, 
+    Background -> {Automatic, Flatten[Table[{White, GrayLevel[0.96]}, {Length[gridData]/2}]]}]
+  ];
 
 End[]
 
