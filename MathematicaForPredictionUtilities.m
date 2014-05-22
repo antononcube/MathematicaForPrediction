@@ -129,11 +129,11 @@ GridTableForm[data_, opts : OptionsPattern[]] :=
     gridHeadings = Join[{"#"}, Range[1, Length[gridData[[1]]] - 1]],
     (*ELSE*)
     gridHeadings = Join[{"#"}, gridHeadings];
-    If[Length[gridHeadings] < Length[gridData[[1]]],
-     gridHeadings = Append[gridHeadings, SpanFromLeft];
-    ]
    ];
    gridHeadings = Map[Style[#, Blue, FontFamily -> "Times"] &, gridHeadings];
+   If[Length[gridHeadings] < Length[gridData[[1]]],
+     gridHeadings = Append[gridHeadings, SpanFromLeft];
+   ];
    gridData = Prepend[gridData, gridHeadings];
    Grid[gridData, Alignment -> Left, 
     Dividers -> {Join[{1 -> Black, 2 -> Black}, 
