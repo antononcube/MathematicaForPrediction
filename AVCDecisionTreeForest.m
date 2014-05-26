@@ -593,7 +593,7 @@ ParallelDecisionForestClassify[forest_, record_] :=
 Clear[MakeIDGenerator]
 MakeIDGenerator[] :=
   Module[{i = 0},
-   Clear[NewID, ReetID];
+   Clear[NewID, ResetID];
    NewID[] := i++;
    ResetID[] := (i = 0);
   ];
