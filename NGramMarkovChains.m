@@ -1,3 +1,5 @@
+(* ::Package:: *)
+
 (*
     N-gram Markov chains Mathematica package
     Copyright (C) 2014  Anton Antonov
@@ -117,33 +119,50 @@ NGramMarkovChainModel[textWords_, numberOfPreviousWords_, opts : OptionsPattern[
     NGramModel[markovMat, wordToIndexRules, indexToWordRules]
   ];
 
+
 Clear[NGramMarkovChainGenerate]
 NGramMarkovChainGenerate[
    NGramModel[markovMat_SparseArray, 
     wordToIndexRules : (_Dispatch | {_Rule ..}), 
     indexToWordRules : (_Dispatch | {_Rule ..})], startWords_List, 
    numberOfWords_Integer] :=
-  Module[{words, numberOfPreviousWords, randomTextWords, PickWord, startNGram},
-   words = If[TrueQ[Head[wordToIndexRules] === Dispatch], wordToIndexRules[[1, All, 1]], wordToIndexRules[[All, 1]]];
-   PickWord[inds_] := RandomSample[Normal[markovMat[[Sequence @@ inds]]] -> words, 1][[1]];
-   PickWord[ss : {_String ..}] := PickWord[ss /. wordToIndexRules];
-   numberOfPreviousWords = Length[Dimensions[markovMat]] - 1;
-   startNGram = startWords;
-   If[Length[startNGram] < numberOfPreviousWords,
-    startNGram = 
+  Module[{words, numberOfPreviousWords, randomTextWords, PickWord, startNGram, b = True, w},
+
+    words = If[TrueQ[Head[wordToIndexRules] === Dispatch], Normal[wordToIndexRules][[All, 1]], wordToIndexRules[[All, 1]]];
+    PickWord[inds_] :=
+     Block[{ps = Total[markovMat[[Sequence @@ inds]]]},
+      If[ps > 0,
+       {True, 
+        RandomSample[Normal[markovMat[[Sequence @@ inds]]] -> words, 
+          1][[1]]},
+       {False, None}
+       ]
+      ];
+    (*PickWord[inds_]:=RandomSample[Normal[markovMat[[Sequence@@inds]]]->words,1][[1]];*)
+    
+    PickWord[ss : {_String ..}] := PickWord[ss /. wordToIndexRules];
+    numberOfPreviousWords = Length[Dimensions[markovMat]] - 1;
+    startNGram = startWords;
+    If[Length[startNGram] < numberOfPreviousWords,
+     startNGram = 
       Join @@ Table[
         startNGram, {Ceiling[
           numberOfPreviousWords/Length[startNGram]]}]
-   ];
-   startNGram = Take[startNGram, -numberOfPreviousWords];
-   randomTextWords = Nest[Append[#, PickWord[Take[#, -numberOfPreviousWords]]] &, startNGram, numberOfWords];
-   randomTextWords
-  ] /; Equal @@ Join[
+     ];
+    startNGram = Take[startNGram, -numberOfPreviousWords];
+
+    (*randomTextWords=Nest[Append[#,PickWord[Take[#,-numberOfPreviousWords]]]&,startNGram,numberOfWords];*)
+   
+    randomTextWords = 
+     NestWhile[({b, w} = PickWord[Take[#, -numberOfPreviousWords]]; If[b, Append[#, w ], #]) &, startNGram, b &, 1, numberOfWords];
+
+    randomTextWords
+    ] /; Equal @@ Join[
       Dimensions[markovMat],
       {If[TrueQ[Head[wordToIndexRules] === Dispatch], 
-        Length[wordToIndexRules[[1]]], Length[wordToIndexRules]],
+        Length[Normal[wordToIndexRules]], Length[wordToIndexRules]],
        If[TrueQ[Head[indexToWordRules] === Dispatch], 
-        Length[indexToWordRules[[1]]], Length[indexToWordRules]]}] && 
+        Length[Normal[indexToWordRules]], Length[indexToWordRules]]}] && 
     numberOfWords > 0;
 
 Clear[NGramMarkovChainText]
@@ -160,3 +179,6 @@ NGramMarkovChainText[text_String, numberOfPreviousWords_Integer, startWords : {_
 End[]
 
 EndPackage[]
+
+
+
