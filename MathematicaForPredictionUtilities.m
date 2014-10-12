@@ -122,7 +122,7 @@ Options[GridTableForm] = {TableHeadings -> None};
 GridTableForm[data_, opts : OptionsPattern[]] :=
   Block[{gridData, gridHeadings},
    gridHeadings = OptionValue[GridTableForm, TableHeadings];
-   gridData = SortBy[Flatten /@ data, -#[[1]] &];
+   gridData = data;
    gridData = Map[Join[#, Table["", {Max[Length /@ gridData] - Length[#]}]] &, gridData];
    gridData = MapIndexed[Prepend[#1, #2[[1]]] &, gridData];
    If[gridHeadings === None || ! ListQ[gridHeadings],
