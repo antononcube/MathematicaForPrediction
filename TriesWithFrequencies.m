@@ -15,9 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	Written by Anton Antonov,
+	antononcube@gmail.com,
+	7320 Colbury Ave,
 	Windermere, Florida, USA.
 *)
 
@@ -34,8 +34,8 @@
 
 (* Version 0.8 *)
 (* This version contains functions to build, shrink, and retrieve nodes of tries (also known as "prefix trees"). The implementations are geared toward utilization of data mining algorithms, like frequent sequence occurrences. *)
-(* TODO: 
-  1. Enhance the functionality of TriePosition to work over shrunk tries. 
+(* TODO:
+  1. Enhance the functionality of TriePosition to work over shrunk tries.
   2. Enhance the signature and functionality of TrieLeafProbabilities to take a second argument of a "word" for which the leaf probabilities have to be found.
 *)
 
@@ -59,6 +59,8 @@ TrieForm::usage = "Shrinks the trie argument and returns a list of rules for a g
 
 TrieNodeProbabilities::usage = "Converts the frequencies at the nodes of a trie into probabilities. The value of the option \"ProbabilityModifier\" is a function that is applied to the computed probabilities."
 
+TrieNodeFrequencies::usage = "Converts the probabilities at the nodes of a trie into frequencies. The value of the option \"FrequencyModifier\" is a function that is applied to the computed frequencies."
+
 TrieLeafProbabilities::usage = "Gives the probabilities to end up at each of the leaves by paths from the root of the trie."
 
 TrieLeafProbabilitiesWithPositions::usage = "Gives the probabilities to end up at each of the leaves by paths from the root of the trie. For each leaf its position in the trie is given."
@@ -68,6 +70,8 @@ TriePositionParts::usage = "Transforms a list of the form {a[1],a[2],...,a[n],1}
 TriePathFromPosition::usage = "TriePathFromPosition[trie_,pos_] gives a list of nodes from the root of a trie to the node at a specified position."
 
 TrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the root node to the leaf nodes."
+
+TrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
 Begin["`Private`"]
 
@@ -126,19 +130,19 @@ Clear[TrieInsert]
 
 TrieInsert[t_, word : (_String | _List)] := TrieMerge[t, {{{}, 1}, MakeTrie[word]}];
 
-TrieInsert[t_, wordKey : (_String | _List), value_] := 
+TrieInsert[t_, wordKey : (_String | _List), value_] :=
   Block[{mt},
     mt = MakeTrie[wordKey,0];
     mt[[Sequence @@ Join[Table[2, {Depth[mt] - 3}], {1, 2}]]] = value;
     TrieMerge[t, {{{}, 0}, mt}]
   ];
 
-TrieCreate1[ {}] := {{{}, 0}}; 
+TrieCreate1[ {}] := {{{}, 0}};
 TrieCreate1[words : {(_String | _List) ...}] :=
   Fold[TrieInsert, {{{}, 1}, MakeTrie[First[words]]}, Rest@words];
 
 Clear[TrieCreate]
-TrieCreate[ {}] := {{{}, 0}}; 
+TrieCreate[ {}] := {{{}, 0}};
 TrieCreate[words : {(_String | _List) ...}] :=
   Block[{},
    If[
@@ -156,7 +160,7 @@ TrieRemoveFrequencies[t_] :=
   Which[
    MatchQ[t, {_, _Integer}], t[[1]],
    MatchQ[t, {{_, _Integer}}], {t[[1, 1]]},
-   MatchQ[t, {{_, _Integer}, ___}], 
+   MatchQ[t, {{_, _Integer}, ___}],
    Prepend[TrieRemoveFrequencies /@ Rest[t], t[[1, 1]]]
   ];
 
@@ -184,7 +188,7 @@ TrieShrinkRec[t_] :=
      Prepend[Rest@tt, newnode]
     ],
     True,
-    Prepend[TrieShrinkRec /@ Rest[t], 
+    Prepend[TrieShrinkRec /@ Rest[t],
      If[rootQ, t[[1]], {NodeJoin[t[[1, 1]]], t[[1, 2]]}]]
    ]
   ];
@@ -225,14 +229,14 @@ TrieToRules[tree_, level_, order_] :=
   ];
 
 Clear[GrFramed]
-GrFramed[text_] := 
-  Framed[text, {Background -> RGBColor[1, 1, 0.8], 
-    FrameStyle -> RGBColor[0.94, 0.85, 0.36], 
+GrFramed[text_] :=
+  Framed[text, {Background -> RGBColor[1, 1, 0.8],
+    FrameStyle -> RGBColor[0.94, 0.85, 0.36],
     FrameMargins -> Automatic}];
 
 Clear[TrieForm]
-TrieForm[mytrie_, opts:OptionsPattern[]] := 
-  LayeredGraphPlot[TrieToRules[mytrie], 
+TrieForm[mytrie_, opts:OptionsPattern[]] :=
+  LayeredGraphPlot[TrieToRules[mytrie],
    VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
 
 TrieNodeProbabilities::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency."
@@ -241,23 +245,42 @@ Clear[TrieNodeProbabilities, TrieNodeProbabilitiesRec]
 Options[TrieNodeProbabilities] = {"ProbabilityModifier" -> N};
 Options[TrieNodeProbabilitiesRec] = Options[TrieNodeProbabilities];
 TrieNodeProbabilities[trie_, opts : OptionsPattern[]] :=
-  ReplacePart[TrieNodeProbabilitiesRec[trie, opts], {1, 2} -> 1];
-TrieNodeProbabilitiesRec[trie_, opts : OptionsPattern[]] :=  
-  Block[{sum, res, pm = OptionValue["ProbabilityModifier"]},
-   Which[
-    Rest[trie] == {}, trie,
-    True,
-    If[trie[[1, 2]] == 0,
-     sum = Total[Rest[trie][[All, 1, 2]]],
-     sum = trie[[1, 2]],
-     Message[TrieNodeProbabilities::ntnode,trie[[1]]];
-     Return[{}]
+    ReplacePart[TrieNodeProbabilitiesRec[trie, opts], {1, 2} -> 1];
+TrieNodeProbabilitiesRec[trie_, opts : OptionsPattern[]] :=
+    Block[{sum, res, pm = OptionValue["ProbabilityModifier"]},
+      Which[
+        Rest[trie] == {}, trie,
+        True,
+        If[trie[[1, 2]] == 0,
+          sum = Total[Rest[trie][[All, 1, 2]]],
+          sum = trie[[1, 2]],
+          Message[TrieNodeProbabilities::ntnode,trie[[1]]];
+          Return[{}]
+        ];
+        res = Map[TrieNodeProbabilitiesRec[#, opts] &, Rest[trie]];
+        res[[All, 1, 2]] = Map[pm, res[[All, 1, 2]]/sum];
+        Prepend[res, First[trie]]
+      ]
     ];
-    res = Map[TrieNodeProbabilitiesRec[#, opts] &, Rest[trie]];
-    res[[All, 1, 2]] = Map[pm, res[[All, 1, 2]]/sum];
-    Prepend[res, First[trie]]
-   ]
-  ];
+
+TrieNodeFrequencies::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency."
+
+Clear[TrieNodeFrequencies, TrieNodeFrequenciesRec]
+Options[TrieNodeFrequencies] = {"FrequencyModifier" -> N};
+Options[TrieNodeFrequenciesRec] = Options[TrieNodeFrequencies];
+TrieNodeFrequencies[trie_, opts : OptionsPattern[]] := TrieNodeFrequencies[ trie, 1, opts ];
+TrieNodeFrequencies[trie_, scale_?NumericQ, opts : OptionsPattern[]] :=
+    TrieNodeFrequenciesRec[ ReplacePart[trie, {1,2}->scale * trie[[1,2]]], opts];
+TrieNodeFrequenciesRec[trie_, opts : OptionsPattern[]] :=
+    Block[{sum, res, pm = OptionValue["FrequencyModifier"]},
+      Which[
+        Rest[trie] == {}, trie,
+        True,
+        res = Map[TrieNodeFrequenciesRec[#, opts] &, Map[ ReplacePart[#,{1,2}->#[[1,2]]*trie[[1,2]] ]& , Rest[trie] ]];
+        res[[All, 1, 2]] = Map[pm, res[[All, 1, 2]]];
+        Prepend[res, First[trie]]
+      ]
+    ];
 
 
 TrieLeafProbabilities::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency."
@@ -266,7 +289,7 @@ TrieLeafProbabilitiesWithPositions::ntnode = "Non trie node was encountered: `1`
 Clear[TrieLeafProbabilities]
 TrieLeafProbabilities[trieArg_] :=
   Block[{TrieLeafProbabilitiesRec},
-   
+
    TrieLeafProbabilitiesRec[trie_] :=
     Block[{res, sum},
      Which[
@@ -278,9 +301,9 @@ TrieLeafProbabilities[trieArg_] :=
       res = Map[{#[[1]], #[[2]]*trie[[1, 2]]} &, Flatten[res, 1]]
      ]
     ];
-   
+
    If[trieArg[[1, 2]] == 0,
-    TrieLeafProbabilitiesRec[trieArg],  
+    TrieLeafProbabilitiesRec[trieArg],
     Map[{#[[1]], #[[2]]} &, TrieLeafProbabilitiesRec[trieArg]],
     Message[TrieLeafProbabilities::ntnode,trieArg[[1]]];
     Return[{}]
@@ -307,7 +330,7 @@ TrieLeafProbabilitiesWithPositions[trieArg_] :=
       res = Map[{#[[1]], #[[2]]*trie[[1, 2]], #[[3]]} &, Flatten[res, 1]]
       ]
      ];
-   
+
    If[trieArg[[1, 2]] == 0,
     TrieLeafProbabilitiesRec[trieArg],
     Map[{#[[1]], #[[2]], #[[3]]} &, TrieLeafProbabilitiesRec[trieArg]],
@@ -317,7 +340,7 @@ TrieLeafProbabilitiesWithPositions[trieArg_] :=
   ];
 
 Clear[TriePositionParts]
-TriePositionParts[pos : {_Integer ..}] := 
+TriePositionParts[pos : {_Integer ..}] :=
   Map[Append[#, 1] &, FoldList[Join[#1, {#2}] &, {}, Most[pos]]];
 
 Clear[TriePathFromPosition]
@@ -337,6 +360,84 @@ TrieRootToLeafPaths[trie_] :=
     ];
    TrieRows[trie, {}];
    rows
+  ];
+
+TrieRemove::nnval = "The value of the option \"HowManyTimes\" is expected to a number, Automatic, or All.";
+
+TrieRemove::nprob = "If \"FrequencyValues\"->False then \"HowManyTimes\" is taken to be Automatic.";
+
+Clear[TrieRemove, TrieRemoveRecFreq, TrieRemoveRecProb]
+Options[TrieRemove] = {"HowManyTimes" -> Automatic, "FrequencyValues" -> Automatic};
+TrieRemove[trie_, wordArg : (_List | _String), opts : OptionsPattern[]] :=
+  Block[{word = wordArg,
+    nVal = OptionValue[TrieRemove, "HowManyTimes"],
+    freqVals = OptionValue[TrieRemove, "FrequencyValues"]},
+   If[StringQ[word], word = Characters[word]];
+   If[ freqVals === Automatic,
+     freqVals =
+         Which[
+           IntegerQ[ trie[[1,2]] ] && trie[[1,2]] > 1, True,
+           Length[ Rest[trie] ] > 1 && trie[[1,2]] <= 1,
+           If[ Total[ Rest[trie][[All,1,2]] ] <= 1, False, True],
+           True, True
+         ];
+   ];
+   If[! TrueQ[freqVals] && ! (TrueQ[nVal === Automatic] || TrueQ[nVal === All]),
+    Message[TrieRemove::nprob];
+    nVal = Automatic;
+   ];
+   If[nVal === Automatic || nVal === All,
+    nVal = TrieRetrieve[trie, word][[2]]
+   ];
+   If[! NumberQ[nVal],
+    Message[TrieRemove::nnval]; Return[{}];
+   ];
+   If[TrueQ[freqVals],
+    TrieRemoveRecFreq[trie, Prepend[word, {}], nVal]
+    ,(*ELSE*)
+    TrieRemoveRecProb[trie, Prepend[word, {}], nVal]
+   ]
+  ];
+TrieRemoveRecFreq[trie_, word_List, nVal_] :=
+  Block[{},
+   Which[
+    trie === {}, {},
+    word === {}, {},
+    trie[[1, 1]] == word[[1]],
+    Prepend[
+     DeleteCases[
+      Map[TrieRemoveRecFreq[#, Rest[word], nVal] &,
+       Rest[trie]], {}], {trie[[1, 1]], trie[[1, 2]] - nVal}],
+    True, trie
+   ]
+  ];
+TrieRemoveRecProb[trie_, word_List, nVal_] :=
+  Block[{res, ts},
+   Which[
+    trie === {}, {},
+    word === {}, {},
+    trie[[1, 1]] == word[[1]],
+    res =
+     Prepend[
+      DeleteCases[
+       Map[TrieRemoveRecProb[#, Rest[word], nVal] &,
+        Rest[trie]], {}],
+      If[Length[word] > 1,
+       trie[[1]], {trie[[1, 1]], trie[[1, 2]] - nVal}]
+      ];
+    If[Length[res] > 0,
+      ts = Total[Rest[res][[All, 1, 2]]];
+      If[ts == 0, {},
+        Prepend[
+          Map[Prepend[Rest[#], {#[[1, 1]], #[[1, 2]]/ts}] &, Rest[res]],
+          {res[[1, 1]], res[[1, 2]]*ts}
+        ]
+      ],
+      {}
+    ],
+
+    True, trie
+   ]
   ];
 
 End[]
