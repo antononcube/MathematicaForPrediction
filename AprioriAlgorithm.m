@@ -163,8 +163,10 @@ Clear[AprioriAlgorithm]
 
 (* I overloaded the non-sparse array Support definition with this one because Support is provided as package function. *) 
 Support[Tcolumns : {_SparseArray ..}, s : {_Integer ..}] :=
-  If[Length[s] == 1,
-    Total[Tcolumns[[s[[1]]]]],
+  Which[
+    Length[s] == 1, Total[Tcolumns[[s[[1]]]]],
+    Length[s] == 2, Tcolumns[[s[[1]]]].Tcolumns[[s[[2]]]],
+    True,
     Total[Fold[Times[#1, Tcolumns[[#2]]] &, Tcolumns[[s[[1]]]], Rest[s]]]
   ]/Length[Tcolumns[[1]]];
 
