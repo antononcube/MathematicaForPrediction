@@ -383,19 +383,21 @@ TrieRemove[trie_, wordArg : (_List | _String), opts : OptionsPattern[]] :=
          ];
    ];
    If[! TrueQ[freqVals] && ! (TrueQ[nVal === Automatic] || TrueQ[nVal === All]),
-    Message[TrieRemove::nprob];
-    nVal = Automatic;
+     Message[TrieRemove::nprob];
+     nVal = Automatic;
    ];
    If[nVal === Automatic || nVal === All,
-    nVal = TrieRetrieve[trie, word][[2]]
+     nVal = TrieRetrieve[trie, word];
+     If[ nVal==={}, Return[trie] ];
+     nVal = nVal[[2]];
    ];
    If[! NumberQ[nVal],
-    Message[TrieRemove::nnval]; Return[{}];
+     Message[TrieRemove::nnval]; Return[{}];
    ];
    If[TrueQ[freqVals],
-    TrieRemoveRecFreq[trie, Prepend[word, {}], nVal]
-    ,(*ELSE*)
-    TrieRemoveRecProb[trie, Prepend[word, {}], nVal]
+     TrieRemoveRecFreq[trie, Prepend[word, {}], nVal]
+     ,(*ELSE*)
+     TrieRemoveRecProb[trie, Prepend[word, {}], nVal]
    ]
   ];
 TrieRemoveRecFreq[trie_, word_List, nVal_] :=
@@ -435,7 +437,6 @@ TrieRemoveRecProb[trie_, word_List, nVal_] :=
       ],
       {}
     ],
-
     True, trie
    ]
   ];
