@@ -234,8 +234,12 @@ TrieNodeProbabilitiesRec <- function( trie ) {
 #' @param rootNode
 #' @return a list of lists of data frames
 TrieRows <- function( trie, rootNode ) {
-  key <- if ( is.null(trie$Key) ) NA else trie$Key
-  path <- rbind( rootNode, data.frame( Key=key, Value=trie$Value ) )
+  key <- if ( is.null(trie$Key) ) { NA } else { trie$Key }
+  value <- if ( is.null(trie$Value) ) { NA } else { trie$Value }
+  if ( is.null(trie$Value) || length(trie$Value) == 0 ) {
+      return(NULL)
+  }
+  path <- rbind( rootNode, data.frame( Key=key, Value=value ) )
   if ( is.null( trie$Children ) || length( trie$Children) == 0 ) {
     list( path )
   } else {
