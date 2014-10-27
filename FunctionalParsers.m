@@ -138,7 +138,7 @@ GenerateParsersFromEBNF::usage = "GenerateParsersFromEBNF[gr:{_String..}] genera
 
 Begin["`Private`"]
 
-Clear["Parse*"]
+Clear["Parse?*"]
 
 
 (************************************************************)
