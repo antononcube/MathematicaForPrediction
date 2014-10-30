@@ -35,6 +35,11 @@
 (* Version 2.0 *)
 (* This package contains definitions for the Apriori algorithm application. *)
 
+(* October, 30, 2014
+   
+   Updated the function definitions to use Mathematica 10.1 dispatch rules.
+*)
+
 (* February, 20, 2014 
 
    Updated the package with a faster implementation of the Apriori algorithm that uses sparse algebra operations.
@@ -52,6 +57,7 @@
 
    Added a new function, AprioriSparseArrayRepresentation, the result of which can be used with the overloaded version of Support, and for AssociationRules.
 *)
+
 
 BeginPackage["AprioriAlgorithm`"]
 
@@ -243,7 +249,7 @@ AprioriApplicationOriginal[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsP
     dataWithIDs = itemLists /. uniqueItemToIDRules;
     dataWithIDs = Sort /@ (dataWithIDs);
     {AprioriAlgorithmOriginal[dataWithIDs, Mu, opts], uniqueItemToIDRules, 
-     Dispatch[Reverse /@ uniqueItemToIDRules[[1]]]}
+     Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
     ] /; 0 < Mu < 1;
 
 (* AprioriApplcation *)
@@ -263,7 +269,7 @@ AprioriSparseArrayRepresentation[itemLists : {_List ...}] :=
    arrayRules = 
     Flatten[MapIndexed[Thread[Thread[{#2[[1]], #1}] -> 1] &, dataWithIDs], 1];
    Tcolumns = Map[# &, Transpose[SparseArray[arrayRules]]];
-   {Tcolumns, uniqueItemToIDRules, Dispatch[Reverse /@ uniqueItemToIDRules[[1]]]}
+   {Tcolumns, uniqueItemToIDRules, Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
   ];
 
 Clear[AprioriApplication];
@@ -274,7 +280,7 @@ AprioriApplication[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]
     {Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules} = 
      AprioriSparseArrayRepresentation[itemLists];
     {AprioriAlgorithm[Tcolumns, Mu, "MaxNumberOfItems" -> mni], uniqueItemToIDRules, 
-     Dispatch[Reverse /@ uniqueItemToIDRules[[1]]]}
+     Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
     ] /; 0 < Mu < 1;
 
 (* Supporting Defintions *)
