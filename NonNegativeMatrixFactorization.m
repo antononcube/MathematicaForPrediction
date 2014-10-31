@@ -38,9 +38,9 @@
 
 BeginPackage["NonNegativeMatrixFactorization`"]
 
-GDCLS::usage = "GDCLS[V_?MatrixQ,k_Integer,tol_?NumberQ] returns the pair of matrices {W,H} such that V = W H and the number of the columns of W and the number of rows of H are k. The method used is Gradient Descent with Constrained Least Squares."
+GDCLS::usage = "GDCLS[V_?MatrixQ,k_Integer,opts] returns the pair of matrices {W,H} such that V = W H and the number of the columns of W and the number of rows of H are k. The method used is Gradient Descent with Constrained Least Squares."
 
-GDCLSGlobal::usage = "GDCLSGlobal[V_?MatrixQ,tol_?NumberQ] continues the GDCLS iterations over the matrices W and H in the execution context and returns {W,H} as a result."
+GDCLSGlobal::usage = "GDCLSGlobal[V_?MatrixQ,W_?MatrixQ,H_?MatrixQ,opts] continues the GDCLS iterations over the matrices W and H in the execution context and returns {W,H} as a result."
 
 NormalizeMatrixProduct::usage = "NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} such that W1 H1 = W H and the norms of the columns of W1 are 1."
 
