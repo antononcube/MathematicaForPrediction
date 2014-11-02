@@ -1,6 +1,6 @@
 (*
     Quantile regression Mathematica package
-    Copyright (C) 2013  Anton Antonov
+    Copyright (C) 2014  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,6 +58,11 @@
 *)
 
 (*
+   2014.11.01
+   Added experimental implementation for finding of the points of quantile regression envelopes for 2D data.
+*)
+
+(*
   TODO
   1. Better messages.
 *)
@@ -68,6 +73,7 @@ QuantileRegressionFit::usage = "QuantileRegression[data,funs,var,qs] finds the r
 
 QuantileRegression::usage = "QuantileRegression[data,ks_List,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations splines generated over the knots ks. With the signature QuantileRegression[data,n_Integer,qs] n equally spaced knots are generated. The order of the splines is specified with the option InterpolationOrder."
 
+QuantileEnvelope::usage = "QuantileRegression[data_?MatrixQ,qs:(_?NumberQ|{_?NumberQ..}),n_Integer] experimental implementation of quantile envelopes points finding."
 
 Begin["`Private`"]
 
@@ -337,6 +343,71 @@ MinimizeSplineQuantileRegression[methodFunc_, dataArg_?MatrixQ, knotsArg : {_?Nu
   ] /; order > 0;
 
 
+	   (**************************************************************)
+	   (* QuantileEnvelope                                           *)
+	   (**************************************************************)
+	   
+QuantileEnvelope::qenargs = "Three arguments are expected, two column data matrix, quantiles, and a number of curve points.";
+QuantileEnvelope::qemat = "The first argument is expected to be a numeric two column data matrix.";
+QuantileEnvelope::qeqs = "The second argument is expected to be a number or a list of numbers between 0 and 1.";
+QuantileEnvelope::qen = "The third argument is expected to be an integer greater than 2.";
+
+Clear[QuantileEnvelope]
+Options[QuantileEnvelope] = {"Tangents" -> True};
+QuantileEnvelope[data_, qs_, n_, opts : OptionsPattern[]] :=
+  Block[{},
+   If[! MatrixQ[data, NumberQ],
+    Message[QuantileEnvelope::qemat];
+    Return[{}]
+   ];
+   If[! (TrueQ[ VectorQ[qs, NumberQ] && Apply[And, Map[0 <= # <= 1 &, qs]]] || TrueQ[NumberQ[qs] && (0 <= qs <= 1)]),
+    Message[QuantileEnvelope::qeqs];
+    Return[{}]
+   ];
+   If[! TrueQ[IntegerQ[n] && (n > 2)],
+    Message[QuantileEnvelope::qen];
+    Return[{}]
+   ];
+   QuantileEnvelopeSimple[data, qs, n, opts]
+  ];
+
+Clear[QuantileEnvelopeSimple]
+Options[QuantileEnvelopeSimple] = Options[QuantileEnvelope];
+QuantileEnvelopeSimple[data_?MatrixQ, q_?NumberQ, n_Integer, opts : OptionsPattern[]] := QuantileEnvelopeSimple[data, {q}, n, opts];
+QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : OptionsPattern[]] :=
+  Block[{data = dataArg, center, scale, rmat, rmats, qfuncs, x1, x2, y1, rqfuncs, intPoints, t, tangentsQ},
+   
+   (* Option values *)   
+   tangentsQ = TrueQ[OptionValue[QuantileEnvelopeSimple, "Tangents"]];
+   
+   (* Standardize *)
+   center = Mean /@ Transpose[data];
+   scale = InterquartileRange /@ Transpose[data];
+   data = Map[(# - center)/scale &, data];
+   
+   (* Rotation matrices *)
+   rmat = N[RotationMatrix[2 \[Pi]/n]];
+   rmats = NestList[rmat.# &, rmat, n - 1];
+   qfuncs = Transpose[ Map[Function[{m}, Quantile[(m.Transpose[data])[[2]], qs]], rmats]];
+   If[tangentsQ,
+    rqfuncs = Map[Function[{qfs}, MapThread[ Flatten[Expand[{x1, y1}.#1 /. y1 -> #2]] &, {rmats, qfs}]], qfuncs];
+    intPoints = Table[(
+       t = 
+        Equal @@@ Transpose[{rqfuncs[[k, i]], rqfuncs[[k, If[i >= Length[rqfuncs[[k]]], 1, i + 1]]] /. x1 -> x2}];
+       t = {x1, x2} /. ToRules[Reduce[t, {x1, x2}]];
+       rqfuncs[[k, i]] /. x1 -> t[[1]]
+       ), {k, 1, Length[rqfuncs]}, {i, 1, Length[rqfuncs[[k]]]}],
+    (*ELSE*)
+    
+    intPoints = Map[Function[{qfs}, MapThread[{0, #2}.#1 &, {rmats, qfs}]], qfuncs];
+   ];
+   
+   (* Reverse standardizing *)
+   
+   intPoints = Map[(#*scale + center) &, intPoints, {2}];
+   intPoints
+  ];
+	   
 End[]
 
 EndPackage[]
