@@ -50,7 +50,7 @@
 
 *)
 
-(* For version 1.1 implemenented quantile regression with B-splines. 
+(* For version 1.1 implemented quantile regression with B-splines. 
   Renamed the original function QuantileRegression to QuantileRegressionFit.
   Overloading the original function QuantileRegression with the B-splines implementation is not a good idea because:
   1. the original quantile regression function returns function expressions,
