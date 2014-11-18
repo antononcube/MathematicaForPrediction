@@ -38,9 +38,9 @@
 
 BeginPackage["AVCDecisionTreeForest`"]
 
-BuildDecisionTree::usage = "BuildDecisionTree[dataMat,th,opts] makes a decision tree of the matrix dataMat the last column of which has the classification labels. BuildDecisionTree takes options to specify the impurity threshold at which the recursive process stops, should linear combinations of the variable be used as decision axes, the number of strata into which the ranges of the real variables are partitioned at each recursive step, and should the decision axis be determined looking into all axes or at a random sample of them."
+BuildDecisionTree::usage = "BuildDecisionTree[dataMat,{minSizeTh,impTh},opts] makes a decision tree of the matrix dataMat the last column of which has the classification labels. The recursive tree building stops when the data set length is less than minSizeTh or the data set impurity is less than impTh. BuildDecisionTree takes options to specify should linear combinations of the variable be used as decision axes, the number of strata into which the ranges of the real variables are partitioned at each recursive step, and should the decision axis be determined looking into all axes or at a random sample of them. BuildDecisionTree[dataMat,minSizeTh,n,opts] calls BuildDecisionTree[dataMat,{minSizeTh,0},n,opts] ."
 
-BuildDecisionForest::usage = "BuildDecisionForest[dataMat,{minSizeTh,imp},n,opts] makes a forest of n decision trees of the matrix dataMat the last column of which has the classification labels. The recursive tree building stops when the data set length is less than minSizeTh or the data set impurity is less than imp. BuildDecisionForest[dataMat,minSizeTh,n,opts] calls BuildDecisionForest[dataMat,{minSizeTh,0},n,opts] ."
+BuildDecisionForest::usage = "BuildDecisionForest[dataMat,{minSizeTh,impTh},n,opts] makes a forest of n decision trees of the matrix dataMat the last column of which has the classification labels. The recursive tree building stops when the data set length is less than minSizeTh or the data set impurity is less than impTh. BuildDecisionForest[dataMat,minSizeTh,n,opts] calls BuildDecisionForest[dataMat,{minSizeTh,0},n,opts] ."
 
 DecisionTreeClassify::usage = "DecisionTreeClassify[dTree,rec] predicts the label for the record rec using the decision tree dTree."
 
