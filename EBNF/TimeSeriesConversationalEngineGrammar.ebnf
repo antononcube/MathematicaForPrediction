@@ -1,5 +1,31 @@
+(*
+    Time series conversational engine grammar in EBNF
+    Copyright (C) 2014  Anton Antonov
 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	Written by Anton Antonov, 
+	antononcube@gmail.com, 
+	7320 Colbury Ave, 
+	Windermere, Florida, USA.
+*)
+
+(* Version 1.0 *)
+(* This grammar is intended to be parsed by the functions in the Mathematica package FunctionalParses.m at GitHub, 
+   see https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
+   In order to parse this grammar specification copy all of the grammar rule lines and paste them within a pair of string quotes. 
+ *) 
 
  <preamble> = 'find' | 'compute' | 'calculate' | 'show' ;
  <weather-spec-straight> = ( ( 'temperature' | 'pressure' | 'wind' , 'speed' ) \[LeftTriangle] ( 'of' | 'for' ) ) , <city-spec> <@ TSWeatherSpec[#]& ;
