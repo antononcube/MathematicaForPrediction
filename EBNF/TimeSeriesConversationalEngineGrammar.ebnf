@@ -1,1 +1,34 @@
-First version of the time series conversational engine grammar.
+
+
+
+ <preamble> = 'find' | 'compute' | 'calculate' | 'show' ;
+ <weather-spec-straight> = ( ( 'temperature' | 'pressure' | 'wind' , 'speed' ) \[LeftTriangle] ( 'of' | 'for' ) ) , <city-spec> <@ TSWeatherSpec[#]& ;
+ <weather-spec-reverse> = [ 'the' ] \[RightTriangle] <city-spec> , ( 'temperature' | 'pressure' | 'wind' , 'speed' ) <@ TSWeatherSpec[Reverse[#]]& ;
+ <weather-spec> = <weather-spec-straight> | <weather-spec-reverse> ;
+ <city-spec> = '_LetterString' | '_LetterString' , [ ',' ] , '_LetterString' , [ [ ',' ] , '_LetterString' ] <@ TSCitySpec[Flatten[{#}]]& ;
+ <company-spec> = '_String' <@ TSCompanySpec ;
+ <finance-spec-straight> = ( [ 'the' ] \[RightTriangle] ( [ 'stock' ] \[RightTriangle] 'price' | 'trade' \[RightTriangle] 'volume' ) \[LeftTriangle] [ 'of' | 'for' ] ) , <company-spec> <@ TSFinancialData ;
+ <finance-spec-reverse> =  [ 'the' ] \[RightTriangle] <company-spec> , ( [ 'stock' ] \[RightTriangle] 'price' | 'trade' \[RightTriangle] 'volume' ) <@ TSFinancialData[Reverse[#]]& ;
+ <finance-spec> = <finance-spec-straight> | <finance-spec-reverse> ; 
+ <past-data-spec> = [ 'the' ] \[RightTriangle] 'last' , [ 'loaded' ] , ( 'data' | 'file' ) <@ TSPastData[Flatten[{#}]]& ;
+ <data-spec> = <weather-spec> | <finance-spec> | <past-data-spec> ;
+ <regression-quantile-bsplines> = [ ( '1' | 'one' | 'a' ) ] , 'regression' , 'quantile' | 'quantile' , 'regression' <@ TSBSplineQRegression[1]& ;
+ <regression-quantiles-bsplines> = [ 'Range[1,40]' ] \[LeftTriangle] ( 'regression' , 'quantiles' ) <@ TSBSplineQRegression[#]& ;
+ <regression-quantiles> = <regression-quantile-bsplines> |  <regression-quantiles-bsplines> ;
+ <outliers> = [ 'the' ] \[RightTriangle] [ ( 'top' | 'bottom' | 'largest' | 'smallest' | 'all' ) ] , 'outliers' <@ TSOutliers[Flatten[#]]& ;
+ <least-squares> = ( 'least' , 'squares' , [ 'fit' ] , [ 'with' | 'of' ] ) \[RightTriangle] '_String' <@ TSLeastSquaresFit[#]& ;
+ <operation-spec> = <regression-quantiles> | <least-squares> | <outliers> ;
+ <operate-command> = [ <preamble> ] \[RightTriangle] <operation-spec> <@ TSOperateCommand[#]& ;
+ <operate-on-data-command> = <operate-command> , ( 'for' | 'on' | 'in'  | 'over' | 'of' ) \[RightTriangle] <data-spec> <@ TSOperateOnDataCommand[#]& ;
+ <load-file-command> = ( 'load' , [ 'data' ] , 'file'  ) \[RightTriangle] ( '_String' ) <@ TSLoadFile[#]& ;
+ <load-data-command> = ( 'load' , [ 'the' ] , [ 'data' ] ) \[RightTriangle] <data-spec> <@ TSLoadData[#]& ;
+ <start-over> = 'start' , 'over' | 'clear' <@ TSStartOver[Flatten[{#}]]& ;
+ <clear-graphics> = 'clear' , ( 'plots' | 'plots' | 'graphics' ) <@ TSClearGraphics ;
+ <what-operations> = 'what' , ( ( 'operations' , 'are'  |  [ 'are' ] , [ 'the' ] , 'operations' ) , [ 'implemented' | 'in' ] ) | [ 'what' ] , ( 'operation' | 'operations' ) , ( 'I' , 'can' | 'to' ) , ( 'use' | 'do' ) <@ TSWhatOperations[Flatten[{#}]]& ;
+ <help-all> = 'help' | [ 'all' ] , 'commands' <@ TSHelp[Flatten[{#}]]& ;
+ <help> = <help-all> | <what-operations> ;
+ <plot-joined> = [ 'plot' | 'plots' ] , 'joined' | 'Joined' , '->' , 'True' | 'Joined->True' <@ TSPlotJoined ;
+ <plot-not-joined> = [ 'plot' | 'plots' ] ,  ( 'not' | 'non' ) , 'joined' | 'Joined' , '->' , 'False' | 'Joined->False' <@ TSPlotNotJoined ;
+ <plot-data> = 'plot' , 'data' <@ TSPlotData ;
+ <plot-command> = <plot-data> | <plot-joined> | <plot-not-joined> ;
+ <ts-command> = <load-data-command> | <load-file-command> | <operate-command> | <operate-on-data-command> | <clear-graphics> | <start-over> | <help> | <plot-command> ;
