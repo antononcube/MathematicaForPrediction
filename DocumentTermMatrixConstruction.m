@@ -96,7 +96,7 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWe
 
 Clear[WeightTerms]
 WeightTerms[docTermMat_?MatrixQ] :=
-  WeightTerms[docTermMat, GlobalTermWeight["IDF", #1, #2, #3] &, # &, If[Max[#] == 0, #, #/Norm[#]] &];
+  WeightTerms[docTermMat, GlobalTermWeight["IDF", #1, #2] &, # &, If[Max[#] == 0, #, #/Norm[#]] &];
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] := 
   Block[{mat, nDocuments, n, m, globalWeights, diagMat},
@@ -136,11 +136,18 @@ GlobalTermWeight["None", termIndex_Integer, termDoc : ({_SparseArray ..} | _Spar
 
 GlobalTermWeight["None", termVec_SparseArray, nDocuments_List] := 1; 
 
-GlobalTermWeight["Entropy", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] :=
-  Block[{ps, n = Dimensions[termDoc][[2]]},
-    ps = MapThread[If[#2 > 0, #1/#2, 1.0] &, {termDoc[[termIndex]] // Normal, nDocuments}];
-    1.0 + Total[Map[If[# == 0, 0, #*Log[#]] &, ps]]/Log[n]
+GlobalTermWeight["Entropy", termVec_SparseArray, nDocuments_List] :=
+  Block[{ps, nfs, n = Dimensions[termVec][[1]]}, 
+		nfs = Total[termVec];
+		If[ nfs > 0,
+			ps = termVec / nfs; 
+			1.0 + Total[Map[If[# == 0, 0, #*Log[#]] &, ps]] / Log[n],
+			ZEROFREQUENCYWEIGHT
+		]
   ];
+
+GlobalTermWeight["Entropy", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), nDocuments_List] :=
+	GlobalTermWeight["Entropy", termDoc[[termIndex]], nDocuments ]
 
 GlobalTermWeight["IDF", termVec_SparseArray, nDocuments_List] :=  
   Block[{nfs},
@@ -160,8 +167,8 @@ GlobalTermWeight["IDF", termIndex_Integer, termDoc : ({_SparseArray ..} | _Spars
 
 GlobalTermWeight["GFIDF", termVec_SparseArray, nDocuments_List] :=  
   Block[{nfs, fs, n = Dimensions[termVec][[1]]},
-    nfs = Total[Clip[fs]];
-    fs = Total[termVec];
+	fs = Total[termVec];
+    nfs = Total[Clip[termVec]];
     If[nfs > 0, fs/nfs,
       ZEROFREQUENCYWEIGHT
     ]
