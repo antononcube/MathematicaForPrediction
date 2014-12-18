@@ -90,7 +90,7 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, nor
     
   } else if ( globalWeightFuncionID == "Normal" ) {
     
-    globalWeights <- sqrt( colSums(mat) %*% colSums(mat) )
+    globalWeights <- sqrt( colSums( mat*mat ) )
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
     
