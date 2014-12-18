@@ -33,8 +33,17 @@
 #
 # History
 # Started: September 2013
-# Updated: May 2014, June 2014, July 2014
-#=======================================================================================
+# Updated: May 2014, June 2014, July 2014, December 2014
+##=======================================================================================
+## 2014.12.17
+## Implemented "Entropy". Fixed implementation of "Normal".
+## Added "Binary" (same as "None").
+##
+##=======================================================================================
+##
+## ToDo: Adding local weights
+##=======================================================================================
+
 
 #' @detail Required libraries
 require(plyr)
@@ -49,7 +58,11 @@ require(Matrix)
 #' @detail The implemented global weight function ID's are "IDF", "GFIDF", "Normal", "None".
 #' @detail The implemented normalization function ID's are "Cosine", "Sum", "None" 
 SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, normalizerFuncID ) {
-  
+
+  if ( class(movieTermMat) != "dgCMatrix" || nrow(docTermMat) < 2 || ncol(docTermMat) < 2 ) {
+    stop( "The argument docTermMat is expected to be a sparse matrix with number of rows and columns greater than two.", call.=TRUE)
+  }
+        
   mat <- docTermMat
   
   if ( globalWeightFuncionID == "IDF" ) {
@@ -66,17 +79,22 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, nor
     
   } else if ( globalWeightFuncionID == "GFIDF" ) {
     
-    globalWeights <- sqrt( colSums( mat*mat ) )
+    freqSums <- colSums(mat)
+    mat@x <- rep(1,length(mat@x))
+    globalWeights <- colSums(mat)
     globalWeights[ globalWeights == 0 ] <- 1
-    globalWeights <- 1 / globalWeights
+    globalWeights <- freqSums / globalWeights
+    
+    # restore the original matrix
+    mat <- docTermMat
     
   } else if ( globalWeightFuncionID == "Normal" ) {
     
-    globalWeights <- colSums(mat)
+    globalWeights <- sqrt( colSums(mat) %*% colSums(mat) )
     globalWeights[ globalWeights == 0 ] <- 1
-    globalWeights <- colSums(mat) / (globalWeights)
+    globalWeights <- 1 / globalWeights
     
-  } else if ( globalWeightFuncionID == "None" ) {
+  } else if ( globalWeightFuncionID == "None" || globalWeightFuncionID == "Binary" ) {
     
     globalWeights <- rep(1, ncol(mat) )
     
@@ -84,12 +102,22 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, nor
     
     globalWeights <- colSums(mat)
     globalWeights[ globalWeights == 0 ] <- 1
-    
+    globalWeights <- 1 / globalWeights
+
+  } else if ( globalWeightFuncionID == "Entropy" ) {
+
+    gfs <- colSums(mat)
+    gfs[ gfs == 0 ] <- 1
+    pmat <- mat %*% Diagonal( ncol(mat), 1 / gfs )
+    lpmat <- pmat
+    lpmat@x <- log( lpmat@x ) 
+    globalWeights <- 1 + colSums( pmat * lpmat ) / log( nrow(mat) )
+        
   } else {
     stop( "Unknown global weight function specification for the argument globalWeightFuncionID.", call.=TRUE)
   } 
   
-  diagMat <- Diagonal(dim(docTermMat)[[2]], globalWeights)
+  diagMat <- Diagonal(ncol(docTermMat), globalWeights)
   mat <- mat %*% diagMat
   
   # normalizing
