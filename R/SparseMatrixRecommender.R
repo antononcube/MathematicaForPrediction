@@ -43,7 +43,7 @@
 # 
 # History
 # Started: November 2013, 
-# Updated: December 2013, May 2014, June 2014, July 2014
+# Updated: December 2013, May 2014, June 2014, July 2014, December 2014
 #=======================================================================================
 #
 # TODO Argument type and ranks check
@@ -68,6 +68,9 @@
 # 2. Extracted the document-term weight functions in a separate file:
 # DocumentTermWeightFunctions.R
 #
+# 12/23/14
+# Added the function SMRReorderRecommendations that re-orders recommendations according
+# to scores from common tags.
 #=======================================================================================
 
 #' @detail Required libraries
@@ -75,7 +78,7 @@ require(plyr)
 require(reshape2)
 require(Matrix)
 
-#' @detail Read weight functions application definitions
+#' @deatil Read weight functions application definitions
 # source("./DocumentTermWeightFunctions.R")
  
 #' @description Convert to contingency matrix from item consumption "transactions" (e.g. instances of movie watching)
@@ -372,5 +375,32 @@ SMRTagType <- function( smr, tag ) {
     smr$TagTypes[ tagTypeInd ] 
   } else {
     "None"
+  }
+}
+
+#' @description Re-orders a list of recommendations according to their weighted intersection with a list of tags.
+#' @param smr a sparse matrix recommender object
+#' @param recs a data frame recommended items, the second column being row names or row indices
+#' @param tagIDs a vector tag ID's of indices with which the recommendations are scored
+#' @detail The first column is expected to be of scores. The original Mathematica package function is named InterfaceUserToLoveFiltered.
+SMRReorderRecommendations <- function( smr, recs, tagIDs ) {
+  if ( is.character( tagIDs ) && length( tagIDs ) > 0 ) {
+    ## Assuming column ID's of smr$M
+    tagInds <- which( colnames(smr$M) %in% tagIDs )
+  } else if ( is.numeric( tagIDs ) && length( tagIDs ) > 0 ) {
+    tagInds <- tagIDs
+  } else {
+    stop( "The third argument, tagIDs, is expected to be a non-empty vector of column indices or column ID's.", call.=TRUE )
+  }
+
+  profileVec <- sparseMatrix( i=tagInds, j=rep(1,length(tagInds)), x=rep(1,length(tagInds)), dims = c( ncol(smr$M), 1 ) )
+  
+  newOrder <- smr$M[recs[[2]], ] %*% profileVec
+  
+  if ( sum( newOrder ) > 0 ) {
+    newOrder <- rev( order( as.vector(newOrder) ) )
+    recs[ newOrder, ]
+  } else {
+    recs
   }
 }
