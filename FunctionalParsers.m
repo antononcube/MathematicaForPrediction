@@ -498,7 +498,7 @@ EBNFSequenceInterpreter[parsedArg_] :=
    
    crules = {ParseSymbol[","] -> "X$$#$#$#1", 
      ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", 
-     ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2"};
+     ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3"};
    parsed = parsed //. crules;
    (*Print["mid:",parsed];*)
    
