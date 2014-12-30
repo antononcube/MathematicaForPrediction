@@ -59,7 +59,7 @@ require(Matrix)
 #' @detail The implemented normalization function ID's are "Cosine", "Sum", "None" 
 SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, normalizerFuncID ) {
 
-  if ( class(movieTermMat) != "dgCMatrix" || nrow(docTermMat) < 2 || ncol(docTermMat) < 2 ) {
+  if ( class(docTermMat) != "dgCMatrix" || nrow(docTermMat) < 2 || ncol(docTermMat) < 2 ) {
     stop( "The argument docTermMat is expected to be a sparse matrix with number of rows and columns greater than two.", call.=TRUE)
   }
         
