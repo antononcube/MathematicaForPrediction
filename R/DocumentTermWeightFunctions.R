@@ -33,15 +33,16 @@
 #
 # History
 # Started: September 2013
-# Updated: May 2014, June 2014, July 2014, December 2014
+# Updated: May 2014, June 2014, July 2014, December 2014, January 2015.
 ##=======================================================================================
 ## 2014.12.17
 ## Implemented "Entropy". Fixed implementation of "Normal".
 ## Added "Binary" (same as "None").
 ##
 ##=======================================================================================
+## 2015.01.12
+## Implemented local weights. Changed the default values for the functons to be NULL.
 ##
-## ToDo: Adding local weights
 ##=======================================================================================
 
 
@@ -50,22 +51,29 @@ require(plyr)
 require(reshape2)
 require(Matrix)
 
+# Defined for legacy code purposes
+SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFunction, normalizerFunction ) {
+  SMRApplyTermWeightFunctions( docTermMat, globalWeightFunction, NULL, normalizerFunction )
+}
+
 #' @description Applies the global weight functions like Inverse Document Frequency (IDF) to the entries of a sparse matrix.
 #' @param docTermMat a document-term sparse matrix (dgCMatrix)
-#' @param globalWeightFuncionID global weight finction ID (a string, one of "IDF", "GFIDF", "Normal", "None")
-#' @param normalizerFuncID normalization weight finction ID (a string, one of "Cosine", "Sum", "None")
+#' @param globalWeightFunction global weight finction ID (a string, one of "IDF", "GFIDF", "Normal", "None")
+#' @param localWeightFunction global weight finction ID (a string, one of "Binary", "TermFrequency", "Log", "None")
+#' @param normalizerFunction normalization weight finction ID (a string, one of "Cosine", "Sum", "None")
 #' @return a sparse matrix of class dgCMatrix
 #' @detail The implemented global weight function ID's are "IDF", "GFIDF", "Normal", "None".
-#' @detail The implemented normalization function ID's are "Cosine", "Sum", "None" 
-SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, normalizerFuncID ) {
-
+#' @detail The implemented local weight function ID's are "Binary", "TermFrequency", "Log", "Logarithmic", "None".
+#' @detail The implemented normalization function ID's are "Cosine", "Sum", "None".
+SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL, localWeightFunction = NULL, normalizerFunction = NULL ) {
+  
   if ( class(docTermMat) != "dgCMatrix" || nrow(docTermMat) < 2 || ncol(docTermMat) < 2 ) {
     stop( "The argument docTermMat is expected to be a sparse matrix with number of rows and columns greater than two.", call.=TRUE)
   }
-        
+  
   mat <- docTermMat
   
-  if ( globalWeightFuncionID == "IDF" ) {
+  if ( globalWeightFunction == "IDF" ) {
     
     # The following line seem to work, but gives messages. Using a direct access assignment instead.
     # mat[ mat>0 ] <- 1
@@ -77,7 +85,7 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, nor
     # restore the original matrix
     mat <- docTermMat
     
-  } else if ( globalWeightFuncionID == "GFIDF" ) {
+  } else if ( globalWeightFunction == "GFIDF" ) {
     
     freqSums <- colSums(mat)
     mat@x <- rep(1,length(mat@x))
@@ -88,53 +96,93 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFuncionID, nor
     # restore the original matrix
     mat <- docTermMat
     
-  } else if ( globalWeightFuncionID == "Normal" ) {
+  } else if ( globalWeightFunction == "Normal" ) {
     
     globalWeights <- sqrt( colSums( mat*mat ) )
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
     
-  } else if ( globalWeightFuncionID == "None" || globalWeightFuncionID == "Binary" ) {
+  } else if ( globalWeightFunction == "None" || globalWeightFunction == "Binary" ) {
     
     globalWeights <- rep(1, ncol(mat) )
     
-  } else if ( globalWeightFuncionID == "ColumnStochastic" ) {
+  } else if ( globalWeightFunction == "ColumnStochastic" ) {
     
     globalWeights <- colSums(mat)
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
-
-  } else if ( globalWeightFuncionID == "Entropy" ) {
-
+    
+  } else if ( globalWeightFunction == "Entropy" ) {
+    
     gfs <- colSums(mat)
     gfs[ gfs == 0 ] <- 1
     pmat <- mat %*% Diagonal( ncol(mat), 1 / gfs )
     lpmat <- pmat
     lpmat@x <- log( lpmat@x ) 
     globalWeights <- 1 + colSums( pmat * lpmat ) / log( nrow(mat) )
-        
+    
   } else {
-    stop( "Unknown global weight function specification for the argument globalWeightFuncionID.", call.=TRUE)
+    stop( "Unknown global weight function specification for the argument globalWeightFunction.", call.=TRUE)
   } 
   
-  diagMat <- Diagonal(ncol(docTermMat), globalWeights)
-  mat <- mat %*% diagMat
+  # local weights
+  if( missing(localWeightFunction) || is.null(localWeightFunction) ) {
+    
+    if ( ! ( is.null(globalWeightFunction) || missing(globalWeightFunction) ) ) {
+      
+      diagMat <- Diagonal(ncol(docTermMat), globalWeights)
+      mat <- mat %*% diagMat
+      
+    }    
+    
+  } else {
+    
+    if ( localWeightFunction == "TermFrequency" ||  localWeightFunction == "None" ) {
+      ## There is nothing to be done if localWeightFunction is "None" or "TermFrequency".
+      
+    } else if ( localWeightFunction == "Binary" ) {
+      
+      mat@x <- rep(1, length(mat@x) )
+      
+    } else if ( localWeightFunction == "Log" || localWeightFunction == "Logarithmic"  ) {
+      
+      mat@x <- log( mat@x + 1 )
+      
+    } else {
+      stop( "Unknown local weight function specification for the argument localWeightFunction.", call.=TRUE)
+    }
+    
+    ## Multiply with the global weights
+    if ( ! ( is.null(globalWeightFunction) || missing(globalWeightFunction) ) ) {
+      
+      diagMat <- Diagonal(ncol(docTermMat), globalWeights)
+      mat <- mat %*% diagMat
+      
+    }
+  }
   
   # normalizing
-  if( !( missing(normalizerFuncID) || is.null(normalizerFuncID) ) ) { ## || normalizerFunc == identity
+  if( !( missing(normalizerFunction) || is.null(normalizerFunction) ) ) { ## || normalizerFunc == identity
     
-    if( class(normalizerFuncID)[[1]]=="character" ) {
-      # if ( normalizerFuncID == "None" ) {
-      #  # do nothing
-      #} 
-      if ( normalizerFuncID == "Cosine" ) {
+    if( class(normalizerFunction)[[1]]=="character" ) {
+      if ( normalizerFunction == "None" ) {
+        
+        ## do nothing
+        
+      } else if ( normalizerFunction == "Cosine" ) {
+        
         svec <- sqrt( rowSums( mat * mat ) )
         svec <- ifelse( svec > 0, svec, 1 )
         mat <- mat / svec
-      } else if ( normalizerFuncID == "Sum" || normalizerFuncID == "RowStochastic" ) {
+        
+      } else if ( normalizerFunction == "Sum" || normalizerFunction == "RowStochastic" ) {
+        
         svec <- rowSums( mat )
         svec <- ifelse( svec > 0, svec, 1 )
         mat <- mat / svec
+        
+      } else {
+        stop( "Unknown normalizing function specification for the argument normalizerFunction.", call.=TRUE)
       }
     }
   }
