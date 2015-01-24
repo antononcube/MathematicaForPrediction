@@ -178,13 +178,21 @@ SMRSubMatrix <- function(smr, tagType ){
   smr$M[,smr$TagTypeRanges[tagType, "Begin"]:smr$TagTypeRanges[tagType, "End"]]
 }
 
+#' @description Returns the sub-matrix of a matrix that corresponds to a tag type in an SMR object
+#' @param M a sparse matrix (in a sparse matrix recommender object)
+#' @param ranges column ranges of sub-matrices (in a sparse matrix recommender object)
+#' @param tagType a tag type
+SMRSubMatrixOfMatrix <- function( M, ranges, tagType ) {
+  M[,ranges[tagType, "Begin"]:ranges[tagType, "End"]]
+}
 
 #' @description Finds the current significance factors in a SMR object
 #' @param smr a sparse matrix object
 SMRCurrentTagTypeSignificanceFactors <- function(smr) {
-  sfs01 <- laply( smr$TagTypes, function(tc) sum( SMRSubMatrix( smr, tc ) ) )
+  sfs01 <- laply( smr$TagTypes, function(tc) sum( SMRSubMatrixOfMatrix( smr$M01, smr$TagTypeRanges, tc ) ) )
   sfs01[ sfs01 == 0 ] <- 1
-  laply( smr$TagTypes, function(tc) sum( SMRSubMatrix( smr, tc ) ) ) / sfs01
+  res <- laply( smr$TagTypes, function(tc) sum( SMRSubMatrix( smr, tc ) ) ) / sfs01
+  setNames( res, smr$TagTypes ) 
 }
 
 
@@ -403,4 +411,32 @@ SMRReorderRecommendations <- function( smr, recs, tagIDs ) {
   } else {
     recs
   }
+}
+
+#' @description Creates an SMR object from a given SMR object by removing specified tag types
+#' @param smr a sparse matrix recommender object
+#' @param removeTagTypes a list of tag types to be removed from smr
+SMRRemoveTagTypes <- function( smr, removeTagTypes ) {
+  
+  ## Copy of the SMR
+  newSMR <- smr
+  
+  ## There are several ways to do this:
+  ## 1. Work with newSMR$TagTypeRanges, take the indices corresponding to tag types not to be removed.
+  ## 2. Construct a metadata matrix by taking sub-matrices of the tag types not to be removed.
+  pos <- ! ( newSMR$TagTypes %in% removeTagTypes )
+  
+  applySFs <- SMRCurrentTagTypeSignificanceFactors( newSMR )[pos]
+  
+  newSMR$M01 <-
+    Reduce( function( mat, tt )
+      if ( is.null(mat) ) { newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] } 
+      else { cBind( mat, newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] ) },  
+      newSMR$TagTypes[pos], NULL )
+  newSMR$TagTypeRanges <- newSMR$TagTypeRanges[pos, ]
+  newSMR$TagTypes <- newSMR$TagTypes[pos]
+  
+  newSMR$M <- SMRApplyTagTypeWeights( newSMR, applySFs )
+  
+  newSMR
 }
