@@ -301,7 +301,7 @@ SMRRecommendationsByProfileVector <- function( smr, profileVec, nrecs ) {
 SMRProfileVector <- function( smr, itemHistory ) {
   pinds <- match( itemHistory[,2], rownames(smr$M) )
   names(itemHistory) <- c("Rating", "Item")
-  hvec <- sparseMatrix(i=rep(1,nrow(itemHistory)), j=pinds, x=itemHistory$Rating, dims=c(1,dim(smr$M)[1]))
+  hvec <- sparseMatrix( i=rep(1,nrow(itemHistory)), j=pinds, x=itemHistory$Rating, dims=c(1,dim(smr$M)[1]) )
   pvec <- hvec %*% smr$M
   t(pvec)
 }
@@ -312,12 +312,12 @@ SMRProfileVector <- function( smr, itemHistory ) {
 #' @param itemHistory a data frame with item history with column names c("Rating", "Item")
 SMRProfileDF <- function( smr, itemHistory ) {
   pvec <- SMRProfileVector( smr, itemHistory )
-  pvecInds <- which(pvec>0)
-  pvecScores <- pvec[pvecInds]
+  pvecInds <- which( pvec > 0 )
+  pvecScores <- pvec[ pvecInds ]
   res<-as.data.frame( cbind( pvecScores, pvecInds) )
-  res<-cbind(res,colnames(smr$M)[pvecInds])
-  names(res)<-c("Score","Index","Tag")
-  res[rev(order(res$Score)),]
+  res<-cbind( res, colnames(smr$M)[ pvecInds ], stringsAsFactors = FALSE )
+  names(res) <- c("Score","Index","Tag")
+  res[ rev( order(res$Score) ),]
 }
 
 
@@ -325,12 +325,12 @@ SMRProfileDF <- function( smr, itemHistory ) {
 #' @param smr a sparse matrix recommendation object
 #' @param pvec a sparse matrix with one column
 SMRProfileDFFromVector <- function( smr, pvec ) {
-  pvecInds <- which(pvec>0)
-  pvecScores <- pvec[pvecInds]
+  pvecInds <- which( pvec > 0 )
+  pvecScores <- pvec[ pvecInds ]
   res<-as.data.frame( cbind( pvecScores, pvecInds) )
-  res<-cbind(res,colnames(smr$M)[pvecInds], stringsAsFactors = FALSE)
-  names(res)<-c("Score","Index","Tag")
-  res[rev(order(res$Score)),]
+  res<-cbind( res, colnames(smr$M)[ pvecInds ], stringsAsFactors = FALSE )
+  names(res) <- c("Score","Index","Tag")
+  res[ rev( order(res$Score) ), ]
 }
 
 
