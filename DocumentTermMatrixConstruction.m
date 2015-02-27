@@ -58,14 +58,19 @@ ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch), stopWords_List}, opts
   ToBagOfWords[{doc}, {stemmingRules, stopWords}, opts][[1]];
 
 ToBagOfWords[docs : {_String ..}, {stemmingRules:(_List|_Dispatch), stopWords_List}, opts : OptionsPattern[]] :=  
-  Block[{docTerms, splittingCharaters, pSPred},
+  Block[{docTerms, splittingCharaters, pSPred, stopWordsRules},
     splittingCharaters = OptionValue[ToBagOfWords, "SplittingCharacters"];
     pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
     If[TrueQ[pSPred === None],
       docTerms = Flatten[StringSplit[#, splittingCharaters]] & /@ docs,
       docTerms = Select[Flatten[StringSplit[#, splittingCharaters]], pSPred] & /@ docs
     ];
-    docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms;
+    If[ MatchQ[ stopWords, {_String...} ],
+	  stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ],
+	  If[ Head[stopWordsRules] =!= Dispatch, stopWordsRules = Dispatch[ stopWords ]]
+	];
+	(* docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms; *)
+	docTerms = Pick[#, Not /@ (#/.stopWordsRules) ]& /@ docTerms;	
     docTerms = docTerms /. stemmingRules;
     docTerms
   ];
