@@ -62,7 +62,7 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFunction, norm
 #' @param localWeightFunction global weight finction ID (a string, one of "Binary", "TermFrequency", "Log", "None")
 #' @param normalizerFunction normalization weight finction ID (a string, one of "Cosine", "Sum", "None")
 #' @return a sparse matrix of class dgCMatrix
-#' @detail The implemented global weight function ID's are "IDF", "GFIDF", "Normal", "None".
+#' @detail The implemented global weight function ID's are "IDF", "GFIDF", "Normal", "Binary", "Entropy", "Sum", "None".
 #' @detail The implemented local weight function ID's are "Binary", "TermFrequency", "Log", "Logarithmic", "None".
 #' @detail The implemented normalization function ID's are "Cosine", "Sum", "None".
 SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL, localWeightFunction = NULL, normalizerFunction = NULL ) {
@@ -72,6 +72,10 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
   }
   
   mat <- docTermMat
+  
+  if ( is.null(globalWeightFunction) ) { globalWeightFunction = "None" }
+  if ( is.null(localWeightFunction) ) { localWeightFunction = "None" }
+  if ( is.null(normalizerFunction) ) { normalizerFunction = "None" }
   
   if ( globalWeightFunction == "IDF" ) {
     
@@ -102,7 +106,7 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
     
-  } else if ( globalWeightFunction == "None" || globalWeightFunction == "Binary" ) {
+  } else if ( globalWeightFunction == "Binary" || globalWeightFunction == "None" ) {
     
     globalWeights <- rep(1, ncol(mat) )
     
@@ -111,6 +115,10 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
     globalWeights <- colSums(mat)
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
+
+  } else if ( globalWeightFunction == "Sum" ) {
+    
+    globalWeights <- colSums(mat)
     
   } else if ( globalWeightFunction == "Entropy" ) {
     
