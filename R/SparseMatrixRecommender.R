@@ -249,24 +249,46 @@ SMRRecommendations <- function( smr, userHistoryItems, userRatings, nrecs, remov
 #' @param removeHistory should the history be removed from the recommendationsa
 SMRRecommendationsDF <- function( smr, history, nrecs, removeHistory ) {
   if ( is.numeric(history[,2]) ) {
-    res <- SMRRecommendations( smr, history[,2], history[,1], nrecs) 
+    res <- SMRRecommendations( smr, history[,2], history[,1], nrecs ) 
   } else {
     inds <- match(  history[,2], rownames( smr$M ) )
     if (  NA %in% inds ) {
       stop("Some of the items are not in the sparse matrix recommender object.")
     }
-    res <- SMRRecommendations( smr, inds, history[,1], nrecs) 
+    res <- SMRRecommendations( smr, inds, history[,1], nrecs, removeHistory ) 
   }
   names(res) <- c( names(res)[1:2], names(history)[[2]] )
   res
 }
 
+#' @description Recommend items based on a sparse matrix and a specified profile
+#' @param smar sparse matrix recommender
+#' @param profile data frame of scored tags, profile of a user with column names c( "Score", "Tag" | "Index" )
+#' @param nrecs number of recommendations to be returned
+#' @return Returns a data frame.
+SMRRecommendationsByProfileDF <- function( smr, profile, nrecs ) {
+  if ( names(profile) == c( "Tag", "Score" ) || names(profile) == c( "Index", "Score" ) ) {
+    profile <- profile[,c(2,1)]
+  }
+  if ( is.numeric( profile[,2] ) ) {
+    res <- SMRRecommendationsByProfile( smr, profile[,2], profile[,1], nrecs ) 
+  } else {
+    inds <- match(  profile[,2], colnames( smr$M ) )
+    if (  NA %in% inds ) {
+      stop("Some of the tags are not in the sparse matrix recommender object.")
+    }
+    res <- SMRRecommendationsByProfile( smr, inds, profile[,1], nrecs ) 
+  }
+  res
+}
 
-#' @description Recommend items based on a sparse matrix and specified profile
+
+#' @description Recommend items based on a sparse matrix and a specified profile indices and scores
 #' @param smr sparse matrix recommender
 #' @param profileInds metadata indices corresponding to the columns of \param smr$M
 #' @param profileRatings ratings of the profile metadata
 #' @param nrecs number of recommendations to be returned
+#' @return Returns a data frame.
 SMRRecommendationsByProfile <- function( smr, profileInds, profileRatings, nrecs ) {
     pvec <- sparseMatrix(i=rep(1,length(profileInds)), j=profileInds, x=profileRatings, dims=c(1,dim(smr$M)[2]))
     SMRRecommendationsByProfileVector( smr, pvec, nrecs )
@@ -288,8 +310,8 @@ SMRRecommendationsByProfileVector <- function( smr, profileVec, nrecs ) {
   if ( nrecs > length(rvec) ) {
     nrecs <- length(rvec)
   }
-  res<-as.data.frame(cbind(recScores[1:nrecs],recInds[1:nrecs]), stringsAsFactors=FALSE)
-  res<-cbind(res,rownames(smr$M)[recInds[1:nrecs]], stringsAsFactors=FALSE)
+  res <- data.frame( Score = recScores[1:nrecs], Index = recInds[1:nrecs], stringsAsFactors = FALSE )
+  res <- cbind( res, Item = rownames(smr$M)[recInds[1:nrecs]], stringsAsFactors = FALSE )
   names(res)<-c( "Score", "Index", "Item" )
   res
 }
@@ -314,8 +336,8 @@ SMRProfileDF <- function( smr, itemHistory ) {
   pvec <- SMRProfileVector( smr, itemHistory )
   pvecInds <- which( pvec > 0 )
   pvecScores <- pvec[ pvecInds ]
-  res<-as.data.frame( cbind( pvecScores, pvecInds) )
-  res<-cbind( res, colnames(smr$M)[ pvecInds ], stringsAsFactors = FALSE )
+  res <- data.frame( Score = pvecScores, Index = pvecInds, stringsAsFactors = FALSE  )
+  res <- cbind( res, Tag = colnames(smr$M)[ pvecInds ], stringsAsFactors = FALSE )
   names(res) <- c("Score","Index","Tag")
   res[ rev( order(res$Score) ),]
 }
@@ -327,10 +349,29 @@ SMRProfileDF <- function( smr, itemHistory ) {
 SMRProfileDFFromVector <- function( smr, pvec ) {
   pvecInds <- which( pvec > 0 )
   pvecScores <- pvec[ pvecInds ]
-  res<-as.data.frame( cbind( pvecScores, pvecInds) )
-  res<-cbind( res, colnames(smr$M)[ pvecInds ], stringsAsFactors = FALSE )
+  res <- data.frame( Score = pvecScores, Index = pvecInds, stringsAsFactors = FALSE )
+  res <- cbind( res, Tag = colnames(smr$M)[ pvecInds ], stringsAsFactors = FALSE )
   names(res) <- c("Score","Index","Tag")
   res[ rev( order(res$Score) ), ]
+}
+
+
+#' @description Return a data frame corresponding to a profile vector
+#' @param smr a sparse matrix recommendation object
+#' @param profile a data frame with names c( "Score", "Index", "Tag" )
+#' @return a sparse matrix with one column
+SMRProfileDFToVector <- function( smr, profileDF ) {
+  if ( length( intersect( names(profileDF), c("Score", "Index" ) ) ) == 2 ) {
+    sparseMatrix( i = profileDF$Index, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
+  } else if ( length( intersect( names(profileDF), c("Score", "Tag" ) ) ) == 2  ) {
+    inds <- which( colnames( smr$M ) %in% profileDF$Tag )
+    if ( length(inds) != nrow(profileDF) ) {
+      stop( "Not all tags are in known in SMR.", call. = TRUE )
+    }
+    sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
+  } else {
+    stop( "Expected a data frame with names c('Score','Index','Tag'), c('Score','Index'), or c('Score','Tag').", call. = TRUE )
+  }
 }
 
 
@@ -439,4 +480,94 @@ SMRRemoveTagTypes <- function( smr, removeTagTypes ) {
   newSMR$M <- SMRApplyTagTypeWeights( newSMR, applySFs )
   
   newSMR
+}
+
+
+#' @description Find the metadata tags that would explain or justify the recommendations
+#' @param smr a sparse matrix recommendation object
+#' @param toBeLovedItem an ID of a item or its index in smr$M
+#' @param profile a data frame that is the profile of the customer with columns c("Score", "Index", "Tag" )
+#' @param normalizeScores logical value should the scores be normalized with max(res$Score)
+#' @param style is one of "intersection", "multiplication"
+#' @return a data frame with columns names c("Score", "Index", "Tag" )
+SMRMetadataProofs <- function( smr, toBeLovedItem, profile,
+                               normalizeScores = TRUE,
+                               style = "intersection" ) {
+  
+  if ( is.null(style) ) {
+    style = "intersection"
+  }
+  
+  prodVec <- smr$M[ toBeLovedItem, , drop = FALSE ]
+  
+  if ( style == "intersection" ) {
+    prodVec@x <- rep(1, length(prodVec@x) )
+  }
+  
+  pvec <- SMRProfileDFToVector( smr, profile )
+  
+  ## SMRProfileDFToVector returns a column vector that is why its result is transposed here
+  pvec <- prodVec * t(pvec)
+  
+  res <- SMRProfileDFFromVector( smr, pvec )
+  
+  ## guarding a bug where res is a rowless data frame
+  if(nrow(res) > 0){
+    if (normalizeScores ) {
+      res$Score <- res$Score / max(res$Score) 
+    }
+    return( res )
+  } else {
+    return( NULL )
+  }
+}
+
+
+#' @description Find the items of the history that are the closest to a recommendation
+#' @param smr a sparse matrix recommendation object
+#' @param toBeLovedItem an ID of a item or its index in smr$M
+#' @param history a data frame that is the customer purchasing history with columns c( Score, <some-item-ID> )
+#' @param normalizeScores logical value should the scores be normalized with max(res$Score)
+#' @return a data frame with columns names c("Score", <some-item-id> )
+SMRHistoryProofs <- function( smr, toBeLovedItem, history, normalizeScores=TRUE ) {
+
+  # there should be a better way of making sparse matrix or vector 
+  # from a row of a sparse matrix
+  #   prodRow <- smr$M[toBeLovedInd,] 
+  # Replace with  smr$M[toBeLovedItem,,drop=FALSE] 
+  prodRow <- smr$M[toBeLovedItem,] 
+  nzInds <- which( prodRow > 0 )
+  prodVec <- sparseMatrix( i=nzInds, j=rep(1,length(nzInds)), x = prodRow[nzInds], dims=c( ncol(smr$M), 1 ) )
+  
+  vInds <- laply( history[,2], function(x) which(rownames(smr$M)==x) )
+  scores <- smr$M[ vInds, ] %*% prodVec
+  scores <- scores * history[,1]
+  
+  nzInds <- which( scores > 0 )
+  
+  # if all scores are zero give a warning and return an empty data frame
+  if ( length(nzInds) == 0 ) {
+    warning("All scores are zero", call.=TRUE)  
+    res <- data.frame( Score=numeric(0), Index=integer(0), y=character(0) )
+    names(res) <- c("Score", "Index", names(history)[[2]] )
+    return(res)
+  }
+  
+  prods <- rownames(smr$M)[vInds][ nzInds ]
+  prodInds <- (1:nrow(smr$M))[vInds][ nzInds ]
+  scores <- scores[ nzInds ]
+  
+  res <- as.data.frame( scores );
+  res <- cbind( res, prodInds, prods )
+  names(res) <- c("Score", "Index", names(history)[[2]] )
+  if ( normalizeScores ) {
+    if ( as.numeric( t(prodVec) %*% prodVec ) > 0 ) {
+      res$Score <- res$Score / ( max(history[,1]) * as.numeric( t(prodVec) %*% prodVec ) ) 
+    } else {
+      res$Score <- res$Score / max(res$Score)     
+    }
+  }
+  
+  res <- res[rev(order(res$Score)),]
+  res
 }
