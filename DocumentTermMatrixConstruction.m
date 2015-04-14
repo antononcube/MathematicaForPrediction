@@ -107,29 +107,35 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizer
   Block[{mat, nDocuments, n, m, globalWeights, diagMat},
     {n, m} = Dimensions[docTermMat];
     mat = N[SparseArray[docTermMat]];
-    
-    (* number of documents per term *)
-    nDocuments = Map[Total, mat];
-    
-    mat = Transpose[mat]; (* term * document matrix *)
-     
-    globalWeights = Map[globalWeightFunc[#, nDocuments] &, mat];
-    mat = Transpose[SparseArray[mat]]; (* document * term matrix *)
+
+    If[ TrueQ[ globalWeightFunc === Identity || globalWeightFunc === None || globalWeightFunc == Function[#] ],
+
+      globalWeights = ConstantArray[1.0,m],
+      (*ELSE*)
+      (* number of documents per term *)
+      nDocuments = Map[Total, mat];
+
+      mat = Transpose[mat]; (* term * document matrix *)
+
+      globalWeights = Map[globalWeightFunc[#, nDocuments] &, mat];
+
+      mat = Transpose[ SparseArray[mat] ]; (* document * term matrix *)
+    ];
 
     (* PRINT[Length[Select[globalWeights, ! NumberQ[#] &]]]; *)
     (* PRINT["WeightTerms::globalWeights : ", Through[{Min, Max, Mean, Median}[globalWeights]]]; *)
    
-    If[TrueQ[localWeightFunc === Identity || localWeightFunc == Function[#]], 
+    If[TrueQ[ localWeightFunc === Identity || localWeightFunc === None || localWeightFunc == Function[#] ],
       diagMat = SparseArray[MapThread[{#1, #2} -> #3 &, {Range[1, m], Range[1, m], globalWeights}], {m, m}];
       (* PRINT[diagMat, " ", MatrixQ[diagMat, NumberQ]]; *)
       mat = mat.diagMat,
       (* ELSE *)
-      mat = Map[SparseArray[Map[localWeightFunc, #]*globalWeights] &, mat]
+      mat = Map[ SparseArray[Map[localWeightFunc, #]*globalWeights] &, mat ]
     ];
 
-    If[TrueQ[normalizerFunc === Identity || normalizerFunc == Function[#]],
-      mat = SparseArray[mat],
-      mat = SparseArray[Map[normalizerFunc[#] &, mat]];
+    If[TrueQ[ normalizerFunc === Identity ||  normalizerFunc === None || normalizerFunc == Function[#] ],
+      mat = SparseArray[ mat ],
+      mat = SparseArray[ Map[normalizerFunc[#] &, mat] ];
     ];
     mat
   ];
