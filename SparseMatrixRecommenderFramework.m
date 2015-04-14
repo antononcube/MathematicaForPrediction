@@ -15,9 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	Written by Anton Antonov,
+	antononcube@gmail.com,
+	7320 Colbury Ave,
 	Windermere, Florida, USA.
 *)
 
@@ -38,7 +38,7 @@
 
    [1] Anton Antonov, "A fast and agile item-item recommender : design and implementation", October, WTC 2011.
        URL: http://library.wolfram.com/infocenter/Conferences/7964/
-   
+
    The presentation is also available at MathematicaForPrediction project at GitHub:
 
    [2] https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Antonov%20WTC-2011%20-%20A%20fast%20and%20agile%20IIR.pdf
@@ -49,7 +49,7 @@
        URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m .
 
    The package [3] is imported below (using Import[...]).
-   
+
    *)
 
 (* What is in the framework
@@ -59,10 +59,10 @@
    1.1.1. Constructors
    1.1.2. Weights calculation
    1.1.3. Weights parameters
-   1.2. Data 
+   1.2. Data
    1.2.1. Data interpretation
    1.3. Sparse Matrix Column interpretation to be used for ad-hoc profiles (search based, cold-start based)
-   1.4. Post-processing 
+   1.4. Post-processing
    1.4.1. Proofs
    1.4.2. Distances
    1.4.3. Ratings
@@ -76,15 +76,15 @@
    2.2.1. Takes number of results and profile vector or profile items list
    2.3. Post-processing
    2.3.1. Proofs -- common tags
-   2.3.2. Ratings -- 
+   2.3.2. Ratings --
    2.3.3. Carousels --
-   
+
    3. Interface
    3.1. Consumed items
    3.2. Recommended items
    3.3. User profile
    3.4. Controls for weghts calculation
-   
+
 
    4. Major design decisions
    4.1. Construct M01 and make M as M=M01.W .
@@ -136,6 +136,21 @@
 
 
 Clear[ItemRecommender]
+
+
+Clear[ItemRecommenderCreation]
+ItemRecommenderCreation[id_String, smats : {_SparseArray ..},
+  tagTypeNames : {_String ..}, rowNames : {_String ..},
+  columnNames : {{_String ..} ..}] :=
+    Module[{objIR},
+      objIR = ItemRecommender[id];
+      objIR["itemNames"] = rowNames;
+      objIR["tagTypes"] = tagTypeNames;
+      objIR["M01"] = objIR["SpliceMatrices"][smats];
+      objIR["MakeColumnInterpretation"][tagTypeNames, columnNames];
+      objIR["UseTagTypeWeights"][ConstantArray[1, Length[tagTypeNames]]];
+      objIR
+    ] /; Length[smats] == Length[tagTypeNames] == Length[columnNames];
 
 
 (* Makes the item-tag sparse martix \[Element] {0,1}^(Subscript[n, items]*Subscript[n, tags]) *)
@@ -688,31 +703,31 @@ Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/m
 
 Clear[ColorProfileOutliers]
 ColorProfileOutliers[uProf_]:=
-Block[{maxRank,clRules,cls},
-maxRank=Max[uProf[[All,1]]];
-(*cls={{maxRank},Select[shown[[All,1]],0.9 maxRank<=#1<maxRank&]};*)
-cls=OutlierIdentifier[uProf[[All,1]],TopOutliers[SPLUSQuartileIdentifierParameters[#]]&];
-cls={cls,OutlierIdentifier[Drop[uProf[[All,1]],Length[cls]],TopOutliers[HampelIdentifierParameters[#]]&]};
-clRules=Flatten@MapThread[Function[{gr,c},(#1->Style[#1,c]&)/@gr],{cls,Take[{Red,Blue},Length[cls]]},1];
-MapThread[Prepend,{uProf[[All,2;;-1]],uProf[[All,1]]/. clRules}]
-];
+    Block[{maxRank,clRules,cls},
+      maxRank=Max[uProf[[All,1]]];
+      (*cls={{maxRank},Select[shown[[All,1]],0.9 maxRank<=#1<maxRank&]};*)
+      cls=OutlierIdentifier[uProf[[All,1]],TopOutliers[SPLUSQuartileIdentifierParameters[#]]&];
+      cls={cls,OutlierIdentifier[Drop[uProf[[All,1]],Length[cls]],TopOutliers[HampelIdentifierParameters[#]]&]};
+      clRules=Flatten@MapThread[Function[{gr,c},(#1->Style[#1,c]&)/@gr],{cls,Take[{Red,Blue},Length[cls]]},1];
+      MapThread[Prepend,{uProf[[All,2;;-1]],uProf[[All,1]]/. clRules}]
+    ];
 
 
 Clear[ColorSelectedInds];
 Options[ColorSelectedInds]=Join[Options[Style],{"Foreground"->Darker[Red]}];
 ColorSelectedInds[uProf_,inds:{_Integer...},opts:OptionsPattern[]]:=
-Block[{clRules,fc=OptionValue["Foreground"]},
-Fold[ReplacePart[#1,#2->(Style[#,fc,opts]&/@#1[[#2]])]&,uProf,inds]
-];
+    Block[{clRules,fc=OptionValue["Foreground"]},
+      Fold[ReplacePart[#1,#2->(Style[#,fc,opts]&/@#1[[#2]])]&,uProf,inds]
+    ];
 
 
 Clear[OutlierIndexes]
 OutlierIndexes[data:{_?NumberQ...},outlierIdentifier_:HampelIdentifierParameters]:=
-Block[{cls,t},
-cls=OutlierIdentifier[data,TopOutliers[outlierIdentifier[#]]&];
-t=Select[Transpose[{data,Range[Length[data]]}],MemberQ[cls,#[[1]]]&];
-If[t==={},{},t[[All,2]]]
-];
+    Block[{cls,t},
+      cls=OutlierIdentifier[data,TopOutliers[outlierIdentifier[#]]&];
+      t=Select[Transpose[{data,Range[Length[data]]}],MemberQ[cls,#[[1]]]&];
+      If[t==={},{},t[[All,2]]]
+    ];
 
 
 (* ::Subsection:: *)
@@ -722,117 +737,117 @@ If[t==={},{},t[[All,2]]]
 Clear[MetaDataProofs]
 Options[MetaDataProofs]={"OutlierIdentifierParameters"->None,"NormalizeScores"->True};
 MetaDataProofs[irecObj_ItemRecommender,toBeLovedInd_Integer,userProfile_,opts:OptionsPattern[]]:=
-Block[{shInds,scores,outInds,oiFunc=OptionValue["OutlierIdentifierParameters"],normScores=OptionValue["NormalizeScores"],res},
-shInds=Flatten[(Most@ArrayRules[irecObj["M"][[toBeLovedInd]]])[[All,1]]];
-scores=SortBy[Select[userProfile,MemberQ[shInds,#[[2]]]&],-#[[1]]&];
-res=
-If[TrueQ[oiFunc===None],
-scores,
-scores[[If[#==={},All,#]&@OutlierIndexes[scores[[All,1]],TopOutliers[oiFunc[#]]&]]]
-];
-If[TrueQ[normScores],
-res[[All,1]]=res[[All,1]]/Max[userProfile[[All,1]]]//N
-];
-res
-];
+    Block[{shInds,scores,outInds,oiFunc=OptionValue["OutlierIdentifierParameters"],normScores=OptionValue["NormalizeScores"],res},
+      shInds=Flatten[(Most@ArrayRules[irecObj["M"][[toBeLovedInd]]])[[All,1]]];
+      scores=SortBy[Select[userProfile,MemberQ[shInds,#[[2]]]&],-#[[1]]&];
+      res=
+          If[TrueQ[oiFunc===None],
+            scores,
+            scores[[If[#==={},All,#]&@OutlierIndexes[scores[[All,1]],TopOutliers[oiFunc[#]]&]]]
+          ];
+      If[TrueQ[normScores],
+        res[[All,1]]=res[[All,1]]/Max[userProfile[[All,1]]]//N
+      ];
+      res
+    ];
 
 
 Clear[HistoryProofs]
 Options[HistoryProofs]={"OutlierIdentifierParameters"->None,"NormalizeScores"->True};
 HistoryProofs[irecObj_ItemRecommender,toBeLovedInd_Integer,userHistoryInds:{_Integer...},opts:OptionsPattern[]]:=
-HistoryProofs[irecObj,toBeLovedInd,Transpose[{Table[1.,{Length[userHistoryInds]}],userHistoryInds,userHistoryInds}],opts];
+    HistoryProofs[irecObj,toBeLovedInd,Transpose[{Table[1.,{Length[userHistoryInds]}],userHistoryInds,userHistoryInds}],opts];
 HistoryProofs[irecObj_ItemRecommender,toBeLovedInd_Integer,userHistory:{{_?NumberQ,_Integer,___}...},opts:OptionsPattern[]]:=
-Block[{userHistoryInds,userHistoryRatings,scores,outInds,oiFunc=OptionValue["OutlierIdentifierParameters"],normScores=OptionValue["NormalizeScores"],res},
-userHistoryInds=userHistory[[All,2]];
-userHistoryRatings=userHistory[[All,1]];
-scores=irecObj["M"][[userHistoryInds]].irecObj["M"][[toBeLovedInd]];
-scores=scores*userHistoryRatings;
-scores=Select[SortBy[Transpose[{scores,userHistory}],-#[[1]]&],#[[1]]>0&];
-res=Flatten/@
-If[TrueQ[oiFunc===None],
-scores,
-scores[[If[#==={},All,#]&@OutlierIndexes[scores[[All,1]],TopOutliers[oiFunc[#]]&]]]
-];
-res=Map[Drop[#,{2}]&,res];
-If[TrueQ[normScores],
-res[[All,1]]=res[[All,1]]/(Max[userHistoryRatings]*(irecObj["M"][[toBeLovedInd]].irecObj["M"][[toBeLovedInd]]))//N
-];
-res
-];
+    Block[{userHistoryInds,userHistoryRatings,scores,outInds,oiFunc=OptionValue["OutlierIdentifierParameters"],normScores=OptionValue["NormalizeScores"],res},
+      userHistoryInds=userHistory[[All,2]];
+      userHistoryRatings=userHistory[[All,1]];
+      scores=irecObj["M"][[userHistoryInds]].irecObj["M"][[toBeLovedInd]];
+      scores=scores*userHistoryRatings;
+      scores=Select[SortBy[Transpose[{scores,userHistory}],-#[[1]]&],#[[1]]>0&];
+      res=Flatten/@
+          If[TrueQ[oiFunc===None],
+            scores,
+            scores[[If[#==={},All,#]&@OutlierIndexes[scores[[All,1]],TopOutliers[oiFunc[#]]&]]]
+          ];
+      res=Map[Drop[#,{2}]&,res];
+      If[TrueQ[normScores],
+        res[[All,1]]=res[[All,1]]/(Max[userHistoryRatings]*(irecObj["M"][[toBeLovedInd]].irecObj["M"][[toBeLovedInd]]))//N
+      ];
+      res
+    ];
 
 
 Clear[FancyProofs]
 Options[FancyProofs]={"Preamble"->"Recommended","HistoryProofPreamble"->"because of your interest in","MetaDataProofPreamble"->"because you like","SimilarityThreshold"->0.45,"ProofOptions"->Options[HistoryProofs]};
 FancyProofs[irecObj_ItemRecommender,toBeLovedInd_Integer,userHistory:{{_?NumberQ,_Integer,_String}...},userProfile_,opts:OptionsPattern[]]:=
-Block[{hpsRes,mdpsRes,hps,mdps,TryToTake,
-prem=OptionValue["Preamble"],
-hpPrem=OptionValue["HistoryProofPreamble"],
-mdpPrem=OptionValue["MetaDataProofPreamble"],
-simTh=OptionValue["SimilarityThreshold"],
-proofOpts=OptionValue["ProofOptions"]},
-TryToTake[l_,n_]:=If[Length[l]>n,Take[l,n],l];
-hpsRes=HistoryProofs[irecObj,toBeLovedInd,userHistory,"NormalizeScores"->True,proofOpts];
-mdpsRes=MetaDataProofs[irecObj,toBeLovedInd,userProfile,"NormalizeScores"->True,proofOpts];
-hps=Style[#,Blue]&/@hpsRes[[All,-1]];
-mdps=Style[#,Purple]&/@mdpsRes[[All,-1]];
-Which[
-Length[hps]==Length[userHistory]||Max[hpsRes[[All,1]]]<simTh,
-Row[{prem," ",mdpPrem,": ",TryToTake[mdps,4]}],
-Length[mdps]==0,
-Row[{prem," ",hpPrem," ",TryToTake[hps,3]}],
-Length[hps]==3,
-Row[{prem," ",hpPrem," ",hps}],
-Length[hps]>3,
-Row[{prem," ",hpPrem," ",TryToTake[hps,3]," and ",mdpPrem," ",TryToTake[mdps,2]}],
-Length[hps]<3,
-Row[{prem," ",hpPrem," ",hps," and ",mdpPrem," ",TryToTake[mdps,4-Length[hps]]}],
-True,
-Row[{prem," ",mdpPrem,": ",TryToTake[mdps,4]}]
-]
-];
+    Block[{hpsRes,mdpsRes,hps,mdps,TryToTake,
+      prem=OptionValue["Preamble"],
+      hpPrem=OptionValue["HistoryProofPreamble"],
+      mdpPrem=OptionValue["MetaDataProofPreamble"],
+      simTh=OptionValue["SimilarityThreshold"],
+      proofOpts=OptionValue["ProofOptions"]},
+      TryToTake[l_,n_]:=If[Length[l]>n,Take[l,n],l];
+      hpsRes=HistoryProofs[irecObj,toBeLovedInd,userHistory,"NormalizeScores"->True,proofOpts];
+      mdpsRes=MetaDataProofs[irecObj,toBeLovedInd,userProfile,"NormalizeScores"->True,proofOpts];
+      hps=Style[#,Blue]&/@hpsRes[[All,-1]];
+      mdps=Style[#,Purple]&/@mdpsRes[[All,-1]];
+      Which[
+        Length[hps]==Length[userHistory]||Max[hpsRes[[All,1]]]<simTh,
+        Row[{prem," ",mdpPrem,": ",TryToTake[mdps,4]}],
+        Length[mdps]==0,
+        Row[{prem," ",hpPrem," ",TryToTake[hps,3]}],
+        Length[hps]==3,
+        Row[{prem," ",hpPrem," ",hps}],
+        Length[hps]>3,
+        Row[{prem," ",hpPrem," ",TryToTake[hps,3]," and ",mdpPrem," ",TryToTake[mdps,2]}],
+        Length[hps]<3,
+        Row[{prem," ",hpPrem," ",hps," and ",mdpPrem," ",TryToTake[mdps,4-Length[hps]]}],
+        True,
+        Row[{prem," ",mdpPrem,": ",TryToTake[mdps,4]}]
+      ]
+    ];
 
 
 Clear[ProofHistogram]
 Options[ProofHistogram]=Options[BarChart];
 ProofHistogram[scores_,nelems_:5,opts:OptionsPattern[]]:=
-Block[{data=If[Length[Abs[scores]]<nelems ||nelems===All,scores,Take[scores,nelems]]},
-BarChart[Reverse@data[[All,1]],BarOrigin->Left,ChartLabels->Placed[Reverse@data[[All,3]],After],opts]
-];
+    Block[{data=If[Length[Abs[scores]]<nelems ||nelems===All,scores,Take[scores,nelems]]},
+      BarChart[Reverse@data[[All,1]],BarOrigin->Left,ChartLabels->Placed[Reverse@data[[All,3]],After],opts]
+    ];
 
 
 Clear[FancyTooltipProofs]
 Options[FancyTooltipProofs]={"Preamble"->"Recommended","HistoryProofPreamble"->"because of your interest in","MetaDataProofPreamble"->"because you like","SimilarityThreshold"->0.45,"ProofHistogramOptions"->{ImageSize->200},"ProofOptions"->Options[HistoryProofs]};
 FancyTooltipProofs[irecObj_ItemRecommender,toBeLovedInd_Integer,userHistory:{{_?NumberQ,_Integer,_String}...},userProfile_,opts:OptionsPattern[]]:=
-Block[{hpsRes,mdpsRes,hps,mdps,TryToTake,NBARS=5,
-prem=OptionValue["Preamble"],
-hpPrem=OptionValue["HistoryProofPreamble"],
-mdpPrem=OptionValue["MetaDataProofPreamble"],
-simTh=OptionValue["SimilarityThreshold"],
-proofOpts=OptionValue["ProofOptions"],
-proofHistOpts=OptionValue["ProofHistogramOptions"]},
+    Block[{hpsRes,mdpsRes,hps,mdps,TryToTake,NBARS=5,
+      prem=OptionValue["Preamble"],
+      hpPrem=OptionValue["HistoryProofPreamble"],
+      mdpPrem=OptionValue["MetaDataProofPreamble"],
+      simTh=OptionValue["SimilarityThreshold"],
+      proofOpts=OptionValue["ProofOptions"],
+      proofHistOpts=OptionValue["ProofHistogramOptions"]},
 
-TryToTake[l_,n_]:=If[Length[l]>n,Take[l,n],l];
-hpsRes=HistoryProofs[irecObj,toBeLovedInd,userHistory,"NormalizeScores"->True,proofOpts];
-mdpsRes=MetaDataProofs[irecObj,toBeLovedInd,userProfile,"NormalizeScores"->True,proofOpts];
+      TryToTake[l_,n_]:=If[Length[l]>n,Take[l,n],l];
+      hpsRes=HistoryProofs[irecObj,toBeLovedInd,userHistory,"NormalizeScores"->True,proofOpts];
+      mdpsRes=MetaDataProofs[irecObj,toBeLovedInd,userProfile,"NormalizeScores"->True,proofOpts];
 
-hps=Style[#,Blue]&/@hpsRes[[All,-1]];
-mdps=Style[#,Purple]&/@mdpsRes[[All,-1]];
+      hps=Style[#,Blue]&/@hpsRes[[All,-1]];
+      mdps=Style[#,Purple]&/@mdpsRes[[All,-1]];
 
-Which[
-Length[hps]==Length[userHistory]||Max[hpsRes[[All,1]]]<simTh,
-Row[{prem," ",mdpPrem,": ",Tooltip[TryToTake[mdps,4],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}],
-Length[mdps]==0,
-Row[{prem," ",hpPrem," ",Tooltip[TryToTake[hps,3],ProofHistogram[hpsRes,NBARS,proofHistOpts]]}],
-Length[hps]==3,
-Row[{prem," ",hpPrem," ",Tooltip[hps,ProofHistogram[hpsRes,NBARS,proofHistOpts]]}],
-Length[hps]>3,
-Row[{prem," ",hpPrem," ",Tooltip[TryToTake[hps,3],ProofHistogram[hpsRes,NBARS,proofHistOpts]]," and ",mdpPrem," ",Tooltip[TryToTake[mdps,2],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}],
-Length[hps]<3,
-Row[{prem," ",hpPrem," ",Tooltip[hps,ProofHistogram[hpsRes,NBARS,proofHistOpts]]," and ",mdpPrem," ",Tooltip[TryToTake[mdps,4-Length[hps]],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}],
-True,
-Row[{prem," ",mdpPrem,": ",Tooltip[TryToTake[mdps,4],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}]
-]
-];
+      Which[
+        Length[hps]==Length[userHistory]||Max[hpsRes[[All,1]]]<simTh,
+        Row[{prem," ",mdpPrem,": ",Tooltip[TryToTake[mdps,4],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}],
+        Length[mdps]==0,
+        Row[{prem," ",hpPrem," ",Tooltip[TryToTake[hps,3],ProofHistogram[hpsRes,NBARS,proofHistOpts]]}],
+        Length[hps]==3,
+        Row[{prem," ",hpPrem," ",Tooltip[hps,ProofHistogram[hpsRes,NBARS,proofHistOpts]]}],
+        Length[hps]>3,
+        Row[{prem," ",hpPrem," ",Tooltip[TryToTake[hps,3],ProofHistogram[hpsRes,NBARS,proofHistOpts]]," and ",mdpPrem," ",Tooltip[TryToTake[mdps,2],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}],
+        Length[hps]<3,
+        Row[{prem," ",hpPrem," ",Tooltip[hps,ProofHistogram[hpsRes,NBARS,proofHistOpts]]," and ",mdpPrem," ",Tooltip[TryToTake[mdps,4-Length[hps]],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}],
+        True,
+        Row[{prem," ",mdpPrem,": ",Tooltip[TryToTake[mdps,4],ProofHistogram[mdpsRes,NBARS,proofHistOpts]]}]
+      ]
+    ];
 
 
 (* ::Subsection:: *)
@@ -842,34 +857,34 @@ Row[{prem," ",mdpPrem,": ",Tooltip[TryToTake[mdps,4],ProofHistogram[mdpsRes,NBAR
 Clear[AddLikeItButton]
 SetAttributes[AddLikeItButton,HoldRest];
 AddLikeItButton[searchResult:{{_,_,___}...},observedVar_Symbol,command_]:=
-Block[{},
-Map[Append[#1,Button[Style["Like It!",Italic,Small],(AppendTo[USERRATINGS,3];AppendTo[USERDATETIMES,Append[Most[Date[]],0]];AppendTo[observedVar,#[[2]]]),Appearance->None]]&,searchResult]
-];
+    Block[{},
+      Map[Append[#1,Button[Style["Like It!",Italic,Small],(AppendTo[USERRATINGS,3];AppendTo[USERDATETIMES,Append[Most[Date[]],0]];AppendTo[observedVar,#[[2]]]),Appearance->None]]&,searchResult]
+    ];
 
 AddLikeItButton[searchResult:{{_,_,___}...},observedVar_Symbol,observedVar2_Symbol,command_]:=
-Block[{},
-Map[Append[#1,Button[Style["Like It!",Italic,Small],(AppendTo[observedVar2,1];AppendTo[observedVar,#[[2]]]),Appearance->None]]&,searchResult]
-];
+    Block[{},
+      Map[Append[#1,Button[Style["Like It!",Italic,Small],(AppendTo[observedVar2,1];AppendTo[observedVar,#[[2]]]),Appearance->None]]&,searchResult]
+    ];
 
 
 Clear[AddUseItButton]
 SetAttributes[AddUseItButton,HoldRest];
 AddUseItButton[searchResult:{{_,_,___}...},observedVar_Symbol,command_]:=
-Block[{},
-MapIndexed[Prepend[#1,Button[Style["\[FilledCircle]",Bold,Small],(If[MemberQ[observedVar,#2[[1]]],observedVar=Complement[observedVar,{#2[[1]]}],AppendTo[observedVar,#2[[1]]]]),Appearance->None]]&,searchResult]
-];
+    Block[{},
+      MapIndexed[Prepend[#1,Button[Style["\[FilledCircle]",Bold,Small],(If[MemberQ[observedVar,#2[[1]]],observedVar=Complement[observedVar,{#2[[1]]}],AppendTo[observedVar,#2[[1]]]]),Appearance->None]]&,searchResult]
+    ];
 
 
 Clear[AddRatingButton]
 SetAttributes[AddRatingButton,HoldRest];
 AddRatingButton[searchResult:{{_,_,___}...},observedVar_Symbol,command_]:=
-Block[{},
-MapIndexed[Append[#1,Button[Style["\[FivePointedStar]",Bold],(USERRATINGS[[#2[[1]]]]=Mod[USERRATINGS[[#2[[1]]]],5]+1),Appearance->None]]&,searchResult]
-];
+    Block[{},
+      MapIndexed[Append[#1,Button[Style["\[FivePointedStar]",Bold],(USERRATINGS[[#2[[1]]]]=Mod[USERRATINGS[[#2[[1]]]],5]+1),Appearance->None]]&,searchResult]
+    ];
 AddRatingButton[searchResult:{{_,_,___}...},observedVar_Symbol,maxRating_,command_]:=
-Block[{},
-MapIndexed[Append[#1,Button[Style["\[FivePointedStar]",Bold],(observedVar[[#2[[1]]]]=Mod[observedVar[[#2[[1]]]],maxRating]+1),Appearance->None]]&,searchResult]
-];
+    Block[{},
+      MapIndexed[Append[#1,Button[Style["\[FivePointedStar]",Bold],(observedVar[[#2[[1]]]]=Mod[observedVar[[#2[[1]]]],maxRating]+1),Appearance->None]]&,searchResult]
+    ];
 
 
 (* ::Section::Closed:: *)
