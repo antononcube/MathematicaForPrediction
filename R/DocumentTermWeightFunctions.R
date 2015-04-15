@@ -67,8 +67,8 @@ SMRApplyGlobalWeightFunction <- function( docTermMat, globalWeightFunction, norm
 #' @detail The implemented normalization function ID's are "Cosine", "Sum", "None".
 SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL, localWeightFunction = NULL, normalizerFunction = NULL ) {
   
-  if ( class(docTermMat) != "dgCMatrix" || nrow(docTermMat) < 2 || ncol(docTermMat) < 2 ) {
-    stop( "The argument docTermMat is expected to be a sparse matrix with number of rows and columns greater than two.", call.=TRUE)
+  if ( class(docTermMat) != "dgCMatrix" || nrow(docTermMat) < 1 || ncol(docTermMat) < 1 ) {
+    stop( "The argument docTermMat is expected to be a sparse matrix with number of rows and columns greater than zero", call.=TRUE)
   }
   
   mat <- docTermMat
