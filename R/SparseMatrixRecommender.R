@@ -237,7 +237,7 @@ SMRRecommendations <- function( smr, userHistoryItems, userRatings, nrecs, remov
   
   res<-as.data.frame(cbind(recScores,recInds), stringsAsFactors=FALSE)
   res<-cbind(res,rownames(smr$M)[recInds], stringsAsFactors=FALSE)
-  names(res)<-c("Score","Index","Item")
+  names(res)<-c("Score","Index",smr$ItemColumnName)
   res
 }
 
@@ -247,7 +247,7 @@ SMRRecommendations <- function( smr, userHistoryItems, userRatings, nrecs, remov
 #' @param history a data frame of rated items with colums("Ratings",<some-item-ID>)
 #' @param nrecs number of recommendations to be returned
 #' @param removeHistory should the history be removed from the recommendationsa
-SMRRecommendationsDF <- function( smr, history, nrecs, removeHistory ) {
+SMRRecommendationsDF <- function( smr, history, nrecs, removeHistory=TRUE ) {
   if ( is.numeric(history[,2]) ) {
     res <- SMRRecommendations( smr, history[,2], history[,1], nrecs ) 
   } else {
