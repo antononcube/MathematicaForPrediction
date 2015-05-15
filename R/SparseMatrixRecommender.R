@@ -571,3 +571,68 @@ SMRHistoryProofs <- function( smr, toBeLovedItem, history, normalizeScores=TRUE 
   res <- res[rev(order(res$Score)),]
   res
 }
+
+
+#' @description Annex a sub-matrix to the metadata matrix of an SMR object.
+#' @param smr a sparse matrix recommender object
+#' @param newSubMat the new sub-matrix to be annexed
+#' @param newTagType the tag type associated with the new sub-matrix
+SMRAnnexSubMatrix <- function( smr, newSubMat, newTagType ) { 
+  
+  if ( nrow( newSubMat ) != nrow( smr$M ) ) { 
+    stop( "The metadata matrix of the SMR object and the new sub-matrix should have the same number of rows.", call. = TRUE )
+  }
+  
+  newSMR <- smr 
+  
+  newSMR$TagTypeRanges <- rbind( newSMR$TagTypeRanges, data.frame( Begin = ncol(newSMR$M) + 1, End = ncol(newSMR$M) + ncol(newSubMat) ) )
+  rownames(newSMR$TagTypeRanges) <- c( rownames(newSMR$TagTypeRanges)[-nrow(newSMR$TagTypeRanges)], newTagType )
+  
+  newSMR$M <- cBind( newSMR$M, newSubMat )
+  newSMR$M01 <- cBind( newSMR$M01, newSubMat )
+  
+  newSMR$TagTypes <- c( newSMR$TagTypes, newTagType )
+  
+  newSMR
+}
+
+
+#' @describtion Join two SMR objects
+#' @param smr1 the first SMR object
+#' @param smr2 the second SMR object
+#' @param colnamesPrefix1 the prefix to be concatenated to the colnames of the first SMR object
+#' @param colnamesPrefix2 the prefix to be concatenated to the colnames of the second SMR object
+SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL ) { 
+
+  if ( nrow( smr1$M ) != nrow( smr2$M ) ) { 
+    ## The rownames should be the same too.
+    stop( "The metadata matrices of the SMR objects have to have the same number of rows.", call. = TRUE )
+  }
+
+  ## The rownames should be the same too.
+  if ( mean( rownames( smr1$M ) == rownames( smr2$M ) ) < 1 ) { 
+    stop( "The metadata matrices of the SMR objects should have the same rownames.", call. = TRUE )
+  }
+  
+  newSMR <- smr1
+  
+  ranges <- smr2$TagTypeRanges
+  ranges$Begin <- ranges$Begin + smr1$TagTypeRanges$End[nrow(smr1$TagTypeRanges)]
+  ranges$End <- ranges$End + smr1$TagTypeRanges$End[nrow(smr1$TagTypeRanges)]
+    
+  newSMR$TagTypeRanges <- rbind( smr1$TagTypeRanges, ranges )
+  rownames(newSMR$TagTypeRanges) <- c( paste( colnamesPrefix1, rownames(smr1$TagTypeRanges), sep=""), paste( colnamesPrefix2, rownames(smr2$TagTypeRanges), sep="") )
+  
+  newSMR$M <- cBind( smr1$M, smr2$M )
+  newSMR$M01 <- cBind( smr1$M01, smr2$M01 )
+  
+  newSMR$TagTypes <- c( paste( colnamesPrefix1, smr1$TagTypes, sep=""), paste( colnamesPrefix2, smr2$TagTypes, sep="") )
+  
+  colnames(newSMR$M) <- c( paste( colnamesPrefix1, colnames(smr1$M), sep="" ), paste( colnamesPrefix2, colnames(smr2$M), sep="" ) )
+  colnames(newSMR$M01) <- c( paste( colnamesPrefix1, colnames(smr1$M01), sep="" ), paste( colnamesPrefix2, colnames(smr2$M01), sep="" ) )
+  
+  newSMR
+}
+
+
+
