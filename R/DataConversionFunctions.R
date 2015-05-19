@@ -43,7 +43,8 @@ SplitColumnOfTags <- function( dataColumn, numberOfSplits, sep = "," ) {
   spCol <- str_split_fixed( dataColumn, sep, numberOfSplits )
   spCol[ spCol == "" ] <- "null"
   #spCol[ spCol == "null"] <- NA
-  spCol <- str_trim(spCol)
+  ##spCol <- apply( spCol, c(1,2), str_trim)
+  spCol <- apply( spCol, c(2), str_trim)
   spCol
 }
 
@@ -215,6 +216,7 @@ ImposeColumnIDs <- function( colIDs, smat ) {
 #' @description Make piecewise function for a list of values.
 #' The names of the values are used as function's result.
 #' If the names are NULL they are automatically assign to be ordinals starting from 1.
+#' Similar behavior is provided by the base function findInterval.
 #' @param points a list of named values; if the values are not named automatic naming is used
 #' @param tags the values to be returned for the ranges defined by points.
 #' @details length(points) == length(tags) - 1
@@ -305,4 +307,58 @@ ConvertMultiColumnDataFrameToSparseMatrix <- function( multiColDF, itemColName, 
 }
 
 
+
+#' @description Make categorical representation of the numerical values of a column in a data frame and 
+#' produce a matrix with the derived categorical tags as columns and values of a specified data column as rows. 
+#' @param data a data frame
+#' @param colNameForRows a column name in data for the rows of the result matrix
+#' @param colNameForColumns a column name in data for the columns of the result matrix
+#' @param breaks the points over which the breaking of data[colNameForColumns] is done
+#' @param leftOverlap vector of weights for the neighboring columns to left
+#' @param rightOverlap vector of weights for the neighboring columns to right
+#' @param colnamesPrefix prefix for the columns names
+MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns, breaks = 10, leftOverlap = NULL, rightOverlap = NULL, colnamesPrefix = "" ) {
+  
+  if( is.numeric( breaks ) && length( breaks ) == 1 ) {
+    d0 <- min(data[[colNameForColumns]]); d1 <- max(data[[colNameForColumns]])
+    breaks <- seq( d0, d1, (d1-d0)/(breaks-1) )    
+  }
+  
+  smat <- afData[ , c(colNameForRows, colNameForColumns) ]
+  qF <- MakePiecewiseFunction( breaks )
+  smat <- cbind( smat, parts = laply( smat[[colNameForColumns]], qF ) )
+  smat <- xtabs( as.formula( paste( "~", colNameForRows, "+ parts") ), smat, sparse = TRUE )
+  colnames(smat) <- paste( colnamesPrefix, colnames(smat), sep="" )
+  
+  if ( !is.null( leftOverlap ) && !is.null( rightOverlap ) ) {
+    genMat <- smat
+  }
+  
+  if ( !is.null( leftOverlap ) ) {
+    
+    addMat <- smat
+    zeroCol <- sparseMatrix(  i = c(1), j = c(1), x = 0, dims = c( nrow(smat), 1 ) )
+    
+    for( w in rev(leftOverlap) ) {
+      addMat <- addMat[,2:ncol(addMat)]
+      addMat <- cBind( addMat, zeroCol )
+      smat <- smat + w * addMat
+    }
+  }
+  
+  if ( !is.null( rightOverlap ) ) {
+    
+    if ( is.null( leftOverlap ) ) { addMat <- smat } else { addMat <- genMat }
+    
+    zeroCol <- sparseMatrix(  i = c(1), j = c(1), x = 0, dims = c( nrow(smat), 1 ) )
+    
+    for( w in rightOverlap ) {
+      addMat <- addMat[,1:(ncol(addMat)-1)]
+      addMat <- cBind( zeroCol, addMat )
+      smat <- smat + w * addMat
+    }
+  }
+  
+  smat
+}
 
