@@ -34,7 +34,12 @@
 
 (* Version 1.0 *)
 (* This package contains definitions for the application of Non-Negative Matrix Factorization (NNMF). *)
-(* *)
+(* 
+ The implementation follows the description of the hybrid algorithm GD-CLS (Gradient Descent with Constrained Least Squares) in the article:
+
+ Shahnaz, F., Berry, M., Pauca, V., Plemmons, R., 2006.
+ Document clustering using nonnegative matrix factorization. Information Processing & Management 42 (2), 373-386.
+*)
 
 BeginPackage["NonNegativeMatrixFactorization`"]
 
