@@ -21,10 +21,20 @@
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
-## NNMF functions re-programmed from the Mathematica package
+##
+## This code has NNMF functions re-programmed from the Mathematica package
 ## NonNegativeMatrixFactorization.m,
 ## "Implementation of the Non-Negative Matrix Factorization algorithm in Mathematica",
 ## https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m .
+##
+##=======================================================================================
+##
+## The implementation follows the description of the hybrid algorithm
+## GD-CLS (Gradient Descent with Constrained Least Squares) in the article:
+##
+## Shahnaz, F., Berry, M., Pauca, V., Plemmons, R., 2006.
+## Document clustering using nonnegative matrix factorization. Information Processing & Management 42 (2), 373-386.
+##
 ##=======================================================================================
 ##
 ## Version 1.0 
@@ -33,6 +43,7 @@
 ##
 ## The functions is based on the sparse matrix library in R. 
 ## (The reason I wrote it is there was no R library for NNMF using sparse matrices.)
+##
 ##=======================================================================================
 ## TODO: Make these functions into an actual R package.
 ##=======================================================================================
@@ -84,6 +95,10 @@ NNMF <- function( V, k, maxSteps = 200, nonNegative = TRUE, epsilon = 10^-9., re
     if( profiling && ( nSteps < 100  || ( nSteps %% 100 == 0) ) ) {
       cat( "\n\tStep = ", nSteps, ", diffNorm = ", diffNorm )
     }
+  }
+
+  if ( nonNegative ) {
+     W@x[ W@x < 0  ] <- 0
   }
   
   list( W = W, H = H )
