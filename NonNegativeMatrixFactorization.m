@@ -49,6 +49,8 @@ GDCLSGlobal::usage = "GDCLSGlobal[V_?MatrixQ,W_?MatrixQ,H_?MatrixQ,opts] continu
 
 NormalizeMatrixProduct::usage = "NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} such that W1 H1 = W H and the norms of the columns of W1 are 1."
 
+LeftNormalizeMatrixProduct::usage = "Same as NormalizeMatrixProduct."
+	
 RightNormalizeMatrixProduct::usage = "RightNormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} such that W1 H1 = W H and the norms of the rows of H1 are 1."
 
 BasisVectorInterpretation::usage = "BasisVectorInterpretation[vec_?VectorQ,n_Integer,interpretationItems_List] takes the n largest coordinates of vec, finds the corresponding elements in interpretationItems, and returns a list of coordinate-item pairs."
@@ -69,6 +71,7 @@ GDCLS[V_?MatrixQ, k_?IntegerQ, opts:OptionsPattern[]] :=
    W = RandomReal[{0, 1}, {m, k}];
    H = ConstantArray[0, {k, n}];
    normV = Norm[V, "Frobenius"]; diffNorm = 10 normV;
+   If[ pgoal === Automatic, pgoal = 4 ];		
    While[nSteps < maxSteps && TrueQ[! NumberQ[pgoal] || NumberQ[pgoal] && (normV > 0) && diffNorm/normV > 10^(-pgoal)],
     nSteps++;
     t =
@@ -80,13 +83,13 @@ GDCLS[V_?MatrixQ, k_?IntegerQ, opts:OptionsPattern[]] :=
       H = SparseArray[Transpose[H]];
       If[nonnegQ,
        H = Clip[H, {0, Max[H]}]
-       ];
-      W = W*(V.Transpose[H])/(W.(H.Transpose[H]) + eps);
       ];
+	  W = W*(V.Transpose[H])/(W.(H.Transpose[H]) + eps);
+     ];
     If[NumberQ[pgoal],
       diffNorm = Norm[V - W.H, "Frobenius"];
-      If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t, " relative error=", diffNorm/normV]],
-      If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t]]
+      If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT["step:", nSteps, ", iteration time:", t, " relative error:", diffNorm/normV]],
+      If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT["step:", nSteps, ", iteration time:", t]]
      ];
    ];
    {W, H}
@@ -117,9 +120,9 @@ GDCLSGlobal[V_, W_, H_, opts:OptionsPattern[]] :=
       H = SparseArray[Transpose[H]];
       If[nonnegQ,
        H = Clip[H, {0, Max[H]}]
-       ];
-      W = W*(V.Transpose[H])/(W.(H.Transpose[H]) + eps);
       ];
+      W = W*(V.Transpose[H])/(W.(H.Transpose[H]) + eps);
+     ];
     If[NumberQ[pgoal],
       diffNorm = Norm[V - W.H, "Frobenius"];
       If[nSteps < 100 || Mod[nSteps, 100] == 0, PRINT[nSteps, " ", t, " relative error=", diffNorm/normV]],
@@ -131,7 +134,7 @@ GDCLSGlobal[V_, W_, H_, opts:OptionsPattern[]] :=
 
 (* ::Subsection:: *)
 (*Normalize matrices*)
-
+	
 Clear[NormalizeMatrixProduct]
 NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ]:=
   Block[{d,S,SI},
@@ -140,6 +143,8 @@ NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ]:=
     SI=DiagonalMatrix[Map[If[#!=0,1/#,0]&,d]];
     {W.(SI),S.H}
   ];
+
+LeftNormalizeMatrixProduct = NormalizeMatrixProduct;
 
 Clear[RightNormalizeMatrixProduct]
 RightNormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ]:=
