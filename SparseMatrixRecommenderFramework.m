@@ -415,6 +415,12 @@ ItemRecommender[d___]["MakeProfileVector"][tagWeightRules:{Rule[_,_?NumberQ]..}]
       SparseArray[t,{Dimensions[ItemRecommender[d]["M01"]][[2]]}]
     ];
 
+ItemRecommender[d___]["UserProfileFromVector"][pvec_SparseArray] :=
+    Block[{arules,res},
+      arules = Most[ArrayRules[pvec]];
+	  res = Transpose[{arules[[All, 2]], Flatten[arules[[All, 1]]], ItemRecommender[d]["ColumnInterpretation"][[Flatten[arules[[All, 1]]]]]}];
+	  res[[Reverse[Ordering[res[[All, 1]]]]]]	  
+    ] /; VectorQ[pvec];
 
 (* ::Subsection:: *)
 (*RatingPrediction*)
