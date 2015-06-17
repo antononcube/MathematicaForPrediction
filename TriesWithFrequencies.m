@@ -73,7 +73,7 @@ TrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the
 
 TrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
-TrieCompleteMatch::usage = "TrieCompleteMatch[ t, w ] checks is the \"word\" w a complete match in the trie t."
+TrieCompleteMatch::usage = "TrieCompleteMatch[ t, pos ] checks is the position list pos of \"word\" is a complete match in the trie t."
 	
 Begin["`Private`"]
 
