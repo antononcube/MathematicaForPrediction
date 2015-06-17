@@ -73,6 +73,8 @@ TrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the
 
 TrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
+TrieCompleteMatch::usage = "TrieCompleteMatch[ t, w ] checks is the \"word\" w a complete match in the trie t."
+	
 Begin["`Private`"]
 
 
@@ -438,6 +440,17 @@ TrieRemoveRecProb[trie_, word_List, nVal_] :=
       {}
     ],
     True, trie
+   ]
+  ];
+
+Clear[TrieCompleteMatch]
+TrieCompleteMatch[trie_, {}] := False;
+TrieCompleteMatch[trie_, pos : {_Integer ..}] :=
+  Block[{},
+   If[Length[trie[[Sequence @@ pos]]] == 1 || 
+     trie[[Sequence @@ pos, 1, 2]] > Total[trie[[Sequence @@ pos, 2 ;; -1, 1, 2]]],
+    True,
+    False
    ]
   ];
 
