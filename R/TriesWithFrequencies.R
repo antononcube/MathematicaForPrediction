@@ -46,9 +46,11 @@ TriePosition <- function( trie, word ) {
     stop("The second argument is not an atomic vector", call. = TRUE)
   } 
   
-  pos <- match( word[1], names(trie$Children) )
+  pos <- match( word[1], names(trie$Children), nomatch = NA )
   if ( is.na(pos) ) {
     NULL 
+  } else if ( length(word) == 1 ) {
+    pos
   } else {
     c( pos, TriePosition( trie$Children[[pos]], word[-1]) )
   }
@@ -252,4 +254,18 @@ TrieRows <- function( trie, rootNode ) {
 #' @param trie a trie
 TrieRootToLeafPaths <- function( trie ) {
   TrieRows( trie, data.frame() )
+}
+
+#' @description Checks is a given word a complete match in a given trie.
+#' @param trie a trie
+#' @param word a word in the trie 
+TrieCompleteMatch <- function( trie, word ) {
+  res <- TrieRetrive( trie, word )
+  if ( length(res$Children) == 0 ) { TRUE }
+  else {
+    ## If the frequencies/probabilities of the children are less than
+    ## the frequency/probabilty of the root node, then we have a complete match.
+    chSum <- sum( laply( res$Children, function(x) if( is.null(x$Key) ) { 0 } else { x$Value } ) )
+    chSum < res$Value 
+  }
 }
