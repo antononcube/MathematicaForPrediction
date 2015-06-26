@@ -85,6 +85,7 @@ TrieRetrive <- function( trie, word ) {
 #' @param bottomVal the bottom value
 ### @param valuesAsNames values to be used as names of the children
 TrieMake <- function( chars, val=1, bottomVal=NULL ) {
+  
   if ( !is.atomic(chars) ) {
     stop("The first argument is not an atomic vector.", call. = TRUE)
   } 
@@ -98,11 +99,14 @@ TrieMake <- function( chars, val=1, bottomVal=NULL ) {
   
   chars <- rev(chars)
   res <- list( Key=chars[1], Value=bottomVal, Children=NULL )
-  for ( ch in chars[2:length(chars)] ) {
-    children <- list(res)
-    # if ( valuesAsNames ) {
-    names(children) <- as.character( res$Key )  
-    res <- list( Key=ch, Value=val, Children=children )
+  
+  if ( length(chars) > 1 ) { 
+    for ( ch in chars[2:length(chars)] ) {
+      children <- list(res)
+      # if ( valuesAsNames ) {
+      names(children) <- as.character( res$Key )  
+      res <- list( Key=ch, Value=val, Children=children )
+    }
   }
   children <- list(res)
   names(children) <- as.character( res$Key )
@@ -114,7 +118,16 @@ TrieMake <- function( chars, val=1, bottomVal=NULL ) {
 #' @param trie1 a trie
 #' @param trie2 a trie
 TrieMerge <- function( trie1, trie2 ) {
-  if ( ! identical( trie1$Key, trie2$Key ) ) {
+  
+  if ( is.null( trie1 ) ) { 
+    
+    res <- trie2 
+    
+  } else if ( is.null( trie2 ) ) { 
+    
+    res <- trie1 
+    
+  } else if ( ! identical( trie1$Key, trie2$Key ) ) {
     
     res <- list( trie1, trie2 ) 
     names(res) <- as.character( c( trie1$Key, trie2$Key ) )
@@ -206,9 +219,9 @@ TrieCreate <- function( words ) {
 #' @description Converts the frequencies at the nodes of a trie into probabilities. 
 #' @param trie a prifix tree
 TrieNodeProbabilities <- function( trie ) {
- res <- TrieNodeProbabilitiesRec( trie )
- res$Value <- 1
- res
+  res <- TrieNodeProbabilitiesRec( trie )
+  res$Value <- 1
+  res
 }
 
 #' @description Internal function for the recursive implementation of TrieNodeProbabilities.
@@ -239,7 +252,7 @@ TrieRows <- function( trie, rootNode ) {
   key <- if ( is.null(trie$Key) ) { NA } else { trie$Key }
   value <- if ( is.null(trie$Value) ) { NA } else { trie$Value }
   if ( is.null(trie$Value) || length(trie$Value) == 0 ) {
-      return(NULL)
+    return(NULL)
   }
   path <- rbind( rootNode, data.frame( Key=key, Value=value ) )
   if ( is.null( trie$Children ) || length( trie$Children) == 0 ) {
