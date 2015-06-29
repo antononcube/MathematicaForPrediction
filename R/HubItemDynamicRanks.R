@@ -48,7 +48,7 @@
 ##=======================================================================================
 ## Version 0.4
 ## This implementation started as re-implementation of a Mathematica implementaion of HIDRA.
-## At some it become better and more useful than the Mathematica one.
+## At some point it became better and more useful than the Mathematica one.
 ##=======================================================================================
 
 require(plyr)
@@ -59,7 +59,7 @@ require(Matrix)
 #' @description Find the Euclidean norm of a vector.
 vnorm <- function(x) { sqrt( sum(x*x) ) }
 
-#' @description Find the eigenvector with the largest eigenvalue using the Power method
+#' @description Find the eigenvector with the largest eigenvalue using the Power method.
 #' @param mat sparse matrix
 #' @param bvec biasing vector (a guess of the probabilities)
 #' @param alpha significance of the \parm pmat
@@ -84,7 +84,7 @@ PowerMethod <- function( mat, bvec, alpha, maxSteps = 100, tol = 10^(-6) ) {
   list( Vector = v, Iterations = k, ResidualNorm = norm( v - vold, "F" ) )
 }
 
-#' @description Makes the adjacency matrix of a bi-partite graph connecting 
+#' @description Makes the adjacency matrix of a bi-partite graph connecting.
 #' @param hubItemScoresArray data frame with columns HubID, ItemID, Score, Awarded
 MakeBiPartiteGraphMatrix <- function ( hubItemScoresArray ) {
   
@@ -117,7 +117,8 @@ MakeBiPartiteGraphMatrix <- function ( hubItemScoresArray ) {
   list( M = bmat, Hubs = hubDF, Items = itemDF )
 }
 
-#' @description Remove the zero entries from a sparse matrix
+#' @description Remove the zero entries from a sparse matrix.
+#' @ smat a sparse matrix
 RemoveZeroEntries <- function( smat ) {
   df <- summary(smat)
   smatDF <- data.frame( i=df$i, j=df$j, x=df$x )
@@ -128,7 +129,7 @@ RemoveZeroEntries <- function( smat ) {
   smatRes
 }
 
-#' @description
+#' @description Calculate the hub-item ranks for a given adjacency matrix of bi-partite graph and characterizing tags of the nodes.
 #' @param hubsAndItemsMat a bipartite graph adjacency matrix of hub-item connections 
 #' with rownames and colnames corresponding to the hub and item ID's.
 #' @param hubIDs a data frame with columns c('HubID','HubIndex') mapping ID's to indexes in hubsAndItemsMat
