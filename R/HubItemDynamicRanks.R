@@ -50,6 +50,12 @@
 ## This implementation started as re-implementation of a Mathematica implementaion of HIDRA.
 ## At some point it became better and more useful than the Mathematica one.
 ##=======================================================================================
+## TODO
+## 1. Explanation of the flow of computations and how to be used.
+## 2. Explanations why Power Method is used over the whole matrix but not
+##    on its hub-item and item-hub blocks. (As in HITS.)
+## 3. Review of the dynamic ranking queries functions.
+##=======================================================================================
 
 require(plyr)
 require(reshape2)
