@@ -38,6 +38,11 @@
 #' @detail Trie node structure
 # <node> := list( Key=<obj>, Value=<number>, Children=list( <key1>=<node>, <key2>=<node>, ... ) )
 
+#' @description Find the dept of a trie
+#' @details This is an universal function.
+ListDepth <- function(this) ifelse(is.list(this), 1L + max(sapply(this, ListDepth)), 0L)
+
+
 #' @description Gives the position node corresponding to the last "character" of the "word" in the trie trie.
 #' @param trie a trie
 #' @param word a list of characters
@@ -56,7 +61,7 @@ TriePosition <- function( trie, word ) {
   }
 }
 
-#' @description Gives the position node corresponding to the last "character" of the "word" in the trie trie.
+#' @description Gives the node corresponding to the last "character" of the "word" in a given trie.
 #' @param trie a trie
 #' @param word a list of characters
 TrieRetrive <- function( trie, word ) {
@@ -142,8 +147,8 @@ TrieMerge <- function( trie1, trie2 ) {
       
     } else {
       
-      n1 <- setdiff( names(trie1$Children), names(trie2$Children) )
-      n2 <- setdiff( names(trie2$Children), names(trie1$Children) )
+      n1 <- setdiff( names(trie1$Children), cs )
+      n2 <- setdiff( names(trie2$Children), cs )
       
       children <- llply( cs,  function(x) TrieMerge( trie1$Children[[x]], trie2$Children[[x]] ) )
       names(children) <- cs
@@ -280,5 +285,35 @@ TrieCompleteMatch <- function( trie, word ) {
     ## the frequency/probabilty of the root node, then we have a complete match.
     chSum <- sum( laply( res$Children, function(x) if( is.null(x$Key) ) { 0 } else { x$Value } ) )
     chSum < res$Value 
+  }
+}
+
+#' @description Gives the probabilities to end up at each of the leaves by paths from the root of the trie.
+#' @param trie the trie to find the leaf probabilities for
+#' @param aggregateFunc if one of c(sum, mean, max) it is applied to the vector of probabilities corresponding to the same label;
+#' if NULL no aggregation is done
+TrieLeafProbabilities <- function( trie, aggregateFunc = sum ) {
+  if ( is.null(trie) ) { return(NULL) }
+  res <- TrieLeafProbabilitiesRec( trie )
+  if ( !is.null( aggregateFunc ) ) { 
+    ddply( res, "Key", function(x) data.frame( Key = x$Key[[1]], Value = aggregateFunc(x$Value), stringsAsFactors = FALSE ) )
+  } else { res }
+}
+
+#' @description Internal function. Recursive calls.
+#' @param trie the trie to find the leaf probabilities for
+TrieLeafProbabilitiesRec <- function( trie, level = 0 ) {
+  if ( is.null(trie) ) { NULL }
+  else if ( length(trie$Children) == 0 ) { data.frame( Key = trie$Key, Value = trie$Value, stringsAsFactors = FALSE ) }
+  else { 
+    chSum <- sum( laply( trie$Children, function(x) if( is.null(x$Key) ) { 0 } else { x$Value } ) ) 
+    ## cat("Level:", level, ", chSum:", chSum, "\n" )
+    res <- ldply( trie$Children, function(x) TrieLeafProbabilitiesRec( x, level + 1 ), .id = NULL )
+    ## cat("Level:", level, ", res:", "\n" ); print(res)
+    if ( chSum < 1 && !is.null(trie$Key) ) {
+      res <- rbind( res, data.frame( Key = trie$Key, Value = 1 - chSum, stringsAsFactors = FALSE ) )
+    } 
+    res$Value <- res$Value * trie$Value
+    res
   }
 }
