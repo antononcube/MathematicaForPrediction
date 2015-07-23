@@ -50,14 +50,18 @@ TriePosition <- function( trie, word ) {
   if ( !is.atomic(word) ) {
     stop("The second argument is not an atomic vector", call. = TRUE)
   } 
-  
-  pos <- match( word[1], names(trie$Children), nomatch = NA )
-  if ( is.na(pos) ) {
+
+  if ( is.null(trie$Hash) ) {
+    pos <- pmatch( word[1], names(trie$Children), nomatch = NA )
+  } else {
+    pos <- trie$Hash[[ word[1] ]]
+  }
+  if ( is.null(pos) || is.na(pos) ) {
     NULL 
   } else if ( length(word) == 1 ) {
     pos
   } else {
-    c( pos, TriePosition( trie$Children[[pos]], word[-1]) )
+    c( pos, TriePosition( trie$Children[[pos]], word[-1] ) )
   }
 }
 
@@ -317,3 +321,24 @@ TrieLeafProbabilitiesRec <- function( trie, level = 0 ) {
     res
   }
 }
+
+#' @description Add hash maps to every sub-trie of trie
+#' @param trie a trie
+#' @param minNumberOfChildren the minimum number of children of a sub-trie required to make a hash-map
+TrieAppendHashMaps <- function( trie, minNumberOfChildren = 100 ) {
+  
+  if ( is.null(trie) ) { 
+    NULL 
+  } else if ( length(trie$Children) < minNumberOfChildren ) {
+    trie
+  } else {
+    hashMap <- new.env( hash = TRUE )
+    for( i in 1:length(trie$Children) ) { 
+      hashMap[[ names(trie$Children)[i] ]] <- i 
+    }
+    
+    list( Key = trie$Key, Value = trie$Value, 
+          Children = llply( trie$Children, function(x) TrieAppendHashMaps( x, minNumberOfChildren ) ),
+          Hash = hashMap )
+  }
+} 
