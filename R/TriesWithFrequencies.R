@@ -50,7 +50,7 @@ TriePosition <- function( trie, word ) {
   if ( !is.atomic(word) ) {
     stop("The second argument is not an atomic vector", call. = TRUE)
   } 
-
+  
   if ( is.null(trie$Hash) ) {
     pos <- pmatch( word[1], names(trie$Children), nomatch = NA )
   } else {
@@ -296,9 +296,9 @@ TrieCompleteMatch <- function( trie, word ) {
 #' @param trie the trie to find the leaf probabilities for
 #' @param aggregateFunc if one of c(sum, mean, max) it is applied to the vector of probabilities corresponding to the same label;
 #' if NULL no aggregation is done
-TrieLeafProbabilities <- function( trie, aggregateFunc = sum ) {
+TrieLeafProbabilitiesDF <- function( trie, aggregateFunc = sum ) {
   if ( is.null(trie) ) { return(NULL) }
-  res <- TrieLeafProbabilitiesRec( trie )
+  res <- TrieLeafProbabilitiesDFRec( trie )
   if ( !is.null( aggregateFunc ) ) { 
     ddply( res, "Key", function(x) data.frame( Key = x$Key[[1]], Value = aggregateFunc(x$Value), stringsAsFactors = FALSE ) )
   } else { res }
@@ -306,13 +306,15 @@ TrieLeafProbabilities <- function( trie, aggregateFunc = sum ) {
 
 #' @description Internal function. Recursive calls.
 #' @param trie the trie to find the leaf probabilities for
-TrieLeafProbabilitiesRec <- function( trie, level = 0 ) {
+#' @param level intermediate level of the tree
+TrieLeafProbabilitiesDFRec <- function( trie, level = 0 ) {
   if ( is.null(trie) ) { NULL }
-  else if ( length(trie$Children) == 0 ) { data.frame( Key = trie$Key, Value = trie$Value, stringsAsFactors = FALSE ) }
-  else { 
+  else if ( length(trie$Children) == 0 ) { 
+    data.frame( Key = trie$Key, Value = trie$Value, stringsAsFactors = FALSE )
+  } else { 
     chSum <- sum( laply( trie$Children, function(x) if( is.null(x$Key) ) { 0 } else { x$Value } ) ) 
     ## cat("Level:", level, ", chSum:", chSum, "\n" )
-    res <- ldply( trie$Children, function(x) TrieLeafProbabilitiesRec( x, level + 1 ), .id = NULL )
+    res <- ldply( trie$Children, function(x) TrieLeafProbabilitiesDFRec( x, level + 1 ), .id = NULL )
     ## cat("Level:", level, ", res:", "\n" ); print(res)
     if ( chSum < 1 && !is.null(trie$Key) ) {
       res <- rbind( res, data.frame( Key = trie$Key, Value = 1 - chSum, stringsAsFactors = FALSE ) )
@@ -322,11 +324,51 @@ TrieLeafProbabilitiesRec <- function( trie, level = 0 ) {
   }
 }
 
+
+#' @description Gives the probabilities to end up at each of the leaves by paths from the root of the trie.
+#' @param trie the trie to find the leaf probabilities for
+#' @param aggregateFunc if one of c(sum, mean, max) it is applied to the vector of probabilities corresponding to the same label;
+#' if NULL no aggregation is done
+TrieLeafProbabilities <- function( trie, aggregateFunc = sum  ) {
+  if ( is.null(trie) ) { return(NULL) }
+  leafValHash <- vector( mode = "numeric", length = 0 )
+  TrieLeafProbabilitiesRec( trie, level = 0, leafValHash = leafValHash, trie$Value )
+}
+
+
+#' @description Internal function. Recursive calls.
+#' @param trie the trie to find the leaf probabilities for
+#' @param level intermediate level of the tree
+TrieLeafProbabilitiesRec <- function( trie, level, leafValHash, prob ) {
+  if ( is.null(trie) ) { NULL }
+  else if ( length(trie$Children) == 0 ) { 
+    if ( is.na( leafValHash[ trie$Key ] ) ) { 
+      leafValHash[[ trie$Key ]] <- prob * trie$Value
+    } else { 
+      leafValHash[[ trie$Key ]] <- leafValHash[[ trie$Key ]] + prob * trie$Value 
+    }
+  } else { 
+    chSum <- sum( laply( trie$Children, function(x) if( is.null(x$Key) ) { 0 } else { x$Value } ) ) 
+    ## cat( "before:", leafValHash, "\n" )
+    leafValHash <- Reduce( function(hm, x) TrieLeafProbabilitiesRec( x, level + 1, hm, prob * trie$Value ), x = trie$Children, init = leafValHash  )
+    ## cat( "after:", leafValHash, "\n" )
+    ## cat("Level:", level, ", res:", "\n" ); print(res)
+    if ( chSum < 1 && !is.null(trie$Key) ) {
+      if ( is.na( leafValHash[ trie$Key ] ) ) { 
+        leafValHash[[ trie$Key ]] <- (1 - chSum) * prob
+      } else { 
+        leafValHash[[ trie$Key ]] <- leafValHash[[ trie$Key ]] + (1 - chSum) * prob
+      }
+    } 
+  }
+  leafValHash
+}
+
+
 #' @description Add hash maps to every sub-trie of trie
 #' @param trie a trie
 #' @param minNumberOfChildren the minimum number of children of a sub-trie required to make a hash-map
 TrieAppendHashMaps <- function( trie, minNumberOfChildren = 100 ) {
-  
   if ( is.null(trie) ) { 
     NULL 
   } else if ( length(trie$Children) < minNumberOfChildren ) {
