@@ -359,16 +359,32 @@ SMRProfileDFFromVector <- function( smr, pvec ) {
 #' @description Return a data frame corresponding to a profile vector
 #' @param smr a sparse matrix recommendation object
 #' @param profile a data frame with names c( "Score", "Index", "Tag" )
+#' @param tagType tag type over which the vector is made
 #' @return a sparse matrix with one column
-SMRProfileDFToVector <- function( smr, profileDF ) {
+SMRProfileDFToVector <- function( smr, profileDF, tagType = NULL ) {
   if ( length( intersect( names(profileDF), c("Score", "Index" ) ) ) == 2 ) {
     sparseMatrix( i = profileDF$Index, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
   } else if ( length( intersect( names(profileDF), c("Score", "Tag" ) ) ) == 2  ) {
-    inds <- which( colnames( smr$M ) %in% profileDF$Tag )
-    if ( length(inds) != nrow(profileDF) ) {
-      stop( "Not all tags are in known in SMR.", call. = TRUE )
-    }
-    sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
+    if ( is.null(tagType) ) { 
+      inds <- which( colnames( smr$M ) %in% profileDF$Tag ) 
+      if ( length(inds) != nrow(profileDF) ) {
+        stop( "Not all tags are in known in SMR or some SMR tags are repeated.", call. = TRUE )
+      }
+      sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
+    } else {
+      if ( sum( tagType %in% smr$TagTypes ) == 0 ) { 
+        stop( "Unknown tag type value for the argument 'tagType'.", call. = TRUE )
+      } 
+      cnames <- colnames(smr$M)[ smr$TagTypeRanges[tagType,"Begin"] : smr$TagTypeRanges[tagType,"End"] ]
+      profileDF <- profileDF[ profileDF$Tag %in% cnames, ]
+      if ( nrow(profileDF) == 0 ) {
+        warning( "None of the given tags belong to the specified tag type. Returning 0.", call. = TRUE )
+        return( 0 )
+      }
+      inds <- which( cnames %in% profileDF$Tag ) 
+      inds <- inds + (smr$TagTypeRanges[tagType,"Begin"] - 1)
+      sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
+    }  
   } else {
     stop( "Expected a data frame with names c('Score','Index','Tag'), c('Score','Index'), or c('Score','Tag').", call. = TRUE )
   }
