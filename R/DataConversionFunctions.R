@@ -295,9 +295,10 @@ ConvertMultiColumnDataFrameToSparseMatrix <- function( multiColDF, itemColName, 
   
   ## Find all genres
   allTags <- unique( unlist( llply( gmats, colnames ) ) )
+  allIDs <- unique( unlist( llply( gmats, rownames ) ) )
   
   ## Impose the genres to all genre matrices
-  gmats <- llply( gmats, function(m) { ImposeColumnIDs( allTags, m ) })
+  gmats <- llply( gmats, function(m) { ImposeRowIDs( allIDs, ImposeColumnIDs( allTags, m ) ) })
   
   ## Sum the genre matrices into one matrix
   gmat <- gmats[[1]]
