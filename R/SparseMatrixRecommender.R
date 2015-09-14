@@ -175,7 +175,7 @@ SMRApplyTagTypeWeights <- function( smr, weights ) {
 #' @param smr a sparse matrix recommender object (list with named elements)
 #' @param tagType a tag type
 SMRSubMatrix <- function(smr, tagType ){
-  smr$M[,smr$TagTypeRanges[tagType, "Begin"]:smr$TagTypeRanges[tagType, "End"]]
+  smr$M[,smr$TagTypeRanges[tagType, "Begin"]:smr$TagTypeRanges[tagType, "End"], drop = FALSE ]
 }
 
 #' @description Returns the sub-matrix of a matrix that corresponds to a tag type in an SMR object
