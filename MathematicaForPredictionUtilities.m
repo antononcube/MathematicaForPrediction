@@ -110,13 +110,15 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
          ]}] &, {columnNames, columnTypes, dataColumns}, 1]
   ] /; Length[dataColumns] == Length[columnNamesArg];
 
-RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 2."
+RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2."
 	
 Clear[RecordsSummary];
 RecordsSummary[dataRecords_, opts : OptionsPattern[]] := 
   DataColumnsSummary[Transpose[dataRecords], opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
   DataColumnsSummary[Transpose[dataRecords], columnNames, opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
+RecordsSummary[dataRecords_, args___ ] :=
+  RecordsSummary[ List /@ dataRecords, args ] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 1 );
 RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
 
 Clear[GridTableForm]
