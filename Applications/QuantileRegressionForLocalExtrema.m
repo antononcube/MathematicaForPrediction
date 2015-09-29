@@ -123,7 +123,7 @@ LMFFindExtrema[points_List, fitOrder_Integer, around_Integer: 5,
 Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/QuantileRegression.m"]
 
 Clear[QRFindExtrema]
-Options[QRFindExtrema] = { "NearestWithOutliers" -> True };
+Options[QRFindExtrema] = { "NearestWithOutliers" -> False };
 QRFindExtrema[points_List, nknots_Integer, nfitOrder_Integer, around_Integer, quantiles_: {0.1,0.9}, opts:OptionsPattern[] ] :=
     Module[{fit, fn, extrema1, extrema2, minima, maxima, x, signs1, signs2, extremaPoints, nearestByOutliersQ, nfMax, nfMin },
 
