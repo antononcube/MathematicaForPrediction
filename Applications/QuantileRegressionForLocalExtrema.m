@@ -64,6 +64,9 @@ MathematicaForPrediction at GitHub, see:
 https://github.com/antononcube/MathematicaForPrediction, package QuantileRegression.m, (2013).
 
 The algorithm QRFindExtrema has as parameters: the data, number of B-spline knots, interpolation order, and quantiles.
+It also takes an option should the Nearest functions for finding the extrema be constructed using
+all data points or just the outliers (the points outside of the found regression quantiles).
+
 QRFindExtrema returns a list of two elements:
 the first element is a list of fitted regression quantiles functions,
 the second element is a list of lists with local minima and local maxima.
@@ -120,34 +123,42 @@ LMFFindExtrema[points_List, fitOrder_Integer, around_Integer: 5,
 Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/QuantileRegression.m"]
 
 Clear[QRFindExtrema]
-QRFindExtrema[points_List, nknots_Integer, nfitOrder_Integer, around_Integer, quantiles_: {0.1,0.9}] :=
+Options[QRFindExtrema] = { "NearestWithOutliers" -> True };
+QRFindExtrema[points_List, nknots_Integer, nfitOrder_Integer, around_Integer, quantiles_: {0.1,0.9}, opts:OptionsPattern[] ] :=
+    Module[{fit, fn, extrema1, extrema2, minima, maxima, x, signs1, signs2, extremaPoints, nearestByOutliersQ, nfMax, nfMin },
 
-    Module[{fit, fn, extrema1, extrema2, extrema, x, signs1, signs2,
-      signs, extPoints},
+      nearestByOutliersQ = OptionValue[ "NearestWithOutliers" ];
+
       (* Step 1 *)
       fn = Simplify[ QuantileRegression[points, nknots, quantiles, InterpolationOrder -> nfitOrder, Method -> {LinearProgramming, Method -> "CLP"}]];
 
       (* Step 2 *)
       extrema1 = Reduce[fn[[1]]'[x] == 0, x, Reals];
-      extrema1 = Cases[{ToRules[extrema1]}, _Rule, \[Infinity]];
+      extrema1 = Cases[{ToRules[extrema1]}, _Rule, Infinity ];
       signs1 = Sign[fn[[1]]''[#] & /@ extrema1[[All, 2]]];
       extrema2 = Reduce[fn[[-1]]'[x] == 0, x, Reals];
-      extrema2 = Cases[{ToRules[extrema2]}, _Rule, \[Infinity]];
+      extrema2 = Cases[{ToRules[extrema2]}, _Rule, Infinity ];
       signs2 = Sign[fn[[-1]]''[#] & /@ extrema2[[All, 2]]];
 
       (* Step 3 *)
-      extrema =
-          Join[
-            Map[{#, fn[[1]][#]} &,
-              Pick[extrema1[[All, 2]], # > 0 & /@ signs1]],
+      minima =
+          Map[{#, fn[[1]][#]} &,
+              Pick[extrema1[[All, 2]], # > 0 & /@ signs1]];
+      maxima =
             Map[{#, fn[[-1]][#]} &,
-              Pick[extrema2[[All, 2]], # < 0 & /@ signs2]]];
-      signs =
-          Join[Pick[signs1, # > 0 & /@ signs1],
-            Pick[signs2, # < 0 & /@ signs2]];
-      extPoints =
-          MapThread[
-            First@SortBy[Nearest[points, #, around], #2] &, {extrema,
-            signs /. {1 -> Last, -1 -> (-Last[#] &)}}];
-      {fn, Map[Pick[extPoints, signs, #] &, {1, -1}]}
+              Pick[extrema2[[All, 2]], # < 0 & /@ signs2]];
+
+      If[ nearestByOutliersQ,
+        nfMin = Nearest[ Select[ points, #[[2]] <= fn[[1]][#[[1]]]& ] ];
+        nfMax = Nearest[ Select[ points, #[[2]] >= fn[[-1]][#[[1]]]& ] ];,
+        (* ELSE *)
+        nfMin = Nearest[points];
+        nfMax = nfMin;
+      ];
+
+      extremaPoints = {
+        Map[ First@SortBy[ nfMin[#, around], #[[-1]]& ]&, minima ],
+        Map[ First@SortBy[ nfMax[#, around], -#[[-1]]& ]&, maxima ]
+      };
+      {fn, extremaPoints }
     ];
