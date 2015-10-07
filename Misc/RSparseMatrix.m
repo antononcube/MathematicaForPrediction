@@ -178,8 +178,8 @@ MatrixPlot[RSparseMatrix[obj_], args___] ^:=
 
 (*Sums*)
 
-RowSum[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"]];
-ColumnSum[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"], {2}];
+RowSums[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"]];
+ColumnSums[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"], {2}];
 
 Total[rmat_RSparseMatrix, args___] ^:= Total[rmat[[1]]["sparseArray"], args];
 
@@ -215,7 +215,7 @@ Dot[x_, RSparseMatrix[obj_]] ^:=
 
 (*Here we need to have an option to respect or to ignore the row names and column names.*)
 
-    Times[rmat1_RSparseMatrix, rmat2_RSparseMatrix] ^:=
+Times[rmat1_RSparseMatrix, rmat2_RSparseMatrix] ^:=
     Block[{},
       If[RowNames[rmat1] == RowNames[rmat2] &&
           ColumnNames[rmat1] == ColumnNames[rmat2],
