@@ -231,8 +231,7 @@ Total[rmat_RSparseMatrix, args___] ^:= Total[rmat[[1]]["sparseArray"], args];
 
 Dot[RSparseMatrix[obj1_], RSparseMatrix[obj2_]] ^:=
     Block[{res},
-      res = Dot[RSparseMatrix[obj1][[1]]["sparseArray"],
-        RSparseMatrix[obj2][[1]]["sparseArray"]];
+      res = Dot[RSparseMatrix[obj1][[1]]["sparseArray"], RSparseMatrix[obj2][[1]]["sparseArray"]];
       ToRSparseMatrix[res, "RowNames" -> RowNames[RSparseMatrix[obj1]],
         "ColumnNames" -> ColumnNames[RSparseMatrix[obj2]],
         "DimensionNames" -> {DimensionNames[RSparseMatrix[obj1]][[1]],
@@ -304,34 +303,40 @@ Plus[x_, rmat1_RSparseMatrix] ^:=
 
 (* Part *)
 
-Part[RSparseMatrix[obj_], s1Arg : (_String | {_String ..})] ^:=
-    Block[{ s1 = s1Arg },
-      s1 = If[ListQ[s1],s1,{s1}];
-      Part[RSparseMatrix[obj], obj["rownames"] /@ s1, All]
+Part[RSparseMatrix[obj_], s1 : (_String | {_String ..})] ^:=
+    Block[{ i1 },
+      i1 = If[ ListQ[s1], obj["rownames"] /@ s1, obj["rownames"] @ s1 ];
+      Part[ RSparseMatrix[obj], i1, All ]
     ];
-Part[RSparseMatrix[obj_], s1Arg : (_String | {_String ..}), s2Arg : (_String | {_String ..})] ^:=
-    Block[{s1 = s1Arg, s2 = s2Arg },
-      s1 = If[ListQ[s1Arg],s1,{s1}]; s2 = If[ListQ[s2Arg],s2,{s2}];
-      Part[RSparseMatrix[obj], obj["rownames"] /@ s1, obj["colnames"] /@ s2]
+Part[RSparseMatrix[obj_], s1 : (_String | {_String ..}), s2 : (_String | {_String ..})] ^:=
+    Block[{ i1, i2 },
+      i1 = If[ ListQ[s1], obj["rownames"] /@ s1, obj["rownames"] @ s1 ];
+      i2 = If[ ListQ[s2], obj["colnames"] /@ s2, obj["colnames"] @ s2 ];
+      Part[ RSparseMatrix[obj], i1, i2 ]
     ];
-Part[RSparseMatrix[obj_], s1Arg : (_String | {_String ..}), s2_] ^:=
-    Block[{ s1 = s1Arg },
-      s1 = If[ListQ[s1Arg],s1,{s1}];
-      Part[RSparseMatrix[obj], obj["rownames"] /@ s1, s2]
+Part[RSparseMatrix[obj_], s1 : (_String | {_String ..}), s2_] ^:=
+    Block[{ i1 },
+      i1 = If[ ListQ[s1], obj["rownames"] /@ s1, obj["rownames"] @ s1 ];
+      Part[ RSparseMatrix[obj], i1, s2 ]
     ];
-Part[RSparseMatrix[obj_], s1_, s2Arg : (_String | {_String ..})] ^:=
-    Block[{ s2 = s2Arg },
-      s2 = If[ListQ[s2Arg],s2,{s2}];
-      Part[RSparseMatrix[obj], s1, obj["colnames"] /@ s2]
+Part[RSparseMatrix[obj_], s1_, s2 : (_String | {_String ..})] ^:=
+    Block[{ i2 },
+      i2 = If[ ListQ[s2], obj["colnames"] /@ s2, obj["colnames"] @ s2 ];
+      Part[ RSparseMatrix[obj], s1, i2 ]
     ];
 Part[RSparseMatrix[obj_], s1_, s2_] ^:=
     Block[{smat},
-      smat = Part[obj["sparseArray"], s1, s2];
+      smat = Part[ obj["sparseArray"], s1, s2 ];
       If[Head[smat] === Part,
         smat,
-        ToRSparseMatrix[smat, "RowNames" -> RowNames[RSparseMatrix[obj]][[s1]],
-          "ColumnNames" -> ColumnNames[RSparseMatrix[obj]][[s2]],
-          "DimensionNames" -> DimensionNames[RSparseMatrix[obj]]]
+        If[ MatrixQ[smat],
+          ToRSparseMatrix[smat,
+            "RowNames" -> RowNames[RSparseMatrix[obj]][[s1]],
+            "ColumnNames" -> ColumnNames[RSparseMatrix[obj]][[s2]],
+            "DimensionNames" -> DimensionNames[RSparseMatrix[obj]]],
+        (* ELSE *)
+          smat
+        ]
       ]
     ];
 
