@@ -36,7 +36,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2015-09-27 *)
 
-(* :Package Version: 0.1 *)
+(* :Package Version: 0.4 *)
 (* :Mathematica Version: 10.2 *)
 (* :Copyright: (c) 2015 Anton Antonov *)
 (* :Keywords: R, sparse array, sparse matrix, named rows, named columns *)
@@ -50,6 +50,8 @@ The idea is fairly simple: we can use associations or replacement rules to map r
 Similarly to how it is done in R, RSparseMatrix handles only strings as row names and column names.
 
 Note that assignment (with Set[__]) is not implemented.
+
+See the commented out delegation to SparseArray implementation at the of the file.
 
 Since the package is under development it is not a real Mathematica package.
 
@@ -142,6 +144,7 @@ ToRSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
 ToRSparseMatrix[___] := Message[ToRSparseMatrix::arg1];
 
 SparseArray[rmat_RSparseMatrix] ^:= rmat[[1]]["sparseArray"];
+
 
 (* Setters *)
 
@@ -400,3 +403,38 @@ ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
       ToRSparseMatrix[sarr, "RowNames" -> RowNames[r1],
         "ColumnNames" -> resColumnNames, "DimensionNames" -> DimensionNames[r1]]
     ];
+
+
+(* Delegation to SparseArray functions *)
+
+(* This is similar to the OOP design pattern Decorator.
+The implementation is still experimental.
+New functions for RSparseMatrix objects have to be added into the do-not-decorate list.
+Note that this decoration is very aggressive and it might have un-forseen effects.
+*)
+
+(* Format *)
+
+Format[RSparseMatrix[obj_]] := obj["sparseArray"];
+
+(*F_[rmat_RSparseMatrix, args___] ^:=*)
+    (*Block[{res = F[SparseArray[rmat], args]},*)
+    (*Print["RSparseMatrix decoration::F=",F];*)
+    (*Print["RSparseMatrix decoration::res=",res];*)
+      (*If[MatrixQ[res],*)
+        (*RSparseMatrix[*)
+          (*Join[<|"sparseArray" -> SparseArray[res]|>, Rest[rmat[[1]]]]],*)
+        (*res*)
+      (*]*)
+    (*] /; !*)
+        (*MemberQ[{SparseArray, ToRSparseMatrix,*)
+          (*RowNames, ColumnNames, DimensionNames,*)
+          (*SetRowNames, SetColumnNames, SetDimensionNames,*)
+          (*MatrixForm, MatrixPlot,*)
+          (*Dimensions, ArrayRules,*)
+          (*Total, RowSums, ColumnSums, RowsCount, ColumnsCount,*)
+          (*Dot, Plus, Times, Part,*)
+          (*RowBind, ColumnBind,*)
+          (*Head, Format, Print*)
+        (*}, F];*)
+
