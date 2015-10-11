@@ -109,14 +109,15 @@ Begin["`Private`"]
 
 Clear[ParseGitRecord]
 ParseGitRecord[recRules_] :=
-    Block[{sha, message, committer, date, parentSha},
+    Block[{sha, message, committer, date, parentSha, htmlURL},
       sha = "sha" /. recRules;
       message = StringReplace["message" /. ("commit" /. recRules), Whitespace -> " "];
       committer = "name" /. ("committer" /. ("commit" /. recRules));
       date = "date" /. ("committer" /. ("commit" /. recRules));
       parentSha = "sha" /. ("parents" /. recRules);
-      Thread[{"sha", "message", "committer", "date",
-        "parentSha"} -> {sha, message, committer, date, parentSha}]
+      htmlURL = "html_url" /. recRules;
+      Thread[{"sha", "message", "committer", "date", "parentSha", "htmlURL"} ->
+          {sha, message, committer, date, parentSha, htmlURL}]
     ];
 
 
@@ -125,7 +126,7 @@ EmptyGitRecord[sha_String] := EmptyGitRecord[sha, ""];
 EmptyGitRecord[sha_String, date_String] :=
     {"sha" -> sha,
       "commit" -> {"message" -> "none", "committer" -> {"name" -> "unknown", "date" -> date}},
-      "parents" -> {"sha" -> "none"}};
+      "parents" -> {"sha" -> "none"}, "htmlURL"->""};
 
 (* Core plot data *)
 (* Some parametrizing options would be nice to be added:
@@ -150,7 +151,7 @@ CorePlotData[ user_String, repo_String ] :=
       graphRules = Flatten@Map[Thread, ("parentSha" -> "sha") /. commitRecs];
       commitsGraph = Graph[DirectedEdge @@@ graphRules];
 
-    (* Find the unknown parents and add empty records for them. *)
+      (* Find the unknown parents and add empty records for them. *)
       unknown = Complement[Union[Flatten[List @@@ graphRules]], "sha" /. commitRecs];
 
       unknownDate =
@@ -177,9 +178,19 @@ CorePlotData[ user_String, repo_String ] :=
       pathsByInds = Map[shaInds /@ # &, paths];
 
       (* The plot data *)
-      tickLabels = {"message", Style["committer", GrayLevel[0.7]], Style["date", GrayLevel[0.8]]} /. commitRecs;
+      tickLabels = {"message", Style["committer", "Text", GrayLevel[0.7]], Style["date", "Text", GrayLevel[0.8]]} /. commitRecs;
       tickLabels[[All, 1]] =
           StringReplace[#, WhitespaceCharacter -> " "] & /@ tickLabels[[All, 1]];
+
+      tickLabels[[All, 1]] =
+          MapThread[
+            Function[{mess,url},
+              Button[
+                Mouseover[Style[mess,"Text"], Style[mess, "HyperlinkActive"]],
+                NotebookLocate[{URL[url], None}],
+                Appearance -> None]
+            ],
+            {tickLabels[[All, 1]], "htmlURL" /. commitRecs}];
 
       datePoints =
           MapThread[{AbsoluteTime[DateList[#1]], #2} &, {"date" /. commitRecs, Range[Length[commitRecs]]}];
@@ -204,7 +215,7 @@ GitHubDateListPlot[ user_String, repo_String, opts:OptionsPattern[] ] :=
         PlotRange -> All, AspectRatio -> 2, ImageSize -> {Automatic, 800},
         GridLines -> {None, Automatic},
         FrameTicks -> {{Automatic,
-          Table[{i, Style[tickLabels[[i]], FontSize -> 14]}, {i, 1, Length[tickLabels]}]}, {Automatic, Automatic}},
+          Table[{i, tickLabels[[i]] }, {i, 1, Length[tickLabels]}]}, {Automatic, Automatic}},
         FrameLabel -> {{"commit order", None}, {1, 1} "date"}];
 
       Show[gr,
@@ -237,7 +248,7 @@ GitHubBarChart[ user_String, repo_String, opts:OptionsPattern[] ] :=
         PlotRangePadding -> {{None, 0.5}, {None, 0.3}},
         FrameLabel -> {{"commit order", None}, {1, 1} "number of days"},
         FrameTicks -> {{Automatic,
-          Table[{i, Style[tickLabels[[i]], FontSize -> 14]}, {i, 1, Length[tickLabels]}]}, {Automatic,
+          Table[{i, tickLabels[[i]] }, {i, 1, Length[tickLabels]}]}, {Automatic,
           Automatic}},(*ScalingFunctions\[Rule]"Log",*)AspectRatio -> 3,
         ImageSize -> {Automatic, 800}]
 
