@@ -42,9 +42,21 @@
 (* :Keywords: GitHub, commit, plot *)
 (* :Discussion:
 
-  This package provides couple of functions for plotting commits data from GiHub.
+  This package provides the functions GitHubDateListPlot and GitHubBarChart for plotting commits data from GiHub.
+  Here is an example:
 
-  To do that there are several questions / problems to be resolved.
+    GitHubDateListPlot["hadley", "plyr"]
+
+  The functions GitHubDateListPlot and GitHubBarChart take options that can be given to
+  the corresponding functions DateListPlot and BarChart. For example,
+
+    GitHubDateListPlot["hadley", "plyr",
+      PlotRange -> {{{2015, 04, 01}, {2015, 04, 20}}, {0, 26}},
+      ImageSize -> {Automatic, 600}]
+
+    GitHubBarChart["hadley", "plyr", ScalingFunctions -> "Log"]
+
+  To do these kind of data presentation there are several questions / problems to be resolved.
 
   1. Getting the data.
      GitHub provides a web service API.
@@ -66,7 +78,12 @@
      This is not the best approach. The paths are most likely to be many and the layout gets cluttered.
      Note that the function GitHubDateListPlot uses RandomSample to the color of dependency lines.
 
-  There are several options that would be nice to be added, like, font size of the ticks, coloring, line thickness, etc.
+  TODO
+   There are several options that would be nice to be added.
+   1. Font size of the ticks, coloring, line thickness, etc.
+   2. I am not sure is possible and how to retrieve commits that a password protected.
+   3. Hyperlinks to the commits.
+
 
   There are probably bugs in the code. I have tested it with only 4-5 repositories.
 
