@@ -82,7 +82,11 @@
    There are several options that would be nice to be added.
    1. Font size of the ticks, coloring, line thickness, etc.
    2. I am not sure is possible and how to retrieve commits that a password protected.
-   3. Hyperlinks to the commits.
+   3. DONE -- Hyperlinks to the commits.
+   4. Error handling.
+   5. Refactor the code so the git data be retrieved separately from the plotting.
+      This is needed for experimentation with the plots because GitHub will reject requests
+      after they become too many (for GitHub).
 
 
   There are probably bugs in the code. I have tested it with only 4-5 repositories.
@@ -204,14 +208,14 @@ CorePlotData[ user_String, repo_String ] :=
 (* DateListPlot based *)
 (* It would be nice to be able to specify the commits point sizes and line thickness of the dependencies. *)
 GitHubDateListPlot[ user_String, repo_String, opts:OptionsPattern[] ] :=
-    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr},
+    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize=0.03},
 
       {commitRecs, pathsByInds, datePoints, tickLabels} = CorePlotData[user,repo];
 
       gr = DateListPlot[
         MapThread[Tooltip[#1, #2] &, {datePoints, tickLabels}],
         opts,
-        Joined -> False, PlotStyle -> {PointSize[0.03]},
+        Joined -> False, PlotStyle -> {PointSize[pointSize]},
         PlotRange -> All, AspectRatio -> 2, ImageSize -> {Automatic, 800},
         GridLines -> {None, Automatic},
         FrameTicks -> {{Automatic,
@@ -220,10 +224,13 @@ GitHubDateListPlot[ user_String, repo_String, opts:OptionsPattern[] ] :=
 
       Show[gr,
         Graphics[{Opacity[0.5], Thickness[0.01],
-          MapThread[{ColorData["TemperatureMap"][#2],
-            Line[datePoints[[#1]]]} &, {pathsByInds,
-            RandomSample[Range[0, 1, 1/(Length[pathsByInds] - 1)]]}],
-          Opacity[1], LightBlue, PointSize[0.02],
+          MapThread[{
+            ColorData["TemperatureMap"][#2],
+            Mouseover[
+              Line[datePoints[[#1]]], {Red, PointSize[pointSize*1.18], Point[datePoints[[#1]]]}]
+          } &,
+            {pathsByInds, RandomSample[Range[0, 1, 1/(Length[pathsByInds] - 1)]]}],
+          Opacity[1], LightBlue, PointSize[pointSize*0.66],
           MapThread[
             Tooltip[
               Point[#1],
