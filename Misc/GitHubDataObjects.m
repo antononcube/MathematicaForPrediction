@@ -32,7 +32,7 @@
 *)
 
 
-(* :Title: GitHubPlots *)
+(* :Title: GitHubDataObjects *)
 (* :Author: Anton Antonov *)
 (* :Date: 2015-10-15 *)
 
@@ -492,8 +492,8 @@ GitHubDataComposite[objID_, children_]["Plot"[opts___]] :=
       (*Instead of relying on the PlotRange specifications in the plots we can use these ...*)
       (*allDatePoints = Map[ #["DatePoints"[]]&, children ];*)
       (*dateRange = { Min[Flatten[allDatePoints[[All,All,1]]]], Max[Flatten[allDatePoints[[All,All,1]]]] };*)
-      ranges = Cases[plots, (PlotRange -> x_) :> x, Infinity]
-      glRange = {{Min[ranges[[All, 1]]], Max[ranges[[All, 1]]]}, {Min[ranges[[All, 2]]], Max[ranges[[All, 2]]]}}
+      ranges = Cases[plots, (PlotRange -> x_) :> x, Infinity];
+      glRange = {{Min[ranges[[All, 1]]], Max[ranges[[All, 1]]]}, {Min[ranges[[All, 2]]], Max[ranges[[All, 2]]]}};
       plots /. (PlotRange -> x_) -> (PlotRange -> glRange)
     ];
 
@@ -503,7 +503,7 @@ GitHubDataComposite[objID_, children_]["Plot3D"[opts___]] :=
       ghsDatePoints,projects,projectToCoordRules,ghsDate3DPoints,projectColors,
       grPrism,projectPlanes,ghsExtDs,crossQueryPoints, dateRange, t},
 
-    (*get option values*)
+      (*get option values*)
       colorFunc = OptionValue[Join[{opts}, {ColorFunction -> ColorData["SouthwestColors","ColorFunction"]}], ColorFunction];
       pSize = OptionValue[Join[{opts}, {PointSize->0.015}], PointSize];
       projectPlanesQ = OptionValue[Join[{opts}, {"ProjectPlanes"->True}], "ProjectPlanes"];
@@ -528,7 +528,7 @@ GitHubDataComposite[objID_, children_]["Plot3D"[opts___]] :=
         ghsDate3DPoints = ghsDate3DPoints /. t;
       ];
 
-      projectColors = colorFunc/@Rescale[Range[Length[children]]/Length[children],{0,1},{0,0.9}];
+      projectColors = colorFunc/@Rescale[Range[Length[children]]/Length[children]];
 
       If[ TrueQ[projectPlanesQ],
         projectPlanes = Map[InfinitePlane[Through[{First, Last, Mean}[#]]] &, ghsDate3DPoints],
