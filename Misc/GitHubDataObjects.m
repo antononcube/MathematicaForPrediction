@@ -39,11 +39,16 @@
 (* :Package Version: 0.1 *)
 (* :Mathematica Version: 10.2 *)
 (* :Copyright: (c) 2015 Anton Antonov *)
-(* :Keywords: GitHub, commit, plot, design patterns, Template Method, Strategy, Decorator, Composite *)
+(* :Keywords: GitHub, commit, plot, design patterns, Template Method, Strategy, Decorator, Composite, GoF *)
 (* :Discussion:
 
   This package provides object-oriented implementation of visualization and query tasks of commits data from GiHub.
-  The implementation uses the design patterns (Template Method, Strategy, Decorator, and Composite).
+
+  The implementation uses the design patterns Template Method, Strategy, Decorator, and Composite described in the
+  book:
+
+    [GoF-94] Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides,
+             Design Patterns: Elements of Reusable Object-Oriented Software, Addison-Wesley, 1994.
 
   The implementation is a modified and extended version of the functions in the package "GitHubPlots.m".
   (Which is also provided in this MathematicaForPrediction GitHub project.)
@@ -64,7 +69,8 @@
        "SubsetQueryFunction" -> (StringMatchQ[#committer, ___ ~~ "Hadley" | "hadley" ~~ ___] &),
        "SubsetLines" -> True,
        "SubsetPlotStyle" -> {PointSize[0.02], Lighter[Purple], Arrowheads[10^-7.7, Appearance -> "Flat"]},
-       PlotLabel -> "Hadley Wickham"]]
+       PlotLabel -> "Hadley Wickham",
+       BoxRatios -> {1, 2, 2}]]
 
   Descriptions of the options follow.
 
@@ -207,7 +213,8 @@ GitHubData[{objID_, user_String, project_String}]["ParseData"[]] :=
 GitHubDataHEAD = GitHubData;
 
 GitHubData[{objID_, user_String, project_String}]["TickLabels"[]] :=
-    Block[{commitRecs = GitHubData[{objID, user, project}]["ParseData"[]], tickLabels},
+    Block[{ obj = GitHubDataHEAD[{objID, user, project}], commitRecs, tickLabels },
+      commitRecs = obj["ParseData"[]];
       tickLabels = {"message", Style["committer", GrayLevel[0.7]], Style["date", GrayLevel[0.8]]} /. commitRecs;
       tickLabels[[All, 1]] = StringReplace[#, WhitespaceCharacter -> " "] & /@ tickLabels[[All, 1]];
       tickLabels
@@ -215,7 +222,8 @@ GitHubData[{objID_, user_String, project_String}]["TickLabels"[]] :=
 
 
 GitHubData[{objID_, user_String, project_String}]["DatePoints"[]] :=
-    Block[{ commitRecs = GitHubData[{objID, user, project}]["ParseData"[]] },
+    Block[{ obj = GitHubDataHEAD[{objID, user, project}], commitRecs },
+      commitRecs = obj["ParseData"[]];
       MapThread[{AbsoluteTime[DateList[#1]], #2} &, {"date" /. commitRecs, Range[Length[commitRecs]]}]
     ];
 
@@ -360,7 +368,7 @@ GitHubDataColorFunctionDecorator[{objID_, user_String, project_String}, componen
 
 
 (**********************************************************)
-(* GitHubDataWithMouseActions                             *)
+(* GitHubDataMessageHyperlinks                            *)
 (**********************************************************)
 
 GitHubDataMessageHyperlinks[{objID_, user_String, project_String}][s_] :=
