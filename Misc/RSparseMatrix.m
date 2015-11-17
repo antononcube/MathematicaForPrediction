@@ -92,7 +92,7 @@ RSparseMatrix::dnset =
     "The dimension names `1` are expected to be a list of two strings.";
 
 ToRSparseMatrix::arg1 =
-    "The first argument is expected to a sparse array or a RSparseMatrix object.";
+    "The first argument is expected to be a sparse array, a dataset with two dimensions, or a RSparseMatrix object";
 
 Options[MakeRSparseMatrix] = {"RowNames" -> None, "ColumnNames" -> None, "DimensionNames" -> None};
 
@@ -140,6 +140,30 @@ ToRSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
           "dimnames" ->
               If[dnames === None, None, AssociationThread[dnames, {1, 2}]]|>]
     ];
+
+ToRSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
+    Block[{rows, dsRownames, dsColnames, vals, res},
+      rows = Normal[ds];
+      If[AssociationQ[rows],
+        dsRownames = Keys[rows];
+        rows = rows /@ dsRownames,
+      (*ELSE*)
+        dsRownames = None;
+      ];
+      If[AssociationQ[rows[[1]]],
+        dsColnames = Keys[rows[[1]]];
+        vals = Map[Values, rows],
+      (*ELSE*)
+        dsColnames = None;
+        vals = rows;
+      ];
+
+      res = ToRSparseMatrix[SparseArray[vals], "RowNames" -> dsRownames, "ColumnNames" -> dsColnames];
+
+      If[ Length[{opts}] == 0, res,
+        ToRSparseMatrix[ res, opts ]
+      ]
+    ] /; Length[Dimensions[ds]] == 2;
 
 ToRSparseMatrix[___] := Message[ToRSparseMatrix::arg1];
 
@@ -419,22 +443,26 @@ Format[RSparseMatrix[obj_]] := obj["sparseArray"];
 
 (*F_[rmat_RSparseMatrix, args___] ^:=*)
     (*Block[{res = F[SparseArray[rmat], args]},*)
-    (*Print["RSparseMatrix decoration::F=",F];*)
-    (*Print["RSparseMatrix decoration::res=",res];*)
+      (*Print["RSparseMatrix decoration::F=",F];*)
+      (*Print["RSparseMatrix decoration::res=",res];*)
       (*If[MatrixQ[res],*)
         (*RSparseMatrix[*)
           (*Join[<|"sparseArray" -> SparseArray[res]|>, Rest[rmat[[1]]]]],*)
         (*res*)
       (*]*)
-    (*] /; !*)
-        (*MemberQ[{SparseArray, ToRSparseMatrix,*)
-          (*RowNames, ColumnNames, DimensionNames,*)
-          (*SetRowNames, SetColumnNames, SetDimensionNames,*)
-          (*MatrixForm, MatrixPlot,*)
-          (*Dimensions, ArrayRules,*)
-          (*Total, RowSums, ColumnSums, RowsCount, ColumnsCount,*)
-          (*Dot, Plus, Times, Part,*)
-          (*RowBind, ColumnBind,*)
-          (*Head, Format, Print*)
-        (*}, F];*)
+    (*] /;*)
+        (*! MemberQ[*)
+          (*Join[{"SparseArray", "ToRSparseMatrix",*)
+            (*"RowNames", "ColumnNames", "DimensionNames",*)
+            (*"SetRowNames", "SetColumnNames", "SetDimensionNames",*)
+            (*"MatrixForm", "MatrixPlot",*)
+            (*"Dimensions", "ArrayRules",*)
+            (*"Total", "RowSums", "ColumnSums", "RowsCount", "ColumnsCount",*)
+            (*"Dot", "Plus", "Times", "Part",*)
+            (*"RowBind", "ColumnBind",*)
+            (*"Head", "Format", "Print"},*)
+            (*Names["System`*Hold*"],*)
+            (*Names["System`Inactiv*"],*)
+            (*Names["System`Activ*"]*)
+          (*], SymbolName[F] ];*)
 
