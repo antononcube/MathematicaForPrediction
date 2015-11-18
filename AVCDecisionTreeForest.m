@@ -411,6 +411,8 @@ BuildDecisionTree::rvalopt = "The value of `1` should be a positive real number.
 
 BuildDecisionTree::lvalopt = "The value of `1` should be Automatic, All, or a subset of the class labels `2`.";
 
+BuildDecisionTree::farg = "The first argument is expected to be a matrix all elements of which are atoms.";
+
 Clear[BuildDecisionTree]
 Options[BuildDecisionTree] = {"RandomAxes" -> False, 
    "ImpurityFunction" -> "Gini", "Strata" -> 100, 
@@ -511,8 +513,12 @@ BuildDecisionTree[data_, minSizeTh_: 1, opts : OptionsPattern[]] :=
   BuildDecisionTree[data, {minSizeTh, 0.}, opts] /; NumberQ[minSizeTh];
 BuildDecisionTree[data_, {minSizeTh_Integer, impurityTh_?NumberQ}, opts : OptionsPattern[]] :=
   Block[{columnTypes},
+   If[ !MatrixQ[ data, AtomQ],
+     Message[BuildDecisionTree::farg];
+     Return[{}];
+   ];
    columnTypes = 
-    Map[Apply[And, NumericQ /@ data[[All, #]]] &, Range[1, Length[data[[1]]]]];
+    Map[ VectorQ[ data[[All, #]], NumericQ ] &, Range[1, Length[ data[[1]]] ] ];
    columnTypes = columnTypes /. {True -> Number, False -> Symbol};
    BuildDecisionTree[data, columnTypes, {Max[minSizeTh, 1], impurityTh}, opts]
   ];
