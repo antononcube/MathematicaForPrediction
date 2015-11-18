@@ -1,7 +1,7 @@
 
 (*
 	Decision tree and random forest implementations in Mathematica
-    Copyright (C) 2013  Anton Antonov
+    Copyright (C) 2013-2015  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,8 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube@gmail.com,
 	Windermere, Florida, USA.
 *)
 
@@ -628,9 +627,10 @@ TreeToRulesRecStep[tree_] :=
 
 Clear[DecisionTreeToRules]
 DecisionTreeToRules[tree_] :=
-  Block[{},
+  Block[{dtree, k=0},
+    dtree = tree /. ({m_, v_, cInd_Integer, s_, n_} :> {m, v, cInd, s, n, "node "<>ToString[k++]});
     MakeIDGenerator[];
-    TreeToRulesRecStep[tree]
+    TreeToRulesRecStep[dtree]
   ] /. {{r_Rule, edge_String} :> {r, Style[StandardForm[edge], Background -> White, FontSlant -> Plain]}};
 
 
