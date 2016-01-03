@@ -166,10 +166,12 @@
 BeginPackage["VariableImportanceByClassifiers`"]
 (* Exported symbols added here with SymbolName::usage *)
 
-AccuracyByVariableShuffling::usage = "AccuracyByVariableShuffling[clFunc, testData, variableNames, opts] finds the variable \
-importance using a ClassiferFunction object clFunc and a test data set testData. The names of the variables \
-can be specified with variableNames. With the option \"FScoreLabels\" the accuracies can be computed over a specific list \
-of class labels."
+AccuracyByVariableShuffling::usage = "AccuracyByVariableShuffling[clFunc, testData, variableNames, opts] computes classification \
+accuracies with the ClassiferFunction object clFunc over damaged versions of the data testData. The accuracies can be used \
+in variable importance finding. The names of the variables can be specified with variableNames. \
+With the option \"FScoreLabels\" the accuracies can be computed over a specific list of class labels. \
+The result is an Association object with keys the damaged column names of testData (variables) and with values the corresponding \
+accuracies."
 
 Begin["`Private`"]
 
