@@ -150,7 +150,7 @@
         URL: https://mathematicaforprediction.wordpress.com/2014/03/30/classification-and-association-rules-for-census-income-data/
 
 
-    The mosaic plots can be made using this package:
+    The mosaic plots suggested above can be made using this package:
 
     [3] "Mosaic plot for data visualization implementation in Mathematica" (2014)
         https://github.com/antononcube/MathematicaForPrediction/blob/master/MosaicPlot.m
@@ -166,7 +166,10 @@
 BeginPackage["VariableImportanceByClassifiers`"]
 (* Exported symbols added here with SymbolName::usage *)
 
-AccuracyByVariableShuffling::usage = "Finds the variable importance using an already built ClassiferFunction object and a test data set. "
+AccuracyByVariableShuffling::usage = "AccuracyByVariableShuffling[clFunc, testData, variableNames, opts] finds the variable \
+importance using a ClassiferFunction object clFunc and a test data set testData. The names of the variables \
+can be specified with variableNames. With the option \"FScoreLabels\" the accuracies can be computed over a specific list \
+of class labels."
 
 Begin["`Private`"]
 
@@ -174,7 +177,7 @@ Clear[IsClassifierDataQ, AccuracyByVariableShuffling]
 
 IsClassifierDataQ[data_] := MatchQ[ data, { Rule[_List, _] .. } ] && ArrayQ[ data[[ All, 1 ]] ];
 
-AccuracyByVariableShuffling::varnames = "The third argument (variableNames) is expected to be Automatic or a list of Strings."
+AccuracyByVariableShuffling::varnames = "The third argument (variableNames) is expected to be Automatic or a list of strings."
 
 Options[AccuracyByVariableShuffling] = { "FScoreLabels" -> None };
 
