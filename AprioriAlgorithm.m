@@ -1,6 +1,6 @@
 (*
     Implementation of the Apriori algorithm in Mathematica
-    Copyright (C) 2014  Anton Antonov
+    Copyright (C) 2014-2015  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube@gmail.com,
 	Windermere, Florida, USA.
 *)
 
@@ -58,6 +57,10 @@
    Added a new function, AprioriSparseArrayRepresentation, the result of which can be used with the overloaded version of Support, and for AssociationRules.
 *)
 
+(* January, 06, 2016
+   Added a new function, ItemRules, that makes it easier to obtain association rules for specified items using the
+   results of AprioriApplication.
+*)
 
 BeginPackage["AprioriAlgorithm`"]
 
@@ -76,6 +79,10 @@ QuantileReplacementFunc::usage = "QuantileReplacementFunc[qBoundaries] makes a p
 RymonTree::usage = "RymonTree[numberOfItems] gives the Rymon tree for numberOfItems."
 
 TreeToRules::usage = "TreeToRules[tree] returns rules for the argument tree that can be used in GraphPlot."
+
+ItemRules::usage = "ItemRules[setOfItemSets, frequentSetsOfIDs, itemToIDRules, idToItemRules, itemSpec, minConfidence, minSupport, nAssocItems] \
+finds rules for a specified item or list if items using the baskets data and the result of AprioriApplication."
+
 
 Begin["`Private`"]
 
@@ -293,6 +300,36 @@ QuantileReplacementFunc[qBoundaries : {_?NumberQ ...}] :=
        MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t, 
          Range[1, Length[t]]}]] /. {XXX -> #}]]
    ];
+
+
+(* Item rules *)
+
+Clear[ItemRules];
+
+ItemRules[setOfItemSets_, frequentSetsOfIDs : {{{_Integer ..} ..} ..},
+  itemToIDRules_, idToItemRules_, itemSpec_, minConfidence_?NumberQ,
+  minSupport_?NumberQ] :=
+    ItemRules[setOfItemSets, frequentSetsOfIDs, itemToIDRules, idToItemRules, itemSpec, minConfidence, minSupport, All];
+
+ItemRules[setOfItemSets_, frequentSetsOfIDs : {{{_Integer ..} ..} ..},
+  itemToIDRules_, idToItemRules_, itemSpec : (_?AtomQ | {_?AtomQ ..}),
+  minConfidence_?NumberQ, minSupport_?NumberQ,
+  nAssocItems : (All | _Integer)] :=
+    Block[{itemAprioriRes, basketItemRows, t, r1, r2, items, itemsInds},
+      {basketItemRows, r1, r2} = AprioriSparseArrayRepresentation[setOfItemSets];
+      If[ListQ[itemSpec] && Length[itemSpec] == 1, items = itemSpec[[1]], items = itemSpec ];
+      If[AtomQ[items],
+        itemAprioriRes =
+            Cases[#, {___, items /. itemToIDRules, ___}, Infinity] & /@ frequentSetsOfIDs,
+      (* ELSE *)
+        itemsInds = items /. itemToIDRules;
+        itemAprioriRes =
+            Cases[#, r_List /; Length[Intersection[r, itemsInds]] == Length[itemsInds], 3] & /@ frequentSetsOfIDs
+      ];
+      t = AssociationRules[basketItemRows, itemAprioriRes[[#]], minConfidence, minSupport] & /@
+          If[TrueQ[nAssocItems === All], Range[2, Length[itemAprioriRes]], {nAssocItems}];
+      DeleteCases[t /. idToItemRules, {}, 2]
+    ];
 
 End[]
 
