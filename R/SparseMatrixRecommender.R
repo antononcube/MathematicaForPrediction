@@ -1,6 +1,6 @@
 #=======================================================================================
 # Sparse matrix recommender framework in R
-# Copyright (C) 2014  Anton Antonov
+# Copyright (C) 2014-2016  Anton Antonov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # Written by Anton Antonov, 
-# antononcube@gmail.com, 
-# 7320 Colbury Ave, 
+# antononcube@gmail.com,
 # Windermere, Florida, USA.
 #
 #=======================================================================================
@@ -43,12 +42,19 @@
 # 
 # History
 # Started: November 2013, 
-# Updated: December 2013, May 2014, June 2014, July 2014, December 2014
+# Updated: December 2013, May 2014, June 2014, July 2014, December 2014,
+# January 2016.
 #=======================================================================================
 #
 # TODO Argument type and ranks check
 # Mathematica has pattern matching for the arguments, here I have to make type checks.
 # Note that S4 provides some of this functionality.
+# TODO Recommender Composite object
+# Application of the Composite Design Pattern for a collection of recommenders.
+# For example, SMR, PageRank recommenders, and HubItemDynamicRanks recommender.
+# Needed is a function for the combination of recommendations from many recommenders.
+# There should be an argument allowing the merging of the recommendations to be done
+# according to different types normalizations.
 
 #---------------------------------------------------------------------------------------
 
@@ -71,6 +77,17 @@
 # 12/23/14
 # Added the function SMRReorderRecommendations that re-orders recommendations according
 # to scores from common tags.
+#
+# 2016-01-05
+# Introduced of S3 OOP (i.e. generic function) implementations for the recommender objects.
+# A recommender object is just a list with named elements. It is turned into an
+# S3 object by assigning "SMR" to the attribute class.
+# This file has only set-up and implementations for SMR's. Other type of recommenders
+# have to provided the corresponding generic functions.
+# At this point they are three:
+# 1. Recommendations (e.g. Recommendations.SMR )
+# 2. RecommenderTags (e.g. RecommenderTags.SMR )
+# 3. RecommenderItems (e.g. RecommenderItems.SMR )
 #=======================================================================================
 
 #' @detail Required libraries
@@ -78,7 +95,7 @@ require(plyr)
 require(reshape2)
 require(Matrix)
 
-#' @deatil Read weight functions application definitions
+#' @detail Read weight functions application definitions
 # source("./DocumentTermWeightFunctions.R")
  
 #' @description Convert to contingency matrix from item consumption "transactions" (e.g. instances of movie watching)
@@ -97,6 +114,7 @@ SMRCreateItemTagMatrix <- function( dataRows, itemColumnName, tagType, sparse=TR
 #' @param dataRows transaction data frame
 #' @param tagTypes the name of the column containing the categorical tags
 #' @param itemColumnName the name of the column containing the unique items
+#' @return An S3 object is returned that is list with class attribute set to "SMR".
 SMRCreate <- function(dataRows, tagTypes, itemColumnName ){
   matrices <- alply(tagTypes, 1, function(x){
     SMRCreateItemTagMatrix(dataRows, tagType=x, itemColumnName=itemColumnName)
@@ -109,6 +127,7 @@ SMRCreate <- function(dataRows, tagTypes, itemColumnName ){
 #' @param matrices matrices to be spliced into a metadata matrix
 #' @param tagTypes the name of the column containing the categorical tags
 #' @param itemColumnName the name of the column containing the unique items
+#' @return An S3 object is returned that is list with class attribute set to "SMR".
 SMRCreateFromMatrices <- function( matrices, tagTypes, itemColumnName ){
   
   if ( length(matrices) != length(tagTypes)  ) {
@@ -129,8 +148,10 @@ SMRCreateFromMatrices <- function( matrices, tagTypes, itemColumnName ){
   itemToIndexRules <- 1:nrow(m)
   names(itemToIndexRules) <- rownames(m)
   
-  list( M=m, M01=m, TagTypeRanges=ranges, TagTypes=tagTypes, ItemColumnName=itemColumnName, 
-        TagToIndexRules=tagToIndexRules, ItemToIndexRules=itemToIndexRules )
+  res <- list( M=m, M01=m, TagTypeRanges=ranges, TagTypes=tagTypes, ItemColumnName=itemColumnName,
+               TagToIndexRules=tagToIndexRules, ItemToIndexRules=itemToIndexRules )
+  class(res) <- "SMR"
+  res
 }
 
 
@@ -649,6 +670,46 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
   
   newSMR
 }
+
+
+#=======================================================================================
+# Object-Oriented Programming (OOP) implementations
+#=======================================================================================
+
+
+##===========================================================
+## Generic function definition
+##===========================================================
+
+## Note that in the functions below the data frames with the recommendations results have (only) the columns "Score" and "Item".
+## The more basic recommendations functions return data frames that also have the column "Index", but the indices are not invariant
+## across the recommenders. The item names are.
+
+#' @description The generic function for calculating recommendations.
+#' @param x a recommender object
+#' @param historyItems a list of history items (indices or ID's)
+#' @param historyRatings a list of history ratings
+#' @param nrecs number of required recommendations
+#' @param dropHistory should the history be dropped or not
+Recommendations <- function( x, historyItems, historyRatings, nrecs, dropHistory = TRUE, ... ) UseMethod( "Recommendations" )
+
+#' @description Specialization of Recommendations for SMR objects.
+Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, dropHistory = TRUE, ... ) {
+  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, dropHistory = dropHistory, ... )
+  setNames( res[, c(1,3)], c("Score", "Item") )
+}
+
+
+##===========================================================
+## Recommenders items and tags query methods
+##===========================================================
+
+RecommenderTags <- function( recommender )  UseMethod("RecommenderTags")
+RecommenderTags.SMR <- function( recommender ) colnames( recommender$M )
+
+
+RecommenderItems <- function( recommender ) UseMethod("RecommenderItems")
+RecommenderItems.SMR <- function( recommender ) rownames( recommender$M )
 
 
 
