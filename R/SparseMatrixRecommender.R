@@ -231,7 +231,7 @@ SMRRecommendations <- function( smr, userHistoryItems, userRatings, nrecs, remov
   if ( class(userHistoryItems) != "integer" && class(userHistoryItems) != "numeric" ) {
     stop("Row ID's (names or indices) are expected for the argument userHistoryItems.", call.=TRUE)
   }
-  if ( class(userRatings) != "numeric") {
+  if ( class(userRatings) != "numeric" && class(userRatings) != "integer") {
     stop("Positive real numbers are expected for the argument userRatings.", call.=TRUE)
   }
   if ( length(userRatings) < length(userHistoryItems) ) {
@@ -695,7 +695,7 @@ Recommendations <- function( x, historyItems, historyRatings, nrecs, removeHisto
 
 #' @description Specialization of Recommendations for SMR objects.
 Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
-  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, revomeHistory = removeHistory, ... )
+  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, removeHistory = removeHistory, ... )
   setNames( res[, c(1,3)], c("Score", "Item") )
 }
 
