@@ -1,6 +1,6 @@
 (*
     Implementation of document-term matrix construction and re-weighting functions in Mathematica
-    Copyright (C) 2013  Anton Antonov
+    Copyright (C) 2013-2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,14 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
-	Windermere, Florida, USA.
+	  Written by Anton Antonov,
+	  antononcube@gmail.com,
+	  Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -33,16 +32,28 @@
 *)
 
 (* Version 0.95 *)
-(* This package contains definitions for turning a collection of documents into a collection of bags of words and representing them in a linear vector space in which the (stemmed) words of the documents correspond to the axes. In this way the collection turns into a sparse matrix, each row corresponds to a document, each column corresponds to a (stemmed) word. *)
-(* TODO: (1) better description of the functions, (2) remove or change the profiling statements with PRINT and AbsoluteTiming. *)
+(* This package contains definitions for turning a collection of documents into a collection of bags of words and
+   representing them in a linear vector space in which the (stemmed) words of the documents correspond to the axes.
+   In this way the collection turns into a sparse matrix, each row corresponds to a document,
+   each column corresponds to a (stemmed) word. *)
+(*
+TODO:
+   (1) better description of the functions,
+   (2) remove or change the profiling statements with PRINT and AbsoluteTiming.
+*)
 
 BeginPackage["DocumentTermMatrixConstruction`"]
 
-ToBagOfWords::usage = "ToBagOfWords[docs:{_String..},{stemmingRules_List, stopWords_List}] converts a list of documents docs into bags words using stemming rules and removing stop words. As options can be given string splitting characters and a post string splitting predicate."
+ToBagOfWords::usage = "ToBagOfWords[docs:{_String..},{stemmingRules_List, stopWords_List}] converts a list of documents \
+docs into bags words using stemming rules and removing stop words. As options can be given string splitting characters \
+and a post string splitting predicate."
 
-DocumentTermMatrix::usage = "DocumentTermMatrix[docs:{_String..},{stemmingRules_List, stopWords_List}] converts a list of documents docs into sparse matrix using stemming rules and removing stop words. As options can be given string splitting characters and a post string splitting predicate. DocumentTermMatrix uses ToBagOfWords."
+DocumentTermMatrix::usage = "DocumentTermMatrix[docs:{_String..},{stemmingRules_List, stopWords_List}] converts \
+a list of documents docs into sparse matrix using stemming rules and removing stop words. As options can be given \
+string splitting characters and a post string splitting predicate. DocumentTermMatrix uses ToBagOfWords."
 
-WeightTerms::usage = "WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] changes the entries of docTermMat according to the functions for global weight, local weight, and normalization."
+WeightTerms::usage = "WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] changes \
+the entries of docTermMat according to the functions for global weight, local weight, and normalization."
 
 GlobalTermWeight::usage = "GlobalTermWeight implements the global weight over a vector."
 
@@ -50,8 +61,7 @@ Begin["`Private`"]
 
 Clear[ToBagOfWords]
 Options[ToBagOfWords] = {"SplittingCharacters" -> {Whitespace, "\n",
-  " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")",
-  "\[OpenCurlyDoubleQuote]", "`"},
+  " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
   "PostSplittingPredicate" -> (StringLength[#] > 2 &)};
 
 ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch), stopWords_List}, opts : OptionsPattern[]] :=
@@ -119,8 +129,8 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizer
       If[ TrueQ[ globalWeightFunc === Identity || globalWeightFunc === None || globalWeightFunc == Function[#] ],
 
         globalWeights = ConstantArray[1.0,m],
-      (*ELSE*)
-      (* number of documents per term *)
+        (*ELSE*)
+        (* number of documents per term *)
         nDocuments = Map[Total, mat];
 
         mat = Transpose[mat]; (* term * document matrix *)
@@ -137,7 +147,7 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizer
         diagMat = SparseArray[MapThread[{#1, #2} -> #3 &, {Range[1, m], Range[1, m], globalWeights}], {m, m}];
         (* PRINT[diagMat, " ", MatrixQ[diagMat, NumberQ]]; *)
         mat = mat.diagMat,
-      (* ELSE *)
+        (* ELSE *)
         mat = Map[ SparseArray[Map[localWeightFunc, #]*globalWeights] &, mat ]
       ];
 
