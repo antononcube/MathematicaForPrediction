@@ -690,12 +690,12 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
 #' @param historyItems a list of history items (indices or ID's)
 #' @param historyRatings a list of history ratings
 #' @param nrecs number of required recommendations
-#' @param dropHistory should the history be dropped or not
-Recommendations <- function( x, historyItems, historyRatings, nrecs, dropHistory = TRUE, ... ) UseMethod( "Recommendations" )
+#' @param removeHistory should the history be dropped or not
+Recommendations <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) UseMethod( "Recommendations" )
 
 #' @description Specialization of Recommendations for SMR objects.
-Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, dropHistory = TRUE, ... ) {
-  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, dropHistory = dropHistory, ... )
+Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
+  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, revomeHistory = removeHistory, ... )
   setNames( res[, c(1,3)], c("Score", "Item") )
 }
 
