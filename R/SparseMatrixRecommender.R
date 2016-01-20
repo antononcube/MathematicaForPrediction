@@ -691,6 +691,7 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
 #' @param historyRatings a list of history ratings
 #' @param nrecs number of required recommendations
 #' @param removeHistory should the history be dropped or not
+#' @return A data frame with the columns "
 Recommendations <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) UseMethod( "Recommendations" )
 
 #' @description Specialization of Recommendations for SMR objects.
@@ -699,6 +700,24 @@ Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, removeH
   setNames( res[, c(1,3)], c("Score", "Item") )
 }
 
+#' @description The generic function for calculating a consumption profile.
+#' @param x a recommender object
+#' @param historyItems a list of history items (indices or ID's)
+#' @param historyRatings a list of history ratings
+#' @param allColumns a logical are all columns of the results returned or not
+#' @return A data frame with the first columns being "Score" and "Tag".
+ConsumptionProfile <- function( x, historyItems, historyRatings, allColumns = FALSE ) UseMethod( "ConsumptionProfile" )
+
+ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns = FALSE ) {
+    if( missing(historyRatings) || is.null(historyRatings) ) {
+      historyRatings <- rep( 1, length(historyItems) )
+    }
+    if( allColumns ) {
+      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems ) )[, c("Score", "Tag", "Index")]
+    } else {
+      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems ) )[, c("Score", "Tag")]
+    }
+}
 
 ##===========================================================
 ## Recommenders items and tags query methods
