@@ -732,9 +732,9 @@ ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns 
       historyRatings <- rep( 1, length(historyItems) )
     }
     if( allColumns ) {
-      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems ) )[, c("Score", "Tag", "Index")]
+      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag", "Index")]
     } else {
-      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems ) )[, c("Score", "Tag")]
+      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag")]
     }
 }
 
