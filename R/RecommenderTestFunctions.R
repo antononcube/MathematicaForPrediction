@@ -176,11 +176,9 @@ RecommenderTestRun <- function( recommenderObject, recommenderObjectFreq = NULL,
         if ( is.null(recommenderObject) ) {
           prof <- testSpecs[[i]]$PremiseTags
         } else if ( ! is.null(recommenderObjectFreq) ) {
-          profHist <- data.frame( Rating=testSpecsRecs[[i]]$Score, Item=testSpecsRecs[[i]]$Item, stringsAsFactors = FALSE )
-          prof <- SMRProfileDF( recommenderObjectFreq, profHist )
+          prof <- ConsumptionProfile( recommenderObjectFreq, historyItems = testSpecsRecs[[i]]$Item, historyRatings = testSpecsRecs[[i]]$Score )
         } else {
-          profHist <- data.frame( Rating=testSpecsRecs[[i]]$Score, Item=testSpecsRecs[[i]]$Item, stringsAsFactors = FALSE )
-          prof <- SMRProfileDF( recommenderObject, profHist )
+          prof <- ConsumptionProfile( recommenderObject, historyItems = testSpecsRecs[[i]]$Item, historyRatings = testSpecsRecs[[i]]$Score )
         }
       }
       
