@@ -139,7 +139,8 @@ RecommenderTestRun <- function( recommenderObject, recommenderObjectFreq = NULL,
                                    historyItems = histSpec$Item,
                                    historyRatings = histSpec$Score,
                                    nrecs = tspec$NRecs,
-                                   removeHistory = removeHistory )
+                                   removeHistory = removeHistory,
+                                   tuningParameters = tspec$TuningParameters )
           
         } else if ( ! is.null( tspec$PremiseTags && ( is.null( tspec$PremiseItems ) || tspec$CombinationParameter == 1 ) ) ) {
           ## Recommendations by profile
@@ -148,7 +149,8 @@ RecommenderTestRun <- function( recommenderObject, recommenderObjectFreq = NULL,
           inds <- which( tspec$PremiseTags$Tag %in% RecommenderTags(recommenderObject) )
           prof <- tspec$PremiseTags[ inds, ]
 
-          recs <- RecommendationsByProfile( recommenderObject, prof$Tag, prof$Score, nrecs = tspec$NRecs )
+          recs <- RecommendationsByProfile( recommenderObject, prof$Tag, prof$Score, nrecs = tspec$NRecs,
+                                            tuningParameters = tspec$TuningParameters )
           
         } else {
           ## Combined recommendations
