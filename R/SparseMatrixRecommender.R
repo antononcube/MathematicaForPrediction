@@ -696,8 +696,10 @@ Recommendations <- function( x, historyItems, historyRatings, nrecs, removeHisto
 
 #' @description Specialization of Recommendations for SMR objects.
 Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
-  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, removeHistory = removeHistory, ... )
-  setNames( res[, c(1,3)], c("Score", "Item") )
+    ## Needs handling of the argument tuningParametes.
+    res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings,
+                               nrecs = nrecs, removeHistory = removeHistory )
+    setNames( res[, c(1,3)], c("Score", "Item") )
 }
 
 #' @description The generic function for calculating recommendations by profile.
@@ -710,6 +712,7 @@ RecommendationsByProfile <- function( x, profileTags, profileTagScores, nrecs, .
 
 #' @description Specialization of RecommendationsByProfile for SMR objects.
 RecommendationsByProfile.SMR <- function ( x, profileTags, profileTagScores, nrecs, ... ) {
+    ## Needs handling of the argument tuningParametes.
     res <- SMRRecommendationsByProfileDF( smr = x,
                                           profile = data.frame( Score = profileTagScores, Tag = profileTags, stringsAsFactors=FALSE),
                                           nrecs = nrecs )
