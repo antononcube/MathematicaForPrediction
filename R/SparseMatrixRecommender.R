@@ -685,19 +685,35 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
 ## The more basic recommendations functions return data frames that also have the column "Index", but the indices are not invariant
 ## across the recommenders. The item names are.
 
-#' @description The generic function for calculating recommendations.
+#' @description The generic function for calculating recommendations by history.
 #' @param x a recommender object
 #' @param historyItems a list of history items (indices or ID's)
 #' @param historyRatings a list of history ratings
 #' @param nrecs number of required recommendations
 #' @param removeHistory should the history be dropped or not
-#' @return A data frame with the columns "
+#' @return A data frame with the columns c("Score", "Item")
 Recommendations <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) UseMethod( "Recommendations" )
 
 #' @description Specialization of Recommendations for SMR objects.
 Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
   res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings, nrecs = nrecs, removeHistory = removeHistory, ... )
   setNames( res[, c(1,3)], c("Score", "Item") )
+}
+
+#' @description The generic function for calculating recommendations by profile.
+#' @param x a recommender object
+#' @param profileTags a list of profile tags
+#' @param profileTagScores a list of scores corresponding to the profile tags
+#' @param nrecs number of required recommendations
+#' @return A data frame with the columns columns c("Score", "Item")
+RecommendationsByProfile <- function( x, profileTags, profileTagScores, nrecs, ... ) UseMethod( "RecommendationsByProfile" )
+
+#' @description Specialization of RecommendationsByProfile for SMR objects.
+RecommendationsByProfile.SMR <- function ( x, profileTags, profileTagScores, nrecs, ... ) {
+    res <- SMRRecommendationsByProfileDF( smr = x,
+                                          profile = data.frame( Score = profileTagScores, Tag = profileTags, stringsAsFactors=FALSE),
+                                          nrecs = nrecs )
+    res[, c("Score", "Item")]
 }
 
 #' @description The generic function for calculating a consumption profile.
