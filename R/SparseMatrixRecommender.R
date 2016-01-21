@@ -722,9 +722,9 @@ RecommendationsByProfile.SMR <- function ( x, profileTags, profileTagScores, nre
 #' @param historyRatings a list of history ratings
 #' @param allColumns a logical are all columns of the results returned or not
 #' @return A data frame with the first columns being "Score" and "Tag".
-ConsumptionProfile <- function( x, historyItems, historyRatings, allColumns = FALSE ) UseMethod( "ConsumptionProfile" )
+ConsumptionProfile <- function( x, historyItems, historyRatings, allColumns = FALSE, ... ) UseMethod( "ConsumptionProfile" )
 
-ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns = FALSE ) {
+ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns = FALSE, ... ) {
     if( missing(historyRatings) || is.null(historyRatings) ) {
       historyRatings <- rep( 1, length(historyItems) )
     }
