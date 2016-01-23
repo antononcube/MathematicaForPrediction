@@ -237,7 +237,10 @@ RecommenderTestRun <- function( recommenderObject, recommenderObjectFreq = NULL,
             prof <- prof[ !duplicated( prof$Tag ), ]
             
             if ( nrow(prof) < nrow( testSpecs[[i]]$ResponseTags ) ) {
-              prof <- rbind( prof, data.frame( Tag=setdiff( testSpecs[[i]]$ResponseTags$Tag, prof$Tag ), Score=c(0) ) )
+              diffTags <- setdiff( testSpecs[[i]]$ResponseTags$Tag, prof$Tag )
+              if( length(diffTags) > 0 ) {
+                prof <- rbind( prof, data.frame( Tag = diffTags, Score=c(0) ) )
+              }
             }
             
             intermediateRes <- prof
