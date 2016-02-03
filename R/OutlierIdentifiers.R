@@ -16,8 +16,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ## 
 ## Written by Anton Antonov, 
-## antononcube@gmail.com, 
-## 7320 Colbury Ave, 
+## antononcube@gmail.com,
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
@@ -73,11 +72,18 @@ OutlierIdentifier <- function( dataVec, lowerAndUpperThresholds ) {
   dataVec[ dataVec <= lowerAndUpperThresholds[[1]] | dataVec >= lowerAndUpperThresholds[[2]] ]
 }
 
-#' @description Find an outlier threshold for a data vector
+#' @description Find the top outliers for a data vector
 #' @param dataVec data vector
 #' @param lowerAndUpperThresholds outlier identifier parameters
 TopOutlierIdentifier <- function( dataVec, lowerAndUpperThresholds ) {
   dataVec[dataVec >= lowerAndUpperThresholds[[2]] ]
+}
+
+#' @description Find the bottom outliers for a data vector
+#' @param dataVec data vector
+#' @param lowerAndUpperThresholds outlier identifier parameters
+BottomOutlierIdentifier <- function( dataVec, lowerAndUpperThresholds ) {
+  dataVec[dataVec <= lowerAndUpperThresholds[[1]] ]
 }
 
 #' @description Find the outlier positions in a data vector
@@ -88,12 +94,20 @@ OutlierPosition <- function( dataVec, outlierIdentifier = HampelIdentifierParame
   which( dataVec <= cls[[1]] | dataVec >= cls[[2]] )
 }
 
-#' @description Find the outlier positions in a data vector
+#' @description Find the top outlier positions in a data vector
 #' @param dataVec data vector
 #' @param outlierIdentifier outlier identifier function
 TopOutlierPosition <- function( dataVec, outlierIdentifier = HampelIdentifierParameters ) {
   cls <- outlierIdentifier(dataVec)
   which( dataVec >= cls[[2]] )
+}
+
+#' @description Find the bottom outlier positions in a data vector
+#' @param dataVec data vector
+#' @param outlierIdentifier outlier identifier function
+BottomOutlierPosition <- function( dataVec, outlierIdentifier = HampelIdentifierParameters ) {
+  cls <- outlierIdentifier(dataVec)
+  which( dataVec <= cls[[1]] )
 }
 
 
