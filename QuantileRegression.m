@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube @ gmail.com,
 	Windermere, Florida, USA.
 *)
 
@@ -65,13 +64,15 @@
 (*
   TODO
   1. Better messages.
+  2. Creating (more) signatures with default values.
+     E.g. no knots specification and/or no quantile specifications for QuantileRegression.
 *)
 
 BeginPackage["QuantileRegression`"]
 
 QuantileRegressionFit::usage = "QuantileRegression[data,funs,var,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations of the functions funs of the variable var."
 
-QuantileRegression::usage = "QuantileRegression[data,ks_List,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations splines generated over the knots ks. With the signature QuantileRegression[data,n_Integer,qs] n equally spaced knots are generated. The order of the splines is specified with the option InterpolationOrder."
+QuantileRegression::usage = "QuantileRegression[data,ks_List,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations of splines generated over the knots ks. With the signature QuantileRegression[data,n_Integer,qs] n equally spaced knots are generated. The order of the splines is specified with the option InterpolationOrder."
 
 QuantileEnvelope::usage = "QuantileRegression[data_?MatrixQ,qs:(_?NumberQ|{_?NumberQ..}),n_Integer] experimental implementation of quantile envelopes points finding."
 
@@ -353,7 +354,7 @@ QuantileEnvelope::qeqs = "The second argument is expected to be a number or a li
 QuantileEnvelope::qen = "The third argument is expected to be an integer greater than 2.";
 
 Clear[QuantileEnvelope]
-Options[QuantileEnvelope] = {"Tangents" -> True};
+Options[QuantileEnvelope] = {"Tangents" -> True };
 QuantileEnvelope[data_, qs_, n_, opts : OptionsPattern[]] :=
   Block[{},
    If[! MatrixQ[data, NumberQ],
@@ -379,7 +380,7 @@ QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : 
    
    (* Option values *)   
    tangentsQ = TrueQ[OptionValue[QuantileEnvelopeSimple, "Tangents"]];
-   
+ 		
    (* Standardize *)
    center = Mean /@ Transpose[data];
    scale = InterquartileRange /@ Transpose[data];
