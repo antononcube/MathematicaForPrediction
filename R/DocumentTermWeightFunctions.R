@@ -17,7 +17,6 @@
 # 
 # Written by Anton Antonov, 
 # antononcube@gmail.com, 
-# 7320 Colbury Ave, 
 # Windermere, Florida, USA.
 #
 
@@ -115,7 +114,7 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
     globalWeights <- colSums(mat)
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
-
+    
   } else if ( globalWeightFunction == "Sum" ) {
     
     globalWeights <- colSums(mat)
@@ -126,7 +125,7 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
     gfs[ gfs == 0 ] <- 1
     pmat <- mat %*% Diagonal( ncol(mat), 1 / gfs )
     lpmat <- pmat
-    lpmat@x <- log( lpmat@x ) 
+    lpmat@x <- log( lpmat@x + 1 ) 
     globalWeights <- 1 + colSums( pmat * lpmat ) / log( nrow(mat) )
     
   } else {
@@ -188,6 +187,14 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
         svec <- rowSums( mat )
         svec <- ifelse( svec > 0, svec, 1 )
         mat <- mat / svec
+
+      } else if ( normalizerFunction == "Max" || normalizerFunction == "Maximum" ) {
+
+        warning( "The normalization per row with the argument normalizerFunction set to 'Max' or 'Maximum' is potentially very slow." )
+
+        svec <- laply( 1:nrow(mat), function(i) { max( mat[i,,drop=FALSE] ) })
+        svec <- ifelse( svec > 0, svec, 1 )
+        mat <- mat / svec
         
       } else {
         stop( "Unknown normalizing function specification for the argument normalizerFunction.", call.=TRUE)
@@ -227,4 +234,29 @@ SMRMakeRowStochastic <- function( mat ){
   diagMat <- Diagonal(nrow(mat), globalWeights)
   mat <- diagMat %*% mat
   mat
+}
+
+#' @description Converts a string into a bag of words.
+#' @param text the text to be converted
+#' @param split character vector containing regular expressions
+#' @param punctuationPattern pattern for the punctuation signs
+#' @param patternToIgnore pattern for words to be ignored
+SMRToBagOfWords <- function( text, split = " ", punctuationPattern = "[[:punct:]]", stopWords = NULL, minWordLength = 2, patternToIgnore = NULL ) {
+  
+  if ( !is.null(patternToIgnore) ) {
+    m <- gregexpr( pattern = patternToIgnore, text )
+    res <- unlist( strsplit( unlist( regmatches( text, m, invert = TRUE ) ), split = split ) )
+  } else {
+    res <- unlist( strsplit( text, split = split ) )
+  } 
+  
+  res <- gsub( pattern = punctuationPattern, replacement = "", res )
+  
+  if( !is.null(stopWords) ) {
+    res <- res[ !( res %in% stopWords) ]  
+  }
+  
+  if ( minWordLength > 0  ) {
+    res[ nchar(res) >= minWordLength ] 
+  } else { res }
 }
