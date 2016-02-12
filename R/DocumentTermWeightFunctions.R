@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # Written by Anton Antonov, 
-# antononcube@gmail.com, 
+# antononcube @ gmail . com,
 # Windermere, Florida, USA.
 #
 
@@ -41,6 +41,10 @@
 ##=======================================================================================
 ## 2015.01.12
 ## Implemented local weights. Changed the default values for the functons to be NULL.
+##
+##=======================================================================================
+## 2016.02.11
+## Implemented a function for making a document-term matrix from a collection of documents.
 ##
 ##=======================================================================================
 
@@ -241,7 +245,8 @@ SMRMakeRowStochastic <- function( mat ){
 #' @param split character vector containing regular expressions
 #' @param punctuationPattern pattern for the punctuation signs
 #' @param patternToIgnore pattern for words to be ignored
-SMRToBagOfWords <- function( text, split = " ", punctuationPattern = "[[:punct:]]", stopWords = NULL, minWordLength = 2, patternToIgnore = NULL ) {
+SMRToBagOfWords <- function( text, split = "\\W", punctuationPattern = "[[:punct:]]", 
+                             stopWords = NULL, minWordLength = 2, patternToIgnore = NULL ) {
   
   if ( !is.null(patternToIgnore) ) {
     m <- gregexpr( pattern = patternToIgnore, text )
@@ -259,4 +264,48 @@ SMRToBagOfWords <- function( text, split = " ", punctuationPattern = "[[:punct:]
   if ( minWordLength > 0  ) {
     res[ nchar(res) >= minWordLength ] 
   } else { res }
+}
+
+#' @description Creates a document-term matrix from a list of documents and list of ID's
+#' @param documents a list of documents
+#' @param ids a list of ID's corresponding to the documents
+#' @param split a string pattern to split with
+#' @param applyWordStemming should word stemming be applied or not
+#' @param .progress progress argument of plyr functions (ldply)
+#' @detail It would be nice if this function uses SMRToBagOfWords function defined above.
+SMRMakeDocumentTermMatrix <- function( documents, ids = NULL, split = "\\W", 
+                                       applyWordStemming = TRUE, minWordLength = 2, 
+                                       .progress = "none" ) {
+  
+  if ( is.null(ids) ) { ids = 1:length(documents) }
+  
+  if ( length(documents) != length(ids) ) {
+    stop( "The lengths of the arguments 'documents' and 'ids' are expected to be the same.", call. = TRUE )
+  }
+  
+  ## Split the descriptions into words
+  ss <- setNames( strsplit( documents, split = split ), ids )
+  
+  ## Remove words that are too short
+  ss <- ss[ llply(ss, length) > 0 ]
+  ss <- llply( ss, function(x) x[ nchar(x) > minWordLength ] )
+  
+  ## Convert all words to lower case and apply stemming
+  snLoadQ = exists("wordStem")
+  if(  applyWordStemming && !snLoadQ ) { 
+      warning("The function 'wordStem' does not exist. Attempting to proceed by loading the library `SnowballC`.")
+      snLoadQ = require("SnowballC") 
+  }
+  if ( applyWordStemming && snLoadQ ) { 
+    ss <- llply( ss, function(x) wordStem( tolower(x) ) )
+  } else {
+    ss <- llply( ss, function(x) tolower(x) )    
+  } 
+  ss <- ss[ llply(ss, length) > 0 ]
+  
+  ## Make document-term contingency matrix
+  ssDF <- ldply( 1:length(ss), function(i) { data.frame( id = names(ss)[i], term = ss[[i]], stringsAsFactors = FALSE ) }, .progress = .progress )
+  dtMat <- xtabs( formula = ~ id + term, ssDF, sparse = TRUE )
+  
+  dtMat
 }
