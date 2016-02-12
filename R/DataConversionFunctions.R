@@ -39,9 +39,10 @@ library(Matrix)
 #' @description Partition combined columns
 #' @param dataColumn data vector
 #' @param numberOfSplits number of strings into which is field is splitted
-SplitColumnOfTags <- function( dataColumn, numberOfSplits, sep = "," ) {
+#' @param emptyStringReplacement with what value empty strings are replaced
+SplitColumnOfTags <- function( dataColumn, numberOfSplits, sep = ",", emptyStringReplacement = "null"  ) {
   spCol <- str_split_fixed( dataColumn, sep, numberOfSplits )
-  spCol[ spCol == "" ] <- "null"
+  spCol[ spCol == "" ] <- emptyStringReplacement
   #spCol[ spCol == "null"] <- NA
   ##spCol <- apply( spCol, c(1,2), str_trim)
   spCol <- apply( spCol, c(2), str_trim)
@@ -251,13 +252,13 @@ MakePiecewiseFunction <- function( points, tags=NULL ) {
   eval( parse( text=funcStr ) )
 }
 
-#' @param itemRows a data frame of flat movie data
+#' @param itemRows a data frame of flat content data
 #' @param tagTypeColName column name of the relationship to be ingested inge in itemRows
 #' @param itemIDName 
 #' @param nTagsPerField number of tags per field of the column colName in itemRows
-IngestMovieDataColumn <- function( itemRows, tagTypeColName, itemIDColName = "ID", nTagsPerField = 12 ) {
+IngestMultiValuedDataColumn <- function( itemRows, tagTypeColName, itemIDColName = "ID", nTagsPerField = 12, split = "," ) {
   
-  spdf <- str_split_fixed( itemRows[, tagTypeColName], pattern = c(","), n=nTagsPerField )
+  spdf <- str_split_fixed( itemRows[, tagTypeColName], pattern = split, n=nTagsPerField )
   spdf <- as.data.frame( spdf, stringsAsFactors = FALSE )
   for( i in 1:ncol(spdf) ) {
     spdf[[i]] <- gsub( pattern = "^\\W", replacement = "", spdf[[i]] )
@@ -282,25 +283,37 @@ IngestMovieDataColumn <- function( itemRows, tagTypeColName, itemIDColName = "ID
   list( tags = tags, tags.items = tags.itemRows )
 }
 
+## For backward compatibility
+IngestMovieDataColumn <- IngestMultiValuedDataColumn
 
 #' @param Multi-column data frame id-tag relationship
 #' @param idColName the column name of the item ID
 #' @param tagTypeColNames names of the tag type column names 
+#' @details This does not work if the tagTypeColNames have dash in them.
+#' I assume because of the string-to-formula conversion in SMRCreateItemTagMatrix.
+#' Obviously, the dependence of the SMRCreateItemTagMatrix can be removed.
 ConvertMultiColumnDataFrameToSparseMatrix <- function( multiColDF, itemColName, tagTypeColNames ) {
+
+  emptyColumns <- laply( tagTypeColNames, function(tt) mean( is.na( multiColDF[,tt] ) ) == 1 ) 
+
+  if ( sum( !emptyColumns ) < 1 ) {
+    stop( "All tag columns are empty.", call. = TRUE )
+  }
+  tagTypeColNames <- tagTypeColNames[ !emptyColumns ]
   
   ## Find all the sub-matrices with for the tag types
   gmats <- llply( tagTypeColNames, function( tt ) {
     SMRCreateItemTagMatrix( dataRows = multiColDF, itemColumnName = itemColName, tagType = tt )
   } )
   
-  ## Find all genres
+  ## Find all tags
   allTags <- unique( unlist( llply( gmats, colnames ) ) )
   allIDs <- unique( unlist( llply( gmats, rownames ) ) )
-  
-  ## Impose the genres to all genre matrices
+
+  ## Impose the tags to all tags matrices
   gmats <- llply( gmats, function(m) { ImposeRowIDs( allIDs, ImposeColumnIDs( allTags, m ) ) })
   
-  ## Sum the genre matrices into one matrix
+  ## Sum the tag matrices into one matrix
   gmat <- gmats[[1]]
   for( i in 2:length(gmats) ) { gmat <- gmat + gmats[[i]] }
   
