@@ -47,6 +47,7 @@ ParetoLawForCountsPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab=
 #' @param xlab label for the x-axis
 #' @param ylab label for the y-axis
 ParetoLawPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", xFraction = 0.2, yFraction = 0.8, ... ) {
+    dataVec <- rev( sort(dataVec) )
     plot( cumsum( dataVec ) / sum( dataVec ), type='l', main=main, xlab=xlab, ylab=ylab, ... )
     grid()
     ## grid(nx=4,ny=4)
