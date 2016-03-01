@@ -16,8 +16,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ## 
 ## Written by Anton Antonov, 
-## antononcube@gmail.com, 
-## 7320 Colbury Ave, 
+## antononcube@gmail.com,
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
@@ -143,3 +142,76 @@ NNMFBasisVectorInterpretation <- function( vec, n, interpretationTerms = NULL ) 
   setNames( vec[inds], interpretationTerms[inds] )
 }
 
+
+#' @description Cenralizes a sparse matrix around the mean of the non-zero elements in each column. 
+#' The sparse matrix zero entries are also zeroes in the centralized matrix.
+#' @param smat a sparse item-tag (document-term) matrix 
+#' @param centerFinder a function used to find the center of a numerical vector
+#' @param spreadFinder a function to find the spread of each vector and divide its the centered elements
+#' @details If the argument spreadFinder is NULL no scaling of the centered elements is done.
+#' It would be nice the argument spreadFinder can take as argument also the strings 
+#' "interQuartile" and "standardDeviation".
+ColumnCentralizeSparseMatrix <- function( smat, centerFinder = median, spreadFinder = NULL ) {
+  
+  dtMatDF <- summary( smat )
+  dtMatDF <- data.frame( i=dtMatDF$i, j=dtMatDF$j, x=dtMatDF$x )
+
+  meanDF <- 
+    ddply( .data = dtMatDF, .variables = c("j"), .fun = function(df) { 
+      
+      sp <- 0 
+      if ( !is.null(spreadFinder) ) { sp <- spreadFinder( df$x ) }
+      
+      df$x <- df$x - centerFinder( df$x )
+
+      if ( !is.na(sp[1]) && is.numeric(sp) && sp[1] > 0 ) { df$x <- df$x / sp[1] }
+      
+      df 
+    } )
+  
+  dtMatCentered <- sparseMatrix( i = meanDF$i, j = meanDF$j, x = meanDF$x, dims = dim(smat) )
+  
+  rownames(dtMatCentered) <- rownames(smat)
+  colnames(dtMatCentered) <- colnames(smat)
+  
+  dtMatCentered
+}
+
+
+#' @description Cenralizes a sparse matrix around the mean of the non-zero elements in each row 
+#' The zero entries are also zeroes in the centralized matrix.
+#' @param smat a sparse item-tag (document-term) matrix 
+#' @param centerFinder a function used to find the center of a numerical vector
+#' @param spreadFinder a function to find the spread of each vector and divide its the centered elements
+RowCentralizeSparseMatrix <- function( smat, centerFinder = median, spreadFinder = NULL ) {
+  ## This can be done without transposing just using the appropriate splitting variable in ddply.
+  ## I assume that sparse matrix transposing is fast enough.
+  t( ColumnCentralizeSparseMatrix( t( smat ), centerFinder, spreadFinder ) )
+}
+
+
+#' @description Statistical thesaurus entry calculation for a specified matrix of topics and a word.
+#' @param H a matrix of topics (each row is a topics, each column is a word)
+#' @param word a word (a column of H) for which the thesaurus entry is computed
+#' @param n number of nearest neighbors to be found (size of the thesaurus entry)
+#' @return Returns a data frame with columns c("Distance", "Word").
+#' @detail Euclidean distance is used to find the nearest neighbors.
+NearestWords <- function( H, word, n = 20 ) {
+
+  ind <- grep( pattern = word, x = colnames(H), fixed = TRUE )
+
+  if ( length(ind) == 0 ) {
+    stop( "The word argument is not found in the column names of the matrix argument.", call. = TRUE )
+  }
+  if ( length(ind) > 1 ) {
+    warning( "More that one column name corresponds to the search word; the first match is used." )
+  }
+  if ( n < 1 || ncol(H) < n ) { n = ncol(H) }
+
+  M <- H[, rep( ind[[1]], ncol(H) ) ]
+  M <- M - H
+  M <- M * M
+  dists <- colSums( M )
+  sinds <- order(dists)[1:n]
+  data.frame( Distance = dists[sinds], Word = colnames(H)[ sinds ], stringsAsFactors = FALSE )
+}
