@@ -191,14 +191,19 @@ RowCentralizeSparseMatrix <- function( smat, centerFinder = median, spreadFinder
 
 
 #' @description Statistical thesaurus entry calculation for a specified matrix of topics and a word.
-#' @param H a matrix of topics (each row is a topics, each column is a word)
-#' @param word a word (a column of H) for which the thesaurus entry is computed
+#' @param H a matrix of topics (each row is a topic, each column is a word)
+#' @param word an integer index or a pattern for a word (a column of H)
 #' @param n number of nearest neighbors to be found (size of the thesaurus entry)
-#' @return Returns a data frame with columns c("Distance", "Word").
+#' @param fixed if TRUE word is taken as a fixed pattern; if FALSE as a regexp
+#' @return Returns a data frame with columns c("Distance", "Index", "Word").
 #' @detail Euclidean distance is used to find the nearest neighbors.
-NearestWords <- function( H, word, n = 20 ) {
+NearestWords <- function( H, word, n = 20, fixed = TRUE ) {
 
-  ind <- grep( pattern = word, x = colnames(H), fixed = TRUE )
+  if( is.integer(word) || is.numeric(word) ) {
+    ind <- word[[1]]
+  } else {
+    ind <- grep( pattern = word, x = colnames(H), fixed = fixed )
+  }
 
   if ( length(ind) == 0 ) {
     stop( "The word argument is not found in the column names of the matrix argument.", call. = TRUE )
@@ -213,5 +218,5 @@ NearestWords <- function( H, word, n = 20 ) {
   M <- M * M
   dists <- colSums( M )
   sinds <- order(dists)[1:n]
-  data.frame( Distance = dists[sinds], Word = colnames(H)[ sinds ], stringsAsFactors = FALSE )
+  data.frame( Distance = dists[sinds], Index = sinds, Word = colnames(H)[ sinds ], stringsAsFactors = FALSE )
 }
