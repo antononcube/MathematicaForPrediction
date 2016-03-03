@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube @ gmail . com,
 	Windermere, Florida, USA.
 *)
 
@@ -35,25 +34,41 @@
 (* Version 1.0 *)
 (* This package contains definitions for the application of Non-Negative Matrix Factorization (NNMF). *)
 (* 
- The implementation follows the description of the hybrid algorithm GD-CLS (Gradient Descent with Constrained Least Squares) in the article:
+   The implementation follows the description of the hybrid algorithm GD-CLS (Gradient Descent with Constrained Least Squares) in the article:
 
- Shahnaz, F., Berry, M., Pauca, V., Plemmons, R., 2006.
- Document clustering using nonnegative matrix factorization. Information Processing & Management 42 (2), 373-386.
+     Shahnaz, F., Berry, M., Pauca, V., Plemmons, R., 2006.
+     Document clustering using nonnegative matrix factorization. Information Processing & Management 42 (2), 373-386.
+
+   In order to use NearestWords a nearest function has to be created over the column indices of the topic matrix.
+   For example:
+
+   {W, H} = NormalizeMatrixProduct[W, H];
+   HNF = Nearest[Range[Dimensions[H][[2]]], DistanceFunction -> (Norm[H[[All, #1]] - H[[All, #2]]] &)]
+   NearestWords[HNF, "agent", termsOfH, stemmingRules, 15]
+
 *)
 
 BeginPackage["NonNegativeMatrixFactorization`"]
 
-GDCLS::usage = "GDCLS[V_?MatrixQ,k_Integer,opts] returns the pair of matrices {W,H} such that V = W H and the number of the columns of W and the number of rows of H are k. The method used is Gradient Descent with Constrained Least Squares."
+GDCLS::usage = "GDCLS[V_?MatrixQ,k_Integer,opts] returns the pair of matrices {W,H} such that V = W H and \
+the number of the columns of W and the number of rows of H are k. The method used is called Gradient Descent with Constrained Least Squares."
 
-GDCLSGlobal::usage = "GDCLSGlobal[V_?MatrixQ,W_?MatrixQ,H_?MatrixQ,opts] continues the GDCLS iterations over the matrices W and H in the execution context and returns {W,H} as a result."
+GDCLSGlobal::usage = "GDCLSGlobal[V_?MatrixQ,W_?MatrixQ,H_?MatrixQ,opts] continues the GDCLS iterations over the matrices W and H \
+in the execution context and returns {W,H} as a result."
 
-NormalizeMatrixProduct::usage = "NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} such that W1 H1 = W H and the norms of the columns of W1 are 1."
+NormalizeMatrixProduct::usage = "NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} \
+such that W1 H1 = W H and the norms of the columns of W1 are 1."
 
 LeftNormalizeMatrixProduct::usage = "Same as NormalizeMatrixProduct."
 	
-RightNormalizeMatrixProduct::usage = "RightNormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} such that W1 H1 = W H and the norms of the rows of H1 are 1."
+RightNormalizeMatrixProduct::usage = "RightNormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} \
+such that W1 H1 = W H and the norms of the rows of H1 are 1."
 
-BasisVectorInterpretation::usage = "BasisVectorInterpretation[vec_?VectorQ,n_Integer,interpretationItems_List] takes the n largest coordinates of vec, finds the corresponding elements in interpretationItems, and returns a list of coordinate-item pairs."
+BasisVectorInterpretation::usage = "BasisVectorInterpretation[vec_?VectorQ,n_Integer,interpretationItems_List] \
+takes the n largest coordinates of vec, finds the corresponding elements in interpretationItems, and returns a list of coordinate-item pairs."
+
+NearestWords::usage = "NearestWords[HNF, word, terms, stemmingRules, n] calculates a statistical thesaurus entry \
+for a specified nearest function over the columns of a matrix of topics and a word."
 
 Begin["`Private`"]
 
@@ -162,6 +177,18 @@ BasisVectorInterpretation[vec_,n_Integer,terms_]:=
     Transpose[{vec[[t]],terms[[t]]}]
   ];
 
+
+Clear[NearestWords];
+NearestWords[HNF_NearestFunction, word_String, terms : {_String ..},
+  stemmingRules_, n_Integer: 20] :=
+    Block[{sword, tpos, inds},
+      sword = word /. stemmingRules;
+      tpos = Position[terms, sword];
+      If[Length[tpos] == 0, {},
+        inds = HNF[Flatten[tpos][[1]], n];
+        terms[[inds]]
+      ]
+    ];
 
 End[]
 
