@@ -76,6 +76,23 @@
                        {AbstractClass -> {"PrimitiveOperation1", "PrimitiveOperation2"}},
                        "Abstract" -> {AbstractClass}, VertexLabelStyle -> "Subsubsection"]
 
+
+    Here is an example of UML diagram generation without preliminary definitions for the class symbols:
+
+      UMLClassGraph[{Library \[DirectedEdge] Building,
+                      Museum \[DirectedEdge] Building,
+                      Member \[DirectedEdge] Person},
+                    {},
+                    {Library <-> Member,
+                      Museum \[DirectedEdge] Member,
+                      Client \[DirectedEdge] Building,
+                      Client \[DirectedEdge] Person},
+                    {Library \[DirectedEdge] Book},
+                    "Abstract" -> {Building, Person},
+                    "EntityColumn" -> False, VertexLabelStyle -> "Text",
+                    ImageSize -> Large, GraphLayout -> "LayeredDigraphEmbedding"]
+
+
     The function UMLClassGraph takes all options of Graph.
 
     The function UMLClassNode can be used to create custom graphs.
@@ -203,9 +220,7 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
         Which[
           MemberQ[symbolAssociations, #],
           Property[#, EdgeShapeFunction -> UMLDirectedAssociationEdgeFunc],
-          MemberQ[
-            symbolAssociations, (UndirectedEdge @@ #) | (UndirectedEdge @@
-              Reverse[#])],
+          MemberQ[symbolAssociations, (UndirectedEdge @@ #) | (UndirectedEdge @@ Reverse[#])],
           Property[#, EdgeShapeFunction -> UMLAssociationEdgeFunc],
           True,
           Property[#, EdgeShapeFunction -> UMLInheritanceEdgeFunc]
