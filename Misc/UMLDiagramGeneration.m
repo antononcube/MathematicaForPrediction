@@ -175,8 +175,7 @@ SubValueReferenceRules[symbols:{_Symbol..}] :=
   DeleteCases[#, None] &@
       Flatten@Outer[
         If[#1 =!= #2 && ! FreeQ[Cases[SubValues[#1][[All]],
-            RuleDelayed[x_, y_] :> HoldForm[y]], #2], #1 \[DirectedEdge] #2,
-        None] &, symbols, symbols ];
+            RuleDelayed[x_, y_] :> HoldForm[y]], #2], #1 \[DirectedEdge] #2, None] &, symbols, symbols ];
 
 (*********************************************************)
 (* UMLClassGraph                                         *)
@@ -190,8 +189,7 @@ UMLClassGraph[symbols:{_Symbol..}, abstractMethodsPerSymbol : {_Rule ...} : {},
   opts : OptionsPattern[]] :=
     Block[{grRules, assocOpts},
       grRules = SubValueReferenceRules[symbols];
-      UMLClassGraph[grRules, abstractMethodsPerSymbol, symbolAssociations,
-        symbolAggregations, opts]
+      UMLClassGraph[grRules, abstractMethodsPerSymbol, symbolAssociations, symbolAggregations, opts]
     ];
 
 UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
@@ -199,9 +197,8 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
               symbolAssociations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
               symbolAggregations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
               opts : OptionsPattern[]] :=
-
     Block[{grRules = inheritanceRules, assocOpts, symbols},
-      symbols = Union[Flatten[List @@@ inheritanceRules]];
+      symbols = Union[Flatten[List @@@ Join[inheritanceRules,symbolAssociations, symbolAggregations]]];
       grRules = Map[
         Which[
           MemberQ[symbolAssociations, #],
