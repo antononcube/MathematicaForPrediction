@@ -22,7 +22,7 @@
 
 --[[
 
-	Lua is free software distributed under the terms of the MIT license reproduced here.
+	Lua is free software distributed under the terms of the MIT license reproduced here: http://www.lua.org/license.html. .
 	Lua may be used for any purpose, including commercial purposes, at absolutely no cost.
 	No paperwork, no royalties, no GNU-like "copyleft" restrictions, either.
 	Just download it and use it (http://www.lua.org) .
@@ -37,8 +37,9 @@ fp = {}
 -- A table of table-pairs is returned: a list of successes.
 -- Most of the parser definitions below give functions that are parsers.
 
--- include Mathematica-like functions 
-require "../MathematicaFunctions"
+-- include Mathematica-like functions
+package.path = "../?.lua;" .. package.path
+require("MathematicaFunctions")
 
 
 -- ********************************************************************************
