@@ -15,13 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube @ gmail . com,
-	Windermere, Florida, USA.
+	  Written by Anton Antonov,
+   	antononcube @ gmail . com,
+	  Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
