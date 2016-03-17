@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube @ gmail . com,
 	Windermere, Florida, USA.
 *)
 
@@ -37,21 +36,49 @@
    This package provides an implementation of a system of functional parsers. 
    The implementation follows closely the article:
 
-   "Functional parsers" by Jeroen Fokker
+     "Functional parsers" by Jeroen Fokker
+      http://www.staff.science.uu.nl/~fokke101/article/parsers/
 
    The parsers are categorized in the groups: basic, combinators, and transformers.
    The basic parsers parse specified strings and strings adhering to predicates.
    The combinator parsers allow sequential and alternative combinations of parsers.
    The transformer parsers change the input or the output of the parsers that are transformed.
 
-   A basic or a combinator parser takes a list of strings and returns a list of pairs, {{o1,r1},{o2,r2},...}. Each pair has as elements a parsed output and the rest of the input list.
+   A basic parse or a combinator parser takes a list of strings and returns a list of pairs, {{o1,r1},{o2,r2},...}.
+   Each pair has as elements a parsed output and the rest of the input list.
 
    Functions for splitting the input text into tokens are provided.
 
    The package also have functions to generate parsers from a string of the Extended Backus-Naur Form (EBNF) definition of a grammar. 
-   In the current version of the EBNF parser functions there is a requirement that all elements of the parsed EBNF forms have to be separated by space. The EBNF grammar string can have the pick-left and pick-right combinators (\[LeftTriangle] and \[RightTriangle] respectively) and a ParseApply specification can be given within the form "<rhs> = parsers <@ transformer" . The application of functions can be done over the whole definition of an EBNF non-terminal symbol, not over the individual parts.
 
-   There is a function, InterpretWithContext, for interpreting parsed results with a context. The context is given as a list of rules. There are two forms for the context rules: {(_Symbol->_)..} and {"data"->{(_Symbol->_)...}, "functions"->{(_Symbol->_)...}} . If during the interpretation the context functions change the context data the result of InterpretWithContext will return the changed data.
+   In the current version of the EBNF parser functions there is a requirement that all elements of the parsed EBNF forms
+   have to be separated by space. The EBNF grammar string can have the pick-left and pick-right combinators
+   (\[LeftTriangle] and \[RightTriangle] respectively) and a ParseApply specification can be given within the form
+    "<rhs> = parsers <@ transformer" .
+    The application of functions can be done over the whole definition of an EBNF non-terminal symbol,
+    not over the individual parts.
+
+   There is a function, InterpretWithContext, for interpreting parsed results with a context.
+   The context is given as a list of rules. There are two forms for the context rules: {(_Symbol->_)..} and
+   {"data"->{(_Symbol->_)...}, "functions"->{(_Symbol->_)...}} . If during the interpretation the context functions change
+   the context data the result of InterpretWithContext will return the changed data.
+
+   A more extensive introduction is given in the document:
+
+      "Functional parsers for an integration requests language grammar"
+
+   in MathematicaForPrediction at GitHub. Here is the URL:
+
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Functional%20parsers%20for%20an%20integration%20requests%20language%20grammar.pdf
+
+   Versions of this package are also implemented in R and Lua. See:
+      https://github.com/antononcube/MathematicaForPrediction/tree/master/R/FunctionalParsers (R), and
+      https://github.com/antononcube/MathematicaForPrediction/tree/master/Lua/FunctionalParsers (Lua).
+
+TODO:
+   1. Add a simple concrete example in this file.
+   2. Re-implement with the new syntax for operators in Mathematica.
+   3. Provide unit tests.
 
 *)
 
