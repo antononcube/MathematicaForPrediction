@@ -6,42 +6,42 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
-# Written by Anton Antonov, 
-# antononcube@gmail.com,
+#
+# Written by Anton Antonov,
+# antononcube @ gmail . com,
 # Windermere, Florida, USA.
 #
 #=======================================================================================
 
 #=======================================================================================
-# Initially this code was made to resemble the Sparse Matrix Recommender Mathematica 
-# package [1] as closely as possible, but an approach more inherent to R was taken. 
-# Namely, the columns and the rows of the metadata matrix are named, and because of this 
+# Initially this code was made to resemble the Sparse Matrix Recommender Mathematica
+# package [1] as closely as possible, but an approach more inherent to R was taken.
+# Namely, the columns and the rows of the metadata matrix are named, and because of this
 # tag-index and item-index rules are not required.
 
 # The tag-index and item-index rules are made with integer arrays with named entries.
 
-# I did consider programming and using a S4 object, but that requires the declaration of 
-# too many generic functions. And because inheritance is not essential I kept the object 
+# I did consider programming and using a S4 object, but that requires the declaration of
+# too many generic functions. And because inheritance is not essential I kept the object
 # in a list.
 
 # There should be separate files (packages) for term weights and outlier detection.
-# See the notes below. 
+# See the notes below.
 
-# [1] Anton Antonov, Sparse matrix recommender framework in Mathematica, 
+# [1] Anton Antonov, Sparse matrix recommender framework in Mathematica,
 #     SparseMatrixRecommenderFramework.m at MathematicaForPrediction project at GitHub, (2014).
 #     URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/SparseMatrixRecommenderFramework.m
-# 
+#
 # History
-# Started: November 2013, 
+# Started: November 2013,
 # Updated: December 2013, May 2014, June 2014, July 2014, December 2014,
 # January 2016.
 #=======================================================================================
@@ -97,17 +97,17 @@ require(Matrix)
 
 #' @detail Read weight functions application definitions
 # source("./DocumentTermWeightFunctions.R")
- 
+
 #' @description Convert to contingency matrix from item consumption "transactions" (e.g. instances of movie watching)
 #' @param dataRows a data frame corresponding to a item consumption metadata table
 #' @param itemColumnName name of the column of dataRows the values of which correspond to the rows of the returned matrix
 #' @param tagType name of the column of dataRows the values of which correspond to the columns of the returned matrix
 #' @param sparse a logical, should the returned matrix be sparse or not
-#' @return a matrix 
+#' @return a matrix
 SMRCreateItemTagMatrix <- function( dataRows, itemColumnName, tagType, sparse=TRUE ) {
-  frequencies <- count(dataRows, vars=c(itemColumnName, tagType))
+  frequencies <- plyr::count(dataRows, vars=c(itemColumnName, tagType))
   formulaString <- paste("freq ~", itemColumnName, "+", tagType)
-  xtabs(as.formula(formulaString), frequencies, sparse=sparse )  
+  xtabs(as.formula(formulaString), frequencies, sparse=sparse )
 }
 
 #' @description Creates a sparse matrix recommender from transactions data and a list of tag types
@@ -137,8 +137,8 @@ SMRCreateFromMatrices <- function( matrices, tagTypes, itemColumnName ){
   m <- do.call(cBind, matrices)
   
   widths <- laply(matrices, function(x){ncol(x)})
-  ends = cumsum(widths)
-  begins = ends - widths + 1
+  ends <- cumsum(widths)
+  begins <- ends - widths + 1
   ranges <- data.frame(Begin=begins, End=ends)
   rownames(ranges)=tagTypes
   
@@ -213,12 +213,12 @@ SMRCurrentTagTypeSignificanceFactors <- function(smr) {
   sfs01 <- laply( smr$TagTypes, function(tc) sum( SMRSubMatrixOfMatrix( smr$M01, smr$TagTypeRanges, tc ) ) )
   sfs01[ sfs01 == 0 ] <- 1
   res <- laply( smr$TagTypes, function(tc) sum( SMRSubMatrix( smr, tc ) ) ) / sfs01
-  setNames( res, smr$TagTypes ) 
+  setNames( res, smr$TagTypes )
 }
 
 
 #' @description Recommend items based on a sparse matrix and user history of consumption
-#' @param smr sparse matrix recommender 
+#' @param smr sparse matrix recommender
 #' @param userHistoryItems the items the user has consumed / purchased
 #' @param userRatings ratings of the history items
 #' @param nrecs number of recommendations to be returned
@@ -242,7 +242,7 @@ SMRRecommendations <- function( smr, userHistoryItems, userRatings, nrecs, remov
   }
   
   hvec <- sparseMatrix(i=rep(1,length(userHistoryItems)), j=userHistoryItems, x=userRatings, dims=c(1,dim(smr$M)[1]))
-  rvec <- smr$M %*% t(hvec %*% smr$M) 
+  rvec <- smr$M %*% t(hvec %*% smr$M)
   rvec <- as.array(rvec)
   recInds <- rev(order(rvec))[1:(nrecs+length(userHistoryItems))]
   
@@ -264,19 +264,19 @@ SMRRecommendations <- function( smr, userHistoryItems, userRatings, nrecs, remov
 
 
 #' @description Recommend items based on a sparse matrix and user history of consumption
-#' @param smr sparse matrix recommender 
+#' @param smr sparse matrix recommender
 #' @param history a data frame of rated items with colums("Ratings",<some-item-ID>)
 #' @param nrecs number of recommendations to be returned
 #' @param removeHistory should the history be removed from the recommendationsa
 SMRRecommendationsDF <- function( smr, history, nrecs, removeHistory=TRUE ) {
   if ( is.numeric(history[,2]) ) {
-    res <- SMRRecommendations( smr, history[,2], history[,1], nrecs ) 
+    res <- SMRRecommendations( smr, history[,2], history[,1], nrecs )
   } else {
     inds <- match(  history[,2], rownames( smr$M ) )
     if (  NA %in% inds ) {
       stop("Some of the items are not in the sparse matrix recommender object.")
     }
-    res <- SMRRecommendations( smr, inds, history[,1], nrecs, removeHistory ) 
+    res <- SMRRecommendations( smr, inds, history[,1], nrecs, removeHistory )
   }
   names(res) <- c( names(res)[1:2], names(history)[[2]] )
   res
@@ -292,13 +292,13 @@ SMRRecommendationsByProfileDF <- function( smr, profile, nrecs ) {
     profile <- profile[,c(2,1)]
   }
   if ( is.numeric( profile[,2] ) ) {
-    res <- SMRRecommendationsByProfile( smr, profile[,2], profile[,1], nrecs ) 
+    res <- SMRRecommendationsByProfile( smr, profile[,2], profile[,1], nrecs )
   } else {
     inds <- match(  profile[,2], colnames( smr$M ) )
     if (  NA %in% inds ) {
       stop("Some of the tags are not in the sparse matrix recommender object.")
     }
-    res <- SMRRecommendationsByProfile( smr, inds, profile[,1], nrecs ) 
+    res <- SMRRecommendationsByProfile( smr, inds, profile[,1], nrecs )
   }
   res
 }
@@ -311,8 +311,8 @@ SMRRecommendationsByProfileDF <- function( smr, profile, nrecs ) {
 #' @param nrecs number of recommendations to be returned
 #' @return Returns a data frame.
 SMRRecommendationsByProfile <- function( smr, profileInds, profileRatings, nrecs ) {
-    pvec <- sparseMatrix(i=rep(1,length(profileInds)), j=profileInds, x=profileRatings, dims=c(1,dim(smr$M)[2]))
-    SMRRecommendationsByProfileVector( smr, pvec, nrecs )
+  pvec <- sparseMatrix(i=rep(1,length(profileInds)), j=profileInds, x=profileRatings, dims=c(1,dim(smr$M)[2]))
+  SMRRecommendationsByProfileVector( smr, pvec, nrecs )
 }
 
 
@@ -324,7 +324,7 @@ SMRRecommendationsByProfileVector <- function( smr, profileVec, nrecs ) {
   if ( dim( profileVec )[[2]] == dim( smr$M )[[2]] ) {
     profileVec <- t(profileVec)
   }
-  rvec <- smr$M %*% profileVec 
+  rvec <- smr$M %*% profileVec
   rvec <- as.array(rvec)
   recInds <- rev(order(rvec))
   recScores <- rvec[recInds]
@@ -381,31 +381,44 @@ SMRProfileDFFromVector <- function( smr, pvec ) {
 #' @param smr a sparse matrix recommendation object
 #' @param profile a data frame with names c( "Score", "Index", "Tag" )
 #' @param tagType tag type over which the vector is made
+#' @param uniqueColumns boolean should the tags in the profile have unique indices in the columns of smr$M 
 #' @return a sparse matrix with one column
-SMRProfileDFToVector <- function( smr, profileDF, tagType = NULL ) {
+SMRProfileDFToVector <- function( smr, profileDF, tagType = NULL, uniqueColumns = TRUE ) {
   if ( length( intersect( names(profileDF), c("Score", "Index" ) ) ) == 2 ) {
     sparseMatrix( i = profileDF$Index, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
   } else if ( length( intersect( names(profileDF), c("Score", "Tag" ) ) ) == 2  ) {
-    if ( is.null(tagType) ) { 
-      inds <- which( colnames( smr$M ) %in% profileDF$Tag ) 
-      if ( length(inds) != nrow(profileDF) ) {
-        stop( "Not all tags are in known in SMR or some SMR tags are repeated.", call. = TRUE )
+    if ( is.null(tagType) ) {
+      inds <- which( colnames( smr$M ) %in% profileDF$Tag )
+      if ( uniqueColumns ) { 
+        if (length(inds) != nrow(profileDF) ) {
+          stop( "Not all tags are known in the SMR object or some SMR tags are repeated.", call. = TRUE )
+        }
+        sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
+      } else {
+        if ( length(inds) < nrow(profileDF) ) {
+          stop( "Not all tags are known in the SMR object.", call. = TRUE )
+        }
+        ## tagInds <- which( profileDF$Tag %in% colnames(smr&M)[inds] )
+        df <- 
+          ldply( 1:nrow(profileDF), function(i) { 
+            data.frame( Index = which( colnames( smr$M ) %in% profileDF$Tag[i] ), 
+                        Weight = profileDF$Score[[i]]) } )
+        sparseMatrix( i = df$Index, j = rep(1,nrow(df)), x = df$Weight, dims = c( ncol(smr$M), 1 ) )
       }
-      sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
     } else {
-      if ( sum( tagType %in% smr$TagTypes ) == 0 ) { 
+      if ( sum( tagType %in% smr$TagTypes ) == 0 ) {
         stop( "Unknown tag type value for the argument 'tagType'.", call. = TRUE )
-      } 
+      }
       cnames <- colnames(smr$M)[ smr$TagTypeRanges[tagType,"Begin"] : smr$TagTypeRanges[tagType,"End"] ]
       profileDF <- profileDF[ profileDF$Tag %in% cnames, ]
       if ( nrow(profileDF) == 0 ) {
         warning( "None of the given tags belong to the specified tag type. Returning 0.", call. = TRUE )
         return( 0 )
       }
-      inds <- which( cnames %in% profileDF$Tag ) 
+      inds <- which( cnames %in% profileDF$Tag )
       inds <- inds + (smr$TagTypeRanges[tagType,"Begin"] - 1)
       sparseMatrix( i = inds, j = rep(1,nrow(profileDF)), x = profileDF$Score, dims = c( ncol(smr$M), 1 ) )
-    }  
+    }
   } else {
     stop( "Expected a data frame with names c('Score','Index','Tag'), c('Score','Index'), or c('Score','Tag').", call. = TRUE )
   }
@@ -421,7 +434,7 @@ SMRItemData <- function(smr, recs, tagTypes=NULL) {
     sm <- smr$M[recs$Index,]
   } else {
     sm <- smr$M[recs$Index, ]
-    sms <- llply( tagTypes, function(tg) sm[,smr$TagTypeRanges[tg, "Begin"]:smr$TagTypeRanges[tg, "End"]] ) 
+    sms <- llply( tagTypes, function(tg) sm[,smr$TagTypeRanges[tg, "Begin"]:smr$TagTypeRanges[tg, "End"]] )
     sm <- do.call(cBind, sms)
   }
   pt <- as.data.frame(summary(sm))
@@ -452,13 +465,13 @@ SMRTagType <- function( smr, tag ) {
   }
   
   if ( length(tagInd) == 1 ) {
-    tagTypeInd <- which( smr$TagTypeRanges$Begin <= tagInd & tagInd <= smr$TagTypeRanges$End  ) 
+    tagTypeInd <- which( smr$TagTypeRanges$Begin <= tagInd & tagInd <= smr$TagTypeRanges$End  )
   } else {
-    tagTypeInd <- laply( tagInd, function(x) which( smr$TagTypeRanges$Begin <= x & x <= smr$TagTypeRanges$End ) ) 
+    tagTypeInd <- laply( tagInd, function(x) which( smr$TagTypeRanges$Begin <= x & x <= smr$TagTypeRanges$End ) )
   }
   
   if ( length( tagTypeInd ) >= 1 ) {
-    smr$TagTypes[ tagTypeInd ] 
+    smr$TagTypes[ tagTypeInd ]
   } else {
     "None"
   }
@@ -478,7 +491,7 @@ SMRReorderRecommendations <- function( smr, recs, tagIDs ) {
   } else {
     stop( "The third argument, tagIDs, is expected to be a non-empty vector of column indices or column ID's.", call.=TRUE )
   }
-
+  
   profileVec <- sparseMatrix( i=tagInds, j=rep(1,length(tagInds)), x=rep(1,length(tagInds)), dims = c( ncol(smr$M), 1 ) )
   
   newOrder <- smr$M[recs[[2]], ] %*% profileVec
@@ -489,34 +502,6 @@ SMRReorderRecommendations <- function( smr, recs, tagIDs ) {
   } else {
     recs
   }
-}
-
-#' @description Creates an SMR object from a given SMR object by removing specified tag types
-#' @param smr a sparse matrix recommender object
-#' @param removeTagTypes a list of tag types to be removed from smr
-SMRRemoveTagTypes <- function( smr, removeTagTypes ) {
-  
-  ## Copy of the SMR
-  newSMR <- smr
-  
-  ## There are several ways to do this:
-  ## 1. Work with newSMR$TagTypeRanges, take the indices corresponding to tag types not to be removed.
-  ## 2. Construct a metadata matrix by taking sub-matrices of the tag types not to be removed.
-  pos <- ! ( newSMR$TagTypes %in% removeTagTypes )
-  
-  applySFs <- SMRCurrentTagTypeSignificanceFactors( newSMR )[pos]
-  
-  newSMR$M01 <-
-    Reduce( function( mat, tt )
-      if ( is.null(mat) ) { newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] } 
-      else { cBind( mat, newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] ) },  
-      newSMR$TagTypes[pos], NULL )
-  newSMR$TagTypeRanges <- newSMR$TagTypeRanges[pos, ]
-  newSMR$TagTypes <- newSMR$TagTypes[pos]
-  
-  newSMR$M <- SMRApplyTagTypeWeights( newSMR, applySFs )
-  
-  newSMR
 }
 
 
@@ -551,7 +536,7 @@ SMRMetadataProofs <- function( smr, toBeLovedItem, profile,
   ## guarding a bug where res is a rowless data frame
   if(nrow(res) > 0){
     if (normalizeScores ) {
-      res$Score <- res$Score / max(res$Score) 
+      res$Score <- res$Score / max(res$Score)
     }
     return( res )
   } else {
@@ -567,12 +552,12 @@ SMRMetadataProofs <- function( smr, toBeLovedItem, profile,
 #' @param normalizeScores logical value should the scores be normalized with max(res$Score)
 #' @return a data frame with columns names c("Score", <some-item-id> )
 SMRHistoryProofs <- function( smr, toBeLovedItem, history, normalizeScores=TRUE ) {
-
-  # there should be a better way of making sparse matrix or vector 
+  
+  # there should be a better way of making sparse matrix or vector
   # from a row of a sparse matrix
-  #   prodRow <- smr$M[toBeLovedInd,] 
-  # Replace with  smr$M[toBeLovedItem,,drop=FALSE] 
-  prodRow <- smr$M[toBeLovedItem,] 
+  #   prodRow <- smr$M[toBeLovedInd,]
+  # Replace with  smr$M[toBeLovedItem,,drop=FALSE]
+  prodRow <- smr$M[toBeLovedItem,]
   nzInds <- which( prodRow > 0 )
   prodVec <- sparseMatrix( i=nzInds, j=rep(1,length(nzInds)), x = prodRow[nzInds], dims=c( ncol(smr$M), 1 ) )
   
@@ -584,7 +569,7 @@ SMRHistoryProofs <- function( smr, toBeLovedItem, history, normalizeScores=TRUE 
   
   # if all scores are zero give a warning and return an empty data frame
   if ( length(nzInds) == 0 ) {
-    warning("All scores are zero", call.=TRUE)  
+    warning("All scores are zero", call.=TRUE)
     res <- data.frame( Score=numeric(0), Index=integer(0), y=character(0) )
     names(res) <- c("Score", "Index", names(history)[[2]] )
     return(res)
@@ -599,9 +584,9 @@ SMRHistoryProofs <- function( smr, toBeLovedItem, history, normalizeScores=TRUE 
   names(res) <- c("Score", "Index", names(history)[[2]] )
   if ( normalizeScores ) {
     if ( as.numeric( t(prodVec) %*% prodVec ) > 0 ) {
-      res$Score <- res$Score / ( max(history[,1]) * as.numeric( t(prodVec) %*% prodVec ) ) 
+      res$Score <- res$Score / ( max(history[,1]) * as.numeric( t(prodVec) %*% prodVec ) )
     } else {
-      res$Score <- res$Score / max(res$Score)     
+      res$Score <- res$Score / max(res$Score)
     }
   }
   
@@ -610,17 +595,55 @@ SMRHistoryProofs <- function( smr, toBeLovedItem, history, normalizeScores=TRUE 
 }
 
 
+#' @description Creates an SMR object from a given SMR object by removing specified tag types
+#' @param smr a sparse matrix recommender object
+#' @param removeTagTypes a list of tag types to be removed from smr
+SMRRemoveTagTypes <- function( smr, removeTagTypes ) {
+  
+  ## Copy of the SMR
+  newSMR <- smr
+  
+  ## There are several ways to do this:
+  ## 1. Work with newSMR$TagTypeRanges, take the indices corresponding to tag types not to be removed.
+  ## 2. Construct a metadata matrix by taking sub-matrices of the tag types not to be removed.
+  pos <- ! ( newSMR$TagTypes %in% removeTagTypes )
+  
+  applySFs <- SMRCurrentTagTypeSignificanceFactors( newSMR )[pos]
+  
+  newSMR$M01 <-
+    Reduce( function( mat, tt )
+      if ( is.null(mat) ) { newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] }
+      else { cBind( mat, newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] ) },
+      newSMR$TagTypes[pos], NULL )
+  newSMR$TagTypeRanges <- newSMR$TagTypeRanges[pos, ]
+  newSMR$TagTypes <- newSMR$TagTypes[pos]
+  
+  widths <- newSMR$TagTypeRanges$End - newSMR$TagTypeRanges$Begin + 1
+  ends <- cumsum(widths)
+  begins <- ends - widths + 1
+  newSMR$TagTypeRanges <- data.frame( Begin=begins, End=ends)
+  rownames(newSMR$TagTypeRanges) <- newSMR$TagTypes
+  
+  newSMR$TagToIndexRules <- setNames( 1:ncol(newSMR$M01), colnames(newSMR$M01) )
+  newSMR$ItemToIndexRules <- setNames( 1:nrow(newSMR$M01), rownames(newSMR$M01) )  
+  
+  newSMR$M <- SMRApplyTagTypeWeights( newSMR, applySFs )
+  
+  newSMR
+}
+
+
 #' @description Annex a sub-matrix to the metadata matrix of an SMR object.
 #' @param smr a sparse matrix recommender object
 #' @param newSubMat the new sub-matrix to be annexed
 #' @param newTagType the tag type associated with the new sub-matrix
-SMRAnnexSubMatrix <- function( smr, newSubMat, newTagType ) { 
+SMRAnnexSubMatrix <- function( smr, newSubMat, newTagType ) {
   
-  if ( nrow( newSubMat ) != nrow( smr$M ) ) { 
+  if ( nrow( newSubMat ) != nrow( smr$M ) ) {
     stop( "The metadata matrix of the SMR object and the new sub-matrix should have the same number of rows.", call. = TRUE )
   }
   
-  newSMR <- smr 
+  newSMR <- smr
   
   newSMR$TagTypeRanges <- rbind( newSMR$TagTypeRanges, data.frame( Begin = ncol(newSMR$M) + 1, End = ncol(newSMR$M) + ncol(newSubMat) ) )
   rownames(newSMR$TagTypeRanges) <- c( rownames(newSMR$TagTypeRanges)[-nrow(newSMR$TagTypeRanges)], newTagType )
@@ -639,15 +662,15 @@ SMRAnnexSubMatrix <- function( smr, newSubMat, newTagType ) {
 #' @param smr2 the second SMR object
 #' @param colnamesPrefix1 the prefix to be concatenated to the colnames of the first SMR object
 #' @param colnamesPrefix2 the prefix to be concatenated to the colnames of the second SMR object
-SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL ) { 
-
-  if ( nrow( smr1$M ) != nrow( smr2$M ) ) { 
+SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL ) {
+  
+  if ( nrow( smr1$M ) != nrow( smr2$M ) ) {
     ## The rownames should be the same too.
     stop( "The metadata matrices of the SMR objects have to have the same number of rows.", call. = TRUE )
   }
-
+  
   ## The rownames should be the same too.
-  if ( mean( rownames( smr1$M ) == rownames( smr2$M ) ) < 1 ) { 
+  if ( mean( rownames( smr1$M ) == rownames( smr2$M ) ) < 1 ) {
     stop( "The metadata matrices of the SMR objects should have the same rownames.", call. = TRUE )
   }
   
@@ -656,7 +679,7 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
   ranges <- smr2$TagTypeRanges
   ranges$Begin <- ranges$Begin + smr1$TagTypeRanges$End[nrow(smr1$TagTypeRanges)]
   ranges$End <- ranges$End + smr1$TagTypeRanges$End[nrow(smr1$TagTypeRanges)]
-    
+  
   newSMR$TagTypeRanges <- rbind( smr1$TagTypeRanges, ranges )
   rownames(newSMR$TagTypeRanges) <- c( paste( colnamesPrefix1, rownames(smr1$TagTypeRanges), sep=""), paste( colnamesPrefix2, rownames(smr2$TagTypeRanges), sep="") )
   
@@ -696,10 +719,10 @@ Recommendations <- function( x, historyItems, historyRatings, nrecs, removeHisto
 
 #' @description Specialization of Recommendations for SMR objects.
 Recommendations.SMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
-    ## Needs handling of the argument tuningParametes.
-    res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings,
-                               nrecs = nrecs, removeHistory = removeHistory )
-    setNames( res[, c(1,3)], c("Score", "Item") )
+  ## Needs handling of the argument tuningParametes.
+  res <- SMRRecommendations( smr = x, userHistoryItems = historyItems, userRatings = historyRatings,
+                             nrecs = nrecs, removeHistory = removeHistory )
+  setNames( res[, c(1,3)], c("Score", "Item") )
 }
 
 #' @description The generic function for calculating recommendations by profile.
@@ -712,11 +735,11 @@ RecommendationsByProfile <- function( x, profileTags, profileTagScores, nrecs, .
 
 #' @description Specialization of RecommendationsByProfile for SMR objects.
 RecommendationsByProfile.SMR <- function ( x, profileTags, profileTagScores, nrecs, ... ) {
-    ## Needs handling of the argument tuningParametes.
-    res <- SMRRecommendationsByProfileDF( smr = x,
-                                          profile = data.frame( Score = profileTagScores, Tag = profileTags, stringsAsFactors=FALSE),
-                                          nrecs = nrecs )
-    res[, c("Score", "Item")]
+  ## Needs handling of the argument tuningParametes.
+  res <- SMRRecommendationsByProfileDF( smr = x,
+                                        profile = data.frame( Score = profileTagScores, Tag = profileTags, stringsAsFactors=FALSE),
+                                        nrecs = nrecs )
+  res[, c("Score", "Item")]
 }
 
 #' @description The generic function for calculating a consumption profile.
@@ -728,14 +751,14 @@ RecommendationsByProfile.SMR <- function ( x, profileTags, profileTagScores, nre
 ConsumptionProfile <- function( x, historyItems, historyRatings, allColumns = FALSE, ... ) UseMethod( "ConsumptionProfile" )
 
 ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns = FALSE, ... ) {
-    if( missing(historyRatings) || is.null(historyRatings) ) {
-      historyRatings <- rep( 1, length(historyItems) )
-    }
-    if( allColumns ) {
-      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag", "Index")]
-    } else {
-      SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag")]
-    }
+  if( missing(historyRatings) || is.null(historyRatings) ) {
+    historyRatings <- rep( 1, length(historyItems) )
+  }
+  if( allColumns ) {
+    SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag", "Index")]
+  } else {
+    SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag")]
+  }
 }
 
 ##===========================================================
