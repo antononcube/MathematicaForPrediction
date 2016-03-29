@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube @ gmail . com,
 	Windermere, Florida, USA.
 *)
 
@@ -43,9 +42,11 @@ QuartileIdentifierParameters::usage = "Returns quartile identifier parameters {L
 
 SPLUSQuartileIdentifierParameters::usage = "Returns SPLUS quartile identifier parameters {L,U} for a list of numbers."
 
-OutlierIdentifier::usage = "OutlierIdentifier[dataArg:{_?NumberQ..},olParams] applies outlier identifier parameters olParams to a list of numbers dataArg."
+OutlierIdentifier::usage = "OutlierIdentifier[dataArg:{_?NumberQ..},olParams] applies outlier identifier parameters
+olParams to a list of numbers dataArg."
 
-OutlierIdentifierLess::usage = "OutlierIdentifierLess[dataArg:{_?NumberQ..},olParams] applies outlier identifier parameters olParams to a list of numbers dataArg and takes the outliers with smallest values."
+OutlierIdentifierLess::usage = "OutlierIdentifierLess[dataArg:{_?NumberQ..},olParams] applies outlier identifier \
+parameters olParams to a list of numbers dataArg and takes the outliers with smallest values."
 
 TopOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {-Infinity,U}."
 
@@ -53,7 +54,9 @@ BottomOutliers::usage = "Changes the parameters {L,U} of an outlier identifier t
 
 HampelIdentifier::usage = "Shortcut for OutlierIdentifier[#,HampelIdentifierParameters]& ."
 
-OutlierPosition::usage = "OutlierPosition[dataArg:{_?NumberQ...},olParams] gives the positions of the outliers in dataArg using the outlier identifier parameters olParams."
+OutlierPosition::usage = "OutlierPosition[dataArg:{_?NumberQ...},olParams] gives the positions of the outliers \
+in dataArg using the outlier identifier parameters olParams. Top and bottom outliers can be found with
+TopOutliers@*olParams and BottomOutliers@*olParams respectively."
 
 ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPlot."
 
