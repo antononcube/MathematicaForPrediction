@@ -130,11 +130,14 @@ ParseChainRight::usage = "ParseChainRight[p_, sep_] parse a nested application o
 
 ParseRecursiveDefinition::usage = "ParseRecursiveDefinition[pname, rhs] makes a parser with name pname defined by rhs that can be used in recursive definitions."
 
-ToTokens::usage = "ToTokens[text] breaks down text into tokens. ToTokens[text,terminals] breaks down text using specified terminals." 
+ToTokens::usage = "ToTokens[text] breaks down text into tokens. ToTokens[text,terminals] breaks down text using specified terminals. \
+ToTokens[text,\"EBNF\"] has a special implementation for parsing EBNF code."
 
 ParseToTokens::usage = "ParseToTokens[text, terminalDelimiters, whitespaces] breaks down text into tokens using specified terminal symbols and white spaces."
+ParseToEBNFTokens::usage = "ParseToEBNFTokens[text, whitespaces] breaks down text into tokens using EBNF terminal symbols and specified white spaces."
 
-ParsingTestTable::usage = "ParsingTestTable[p, s, opts] parses a list of strings with the parser p and tabulates the result. The options allow to specify terminal symbols and the table layout."
+ParsingTestTable::usage = "ParsingTestTable[p, s, opts] parses a list of strings with the parser p and tabulates the result. \
+The options allow to specify terminal symbols and the table layout."
 
 EBNFNonTerminal::usage = "EBNFNonTerminal head for parsers for non-terminal symbols of EBNF grammars."
 EBNFTerminal::usage = "EBNFTerminal head for parsers for terminal symbols of EBNF grammars."
@@ -359,7 +362,7 @@ ToTokens[text_String, {}] := StringSplit[text];
 ToTokens[text_String, terminals : {_String ...}] :=
   StringSplit[StringReplace[text, Map[# -> " " <> # <> " " &, terminals]]];
 
-ToTokens[text_, "EBNF"] := 
+ToTokens[text_, "EBNF"] :=
   ToTokens[text, {"|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}];
 
 Clear[ParseToTokens];
@@ -378,6 +381,9 @@ ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :
    res = ParseMany1[((If[Length[#] > 0, StringJoin @@ #, #] &)\[CircleDot](pQWord\[CirclePlus]pWord))\[CirclePlus]pTermDelim][Characters[text]];
    res[[1, 2]]
   ];
+
+ParseToEBNFTokens[text_, whitespaces_: {" ", "\n", "\t"}] :=
+    ParseToTokens[text, {"|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
 
 
 (************************************************************)
