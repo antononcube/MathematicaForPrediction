@@ -137,7 +137,7 @@ ParseToTokens::usage = "ParseToTokens[text, terminalDelimiters, whitespaces] bre
 ParseToEBNFTokens::usage = "ParseToEBNFTokens[text, whitespaces] breaks down text into tokens using EBNF terminal symbols and specified white spaces."
 
 ParsingTestTable::usage = "ParsingTestTable[p, s, opts] parses a list of strings with the parser p and tabulates the result. \
-The options allow to specify terminal symbols and the table layout."
+The options allow to specify the terminal symbols, tokenizer function, and table layout."
 
 EBNFNonTerminal::usage = "EBNFNonTerminal head for parsers for non-terminal symbols of EBNF grammars."
 EBNFTerminal::usage = "EBNFTerminal head for parsers for terminal symbols of EBNF grammars."
@@ -394,39 +394,45 @@ Clear[ParsingTestTable]
 
 ParsingTestTable::unval = "Unknown value `2` for the option `1`."
 
-Options[ParsingTestTable] = {FontFamily -> "Times", FontSize -> 16, "Terminals" -> {}, "Layout" -> "Horizontal"};
+Options[ParsingTestTable] = {FontFamily -> "Times", FontSize -> 16, "Terminals" -> {}, "TokenizerFunction"-> ToTokens, "Layout" -> "Horizontal"};
 ParsingTestTable[parser_, statements : {_String ..}, optsArg : OptionsPattern[]] :=
   Block[{res, ff = OptionValue[ParsingTestTable, FontFamily], 
     fs = OptionValue[ParsingTestTable, FontSize], 
-    ts = OptionValue[ParsingTestTable, "Terminals"], 
+    ts = OptionValue[ParsingTestTable, "Terminals"],
+    tokenizerFunc = OptionValue[ParsingTestTable, "TokenizerFunction"],
     layout = OptionValue[ParsingTestTable, "Layout"], opts, ptbl, vptbl},
    	opts = {FontFamily -> ff, FontSize -> fs};
-   	res = Map[parser[ToTokens[#, ts]] &, statements];
-   	ptbl = 
-    TableForm[Transpose[{Map[Style[#, opts] &, statements], res}], 
-     TableDepth -> 2, 
-     TableHeadings -> {Style[#, Darker[Red], opts] & /@ 
-        Range[Length[statements]], 
-       Style[#, Darker[Red], opts] & /@ {"Statement", "Parser output"}}];
-   Which[
-    TrueQ[layout == "Horizontal"], ptbl,
-    TrueQ[layout == "Vertical"],
-    vptbl = Flatten[
-      Transpose[{statements, ptbl[[1, All, 2, 1, 2]], 
-        ptbl[[1, All, 2, 1, 1]]}], 1];
-    vptbl = 
-     Transpose[{Flatten[
-        Table[{Style[i, Darker[Red], opts], "", ""}, {i, 1, 
-          Length[statements]}]], 
-       Style[#, Gray] & /@ 
-        Flatten[Table[{"command:", "parsed:", 
-           "residual:"}, {Length[vptbl]/3}]], vptbl}];
-    Grid[vptbl, Alignment -> {{Right, Right, Left}}, Spacings -> {0.5, 0.75}, 
-     Dividers -> {{True, True, False, True}, 
-       Join[{True}, Flatten@Table[{False, False, True}, {Length[vptbl]}]]}],
-    True,
-    Message[ParsingTestTable::unval,"Layout",layout]; ptbl
-   ]
+    If[ TrueQ[tokenizerFunc === ToTokens],
+   	  res = Map[parser[ToTokens[#, ts]]  &, statements],
+      res = Map[parser[tokenizerFunc[#]] &, statements]
+    ];
+    ptbl =
+        Grid[
+          Prepend[
+            MapThread[Prepend, {Transpose[{Map[Style[#, opts] &, statements], res}], Style[#, Darker[Red], opts] & /@ Range[Length[statements]] }],
+            Style[#, Darker[Red], opts] & /@ {"#", "Statement", "Parser output"}
+          ],
+          Dividers -> {All, {True, True, Sequence @@ Table[False, {Length[statements] - 1}], True}},
+          Alignment -> {{Right, Left, Left}}
+        ];
+    Which[
+      TrueQ[layout == "Horizontal"], ptbl,
+      TrueQ[layout == "Vertical"],
+      ptbl = Transpose[{Map[Style[#, opts] &, statements], res}];
+      ptbl[[All, 2]] = Map[ If[ TrueQ[# === {}], {{{}, {}}}, #]&, ptbl[[All, 2]] ];
+      vptbl = Flatten[
+        Transpose[{statements, ptbl[[All, 2, 1, 2]], ptbl[[All, 2, 1, 1]]}], 1];
+      vptbl =
+          Transpose[{Flatten[
+            Table[{Style[i, Darker[Red], opts], "", ""}, {i, 1, Length[statements]}]],
+            Style[#, Gray] & /@
+                Flatten[Table[{"command:", "parsed:", "residual:"}, {Length[vptbl] / 3}]], vptbl}];
+      Grid[vptbl, Alignment -> {{Right, Right, Left}}, Spacings -> {0.5, 0.75},
+        Dividers -> {{True, True, False, True},
+          Join[{True}, Flatten@Table[{False, False, True}, {Length[vptbl]}]]}],
+      True,
+      Message[ParsingTestTable::unval, "Layout", layout]; ptbl
+    ]
   ];
 
 
