@@ -131,7 +131,7 @@ ParseChainRight::usage = "ParseChainRight[p_, sep_] parse a nested application o
 ParseRecursiveDefinition::usage = "ParseRecursiveDefinition[pname, rhs] makes a parser with name pname defined by rhs that can be used in recursive definitions."
 
 ToTokens::usage = "ToTokens[text] breaks down text into tokens. ToTokens[text,terminals] breaks down text using specified terminals. \
-ToTokens[text,\"EBNF\"] has a special implementation for parsing EBNF code."
+ToTokens[text,\"EBNF\"] has a special implementation for parsing EBNF code. (This function is becoming obsolete, use ParseToTokens.)"
 
 ParseToTokens::usage = "ParseToTokens[text, terminalDelimiters, whitespaces] breaks down text into tokens using specified terminal symbols and white spaces."
 ParseToEBNFTokens::usage = "ParseToEBNFTokens[text, whitespaces] breaks down text into tokens using EBNF terminal symbols and specified white spaces."
@@ -367,23 +367,28 @@ ToTokens[text_, "EBNF"] :=
 
 Clear[ParseToTokens];
 ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :=
-  Block[{pWord, pQWord, pTermDelim, res},
-   pWord = 
-    ParseSpaces[
-     ParseMany1[
-      ParsePredicate[! 
-         MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
-   pQWord = 
-    ParseSpaces[(ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])\[CircleTimes]ParseMany1[
-       ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes](ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])];
-   pTermDelim = 
-    ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]];
-   res = ParseMany1[((If[Length[#] > 0, StringJoin @@ #, #] &)\[CircleDot](pQWord\[CirclePlus]pWord))\[CirclePlus]pTermDelim][Characters[text]];
-   res[[1, 2]]
-  ];
+    Block[{pWord, pQWord, pLongTermDelim, pTermDelim, res},
+      pWord =
+          ParseSpaces[ParseMany1[ParsePredicate[!MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
+      pQWord =
+          ParseSpaces[(ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])\[CircleTimes]ParseMany1[
+            ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes](ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])];
+      If[ Length[Select[terminalDelimiters, StringLength[#] > 1 &]] > 0,
+        pLongTermDelim = ParseAlternativeComposition @@
+            Map[
+              ParseApply[StringJoin, ParseSequentialComposition @@ (ParseSymbol /@ Characters[#])] &,
+              Select[terminalDelimiters,StringLength[#] > 1 &]];
+        pTermDelim =
+            ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]\[CirclePlus]pLongTermDelim],
+        pTermDelim =
+            ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]]
+      ];
+      res = ParseMany1[((If[Length[#] > 0, StringJoin @@ #, #] &)\[CircleDot](pQWord\[CirclePlus]pWord))\[CirclePlus]pTermDelim][Characters[text]];
+      res[[1, 2]]
+    ];
 
 ParseToEBNFTokens[text_, whitespaces_: {" ", "\n", "\t"}] :=
-    ParseToTokens[text, {"|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
+    ParseToTokens[text, {"|", "|>", "<|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
 
 
 (************************************************************)
@@ -450,7 +455,7 @@ Clear["pG*"]
 (* Parse typeTerminal. All teminals are assumed to be between single or double quotes. *)
 
 EBNFSymbolTest = 
-  TrueQ[# == "|" || # == "," || # == "=" || # == ";" || # == "\[LeftTriangle]" || # == "\[RightTriangle]"] &;
+  TrueQ[# == "|" || # == "," || # == "=" || # == ";" || # == "\[LeftTriangle]" || # == "\[RightTriangle]" || # == "<|" || # == "|>" ] &;
 
 NonTerminalTest = 
   TrueQ[StringMatchQ[#, "<" ~~ (WordCharacter | WhitespaceCharacter | "-" | "_") .. ~~ ">"]] &;
@@ -471,7 +476,7 @@ pGRepetition = EBNFRepetition\[CircleDot]ParseCurlyBracketed[pGExpr];
 
 pGNode[xs_] := (EBNFTerminal\[CircleDot]pGTerminal\[CirclePlus]EBNFNonTerminal\[CircleDot]pGNonTerminal\[CirclePlus]ParseParenthesized[pGExpr]\[CirclePlus]pGRepetition\[CirclePlus]pGOption)[xs];
 
-pGTerm = EBNFSequence\[CircleDot]ParseChainRight[pGNode, ParseSymbol[","]\[CirclePlus]ParseSymbol["\[LeftTriangle]"]\[CirclePlus]ParseSymbol["\[RightTriangle]"]];
+pGTerm = EBNFSequence\[CircleDot]ParseChainRight[pGNode, ParseSymbol[","]\[CirclePlus]ParseSymbol["\[LeftTriangle]"]\[CirclePlus]ParseSymbol["\[RightTriangle]"]\[CirclePlus]ParseSymbol["<|"]\[CirclePlus]ParseSymbol["|>"]];
 
 pGExpr = EBNFAlternatives\[CircleDot]ParseListOf[pGTerm, ParseSymbol["|"]];
 
@@ -484,7 +489,8 @@ pEBNF = EBNF\[CircleDot]ParseMany1[pGRule];
 (* EBNF grammar parser generators with \[RightTriangle] and \[LeftTriangle]     *)
 (********************************************************************************)
 
-Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminalInterpreter, EBNFOptionInterpreter, EBNFRepetitionInterpreter, EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter]
+Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminalInterpreter, EBNFOptionInterpreter, EBNFRepetitionInterpreter,
+      EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter]
 
 Clear[pNumber, pWord, pLetterWord, pIdentifierWord]
 pNumber = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] &];
@@ -535,15 +541,15 @@ EBNFSequenceInterpreter[parsedArg_] :=
   Block[{parsed = parsedArg, crules},
    (*Print["before:",parsed];*)
    
-   crules = {ParseSymbol[","] -> "X$$#$#$#1", 
-     ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", 
-     ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3"};
+   crules = {ParseSymbol[","] -> "X$$#$#$#1",
+     ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", ParseSymbol["<|"] -> "X$$#$#$#2",
+     ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3", ParseSymbol["|>"] -> "X$$#$#$#3"};
    parsed = parsed //. crules;
    (*Print["mid:",parsed];*)
    
    parsed = parsed /. {"," -> ParseSequentialComposition, 
-      "\[LeftTriangle]" -> ParseSequentialCompositionPickLeft, 
-      "\[RightTriangle]" -> ParseSequentialCompositionPickRight};
+      "\[LeftTriangle]" -> ParseSequentialCompositionPickLeft, "<|" -> ParseSequentialCompositionPickLeft,
+      "\[RightTriangle]" -> ParseSequentialCompositionPickRight, "|>" -> ParseSequentialCompositionPickRight};
    parsed = parsed //. (Reverse /@ crules);
    (*Print["after:",parsed];*)
    Which[
@@ -570,8 +576,7 @@ EBNFRuleInterpreter[parsed_] :=
    If[ListQ[parsed[[2]]],
     With[{lhs = lhsSymbol, rhs = parsed[[1, 2]], func = parsed[[2, 2]]},
      lhs[xs_] := ParseApply[ToExpression[func], rhs][xs]];
-    res = Row[{lhsSymbolName, " = ", parsed[[1, 2]], parsed[[2, 1]], 
-       parsed[[2, 2]]}],
+    res = Row[{lhsSymbolName, " = ", parsed[[1, 2]], parsed[[2, 1]], parsed[[2, 2]]}],
     (* assumed Length[parsed] == 2*)
     
     With[{lhs = lhsSymbol, rhs = parsed[[1, 2]]}, lhs[xs_] := rhs[xs]];
