@@ -388,7 +388,7 @@ ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :
     ];
 
 ParseToEBNFTokens[text_, whitespaces_: {" ", "\n", "\t"}] :=
-    ParseToTokens[text, {"|", "|>", "<|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
+    ParseToTokens[text, {"|", "&>", "<&", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
 
 
 (************************************************************)
@@ -455,7 +455,7 @@ Clear["pG*"]
 (* Parse typeTerminal. All teminals are assumed to be between single or double quotes. *)
 
 EBNFSymbolTest = 
-  TrueQ[# == "|" || # == "," || # == "=" || # == ";" || # == "\[LeftTriangle]" || # == "\[RightTriangle]" || # == "<|" || # == "|>" ] &;
+  TrueQ[# == "|" || # == "," || # == "=" || # == ";" || # == "\[LeftTriangle]" || # == "\[RightTriangle]" || # == "<&" || # == "&>" ] &;
 
 NonTerminalTest = 
   TrueQ[StringMatchQ[#, "<" ~~ (WordCharacter | WhitespaceCharacter | "-" | "_") .. ~~ ">"]] &;
@@ -476,7 +476,7 @@ pGRepetition = EBNFRepetition\[CircleDot]ParseCurlyBracketed[pGExpr];
 
 pGNode[xs_] := (EBNFTerminal\[CircleDot]pGTerminal\[CirclePlus]EBNFNonTerminal\[CircleDot]pGNonTerminal\[CirclePlus]ParseParenthesized[pGExpr]\[CirclePlus]pGRepetition\[CirclePlus]pGOption)[xs];
 
-pGTerm = EBNFSequence\[CircleDot]ParseChainRight[pGNode, ParseSymbol[","]\[CirclePlus]ParseSymbol["\[LeftTriangle]"]\[CirclePlus]ParseSymbol["\[RightTriangle]"]\[CirclePlus]ParseSymbol["<|"]\[CirclePlus]ParseSymbol["|>"]];
+pGTerm = EBNFSequence\[CircleDot]ParseChainRight[pGNode, ParseSymbol[","]\[CirclePlus]ParseSymbol["\[LeftTriangle]"]\[CirclePlus]ParseSymbol["\[RightTriangle]"]\[CirclePlus]ParseSymbol["<&"]\[CirclePlus]ParseSymbol["&>"]];
 
 pGExpr = EBNFAlternatives\[CircleDot]ParseListOf[pGTerm, ParseSymbol["|"]];
 
@@ -542,14 +542,14 @@ EBNFSequenceInterpreter[parsedArg_] :=
    (*Print["before:",parsed];*)
    
    crules = {ParseSymbol[","] -> "X$$#$#$#1",
-     ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", ParseSymbol["<|"] -> "X$$#$#$#2",
-     ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3", ParseSymbol["|>"] -> "X$$#$#$#3"};
+     ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", ParseSymbol["<&"] -> "X$$#$#$#2",
+     ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3", ParseSymbol["&>"] -> "X$$#$#$#3"};
    parsed = parsed //. crules;
    (*Print["mid:",parsed];*)
    
    parsed = parsed /. {"," -> ParseSequentialComposition, 
-      "\[LeftTriangle]" -> ParseSequentialCompositionPickLeft, "<|" -> ParseSequentialCompositionPickLeft,
-      "\[RightTriangle]" -> ParseSequentialCompositionPickRight, "|>" -> ParseSequentialCompositionPickRight};
+      "\[LeftTriangle]" -> ParseSequentialCompositionPickLeft, "<&" -> ParseSequentialCompositionPickLeft,
+      "\[RightTriangle]" -> ParseSequentialCompositionPickRight, "&>" -> ParseSequentialCompositionPickRight};
    parsed = parsed //. (Reverse /@ crules);
    (*Print["after:",parsed];*)
    Which[
