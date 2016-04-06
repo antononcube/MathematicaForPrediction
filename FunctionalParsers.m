@@ -49,14 +49,16 @@
 
    Functions for splitting the input text into tokens are provided.
 
-   The package also have functions to generate parsers from a string of the Extended Backus-Naur Form (EBNF) definition of a grammar. 
+   The package also have functions to generate parsers from a string of the Extended Backus-Naur Form (EBNF) definition
+   of a grammar.
 
-   In the current version of the EBNF parser functions there is a requirement that all elements of the parsed EBNF forms
-   have to be separated by space. The EBNF grammar string can have the pick-left and pick-right combinators
-   (\[LeftTriangle] and \[RightTriangle] respectively) and a ParseApply specification can be given within the form
+   The EBNF grammar string can have the pick-left and pick-right combinators (\[LeftTriangle] or "<&",
+   and \[RightTriangle] or "&>" respectively) and a ParseApply specification can be given within the form
+
     "<rhs> = parsers <@ transformer" .
-    The application of functions can be done over the whole definition of an EBNF non-terminal symbol,
-    not over the individual parts.
+
+   The application of transformer functions can be done over the whole definition of an EBNF non-terminal symbol,
+   not over the individual parts.
 
    There is a function, InterpretWithContext, for interpreting parsed results with a context.
    The context is given as a list of rules. There are two forms for the context rules: {(_Symbol->_)..} and
