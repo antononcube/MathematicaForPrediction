@@ -16,8 +16,7 @@
 ##  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##  
 ##  Written by Anton Antonov, 
-##  antononcube@gmail.com, 
-##  7320 Colbury Ave, 
+##  antononcube @ gmail . com,
 ##  Windermere, Florida, USA.
 ##  
 ##================================================================================
@@ -43,18 +42,14 @@
 ##  
 ##  Functions for splitting the input text into tokens are provided.
 ##
-##  The parsers can be used with their long names, short names
-##  For example, "ParseApply" are for the same parser "p.apply".
+##  The parsers have long descriptive names. Short names are programmed for convenience.
+##  For example, "p.apply" is the short name of "ParseApply".
+##  "p.seql" is the short name of "ParseSequentialCompositionPickLeft".
 ##  For some parsers there are infix operators. For example, "@" can be used for "ParseApply".
-##  See the sections "Infix notation" and "Shorter parser names" below.
+##  See the sections "Shorter parser names" and "Infix notation" below.
 ##  
-##  The package also have functions to generate parsers from a string of the 
-##  Extended Backus-Naur Form (EBNF) definition of a grammar. 
-##  In the current version of the EBNF parser functions there is a requirement that all elements of 
-##  the parsed EBNF forms have to be separated by space. The EBNF grammar string can have the pick-left and pick-right 
-##  combinators ( "<&" and "&>" respectively ) and a ParseApply specification can be given within 
-##  the form "<rhs> = parsers <@ transformer" . The application of functions can be done over the whole definition of
-##  an EBNF non-terminal symbol, not over the individual parts.
+##  There is a plan the package also have functions to generate parsers from a string of the
+##  Extended Backus-Naur Form (EBNF) definition of a grammar.
 ##  
 ##================================================================================
 ##  This version of the R functions / package does not have functions for parser 
