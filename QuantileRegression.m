@@ -74,7 +74,9 @@ QuantileRegressionFit::usage = "QuantileRegression[data,funs,var,qs] finds the r
 
 QuantileRegression::usage = "QuantileRegression[data,ks_List,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations of splines generated over the knots ks. With the signature QuantileRegression[data,n_Integer,qs] n equally spaced knots are generated. The order of the splines is specified with the option InterpolationOrder."
 
-QuantileEnvelope::usage = "QuantileRegression[data_?MatrixQ,qs:(_?NumberQ|{_?NumberQ..}),n_Integer] experimental implementation of quantile envelopes points finding."
+QuantileEnvelope::usage = "QuantileEnvelope[data_?MatrixQ,qs:(_?NumberQ|{_?NumberQ..}),n_Integer] experimental implementation of quantile envelopes points finding."
+
+QuantileEnvelopeRegion::usage = "QuantileEnvelopeRegion[data_?MatrixQ,qs_?NumberQ,n_Integer] experimental implementation of 3D quantile envelope region finding."
 
 Begin["`Private`"]
 
@@ -408,6 +410,28 @@ QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : 
    intPoints = Map[(#*scale + center) &, intPoints, {2}];
    intPoints
   ];
+
+(**************************************************************)
+(* QuantileEnvelopeRegion                                     *)
+(**************************************************************)
+
+Clear[QuantileEnvelopeRegion]
+QuantileEnvelopeRegion[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_Integer] :=
+    Block[{nd = numberOfDirections, dirs, rmats, qDirPoints, qRegion},
+      dirs =
+          N@Flatten[
+            Table[{Cos[th] Cos[phi], Sin[th] Cos[phi], Sin[phi]},
+              {th, 2 Pi/(10 nd), 2 Pi, 2 Pi/nd},
+              {phi, -Pi, Pi, 2 Pi/nd}], 1];
+      rmats = RotationMatrix[{{1, 0, 0}, #}] & /@ dirs;
+      qDirPoints =
+          Flatten[Map[
+            Function[{m}, Quantile[(m.Transpose[points])[[3]], quantile]],
+            rmats]];
+      qRegion =
+          ImplicitRegion[ MapThread[(#1.{x, y, z})[[3]] <= #2 &, {rmats, qDirPoints}], {x, y, z}];
+      qRegion
+    ] /; Dimensions[points][[2]] == 3 && 0 < quantile <= 1;
 	   
 End[]
 
