@@ -15,13 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube @ gmail.com,
-	Windermere, Florida, USA.
+	  Written by Anton Antonov,
+	  antononcube @ gmail.com,
+	  Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -36,27 +36,38 @@
   This package has two functions, QuantileRegressionFit and QuantileRegression. 
 
   1. QuantileRegressionFit
-  The arguments and the result of QuantileRegressionFit are very similar to those of the function Fit. In order to find the quantile functions that fit through the data QuantileRegressionFit can use LinearProgramming, Minimize, or NMinimize through the Method option, e.g. Method->Minimize or Method->{LinearProgramming, Method->"Simplex", Tolerance->10^-6.0} . Using Minimize can be very slow for large data sets -- that method is included for didactic purposes.
+  The arguments and the result of QuantileRegressionFit are very similar to those of the function Fit.
+  In order to find the quantile functions that fit through the data QuantileRegressionFit can use
+  LinearProgramming, Minimize, or NMinimize through the Method option,
+  e.g. Method->Minimize or Method->{LinearProgramming, Method->"Simplex", Tolerance->10^-6.0} .
+  Using Minimize can be very slow for large data sets -- that method is included for didactic purposes.
 
   The linear programming implementation is based on the (non-dual) formulation in the article 
  
   Roger Koenker, Gilbert Bassett, Jr., "Regression Quantiles", Econometrica, Vol. 46, No. 1. (Jan., 1978), pp. 33-50.
 
-  I experimented with using DualLinearProgramming (provided by Mathematica) and with the dozen experiments I made I obtained the same results for the same computing time.
+  I experimented with using DualLinearProgramming (provided by Mathematica) and with the dozen experiments I made
+  I obtained the same results for the same computing time.
 
   2. QuantileRegression
-  The function QuantileRegression uses B-splines in order to calculate the regression quantiles. The regression quantiles are returned as pure functions. The option InterpolationOrder can be used to specify the order of the splines. Similar to QuantileRegressionFit the Method option can take LinearProgramming, Minimize, and NMinimize specifications. 
+  The function QuantileRegression uses B-splines in order to calculate the regression quantiles.
+  The regression quantiles are returned as pure functions.
+  The option InterpolationOrder can be used to specify the order of the splines.
+  Similar to QuantileRegressionFit the Method option can take LinearProgramming, Minimize, and NMinimize specifications.
 
 *)
 
 (* For version 1.1 implemented quantile regression with B-splines. 
-  Renamed the original function QuantileRegression to QuantileRegressionFit.
-  Overloading the original function QuantileRegression with the B-splines implementation is not a good idea because:
-  1. the original quantile regression function returns function expressions,
-  2. the B-spline quantile regression function returns anonymous functions.
+   Renamed the original function QuantileRegression to QuantileRegressionFit.
+   Overloading the original function QuantileRegression with the B-splines implementation is not a good idea because:
+   1. the original quantile regression function returns function expressions,
+   2. the B-spline quantile regression function returns anonymous functions.
 *)
 
 (*
+   2016.04.30
+   Added experimental implementations for finding of quantile regression envelope regions for 2D and 3D data.
+
    2014.11.01
    Added experimental implementation for finding of the points of quantile regression envelopes for 2D data.
 *)
