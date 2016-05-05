@@ -60,6 +60,7 @@ TopOutliers@*olParams and BottomOutliers@*olParams respectively."
 
 ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPlot."
 
+ColorPlotOutliers::usage = "ColorPlotOutliers[oid___] makes a function for coloring the outliers in list point plots."
 
 Begin["`Private`"]
 
@@ -138,6 +139,10 @@ ListPlotOutliers[ds_,outlierParameters_,optsArg___]:=
       ListPlot[{Transpose[{Range[Length[ds]],ds}],positionedOutliers},opts]
     ]
   ];
+
+ClearAll[ColorPlotOutliers]
+ColorPlotOutliers[] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]]]]]]}} &;
+ColorPlotOutliers[oid_] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]], oid]]]]}} &;
 
 
 End[]
