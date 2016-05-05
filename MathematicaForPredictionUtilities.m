@@ -1,7 +1,7 @@
 
 (*
     MathematicaForPrediction utilities
-    Copyright (C) 2014  Anton Antonov
+    Copyright (C) 2014-2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,14 +16,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
-	Windermere, Florida, USA.
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -47,7 +46,13 @@ DataColumnsSummary::usage = "Summary of a list of data columns."
 
 RecordsSummary::usage = "Summary of a list of records that form a full two dimensional array."
 
-GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimics TableForm by using Grid (and producing fancier outlook)."
+GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimics TableForm by using Grid \
+(and producing fancier outlook)."
+
+ParetoLawPlot::usage = "ParetoLawPlot[data,opts] makes a list plot for the manifestation of the Pareto law. \
+It has the same signature and options as ListPlot."
+
+ColorPlotOutliers::usage = "ColorPlotOutliers[oid___] is useful for coloring the outliers in list plots."
 
 Begin["`Private`"]
 
@@ -144,6 +149,30 @@ GridTableForm[data_, opts : OptionsPattern[]] :=
        Thread[Range[3, Length[gridData[[2]]] + 1] -> GrayLevel[0.8]], {Length[gridData[[2]]] + 1 -> Black}], {True, True, {False}, True}}, 
     Background -> {Automatic, Flatten[Table[{White, GrayLevel[0.96]}, {Length[gridData]/2}]]}]
   ];
+
+
+Clear[ParetoLawPlot]
+Options[ParetoLawPlot] = Options[ListPlot];
+ParetoLawPlot[dataVec : {_?NumberQ ..}, opts : OptionsPattern[]] := ParetoLawPlot[{Tooltip[dataVec, 1]}, opts];
+ParetoLawPlot[dataVecs : {{_?NumberQ ..} ..}, opts : OptionsPattern[]] :=
+    ParetoLawPlot[MapThread[Tooltip, {dataVecs, Range[Length[dataVecs]]}], opts];
+ParetoLawPlot[dataVecs : {Tooltip[{_?NumberQ ..}, _] ..}, opts : OptionsPattern[]] :=
+    Block[{t, mc = 0.5},
+      t = Map[
+        Tooltip[(Accumulate[#]/Total[#] &)[SortBy[#[[1]], -# &]], #[[2]]] &,
+        dataVecs];
+      ListPlot[t, opts, PlotRange -> All,
+        GridLines -> {Length[t[[1, 1]]] Range[0.1, mc, 0.1], {0.8}},
+        Frame -> True,
+        FrameTicks -> {{Automatic, Automatic}, {Automatic,
+          Table[{Length[t[[1, 1]]] c, ToString[Round[100 c]] <> "%"}, {c,
+            Range[0.1, mc, 0.1]}]}}]
+    ];
+
+
+ClearAll[ColorPlotOutliers]
+ColorPlotOutliers[] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]]]]]]}} &;
+ColorPlotOutliers[oid_] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]], oid]]]]}} &;
 
 End[]
 
