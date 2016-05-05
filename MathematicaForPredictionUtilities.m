@@ -52,8 +52,6 @@ GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimic
 ParetoLawPlot::usage = "ParetoLawPlot[data,opts] makes a list plot for the manifestation of the Pareto law. \
 It has the same signature and options as ListPlot."
 
-ColorPlotOutliers::usage = "ColorPlotOutliers[oid___] is useful for coloring the outliers in list plots."
-
 Begin["`Private`"]
 
 Clear[ClassificationSuccessTableForm]
@@ -169,10 +167,6 @@ ParetoLawPlot[dataVecs : {Tooltip[{_?NumberQ ..}, _] ..}, opts : OptionsPattern[
             Range[0.1, mc, 0.1]}]}}]
     ];
 
-
-ClearAll[ColorPlotOutliers]
-ColorPlotOutliers[] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]]]]]]}} &;
-ColorPlotOutliers[oid_] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]], oid]]]]}} &;
 
 End[]
 
