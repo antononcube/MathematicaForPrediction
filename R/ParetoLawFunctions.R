@@ -16,7 +16,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ## 
 ## Written by Anton Antonov, 
-## antononcube@gmail.com,
+## antononcube @ gmail . com,
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
@@ -79,7 +79,7 @@ ParetoLawDataForColumns <- function( data, colNames ) {
 #' @return A data frame with columns c( "Item", "Score", "CumSums" ).
 ParetoItems <- function( data, colName, paretoFraction ) {
 
-  paretoItemsCount <- count( data[colName] )
+  paretoItemsCount <- plyr::count( data[colName] )
   paretoItemsCount[[1]] <- as.character( paretoItemsCount[[1]] )
 
   paretoItemsCount <- paretoItemsCount[ order( -paretoItemsCount[,2] ), ]
