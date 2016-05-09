@@ -1,5 +1,5 @@
 (*
-	Tries with frequencies Mathematica package
+    Tries with frequencies Mathematica package
     Copyright (C) 2013  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -15,14 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov,
-	antononcube@gmail.com,
-	7320 Colbury Ave,
-	Windermere, Florida, USA.
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -33,10 +32,13 @@
 *)
 
 (* Version 0.8 *)
-(* This version contains functions to build, shrink, and retrieve nodes of tries (also known as "prefix trees"). The implementations are geared toward utilization of data mining algorithms, like frequent sequence occurrences. *)
+(* This version contains functions to build, shrink, and retrieve nodes of tries (also known as "prefix trees").
+   The implementations are geared toward utilization of data mining algorithms, like frequent sequence occurrences. *)
+
 (* TODO:
   1. Enhance the functionality of TriePosition to work over shrunk tries.
-  2. Enhance the signature and functionality of TrieLeafProbabilities to take a second argument of a "word" for which the leaf probabilities have to be found.
+  2. Enhance the signature and functionality of TrieLeafProbabilities to take a second argument of a "word"
+     for which the leaf probabilities have to be found.
 *)
 
 BeginPackage["TriesWithFrequencies`"]
