@@ -80,9 +80,9 @@ ClassificationSuccessGrid[ctRules_] :=
 Clear[NumericVectorSummary, CategoricalVectorSummary]
 NumericVectorSummary[dvec_] :=
   Block[{r},
-    r = Flatten[Through[{Min, Max, Mean, Quartiles}[dvec]]];
+    r = Flatten[Through[{Min, Max, Mean, Quartiles}[DeleteMissing[dvec]]]];
     SortBy[Transpose[{{"Min", "Max", "Mean", "1st Qu", "Median", "3rd Qu"}, r}], #[[2]] &]
-  ] /; VectorQ[dvec, NumberQ];
+  ] /; VectorQ[DeleteMissing[dvec], NumberQ];
 CategoricalVectorSummary[dvec_, maxTallies_Integer: 7] :=
   Block[{r},
     r = SortBy[Tally[dvec], -#[[2]] &];
