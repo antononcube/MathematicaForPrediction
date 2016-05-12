@@ -115,19 +115,19 @@ Clear[TrieMerge]
 TrieMerge[{}, {}] := {};
 TrieMerge[t1_, t2_] :=
   Which[
-   t1[[1, 1]] != t2[[1, 1]], {t1, t2},
-   t1[[1, 1]] == t2[[1, 1]],
+   TrueQ[ t1[[1, 1]] != t2[[1, 1]] ], {t1, t2},
+   TrueQ[ t1[[1, 1]] == t2[[1, 1]] ],
    Prepend[
     Join[
      Select[Rest[t1], ! MemberQ[Rest[t2][[All, 1, 1]], #[[1, 1]]] &],
      Select[Rest[t2], ! MemberQ[Rest[t1][[All, 1, 1]], #[[1, 1]]] &],
      DeleteCases[
       Flatten[
-       Outer[If[#1[[1, 1]] == #2[[1, 1]], TrieMerge[#1, #2], {}] &, Rest[t1], Rest[t2], 1],
+       Outer[If[ TrueQ[ #1[[1, 1]] == #2[[1, 1]] ], TrieMerge[#1, #2], {}] &, Rest[t1], Rest[t2], 1],
        1], {}]
      ], {t1[[1, 1]], t1[[1, 2]] + t2[[1, 2]]}],
-   Rest[t1] === {}, t2,
-   Rest[t2] === {}, t1
+   TrueQ[ Rest[t1] === {} ], t2,
+   TrueQ[ Rest[t2] === {} ], t1
   ];
 
 Clear[TrieInsert]
@@ -181,7 +181,7 @@ Clear[TrieShrink, TrieShrinkRec];
 TrieShrink[t_] := TrieShrinkRec[t] /. TH -> List;
 TrieShrinkRec[{}] := {};
 TrieShrinkRec[t_] :=
-  Block[{tt, newnode, rootQ = (ListQ[t[[1, 1]]] && Length[t[[1, 1]]] == 0)},
+  Block[{tt, newnode, rootQ = TrueQ[ ListQ[t[[1, 1]]] && Length[t[[1, 1]]] == 0 ] },
    Which[
     ! rootQ && Length[t] == 1, {{NodeJoin[t[[1, 1]]], t[[1, 2]]}},
     ! rootQ && Length[t] == 2 && t[[1, 2]] == t[[2, 1, 2]],
