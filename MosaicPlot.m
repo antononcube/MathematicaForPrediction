@@ -226,10 +226,13 @@ TriePruneNumericalLevel[trie_, pruneLevel_Integer] := TriePruneNumericalLevel[tr
 TriePruneNumericalLevel[trie_, pruneLevel_Integer, level_Integer] :=
   Block[{t},
    Which[
-    Length[trie] == 1 || pruneLevel < level, trie,
-    pruneLevel == level && VectorQ[Rest[trie][[All, 1, 1]], NumberQ], {{trie[[1, 1]], Total[Rest[trie][[All, 1, 1]]]}},
-    t = TriePruneNumericalLevel[#, pruneLevel, level + 1] & /@ Rest[trie];
-    True, Join[{{trie[[1, 1]], Total[t[[All, 1, 2]]]}}, t]
+    Length[trie] == 1 || pruneLevel < level,
+      trie,
+    pruneLevel == level && VectorQ[Rest[trie][[All, 1, 1]], NumberQ],
+      {{trie[[1, 1]], Total[Rest[trie][[All, 1, 1]]]}},
+    True,
+     t = TriePruneNumericalLevel[#, pruneLevel, level + 1] & /@ Rest[trie];
+     Join[{{trie[[1, 1]], Total[t[[All, 1, 2]]]}}, t]
    ]
   ];
 
