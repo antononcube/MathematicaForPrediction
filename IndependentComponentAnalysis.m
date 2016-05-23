@@ -251,7 +251,6 @@ FastICA[ X_?MatrixQ, k_Integer, opts : OptionsPattern[] ] :=
       X1 = Transpose[X1];
 
       wMat = K . aMat;
-      S = X1 . wMat;
       A = Transpose[wMat.Inverse[Transpose[wMat].wMat]];
 
       (*Print["Head/@{X1, K, aMat, wMat, A, S}] :", Head/@{X1, K, aMat, wMat, A, S} ];*)
@@ -260,13 +259,12 @@ FastICA[ X_?MatrixQ, k_Integer, opts : OptionsPattern[] ] :=
 
       If[ OptionValue[FastICA, "RFastICAResult"],
 
+        S = X1 . wMat;
+
         AssociationThread[ {"X","K","W","A","S"}-> { X1, K, aMat, A, S} ],
         (*ELSE*)
 
-        (* What should be done with the standartization with rowNormQ == True ?*)
-        V = TrueQ[ Head[S]===SparseArray ];
-        S = Map[# + Mean[X].Inverse[A] &, S];
-        If[ V, S = SparseArray[S] ];
+        S = X . wMat;
 
         AssociationThread[ {"K","W","A","S"}-> { K, aMat, A, S} ]
       ]
