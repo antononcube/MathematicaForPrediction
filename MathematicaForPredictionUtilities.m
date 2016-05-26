@@ -52,7 +52,15 @@ GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimic
 ParetoLawPlot::usage = "ParetoLawPlot[data,opts] makes a list plot for the manifestation of the Pareto law. \
 It has the same signature and options as ListPlot."
 
+IntervalMappingFunction::usage = "IntervalMappingFunction[boundaries] makes a piece-wise function for mapping of \
+a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1]."
+
+VariableDependenceGrid::usage = "VariableDependenceGrid[data_?MatrixQ,columnNames,opts] makes a grid with \
+variable dependence plots."
+
 Begin["`Private`"]
+
+Needs["MosaicPlot`"]
 
 Clear[ClassificationSuccessTableForm]
 ClassificationSuccessTableForm[ctRules_] :=
@@ -167,6 +175,65 @@ ParetoLawPlot[dataVecs : {Tooltip[{_?NumberQ ..}, _] ..}, opts : OptionsPattern[
             Range[0.1, mc, 0.1]}]}}]
     ];
 
+Clear[IntervalMappingFunction]
+IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
+    Block[{XXX, t = Partition[Join[{-\[Infinity]}, qBoundaries, {\[Infinity]}], 2, 1]},
+      Function[
+        Evaluate[Piecewise[
+          MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t,
+            Range[1, Length[t]]}]] /. {XXX -> #}]]
+    ];
+
+Clear[VariableDependenceGrid]
+Options[VariableDependenceGrid] = {"IgnoreCategoricalVariables" -> False};
+VariableDependenceGrid[data_?MatrixQ, opts : OptionsPattern[]] :=
+    VariableDependenceGrid[ data, Range[Dimensions[data][[2]]], opts];
+VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] :=
+    Block[{varTypes, grs, ninds, ddata, columnNames = columnNamesArg },
+      varTypes = Map[VectorQ[DeleteMissing[#], NumericQ] &, Transpose[data]];
+
+      If[ Length[columnNames] < Dimensions[data][[2]],
+        AppendTo[ columnNames, Length[columnNames] + Range[Dimensions[data][[2]]-Length[columnNames]]]
+      ];
+
+      ninds = Range[Dimensions[data][[2]]];
+      If[TrueQ[OptionValue["IgnoreCategoricalVariables"]],
+        ninds = Pick[Range[Dimensions[data][[2]]], varTypes];
+      ];
+
+      grs =
+          Which[
+            (SameQ @@ #) && (! varTypes[[#[[1]]]]), columnNames[[#[[1]]]],
+
+            (SameQ @@ #) && (varTypes[[#[[1]]]]),
+            Histogram[data[[All, #[[1]]]], Automatic, "Probability",
+              PlotTheme -> "Detailed",
+              PlotLabel -> Style[columnNames[[#[[1]]]], "FontSize" -> 14]],
+
+            TrueQ[varTypes[[#[[1]]]] && varTypes[[#[[2]]]]],
+            ListPlot[{data[[All, #]]}, PlotStyle -> {PointSize[0.01]},
+              PlotRange -> All, AspectRatio -> 1, Frame -> True],
+
+            TrueQ[! varTypes[[#[[1]]]] && ! varTypes[[#[[2]]]]],
+            MosaicPlot[data[[All, #]], "LabelRotation"->{{1,4},{4,1}}, ColorRules -> {1 -> ColorData[7, "ColorList"]}],
+
+            TrueQ[varTypes[[#[[1]]]] && ! varTypes[[#[[2]]]]],
+            ddata = Map[Prepend[#[[All, 1]], #[[1, -1]]] &, GatherBy[data[[All, #]], Last]];
+            DistributionChart[ddata[[All, 2 ;; -1]],
+              ChartLabels -> {ddata[[All, 1]]},
+              ChartElementFunction -> "DensityQuantile",
+              BarOrigin -> Bottom, AspectRatio -> 1],
+
+            TrueQ[! varTypes[[#[[1]]]] && varTypes[[#[[2]]]]],
+            ddata = Map[Prepend[#[[All, 1]], #[[1, -1]]] &, GatherBy[data[[All, Reverse@#]], Last]];
+            DistributionChart[ddata[[All, 2 ;; -1]],
+              ChartLabels -> ddata[[All, 1]], ChartStyle -> 54, BarOrigin -> Left],
+
+            True, ""
+          ] & /@ Flatten[Outer[List, ninds, ninds], 1];
+
+      Grid[ArrayReshape[grs, {Length[ninds], Length[ninds]}], Dividers -> All]
+    ];
 
 End[]
 
