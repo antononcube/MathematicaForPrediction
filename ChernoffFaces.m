@@ -65,6 +65,8 @@
         "EyeSize", "EyeSlant", "LeftIris", "RightIris", "NoseLength", \
         "MouthSmile", "MouthTwist", "MouthWidth"}
 
+       The values of those parameter are expected to be in the interval [0,1] .
+
     2. Here is the face parts colors group:
 
        { "FaceColor", "EyeBallColor", "IrisColor", "NoseColor", "MouthColor" }
@@ -182,55 +184,39 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       noseLength, mouthWidth, a, b, c, faceColor, eyeBallsColor,
       irisColor, noseColor, mouthColor,
       makeSymmetric},
-      makeSymmetric = Lookup[pars, "MakeSymmetric", False];
+      makeSymmetric = Lookup[pars, "MakeSymmetric", True];
       pars =
           If[TrueQ[makeSymmetric],
             MakeSymmetricChernoffFaceParameters[pars,
               ChernoffFace["Properties"]],
             Merge[{pars, ChernoffFace["Properties"]}, First]
           ];
-      forheadTh =
-          2*Round@Rescale[pars["ForheadShape"], {0, 1}, {2, 15}];
+      forheadTh = 2*Round@Rescale[pars["ForheadShape"], {0, 1}, {2, 15}];
       faceLength = Rescale[pars["FaceLength"], {0, 1}, {2, 3}];
-      eyesVerticalPos =
-          Rescale[pars["EyesVerticalPosition"], {0, 1}, {0.2, 0.7}];
+      eyesVerticalPos = Rescale[pars["EyesVerticalPosition"], {0, 1}, {0.2, 0.7}];
       eyebrLeftTrim = Rescale[pars["LeftEyebrowTrim"], {0, 1}, {0, 1}];
-      eyebrRightTrim =
-          Rescale[pars["RightEyebrowTrim"], {0, 1}, {0, 1}];
-      eyebrRaiseLeft =
-          Rescale[pars["LeftEyebrowRaising"], {0, 1}, {0.6, 0.73}];
-      eyebrRaiseRight =
-          Rescale[pars["RightEyebrowRaising"], {0, 1}, {0.6, 0.73}];
-      eyebrSlantLeft =
-          Rescale[pars["LeftEyebrowSlant"], {0, 1}, {-\[Pi]/6, \[Pi]/6}];
-      eyebrSlantRight =
-          Rescale[pars["RightEyebrowSlant"], {0, 1}, {\[Pi]/6, -\[Pi]/6}];
+      eyebrRightTrim = Rescale[pars["RightEyebrowTrim"], {0, 1}, {0, 1}];
+      eyebrRaiseLeft = Rescale[pars["LeftEyebrowRaising"], {0, 1}, {0.6, 0.73}];
+      eyebrRaiseRight = Rescale[pars["RightEyebrowRaising"], {0, 1}, {0.6, 0.73}];
+      eyebrSlantLeft = Rescale[pars["LeftEyebrowSlant"], {0, 1}, {-\[Pi]/6, \[Pi]/6}];
+      eyebrSlantRight = Rescale[pars["RightEyebrowSlant"], {0, 1}, {\[Pi]/6, -\[Pi]/6}];
       eyeSize = Rescale[pars["EyeSize"], {0, 1}, {0.4, 1}];
-      eyesSlant =
-          Rescale[pars["EyeSlant"], {0, 1}, {-\[Pi]/6, \[Pi]/6}];
-      leftIrisOffset =
-          Rescale[pars["LeftIris"], {0, 1}, {-0.63, -0.37}];
-      rightIrisOffset =
-          Rescale[pars["RightIris"], {0, 1}, {0.37, 0.63}];
+      eyesSlant = Rescale[pars["EyeSlant"], {0, 1}, {-\[Pi]/6, \[Pi]/6}];
+      leftIrisOffset = Rescale[pars["LeftIris"], {0, 1}, {-0.63, -0.37}];
+      rightIrisOffset = Rescale[pars["RightIris"], {0, 1}, {0.37, 0.63}];
       noseLength = Rescale[pars["NoseLength"], {0, 1}, {0.2, 0.65}];
       a = Rescale[pars["MouthSmile"], {0, 1}, {-2, 2}];
       b = Rescale[pars["MouthTwist"], {0, 1}, {-0.25, 0.25}];
       c = -0.8;(*Rescale[pars["MouthPosition"],{0,1},{-1,-0.7}];*)
-
       mouthWidth = Rescale[pars["MouthWidth"], {0, 1}, {0.1, 0.7}];
       faceColor = pars["FaceColor"];
       eyeBallsColor = pars["EyeBallColor"];
       irisColor = pars["IrisColor"];
       noseColor = pars["NoseColor"];
       mouthColor = pars["MouthColor"];
-      (*forheadPts={{-1,0},{-1+0.3forheadTh,1.2},{1-0.3forheadTh,1.2},{1,
-   0}};*)
-      (*{Thick,BSplineCurve[forheadPts,SplineWeights\[Rule]({1,
-   3,3,1}/8)]},*)
-
-      forheadPts =
-          Table[{x, (1 - x^forheadTh)*faceLength eyesVerticalPos}, {x,
-            Range[-1, 1, 0.05]}];
+      (*forheadPts={{-1,0},{-1+0.3forheadTh,1.2},{1-0.3forheadTh,1.2},{1,0}};*)
+      (*{Thick,BSplineCurve[forheadPts,SplineWeights\[Rule]({1,3,3,1}/8)]},*)
+      forheadPts = Table[{x, (1 - x^forheadTh)*faceLength eyesVerticalPos}, {x, Range[-1, 1, 0.05]}];
       leftEye =
           {{eyeBallsColor, Disk[{-0.5, 0}, eyeSize {0.4, 0.2}]}, {Thick,
             Gray, Circle[{-0.5, 0}, eyeSize {0.4, 0.2}]},
