@@ -34,7 +34,7 @@
 
 (* :Title: Chernoff faces implementation in Mathematica *)
 (* :Context: ChernoffFaces` *)
-(* :Author: Anon Antonov *)
+(* :Author: Anton Antonov *)
 (* :Date: 2016-05-27 *)
 
 (* :Package Version: 1.0 *)
@@ -65,7 +65,7 @@
         "EyeSize", "EyeSlant", "LeftIris", "RightIris", "NoseLength", \
         "MouthSmile", "MouthTwist", "MouthWidth"}
 
-       The values of those parameter are expected to be in the interval [0,1] .
+       The values of those parameters are expected to be in the interval [0,1] .
 
     2. Here is the face parts colors group:
 
@@ -187,8 +187,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       makeSymmetric = Lookup[pars, "MakeSymmetric", True];
       pars =
           If[TrueQ[makeSymmetric],
-            MakeSymmetricChernoffFaceParameters[pars,
-              ChernoffFace["Properties"]],
+            MakeSymmetricChernoffFaceParameters[pars, ChernoffFace["Properties"]],
             Merge[{pars, ChernoffFace["Properties"]}, First]
           ];
       forheadTh = 2*Round@Rescale[pars["ForheadShape"], {0, 1}, {2, 15}];
@@ -198,10 +197,10 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       eyebrRightTrim = Rescale[pars["RightEyebrowTrim"], {0, 1}, {0, 1}];
       eyebrRaiseLeft = Rescale[pars["LeftEyebrowRaising"], {0, 1}, {0.6, 0.73}];
       eyebrRaiseRight = Rescale[pars["RightEyebrowRaising"], {0, 1}, {0.6, 0.73}];
-      eyebrSlantLeft = Rescale[pars["LeftEyebrowSlant"], {0, 1}, {-\[Pi]/6, \[Pi]/6}];
-      eyebrSlantRight = Rescale[pars["RightEyebrowSlant"], {0, 1}, {\[Pi]/6, -\[Pi]/6}];
+      eyebrSlantLeft = Rescale[pars["LeftEyebrowSlant"], {0, 1}, {-Pi/6, Pi/6}];
+      eyebrSlantRight = Rescale[pars["RightEyebrowSlant"], {0, 1}, {Pi/6, -Pi/6}];
       eyeSize = Rescale[pars["EyeSize"], {0, 1}, {0.4, 1}];
-      eyesSlant = Rescale[pars["EyeSlant"], {0, 1}, {-\[Pi]/6, \[Pi]/6}];
+      eyesSlant = Rescale[pars["EyeSlant"], {0, 1}, {-Pi/6, Pi/6}];
       leftIrisOffset = Rescale[pars["LeftIris"], {0, 1}, {-0.63, -0.37}];
       rightIrisOffset = Rescale[pars["RightIris"], {0, 1}, {0.37, 0.63}];
       noseLength = Rescale[pars["NoseLength"], {0, 1}, {0.2, 0.65}];
@@ -220,44 +219,36 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       leftEye =
           {{eyeBallsColor, Disk[{-0.5, 0}, eyeSize {0.4, 0.2}]}, {Thick,
             Gray, Circle[{-0.5, 0}, eyeSize {0.4, 0.2}]},
-            {irisColor,
-              Disk[{leftIrisOffset, 0.02},
-                eyeSize 0.15, {0, 2 \[Pi]}]}, {Black,
-            Disk[{leftIrisOffset, 0.02}, eyeSize 0.05, {0, 2 \[Pi]}]}
+            {irisColor, Disk[{leftIrisOffset, 0.02}, eyeSize 0.15, {0, 2 Pi}]}, {Black,
+            Disk[{leftIrisOffset, 0.02}, eyeSize 0.05, {0, 2 Pi}]}
           };
       rightEye =
           {{eyeBallsColor, Disk[{0.5, 0}, eyeSize {0.4, 0.2}]}, {Thick,
             Gray, Circle[{0.5, 0}, eyeSize {0.4, 0.2}]},
-            {irisColor,
-              Disk[{rightIrisOffset, 0.02},
-                eyeSize 0.15, {0, 2 \[Pi]}]}, {Black,
-            Disk[{rightIrisOffset, 0.02}, eyeSize 0.05, {0, 2 \[Pi]}]}
+            {irisColor, Disk[{rightIrisOffset, 0.02}, eyeSize 0.15, {0, 2 Pi}]},
+            {Black, Disk[{rightIrisOffset, 0.02}, eyeSize 0.05, {0, 2 Pi}]}
           };
       Graphics[{
         {EdgeForm[None], FaceForm[faceColor], Polygon[forheadPts], Thick,
           Black, Line[forheadPts]},
         {faceColor,
-          Disk[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {\[Pi],
-            2 \[Pi]}]}, {Thick,
-          Circle[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {\[Pi],
-            2 \[Pi]}]},
+          Disk[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
+          {Thick, Circle[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
       (* Eyes *)
-        {GeometricTransformation[leftEye,
-          RotationTransform[eyesSlant, {-0.5, 0}]],
-          GeometricTransformation[rightEye,
-            RotationTransform[-eyesSlant, {0.5, 0}]]},
+        {GeometricTransformation[leftEye, RotationTransform[eyesSlant, {-0.5, 0}]],
+          GeometricTransformation[rightEye, RotationTransform[-eyesSlant, {0.5, 0}]]},
       (* Eyebrows trimming, raising, and slant *)
         {Thick,
           GeometricTransformation[
             Circle[{-0.5, -0.2}, {0.7,
-              eyebrRaiseLeft}, {\[Pi]/2 - (eyebrLeftTrim \[Pi])/6, \[Pi]/
-                2 + (eyebrLeftTrim \[Pi])/6}],
+              eyebrRaiseLeft}, {Pi/2 - (eyebrLeftTrim Pi)/6, Pi/
+                2 + (eyebrLeftTrim Pi)/6}],
             RotationTransform[
               eyebrSlantLeft, {-0.5, -0.2 + eyebrRaiseLeft}]],
           GeometricTransformation[
             Circle[{0.5, -0.2}, {0.7,
-              eyebrRaiseRight}, {\[Pi]/2 - (eyebrRightTrim \[Pi])/6, \[Pi]/
-                2 + (eyebrRightTrim \[Pi])/6}],
+              eyebrRaiseRight}, {Pi/2 - (eyebrRightTrim Pi)/6, Pi/
+                2 + (eyebrRightTrim Pi)/6}],
             RotationTransform[
               eyebrSlantRight, {0.5, -0.2 + eyebrRaiseRight}]]},
         If[TrueQ[noseColor =!= faceColor],
