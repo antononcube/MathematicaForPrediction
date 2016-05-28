@@ -58,9 +58,26 @@ a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries,
 VariableDependenceGrid::usage = "VariableDependenceGrid[data_?MatrixQ,columnNames,opts] makes a grid with \
 variable dependence plots."
 
+ExcessKurtosis::usage = "ExcessKurtosis[d] computes the excess kurtosis for d (which is Kurtosis[d]-3)."
+
+KurtosisUpperBound:usage = "KurtosisUpperBound[vec_?VectorQ] computes the upper bound of the kurtosis of vec. \
+KurtosisUpperBound[d_,n_Integer] computes the upper bound of the kurtosis of a sample of size n from \
+the distribution d."
+
 Begin["`Private`"]
 
 Needs["MosaicPlot`"]
+
+Clear[KurtosisUpperBound, ExcessKurtosis]
+
+ExcessKurtosis[d_] := Kurtosis[d] - 3;
+
+KurtosisUpperBound[vec_?VectorQ] :=
+    Block[{n = Length[vec]},
+      1/2 (n - 3)/(n - 2) (CentralMoment[vec, 3]/StandardDeviation[vec]^3)^2 + n/2];
+
+KurtosisUpperBound[d_,n_Integer] :=
+    Block[{}, 1/2 (n - 3)/(n - 2) (CentralMoment[d, 3]/StandardDeviation[d]^3)^2 + n/2];
 
 Clear[ClassificationSuccessTableForm]
 ClassificationSuccessTableForm[ctRules_] :=
