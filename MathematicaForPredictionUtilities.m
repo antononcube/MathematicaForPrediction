@@ -135,9 +135,10 @@ RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
 Clear[GridTableForm]
 Options[GridTableForm] = {TableHeadings -> None};
 GridTableForm[data_, opts : OptionsPattern[]] :=
-  Block[{gridData, gridHeadings},
+  Block[{gridData, gridHeadings, dataVecQ=False},
    gridHeadings = OptionValue[GridTableForm, TableHeadings];
    gridData = data;
+   If[VectorQ[data], dataVecQ = True; gridData=List@data ];
    gridData = Map[Join[#, Table["", {Max[Length /@ gridData] - Length[#]}]] &, gridData];
    gridData = MapIndexed[Prepend[#1, #2[[1]]] &, gridData];
    If[gridHeadings === None || ! ListQ[gridHeadings],
@@ -150,8 +151,9 @@ GridTableForm[data_, opts : OptionsPattern[]] :=
      gridHeadings = Append[gridHeadings, SpanFromLeft];
    ];
    gridData = Prepend[gridData, gridHeadings];
+   (*If[dataVecQ, gridData = Transpose[gridData] ];*)
    Grid[gridData, Alignment -> Left, 
-    Dividers -> {Join[{1 -> Black, 2 -> Black}, 
+    Dividers -> {Join[{1 -> Black, 2 -> Black},
        Thread[Range[3, Length[gridData[[2]]] + 1] -> GrayLevel[0.8]], {Length[gridData[[2]]] + 1 -> Black}], {True, True, {False}, True}}, 
     Background -> {Automatic, Flatten[Table[{White, GrayLevel[0.96]}, {Length[gridData]/2}]]}]
   ];
