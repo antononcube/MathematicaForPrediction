@@ -129,7 +129,20 @@ paramerter opts is passed to Graphics. Use ChernoffFace[\"Properties\"] to see t
 ChernoffFacePartsParameters::usage := "ChernoffFacePartsParameters[] returns only the names(keys) only of those \
 parameters taken by ChernoffFace that specify face parts placement, rotation, and sizes."
 
+VariablesRescale::usage = "Standardizes and rescales the columns of the data."
+
 Begin["`Private`"]
+
+Options[VariablesRescale] = {
+  "StandardizingFunction" -> ( Standardize[#, Mean, StandardDeviation] &),
+  "RescaleRangeFunction" -> MinMax }
+VariablesRescale[ data_?MatrixQ, opts:OptionsPattern[] ] :=
+    Block[{ stFunc, rangeFunc },
+      stFunc = OptionValue[ "StandardizingFunction" ];
+      rangeFunc = OptionValue[ "RescaleRangeFunction" ];
+      Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}] ]&, stFunc /@ Transpose[data] ]
+    ];
+
 
 DefaultChernoffFaceParameters[] := <|"ForheadShape" -> 0.5,
   "FaceLength" -> 0.5, "EyesVerticalPosition" -> 0.5,
@@ -172,8 +185,21 @@ MakeSymmetricChernoffFaceParameters[pars_Association, defaultPars : (_Associatio
     ];
 
 Clear[ChernoffFace]
+
+ChernoffFace::pars = "The first argument is expected to be an association or a list of real numbers."
+
 ChernoffFace["Properties"] := DefaultChernoffFaceParameters[];
 ChernoffFace["FacePartsProperties"] := ChernoffFacePartsParameters[];
+
+ChernoffFace[vec_?(VectorQ[#,NumberQ]&)] :=
+    Block[{mn, mx, pars},
+      pars = Take[vec, UpTo[Min[Length[vec],Length[ChernoffFace["FacePartsProperties"]]]] ];
+      {mn, mx} = MinMax[pars];
+      If[ mn< 0 || mx > 1, pars = Rescale[pars] ];
+      pars = AssociationThread[ Take[Keys[ChernoffFace["FacePartsProperties"]], Length[pars]] -> pars];
+      ChernoffFace[ pars ]
+    ];
+
 ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
     Block[{pars = parsArg,
       forheadPts, forheadTh, gr, faceLength, eyesVerticalPos,
@@ -192,11 +218,11 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
           ];
       forheadTh = 2*Round@Rescale[pars["ForheadShape"], {0, 1}, {2, 15}];
       faceLength = Rescale[pars["FaceLength"], {0, 1}, {2, 3}];
-      eyesVerticalPos = Rescale[pars["EyesVerticalPosition"], {0, 1}, {0.2, 0.7}];
+      eyesVerticalPos = Rescale[pars["EyesVerticalPosition"], {0, 1}, {0.2, 0.6}];
       eyebrLeftTrim = Rescale[pars["LeftEyebrowTrim"], {0, 1}, {0, 1}];
       eyebrRightTrim = Rescale[pars["RightEyebrowTrim"], {0, 1}, {0, 1}];
-      eyebrRaiseLeft = Rescale[pars["LeftEyebrowRaising"], {0, 1}, {0.6, 0.73}];
-      eyebrRaiseRight = Rescale[pars["RightEyebrowRaising"], {0, 1}, {0.6, 0.73}];
+      eyebrRaiseLeft = Rescale[pars["LeftEyebrowRaising"], {0, 1}, {0.5, 0.8}];
+      eyebrRaiseRight = Rescale[pars["RightEyebrowRaising"], {0, 1}, {0.5, 0.8}];
       eyebrSlantLeft = Rescale[pars["LeftEyebrowSlant"], {0, 1}, {-Pi/6, Pi/6}];
       eyebrSlantRight = Rescale[pars["RightEyebrowSlant"], {0, 1}, {Pi/6, -Pi/6}];
       eyeSize = Rescale[pars["EyeSize"], {0, 1}, {0.4, 1}];
@@ -238,31 +264,23 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
         {GeometricTransformation[leftEye, RotationTransform[eyesSlant, {-0.5, 0}]],
           GeometricTransformation[rightEye, RotationTransform[-eyesSlant, {0.5, 0}]]},
       (* Eyebrows trimming, raising, and slant *)
-        {Thick,
+        {Thickness[0.01],
           GeometricTransformation[
-            Circle[{-0.5, -0.2}, {0.7,
-              eyebrRaiseLeft}, {Pi/2 - (eyebrLeftTrim Pi)/6, Pi/
-                2 + (eyebrLeftTrim Pi)/6}],
-            RotationTransform[
-              eyebrSlantLeft, {-0.5, -0.2 + eyebrRaiseLeft}]],
+            Circle[{-0.5, -0.2}, {0.7, eyebrRaiseLeft}, {Pi/2 - (eyebrLeftTrim Pi)/6, Pi/2 + (eyebrLeftTrim Pi)/6}],
+            RotationTransform[eyebrSlantLeft, {-0.5, -0.2 + eyebrRaiseLeft}]],
           GeometricTransformation[
-            Circle[{0.5, -0.2}, {0.7,
-              eyebrRaiseRight}, {Pi/2 - (eyebrRightTrim Pi)/6, Pi/
-                2 + (eyebrRightTrim Pi)/6}],
-            RotationTransform[
-              eyebrSlantRight, {0.5, -0.2 + eyebrRaiseRight}]]},
+            Circle[{0.5, -0.2}, {0.7, eyebrRaiseRight}, {Pi/2 - (eyebrRightTrim Pi)/6, Pi/2 + (eyebrRightTrim Pi)/6}],
+            RotationTransform[eyebrSlantRight, {0.5, -0.2 + eyebrRaiseRight}]]},
         If[TrueQ[noseColor =!= faceColor],
           {EdgeForm[Black], Thick, FaceForm[noseColor],
-            Polygon[{{0.012, 0}, {-0.012,
-              0}, {-0.1, -noseLength}, {0.1, -noseLength}}]},
-          {Thick, Black,
-            Line[{{0.012, 0}, {-0.012,
-              0}, {-0.1, -noseLength}, {0.1, -noseLength}}]}
+            Polygon[{{0.012, 0}, {-0.012, 0}, {-0.1, -noseLength}, {0.1, -noseLength}}]},
+          {Thick, Black, Line[{{0.012, 0}, {-0.012, 0}, {-0.1, -noseLength}, {0.1, -noseLength}}]}
         ], {mouthColor, Thickness[0.02],
-          Line[Table[{x, a x^2 + b x + c}, {x, -mouthWidth/2,
-            mouthWidth/2, 0.01}]]}}, opts, PlotRange -> All,
+          Line[Table[{x, a x^2 + b x + c}, {x, -mouthWidth/2, mouthWidth/2, 0.01}]]}}, opts, PlotRange -> All,
         AspectRatio -> Automatic]
     ];
+
+ChernoffFace[___] := (Message[ChernoffFace::pars]; $Failed);
 
 End[] (* `Private` *)
 
