@@ -81,19 +81,34 @@
 
     Examples of usage follow.
 
-    1. Basic example:
+    1. Very basic example:
+
+       ChernoffFace[]
+
+       With this signature ChernoffFace makes a random symmetric face.
+
+    2. Basic example:
+
+       ChernoffFace[ RandomReal[1, 12 ] ]
+
+       With this signature ChernoffFace simply rescales the argument if it has elements outside of [0,1] and
+       then matches as many as possibe of ChernoffFace["FacePartsProperties"] with the elements in the argument
+       (or their rescaled values).
+
+    2. "Proper" basic example:
 
        ChernoffFace[ AssociationThread[
-         Keys[ChernoffFace["FacePartsProperties"]] -> RandomReal[1, Length[ChernoffFace["FacePartsProperties"]]]]]
+         Keys[ChernoffFace["FacePartsProperties"]] -> RandomReal[1, Length[ChernoffFace["FacePartsProperties"]]]],
+         ImageSize->Small ]
 
-    2. A grid of faces:
+       The "proper" way to call ChernoffFace is to use an association for the facial parts placement, size, rotation,
+       and color. The options are passed to Graphics.
+
+    3. A grid of faces:
 
        Grid[ArrayReshape[#, {3, 5}, ""], Dividers -> All] &@
            Table[(
-             props = {"ForheadShape", "FaceLength", "LeftEyebrowTrim",
-                      "RightEyebrowTrim", "LeftEyebrowRaising", "RightEyebrowRaising",
-                      "EyeSlant", "LeftIris", "RightIris", "NoseLength", "MouthSmile",
-                      "MouthTwist", "MouthWidth"};
+             props = Keys[ChernoffFace["FacePartsProperties"]];
              asc = AssociationThread[props -> RandomReal[1, Length[props]]];
              asc = Join[ asc,
                          <|"FaceColor" -> Blend[{White, Brown}, RandomReal[1]],
@@ -191,13 +206,21 @@ ChernoffFace::pars = "The first argument is expected to be an association or a l
 ChernoffFace["Properties"] := DefaultChernoffFaceParameters[];
 ChernoffFace["FacePartsProperties"] := ChernoffFacePartsParameters[];
 
-ChernoffFace[vec_?(VectorQ[#,NumberQ]&)] :=
+ChernoffFace[ opts:OptionsPattern[] ] :=
+    Block[{asc},
+      asc = AssociationThread[
+        Keys[ChernoffFace["FacePartsProperties"]] -> RandomReal[1, Length[ChernoffFace["FacePartsProperties"]]]];
+      asc = Pick[asc, StringMatchQ[Keys[asc], StartOfString ~~ Except["R"] ~~ __]];
+      ChernoffFace[asc,opts]
+    ];
+
+ChernoffFace[vec_?(VectorQ[#,NumberQ]&), opts:OptionsPattern[]] :=
     Block[{mn, mx, pars},
       pars = Take[vec, UpTo[Min[Length[vec],Length[ChernoffFace["FacePartsProperties"]]]] ];
       {mn, mx} = MinMax[pars];
       If[ mn< 0 || mx > 1, pars = Rescale[pars] ];
       pars = AssociationThread[ Take[Keys[ChernoffFace["FacePartsProperties"]], Length[pars]] -> pars];
-      ChernoffFace[ pars ]
+      ChernoffFace[ pars, opts ]
     ];
 
 ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
