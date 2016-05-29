@@ -74,10 +74,11 @@
        If the nose color is the same as the face color the nose is going to be shown "in profile", otherwise as
        a filled polygon.
 
-    3. The parameter "MakeSymmetric" is by default True. Setting "MakeSymmetric" turns incomplete face specification
-       into a complete specification with the missing paired parameters made filled in. In other words, the symmetricity
-       is not enforced on the  specified paired parameters, only on the ones for which specifications are missing.
-
+    3. The parameter "MakeSymmetric" is by default True. Setting "MakeSymmetric" to true turns an incomplete face
+       specification into a complete specification with the missing paired parameters filled in. In other words,
+       the symmetricity is not enforced on the  specified paired parameters, only on the ones for which specifications
+       are missing. The facial parts parameters of ChernoffFace are ordered in a way that would likely produce
+       symmetric faces when using a random vector as an argument.
 
     Examples of usage follow.
 
@@ -131,6 +132,7 @@
     1. Better explanations of the parameters ranges.
     2. Make/describe comparison between the package function faces and the faces in original Chernoff article.
     3. (One more) advanced example.
+    4. Optinal use of tooltips for the facial parts interpretation.
 
 *)
 
@@ -158,17 +160,30 @@ VariablesRescale[ data_?MatrixQ, opts:OptionsPattern[] ] :=
       Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}] ]&, stFunc /@ Transpose[data] ]
     ];
 
+(* This was the initial development ordering (in case need for debugging.) *)
+(*DefaultChernoffFaceParameters[] := <|"ForheadShape" -> 0.5,*)
+(*"FaceLength" -> 0.5, "EyesVerticalPosition" -> 0.5,*)
+(*"LeftEyebrowTrim" -> 0.5, "RightEyebrowTrim" -> 0.5,*)
+(*"LeftEyebrowRaising" -> 0.5, "RightEyebrowRaising" -> 0.5,*)
+(*"LeftEyebrowSlant" -> 0.5, "RightEyebrowSlant" -> 0.5,*)
+(*"EyeSize" -> 0.5, "EyeSlant" -> 0.5, "LeftIris" -> 0.5,*)
+(*"RightIris" -> 0.5, "NoseLength" -> 0.5, "MouthSmile" -> 0.5,*)
+(*"MouthTwist" -> 0.5, "MouthWidth" -> 0.5, "FaceColor" -> White,*)
+(*"EyeBallColor" -> White, "IrisColor" -> GrayLevel[0.85],*)
+(*"NoseColor" -> White, "MouthColor" -> Black,*)
+(*"MakeSymmetric" -> True|>;*)
 
 DefaultChernoffFaceParameters[] := <|"ForheadShape" -> 0.5,
   "FaceLength" -> 0.5, "EyesVerticalPosition" -> 0.5,
-  "LeftEyebrowTrim" -> 0.5, "RightEyebrowTrim" -> 0.5,
-  "LeftEyebrowRaising" -> 0.5, "RightEyebrowRaising" -> 0.5,
-  "LeftEyebrowSlant" -> 0.5, "RightEyebrowSlant" -> 0.5,
-  "EyeSize" -> 0.5, "EyeSlant" -> 0.5, "LeftIris" -> 0.5,
-  "RightIris" -> 0.5, "NoseLength" -> 0.5, "MouthSmile" -> 0.5,
-  "MouthTwist" -> 0.5, "MouthWidth" -> 0.5, "FaceColor" -> White,
-  "EyeBallColor" -> White, "IrisColor" -> GrayLevel[0.85],
-  "NoseColor" -> White, "MouthColor" -> Black,
+  "EyeSize" -> 0.5, "EyeSlant" -> 0.5,
+  "LeftEyebrowSlant" -> 0.5, "LeftIris" -> 0.5,
+  "NoseLength" -> 0.5, "MouthSmile" -> 0.5,
+  "LeftEyebrowTrim" -> 0.5, "LeftEyebrowRaising" -> 0.5,
+  "MouthTwist" -> 0.5, "MouthWidth" -> 0.5,
+  "RightEyebrowTrim" -> 0.5, "RightEyebrowRaising" -> 0.5,
+  "RightEyebrowSlant" -> 0.5, "RightIris" -> 0.5,
+  "FaceColor" -> White, "IrisColor" -> GrayLevel[0.85],
+  "NoseColor" -> Automatic, "MouthColor" -> Black, "EyeBallColor" -> White,
   "MakeSymmetric" -> True|>;
 
 Clear[ChernoffFacePartsParameters]
@@ -262,6 +277,9 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       irisColor = pars["IrisColor"];
       noseColor = pars["NoseColor"];
       mouthColor = pars["MouthColor"];
+      If[ TrueQ[noseColor === Automatic],
+        noseColor = If[ TrueQ[faceColor == White], White, Darker[faceColor] ]
+      ];
       (*forheadPts={{-1,0},{-1+0.3forheadTh,1.2},{1-0.3forheadTh,1.2},{1,0}};*)
       (*{Thick,BSplineCurve[forheadPts,SplineWeights\[Rule]({1,3,3,1}/8)]},*)
       forheadPts = Table[{x, (1 - x^forheadTh)*faceLength eyesVerticalPos}, {x, Range[-1, 1, 0.05]}];
@@ -278,11 +296,10 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
             {Black, Disk[{rightIrisOffset, 0.02}, eyeSize 0.05, {0, 2 Pi}]}
           };
       Graphics[{
-        {EdgeForm[None], FaceForm[faceColor], Polygon[forheadPts], Thick,
-          Black, Line[forheadPts]},
+        {EdgeForm[None], FaceForm[faceColor], Polygon[forheadPts], Thick, Black, Line[forheadPts]},
         {faceColor,
           Disk[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
-          {Thick, Circle[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
+        {Thick, Circle[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
       (* Eyes *)
         {GeometricTransformation[leftEye, RotationTransform[eyesSlant, {-0.5, 0}]],
           GeometricTransformation[rightEye, RotationTransform[-eyesSlant, {0.5, 0}]]},
