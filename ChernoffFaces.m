@@ -52,20 +52,24 @@
 
     The Chernoff face drawn with the function `ChernoffFace` of this package can be parameterized to be asymmetric.
 
-    The parameters argument mixes (1) face parts placement, sizes, and rotation, with (2) face parts colors,
-    and (3) a parameter should it be attempted to make the face symmetric.
+    The parameters argument of `ChernoffFace` mixes
+    (1) face parts placement, sizes, and rotation, with
+    (2) face parts colors, and
+    (3) a parameter should it be attempted to make the face symmetric.
 
     1. The parameters for face parts placement, rotation, sizes are:
 
-       Keys[ChernoffFace["Properties"]]
+       Keys[ChernoffFace["FacePartsProperties"]]
 
-       {"ForheadShape", "FaceLength", "EyesVerticalPosition", \
-        "LeftEyebrowTrim", "RightEyebrowTrim", "LeftEyebrowRaising", \
-        "RightEyebrowRaising", "LeftEyebrowSlant", "RightEyebrowSlant", \
-        "EyeSize", "EyeSlant", "LeftIris", "RightIris", "NoseLength", \
-        "MouthSmile", "MouthTwist", "MouthWidth"}
+       {"FaceLength", "ForheadShape", "EyesVerticalPosition", "EyeSize", \
+        "EyeSlant", "LeftEyebrowSlant", "LeftIris", "NoseLength", \
+        "MouthSmile", "LeftEyebrowTrim", "LeftEyebrowRaising", "MouthTwist", \
+        "MouthWidth", "RightEyebrowTrim", "RightEyebrowRaising", \
+        "RightEyebrowSlant", "RightIris"}
 
-       The values of those parameters are expected to be in the interval [0,1] .
+       The values of those parameters are expected to be in the interval [0,1] . The order of the parameters
+       is chosen to favor making symmetric faces when a list of random numbers is given as an argument, and
+       to make it easier to discern the faces when multiple records are visualized.
 
     2. Here is the face parts colors group:
 
@@ -76,8 +80,8 @@
 
     3. The parameter "MakeSymmetric" is by default True. Setting "MakeSymmetric" to true turns an incomplete face
        specification into a complete specification with the missing paired parameters filled in. In other words,
-       the symmetricity is not enforced on the  specified paired parameters, only on the ones for which specifications
-       are missing. The facial parts parameters of ChernoffFace are ordered in a way that would likely produce
+       the symmetry is not enforced on the specified paired parameters, only on the ones with missing specifications.
+       The facial parts parameters of ChernoffFace are ordered in a way that would likely produce
        symmetric faces when using a random vector as an argument.
 
     Examples of usage follow.
@@ -102,7 +106,7 @@
          Keys[ChernoffFace["FacePartsProperties"]] -> RandomReal[1, Length[ChernoffFace["FacePartsProperties"]]]],
          ImageSize->Small ]
 
-       The "proper" way to call ChernoffFace is to use an association for the facial parts placement, size, rotation,
+       The "proper" way to call ChernoffFace is to use an association for the face parts placement, size, rotation,
        and color. The options are passed to Graphics.
 
     3. A grid of faces:
@@ -121,6 +125,10 @@
     direction. Using `"RightIris" -> 1 - asc["LeftIris"]` instead would change the gap between the irises and
     their placement is going be symmetric.
 
+    Given a full array of records, we most likely have to standardize and rescale the columns in order to use the
+    function ChernoffFace. To help with that the package provides the function VariablesRescale which takes has
+    the options "StandardizingFunction" and "RescaleRangeFunction".
+
     Anton Antonov
     2016-05-27
     Windermere, FL, USA
@@ -130,9 +138,9 @@
 
   TODO:
     1. Better explanations of the parameters ranges.
-    2. Make/describe comparison between the package function faces and the faces in original Chernoff article.
+    2. Make/describe comparison between the package function faces and the faces in the original Chernoff article.
     3. (One more) advanced example.
-    4. Optinal use of tooltips for the facial parts interpretation.
+    4. Optional use of tooltips for the facial parts interpretation.
 
 *)
 
@@ -143,10 +151,10 @@ BeginPackage["ChernoffFaces`"]
 ChernoffFace::usage = "ChernoffFace[pars_Association,opts] plots a Gernoff face specified by pars. The options \
 paramerter opts is passed to Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names."
 
-ChernoffFacePartsParameters::usage := "ChernoffFacePartsParameters[] returns only the names(keys) only of those \
-parameters taken by ChernoffFace that specify face parts placement, rotation, and sizes."
+ChernoffFacePartsParameters::usage := "ChernoffFacePartsParameters[] returns only those parameter associations \
+taken by ChernoffFace the keys of which specify face parts placement, rotation, and sizes."
 
-VariablesRescale::usage = "Standardizes and rescales the columns of the data."
+VariablesRescale::usage = "VariablesRescale[data, opts] standardizes and rescales the columns of the data."
 
 Begin["`Private`"]
 
@@ -173,8 +181,8 @@ VariablesRescale[ data_?MatrixQ, opts:OptionsPattern[] ] :=
 (*"NoseColor" -> White, "MouthColor" -> Black,*)
 (*"MakeSymmetric" -> True|>;*)
 
-DefaultChernoffFaceParameters[] := <|"ForheadShape" -> 0.5,
-  "FaceLength" -> 0.5, "EyesVerticalPosition" -> 0.5,
+DefaultChernoffFaceParameters[] := <|
+  "FaceLength" -> 0.5, "ForheadShape" -> 0.5, "EyesVerticalPosition" -> 0.5,
   "EyeSize" -> 0.5, "EyeSlant" -> 0.5,
   "LeftEyebrowSlant" -> 0.5, "LeftIris" -> 0.5,
   "NoseLength" -> 0.5, "MouthSmile" -> 0.5,
