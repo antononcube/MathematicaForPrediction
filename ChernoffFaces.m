@@ -129,6 +129,17 @@
     function ChernoffFace. To help with that the package provides the function VariablesRescale which takes has
     the options "StandardizingFunction" and "RescaleRangeFunction".
 
+    Consider the following example of VariableRescale invocation in which:
+    1. each column is centered around its median and then devided by the inter-quartile distance,
+    2. followed by clipping of the outliers that are outside of the disk with radius 3 times the quartile deviation, and
+    3. rescaling to the unit interval.
+
+      VariablesRescale[N@data,
+        "StandardizingFunction" -> (Standardize[#, Median, QuartileDeviation] &),
+        "RescaleRangeFunction" -> ({-3, 3} QuartileDeviation[#] &)];
+
+    (Remark: the bottom outliers are replaced with 0 and the top outliers with 1 using Clip.)
+
     Anton Antonov
     2016-05-27
     Windermere, FL, USA
@@ -165,7 +176,7 @@ VariablesRescale[ data_?MatrixQ, opts:OptionsPattern[] ] :=
     Block[{ stFunc, rangeFunc },
       stFunc = OptionValue[ "StandardizingFunction" ];
       rangeFunc = OptionValue[ "RescaleRangeFunction" ];
-      Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}] ]&, stFunc /@ Transpose[data] ]
+      Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}], {0,1} ]&, stFunc /@ Transpose[data] ]
     ];
 
 (* This was the initial development ordering (in case need for debugging.) *)
