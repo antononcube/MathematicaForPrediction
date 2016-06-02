@@ -167,6 +167,9 @@ taken by ChernoffFace the keys of which specify face parts placement, rotation, 
 
 VariablesRescale::usage = "VariablesRescale[data, opts] standardizes and rescales the columns of the data."
 
+PrototypeDeviationsRescale::usage = "PrototypeDeviationsRescale[prototype, data] standardizes and rescales \
+the columns of the data assuming prototype is the most normal (central) row of data."
+
 Begin["`Private`"]
 
 Options[VariablesRescale] = {
@@ -177,6 +180,16 @@ VariablesRescale[ data_?MatrixQ, opts:OptionsPattern[] ] :=
       stFunc = OptionValue[ "StandardizingFunction" ];
       rangeFunc = OptionValue[ "RescaleRangeFunction" ];
       Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}], {0,1} ]&, stFunc /@ Transpose[data] ]
+    ];
+
+Clear[PrototypeDeviationsRescale];
+PrototypeDeviationsRescale[prototypeItem_, items_] :=
+    Block[{},
+      (* If QuartileDeviation the {0,3} range is the same as the upper bound obtained from
+         OutlierIdentifiers::SPLUSQuartileIdentifierParameters . *)
+      Transpose@Map[
+        Clip[Rescale[Standardize[#, 0 &, StandardDeviation], {0, 3}, {0.5, 1}], {0, 1}] &,
+        Transpose@Map[# - prototypeItem &, items]]
     ];
 
 (* This was the initial development ordering (in case need for debugging.) *)
