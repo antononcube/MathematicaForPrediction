@@ -88,6 +88,10 @@
 # 1. Recommendations (e.g. Recommendations.SMR )
 # 2. RecommenderTags (e.g. RecommenderTags.SMR )
 # 3. RecommenderItems (e.g. RecommenderItems.SMR )
+#
+# 2016-06-05
+# Adding Composite pattern for combined recommendations.
+#
 #=======================================================================================
 
 #' @detail Required libraries
@@ -214,6 +218,36 @@ SMRCurrentTagTypeSignificanceFactors <- function(smr) {
   sfs01[ sfs01 == 0 ] <- 1
   res <- laply( smr$TagTypes, function(tc) sum( SMRSubMatrix( smr, tc ) ) ) / sfs01
   setNames( res, smr$TagTypes )
+}
+
+
+#' @description Restrict the recommendations vector by additional parameters and convert to a data frame.
+#' @param rvec recommendations vector
+#' @param history history of items
+#' @param nrecs number of recommendations to be returned
+#' @param removeHistory logical should the history be dropped or not
+SMRRecommendationsVectorToDF <- function( rvec, history, nrecs, removeHistory ) {
+  rvec <- as.numeric(rvec)
+  if ( is.null(nrecs) ) {
+    ## take all non-zero 
+    recInds <- rev(order(rvec))
+    recInds <- recInds[ rvec[recInds] > 0 ]
+    nrecs <- length(recInds)
+  } else {
+    recInds <- rev(order(rvec))[1:(nrecs + length(history))]
+  }
+  
+  if ( removeHistory ) {
+    dropInds <- recInds %in% history
+    recInds <- recInds[ ! dropInds ]
+  }
+  
+  if ( nrecs < length(recInds) ) {
+    recInds <- recInds[1:nrecs]
+  } 
+  recScores <- rvec[ recInds ]
+  
+  data.frame( Score = recScores, Index = recInds, stringsAsFactors=FALSE )
 }
 
 
@@ -762,15 +796,119 @@ ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns 
 }
 
 ##===========================================================
+## Composite pattern for recommenders combination
+##===========================================================
+## Here is way to construct a composite recommender object:
+
+# rcObj <- list( Recommenders = list( "SMR1" = smr1, "SMRFreq1" = smrFreq1, "SMR2" = smr2, "SMR3" = smr3 ), Weights = c(1,0.5,1,1), 
+#               NormalizationType = "quantileIntervals", MergeFunction = length )
+# class(rcObj) <- "CompositeRecommender"
+
+#' @description Calculate recommendations over a composite recommender object.
+#' @param x a recommender object
+#' @param historyItems a list of history items
+#' @param historyRatings a list of history ratings
+#' @param nrecs number of required recommendations
+#' @param removeHistory should the history be removed or not
+#' @param normalizationType normalization type, one of NULL, 'none', 'max', 'rank', 'quantileIntervals', 
+#' or 'shiftAndRescale' (same as NULL)
+#' @param mergeFunction a function to merge the recommendations lists, a function that can be applied to 
+#' a vector of scores corresponding to an item.
+#' @details If the argument normalizationType is NULL, then the object's element 'NormalizationType' is used. 
+#' If that is NULL too, then 'shiftAndRescale' is used. Examples of values of mergeFunction are 'sum', 
+#' 'max', 'mean', 'median', 'length'. If mergeFunction is NULL, then the object's element 'MergeFunction' 
+#' is used. If that is NULL too, then sum is used.
+Recommendations.CompositeRecommender <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, 
+                                                  normalizationType = NULL, mergeFunction = NULL, ... ) {
+  
+  ## Computing recommendations with each recommender
+  allRecs <- llply( x$Recommenders, function(recObj) Recommendations( recObj, 
+                                                                    historyItems = historyItems, 
+                                                                    historyRatings = historyRatings, 
+                                                                    nrecs = nrecs, 
+                                                                    removeHistory = removeHistory, ... ) )
+  
+  ## Determine weights for the recommenders
+  weights <- x$Weights
+  if ( is.null( weights ) ) { weights <- rep(1, length( x$Recommenders ) ) }
+  if ( length( weights ) < length( x$Recommenders ) ) { weights <- rep_len( weights, length.out = length( x$Recommenders ) ) }
+  
+  ## Default normalizationType if NULL
+  if ( is.null( normalizationType ) ) { normalizationType <- x$NormalizationType }
+  if ( is.null( normalizationType ) ) { normalizationType <- "shiftAndRescale" }
+  
+  ## Default mergeFunction if NULL
+  if ( is.null( mergeFunction ) ) { mergeFunction <- x$MergeFunction }
+  if ( is.null( mergeFunction ) ) { mergeFunction <- sum }
+  
+  ## Normalization of scores
+  ## Weights for the different recommenders can be used.
+  if ( normalizationType == "max" ) {
+    
+    allRecsDF <- ldply( 1:length(allRecs), function(i) { x <- allRecs[[i]]; x$Score <- weights[i] * ( x$Score / max(x$Score) ); x } )
+    
+  } else if ( normalizationType == "rank" ) {
+    
+    maxNRow <- max( laply( allRecs, nrow ) )
+    allRecsDF <- ldply( 1:length(allRecs), function(i) { x <- allRecs[[i]]; x$Score <- weights[i] * ( maxNRow - (0:(nrow(x)-1)) ); x } )
+    
+  } else if ( normalizationType == "quantileIntervals" ) {
+    
+    ## Note that here are handled quantile levels "probs" if given as an argument.
+    args <- list(...)
+    if ( !("probs" %in% names(args)) ) { probs <- seq(0,1,0.2) }
+    
+    allRecsDF <- 
+      ldply( 1:length(allRecs), function(i) { 
+        x <- allRecs[[i]]
+        qs <- quantile( x$Score, probs, na.rm = TRUE )
+        x$Score <- weights[i] * findInterval( x = x$Score, vec = qs )
+        x
+      } )
+    
+  } else if ( normalizationType == "shiftAndRescale" ) {
+    
+    ## May be just using scale would suffice.
+    ## Note that bottom outliers are removed.
+    allRecsDF <- 
+      ldply( 1:length(allRecs), function(i) { 
+        x <- allRecs[[i]]
+        qs <- quantile( x$Score, seq(0,1,0.25), na.rm = TRUE ); 
+        if ( qs[4] - qs[2] > 0 ) {
+          x$Score <- ( x$Score - qs[3] ) / ( qs[4] - qs[2] ) / 2 + 1
+        }
+        x$Score[ x$Score < 0 ] <- 0  
+        x$Score <- weights[i] * x$Score
+        x
+      })
+    
+  } else if ( normalizationType == "none" ) {
+    
+    allRecsDF <- do.call( rbind, allRecs )
+    
+  } else {
+    stop( "The argument 'normalizationType' is not one of: NULL, 'none', 'max', 'rank', 'quantileIntervals', 'shiftAndRescale'.", call. = TRUE )
+  }
+  
+  allRecsDF <- allRecsDF[ allRecsDF$Score > 0, ]
+  ## Note, the merging here is with merge-sum. Other merging can be applied.
+  res <- ddply( allRecsDF, "Item", function(x) { data.frame( Score = mergeFunction(x$Score), Item = x$Item[1], stringsAsFactors = FALSE ) } )  
+  res <- res[ order(-res$Score), ]
+  
+  res
+}
+
+
+##===========================================================
 ## Recommenders items and tags query methods
 ##===========================================================
 
 RecommenderTags <- function( recommender )  UseMethod("RecommenderTags")
 RecommenderTags.SMR <- function( recommender ) colnames( recommender$M )
-
+RecommenderTags.CompositeRecommender <- function( recommender ) unique( unlist( llply( recommender$Recommenders, RecommenderTags ) ) )
 
 RecommenderItems <- function( recommender ) UseMethod("RecommenderItems")
 RecommenderItems.SMR <- function( recommender ) rownames( recommender$M )
-
+RecommenderItems.CompositeRecommender <- function( recommender ) unique( unlist( llply( recommender$Recommenders, RecommenderItems ) ) )
 
 
