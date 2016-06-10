@@ -1,6 +1,6 @@
 (*
     Sparse matrix recommender framework in Mathematica
-    Copyright (C) 2014  Anton Antonov
+    Copyright (C) 2014-2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,14 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov,
-	antononcube@gmail.com,
-	7320 Colbury Ave,
-	Windermere, Florida, USA.
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -457,8 +456,9 @@ ItemRecommender[d___]["RatingPrediction"][inputShowInds:{_Integer...},inputRatin
     Block[{inds,norms,t,smat=ItemRecommender[d]["M"]},
       t=smat[[recInds]].Transpose[smat[[inputShowInds]]];
       norms=Total/@t;
+      norms = If[#==0,1,#] & /@ norms;
       t=t.inputRatings;
-      t=t/norms;
+      t=t/norms
       Transpose[{t,recInds}]
     ];
 
@@ -896,9 +896,10 @@ AddRatingButton[searchResult:{{_,_,___}...},observedVar_Symbol,maxRating_,comman
 (* ::Section::Closed:: *)
 (*Experiments*)
 
-
+(*
 offsets=FoldList[Plus,0,{10,10,10}]
 
 
 Flatten[MapThread[ConstantArray[#1,#2]&,{{1,20,300},Subtract@@@Partition[Reverse[{0,10,20,30}],2,1]}]]
 %//Length
+*)
