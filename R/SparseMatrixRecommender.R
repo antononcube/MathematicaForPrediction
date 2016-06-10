@@ -43,19 +43,21 @@
 # History
 # Started: November 2013,
 # Updated: December 2013, May 2014, June 2014, July 2014, December 2014,
-# January 2016.
+# January 2016, June 2016.
 #=======================================================================================
 #
 # TODO Argument type and ranks check
 # Mathematica has pattern matching for the arguments, here I have to make type checks.
 # Note that S4 provides some of this functionality.
-# TODO Recommender Composite object
-# Application of the Composite Design Pattern for a collection of recommenders.
-# For example, SMR, PageRank recommenders, and HubItemDynamicRanks recommender.
-# Needed is a function for the combination of recommendations from many recommenders.
-# There should be an argument allowing the merging of the recommendations to be done
-# according to different types normalizations.
-
+#
+# TODO Union of two SMRs by sub-matrices 
+# [ ] Given two matrices of the same tag type data for two SMRs make
+#     one matrix that have the union of the rownames and colnames.
+#     - Take care of collisions.
+#       - Trivially done with matrix summation and clipping.
+# [ ] Make the SMR sub-matrix union for
+#     - a given pair of SMRs, and
+#     - a given a list of pairs of tag types.
 #---------------------------------------------------------------------------------------
 
 # 05/02/14
@@ -90,8 +92,16 @@
 # 3. RecommenderItems (e.g. RecommenderItems.SMR )
 #
 # 2016-06-05
-# Adding Composite pattern for combined recommendations.
+# Added an implementation of the Composite pattern for combined recommendations.
+# - Application of the Composite Design Pattern for a collection of recommenders using S3 objects
+#   For example, SMR, PageRank recommenders, and HubItemDynamicRanks recommender.
+# - Implemented a function for the combination of recommendations from many recommenders.
+# - There is an argument allowing the merging of the recommendations to be done
+#   according to different types normalizations.
 #
+# 2016-06-08
+# Added functions for converting the SMR sparse matrices data into data frames
+# both (long and wide forms).
 #=======================================================================================
 
 #' @detail Required libraries
@@ -728,6 +738,58 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
   newSMR
 }
 
+#' @description Makes a data frame of a sparse matrix
+#' @param smr a sparse matrix object
+#' @param tagType tag type 
+SMRSparseMatrixToDF <- function( smr, tagType  ) {
+  
+  if( !(tagType %in% smr$TagTypes) ) {
+    stop("The parameter tagType is not of the tag types of the SMR object.")
+  }
+  
+  smat <- SMRSubMatrix( smr = smr, tagType = tagType )
+  df <- summary(smat) 
+  df <- df[ df$x > 0, ]
+  
+  df <- data.frame(  Rownames = rownames(smat)[df$i], Colnames = colnames(smat)[df$j], Weight = df$x, stringsAsFactors = FALSE )
+  
+  names(df) <- c( smr$ItemColumnName, tagType, "Weight")
+  df
+}
+
+#' @description Long form of the data frame
+#' @param smr a sparse matrix object
+#' @param tagTypes the tag types to make the data frame with
+#' @param .progress progress argument for plyr::llply
+SMRMatricesToLongDF <- function( smr, tagTypes = NULL, .progress = "none" ) {
+  
+  if ( is.null(tagTypes) ) { tagTypes = smr$TagTypes }
+
+  dfs <- 
+    llply( tagTypes, function(tt) {
+      df <- SMRSparseMatrixToDF(smr, tt)
+      if ( nrow(df) == 0 ) { NULL }
+      else {
+        names(df) <- c( smr$ItemColumnName, "Value", "Weight")
+        cbind(df, TagType = tt, stringsAsFactors = FALSE ) 
+      }
+    },.progress = .progress )
+  
+  dfs <- dfs[ !is.null(dfs) ]
+  do.call( rbind, dfs )
+}
+
+#' @description Long form of the data frame
+#' @param smr a sparse matrix object
+#' @param tagTypes the tag types to make the data frame with
+#' @param .progress progress argument for plyr::llply
+SMRMatricesToWideDF <- function( smr, tagTypes = NULL, sep = ", ", .progress = "none" ) {
+  df <- SMRMatricesToLongDF( smr, tagTypes, .progress = .progress )
+  dfCast <- reshape2::dcast( data = df, 
+                             formula = as.formula( paste( smr$ItemColumnName, " ~ TagType " ) ), 
+                             value.var = "Value", fun.aggregate = function(x) paste(x, collapse = sep ) )
+}
+
 
 #=======================================================================================
 # Object-Oriented Programming (OOP) implementations
@@ -823,10 +885,10 @@ Recommendations.CompositeRecommender <- function( x, historyItems, historyRating
   
   ## Computing recommendations with each recommender
   allRecs <- llply( x$Recommenders, function(recObj) Recommendations( recObj, 
-                                                                    historyItems = historyItems, 
-                                                                    historyRatings = historyRatings, 
-                                                                    nrecs = nrecs, 
-                                                                    removeHistory = removeHistory, ... ) )
+                                                                      historyItems = historyItems, 
+                                                                      historyRatings = historyRatings, 
+                                                                      nrecs = nrecs, 
+                                                                      removeHistory = removeHistory, ... ) )
   
   ## Determine weights for the recommenders
   weights <- x$Weights
