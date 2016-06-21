@@ -34,11 +34,11 @@
   ## Some theory
 
     Brief theory for the Lebesgue integration algorithms that are implemented.
-    (Should be rendered with Markdown+LaTeX editors/tools. I used Emacs+Pandoc)
+    (Should be rendered with Markdown+LaTeX editors/tools. I used Emacs+Pandoc. )
 
-    Consider the non-negative boundable measurable function f:
+    Consider the non-negative boundable measurable function $f$:
 
-    $$ y=f(x), f(x) \geq 0, x \in \Omega $$
+    $$ y=f(x), f(x) \geq 0, x \in \Omega .$$
 
     We denote by $\mu(y)$ the measure for the points in $\Omega$ for which $f(x)>=y$, i.e.
 
@@ -55,9 +55,9 @@
 
     The restriction $f(x)>=0$ can be handled by defining the following functions $f_1$ and $f_2$ :
 
-    $$ f_1 x := \frac{1}{2} (\left| f(x) \right| + f(x) ), $$
+    $$ f_1(x) := \frac{1}{2} (\left| f(x) \right| + f(x) ), $$
 
-    $$ f_2 x := \frac{1}{2} (\left| f(x) \right| - f(x) ), $$
+    $$ f_2(x) := \frac{1}{2} (\left| f(x) \right| - f(x) ), $$
 
     and using the formula
 
@@ -86,6 +86,13 @@
     res = DeleteCases[res, fval, Infinity]
 
 
+  ### nD
+
+    NIntegrate[x1 + x2 + x3 + Sqrt[x4] + x5, {x1, 0, 1}, {x2, 0, 2}, {x3, 0, 3}, {x4, 0, 5}, {x5, 0, 10},
+      Method -> {LebesgueIntegration}]
+    (* 2847.06 *)
+
+
   ### Handling of variable ranges
 
     Explicit nesting in "UnitCubeRescaling" has to be done:
@@ -95,11 +102,13 @@
           Method -> {LebesgueIntegrationStrategy, "PointsGenerator" -> Random}},
       PrecisionGoal -> 3]
 
+
   ## Usage as an integration rule
 
   ### 1D
 
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegrationRule, PrecisionGoal -> 3]
+
 
   ### 2D
 
@@ -107,6 +116,13 @@
       Method -> {LebesgueIntegrationRule, "Points" -> 3000,
       Method -> "ClenshawCurtisRule"}, "SingularityHandler" -> None},
       PrecisionGoal -> 4]
+
+
+  ### nD
+    NIntegrate[ x1 + x2 + x3 + Sqrt[x4] + x5, {x1, 0, 1}, {x2, 0, 2}, {x3, 0, 3}, {x4, 0, 5}, {x5, 0, 10},
+      Method -> LebesgueIntegrationRule, PrecisionGoal -> 2]
+    (* 2846.31 *)
+
 
   ## References
 
@@ -118,23 +134,23 @@
 
   ## TODO
 
-     1. [ ] Proper computation of volume estimates corresponding to the sampling points for
+     1. [ ] HIGH Proper computation of volume estimates corresponding to the sampling points for
             "Partitioning"->"RegularGrid".
 
-     2. [ ] Proper computation of splitting axis for LebesgueIntegrationRule.
+     2. [ ] HIGH Proper computation of splitting axis for LebesgueIntegrationRule.
             This should be same/similar as for MonteCarloRule.
 
-     3. [ ] Tests showing functionality.
+     3. [ ] MEDIUM Tests showing functionality.
 
-     4. Handling of variable ranges by default in the integration strategy.
+     4. [ ] HIGH Handling of variable ranges by default in the integration strategy.
         As in NIntegrate[f[x,y],{x,0,1},{y,x,2}] .
         Right now explicit specification of "UnitCubeRescaling" is required.
 
-     5. Better handling of evaluation monitoring.
+     5. [ ] LOW Better handling of evaluation monitoring.
 
-     6. IntegrationMonitor handling implementation.
+     6. [ ] LOW IntegrationMonitor handling implementation.
 
-     7. Code refactoring.
+     7. [ ] LOW Code refactoring.
         The strategy and rule have common code, especially for initialization.
         But I do expect those algorithms to devlop into more peculiar way.
         So I am not sure refactoring needed. This package was also created in part for didactic reasons, so
