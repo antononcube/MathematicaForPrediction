@@ -137,14 +137,14 @@
      1. [ ] HIGH Proper computation of volume estimates corresponding to the sampling points for
             "Partitioning"->"RegularGrid".
 
-     2. [ ] HIGH Proper computation of splitting axis for LebesgueIntegrationRule.
-            This should be same/similar as for MonteCarloRule.
+     2. [ ] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule.
+            This should be same/similar as for MonteCarloRule. Right now random selection of the axis is done.
 
-     3. [ ] MEDIUM Tests showing functionality.
+     3. [X] MEDIUM Tests showing functionality.
 
-     4. [ ] HIGH Handling of variable ranges by default in the integration strategy.
+     4. [ ] LOW Messages for no Handling of variable ranges for "SymbolicProcessing"->0 .
         As in NIntegrate[f[x,y],{x,0,1},{y,x,2}] .
-        Right now explicit specification of "UnitCubeRescaling" is required.
+        Right now explicit specification of "UnitCubeRescaling" is required if "SymbolicProcessing"->0 .
 
      5. [ ] LOW Better handling of evaluation monitoring.
 
@@ -190,7 +190,7 @@ Options[LebesgueIntegration] = {
   "RegularGridDimensions" -> Automatic,
   "Points" -> Automatic,
   "LebesgueIntegralVariableSymbol" -> Automatic,
-  "SymbolicProcessing" -> 0
+  "SymbolicProcessing" -> 5
 };
 
 LebesgueIntegrationProperties = Options[LebesgueIntegration][[All, 1]];
@@ -204,8 +204,8 @@ LebesgueIntegration /:
     Block[{method, RNGenerator, npoints, regularGridStep, regionPartitioning, lebesgueIntegralVar,
       t, symbproctime},
 
-      t = NIntegrate`GetMethodOptionValues[LebesgueIntegration,
-        LebesgueIntegrationProperties, strOpts];
+
+      t = NIntegrate`GetMethodOptionValues[LebesgueIntegration, LebesgueIntegrationProperties, strOpts];
 
       (* Method *)
       If[t === $Failed, Return[$Failed]];
