@@ -174,6 +174,9 @@ as an NIntegrate method."
 LebesgueIntegrationRule::usage = "Implementation of a Lebesgue integration algorithm as an integration rule \
 for NIntegrate."
 
+GridLebesgueIntegrationRule::usage = "Implementation of a Lebesgue integration algorithm as an integration rule \
+that uses regular grid membership of (pseudo-)random points."
+
 Begin["`Private`"]
 
 (**************************************************************************)
@@ -335,29 +338,32 @@ LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, regionPartitioning_,
 
 
 (**************************************************************************)
-(* Definition as an integration rule                                      *)
+(* Definition of point-wise integration rule                                      *)
 (**************************************************************************)
-
 
 Clear[LebesgueIntegrationRule]
 Options[LebesgueIntegrationRule] = {
   "Method" -> "ClenshawCurtisRule",
   "PointsGenerator" -> "Sobol",
-  "Partitioning" -> Automatic,
-  "RegularGridStep" -> Automatic,
+  "PointwiseMeasure" -> Automatic,
   "Points" -> Automatic
 };
+
 LebesgueIntegrationRuleProperties = Part[Options[LebesgueIntegrationRule], All, 1];
+
+LebesgueIntegrationRule::vmesh =
+    "The value \"VoronoiMesh\" of the option \"PoinwiseMeasure\" can be used only \
+for dimension 2. Proceeding with \"Uniform\" instead.";
+
 LebesgueIntegrationRule /:
     NIntegrate`InitializeIntegrationRule[LebesgueIntegrationRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
-    Module[{t, method, RNGenerator, regionPartitioning, regularGridStep,
-      npoints, lebesgueIntegralVar, pos, absc, weights, errweights, points,
-      pointVolumes, wprec, dim, vmesh},
+    Module[{t, method, RNGenerator, pointwiseMeasure, npoints, lebesgueIntegralVar,
+      absc, weights, errweights, points, pointVolumes, wprec, dim, vmesh},
 
       t = NIntegrate`GetMethodOptionValues[LebesgueIntegrationRule, LebesgueIntegrationRuleProperties, ruleOpts];
 
       If[t === $Failed, Return[$Failed]];
-      {method, RNGenerator, regionPartitioning, regularGridStep, npoints} = t;
+      {method, RNGenerator, pointwiseMeasure, npoints} = t;
 
       (* Method *)
       If[TrueQ[method === Automatic], method = "GlobalAdaptive"];
@@ -366,22 +372,21 @@ LebesgueIntegrationRule /:
       If[t === $Failed, Return[$Failed]];
       {absc, weights, errweights} = t[[1]];
 
-      (* Paritioning *)
-      If[regionPartitioning === Automatic,
+      (* Pointwise measure *)
+      If[pointwiseMeasure === Automatic,
         If[Length[ranges] <= 2,
-          regionPartitioning = "VoronoiMesh",
-          regionPartitioning = "RegularGrid"
+          pointwiseMeasure = "VoronoiMesh",
+          pointwiseMeasure = "Uniform"
         ];
       ];
 
-      If[MemberQ[{"VoronoiMesh", VoronoiMesh}, regionPartitioning] &&
-          Length[ranges] > 2,
+      If[MemberQ[{"VoronoiMesh", VoronoiMesh}, pointwiseMeasure] && Length[ranges] > 2,
         Message[LebesgueIntegrationRule::vmesh];
-        regionPartitioning = "RegularGrid";
+        pointwiseMeasure = "Uniform";
       ];
 
-      If[! MemberQ[{"VoronoiMesh", VoronoiMesh, "RegularGrid"}, regionPartitioning],
-        Message[NIntegrate::moptxn, regionPartitioning, "RegionGrid", {"VoronoiMesh", "RegularGrid"}];
+      If[! MemberQ[{"VoronoiMesh", VoronoiMesh, "Uniform"}, pointwiseMeasure],
+        Message[NIntegrate::moptxn, pointwiseMeasure, "Uniform", {"VoronoiMesh", "Uniform"}];
         Return[$Failed];
       ];
 
@@ -413,7 +418,7 @@ LebesgueIntegrationRule /:
       ];
 
       (* Find point volumes *)
-      If[TrueQ[(regionPartitioning === VoronoiMesh || regionPartitioning == "VoronoiMesh") && dim == 2],
+      If[TrueQ[(pointwiseMeasure === VoronoiMesh || pointwiseMeasure == "VoronoiMesh") && dim == 2],
         (* There is some problem in the VoronoiMesh 1D case, VoronoiMesh[__,{{a, b}}], so we skip it.*)
         vmesh = VoronoiMesh[points, ranges];
         pointVolumes = PropertyValue[{vmesh, dim}, MeshCellMeasure],
@@ -436,7 +441,6 @@ IRuleEstimate[f_, {a_, b_}, {absc_, weights_, errweights_}] :=
 
 
 (* The integration rule algorithm implementation uses EstimateMeasure defined above for the strategy. *)
-
 LebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_,
   pointVolumes_}]["ApproximateIntegral"[region_]] :=
     Block[{regionPoints, factor, pointFuncVals, pointAbsVals, pointVals, offset, integral1, integral2},
@@ -459,8 +463,8 @@ LebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_,
 
       integral1 = {offset, 0} +
           IRuleEstimate[
-            EstimateMeasure[#, pointVals, factor*pointVolumes] &, {Min[pointVals],
-            Max[pointVals]}, {absc, weights, errweights}];
+            EstimateMeasure[#, pointVals, factor*pointVolumes] &,
+            {Min[pointVals], Max[pointVals]}, {absc, weights, errweights}];
 
       (* Second integral calculation *)
       pointVals = 1/2 (pointAbsVals - pointFuncVals);
@@ -469,14 +473,196 @@ LebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_,
 
       integral2 = {offset, 0} +
           IRuleEstimate[
-            EstimateMeasure[#, pointVals, factor*pointVolumes] &, {Min[pointVals],
-            Max[pointVals]}, {absc, weights, errweights}];
+            EstimateMeasure[#, pointVals, factor*pointVolumes] &,
+            {Min[pointVals], Max[pointVals]}, {absc, weights, errweights}];
 
       (* Proper splitting axis selection has to be done as in MonteCarloRule instead of just random axis pick. *)
       { integral1[[1]] - integral2[[1]],
         integral1[[2]] + integral2[[2]],
         RandomInteger[{1, Length[region["Boundaries"]]}]}
     ];
+
+
+(**************************************************************************)
+(* Measure estimates by a regular grid integration rule                   *)
+(**************************************************************************)
+
+Clear[CellPointIndices]
+CellPointIndices[points : {{_?NumberQ ..} ..}, ncells : {_?NumberQ ..}] :=
+    Block[{cellsOrigins, cellSizes, cellOriginToIndexRules, pointCells,
+      fvec, pointToCellIndexRules, pointIndexToCellIndexRules,
+      cellIndexToPointCountRules, t, missingCells},
+      cellsOrigins = N[MakeCells[ncells]];
+      cellSizes = N[1/ncells];
+      cellOriginToIndexRules = Dispatch@Thread[cellsOrigins -> Range[Length[cellsOrigins]]];
+      pointCells =
+          Transpose[
+            MapThread[
+              QuotientRemainder[#1, #2][[All, 1]] &, {Transpose[points], cellSizes}]] /. cellOriginToIndexRules;
+      fvec = Reverse@FoldList[Times, 1, Reverse[Rest[ncells]]];
+      pointCells = Map[fvec.# + 1 &, pointCells];
+      pointToCellIndexRules = Thread[points -> pointCells];
+      pointIndexToCellIndexRules = Thread[Range[Length[points]] -> pointCells];
+      (*cellIndexToPointCountRules = Rule @@@ Tally[Range[Length[points]] /. pointIndexToCellIndexRules];*)
+      t = SortBy[ Map[#[[1, 2]] -> #[[All, 1]] &,
+        GatherBy[List @@@ pointIndexToCellIndexRules, #[[2]] &]], First];
+      missingCells = Complement[ Range[Apply[Times,ncells]], t[[All,1]]];
+      If[Length[missingCells] > 0, t = Join[ t, Map[#->{}&, missingCells]] ];
+      {t, #[[2]] & /@ t, missingCells}
+    ];
+
+Clear[CellMinMaxValues]
+CellMinMaxValues[func_, points : {{_?NumberQ ..} ..}, cellPointIndices : {{_Integer ..} ..}] :=
+    CellMinMaxValues[func, points, cellPointIndices, Table[{0, 1}, {Length[points[[1]]]}]];
+CellMinMaxValues[func_, points : {{_?NumberQ ..} ..}, cellPointIndices : {{_Integer ..} ..},
+  boundaries : {{_?NumberQ, _?NumberQ} ..}] :=
+    Block[{fs, fs1, fs2},
+      fs = func @@@
+          Transpose[ MapThread[ Rescale[#1, {0, 1}, #2] &, {Transpose[points], boundaries}] ];
+      fs1 = (Abs[fs] + fs)/2;
+      fs2 = (Abs[fs] - fs)/2;
+      {Transpose@Map[Through[{Min, Max}[fs1[[#]]]] &, cellPointIndices],
+        Transpose@Map[Through[{Min, Max}[fs2[[#]]]] &, cellPointIndices]}
+    ] /; Length[points[[1]]] == Length[boundaries];
+
+CellEstimateMeasure[fval_?NumericQ, regionMinVals : {_?NumberQ ...},
+  regionMaxVals : {_?NumberQ ...}, cellVolume_?NumberQ] :=
+    Block[{pindsMin, pindsMax, fmaxdiffs, denomdiffs},
+      pindsMin = Clip[Sign[regionMinVals - fval], {0, 1}, {0, 1}];
+      fmaxdiffs = regionMaxVals - fval;
+      pindsMax = Clip[Sign[fmaxdiffs], {0, 1}, {0, 1}];
+      denomdiffs = Map[If[# == 0, 1, #] &, Abs[regionMaxVals - regionMinVals]];
+      cellVolume (Total[pindsMin] + ((Abs[fmaxdiffs]/denomdiffs).((1 - pindsMin)* pindsMax)))
+    ]
+
+Clear[GridLebesgueIntegrationRule]
+Options[GridLebesgueIntegrationRule] = {
+  "Method" -> "ClenshawCurtisRule",
+  "PointsGenerator" -> "Sobol",
+  "GridSizes" -> Automatic,
+  "Points" -> Automatic
+};
+GridLebesgueIntegrationRuleProperties = Part[Options[GridLebesgueIntegrationRule], All, 1];
+
+
+GridLebesgueIntegrationRule::gsizes =
+    "The value of the option \"GridSizes\" is expected to be Automatic or a list of positive integers.";
+
+GridLebesgueIntegrationRule::ecells =
+    "Using the specified option values `1` cells of the grid for measure estimation are have not points.";
+
+
+GridLebesgueIntegrationRule /:
+    NIntegrate`InitializeIntegrationRule[GridLebesgueIntegrationRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
+    Module[{t, method, RNGenerator, gridSizes, npoints,
+      absc, weights, errweights, points, pointVolumes, wprec, dim, cellPointIndices, cellVolume},
+
+      t = NIntegrate`GetMethodOptionValues[GridLebesgueIntegrationRule, GridLebesgueIntegrationRuleProperties, ruleOpts];
+
+      If[t === $Failed, Return[$Failed]];
+      {method, RNGenerator, gridSizes, npoints} = t;
+
+      (* Method *)
+      If[TrueQ[method === Automatic], method = "GlobalAdaptive"];
+
+      t = NIntegrate`MOptionValue[method, nfs, ranges, allOpts];
+      If[t === $Failed, Return[$Failed]];
+      {absc, weights, errweights} = t[[1]];
+
+      (* Points *)
+      Which[
+        npoints === Automatic && Length[ranges] == 1, npoints = 1000,
+        npoints === Automatic && Length[ranges] > 1, npoints = 10^4
+      ];
+
+      If[! TrueQ[npoints >= 0] ,
+        Message[NIntegrate::intpm, "Points" -> npoints, 2];
+        Return[$Failed];
+      ];
+
+      (* Lebesgue rule points and volumes. *)
+      wprec = WorkingPrecision /. allOpts;
+      dim = Length[ranges];
+
+      (* Generate points *)
+      If[TrueQ[RNGenerator == "Sobol" || RNGenerator == "Niederreiter"],
+      (* We cannot set the working precision here. *)
+        BlockRandom[
+          SeedRandom[0,
+            Method -> {"MKL", Method -> {RNGenerator, "Dimension" -> dim}}];
+          points = RandomReal[{0, 1}, {npoints, dim}];
+        ],
+      (*ELSE*)
+        points = RandomReal[{0, 1}, {npoints, dim}, WorkingPrecision -> wprec];
+      ];
+
+      (* Grid sizes *)
+      If[ IntegerQ[gridSizes], gridSizes = {gridSizes}];
+      If[ TrueQ[gridSizes === Automatic], gridSizes = Table[10, {Length[ranges]}] ];
+
+      If[ ! ( MatchQ[gridSizes,{_Integer ..}] && Apply[And,Map[#>0&, gridSizes]] ),
+        Message[GridLebesgueIntegrationRule::gsizes];
+        Return[$Failed];
+      ];
+
+      Which[
+        Length[gridSizes] < Length[ranges],
+          gridSizes = Join[ gridSizes, Table[gridSizes[[-1]],{Length[ranges]-Length[gridSizes]}] ],
+        Length[gridSizes] > Length[ranges],
+          gridSizes = Take[gridSizes,Length[ranges]]
+      ];
+
+      (* Find point-cell associations *)
+      t = CellPointIndices[ points, gridSizes ];
+
+      (* There should be a check does every cell have at least a point. *)
+      If[ Length[ t[[3]] ] > 0,
+        Message[GridLebesgueIntegrationRule::ecells,Length[t[[3]]]];
+        Return[$Failed];
+      ];
+      cellPointIndices = t[[2]];
+
+      cellVolume = N[ 1 / Apply[Times,gridSizes], wprec ];
+
+      GridLebesgueIntegrationRule[{{absc, weights, errweights}, method, points, gridSizes, cellPointIndices, cellVolume}]
+    ];
+
+GridLebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_, gridSizes_, cellPointIndices_,
+  cellVolume_}]["ApproximateIntegral"[region_]] :=
+    Block[{regionPoints, factor, offset, integral1, integral2, minVals, maxVals, t},
+
+      factor = Apply[Times, Abs[Subtract @@@ region["Boundaries"]]];
+
+      (* Integrals calculation *)
+      t = CellMinMaxValues[ region["NumericalFunction"], points, cellPointIndices, region["Boundaries"]];
+
+
+      (* First integral calculation *)
+      {minVals, maxVals} = t[[1]];
+
+      offset = Min[minVals] * CellEstimateMeasure[Min[minVals], minVals, maxVals, factor*cellVolume];
+
+      integral1 = {offset, 0} +
+          IRuleEstimate[
+            CellEstimateMeasure[#, minVals, maxVals, factor*cellVolume] &,
+            {Min[minVals], Max[maxVals]}, {absc, weights, errweights}];
+
+      (* Second integral calculation *)
+      {minVals, maxVals} = t[[2]];
+
+      offset = Min[minVals] * CellEstimateMeasure[Min[minVals], minVals, maxVals, factor*cellVolume];
+
+      integral2 = {offset, 0} +
+          IRuleEstimate[
+            CellEstimateMeasure[#, minVals, maxVals, factor*cellVolume] &,
+            {Min[minVals], Max[maxVals]}, {absc, weights, errweights}];
+
+      (* Proper splitting axis selection has to be done as in MonteCarloRule instead of just random axis pick. *)
+      { integral1[[1]] - integral2[[1]],
+        integral1[[2]] + integral2[[2]],
+        RandomInteger[{1, Length[region["Boundaries"]]}]}
+    ];
+
 
 End[] (* `Private` *)
 
