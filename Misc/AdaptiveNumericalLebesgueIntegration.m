@@ -134,8 +134,11 @@
 
   ## TODO
 
-     1. [ ] HIGH Proper computation of volume estimates corresponding to the sampling points for
+     1. [X] HIGH Proper computation of volume estimates corresponding to the sampling points for
             "Partitioning"->"RegularGrid".
+            Instead of fiddling with the cell and point volumes, I implementended a separate integration rule,
+            GridLebesgueIntegrationRule, that uses a regular grid over a set of random points. That rule adheres
+            very closely to the algorithm descriptions in the article [1] and book [2].
 
      2. [ ] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule.
             This should be same/similar as for MonteCarloRule. Right now random selection of the axis is done.
