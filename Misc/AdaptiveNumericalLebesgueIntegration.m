@@ -109,6 +109,8 @@
 
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegrationRule, PrecisionGoal -> 3]
 
+    NIntegrate[Sqrt[x], {x, 0, 2}, Method -> GridLebesgueIntegrationRule, PrecisionGoal -> 3]
+
 
   ### 2D
 
@@ -117,6 +119,10 @@
       Method -> "ClenshawCurtisRule"}, "SingularityHandler" -> None},
       PrecisionGoal -> 4]
 
+    NIntegrate[Sin[x + y], {x, 1, 2}, {y, -1, 1}, Method -> {"GlobalAdaptive",
+      Method -> {GridLebesgueIntegrationRule, "Points" -> 300, "GridSizes"->5,
+      Method -> "ClenshawCurtisRule"}, "SingularityHandler" -> None},
+      PrecisionGoal -> 4]
 
   ### nD
     NIntegrate[ x1 + x2 + x3 + Sqrt[x4] + x5, {x1, 0, 1}, {x2, 0, 2}, {x3, 0, 3}, {x4, 0, 5}, {x5, 0, 10},
@@ -131,6 +137,11 @@
     [2] T. He, Dimensionality Reducing Expansion of Multivariate Integration, 2001, Birkhauser Boston.
         ISBN-13:978-1-4612-7414-8 .
 
+    [3] William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery.
+        Numerical Recipes in C (2nd Ed.): The Art of Scientific Computing, 1992,
+        Cambridge University Press, New York, NY, USA.
+        URL: http://www.nrbook.com/a/bookcpdf.php
+        Chapter "7.8 Adaptive and Recursive Monte Carlo Methods" page 316.
 
   ## TODO
 
@@ -140,8 +151,10 @@
             GridLebesgueIntegrationRule, that uses a regular grid over a set of random points. That rule adheres
             very closely to the algorithm descriptions in the article [1] and book [2].
 
-     2. [ ] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule.
-            This should be same/similar as for MonteCarloRule. Right now random selection of the axis is done.
+     2. [ ] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule and
+            GridLebesgueIntegrationRule.
+            This should be same/similar as for MonteCarloRule see [3].
+            Right now random selection of the axis is done.
 
      3. [X] MEDIUM Tests showing functionality.
 
