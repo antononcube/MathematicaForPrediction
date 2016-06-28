@@ -25,11 +25,23 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2016-06-19 *)
 
-(* :Package Version: 0.9 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2016 Anton Antonov *)
 (* :Keywords: NIntegrate, Lebesgue integral, set measure, integration strategy, dimension reduction *)
 (* :Discussion:
+
+  ## Goals
+
+    This package is made with three goals in mind.
+    1. To have a Lebesgue integration implementaion (for study and experiments).
+    2. To able to utilized Mathematica's (advanced) features of geometric computation in numerical integration.
+    3. To provide a didactic, full blown implementations of non-trivial integration rules and strategies within
+       NIntegrate`s framework. (Especially, what would be called "non-standard" algorithms.)
+
+    At this point only goals 1 and 3 are achieved. To achieve Goal 2 it is necessary to do further studies,
+    development, and code refactoring.
+
 
   ## Some theory
 
