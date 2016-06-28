@@ -401,7 +401,7 @@ LebesgueIntegrationRule::noptval = "The value `1` given to the option `2` is not
 
 LebesgueIntegrationRule /:
     NIntegrate`InitializeIntegrationRule[LebesgueIntegrationRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
-    Module[{t, method, RNGenerator, pointwiseMeasure, npoints, axisSelector,
+    Module[{t, method, RNGenerator, pointwiseMeasure, npoints, axisSelector, axisSelectorPointsFraction,
       absc, weights, errweights, points, pointVolumes, wprec, dim, vmesh, axisSplitPositions},
 
       t = NIntegrate`GetMethodOptionValues[LebesgueIntegrationRule, LebesgueIntegrationRuleProperties, ruleOpts];
@@ -446,12 +446,9 @@ LebesgueIntegrationRule /:
       ];
 
       (* AxisSelector *)
-      If[ TrueQ[axisSelector===Automatic], axisSelector = "MinVariance"];
-
-      If[! MemberQ[{"MinVariance", "Random", Random}, axisSelector],
-        Message[LebesgueIntegrationRule::noptval, axisSelector, "AxisSelector", {"MinVariance", "Random"}];
-        Return[$Failed];
-      ];
+      t = NIntegrate`MonteCarloRuleDump`AxisSelectorParser[axisSelector, ruleOpts];
+      If[t === $Failed, Return[$Failed]];
+      {axisSelector, axisSelectorPointsFraction} = t;
 
       (* Lebesgue rule points and volumes. *)
       wprec = WorkingPrecision /. allOpts;
@@ -483,7 +480,7 @@ LebesgueIntegrationRule /:
       (* Splitting axis selection data *)
       (* Note the hard-coded fraction. *)
       If[ TrueQ[axisSelector == "MinVariance"] && dim > 1,
-        axisSplitPositions = AxisSelectionPoints[ points, 1/10],
+        axisSplitPositions = AxisSelectionPoints[ points, axisSelectorPointsFraction],
         axisSplitPositions = None
       ];
 
@@ -621,7 +618,7 @@ GridLebesgueIntegrationRule /:
     NIntegrate`InitializeIntegrationRule[GridLebesgueIntegrationRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
     Module[{t, method, RNGenerator, gridSizes, npoints,
       absc, weights, errweights, points, pointVolumes, wprec, dim, cellPointIndices, cellVolume,
-      axisSelector, axisSplitPositions},
+      axisSelector, axisSelectorPointsFraction, axisSplitPositions},
 
       t = NIntegrate`GetMethodOptionValues[GridLebesgueIntegrationRule, GridLebesgueIntegrationRuleProperties, ruleOpts];
 
@@ -647,12 +644,9 @@ GridLebesgueIntegrationRule /:
       ];
 
       (* AxisSelector *)
-      If[ TrueQ[axisSelector===Automatic], axisSelector = "MinVariance"];
-
-      If[! MemberQ[{"MinVariance", "Random", Random}, axisSelector],
-        Message[GridLebesgueIntegrationRule::noptval, axisSelector, "AxisSelector", {"MinVariance", "Random"}];
-        Return[$Failed];
-      ];
+      t = NIntegrate`MonteCarloRuleDump`AxisSelectorParser[axisSelector, ruleOpts];
+      If[t === $Failed, Return[$Failed]];
+      {axisSelector, axisSelectorPointsFraction} = t;
 
       (* Lebesgue rule points and volumes. *)
       wprec = WorkingPrecision /. allOpts;
@@ -701,7 +695,7 @@ GridLebesgueIntegrationRule /:
       (* Splitting axis selection data *)
       (* Note the hard-coded fraction. *)
       If[ TrueQ[axisSelector == "MinVariance"] && dim > 1,
-        axisSplitPositions = AxisSelectionPoints[ points, 1/10],
+        axisSplitPositions = AxisSelectionPoints[ points, axisSelectorPointsFraction],
         axisSplitPositions = None
       ];
 
