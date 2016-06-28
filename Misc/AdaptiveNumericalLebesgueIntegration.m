@@ -34,14 +34,14 @@
   ## Goals
 
     This package is made with three goals in mind.
-    1. To have a Lebesgue integration implementaion (for study and experiments).
+    1. To have a Lebesgue integration implementation (for study and experiments).
     2. To be able to explore certain types of utilization of Mathematica's (advanced) features for
        geometric computation in numerical integration.
     3. To provide didactic, full blown implementations of non-trivial integration rules and strategies within
        NIntegrate`s framework. (Especially, what would be called "non-standard" algorithms.)
 
     At this point only goals 1 and 3 are achieved. To achieve Goal 2 it is necessary to do further studies,
-    development, and code refactoring. In order to use different meausure estimation algorithms new rules
+    development, and code refactoring. In order to use different measure estimation algorithms new rules
     or strategies have to be implemented.
 
 
@@ -129,7 +129,7 @@
   ### 2D
 
     In general it is beneficial to use the implemented Lebesgue integration rules with no singularity handling.
-    I.e. NIntegrate performs better if those rules are specified wihin the form:
+    I.e. NIntegrate performs better if those rules are specified within the form:
 
       Method -> {"GlobalAdaptive"|"LocalAdaptive", __, "SingularityHandler" -> None}
 
@@ -168,7 +168,7 @@
 
      1. [X] HIGH Proper computation of volume estimates corresponding to the sampling points for
             "Partitioning"->"RegularGrid".
-            Instead of fiddling with the cell and point volumes, I implementended a separate integration rule,
+            Instead of fiddling with the cell and point volumes, I implemented a separate integration rule,
             GridLebesgueIntegrationRule, that uses a regular grid over a set of random points. That rule adheres
             very closely to the algorithm descriptions in the article [1] and book [2].
 
@@ -176,7 +176,7 @@
             GridLebesgueIntegrationRule.
             This should be same/similar as for MonteCarloRule see [3].
             Note, that it is not necessarily a very good idea to apply Monte Carlo estimates for Lebesgue integration.
-            (Thoigh, it makes implementation and comparisons easier.)
+            (Though, it makes implementation and comparisons easier.)
 
      3. [X] MEDIUM Tests showing functionality.
 
@@ -190,9 +190,9 @@
 
      7. [ ] LOW Code refactoring.
         The strategy and rule have common code, especially for initialization.
-        But I do expect those algorithms to devlop into more peculiar way.
+        But I do expect those algorithms to develop into more peculiar way.
         So I am not sure refactoring needed. This package was also created in part for didactic reasons, so
-        it is better the keep the defintions self-contained for easier study and/or copying.
+        it is better the keep the definitions self-contained for easier study and/or copying.
 
 
 
