@@ -154,8 +154,8 @@
      2. [X] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule and
             GridLebesgueIntegrationRule.
             This should be same/similar as for MonteCarloRule see [3].
-            Right now random selection of the axis very often produces results faster.
-            It is not necessarily a good idea to apply Monte Carlo estimates for Lebesgue integration.
+            Note, that it is not necessarily a very good idea to apply Monte Carlo estimates for Lebesgue integration.
+            (Thoigh, it makes implementation and comparisons easier.)
 
      3. [X] MEDIUM Tests showing functionality.
 
@@ -537,7 +537,7 @@ LebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_,
         integral1[[2]] + integral2[[2]],
         If[ TrueQ[ axisSplitPositions === None ],
           RandomInteger[{1, Length[region["Boundaries"]]}],
-          SelectAxis[pointVals,axisSplitPositions]
+          SelectAxis[pointFuncVals,axisSplitPositions]
         ]}
     ];
 
