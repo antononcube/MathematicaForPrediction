@@ -35,12 +35,14 @@
 
     This package is made with three goals in mind.
     1. To have a Lebesgue integration implementaion (for study and experiments).
-    2. To able to utilized Mathematica's (advanced) features of geometric computation in numerical integration.
-    3. To provide a didactic, full blown implementations of non-trivial integration rules and strategies within
+    2. To be able to explore certain types of utilization of Mathematica's (advanced) features for
+       geometric computation in numerical integration.
+    3. To provide didactic, full blown implementations of non-trivial integration rules and strategies within
        NIntegrate`s framework. (Especially, what would be called "non-standard" algorithms.)
 
     At this point only goals 1 and 3 are achieved. To achieve Goal 2 it is necessary to do further studies,
-    development, and code refactoring.
+    development, and code refactoring. In order to use different meausure estimation algorithms new rules
+    or strategies have to be implemented.
 
 
   ## Some theory
@@ -79,9 +81,9 @@
 
   ### 1D integration
 
-    NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegrationStrategy]
+    NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegration]
 
-    NIntegrate[Sqrt[x], {x, 0, 2}, Method -> {LebesgueIntegrationStrategy, "Points" -> 2000,
+    NIntegrate[Sqrt[x], {x, 0, 2}, Method -> {LebesgueIntegration, "Points" -> 2000,
             "PointGenerator" -> "Sobol", "Partitioning" -> "VoronoiMesh"},
              PrecisionGoal -> 3]
 
@@ -90,7 +92,7 @@
 
     res = Reap@
        NIntegrate[Sin[x + y], {x, -1, 2}, {y, -1, 1},
-          Method -> {LebesgueIntegrationStrategy, "Points" -> 10000,
+          Method -> {LebesgueIntegration, "Points" -> 10000,
           "PointGenerator" -> "Sobol", "Partitioning" -> "RegularGrid",
           "LebesgueIntegralVariableSymbol" -> fval},
           EvaluationMonitor :> {Sow[fval]},
@@ -111,7 +113,7 @@
 
     NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, x, 12},
       Method -> {"UnitCubeRescaling",
-          Method -> {LebesgueIntegrationStrategy, "PointGenerator" -> Random}},
+          Method -> {LebesgueIntegration, "PointGenerator" -> Random}},
       PrecisionGoal -> 3]
 
 
@@ -125,6 +127,13 @@
 
 
   ### 2D
+
+    In general it is beneficial to use the implemented Lebesgue integration rules with no singularity handling.
+    I.e. NIntegrate performs better if those rules are specified wihin the form:
+
+      Method -> {"GlobalAdaptive"|"LocalAdaptive", __, "SingularityHandler" -> None}
+
+    Examples follow.
 
     NIntegrate[Sin[x + y], {x, 1, 2}, {y, -1, 1}, Method -> {"GlobalAdaptive",
       Method -> {LebesgueIntegrationRule, "Points" -> 3000,
