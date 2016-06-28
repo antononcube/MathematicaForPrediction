@@ -25,7 +25,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2016-06-19 *)
 
-(* :Package Version: 0.7 *)
+(* :Package Version: 0.9 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2016 Anton Antonov *)
 (* :Keywords: NIntegrate, Lebesgue integral, set measure, integration strategy, dimension reduction *)
@@ -70,7 +70,7 @@
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegrationStrategy]
 
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> {LebesgueIntegrationStrategy, "Points" -> 2000,
-            "PointsGenerator" -> "Sobol", "Partitioning" -> "VoronoiMesh"},
+            "PointGenerator" -> "Sobol", "Partitioning" -> "VoronoiMesh"},
              PrecisionGoal -> 3]
 
 
@@ -79,7 +79,7 @@
     res = Reap@
        NIntegrate[Sin[x + y], {x, -1, 2}, {y, -1, 1},
           Method -> {LebesgueIntegrationStrategy, "Points" -> 10000,
-          "PointsGenerator" -> "Sobol", "Partitioning" -> "RegularGrid",
+          "PointGenerator" -> "Sobol", "Partitioning" -> "RegularGrid",
           "LebesgueIntegralVariableSymbol" -> fval},
           EvaluationMonitor :> {Sow[fval]},
           PrecisionGoal -> 2, MaxRecursion -> 5];
@@ -99,7 +99,7 @@
 
     NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, x, 12},
       Method -> {"UnitCubeRescaling",
-          Method -> {LebesgueIntegrationStrategy, "PointsGenerator" -> Random}},
+          Method -> {LebesgueIntegrationStrategy, "PointGenerator" -> Random}},
       PrecisionGoal -> 3]
 
 
@@ -151,10 +151,11 @@
             GridLebesgueIntegrationRule, that uses a regular grid over a set of random points. That rule adheres
             very closely to the algorithm descriptions in the article [1] and book [2].
 
-     2. [ ] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule and
+     2. [X] HIGH Deterministic computation of the splitting axis for LebesgueIntegrationRule and
             GridLebesgueIntegrationRule.
             This should be same/similar as for MonteCarloRule see [3].
-            Right now random selection of the axis is done.
+            Right now random selection of the axis very often produces results faster.
+            It is not necessarily a good idea to apply Monte Carlo estimates for Lebesgue integration.
 
      3. [X] MEDIUM Tests showing functionality.
 
@@ -204,7 +205,7 @@ Begin["`Private`"]
 Clear[LebesgueIntegration];
 Options[LebesgueIntegration] = {
   "Method" -> Automatic,
-  "PointsGenerator" -> "Sobol",
+  "PointGenerator" -> "Sobol",
   "Partitioning" -> Automatic,
   "RegularGridDimensions" -> Automatic,
   "Points" -> Automatic,
@@ -357,12 +358,37 @@ LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, regionPartitioning_,
 (* Definition of point-wise integration rule                                      *)
 (**************************************************************************)
 
+(* Assuming the points are in [0,1] hyper-cube *)
+Clear[AxisSelectionPoints]
+AxisSelectionPoints[points : {{_?NumberQ ..} ..}, fraction_?NumberQ] :=
+    Block[{pinds, signs, pos, t1, t2},
+      pinds = Range[Length[points]];
+      Map[
+        Function[{i},
+          signs = Sign[points[[All, i]] - 0.5];
+          pos = Pick[pinds, True*Clip[-signs, {0, 1}, {0, 1}]];
+          t1 = RandomSample[pos, Max[Ceiling[Length[pos] fraction],1]];
+          pos = Pick[pinds, True*Clip[signs, {0, 1}, {0, 1}]];
+          t2 = RandomSample[pos, Max[Ceiling[Length[pos] fraction],1]];
+          {i, t1, t2}
+        ], Range[Length[points[[1]]]]]
+    ] /; 0 < fraction <= 1.0;
+
+Clear[SelectAxis]
+SelectAxis[fvals : {_?NumberQ ..}, axisSplitPositions : {{_Integer, {_Integer ..}, {_Integer ..}}..}] :=
+    Block[{vs},
+      vs = Map[Variance[fvals[[#[[2]]]]] + Variance[fvals[[#[[3]]]]] &, axisSplitPositions];
+      Position[vs, Min[vs]][[1, 1]]
+    ];
+
+
 Clear[LebesgueIntegrationRule]
 Options[LebesgueIntegrationRule] = {
   "Method" -> "ClenshawCurtisRule",
-  "PointsGenerator" -> "Sobol",
+  "PointGenerator" -> "Sobol",
   "PointwiseMeasure" -> Automatic,
-  "Points" -> Automatic
+  "Points" -> Automatic,
+  "AxisSelector" -> Automatic
 };
 
 LebesgueIntegrationRuleProperties = Part[Options[LebesgueIntegrationRule], All, 1];
@@ -371,15 +397,17 @@ LebesgueIntegrationRule::vmesh =
     "The value \"VoronoiMesh\" of the option \"PoinwiseMeasure\" can be used only \
 for dimension 2. Proceeding with \"Uniform\" instead.";
 
+LebesgueIntegrationRule::noptval = "The value `1` given to the option `2` is not one of `3`.";
+
 LebesgueIntegrationRule /:
     NIntegrate`InitializeIntegrationRule[LebesgueIntegrationRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
-    Module[{t, method, RNGenerator, pointwiseMeasure, npoints, lebesgueIntegralVar,
-      absc, weights, errweights, points, pointVolumes, wprec, dim, vmesh},
+    Module[{t, method, RNGenerator, pointwiseMeasure, npoints, axisSelector,
+      absc, weights, errweights, points, pointVolumes, wprec, dim, vmesh, axisSplitPositions},
 
       t = NIntegrate`GetMethodOptionValues[LebesgueIntegrationRule, LebesgueIntegrationRuleProperties, ruleOpts];
 
       If[t === $Failed, Return[$Failed]];
-      {method, RNGenerator, pointwiseMeasure, npoints} = t;
+      {method, RNGenerator, pointwiseMeasure, npoints, axisSelector} = t;
 
       (* Method *)
       If[TrueQ[method === Automatic], method = "GlobalAdaptive"];
@@ -402,7 +430,7 @@ LebesgueIntegrationRule /:
       ];
 
       If[! MemberQ[{"VoronoiMesh", VoronoiMesh, "Uniform"}, pointwiseMeasure],
-        Message[NIntegrate::moptxn, pointwiseMeasure, "Uniform", {"VoronoiMesh", "Uniform"}];
+        Message[LebesgueIntegrationRule::noptval pointwiseMeasure, "PointwiseMeasure", {"VoronoiMesh", "Uniform"}];
         Return[$Failed];
       ];
 
@@ -414,6 +442,14 @@ LebesgueIntegrationRule /:
 
       If[! TrueQ[npoints >= 0] ,
         Message[NIntegrate::intpm, "Points" -> npoints, 2];
+        Return[$Failed];
+      ];
+
+      (* AxisSelector *)
+      If[ TrueQ[axisSelector===Automatic], axisSelector = "MinVariance"];
+
+      If[! MemberQ[{"MinVariance", "Random", Random}, axisSelector],
+        Message[LebesgueIntegrationRule::noptval, axisSelector, "AxisSelector", {"MinVariance", "Random"}];
         Return[$Failed];
       ];
 
@@ -444,7 +480,14 @@ LebesgueIntegrationRule /:
       ];
       pointVolumes = N[pointVolumes, wprec];
 
-      LebesgueIntegrationRule[{{absc, weights, errweights}, method, points, pointVolumes}]
+      (* Splitting axis selection data *)
+      (* Note the hard-coded fraction. *)
+      If[ TrueQ[axisSelector == "MinVariance"] && dim > 1,
+        axisSplitPositions = AxisSelectionPoints[ points, 1/10],
+        axisSplitPositions = None
+      ];
+
+      LebesgueIntegrationRule[{{absc, weights, errweights}, method, points, pointVolumes, axisSplitPositions}]
     ];
 
 (* Using custom made rule in order to mininmize the dependence with on the region objects. *)
@@ -458,7 +501,7 @@ IRuleEstimate[f_, {a_, b_}, {absc_, weights_, errweights_}] :=
 
 (* The integration rule algorithm implementation uses EstimateMeasure defined above for the strategy. *)
 LebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_,
-  pointVolumes_}]["ApproximateIntegral"[region_]] :=
+  pointVolumes_, axisSplitPositions_}]["ApproximateIntegral"[region_]] :=
     Block[{regionPoints, factor, pointFuncVals, pointAbsVals, pointVals, offset, integral1, integral2},
 
       regionPoints =
@@ -492,10 +535,13 @@ LebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_,
             EstimateMeasure[#, pointVals, factor*pointVolumes] &,
             {Min[pointVals], Max[pointVals]}, {absc, weights, errweights}];
 
-      (* Proper splitting axis selection has to be done as in MonteCarloRule instead of just random axis pick. *)
+      (* Proper splitting axis selection as in MonteCarloRule or just random axis pick. *)
       { integral1[[1]] - integral2[[1]],
         integral1[[2]] + integral2[[2]],
-        RandomInteger[{1, Length[region["Boundaries"]]}]}
+        If[ TrueQ[ axisSplitPositions === None ],
+          RandomInteger[{1, Length[region["Boundaries"]]}],
+          SelectAxis[pointVals,axisSplitPositions]
+        ]}
     ];
 
 
@@ -538,7 +584,8 @@ CellMinMaxValues[func_, points : {{_?NumberQ ..} ..}, cellPointIndices : {{_Inte
       fs1 = (Abs[fs] + fs)/2;
       fs2 = (Abs[fs] - fs)/2;
       {Transpose@Map[Through[{Min, Max}[fs1[[#]]]] &, cellPointIndices],
-        Transpose@Map[Through[{Min, Max}[fs2[[#]]]] &, cellPointIndices]}
+        Transpose@Map[Through[{Min, Max}[fs2[[#]]]] &, cellPointIndices],
+        fs}
     ] /; Length[points[[1]]] == Length[boundaries];
 
 CellEstimateMeasure[fval_?NumericQ, regionMinVals : {_?NumberQ ...},
@@ -554,9 +601,10 @@ CellEstimateMeasure[fval_?NumericQ, regionMinVals : {_?NumberQ ...},
 Clear[GridLebesgueIntegrationRule]
 Options[GridLebesgueIntegrationRule] = {
   "Method" -> "ClenshawCurtisRule",
-  "PointsGenerator" -> "Sobol",
+  "PointGenerator" -> "Sobol",
   "GridSizes" -> Automatic,
-  "Points" -> Automatic
+  "Points" -> Automatic,
+  "AxisSelector" -> Automatic
 };
 GridLebesgueIntegrationRuleProperties = Part[Options[GridLebesgueIntegrationRule], All, 1];
 
@@ -567,16 +615,18 @@ GridLebesgueIntegrationRule::gsizes =
 GridLebesgueIntegrationRule::ecells =
     "Using the specified option values `1` cells of the grid for measure estimation are have not points.";
 
+GridLebesgueIntegrationRule::noptval = "The value `1` given to the option `2` is not one of `3`.";
 
 GridLebesgueIntegrationRule /:
     NIntegrate`InitializeIntegrationRule[GridLebesgueIntegrationRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
     Module[{t, method, RNGenerator, gridSizes, npoints,
-      absc, weights, errweights, points, pointVolumes, wprec, dim, cellPointIndices, cellVolume},
+      absc, weights, errweights, points, pointVolumes, wprec, dim, cellPointIndices, cellVolume,
+      axisSelector, axisSplitPositions},
 
       t = NIntegrate`GetMethodOptionValues[GridLebesgueIntegrationRule, GridLebesgueIntegrationRuleProperties, ruleOpts];
 
       If[t === $Failed, Return[$Failed]];
-      {method, RNGenerator, gridSizes, npoints} = t;
+      {method, RNGenerator, gridSizes, npoints, axisSelector} = t;
 
       (* Method *)
       If[TrueQ[method === Automatic], method = "GlobalAdaptive"];
@@ -593,6 +643,14 @@ GridLebesgueIntegrationRule /:
 
       If[! TrueQ[npoints >= 0] ,
         Message[NIntegrate::intpm, "Points" -> npoints, 2];
+        Return[$Failed];
+      ];
+
+      (* AxisSelector *)
+      If[ TrueQ[axisSelector===Automatic], axisSelector = "MinVariance"];
+
+      If[! MemberQ[{"MinVariance", "Random", Random}, axisSelector],
+        Message[GridLebesgueIntegrationRule::noptval, axisSelector, "AxisSelector", {"MinVariance", "Random"}];
         Return[$Failed];
       ];
 
@@ -640,18 +698,27 @@ GridLebesgueIntegrationRule /:
 
       cellVolume = N[ 1 / Apply[Times,gridSizes], wprec ];
 
-      GridLebesgueIntegrationRule[{{absc, weights, errweights}, method, points, gridSizes, cellPointIndices, cellVolume}]
+      (* Splitting axis selection data *)
+      (* Note the hard-coded fraction. *)
+      If[ TrueQ[axisSelector == "MinVariance"] && dim > 1,
+        axisSplitPositions = AxisSelectionPoints[ points, 1/10],
+        axisSplitPositions = None
+      ];
+
+      GridLebesgueIntegrationRule[{{absc, weights, errweights}, method, points, gridSizes, cellPointIndices,
+        cellVolume, axisSplitPositions}]
     ];
 
 GridLebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_, gridSizes_, cellPointIndices_,
-  cellVolume_}]["ApproximateIntegral"[region_]] :=
-    Block[{regionPoints, factor, offset, integral1, integral2, minVals, maxVals, t},
+  cellVolume_, axisSplitPositions_}]["ApproximateIntegral"[region_]] :=
+    Block[{regionPoints, factor, offset, integral1, integral2, minVals, maxVals, pointVals, t},
 
       factor = Apply[Times, Abs[Subtract @@@ region["Boundaries"]]];
 
       (* Integrals calculation *)
       t = CellMinMaxValues[ region["NumericalFunction"], points, cellPointIndices, region["Boundaries"]];
 
+      pointVals = t[[3]];
 
       (* First integral calculation *)
       {minVals, maxVals} = t[[1]];
@@ -673,10 +740,13 @@ GridLebesgueIntegrationRule[{{absc_, weights_, errweights_}, method_, points_, g
             CellEstimateMeasure[#, minVals, maxVals, factor*cellVolume] &,
             {Min[minVals], Max[maxVals]}, {absc, weights, errweights}];
 
-      (* Proper splitting axis selection has to be done as in MonteCarloRule instead of just random axis pick. *)
+      (* Proper splitting axis selection as in MonteCarloRule or just random axis pick. *)
       { integral1[[1]] - integral2[[1]],
         integral1[[2]] + integral2[[2]],
-        RandomInteger[{1, Length[region["Boundaries"]]}]}
+        If[ TrueQ[ axisSplitPositions === None ],
+          RandomInteger[{1, Length[region["Boundaries"]]}],
+          SelectAxis[pointVals,axisSplitPositions]
+        ]}
     ];
 
 
