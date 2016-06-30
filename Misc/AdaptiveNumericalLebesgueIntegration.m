@@ -230,7 +230,6 @@ Options[LebesgueIntegration] = {
   "Method" -> Automatic,
   "PointGenerator" -> "Sobol",
   "PointwiseMeasure" -> Automatic,
-  "RegularGridDimensions" -> Automatic,
   "Points" -> Automatic,
   "LebesgueIntegralVariableSymbol" -> Automatic,
   "SymbolicProcessing" -> 5
