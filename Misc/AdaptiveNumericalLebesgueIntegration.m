@@ -84,7 +84,7 @@
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegration]
 
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> {LebesgueIntegration, "Points" -> 2000,
-            "PointGenerator" -> "Sobol", "Partitioning" -> "VoronoiMesh"},
+            "PointGenerator" -> "Sobol", "PointwiseMeasure" -> "VoronoiMesh"},
              PrecisionGoal -> 3]
 
 
@@ -93,7 +93,7 @@
     res = Reap@
        NIntegrate[Sin[x + y], {x, -1, 2}, {y, -1, 1},
           Method -> {LebesgueIntegration, "Points" -> 10000,
-          "PointGenerator" -> "Sobol", "Partitioning" -> "RegularGrid",
+          "PointGenerator" -> "Sobol", "PointwiseMeasure" -> "Uniform",
           "LebesgueIntegralVariableSymbol" -> fval},
           EvaluationMonitor :> {Sow[fval]},
           PrecisionGoal -> 2, MaxRecursion -> 5];
@@ -167,7 +167,7 @@
   ## TODO
 
      1. [X] HIGH Proper computation of volume estimates corresponding to the sampling points for
-            "Partitioning"->"RegularGrid".
+            "PointwiseMeasure"->"Uniform".
             Instead of fiddling with the cell and point volumes, I implemented a separate integration rule,
             GridLebesgueIntegrationRule, that uses a regular grid over a set of random points. That rule adheres
             very closely to the algorithm descriptions in the article [1] and book [2].
@@ -217,6 +217,8 @@ that uses regular grid membership of (pseudo-)random points."
 
 Begin["`Private`"]
 
+Options[NIntegrate`MonteCarloRule];
+
 (**************************************************************************)
 (* Definition as an integration strategy                                  *)
 (**************************************************************************)
@@ -227,7 +229,7 @@ Clear[LebesgueIntegration];
 Options[LebesgueIntegration] = {
   "Method" -> Automatic,
   "PointGenerator" -> "Sobol",
-  "Partitioning" -> Automatic,
+  "PointwiseMeasure" -> Automatic,
   "RegularGridDimensions" -> Automatic,
   "Points" -> Automatic,
   "LebesgueIntegralVariableSymbol" -> Automatic,
@@ -237,12 +239,12 @@ Options[LebesgueIntegration] = {
 LebesgueIntegrationProperties = Options[LebesgueIntegration][[All, 1]];
 
 LebesgueIntegration::vmesh =
-"The value \"VoronoiMesh\" of the option \"Partitioning\" can be used only \
-for dimension 2. Proceeding with \"RegularGrid\" instead.";
+"The value \"VoronoiMesh\" of the option \"PointwiseMeasure\" can be used only \
+for dimension 2. Proceeding with \"Uniform\" instead.";
 
 LebesgueIntegration /:
     NIntegrate`InitializeIntegrationStrategy[LebesgueIntegration, nfs_, ranges_, strOpts_, allOpts_] :=
-    Block[{method, RNGenerator, npoints, regularGridStep, regionPartitioning, lebesgueIntegralVar,
+    Block[{method, RNGenerator, npoints, regularGridStep, pointwiseMeasure, lebesgueIntegralVar,
       t, symbproctime},
 
 
@@ -250,7 +252,7 @@ LebesgueIntegration /:
 
       (* Method *)
       If[t === $Failed, Return[$Failed]];
-      {method, RNGenerator, regionPartitioning, regularGridStep, npoints, lebesgueIntegralVar, symbproctime} = t;
+      {method, RNGenerator, pointwiseMeasure, regularGridStep, npoints, lebesgueIntegralVar, symbproctime} = t;
 
       If[TrueQ[method === Automatic], method = "GlobalAdaptive"];
 
@@ -258,21 +260,21 @@ LebesgueIntegration /:
       If[t === $Failed, Return[$Failed]];
 
       (* Partitioning *)
-      If[regionPartitioning === Automatic,
+      If[pointwiseMeasure === Automatic,
         If[Length[ranges] == 2,
-          regionPartitioning = "VoronoiMesh",
-          regionPartitioning = "RegularGrid"
+          pointwiseMeasure = "VoronoiMesh",
+          pointwiseMeasure = "Uniform"
         ];
       ];
 
-      If[MemberQ[{"VoronoiMesh", VoronoiMesh}, regionPartitioning] && Length[ranges] != 2,
+      If[MemberQ[{"VoronoiMesh", VoronoiMesh}, pointwiseMeasure] && Length[ranges] != 2,
         Message[LebesgueIntegration::vmesh];
-        regionPartitioning = "RegularGrid";
+        pointwiseMeasure = "Uniform";
       ];
 
-      If[! MemberQ[{"VoronoiMesh", VoronoiMesh, "RegularGrid"},
-        regionPartitioning],
-        Message[NIntegrate::moptxn, regionPartitioning, "RegionGrid", {"VoronoiMesh", "RegularGrid"}];
+      If[! MemberQ[{"VoronoiMesh", VoronoiMesh, "Uniform"},
+        pointwiseMeasure],
+        Message[NIntegrate::moptxn, pointwiseMeasure, "RegionGrid", {"VoronoiMesh", "Uniform"}];
         Return[$Failed];
       ];
 
@@ -290,7 +292,7 @@ LebesgueIntegration /:
 
       If[TrueQ[lebesgueIntegralVar === Automatic], lebesgueIntegralVar = f ];
 
-      LebesgueIntegration[{method, nfs, ranges, RNGenerator, regionPartitioning,
+      LebesgueIntegration[{method, nfs, ranges, RNGenerator, pointwiseMeasure,
         regularGridStep, npoints, lebesgueIntegralVar, symbproctime}]
     ];
 
@@ -298,13 +300,14 @@ LebesgueIntegration /:
 (* Integration strategy algorithm implementation *)
 
 Clear[EstimateMeasure]
+SetAttributes[EstimateMeasure, HoldRest];
 EstimateMeasure[fval_?NumericQ, pointVals_, pointVolumes_] :=
     Block[{pinds},
       pinds = Clip[Sign[pointVals - fval], {0, 1}, {0, 1}];
       pointVolumes.pinds
     ];
 
-LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, regionPartitioning_,
+LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, pointwiseMeasure_,
   regularGridStep_, npoints_, lebesgueIntegralVar_, symbproctime_}]["Algorithm"[regionsArg_, opts___]] :=
     Module[{regions = regionsArg, error = Infinity, integral,
       wprec = WorkingPrecision /. opts, k = 0, dim, t, oldMinMaxPrec, points,
@@ -334,8 +337,8 @@ LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, regionPartitioning_,
 
       (* Find point volumes *)
 
-      If[TrueQ[(regionPartitioning === VoronoiMesh ||
-          regionPartitioning == "VoronoiMesh") && dim == 2],
+      If[TrueQ[(pointwiseMeasure === VoronoiMesh ||
+          pointwiseMeasure == "VoronoiMesh") && dim == 2],
       (* There is some problem in the VoronoiMesh 1D case, VoronoiMesh[__,{{a, b}}], so we skip it.*)
 
         vmesh = VoronoiMesh[points, regions[[1]]["Boundaries"]];
@@ -396,6 +399,7 @@ AxisSelectionPoints[points : {{_?NumberQ ..} ..}, fraction_?NumberQ] :=
     ] /; 0 < fraction <= 1.0;
 
 Clear[SelectAxis]
+SetAttributes[SelectAxis,HoldRest];
 SelectAxis[fvals : {_?NumberQ ..}, axisSplitPositions : {{_Integer, {_Integer ..}, {_Integer ..}}..}] :=
     Block[{vs},
       vs = Map[Variance[fvals[[#[[2]]]]] + Variance[fvals[[#[[3]]]]] &, axisSplitPositions];
