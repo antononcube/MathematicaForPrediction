@@ -145,7 +145,9 @@
       Method -> "ClenshawCurtisRule"}, "SingularityHandler" -> None},
       PrecisionGoal -> 4]
 
+
   ### nD
+
     NIntegrate[ x1 + x2 + x3 + Sqrt[x4] + x5, {x1, 0, 1}, {x2, 0, 2}, {x3, 0, 3}, {x4, 0, 5}, {x5, 0, 10},
       Method -> LebesgueIntegrationRule, PrecisionGoal -> 2]
     (* 2846.31 *)
@@ -251,7 +253,7 @@ LebesgueIntegration /:
 
       (* Method *)
       If[t === $Failed, Return[$Failed]];
-      {method, RNGenerator, pointwiseMeasure, regularGridStep, npoints, lebesgueIntegralVar, symbproctime} = t;
+      {method, RNGenerator, pointwiseMeasure, npoints, lebesgueIntegralVar, symbproctime} = t;
 
       If[TrueQ[method === Automatic], method = "GlobalAdaptive"];
 
