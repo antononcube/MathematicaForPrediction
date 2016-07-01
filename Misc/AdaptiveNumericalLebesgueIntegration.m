@@ -166,6 +166,10 @@
         URL: http://www.nrbook.com/a/bookcpdf.php
         Chapter "7.8 Adaptive and Recursive Monte Carlo Methods" page 316.
 
+    [4] A. Antonov, Adaptive numerical Lebesgue integration by set measure estimates, (2016),
+        MathematicaForPrediction project at GitHub.
+        URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Adaptive-Numerical-Lebesgue-integration-by-set-measure-estimates.pdf
+
   ## TODO
 
      1. [X] HIGH Proper computation of volume estimates corresponding to the sampling points for
@@ -245,7 +249,7 @@ for dimension 2. Proceeding with \"Uniform\" instead.";
 
 LebesgueIntegration /:
     NIntegrate`InitializeIntegrationStrategy[LebesgueIntegration, nfs_, ranges_, strOpts_, allOpts_] :=
-    Block[{method, RNGenerator, npoints, regularGridStep, pointwiseMeasure, lebesgueIntegralVar,
+    Block[{method, RNGenerator, npoints, pointwiseMeasure, lebesgueIntegralVar,
       t, symbproctime},
 
 
@@ -293,8 +297,7 @@ LebesgueIntegration /:
 
       If[TrueQ[lebesgueIntegralVar === Automatic], lebesgueIntegralVar = f ];
 
-      LebesgueIntegration[{method, nfs, ranges, RNGenerator, pointwiseMeasure,
-        regularGridStep, npoints, lebesgueIntegralVar, symbproctime}]
+      LebesgueIntegration[{method, nfs, ranges, RNGenerator, pointwiseMeasure, npoints, lebesgueIntegralVar, symbproctime}]
     ];
 
 
@@ -308,8 +311,8 @@ EstimateMeasure[fval_?NumericQ, pointVals_, pointVolumes_] :=
       pointVolumes.pinds
     ];
 
-LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, pointwiseMeasure_,
-  regularGridStep_, npoints_, lebesgueIntegralVar_, symbproctime_}]["Algorithm"[regionsArg_, opts___]] :=
+LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, pointwiseMeasure_, npoints_,
+  lebesgueIntegralVar_, symbproctime_}]["Algorithm"[regionsArg_, opts___]] :=
     Module[{regions = regionsArg, error = Infinity, integral,
       wprec = WorkingPrecision /. opts, k = 0, dim, t, oldMinMaxPrec, points,
       pointVolumes, pointVals, pointFuncVals, pointAbsVals, integral1,
@@ -363,7 +366,7 @@ LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, pointwiseMeasure_,
       integral1 = offset +
           NIntegrate[
             EstimateMeasure[lebesgueIntegralVar, pointVals, pointVolumes],
-            {lebesgueIntegralVar, Min[pointVals], Max[pointVals]}, Method -> method, opts];
+            Evaluate[{lebesgueIntegralVar, Min[pointVals], Max[pointVals]}], Method -> method, opts];
 
       (* Second integral calculation *)
       pointVals = 1/2 (pointAbsVals - pointFuncVals);
@@ -373,7 +376,7 @@ LebesgueIntegration[{method_, nfs_, ranges_, RNGenerator_, pointwiseMeasure_,
       integral2 = offset +
           NIntegrate[
             EstimateMeasure[lebesgueIntegralVar, pointVals, pointVolumes],
-            {lebesgueIntegralVar, Min[pointVals], Max[pointVals]}, Method -> method, opts];
+            Evaluate[{lebesgueIntegralVar, Min[pointVals], Max[pointVals]}], Method -> method, opts];
 
       integral1 - integral2
     ];
