@@ -489,7 +489,7 @@ URL: http://mathematica.stackexchange.com/a/118922/34008 .
 [8]: https://mathematicaforprediction.files.wordpress.com/2016/07/adaptive-numerical-lebesgue-integration-infinityrange-samplingpoints.png
 [9]: https://mathematicaforprediction.files.wordpress.com/2016/07/adaptive-numerical-lebesgue-integration-evaluationmonitor-rule.png
 [10]: https://mathematicaforprediction.files.wordpress.com/2016/07/adaptive-numerical-lebesgue-integration-evaluationmonitor-strategy.png
-[11]: https://mathematicaforprediction.files.wordpress.com/2016/07/lebesque-integration-strategy-flow-chart.png
-[12]: https://mathematicaforprediction.files.wordpress.com/2016/07/lebesque-integration-rule-flow-chart.png
+[11]: http://i.imgur.com/DXLEDol.png
+[12]: http://i.imgur.com/Ua91I1Q.png
 [13]: https://mathematicaforprediction.files.wordpress.com/2016/07/adaptive-numerical-lebesgue-integration-mind-map.png
 [14]: https://mathematicaforprediction.files.wordpress.com/2016/07/adaptive-numerical-lebesgue-integration-methodoptions.png
