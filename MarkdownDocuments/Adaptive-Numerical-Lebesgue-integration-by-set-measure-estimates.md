@@ -1,30 +1,33 @@
-# Adaptive numerical Lebesgue integration by set measure estimates
+---
+title: Adaptive numerical Lebesgue integration by set measure estimates
+author: Anton Antonov; MathematicaForPrediction project at GitHub
+date: 30.06.2016
+toc: 1
+toc-depth: 2
+geometry: margin=1in
+---
 
-Anton Antonov
-
-[MathematicaForPrediction blog at WordPress](https://mathematicaforprediction.wordpress.com)
-
-[MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction)
-
-June, 2016
 
 ## Introduction
 
 In this document are given outlines and examples of several related implementations of
 [Lebesgue integration](https://en.wikipedia.org/wiki/Lebesgue_integration), \[1\],
-within the [framework of NIntegrate](https://reference.wolfram.com/language/tutorial/NIntegrateOverview.html), \[7\].
+within the [framework of `NIntegrate`](https://reference.wolfram.com/language/tutorial/NIntegrateOverview.html), \[7\].
 The focus is on the implementations of Lebesgue integration algorithms that have multiple options and can be easily
-extended (in order to do further research, optimization, etc.) In terms of NIntegrate's framework terminology
+extended (in order to do further research, optimization, etc.) In terms of `NIntegrate`'s framework terminology
 it is shown how to implement an *integration strategy* or *integration rule* based on the theory of the Lebesgue integral.
 The full implementation of those strategy and rules -- `LebesgueIntegration`, `LebesgueIntegrationRule`, and `GridLebesgueIntegrationRule` --
 are given in the *Mathematica* package \[5\].
 
-The advantage of using [NIntegrate's framework](https://reference.wolfram.com/language/tutorial/NIntegrateOverview.html) is that a host of supporting algorithms can be employed for preprocessing, execution, experimentation, and testing (correctness, comparison, and profiling.)
+The advantage of using [`NIntegrate`'s framework](https://reference.wolfram.com/language/tutorial/NIntegrateOverview.html) is that a host of supporting algorithms can be employed for preprocessing, execution, experimentation, and testing (correctness, comparison, and profiling.)
 
-Here is a brief description of the integration strategy `LebesgueIntegration` in \[5\]:
+Here is a brief description of the integration strategy
+`LebesgueIntegration` in \[5\]:
+
 1. prepare a function that calculates measure estimates based on random points or
 low discrepancy sequences of points in the integration domain;
-2. use NIntegrate for the computation of one dimensional integrals for that measure estimate
+
+2. use `NIntegrate` for the computation of one dimensional integrals for that measure estimate
 function over the range of the integrand function values.
 
 The strategy is adaptive because of the second step -- `NIntegrate` uses adaptive integration algorithms.
@@ -73,7 +76,7 @@ $$ \int_{\Omega}f(x) dx= \int_{\Omega} f_1(x) dx - \int_{\Omega}f_2(x) dx. $$
 
 Since finding analytical expressions of $\mu$ is hard we are going to look into ways of approximating $\mu$.
 
-For more details see\ [1,2,3,4\].
+For more details see \[1,2,3,4\].
 
 (Note, that the theoretical outline the algorithms considered can be seen as algorithms that reduce multidimensional integration to one dimensional integration.)
 
@@ -83,8 +86,10 @@ We can see that because of Equation (4) we mostly have to focus on estimating th
 
 Consider the integral
 
+$$ \int_{0}^{1} \int_{0}^{1} \sqrt{x_1 + x_2 + 1} dx_1 dx_2 . $$
 
-In order to estimate $\mu$ in $ $ for $ $ we are going to generate in $\Omega$ a set $P$ of low discrepancy sequence of points, [2]. Here this is done with $100$ points of the so called "Sobol" sequence:
+In order to estimate $\mu$ in $\Omega := [0,1] \times [0,1]$ for
+$f(x_1, x_2) := \sqrt( 1 + x_1 + x_2 )$ we are going to generate in $\Omega$ a set $P$ of low discrepancy sequence of points, \[2\]. Here this is done with $100$ points of the so called "Sobol" sequence:
 
     n = 100;
     SeedRandom[0,Method -> {"MKL",Method -> {"Sobol", "Dimension" -> 2}}];
@@ -95,10 +100,11 @@ In order to estimate $\mu$ in $ $ for $ $ we are going to generate in $\Omega$ a
 
 [![Adaptive-Numerical-Lebesgue-integration-SobolPoints][1]][1]
 
-To each point $p_i$ let us assign a corresponding "volume" $v_i$ that can be used to approximate $\mu$ with Equation (2). We can of course easily assign such volumes to be $\frac{1}{\left| P\right| }$, but as it can be seen on the plot this would be a good approximation for a larger number of points. Here is an example of a different volume assignment using a Voronoi diagram, [10]:
+To each point $p_i$ let us assign a corresponding "volume" $v_i$ that can be used to approximate $\mu$ with Equation (2). We can of course easily assign such volumes to be $\frac{1}{\left| P\right| }$, but as it can be seen on the plot this would be a good approximation for a larger number of points. Here is an example of a different volume assignment using a Voronoi diagram, \[10\]:
 
     vmesh = VoronoiMesh[points, {{0, 1}, {0, 1}}, Frame -> True];
-    Show[{vmesh, Graphics[{Red, Point[points]}]}, FrameLabel -> {"\!\(\*SubscriptBox[\(x\), \(1\)]\)", "\!\(\*SubscriptBox[\(x\), \(2\)]\)"}]
+    Show[{vmesh, Graphics[{Red, Point[points]}]},
+	 FrameLabel -> {"\!\(\*SubscriptBox[\(x\), \(1\)]\)", "\!\(\*SubscriptBox[\(x\), \(2\)]\)"}]
 
 [![Adaptive-Numerical-Lebesgue-integration-VoronoiMeshVolumes][2]][2]
 
@@ -107,9 +113,10 @@ To each point $p_i$ let us assign a corresponding "volume" $v_i$ that can be use
 Here is a breakdown of the Voronoi diagram volumes corresponding to the generated points (compare with $\frac{1}{\left| P\right| }$) :
 
     volumes =PropertyValue[{vmesh, Dimensions[points][[2]]}, MeshCellMeasure]; 
-    Histogram[volumes, PlotRange -> All, PlotTheme -> "Detailed", FrameLabel -> {"volume", "count"}]
+    Histogram[volumes, PlotRange -> All, PlotTheme -> "Detailed",
+	 FrameLabel -> {"volume", "count"}]
 
-[![Adaptive-Numerical-Lebesgue-integration-VoronoiMeshVolumes-Histogram][3][3]
+[![Adaptive-Numerical-Lebesgue-integration-VoronoiMeshVolumes-Histogram][3]][3]
 
 Let us define a function that computes $\mu$ according to Equation (2) with the generated points and assigned volumes:
 
@@ -130,12 +137,12 @@ And here is another call using uniform volumes:
       Table[1/Length[points], {Length[points]}]] // N
     (* 0.85 *)
 
-The results can be verified using ImplicitRegion:
+The results can be verified using `ImplicitRegion`:
 
     RegionMeasure[ImplicitRegion[ Sqrt[2 + x1 + x2] >= 1.6, {{x1, 0, 1}, {x2, 0, 1}}]]
     (* 0.8432 *)
 
-Or using Integrate:
+Or using `Integrate`:
 
     Integrate[Piecewise[{{1, Sqrt[2 + x1 + x2] >= 1.6}}, 0], {x1, 0, 1}, {x2, 0, 1}]
     (* 0.8432 *)
@@ -156,7 +163,7 @@ Here is the verification of the result:
     (* 8/15 (16 + 2 Sqrt[2] - 9 Sqrt[3]) *)
     (* 1.72798 *)
 
-In order to implement the outlined algorithm so it will be more universal we have to consider volumes rescaling, function positivity, and Voronoi diagram implementation(s). For details how these considerations are resolved see the code of the strategy LebesgueIntegration in [5].
+In order to implement the outlined algorithm so it will be more universal we have to consider volumes rescaling, function positivity, and Voronoi diagram implementation(s). For details how these considerations are resolved see the code of the strategy LebesgueIntegration in \[5\].
 
 ## Further algorithm elaborations
 
@@ -166,13 +173,13 @@ The article [3] and book [4] suggest the measure estimation to be done through m
 
 [![Adaptive-Numerical-Lebesgue-integration-GridGrouping][4]][4]
 
-The following steps describe in detail an algorithm based on the proposed in [3,4] measure estimation method. The algorithm is implemented in [5] for the symbol, `GridLebesgueIntegrationRule`.
+The following steps describe in detail an algorithm based on the proposed in [3,4] measure estimation method. The algorithm is implemented in \[5\] for the symbol, `GridLebesgueIntegrationRule`.
 
-**1.** Generate points filling the $\text{$\$$Failed}$ where $d$ is the dimension of $\Omega$.
+**1.** Generate points filling the $[0,1]^{d}$ where $d$ is the dimension of $\Omega$.
 
-**2.** Partition $\text{$\$$Failed}$ with a regular grid according to specifications.
+**2.** Partition $[0,1]^{d}$ with a regular grid according to specifications.
 
-- 2.1. Assume the cells are indexed with the integers $i_c\subset \mathbb{N}$, $\text{$\$$Failed}$.
+- 2.1. Assume the cells are indexed with the integers $I_c \subset \mathbb{N}$, $|I_c|=n$.
 - 2.2. Assume that all cells have the same volume $v_c$ below.
 
 **3.** For each point find to which cell of the regular grid it belongs to.
@@ -185,30 +192,35 @@ The following steps describe in detail an algorithm based on the proposed in [3,
 
 **6.** For a given integrand function $f$ evaluate $f$ over all points $P_r$.
 
-**7.** For each cell $i\in i_c$ find the min and max values of $f$.
+**7.** For each cell $i \in I_c$ find the min and max values of $f$.
 
 - 7.1. Denote with $f_i^{\min}$ and $f_i^{\max}$ correspondingly.
 
-**8.** For a given value $f x_k$, where $k$ is some integer enumerating the 1D integration rule sampling points, find the coefficients $\xi _i$, $i\in i_c$ using the following formula:
+**8.** For a given value $f x_k$, where $k$ is some integer
+  enumerating the 1D integration rule sampling points, find the
+  coefficients $\xi _i$, $i \in i_c$ using the following formula:
 
-[//]: # (No rules defined for DisplayFormulaNumbered)
+$$
+\xi_i= Piecewise[\{\{1, y_k \leq f_i^{\min}\},\{0, f_i^{\max }<y_k\}\},
+ \{ \frac{Abs[f_i^{\max }-y_k] }{Abs[ f_i^{\max }-f_i^{\min} ]}, f_i^{\min }<y_k<f_i^{\max} \}]
+$$
 
 **9.** Find the measure estimate of $\mu((f(x)>f(x_k))$ with
 
-[//]: # (No rules defined for DisplayFormulaNumbered)
+$$ \gamma \sum_{i=1}^{n} v_c \xi_i $$
 
 ### Axis splitting in Lebesgue integration rules
 
-The implementations of Lebesgue integration rules are required to provide a splitting axis for use of the adaptive algorithms. Of course we can assign a random splitting axis, but that might lead often to slower computations. One way to provide splitting axis is to choose the axis that minimizes the sum of the variances of sub-divided regions estimated by samples of the rule points. This is the same approach taken in NIntegrate`s rule "MonteCarloRule"; for theoretical details see the chapter "7.8 Adaptive and Recursive Monte Carlo Methods" of [11].
+The implementations of Lebesgue integration rules are required to provide a splitting axis for use of the adaptive algorithms. Of course we can assign a random splitting axis, but that might lead often to slower computations. One way to provide splitting axis is to choose the axis that minimizes the sum of the variances of sub-divided regions estimated by samples of the rule points. This is the same approach taken in NIntegrate`s rule "MonteCarloRule"; for theoretical details see the chapter "7.8 Adaptive and Recursive Monte Carlo Methods" of \[11\].
 
-In [5] this splitting axis choice is implemented based on integrand function values. Another approach, more in the spirit of the Lebesgue integration, is to select the splitting axis based on variances of the measure function estimates.
+In \[5\] this splitting axis choice is implemented based on integrand function values. Another approach, more in the spirit of the Lebesgue integration, is to select the splitting axis based on variances of the measure function estimates.
 
 Consider the function:
 
     DensityPlot[Exp[-3 (x - 1)^2 - 4 (y - 1)^2], {x, 0, 3}, {y, 0, 3},
      PlotRange -> All, ColorFunction -> "TemperatureMap"]
 
-[![Adaptive-Numerical-Lebesgue-integration-ExpFunction][5][5]
+[![Adaptive-Numerical-Lebesgue-integration-ExpFunction][5]][5]
 
 Here is an example of sampling points traces using "minimum variance" axis splitting in `LebesgueIntegrationRule`:
 
@@ -253,7 +265,7 @@ Here is a more precise estimate of that integral:
 
 ### Basic usages
 
-The strategy and rule implementations in [5] can be used in the following ways.
+The strategy and rule implementations in \[5\] can be used in the following ways.
 
     NIntegrate[Sqrt[x], {x, 0, 2}, Method -> LebesgueIntegration]
     (* 1.88589 *)
@@ -277,9 +289,12 @@ The strategy and rule implementations in [5] can be used in the following ways.
 
 ### Options
 
-Here are the options for the implemented strategy and rules in [5]:
+Here are the options for the implemented strategy and rules in \[5\]:
 
-     Grid[Transpose[{#, ColumnForm[Options[#]]} & /@ {LebesgueIntegration,LebesgueIntegrationRule, GridLebesgueIntegrationRule}], Alignment -> Left, Dividers -> All]
+    Grid[Transpose[{#, ColumnForm[Options[#]]} & /@
+	 {LebesgueIntegration,LebesgueIntegrationRule,
+	  GridLebesgueIntegrationRule}],
+	   Alignment -> Left, Dividers -> All]
 
 [![Lebesgue methods options][14]][14]
 
@@ -353,7 +368,7 @@ The strategy `LebesgueIntegration` uses an internal variable for the calculation
 
 ### Profiling
 
-We can use NIntegrate`s utility functions for visualization and profiling in order to do comparison of the implemented algorithms with related ones (like "AdaptiveMonteCarlo") which NIntegrate has (or are plugged-in).
+We can use `NIntegrate`'s utility functions for visualization and profiling in order to do comparison of the implemented algorithms with related ones (like "AdaptiveMonteCarlo") which `NIntegrate` has (or are plugged-in).
 
     Needs["Integration`NIntegrateUtilities`"]
 
@@ -408,13 +423,10 @@ The following flow chart shows the steps of `NIntegrate`'s execution when the in
 
 ## Algorithms versions and options
 
-There are multiple architectural, coding, and interface decisions to make while doing implementations like the ones in [5] and described in this document. The following mind map provides an overview of alternatives and interactions between components and parameters.
+There are multiple architectural, coding, and interface decisions to make while doing implementations like the ones in \[5\] and described in this document. The following mind map provides an overview of alternatives and interactions between components and parameters.
 
 [!["Mind map"][13]][13]
 
-[//]: # (No rules defined for Output)
-
-[//]: # (No rules defined for PageBreak)
 
 ## Alternative implementations
 
@@ -429,7 +441,7 @@ but it is not that effective because of the way `NIntegrate` handles vector inte
 One of the most interesting extensions of the described Lebesgue integration algorithms and implementation designs is their extension with more advanced features of *Mathematica* for geometric computation. 
 (Like the functions `VoronoiMesh`, `RegionMeasure`, and `ImplicitRegion` used above.)
 
-Another interesting direction is the derivation and use of symbolic expressions for the measure functions. (Hybrid symbolic and numerical algorithms can be obtained as NIntegrate`s handling of 
+Another interesting direction is the derivation and use of symbolic expressions for the measure functions. (Hybrid symbolic and numerical algorithms can be obtained as `NIntegrate`'s handling of 
 piecewise functions or the strategy combining symbolic and numerical integration described in \[9\].)
 
 ## References
@@ -448,9 +460,19 @@ piecewise functions or the strategy combining symbolic and numerical integration
 
 \[7\] "Advanced Numerical Integration in the Wolfram Language", Wolfram Research Inc. URL: https://reference.wolfram.com/language/tutorial/NIntegrateOverview.html .
 
-\[8\] A. Antonov, ["How to implement custom integration rules for use by NIntegrate?"](http://mathematica.stackexchange.com/q/118324/34008), (2016) [Mathematica StackExchange](http://mathematica.stackexchange.com) answer, URL: http://mathematica.stackexchange.com/a/118326/34008 .
+\[8\] A. Antonov,
+["How to implement custom integration rules for use by NIntegrate?"](http://mathematica.stackexchange.com/q/118324/34008),
+(2016)
+[Mathematica StackExchange](http://mathematica.stackexchange.com)
+answer,
+URL: http://mathematica.stackexchange.com/a/118326/34008 .
 
-\[9\] A. Antonov, ["How to implement custom NIntegrate integration strategies?"](http://mathematica.stackexchange.com/q/118920/34008), (2016) [Mathematica StackExchange](http://mathematica.stackexchange.com) answer, URL: http://mathematica.stackexchange.com/a/118922/34008 .
+\[9\] A. Antonov,
+["How to implement custom NIntegrate integration strategies?"](http://mathematica.stackexchange.com/q/118920/34008),
+(2016)
+[Mathematica StackExchange](http://mathematica.stackexchange.com)
+answer,
+URL: http://mathematica.stackexchange.com/a/118922/34008 .
 
 \[10\] Wikipedia entry, Voronoi diagram, URL: https://en.wikipedia.org/wiki/Voronoi_diagram .
 
