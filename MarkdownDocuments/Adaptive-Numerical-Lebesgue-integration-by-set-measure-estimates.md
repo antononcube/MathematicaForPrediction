@@ -169,7 +169,10 @@ In order to implement the outlined algorithm so it will be more universal we hav
 
 ### Measure estimate with regular grid cells
 
-The article [3] and book [4] suggest the measure estimation to be done through membership of regular grid of cells. For example, the $100$ points generated in the previous section can be grouped by a $25$ grid:
+The article [3] and book [4] suggest the measure estimation to be done
+through membership of regular grid of cells. For example, the $100$
+points generated in the previous section can be grouped by a
+$5 \times 5$ grid:
 
 [![Adaptive-Numerical-Lebesgue-integration-GridGrouping][4]][4]
 
