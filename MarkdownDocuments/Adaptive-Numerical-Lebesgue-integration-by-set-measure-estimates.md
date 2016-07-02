@@ -53,7 +53,7 @@ $$ y=f(x), f(x) \geq 0, x \in \Omega .$$
 
 We denote by $\mu(y)$ the measure for the points in $\Omega$ for which $f(x)>=y$, i.e.
 
-$$ \mu(y) := \left| \{ x: x\in \Omega \land f(x) \geq y\} \right| . $$
+(@mf) $$ \mu(y) := \left| \{ x: x\in \Omega \land f(x) \geq y\} \right| . $$
 
 The Lebesgue integral of $f(x)$ over $\Omega$ can be be defined as:
 
@@ -62,7 +62,7 @@ $$ \int_{\Omega } f (x) dx = y_0 \mu (y_0) + \lim_{n \to \infty ,\max
 
 Further, we can write the last formula as
 
-$$ \int_{\Omega } f(x) dx = y_0 \mu(y_0) + \int_{y_0}^{y_n}\mu(y) dy.$$
+(@lint) $$ \int_{\Omega } f(x) dx = y_0 \mu(y_0) + \int_{y_0}^{y_n}\mu(y) dy.$$
 
 The restriction $f(x)>=0$ can be handled by defining the following functions $f_1$ and $f_2$ :
 
@@ -100,7 +100,7 @@ $f(x_1, x_2) := \sqrt( 1 + x_1 + x_2 )$ we are going to generate in $\Omega$ a s
 
 [![Adaptive-Numerical-Lebesgue-integration-SobolPoints][1]][1]
 
-To each point $p_i$ let us assign a corresponding "volume" $v_i$ that can be used to approximate $\mu$ with Equation (2). We can of course easily assign such volumes to be $\frac{1}{\left| P\right| }$, but as it can be seen on the plot this would be a good approximation for a larger number of points. Here is an example of a different volume assignment using a Voronoi diagram, \[10\]:
+To each point $p_i$ let us assign a corresponding "volume" $v_i$ that can be used to approximate $\mu$ with Equation (@lint). We can of course easily assign such volumes to be $\frac{1}{\left| P\right| }$, but as it can be seen on the plot this would be a good approximation for a larger number of points. Here is an example of a different volume assignment using a Voronoi diagram, \[10\]:
 
     vmesh = VoronoiMesh[points, {{0, 1}, {0, 1}}, Frame -> True];
     Show[{vmesh, Graphics[{Red, Point[points]}]},
@@ -118,7 +118,7 @@ Here is a breakdown of the Voronoi diagram volumes corresponding to the generate
 
 [![Adaptive-Numerical-Lebesgue-integration-VoronoiMeshVolumes-Histogram][3]][3]
 
-Let us define a function that computes $\mu$ according to Equation (2) with the generated points and assigned volumes:
+Let us define a function that computes $\mu$ according to Equation (@mf) with the generated points and assigned volumes:
 
     EstimateMeasure[fval_?NumericQ, pointVals_, pointVolumes_] :=
       Block[{pinds},
