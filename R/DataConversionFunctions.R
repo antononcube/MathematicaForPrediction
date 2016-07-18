@@ -338,7 +338,7 @@ MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns
     breaks <- seq( d0, d1, (d1-d0)/(breaks-1) )    
   }
   
-  smat <- afData[ , c(colNameForRows, colNameForColumns) ]
+  smat <- data[ , c(colNameForRows, colNameForColumns) ]
   qF <- MakePiecewiseFunction( breaks )
   smat <- cbind( smat, parts = laply( smat[[colNameForColumns]], qF ) )
   smat <- xtabs( as.formula( paste( "~", colNameForRows, "+ parts") ), smat, sparse = TRUE )
@@ -376,3 +376,23 @@ MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns
   smat
 }
 
+#' @description Replaces each a column of a integer matrix with number of columns corresponding to the integer values.
+#' The matrix [[2,3],[1,2]] is converted to [[0,1,0,0,0,1],[1,0,0,0,1,0]] .
+#' @param mat an integer matrix to be converted to column value incidence matrix.
+ToColumnValueIncidenceMatrix <- function( mat ) {
+ 
+   tmat <- as( mat, "dgCMatrix")
+   df <- summary(tmat)
+   df <- data.frame(df)
+   minInt <- min(mat); maxInt <- max(mat)
+   step <- maxInt - minInt + 1
+   
+   df$j <- ( df$j - 1 ) * step + df$x
+   ## In other words we are doing this:
+   ## triplets <- ddply( .data = df, .variables = .(i,j), 
+   ##                   .fun = function(row) { c(row[[1]], (row[[2]]-1)*step + row[[3]], 1) })
+   
+   ## Convinient way to check the implmentation:
+   ## sparseMatrix( i = df$i, j = df$j, x = df$x, dims = c( nrow(mat), ncol(mat)*step ) )
+   sparseMatrix( i = df$i, j = df$j, x = rep(1,length(df$x)), dims = c( nrow(mat), ncol(mat)*step ) )
+}
