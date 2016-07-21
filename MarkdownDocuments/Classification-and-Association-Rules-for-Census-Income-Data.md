@@ -1,5 +1,5 @@
 # **Classification and association rules for census income data**
-Original posted at [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com/) on March 30, 2014 by Anton Antonov
+Originally posted at [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com/) on March 30, 2014 by Anton Antonov
 
 ## Introduction
 
@@ -7,7 +7,7 @@ In this blog post I am going to show (some) analysis of census income data — t
 
 (The census income data set is also used in the description of the R package “arules”, \[[7](https://cran.r-project.org/web/packages/arules/vignettes/arules.pdf)\].)
 
-In the census data every record represents a person with 14 attributes, the last element of a record is one of the labels `{“>=50K”,”<50K”}`. The relationships between the categorical variables in that data set was described in my previous blog post, “Mosaic plots for data visualization”.
+In the census data every record represents a person with 14 attributes, the last element of a record is one of the labels \{“>=50K”,”<50K”\}. The relationships between the categorical variables in that data set was described in my blog post, “Mosaic plots for data visualization”, \[[13](https://mathematicaforprediction.wordpress.com/2014/03/17/mosaic-plots-for-data-visualization/)\].
 
 For this data the questions I am most interested in are the following.
 
@@ -41,9 +41,9 @@ Insights about the data set using Mosaic Plots can be found in my previous blog 
 
 ## Data set
 
-The data set can be found and taken from http://archive.ics.uci.edu/ml/datasets/Census+Income, \[[1](http://archive.ics.uci.edu/ml/datasets/Census+Income)\].
+The data set can be found and taken from \[[1](http://archive.ics.uci.edu/ml/datasets/Census+Income)\].
 
-The description of the data set is given in the file “adult.names” of the data folder. The data folder provides two sets with the same type of data “adult.data” and “adult.test”; the former is used for training, the latter for testing.
+The description of the data set is given in the file “adult.names” of the data folder in [1]. The data folder provides two sets with the same type of data “adult.data” and “adult.test”; the former is used for training, the latter for testing.
 
 The total number of records in the file “adult.data” is 32561; the total number of records in the file “adult.test” is 16281.
 
