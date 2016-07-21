@@ -1,23 +1,23 @@
 # **Classification and association rules for census income data**
-Posted on March 30, 2014 by Anton Antonov Antonov
+Original posted at [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com/) on March 30, 2014 by Anton Antonov
 
-##Introduction
+## Introduction
 
-In this blog post I am going to show (some) analysis of census income data — the so called “Adult” data set, \[[1](http://archive.ics.uci.edu/ml/datasets/Census+Income)\] — using three types of algorithms: decision tree classification, naive Bayesian classification, and association rules learning. Mathematica packages for all three algorithms can be found at the project MathematicaForPrediction hosted at GitHub, \[[2](https://github.com/antononcube/MathematicaForPrediction/blob/master/AVCDecisionTreeForest.m),[3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NaiveBayesianClassifier.m),[4](https://github.com/antononcube/MathematicaForPrediction/blob/master/AprioriAlgorithm.m)\].
+In this blog post I am going to show (some) analysis of census income data — the so called “Adult” data set, \[[1](http://archive.ics.uci.edu/ml/datasets/Census+Income)\] — using three types of algorithms: decision tree classification, naive Bayesian classification, and association rules learning. Mathematica packages for all three algorithms can be found at the project [MathematicaForPrediction](https://github.com/antononcube/MathematicaForPrediction) hosted at GitHub, \[[2](https://github.com/antononcube/MathematicaForPrediction/blob/master/AVCDecisionTreeForest.m),[3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NaiveBayesianClassifier.m),[4](https://github.com/antononcube/MathematicaForPrediction/blob/master/AprioriAlgorithm.m)\].
 
-(The census income data set is also used in the description of the R package “arules”, \[7()\].)
+(The census income data set is also used in the description of the R package “arules”, \[[7](https://cran.r-project.org/web/packages/arules/vignettes/arules.pdf)\].)
 
-In the census data every record represents a person with 14 attributes, the last element of a record is one of the labels \{“>=50K”,”<50K”\}. The relationships between the categorical variables in that data set was described in my previous blog post, “Mosaic plots for data visualization”.
+In the census data every record represents a person with 14 attributes, the last element of a record is one of the labels `{“>=50K”,”<50K”}`. The relationships between the categorical variables in that data set was described in my previous blog post, “Mosaic plots for data visualization”.
 
-For this data the questions I am most interested in are:
+For this data the questions I am most interested in are the following.
 
-Question 1: Which of the variables (age, occupation, sex, etc.) are most decisive for determining the income of a person?
+- **Question 1:** Which of the variables (age, occupation, sex, etc.) are most decisive for determining the income of a person?
 
-Question 2: Which values for which variables form conditions that would imply high income or low income? (I.e. “>50K” or “<=50K”.)
+- **Question 2:** Which values for which variables form conditions that would imply high income or low income? (I.e. “>50K” or “<=50K”.)
 
-Question 3: What conclusions or confirmations we can get from answering the previous two questions?
+- **Question 3:** What conclusions or confirmations we can get from answering the previous two questions?
 
-One way to answer Question 1 is to use following steps, \[[8](??)\].
+One way to answer Question 1 is to use following steps, \[8\].
 
 1. Build a classifier with the training set.
 
@@ -39,7 +39,7 @@ In order to apply Association rule learning we need to make the numerical variab
 
 Insights about the data set using Mosaic Plots can be found in my previous blog post [“Mosaic plots for data visualization”](https://mathematicaforprediction.wordpress.com/2014/03/17/mosaic-plots-for-data-visualization/), \[[13](https://mathematicaforprediction.wordpress.com/2014/03/17/mosaic-plots-for-data-visualization/)\]. The use of Mosaic Plots in \[[13](https://mathematicaforprediction.wordpress.com/2014/03/17/mosaic-plots-for-data-visualization/)\] is very similar to the Naive Bayesian Classifiers application discussed below.
 
-##Data set
+## Data set
 
 The data set can be found and taken from http://archive.ics.uci.edu/ml/datasets/Census+Income, \[[1](http://archive.ics.uci.edu/ml/datasets/Census+Income)\].
 
@@ -59,7 +59,7 @@ Here is a summary of the data:
 
 As it was mentioned in the introduction, only 24% of the labels are “>50K”. Also note that 2/3 of the records are for males.
 
-##Scatter plots and mosaic plots
+## Scatter plots and mosaic plots
 
 Often scatter plots and mosaic plots can give a good idea of the general patterns that hold in the data. This sub-section has a couple of examples, but presenting extensive plots is beyond the scope of this blog post. Let me point out that it might be very beneficial to use these kind of plots with *Mathematica*‘s dynamic features ([like Manipulate and Tooltip](https://mathematicaforprediction.files.wordpress.com/2014/03/adult-data-manipulate-and-tooltip-for-mosaic-plots.png)), or make a grid of mosaic plots.
 
@@ -73,7 +73,7 @@ Here is a table with scatter plots for all numerical variables of the data:
 
 ![adult-data-scatter-plots-age-education-num-capital-gain-capital-loss-hours-per-week][4]
 
-##Application of decision trees
+## Application of decision trees
 
 The building and classification with decision trees is straightforward. Since the label “>50K” is only a quarter of the records I consider the classification success rates for “>50K” to be more important.
 
@@ -102,7 +102,7 @@ Both questions are probably answered with “Yes” and probably that is why “
 
 We can see the decisiveness of “age”, “education-num”, “occupation”, and “hours-per-week” as natural. Of course one is expected to receive a higher pay if he has studied longer, has a high paying occupation, is older (more experienced), and works more hours per week. Note that this statement explicitly states the direction of the correlation: we do assume that longer years of study bring higher pay. It is certainly a good idea to consider the alternative direction of the correlation, that people first get high paying jobs and that these high paying jobs allow them to get older and study longer.
 
-##Application of naive Bayesian classifiers
+## Application of naive Bayesian classifiers
 
 The naive Bayesian classifier, \[[3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NaiveBayesianClassifier.m)\], produced better classification results than the decision trees for the label “>50K”:
 
@@ -124,19 +124,19 @@ In comparison with the decision tree importance of variables experiments we can 
 
 3. “age”, “occupation”, “hours-per-week”, “capital-gain”, and “sex” are decisive.
 
-##Shuffled classification rates plots comparison
+## Shuffled classification rates plots comparison
 
 Here are the two shuffled classification rates plots stacked together for easier comparison:
 
 ![adult-data-Decision-tree-and-NBC-classification-shuffled-success-rates-plots][11]
 
-##Data modification
+## Data modification
 
 In order to apply the association rules finding algorithm Apriori, \[[4](https://github.com/antononcube/MathematicaForPrediction/blob/master/AprioriAlgorithm.m)\], the data set have to be modified. The modification is to change the numerical variables “age”, “education-num”, and “age” into categorical. I just partitioned them into non-overlapping intervals, labeled the intervals, and assigned the labels according the variable values. Here is the summary of the modified data for just these variables:
 
 ![adault-data-numerical-to-categorical-columns-summary][12]
 
-##Finding association rules
+## Finding association rules
 
 Using the modified data I found a large number of association rules with the Apriori algorithm, \[[4](https://github.com/antononcube/MathematicaForPrediction/blob/master/AprioriAlgorithm.m)\]. I used the measure called “confidence” to extract the most significant rules. The confidence of an association rule $A \rightarrow C$ with antecedent $A$ and consequent $C$ is defined to be the ratio P$(A \cap C)/$P$(C)$. The higher the ratio the more confidence we have in the rule. (If the ratio is 1 we have a logical rule, $C \subset A$.)
 
@@ -152,7 +152,7 @@ Here is a table showing the rules with highest confidence for the consequent bei
 
 The association rules in these tables confirm the findings with the classifiers: marital status, age, and education are good predictors of income labels “>50K” and “<=50K”.
 
-##Conclusion
+## Conclusion
 
 The analysis confirmed (and quantified) what is considered common sense:
 
@@ -164,33 +164,48 @@ Using the association rules we see for example that
 
 (2) single parents, younger than 25 years, who studied less than 10 years, and were never-married make less than $50000.
 
-##References
+## References
 
-\[1\] Bache, K. & Lichman, M. (2013). UCI Machine Learning Repository [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, School of Information and Computer Science. Census Income Data Set, URL: http://archive.ics.uci.edu/ml/datasets/Census+Income .
+\[1\] Kohavi, R. and Becker, B. (1996), [Census Income Data Set](http://archive.ics.uci.edu/ml/datasets/Census+Income), 
+at [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml). 
 
-\[2\] Antonov, A., Decision tree and random forest implementations in Mathematica, source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), package AVCDecisionTreeForest.m, (2013).
+\[2\] Antonov, A., [Decision tree and random forest implementations in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/AVCDecisionTreeForest.m), (2013), 
+source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), 
+package [AVCDecisionTreeForest.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/AVCDecisionTreeForest.m).
 
-\[3\] Antonov, A., Implementation of naive Bayesian classifier generation in Mathematica, source code [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), package NaiveBayesianClassifier.m, (2013).
+\[3\] Antonov, A., [Implementation of naive Bayesian classifier generation in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/NaiveBayesianClassifier.m), (2013),
+source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), 
+package [NaiveBayesianClassifier.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/NaiveBayesianClassifier.m).
 
-\[4\] Antonov, A., Implementation of the Apriori algorithm in Mathematica, source code at https://github.com/antononcube/MathematicaForPrediction, package AprioriAlgorithm.m, (2013).
+\[4\] Antonov, A., [Implementation of the Apriori algorithm in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/AprioriAlgorithm.m), (2013), 
+source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), 
+package [AprioriAlgorithm.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/AprioriAlgorithm.m).
 
-\[5\] Antonov, A., Mosaic plot for data visualization implementation in Mathematica, source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), package MosaicPlot.m, (2014).
+\[5\] Antonov, A., [Mosaic plot for data visualization implementation in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/MosaicPlot.m), (2014), 
+source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), 
+package [MosaicPlot.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m).
 
-\[6\] Antonov, A., Tries with frequencies Mathematica package, source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), package TriesWithFrequencies.m, (2013).
+\[6\] Antonov, A., [Tries with frequencies Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m), (2013), 
+source code at [MathematicaForPrediction project at GitHub]( https://github.com/antononcube/MathematicaForPrediction), 
+package [TriesWithFrequencies.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m).
 
-\[7\] Hahsler, M. et al., Introduction to arules - A computational environment for mining association rules and frequent item sets, (2012).
+\[7\] Hahsler, M. et al., [Introduction to arules - A computational environment for mining association rules and frequent item sets](https://cran.r-project.org/web/packages/arules/vignettes/arules.pdf), (2012), 
+[CRAN](https://cran.r-project.org).
 
 \[8\] Breiman, L. et al., Classification and regression trees, Chapman & Hall, 1984.
 
-\[9\] Wikipedia, Association rules learning, http://en.wikipedia.org/wiki/Association_rule_learning .
+\[9\] Wikipedia entry, [Association rules learning](http://en.wikipedia.org/wiki/Association_rule_learning), http://en.wikipedia.org/wiki/Association_rule_learning .
 
-\[10\] Antonov, A., [Mosaic plots for data visualization](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Mosaic%20plots%20for%20data%20visualization.pdf), (March, 2014), [MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+\[10\] Antonov, A., [Mosaic plots for data visualization](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Mosaic%20plots%20for%20data%20visualization.pdf), (March, 2014), 
+documentation at [MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-\[11\] Wikipedia, [Trie]( http://en.wikipedia.org/wiki/Trie), URL: http://en.wikipedia.org/wiki/Trie .
+\[11\] Wikipedia entry, [Trie](http://en.wikipedia.org/wiki/Trie), URL: http://en.wikipedia.org/wiki/Trie .
 
-\[12\] Antonov, A., Tries, (December, 2013), URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Tries.pdf .
+\[12\] Antonov, A., [Tries](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Tries.pdf), (December, 2013),
+documentation at [MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-\[13\] Antonov, A., [Mosaic plots for data visualization](https://mathematicaforprediction.wordpress.com/2014/03/17/mosaic-plots-for-data-visualization/), (March, 2014) MathematicaForPrediction at WordPress.
+\[13\] Antonov, A., [Mosaic plots for data visualization](https://mathematicaforprediction.wordpress.com/2014/03/17/mosaic-plots-for-data-visualization/), (March, 2014)
+blog post at [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com/).
 
 
 [1]:http://i.imgur.com/5FkKOJ1.png
