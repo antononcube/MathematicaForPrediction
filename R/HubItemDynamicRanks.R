@@ -17,7 +17,6 @@
 ## 
 ## Written by Anton Antonov, 
 ## antononcube@gmail.com, 
-## 7320 Colbury Ave, 
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
@@ -100,8 +99,8 @@ MakeBiPartiteGraphMatrix <- function ( hubItemScoresArray ) {
   names(hubItemScoresArray) <- c( "HubID", "ItemID", "HubItemScore", "ItemHubScore" )
   
   
-  hubDF <- data.frame( HubID = hubIDs, HubIndex = 1:length(hubIDs) )
-  itemDF <- data.frame( ItemID = itemIDs, ItemIndex = length(hubIDs) + ( 1:length(itemIDs) ) )
+  hubDF <- data.frame( HubID = hubIDs, HubIndex = 1:length(hubIDs), stringsAsFactors = FALSE )
+  itemDF <- data.frame( ItemID = itemIDs, ItemIndex = length(hubIDs) + ( 1:length(itemIDs) ), stringsAsFactors = FALSE )
   
   tempPTA <- hubItemScoresArray[,c( "HubID", "ItemID", "HubItemScore", "ItemHubScore" )]
   
@@ -112,7 +111,7 @@ MakeBiPartiteGraphMatrix <- function ( hubItemScoresArray ) {
   
   
   tempPTA <- rbind( setNames( tempPTA[, c( "HubIndex", "ItemIndex", "HubItemScore" ) ], c( "Index1", "Index2", "Score" ) ),
-                    setNames( tempPTA[, c( "ItemIndex", "HubIndex", "ItemHubScore" ) ], c( "Index1", "Index2", "Score" ) ) )
+                    setNames( tempPTA[, c( "ItemIndex", "HubIndex", "ItemHubScore" ) ], c( "Index1", "Index2", "Score" ) ), stringsAsFactors = FALSE )
   
   bmat <- xtabs( Score ~ Index2 + Index1, tempPTA, sparse=TRUE )
   
@@ -219,7 +218,7 @@ HubItemRanks <- function( hubsAndItemsMat, hubIDs, hubTags, tagSets,
 #' @param tagSets list of lists of strings
 #' @param tset list of strings
 NearestTagSets <- function(tagSets, tset) {
-  ds <- dlply( tagSets, function(x) c( length(pmatch( tset, x )) / length(x), x ) )
+  ds <- dlply( tagSets, function(x) c( length(intersect( tset, x )) / length(x), x ) )
   names(ds) <- c("Score","TagSet")
   ds <- ds[ rev(order(ds$Score)) ]
   if ( ds$Score[1] == 0 ) {
