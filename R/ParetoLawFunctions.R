@@ -100,7 +100,8 @@ ParetoItems <- function( data, colName, paretoFraction ) {
 #' @param dataVec a data vector
 #' @param paretoFraction a number between 0 and 1 specifying the Pareto fraction
 #' @return A data frame with columns c( "Index", "Score", "CumSums" ).
-ParetoPositions <- function( dataVec, paretoFraction ) {
+#' @details "CumSums" should be "CumSumFractions" but it is left to be "CumSums" for backward compatibility.
+ParetoPositions <- function( dataVec, paretoFraction = 1 ) {
 
   paretoItemsCount <- data.frame( Index = 1:length(dataVec), Score = dataVec )
   paretoItemsCount <- paretoItemsCount[ rev( order( paretoItemsCount[,2] ) ), ]
