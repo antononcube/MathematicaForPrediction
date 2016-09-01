@@ -123,12 +123,17 @@ MakeBiPartiteGraphMatrix <- function( hubItemScoresArray,
   bmat <- rBind( cBind( hhZeroMat, bmat1 ), cBind( bmat2, iiZeroMat ) )
   
   # make the matrix column stochastic
-  colNorms <- sqrt( colSums( bmat * bmat ) )
-  bmat <- bmat %*% Diagonal( x = 1 / ifelse( colNorms > 0, colNorms, 1) )
+  if ( columnStochastic ) {
+     colNorms <- sqrt( colSums( bmat * bmat ) )
+     bmat <- bmat %*% Diagonal( x = 1 / ifelse( colNorms > 0, colNorms, 1) )
+  }
 
   hubDF <- data.frame( HubID = rownames(bmat1), Index = 1:nrow(bmat1), stringsAsFactors = FALSE )
   itemDF <- data.frame( ItemID = rownames(bmat2), Index = (1:nrow(bmat2)) + nrow(bmat1), stringsAsFactors = FALSE )
-  
+
+  rownames(bmat) <- c( rownames(bmat1), rownames(bmat2) )
+  colnames(bmat) <- c( rownames(bmat1), rownames(bmat2) )
+
   list( M = bmat, Hubs = hubDF, Items = itemDF )
 }
 
