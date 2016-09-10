@@ -32,11 +32,13 @@
 (* :Discussion: *)
 (*
 
-  When given an array of integrands NIntegrate is run separately over each array element. That is not necessary though,
-  the core NIntegrate integration strategies can work with any integrands as long the error estimates are real numbers.
+  When given an array of integrands NIntegrate is run separately over each array element. That is not
+  necessary though -- the core NIntegrate integration strategies can work with any integrands as long as
+  the error estimates are real numbers.
 
-  The motivation for implementing ArrayOfFunctionsRule is to provide a significant speed-up for integrands that are
-  arrays of functions. That is achived by evaluating all functions with the same integration rule abscissas and weights.
+  The motivation for implementing ArrayOfFunctionsRule is to provide a significant speed-up for integrands
+  that are arrays of functions. That is achived by evaluating all functions with the same integration rule
+  abscissas and weights.
 
   -------
   Example
@@ -69,8 +71,17 @@
 
     (* 7.17894*10^-7 *)
 
-  Note that the rule has to be used with the strategy specification that has the option "SingularityHandler" -> None,
+  Note that the rule has to be used with a strategy specification that has the option
+
+   "SingularityHandler" -> None
+
   and that the rule does not perform correctly over ranges with infinity.
+
+TODO:
+
+  1. Re-design signatures.
+  2. Implement multi-dimensional integration.
+  3. Better error or wrong specifications handling.
 
   This file was created using Mathematica Plugin for IntelliJ IDEA.
 
