@@ -103,6 +103,8 @@ Options[ArrayOfFunctionsRule] = {"Method" -> "GaussKronrodRule",
 
 ArrayOfFunctionsRuleProperties = Part[Options[ArrayOfFunctionsRule], All, 1];
 
+ArrayOfFunctionsRule::narr = "Array of functions is expected as a value of the option \"Functions\".";
+
 ArrayOfFunctionsRule /:
     NIntegrate`InitializeIntegrationRule[ArrayOfFunctionsRule, nfs_, ranges_, ruleOpts_, allOpts_] :=
 
@@ -113,6 +115,11 @@ ArrayOfFunctionsRule /:
         ArrayOfFunctionsRuleProperties, ruleOpts];
       If[t === $Failed, Return[$Failed]];
       {methodSpec, funcsArr, errNormFunc} = t;
+
+      If[ !ArrayQ[funcsArr],
+        Message[ArrayOfFunctionsRule::narr];
+        Return[$Failed];
+      ];
 
       t = NIntegrate`MOptionValue[methodSpec, nfs, ranges, allOpts];
 
