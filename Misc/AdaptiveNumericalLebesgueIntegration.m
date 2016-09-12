@@ -124,11 +124,20 @@
 
     has to be used:
 
-    NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, 0, \[Infinity]},
+    NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, 0, Infinity},
       Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False,
         Method -> {LebesgueIntegration, "PointGenerator" -> Random}},
       PrecisionGoal -> 3]
 
+    For some integrands we have to specify inter-range points or larger MinRecursion.
+
+     NIntegrate[1/(x^2), {x, 1, Infinity}]
+     (* 1. *)
+
+     NIntegrate[1/(x^2), {x, 1, 12, Infinity},
+       Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False,
+         Method -> {LebesgueIntegrationRule, "Points" -> 1000}}]
+     (* 0.999466 *)
 
   ## Usage as an integration rule
 
