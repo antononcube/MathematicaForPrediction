@@ -318,27 +318,34 @@ Integration with variable ranges works "out of the box."
 
 ### Infinite ranges
 
-With infinite ranges the implemented Lebesgue integration algorithms produce estimates far from the real values. Here is an example:
+In order to get correct results with infinite ranges the wrapper
 
-    NIntegrate[1/x^2, {x, 1, Infinity}]
+    Method->{"UnitCubeRescaling","FunctionalRangesOnly"->False, _}
+
+has to be used. Here is an example:
+
+    NIntegrate[1/(x^2 + 12), {x, 0, Infinity}]
+    (* 0.45345 *)
+
+    NIntegrate[1/(x^2 + 12), {x, 0, Infinity},  
+      Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False, 
+        Method -> {LebesgueIntegrationRule, "Points" -> 2000}}, PrecisionGoal -> 3]
+    (* 0.453366 *)
+
+For some integrands we have to specify inter-range points or larger `MinRecursion`.
+
+    NIntegrate[1/(x^2), {x, 1, Infinity}]
     (* 1. *)
 
-    res = Reap@
-       NIntegrate[1/x^2, {x, 1, \[Infinity]},
-        Method -> {LebesgueIntegration, "Points" -> 400,
-          "PointGenerator" -> "Sobol",
-          "LebesgueIntegralVariableSymbol" -> fval},
-        EvaluationMonitor :> {Sow[fval]},
-        PrecisionGoal -> 3, MaxRecursion -> 20,
-        WorkingPrecision -> 20];
-    res = DeleteCases[res, fval, \[Infinity]];
-    res[[1]]
-    ListPlot[res[[2, 1]]]
-    (* 399.91652949396108627 *)
+    NIntegrate[1/(x^2), {x, 1, 12, Infinity}, 
+      Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False, 
+        Method -> {LebesgueIntegrationRule, "Points" -> 1000}}]
+    (* 0.999466 *)
 
-[![Infinite range sampling points][8]][8]
-
-In order to achieve better results dedicated implementation changes (or separate development) have to be done.
+    NIntegrate[1/(x^2), {x, 1, Infinity}, 
+      Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False, 
+        Method -> {LebesgueIntegrationRule, "Points" -> 1000}}]
+    (* 0. *)
 
 ### Evaluation monitoring
 
@@ -364,7 +371,7 @@ The strategy `LebesgueIntegration` uses an internal variable for the calculation
           "LebesgueIntegralVariableSymbol" -> fval},
         EvaluationMonitor :> {Sow[fval]},
         PrecisionGoal -> 3];
-    res = DeleteCases[res, fval, \[Infinity]];
+    res = DeleteCases[res, fval, Infinity];
     ListPlot[res[[2, 1]]]
 
 [![Lebesgue strategy sampling points][10]][10]
