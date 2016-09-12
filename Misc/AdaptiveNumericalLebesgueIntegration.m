@@ -109,17 +109,16 @@
 
   ### Handling of variable ranges
 
-    Explicit nesting in "UnitCubeRescaling" has to be done:
+    Using variable dependent ranges works "out of the box":
 
     NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, x, 12},
-      Method -> {"UnitCubeRescaling",
-          Method -> {LebesgueIntegration, "PointGenerator" -> Random}},
+      Method -> {LebesgueIntegration, "PointGenerator" -> Random},
       PrecisionGoal -> 3]
 
 
   ### Handling of infinite ranges
 
-    Similar for handling variable ranges, in order to get correct results with infinite ranges the wrapper
+    In order to get correct results with infinite ranges the wrapper
 
       Method->{"UnitCubeRescaling","FunctionalRangesOnly"->False, _}
 
