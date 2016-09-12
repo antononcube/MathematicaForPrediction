@@ -125,8 +125,13 @@ ArrayOfFunctionsRule /:
 
       If[t === $Failed, Return[$Failed]];
 
-      vars = {x};
-      funcsExpr = Map[#[x] &, funcsArr, {Length@Dimensions[funcsArr]}];
+      If[ ArrayQ[funcsArr, _, Head[#] === Function &],
+        vars = {x};
+        funcsExpr = Map[#[x] &, funcsArr, {Length@Dimensions[funcsArr]}],
+        (* ELSE *)
+        vars = nfs[[1]]["ArgumentNames"];
+        funcsExpr = funcsArr;
+      ];
       nf = Experimental`CreateNumericalFunction[{#, {}} & /@ vars, funcsExpr, Dimensions[funcsExpr], _Real & /@ vars];
 
       ArrayOfFunctionsRule[t, funcsArr, errNormFunc, nf]
