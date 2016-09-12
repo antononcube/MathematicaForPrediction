@@ -117,6 +117,20 @@
       PrecisionGoal -> 3]
 
 
+  ### Handling of infinite ranges
+
+    Similar for handling variable ranges, in order to get correct results with infinite ranges the wrapper
+
+      Method->{"UnitCubeRescaling","FunctionalRangesOnly"->False, _}
+
+    has to be used:
+
+    NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, 0, \[Infinity]},
+      Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False,
+        Method -> {LebesgueIntegration, "PointGenerator" -> Random}},
+      PrecisionGoal -> 3]
+
+
   ## Usage as an integration rule
 
   ### 1D
@@ -252,7 +266,6 @@ LebesgueIntegration /:
     Block[{method, RNGenerator, npoints, pointwiseMeasure, lebesgueIntegralVar,
       t, symbproctime},
 
-
       t = NIntegrate`GetMethodOptionValues[LebesgueIntegration, LebesgueIntegrationProperties, strOpts];
 
       (* Method *)
@@ -296,6 +309,7 @@ LebesgueIntegration /:
       ];
 
       If[TrueQ[lebesgueIntegralVar === Automatic], lebesgueIntegralVar = f ];
+
 
       LebesgueIntegration[{method, nfs, ranges, RNGenerator, pointwiseMeasure, npoints, lebesgueIntegralVar, symbproctime}]
     ];
