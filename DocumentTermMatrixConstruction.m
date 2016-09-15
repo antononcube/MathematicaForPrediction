@@ -83,9 +83,10 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
       ];
 
       If[ MatchQ[ stopWords, {_String...} ],
-        stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ],
-        If[ Head[stopWordsRules] =!= Dispatch, stopWordsRules = Dispatch[ stopWords ]]
+        stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ]
       ];
+      (* Message should be given here. *)
+      If[ Head[stopWordsRules] =!= Dispatch, stopWordsRules = Dispatch[ {} ]];
 
       (* docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms; *)
       docTerms = Pick[#, Not /@ (#/.stopWordsRules) ]& /@ docTerms;
