@@ -82,15 +82,15 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
         docTerms = Select[#, pSPred] & /@ docTerms
       ];
 
-      If[ MatchQ[ stopWords, {_String...} ],
-        stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ]
+      If[ MatchQ[ stopWords, {_String..} ],
+        stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ];
+        (* docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms; *)
+        docTerms = Pick[#, Not /@ (#/.stopWordsRules) ]& /@ docTerms;
       ];
-      (* Message should be given here. *)
-      If[ Head[stopWordsRules] =!= Dispatch, stopWordsRules = Dispatch[ {} ]];
 
-      (* docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms; *)
-      docTerms = Pick[#, Not /@ (#/.stopWordsRules) ]& /@ docTerms;
-      docTerms = docTerms /. stemmingRules;
+      If[ Length[stemmingRules] > 0,
+        docTerms = docTerms /. stemmingRules;
+      ]
       docTerms
     ];
 
@@ -120,7 +120,7 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWe
 
 Clear[WeightTerms]
 WeightTerms[docTermMat_?MatrixQ] :=
-    WeightTerms[docTermMat, GlobalTermWeight["IDF", #1, #2] &, # &, If[Max[#] == 0, #, #/Norm[#]] &];
+    WeightTerms[docTermMat, GlobalTermWeight["IDF", #1, #2] &, # &, If[Norm[#] == 0, #, #/Norm[#]] &];
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] :=
     Block[{mat, nDocuments, n, m, globalWeights, diagMat},
@@ -141,8 +141,8 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizer
         mat = Transpose[ SparseArray[mat] ]; (* document * term matrix *)
       ];
 
-      (* PRINT[Length[Select[globalWeights, ! NumberQ[#] &]]]; *)
-      (* PRINT["WeightTerms::globalWeights : ", Through[{Min, Max, Mean, Median}[globalWeights]]]; *)
+       (*PRINT[Length[Select[globalWeights, ! NumberQ[#] &]]];*)
+       (*PRINT["WeightTerms::globalWeights : ", Through[{Min, Max, Mean, Median}[globalWeights]]];*)
 
       If[TrueQ[ localWeightFunc === Identity || localWeightFunc === None || localWeightFunc == Function[#] ],
         diagMat = SparseArray[MapThread[{#1, #2} -> #3 &, {Range[1, m], Range[1, m], globalWeights}], {m, m}];
