@@ -64,6 +64,8 @@ KurtosisUpperBound::usage = "KurtosisUpperBound[vec_?VectorQ] computes the upper
 KurtosisUpperBound[d_,n_Integer] computes the upper bound of the kurtosis of a sample of size n from \
 the distribution d."
 
+CrossTabulate::usage = "Finds the contigency co-occurance values in a full array."
+
 Begin["`Private`"]
 
 Needs["MosaicPlot`"]
@@ -252,6 +254,13 @@ VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] 
           ] & /@ Flatten[Outer[List, ninds, ninds], 1];
 
       Grid[ArrayReshape[grs, {Length[ninds], Length[ninds]}], Dividers -> All]
+    ];
+
+Clear[CrossTabulate]
+CrossTabulate[ arr_?ArrayQ ] :=
+    Block[{idRules,t},
+      idRules = Table[(t=Union[arr[[All,i]]];Dispatch@Thread[t->Range[Length[t]]]), {i,Dimensions[arr][[2]]}];
+      { SparseArray[ Map[MapThread[Replace,{#[[1]],idRules}] -> #[[2]] &, Tally[arr]]], Normal[#][[All,1]]&/@idRules}
     ];
 
 End[]
