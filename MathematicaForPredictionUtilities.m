@@ -285,7 +285,7 @@ CrossTabulate[ arr_?ArrayQ ] :=
 
 Clear[xtabsViaRLink];
 xtabsViaRLink::norlink = "R is not installed.";
-xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String] :=
+xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse:(False|True):False] :=
     Block[{},
       If[Length[DownValues[RLink`REvaluate]] == 0,
         Message[xtabsViaRLink::norlink];
@@ -296,7 +296,7 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String] :=
         "dataDF<-as.data.frame(dataColumns,stringsAsFactors=FALSE)"];
       RLink`RSet["columnNames", columnNames];
       RLink`REvaluate["names(dataDF)<-columnNames"];
-      RLink`REvaluate["tdf <- xtabs(" <> formula <> ", dataDF)"]
+      RLink`REvaluate["tdf <- xtabs(" <> formula <> ", dataDF, sparse = " <> If[sparse,"T","F"] <> ")"]
     ];
 
 Clear[FromRXTabsForm];
