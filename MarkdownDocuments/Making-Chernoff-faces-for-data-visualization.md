@@ -27,7 +27,7 @@ Below are given both simple and more advanced examples of constructing Chernoff 
 
 For several of the visualizing scenarios the records of two "real life" data sets are used: Fisher Iris flower dataset [7], and "Vinho Verde" wine quality dataset [8]. For the rest of the scenarios the data is generated.
 
-A fundamental restriction of using Chernoff faces is the necessity to properly transform the data variables into the ranges of the Chernoff face diagram parameters. Therefore, proper data transformation (standadizing and rescaling) is an inherent part of the application of Chernoff faces, and this document describes such data transformation procedures (also using [3]).
+A fundamental restriction of using Chernoff faces is the necessity to properly transform the data variables into the ranges of the Chernoff face diagram parameters. Therefore, proper data transformation (standardizing and rescaling) is an inherent part of the application of Chernoff faces, and this document describes such data transformation procedures (also using [3]).
 
 ### Package load
 
