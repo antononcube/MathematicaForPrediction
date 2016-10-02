@@ -77,7 +77,7 @@ Here is the facial parameter list:
 
     Keys[ChernoffFace["FacePartsProperties"]]
 
-    (* {"FaceLength", "ForheadShape", "EyesVerticalPosition", "EyeSize", \
+    (* {"FaceLength", "ForeheadShape", "EyesVerticalPosition", "EyeSize", \
 		"EyeSlant", "LeftEyebrowSlant", "LeftIris", "NoseLength", \
 		"MouthSmile", "LeftEyebrowTrim", "LeftEyebrowRaising", "MouthTwist", \
 		"MouthWidth", "RightEyebrowTrim", "RightEyebrowRaising", \
@@ -559,7 +559,7 @@ We use the face parts:
 
     Take[Keys[ChernoffFace["FacePartsProperties"]], 4]
 
-    (* {"FaceLength", "ForheadShape", "EyesVerticalPosition", "EyeSize"} *)
+    (* {"FaceLength", "ForeheadShape", "EyesVerticalPosition", "EyeSize"} *)
 
 To make the face comparison easier, the first face is the one of the prototype, each Chernoff face is drawn within the same rectangular frame, and the NNs indices are added on top of the faces.
 
