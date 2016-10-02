@@ -66,6 +66,8 @@ the distribution d."
 
 CrossTabulate::usage = "Finds the contigency co-occurance values in a full array."
 
+xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
+
 Begin["`Private`"]
 
 Needs["MosaicPlot`"]
@@ -277,6 +279,25 @@ CrossTabulate[ arr_?ArrayQ ] :=
         Message[CrossTabulate::narr];
         {}
       ]
+    ];
+
+Clear[xtabsViaRLink]
+xtabsViaRLink::norlink = "R is not installed.";
+xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String] :=
+    Block[{rres},
+      If[Length[DownValues[RLink`REvaluate]] == 0,
+        Message[xtabsViaRLink::norlink];
+        Return[$Failed]
+      ];
+      RLink`RSet["dataColumns", Transpose[data]];
+      RLink`REvaluate[
+        "dataDF<-as.data.frame(dataColumns,stringsAsFactors=FALSE)"];
+      RLink`RSet["columnNames", columnNames];
+      RLink`REvaluate["names(dataDF)<-columnNames"];
+      rres = RLink`REvaluate["tdf <- xtabs(" <> formula <> ", dataDF)"];
+      <|"matrix" -> rres[[1]],
+        "rownames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
+        "colnames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
     ];
 
 End[]
