@@ -257,10 +257,26 @@ VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] 
     ];
 
 Clear[CrossTabulate]
+
+CrossTabulate::narr = "The first argument is expected to be an array with two or three columns.
+If present the third column is expected to be numerical."
+
 CrossTabulate[ arr_?ArrayQ ] :=
     Block[{idRules,t},
-      idRules = Table[(t=Union[arr[[All,i]]];Dispatch@Thread[t->Range[Length[t]]]), {i,Dimensions[arr][[2]]}];
-      { SparseArray[ Map[MapThread[Replace,{#[[1]],idRules}] -> #[[2]] &, Tally[arr]]], Normal[#][[All,1]]&/@idRules}
+      idRules = Table[(t=Union[arr[[All,i]]];Dispatch@Thread[t->Range[Length[t]]]), {i,Min[2,Dimensions[arr][[2]]]}];
+      Which[
+        Dimensions[arr][[2]]==2,
+        { SparseArray[ Map[MapThread[Replace,{#[[1]],idRules}] -> #[[2]] &, Tally[arr]]],
+          Normal[#][[All,1]]&/@idRules},
+        Dimensions[arr][[2]]==3 && VectorQ[arr[[All,3]],NumericQ],
+        { SparseArray[
+          Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
+            Map[{#[[1, 1 ;; 2]], Total[#[[All, 3]]]} &, GatherBy[arr, Most]]]],
+          Normal[#][[All,1]]&/@idRules},
+        True,
+        Message[CrossTabulate::narr];
+        {}
+      ]
     ];
 
 End[]
