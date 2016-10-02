@@ -68,6 +68,8 @@ CrossTabulate::usage = "Finds the contigency co-occurance values in a full array
 
 xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
 
+FromRXTabsForm::usage = "Transforms RObject result of xtabsViaRLink into an association."
+
 Begin["`Private`"]
 
 Needs["MosaicPlot`"]
@@ -281,10 +283,10 @@ CrossTabulate[ arr_?ArrayQ ] :=
       ]
     ];
 
-Clear[xtabsViaRLink]
+Clear[xtabsViaRLink];
 xtabsViaRLink::norlink = "R is not installed.";
 xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String] :=
-    Block[{rres},
+    Block[{},
       If[Length[DownValues[RLink`REvaluate]] == 0,
         Message[xtabsViaRLink::norlink];
         Return[$Failed]
@@ -294,11 +296,16 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String] :=
         "dataDF<-as.data.frame(dataColumns,stringsAsFactors=FALSE)"];
       RLink`RSet["columnNames", columnNames];
       RLink`REvaluate["names(dataDF)<-columnNames"];
-      rres = RLink`REvaluate["tdf <- xtabs(" <> formula <> ", dataDF)"];
+      RLink`REvaluate["tdf <- xtabs(" <> formula <> ", dataDF)"]
+    ];
+
+Clear[FromRXTabsForm];
+FromRXTabsForm[rres_RLink`RObject]:=
+    Block[{},
       <|"matrix" -> rres[[1]],
         "rownames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
         "colnames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
-    ];
+    ] /; (! FreeQ[rres, {"xtabs", "table"}, Infinity]);
 
 End[]
 
