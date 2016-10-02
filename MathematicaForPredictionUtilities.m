@@ -291,12 +291,16 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse:(
         Message[xtabsViaRLink::norlink];
         Return[$Failed]
       ];
-      RLink`RSet["dataColumns", Transpose[data]];
-      RLink`REvaluate[
-        "dataDF<-as.data.frame(dataColumns,stringsAsFactors=FALSE)"];
+      RLink`RSet["data", Transpose[data]];
+      If[ RLink`REvaluate["class(data)"][[1]] == "matrix",
+        RLink`REvaluate["dataDF <- as.data.frame( t(data), stringsAsFactors=F )"],
+        (*RLink`REvaluate["dataDF <- do.call( rbind.data.frame, data )"]*)
+        (*RLink`REvaluate["dataDF <- data.frame( matrix( unlist(data), nrow = " <> ToString[Length[data]] <> ", byrow = T), stringsAsFactors=FALSE)"]*)
+        RLink`REvaluate["dataDF <- as.data.frame( data, srtingsAsFactors=F )"]
+      ]
       RLink`RSet["columnNames", columnNames];
       RLink`REvaluate["names(dataDF)<-columnNames"];
-      RLink`REvaluate["tdf <- xtabs(" <> formula <> ", dataDF, sparse = " <> If[sparse,"T","F"] <> ")"]
+      RLink`REvaluate["xtabs(" <> formula <> ", dataDF, sparse = " <> If[sparse,"T","F"] <> ")"]
     ];
 
 Clear[FromRXTabsForm];
