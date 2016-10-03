@@ -133,7 +133,7 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
     If[numberedColumnsQ,
      columnNames = MapIndexed[ToString[#2[[1]]] <> " " <> #1 &, columnNames]
     ];
-    columnTypes = Map[If[NumberQ[#], Number, Symbol] &, dataColumns[[All, 1]]];
+    columnTypes = Map[If[VectorQ[#,NumberQ], Number, Symbol] &, dataColumns];
     MapThread[
      Column[{
         Style[#1, Blue, FontFamily -> "Times"],
