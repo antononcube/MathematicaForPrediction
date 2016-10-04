@@ -64,7 +64,11 @@ KurtosisUpperBound::usage = "KurtosisUpperBound[vec_?VectorQ] computes the upper
 KurtosisUpperBound[d_,n_Integer] computes the upper bound of the kurtosis of a sample of size n from \
 the distribution d."
 
-CrossTabulate::usage = "Finds the contigency co-occurance values in a full array."
+CrossTensorate::usage = "Finds the contingency co-occurance values for multiple columns of a matrix \
+using a formula specification. The first argument is the formula with the form \
+Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ..."
+
+CrossTabulate::usage = "Finds the contigency co-occurance values in a matrix (2D array)."
 
 xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
 
@@ -260,12 +264,70 @@ VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] 
       Grid[ArrayReshape[grs, {Length[ninds], Length[ninds]}], Dividers -> All]
     ];
 
+(***********************************************************)
+(* CrossTensorate and related functions                    *)
+(***********************************************************)
+
+Clear[CrossTensorate]
+
+SetAttributes[CrossTensorate, HoldFirst];
+
+CrossTensorate::wcnames = "The third argument for the data column names is expected to be Automatic, \
+an Association, or a list with length equal to the number of columns in the \
+data." ;
+CrossTensorate::wargs = "Wrong arguments.";
+CrossTensorate::mcnames = "Not all formula column names are found in the column names specified by \
+the third argument.";
+
+CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
+    Block[{aColumnNames, idRules, formulaLHS, formulaRHS, t},
+
+      Which[
+        TrueQ[columnNames === Automatic],
+        aColumnNames =
+            AssociationThread[Range[Dimensions[data][[2]]] -> Range[Dimensions[data][[2]]]],
+        ListQ[columnNames] && Length[columnNames] == Dimensions[data][[2]],
+        aColumnNames = AssociationMap[columnNames -> Range[Dimensions[data][[2]]]],
+        AssociationQ[columnNames],
+        aColumnNames = columnNames,
+        True,
+        Message[CrossTensorate::wcnames]; Return[{}]
+      ];
+
+      formulaLHS = formula[[1]];
+
+      If[! TrueQ[formulaLHS === Count], formulaLHS = aColumnNames[formulaLHS]];
+
+      formulaRHS = ReleaseHold[Hold[formula] /. Plus -> List][[2]];
+
+      If[Length[Intersection[Keys[aColumnNames], formulaRHS]] < Length[formulaRHS],
+        Message[CrossTensorate::mcnames]; Return[{}]
+      ];
+
+      formulaRHS = aColumnNames /@ formulaRHS;
+      idRules = Table[(t = Union[data[[All, i]]];Dispatch@Thread[t -> Range[Length[t]]]), {i, formulaRHS}];
+      Which[
+        TrueQ[formulaLHS === Count],
+        t = SparseArray[
+          Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
+            Tally[data[[All, formulaRHS]]]]],
+        IntegerQ[formulaLHS],
+        t = SparseArray[
+          Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
+            Map[{#[[1, 1 ;; -2]], Total[#[[All, -1]]]} &,
+              GatherBy[data[[All, Append[formulaRHS, formulaLHS]]], Most]]]],
+        True,
+        Message[CrossTensorate::wargs]; Return[{}]
+      ];
+      Join[<|"Tensor" -> t|>, AssociationThread[ Keys[aColumnNames][[formulaRHS]] -> Map[Normal[#][[All, 1]] &, idRules]]]
+    ] /; (AssociationQ[columnNames] || ListQ[columnNames] || TrueQ[columnNames === Automatic]);
+
 Clear[CrossTabulate]
 
 CrossTabulate::narr = "The first argument is expected to be an array with two or three columns.
 If present the third column is expected to be numerical."
 
-CrossTabulate[ arr_?ArrayQ ] :=
+CrossTabulate[ arr_?MatrixQ ] :=
     Block[{idRules,t},
       idRules = Table[(t=Union[arr[[All,i]]];Dispatch@Thread[t->Range[Length[t]]]), {i,Min[2,Dimensions[arr][[2]]]}];
       Which[
