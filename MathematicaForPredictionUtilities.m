@@ -319,7 +319,7 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
         True,
         Message[CrossTensorate::wargs]; Return[{}]
       ];
-      Join[<|"Tensor" -> t|>, AssociationThread[ Keys[aColumnNames][[formulaRHS]] -> Map[Normal[#][[All, 1]] &, idRules]]]
+      Join[<|"XTABTensor" -> t|>, AssociationThread[ Keys[aColumnNames][[formulaRHS]] -> Map[Normal[#][[All, 1]] &, idRules]]]
     ] /; (AssociationQ[columnNames] || ListQ[columnNames] || TrueQ[columnNames === Automatic]);
 
 Clear[CrossTabulate]
@@ -343,7 +343,7 @@ CrossTabulate[ arr_?MatrixQ ] :=
         Message[CrossTabulate::narr];
         Return[{}]
       ];
-      <| "Matrix" -> t[[1]], "RowNames" -> t[[2,1]], "ColumnNames" -> t[[2,2]] |>
+      <| "XTABMatrix" -> t[[1]], "RowNames" -> t[[2,1]], "ColumnNames" -> t[[2,2]] |>
     ];
 
 Clear[xtabsViaRLink];
@@ -369,9 +369,9 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse:(
 Clear[FromRXTabsForm];
 FromRXTabsForm[rres_RLink`RObject]:=
     Block[{},
-      <|"matrix" -> rres[[1]],
-        "rownames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
-        "colnames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
+      <|"XTABMatrix" -> rres[[1]],
+        "RowNames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
+        "ColumnNames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
     ] /; (! FreeQ[rres, {"xtabs", "table"}, Infinity]);
 
 End[]
