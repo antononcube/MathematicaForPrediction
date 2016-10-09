@@ -1,5 +1,5 @@
 (*
-    Reciever operating characteristics functions Mathematica package
+    Reciever operating characteristic functions Mathematica package
     Copyright (C) 2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
