@@ -1,5 +1,6 @@
 (*
-    Reciever operating characteristic functions Mathematica package
+    Receiver operating characteristic functions Mathematica package
+
     Copyright (C) 2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -31,7 +32,7 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: Reciever operating characteristics functions *)
+(* :Title: Receiver operating characteristic functions *)
 (* :Context: ROCFunctions` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2016-10-09 *)
