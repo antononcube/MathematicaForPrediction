@@ -43,8 +43,31 @@
 (* :Discussion:
 
 
+    This package provides Receiver Operating Characteristic (ROC) functions calculation
+    and plotting. The ROC framework provides analysis and tuning of binary classifiers.
+    (The classifiers are assumed to classify into a positive/true label or a negative/false label. )
+
+    The function ROCFuntions gives access to the individual ROC functions
+    through string arguments. Those ROC functions are applied to special objects,
+    called ROC Association objects.
+
+    Each ROC Association object is an Association that has the following four keys:
+    "TruePositive", "FalsePositive", "TrueNegative", and "FalseNegative" .
+
+    Given two lists of actual and predicted labels a ROC Association object can be made
+    with the function ToROCAssociation .
+
+    For more definitions and example of ROC terminology and functions see:
+      https://en.wikipedia.org/wiki/Receiver_operating_characteristic .
+
+
     Comple usage example with Linear regression
     ===========================================
+
+    Note that below although we use both of the provided Titanic training and test data,
+    the code is doing only training.  The test data is used to find the the best tuning
+    parameter (threshold) through ROC analysis.
+
 
     #### Using Titanic data
 
@@ -115,6 +138,22 @@
                 "FunctionInterpretations"][#]) &, {"PPV", "NPV", "TPR", "ACC",
              "SPC"}], GridLines -> Automatic]
 
+
+    #### Finding the intersection point of PPV and NPV
+
+    We want to find a point that provides balanced positive and negative labels success rates.
+    One way to do this is to find the intersection point of the ROC functions
+    PPV (positive predictive value) and NPV (negative predictive value).
+
+    Examining the plot above we can come up with the initial condition for x.
+
+         ppvFunc = Interpolation[Transpose@{thRange, ROCFunctions["PPV"] /@ aROCs}];
+         npvFunc = Interpolation[Transpose@{thRange, ROCFunctions["NPV"] /@ aROCs}];
+         FindRoot[Abs[ppvFunc[x] - npvFunc[x]] == 0, {x, 0.8}]
+
+         (* {x -> 0.733351} *)
+
+
     ## Comments
 
     Remark 1:
@@ -130,7 +169,7 @@
 (*
 
   TODO:
-  1. Usage examples.
+
 
 *)
 
@@ -150,7 +189,11 @@ ROCFunctions::usage = "Gives access to the implement ROC functions.
 It can be used as Thread[ROCFunctions[][rocAssoc]] or Thread[ROCFunctions[{\"TPR\",\"SPC\"}][rocAssoc]] .\
 See ROCFunctions[\"FunctionInterpretations\"] for available functions and their interpretations."
 
-ROCPlot::usage = "Makes a standard ROC plot for specified parameter list and corresponding ROC Association objects."
+ROCPlot::usage = "Makes a standard ROC plot for specified parameter list and corresponding ROC Association objects. \
+ROCPlot takes all options of Graphics and additional options for ROC points size, color, callouts, and tooltips. \
+The allowed signatures are: \
+\nROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts]
+\nROCPlot[ xFuncName_String, yFuncName_String, parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts]"
 
 Begin["`Private`"]
 
