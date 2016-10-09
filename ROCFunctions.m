@@ -140,24 +140,24 @@
              "SPC"}], GridLines -> Automatic]
 
 
-    #### Finding the intersection point of PPV and NPV
+    #### Finding the intersection point of PPV and TPR
 
     We want to find a point that provides balanced positive and negative labels success rates.
     One way to do this is to find the intersection point of the ROC functions
-    PPV (positive predictive value) and NPV (negative predictive value).
+    PPV (positive predictive value) and TPR (true positive rate).
 
     Examining the plot above we can come up with the initial condition for x.
 
          ppvFunc = Interpolation[Transpose@{thRange, ROCFunctions["PPV"] /@ aROCs}];
-         npvFunc = Interpolation[Transpose@{thRange, ROCFunctions["NPV"] /@ aROCs}];
-         FindRoot[Abs[ppvFunc[x] - npvFunc[x]] == 0, {x, 0.8}]
+         tprFunc = Interpolation[Transpose@{thRange, ROCFunctions["TPR"] /@ aROCs}];
+         FindRoot[Abs[ppvFunc[x] - tprFunc[x]] == 0, {x, 0.2}]
 
-         (* {x -> 0.733351} *)
+         (* {x -> 0.270894} *)
 
 
     ## Comments
 
-    Remark 1:
+    Remark:
      The requirements for atomic labels probably can be removed, but I decided to be conservative and impose
      that restriction.
 
