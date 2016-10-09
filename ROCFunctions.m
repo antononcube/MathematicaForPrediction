@@ -87,7 +87,7 @@
     #### Replace categorical with numerical values
 
         trainingData = trainingData /. {"survived" -> 1, "died" -> 0,
-            "1st" -> 1, "2nd" -> 2, "3rd" -> 3,
+            "1st" -> 0, "2nd" -> 1, "3rd" -> 2,
             "male" -> 0, "female" -> 1};
 
         testData = testData /. {"survived" -> 1, "died" -> 0,
@@ -110,8 +110,7 @@
         testLabels = testData[[All, -1]];
 
         thRange = Range[0.1, 0.9, 0.025];
-        aROCs = Table[ToROCAssociation[{0, 1}, testLabels,
-            Map[If[# > th, 1, 0] &, modelValues]], {th, thRange}];
+        aROCs = Table[ToROCAssociation[{0, 1}, testLabels, Map[If[# > th, 1, 0] &, modelValues]], {th, thRange}];
 
     #### Evaluate ROC functions for given ROC association
 
@@ -119,25 +118,19 @@
 
     #### Standard ROC plot
 
-        ROCPlot[thRange, aROCs, "PlotJoined" -> False,
-         "ROCPointCallouts" -> True, "ROCPointTooltips" -> True,
+        ROCPlot[thRange, aROCs, "PlotJoined" -> False, "ROCPointCallouts" -> True, "ROCPointTooltips" -> True,
          GridLines -> Automatic]
 
     #### Plot ROC functions wrt to parameter values
 
         ListLinePlot[
          Map[Transpose[{thRange, #}] &,
-          Transpose[
-           Map[Through[
-              ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC"}][#]] &,
-            aROCs]]],
+          Transpose[Map[Through[ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC"}][#]] &, aROCs]]],
          Frame -> True,
-         FrameLabel ->
-          Map[Style[#, Larger] &, {"threshold, \[Theta]", "rate"}],
+         FrameLabel -> Map[Style[#, Larger] &, {"threshold, \[Theta]", "rate"}],
          PlotLegends ->
-          Map[# <> ", " <> (ROCFunctions[
-                "FunctionInterpretations"][#]) &, {"PPV", "NPV", "TPR", "ACC",
-             "SPC"}], GridLines -> Automatic]
+          Map[# <> ", " <> (ROCFunctions["FunctionInterpretations"][#]) &, {"PPV", "NPV", "TPR", "ACC", "SPC"}],
+         GridLines -> Automatic]
 
 
     #### Finding the intersection point of PPV and TPR
@@ -152,7 +145,7 @@
          tprFunc = Interpolation[Transpose@{thRange, ROCFunctions["TPR"] /@ aROCs}];
          FindRoot[Abs[ppvFunc[x] - tprFunc[x]] == 0, {x, 0.2}]
 
-         (* {x -> 0.270894} *)
+         (* {x -> 0.3} *)
 
 
     ## Comments
