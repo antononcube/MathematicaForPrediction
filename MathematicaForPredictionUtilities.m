@@ -68,6 +68,8 @@ CrossTensorate::usage = "Finds the contingency co-occurance values for multiple 
 using a formula specification. The first argument is the formula with the form \
 Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ..."
 
+CrossTensorateSplit::usage = "Splits the result of CrossTensorate along a variable."
+
 CrossTabulate::usage = "Finds the contigency co-occurance values in a matrix (2D array)."
 
 xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
@@ -213,6 +215,11 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
             Range[1, Length[t]]}]] /. {XXX -> #}]]
     ];
 
+
+If[ !TrueQ[ Needs["MosaicPlot`"] === Null ],
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"];
+];
+
 Clear[VariableDependenceGrid]
 Options[VariableDependenceGrid] = {"IgnoreCategoricalVariables" -> False};
 VariableDependenceGrid[data_?MatrixQ, opts : OptionsPattern[]] :=
@@ -321,6 +328,23 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
       ];
       Join[<|"XTABTensor" -> t|>, AssociationThread[ Keys[aColumnNames][[formulaRHS]] -> Map[Normal[#][[All, 1]] &, idRules]]]
     ] /; (AssociationQ[columnNames] || ListQ[columnNames] || TrueQ[columnNames === Automatic]);
+
+ClearAll[CrossTensorateSplit]
+CrossTensorateSplit::nvar = "The second argument is expected to be a key in the first.";
+CrossTensorateSplit[varName_] := CrossTensorateSplit[#, varName] &;
+CrossTensorateSplit[xtens_Association, varName_] :=
+    Block[{aVars = KeyDrop[xtens, "XTABTensor"], varInd, perm},
+      If[! (MemberQ[Keys[xtens], varName] && (varName != "XTABTensor")),
+        Message[CrossTensorateSplit::nvar]; Return[{}]
+      ];
+      varInd = Position[Keys[xtens], varName][[1, 1]] - 1;
+      perm = Range[2, Length[aVars]];
+      perm = Join[perm[[1 ;; varInd - 1]], {1}, perm[[varInd ;; -1]]];
+      Association@
+          MapThread[
+            Rule[#1, Join[<|"XTABTensor" -> #2|>, KeyDrop[aVars, varName]]] &,
+            {xtens[varName], # & /@ Transpose[xtens["XTABTensor"], perm]}]
+    ];
 
 Clear[CrossTabulate]
 
