@@ -251,21 +251,21 @@ ROCAssociationQ[ obj_ ] :=
     AssociationQ[obj] &&
         Length[Intersection[Keys[obj],{"TruePositive","FalsePositive","TrueNegative","FalseNegative"}]] == 4;
 
-TPR[rocAssoc_?ROCAssociationQ] := ("TruePositive")/("TruePositive" + "FalseNegative") /. Normal[rocAssoc];
+TPR[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"])/(rocAssoc["TruePositive"] + rocAssoc["FalseNegative"]);
 
-SPC[rocAssoc_?ROCAssociationQ] := ("TrueNegative")/("FalsePositive" + "TrueNegative") /. Normal[rocAssoc];
+SPC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TrueNegative"])/(rocAssoc["FalsePositive"] + rocAssoc["TrueNegative"]);
 
-PPV[rocAssoc_?ROCAssociationQ] := ("TruePositive")/("TruePositive" + "FalsePositive") /. Normal[rocAssoc];
+PPV[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"])/(rocAssoc["TruePositive"] + rocAssoc["FalsePositive"]);
 
-NPV[rocAssoc_?ROCAssociationQ] := ("TrueNegative")/("TrueNegative" + "FalseNegative") /. Normal[rocAssoc];
+NPV[rocAssoc_?ROCAssociationQ] := (rocAssoc["TrueNegative"])/(rocAssoc["TrueNegative"] + rocAssoc["FalseNegative"]);
 
-FPR[rocAssoc_?ROCAssociationQ] := ("FalsePositive")/("FalsePositive" + "TrueNegative") /. Normal[rocAssoc];
+FPR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalsePositive"])/(rocAssoc["FalsePositive"] + rocAssoc["TrueNegative"]);
 
-FDR[rocAssoc_?ROCAssociationQ] := ("FalsePositive")/("FalsePositive" + "TruePositive") /. Normal[rocAssoc];
+FDR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalsePositive"])/(rocAssoc["FalsePositive"] + rocAssoc["TruePositive"]);
 
-FNR[rocAssoc_?ROCAssociationQ] := ("FalseNegative")/("FalseNegative" + "TruePositive") /. Normal[rocAssoc];
+FNR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalseNegative"])/(rocAssoc["FalseNegative"] + rocAssoc["TruePositive"]);
 
-ACC[rocAssoc_?ROCAssociationQ] := ("TruePositive" + "TrueNegative") / Total[Values[rocAssoc]] /. Normal[rocAssoc];
+ACC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"] + rocAssoc["TrueNegative"]) / Total[Values[rocAssoc]];
 
 aROCAcronyms =
     AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC"} ->
