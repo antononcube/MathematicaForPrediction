@@ -259,11 +259,16 @@ FNR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalseNegative"])/(rocAssoc["FalseNe
 
 ACC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"] + rocAssoc["TrueNegative"]) / Total[Values[rocAssoc]];
 
+AUC[pROCs:{_?ROCAssociationQ..}] :=
+    Total[Partition[ Sort@Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}], 2, 1]
+        /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)];
+
+
 aROCAcronyms =
-    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC"} ->
-        {"true positive rate (sensitivity)", "specificity", "positive predictive value",
+    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUC"} ->
+        {"true positive rate", "specificity", "positive predictive value",
           "negative predictive value", "false positive rate",
-          "false discovery rate", "false negative rate", "accuracy"}];
+          "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve"}];
 
 aROCFunctions =
     AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC"} ->
