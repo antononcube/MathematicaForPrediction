@@ -163,7 +163,7 @@
 (*
 
   TODO:
-
+     1. Implementation of AUC.
 
 *)
 
@@ -192,30 +192,20 @@ The allowed signatures are: \
 
 Begin["`Private`"]
 
-Clear[ToROCRulesFirst]
-ToROCRulesFirst[trueLabel_?AtomQ, falseLabel_?AtomQ, rocTbl_?MatrixQ] :=
-    Block[{labelPairs = rocTbl[[All, 1 ;; 2]]},
-      { "TruePositive" -> rocTbl[[Position[labelPairs, {trueLabel, trueLabel}][[1, 1]], 3]],
-        "FalsePositive" -> rocTbl[[Position[labelPairs, {falseLabel, trueLabel}][[1, 1]], 3]],
-        "TrueNegative" -> rocTbl[[Position[labelPairs, {falseLabel, falseLabel}][[1, 1]], 3]],
-        "FalseNegative" -> rocTbl[[Position[labelPairs, {trueLabel, falseLabel}][[1, 1]], 3]]
-      }
-    ];
-
 Clear[ToROCAssociation]
 
-ToROCAssociation::nalbl = "The the first argument is expected to be list of two atomic elements."
+ToROCAssociation::nalbl = "The the first argument is expected to be list of two atomic elements,
+or a list of an atomic label and a list of atomic labels."
 
 ToROCAssociation::nvecs = "The the second and third arguments are expected to be vectors of the same length."
 
 ToROCAssociation::sgntrs = "The alllowed signatures are one of : \
-\nToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, actualLabels_, predictedLabels_ ] , \
-\nToROCAssociation[ {trueLabel_?AtomQ falseLabel_?AtomQ}, apLabelPairsTally:{{{_,_},__}..}], \
+\nToROCAssociation[ {trueLabel_?AtomQ, falseLabel:(_?AtomQ|{_?AtomQ..})}, actualLabels_, predictedLabels_ ] , \
 \nToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, apfAssoc_Association] ."
 
 ToROCAssociation[ {trueLabel_, falseLabel_}, actualLabels_List, predictedLabels_List ] :=
-    Block[{ra},
-      If[ ! ( AtomQ[trueLabel] && AtomQ[falseLabel] ),
+    Block[{ra,localFalseLabel, flRules},
+      If[ ! ( AtomQ[trueLabel] && ( AtomQ[falseLabel] || MatchQ[falseLabel,{_?AtomQ..}] ) ),
         Message[ToROCAssociation::nalbl]
         Return[$Failed]
       ];
@@ -223,17 +213,18 @@ ToROCAssociation[ {trueLabel_, falseLabel_}, actualLabels_List, predictedLabels_
         Message[ToROCAssociation::nvecs]
         Return[$Failed]
       ];
-      ra = Tally[Transpose[{actualLabels,predictedLabels}]];
+      If[ AtomQ[falseLabel],
+        localFalseLabel = falseLabel;
+        ra = Tally[Transpose[{actualLabels,predictedLabels}]],
+        (*ELSE*)
+        localFalseLabel = "Not-"<>ToString[trueLabel];
+        flRules = Dispatch[ Thread[falseLabel->localFalseLabel]];
+        ra = Tally[Transpose[{actualLabels/.flRules,predictedLabels/.flRules}]]
+      ];
       ra = Association[ Rule @@@ ra ];
-      ra = Join[ Association @ Flatten[Outer[{#1,#2}->0&,{trueLabel,falseLabel},{trueLabel,falseLabel}]], ra ];
-      ToROCAssociation[{trueLabel, falseLabel}, ra]
+      ra = Join[ Association @ Flatten[Outer[{#1,#2}->0&,{trueLabel,localFalseLabel},{trueLabel,localFalseLabel}]], ra ];
+      ToROCAssociation[{trueLabel, localFalseLabel}, ra]
     ];
-
-(*ToROCAssociation[ {trueLabel_?AtomQ falseLabel_?AtomQ}, apLabelPairsTally:{{{_,_},_}..}] :=*)
-(*Block[{},*)
-(*Print[apLabelPairsTally];*)
-(*ToROCAssociation[ {trueLabel, falseLabel}, Association[ Rule @@@ apLabelPairsTally ] ]*)
-(*];*)
 
 ToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, apfAssoc_Association] :=
     Block[{},
