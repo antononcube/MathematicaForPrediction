@@ -118,7 +118,7 @@
 
     #### Standard ROC plot
 
-        ROCPlot[thRange, aROCs, "PlotJoined" -> False, "ROCPointCallouts" -> True, "ROCPointTooltips" -> True,
+        ROCPlot[thRange, aROCs, "PlotJoined" -> Automatic, "ROCPointCallouts" -> True, "ROCPointTooltips" -> True,
          GridLines -> Automatic]
 
     #### Plot ROC functions wrt to parameter values
@@ -184,7 +184,8 @@ It can be used as Thread[ROCFunctions[][rocAssoc]] or Thread[ROCFunctions[{\"TPR
 See ROCFunctions[\"FunctionInterpretations\"] for available functions and their interpretations."
 
 ROCPlot::usage = "Makes a standard ROC plot for specified parameter list and corresponding ROC Association objects. \
-ROCPlot takes all options of Graphics and additional options for ROC points size, color, callouts, and tooltips. \
+ROCPlot takes all options of Graphics and additional options for \
+ROC points size, color, callouts, tooltips, and joining. \
 The allowed signatures are: \
 \nROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts]
 \nROCPlot[ xFuncName_String, yFuncName_String, parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts]"
@@ -301,25 +302,27 @@ ROCPlot[
   xFuncName_String, yFuncName_String,
   parVals:{_?NumericQ..},
   aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
-    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, rocpcf, points},
+    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, pja, rocpcf, points},
       psize = OptionValue["ROCPointSize"];
       rocc = OptionValue["ROCColor"];
       rocpcf = OptionValue["ROCPointColorFunction"];
       {pt, pc, pj} = TrueQ[OptionValue[#]] & /@ { "ROCPointTooltips", "ROCPointCallouts", "PlotJoined" };
+      pja = TrueQ[OptionValue["PlotJoined"]===Automatic];
       {xFunc, yFunc} = ROCFunctions[{xFuncName, yFuncName}];
+      points = Map[Through[{xFunc,yFunc}[#1]] &, aROCs];
       Graphics[{
+        If[pja, {Lighter[rocc],Line[points]},{}],
         PointSize[psize], rocc,
         If[ TrueQ[rocpcf===Automatic] || pj,
           Which[
             pt && !pj,
-            MapThread[Tooltip[Point[Through[{xFunc,yFunc}[#1]]], #2] &, {aROCs, parVals}],
+            MapThread[Tooltip[Point[#1], #2] &, {points, parVals}],
             !pt && !pj,
-            Point @ Map[Through[{xFunc,yFunc}[#1]] &, aROCs],
+            Point[points],
             True,
-            Line @ Map[Through[{xFunc,yFunc}[#1]]&, aROCs]
+            Line[points]
           ],
           (*ELSE*)
-          points = Map[Through[{xFunc,yFunc}[#1]] &, aROCs];
           Which[
             pt,
             MapThread[{rocpcf[#1,#2,#3],Tooltip[Point[#1], #2]} &, {points, parVals, Range[Length[points]]}],
