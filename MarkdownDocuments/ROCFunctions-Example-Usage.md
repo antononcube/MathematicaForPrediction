@@ -1,11 +1,11 @@
 # **ROCFunctions example usage**
 
-### Anton Antonov
-### MathematicaForPrediction project at GitHub
-### MathematicaVsR project at GitHub
-### October 2016
+### Anton Antonov  
+### [MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction/)  
+### [MathematicaVsR project at GitHub](https://github.com/antononcube/MathematicaVsR/)  
+### October 2016 
 
-# Introduction
+## Introduction
 
 The package \[[2](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m)\] provides Mathematica implementations of [Receiver Operating Characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) (ROC) functions calculation and plotting. The ROC framework is used for analysis and tuning of binary classifiers, \[[3](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)\]. (The classifiers are assumed to classify into a positive/true label or a negative/false label. )
 
@@ -17,7 +17,7 @@ Given two lists of actual and predicted labels a ROC Association object can be m
 
 For more definitions and example of ROC terminology and functions see \[[3](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)\].
 
-# Minimal example
+## Minimal example
 
 Note that here although we use both of the provided Titanic training and test data, the code is doing only training. The test data is used to find the best tuning parameter (threshold) through ROC analysis.
 
@@ -99,7 +99,7 @@ RecordsSummary[modelValues]
 
 ### Standard ROC plot
 
-    ROCPlot[thRange, aROCs, "PlotJoined" -> False, "ROCPointCallouts" -> True, "ROCPointTooltips" -> True, GridLines -> Automatic]
+    ROCPlot[thRange, aROCs, "PlotJoined" -> Automatic, "ROCPointCallouts" -> True, "ROCPointTooltips" -> True, GridLines -> Automatic]
 
 [![ROCPlot1][5]][5]
 
@@ -122,13 +122,32 @@ Examining the plot above we can come up with the initial condition for $x$.
 
 (* {x -> 0.3} *)
 
-# References
+### Area under the ROC curve
+
+The Area Under the ROC curve (AUROC) tells for a given range of the controlling parameter "what is the probability of the classifier to rank a randomly chosen positive instance higher than a randomly chosen negative instance, (assuming 'positive' ranks higher than 'negative')", [3,4]
+
+Calculating AUROC is easy using the Trapezoidal quadrature formula:
+
+     N@Total[Partition[Sort@Transpose[{ROCFunctions["FPR"] /@ aROCs, ROCFunctions["TPR"] /@ aROCs}], 2, 1] 
+       /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)]
+
+     (* 0.698685 *)
+
+It is also implemented in \[[2](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m)\]:
+
+    N@ROCFunctions["AUROC"][aROCs]
+
+    (* 0.698685 *)
+
+## References
 
 \[1\] Anton Antonov, [MathematicaForPrediction utilities](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), (2014), source code [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), package [MathematicaForPredictionUtilities.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m).
 
 \[2\] Anton Antonov, [Receiver operating characteristic functions Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m), (2016), source code [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), package [ROCFunctions.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m) .
 
 \[3\] Wikipedia entry, Receiver operating characteristic. URL: http://en.wikipedia.org/wiki/Receiver_operating_characteristic .
+
+\[4\] Tom Fawcett, [An introduction to ROC analysis](https://ccrma.stanford.edu/workshops/mir2009/references/ROCintro.pdf), (2006), Pattern Recognition Letters, 27, 861-874.
 
 <!---
 [1]:Titanic1.png
@@ -144,6 +163,6 @@ Examining the plot above we can come up with the initial condition for $x$.
 [2]:http://i.imgur.com/d663I98.png
 [3]:http://i.imgur.com/bBXsDp2.png
 [4]:http://i.imgur.com/mzWjhZc.png
-[5]:http://i.imgur.com/ou6ZtXf.png
+[5]:http://i.imgur.com/EeaALMz.png
 [6]:http://i.imgur.com/mQvPDmA.png
 [7]:http://i.imgur.com/DSkPQOH.png
