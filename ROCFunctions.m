@@ -271,8 +271,8 @@ aROCAcronyms =
           "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve"}];
 
 aROCFunctions =
-    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC"} ->
-        {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC}];
+    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUC"} ->
+        {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUC}];
 
 
 Clear[ROCFunctions]
@@ -280,7 +280,7 @@ ROCFunctions["Methods"] := {"FunctionInterpretations", "FunctionNames", "Functio
 ROCFunctions["Properties"] := ROCFunctions["Methods"];
 ROCFunctions["FunctionNames"] := Keys[aROCAcronyms];
 ROCFunctions["FunctionInterpretations"] := aROCAcronyms;
-ROCFunctions["Functions"] := {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC};
+ROCFunctions["Functions"] := {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUC};
 ROCFunctions[] := Evaluate[ROCFunctions["Functions"]];
 ROCFunctions[fnames:{_String..}] := aROCFunctions/@fnames;
 ROCFunctions[fname_String] := aROCFunctions[fname];
