@@ -62,8 +62,8 @@
       https://en.wikipedia.org/wiki/Receiver_operating_characteristic .
 
 
-    Comple usage example with Linear regression
-    ===========================================
+    Complete usage example with Linear regression
+    =============================================
 
     Note that below although we use both of the provided Titanic training and test data,
     the code is doing only training.  The test data is used to find the the best tuning
