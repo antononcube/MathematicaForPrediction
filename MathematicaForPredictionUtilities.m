@@ -216,7 +216,7 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
     ];
 
 
-If[ !TrueQ[ Needs["MosaicPlot`"] === Null ],
+If[ TrueQ[ Needs["MosaicPlot`"] === $Failed ],
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"];
 ];
 
