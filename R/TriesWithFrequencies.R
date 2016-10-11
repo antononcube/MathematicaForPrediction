@@ -15,10 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # Written by Anton Antonov, 
-# antononcube@gmail.com, 
-# 7516 Derexa Dr.
+# antononcube @ gmail. com ,
 # Windermere, Florida, USA.
-
+#
 # Version 0.5
 # The R code in this file corresponds to the Mathematica package
 # "Tries with frequencies" also written by Anton Antonov.
@@ -34,6 +33,7 @@
 # 1. Make a real R package.
 # 2. Better explanations.
 # 3. Implement functions that find probabilities of the leaves from a given node.
+# 4. Implement conversion functions for the new (released 7/2016) CRAN package data.tree .
 
 #' @detail Trie node structure
 # <node> := list( Key=<obj>, Value=<number>, Children=list( <key1>=<node>, <key2>=<node>, ... ) )
