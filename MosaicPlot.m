@@ -200,7 +200,7 @@ of conditional probabilities from a trie path (suitable to be the second argumen
 
 Begin["`Private`"]
 
-If[ !TrueQ[ Needs["TriesWithFrequencies`"] === Null ],
+If[ TrueQ[ Needs["TriesWithFrequencies`"] === $Failed ],
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"];
 ];
 
