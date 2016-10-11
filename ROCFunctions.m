@@ -291,7 +291,7 @@ ROCFunctions[fname_String] := aROCFunctions[fname];
 Clear[ROCPlot]
 
 Options[ROCPlot] =
-    Join[ {"ROCPointSize"-> 0.02, "ROCColor"-> Lighter[Blue],
+    Join[ {"ROCPointSize"-> 0.02, "ROCColor"-> Lighter[Blue], "ROCPointColorFunction" -> Automatic,
       "ROCPointTooltips"->True, "ROCPointCallouts"->True, "PlotJoined" -> False }, Options[Graphics]];
 
 ROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
@@ -301,20 +301,31 @@ ROCPlot[
   xFuncName_String, yFuncName_String,
   parVals:{_?NumericQ..},
   aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
-    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj},
+    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, rocpcf, points},
       psize = OptionValue["ROCPointSize"];
       rocc = OptionValue["ROCColor"];
+      rocpcf = OptionValue["ROCPointColorFunction"];
       {pt, pc, pj} = TrueQ[OptionValue[#]] & /@ { "ROCPointTooltips", "ROCPointCallouts", "PlotJoined" };
       {xFunc, yFunc} = ROCFunctions[{xFuncName, yFuncName}];
       Graphics[{
         PointSize[psize], rocc,
-        Which[
-          pt && !pj,
-          MapThread[Tooltip[Point[Through[{xFunc,yFunc}[#1]]], #2] &, {aROCs, parVals}],
-          !pt && !pj,
-          Point @ Map[Through[{xFunc,yFunc}[#1]] &, aROCs],
-          True,
-          Line @ Map[Through[{xFunc,yFunc}[#1]]&, aROCs]
+        If[ TrueQ[rocpcf===Automatic] || pj,
+          Which[
+            pt && !pj,
+            MapThread[Tooltip[Point[Through[{xFunc,yFunc}[#1]]], #2] &, {aROCs, parVals}],
+            !pt && !pj,
+            Point @ Map[Through[{xFunc,yFunc}[#1]] &, aROCs],
+            True,
+            Line @ Map[Through[{xFunc,yFunc}[#1]]&, aROCs]
+          ],
+          (*ELSE*)
+          points = Map[Through[{xFunc,yFunc}[#1]] &, aROCs];
+          Which[
+            pt,
+            MapThread[{rocpcf[#1,#2,#3],Tooltip[Point[#1], #2]} &, {points, parVals, Range[Length[points]]}],
+            True,
+            MapThread[{rocpcf[#1,#2,#3],Point[#]}&, {points, parVals, Range[Length[points]]}]
+          ]
         ],
         Black,
         If[ pc,
@@ -325,7 +336,9 @@ ROCPlot[
         AspectRatio -> 1, Frame -> True,
         FrameLabel ->
             Map[Style[#<>", "<>ROCFunctions["FunctionInterpretations"][#], Larger, Bold] &, {xFuncName,yFuncName}],
-        DeleteCases[{opts},( "ROCPointSize" | "ROCColor" | "ROCPointTooltips" | "ROCPointCallouts" | "PlotJoined") -> _ ]
+        DeleteCases[{opts},
+          ( "ROCPointSize" | "ROCColor" | "ROCPointColorFunction" |
+            "ROCPointTooltips" | "ROCPointCallouts" | "PlotJoined") -> _ ]
       ]
     ]/; Length[parVals] == Length[aROCs];
 
