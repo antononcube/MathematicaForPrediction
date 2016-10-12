@@ -1,9 +1,9 @@
 # **ROCFunctions example usage**
 
-### Anton Antonov  
-### [MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction/)  
-### [MathematicaVsR project at GitHub](https://github.com/antononcube/MathematicaVsR/)  
-### October 2016 
+#### Anton Antonov  
+#### [MathematicaForPrediction project at GitHub](https://github.com/antononcube/MathematicaForPrediction/)  
+#### [MathematicaVsR project at GitHub](https://github.com/antononcube/MathematicaVsR/)  
+#### October 2016 
 
 ## Introduction
 
