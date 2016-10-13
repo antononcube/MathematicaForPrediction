@@ -132,7 +132,7 @@
 *)
 (*
     TODO
-      1. Better messages
+      1. Better error messages.
 *)
 
 BeginPackage["ClassifierEnsembles`"]
@@ -153,7 +153,7 @@ The third argument is a rule label->threshold. The fourth argument is one of \"V
 The specified label is returned if its votes or average probability are higher or equal than \
 the specified threshold."
 
-ClassifyByThreshold::usage = "A shortcut to calling EnsembleClassifyByThreshold using a classifier functon \
+ClassifyByThreshold::usage = "A shortcut to calling EnsembleClassifyByThreshold using a classifier function \
 instead of a classifier ensemble."
 
 Begin["`Private`"]
