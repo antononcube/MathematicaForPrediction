@@ -83,13 +83,13 @@
 
     ## Classify a record
 
-       ClassifyByEnsemble[aCLs, testData[[1, 1 ;; -2]]]
+       EnsembleClassify[aCLs, testData[[1, 1 ;; -2]]]
        (* "survived" *)
 
-       ClassifyByEnsembleThreshold[aCLs, testData[[1, 1 ;; -2]], "survived" -> 2, "Votes"]
+       EnsembleClassifyByThreshold[aCLs, testData[[1, 1 ;; -2]], "survived" -> 2, "Votes"]
        (* "survived" *)
 
-       ClassifyByEnsembleThreshold[aCLs, testData[[1, 1 ;; -2]], "survived" -> 0.2, "ProbabilitiesMean"]
+       EnsembleClassifyByThreshold[aCLs, testData[[1, 1 ;; -2]], "survived" -> 0.2, "ProbabilitiesMean"]
        (* "survived" *)
 
 
@@ -97,7 +97,7 @@
 
     ### Return "survived" if it gets at least two votes
 
-       ClassifyByEnsembleThreshold[aCLs, testData[[1 ;; 12, 1 ;; -2]], "survived" -> 2, "Votes"]
+       EnsembleClassifyByThreshold[aCLs, testData[[1 ;; 12, 1 ;; -2]], "survived" -> 2, "Votes"]
 
        (* {"survived", "died", "survived", "survived", "died", "survived", \
            "survived", "survived", "died", "survived", "died", "survived"} *)
@@ -105,11 +105,22 @@
 
     ### Return "survived" if its average probability is at least 0.7
 
-       ClassifyByEnsembleThreshold[aCLs, testData[[1 ;; 12, 1 ;; -2]], "survived" -> 0.7, "ProbabilitiesMean"]
+       EnsembleClassifyByThreshold[aCLs, testData[[1 ;; 12, 1 ;; -2]], "survived" -> 0.7, "ProbabilitiesMean"]
 
        (* {"survived", "died", "survived", "died", "died", \
            "survived", "died", "survived", "died", "survived", "died", \
            "survived"} *)
+
+
+    ## Threshold classification with ROC
+
+    rocRange = Range[0, 1, 0.1];
+    aROCs =
+      Table[(cres = EnsembleClassifyByThreshold[aCLs, testData[[All, 1 ;; -2]], "survived" -> i];
+             ToROCAssociation[{"survived", "died"}, testData[[All, -1]], cres]),
+            {i, rocRange}];
+
+    ROCPlot[rocRange, aROCs]
 
 
     This file was created by Mathematica Plugin for IntelliJ IDEA.
@@ -126,18 +137,18 @@
 
 BeginPackage["ClassifierEnsembles`"]
 
-EnsembleClassify::usage = "Create an ensemble of classifiers over the same data. \
+EnsembleClassifier::usage = "Create an ensemble of classifiers over the same data. \
 Returns an Association of IDs mapped to classifier funcitons."
 
-ClassifierEnsembleVotes::usage = "Find votes by a classifier ensemble for a record ora a list of records."
+EnsembleClassifierVotes::usage = "Find votes by a classifier ensemble for a record ora a list of records."
 
-ClassifierEnsembleProbabilities::usage = "Give the averaged probabilities of a classifier ensemble \
+EnsembleClassifierProbabilities::usage = "Give the averaged probabilities of a classifier ensemble \
 a record or a list of records."
 
-ClassifyByEnsemble::usage = "Classify by a classifier ensemble for a record or a list of records. \
+EnsembleClassify::usage = "Classify by a classifier ensemble for a record or a list of records. \
 The third argument is one of \"Votes\" or \"ProbabilitiesMean\"."
 
-ClassifyByEnsembleThreshold::usage = "Classify by a classifier ensemble for a record or a list of records. \
+EnsembleClassifyByThreshold::usage = "Classify by a classifier ensemble for a record or a list of records. \
 The third argument is a rule label->threshold. The fourth argument is one of \"Votes\" or \"ProbabilitiesMean\". \
 The specified label is returned if its votes or average probability are higher or equal than \
 the specified threshold."
@@ -146,110 +157,110 @@ the specified threshold."
 Begin["`Private`"]
 
 
-Clear[EnsembleClassify]
-EnsembleClassify::nargs =
+Clear[EnsembleClassifier]
+EnsembleClassifier::nargs =
     "The first argument is expected to match (_String|{_String..}|Automatic). \
 The rest of the arguments are given to Classify.";
 
-EnsembleClassify[Automatic, args___] :=
-    EnsembleClassify[{"NearestNeighbors", "NeuralNetwork", "LogisticRegression",
+EnsembleClassifier[Automatic, args___] :=
+    EnsembleClassifier[{"NearestNeighbors", "NeuralNetwork", "LogisticRegression",
       "RandomForest", "SupportVectorMachine", "NaiveBayes"}, args];
 
-EnsembleClassify[clID_String, args___] := EnsembleClassify[{clID}, args];
+EnsembleClassifier[clID_String, args___] := EnsembleClassifier[{clID}, args];
 
-EnsembleClassify[clIDs : {_String ..}, args___] :=
+EnsembleClassifier[clIDs : {_String ..}, args___] :=
     Association @ Table[cl -> Classify[args, Method -> cl], {cl, clIDs}];
 
-EnsembleClassify[___] := (Message[EnsembleClassify::nargs]; $Failed);
+EnsembleClassifier[___] := (Message[EnsembleClassify::nargs]; $Failed);
 
 
-Clear[ClassifierEnsembleVotes]
-ClassifierEnsembleVotes::nargs =
+Clear[EnsembleClassifierVotes]
+EnsembleClassifierVotes::nargs =
     "The first argument is expected to be an Association of classfier IDs to \
 classifer functions. The second argument is expected to be a vector or a \
 matrix.";
 
-ClassifierEnsembleVotes[cls_Association, record_?VectorQ] :=
+EnsembleClassifierVotes[cls_Association, record_?VectorQ] :=
     Association[Rule @@@ Sort[Tally[Through[Values[cls][record]]], -#[[-1]] &]];
 
-ClassifierEnsembleVotes[cls_Association, records_?MatrixQ] :=
+EnsembleClassifierVotes[cls_Association, records_?MatrixQ] :=
     Map[Association[Rule @@@ Sort[Tally[#], -#[[-1]] &]] &, Transpose[Through[Values[cls][records]]]];
 
-ClassifierEnsembleVotes[___] := (Message[ClassifierEnsembleVotes::nargs]; $Failed);
+EnsembleClassifierVotes[___] := (Message[EnsembleClassifierVotes::nargs]; $Failed);
 
-Clear[ClassifierEnsembleProbabilities]
-ClassifierEnsembleProbabilities::nargs =
+Clear[EnsembleClassifierProbabilities]
+EnsembleClassifierProbabilities::nargs =
     "The first argument is expected to be an Association of classfier IDs to \
 classifer functions. The second argument is expected to be a vector or a \
 matrix.";
 
-ClassifierEnsembleProbabilities[cls_Association, record_?VectorQ] :=
+EnsembleClassifierProbabilities[cls_Association, record_?VectorQ] :=
     Mean[Through[Values[cls][record, "Probabilities"]]];
 
-ClassifierEnsembleProbabilities[cls_Association, records_?MatrixQ] :=
+EnsembleClassifierProbabilities[cls_Association, records_?MatrixQ] :=
     Mean /@ Transpose[Through[Values[cls][records, "Probabilities"]]];
 
-ClassifierEnsembleProbabilities[___] := (Message[ClassifierEnsembleProbabilities::nargs]; $Failed);
+EnsembleClassifierProbabilities[___] := (Message[EnsembleClassifierProbabilities::nargs]; $Failed);
 
 
-Clear[ClassifyByEnsemble]
-ClassifyByEnsemble::nargs =
+Clear[EnsembleClassify]
+EnsembleClassify::nargs =
     "The first argument is expected to be an Association of classfier IDs to \
 classifer functions. The second argument is expected to be a vector or a \
 matrix. The third argument is expected to be one of \"Votes\" or \
 \"ProbabilitiesMean\".";
 
-ClassifyByEnsemble[cls_Association, record_] := ClassifyByEnsemble[cls, record, "Votes"];
+EnsembleClassify[cls_Association, record_] := EnsembleClassify[cls, record, "Votes"];
 
-ClassifyByEnsemble[cls_Association, record_?VectorQ, "Votes"] :=
-    First@Keys@TakeLargest[ClassifierEnsembleVotes[cls, record], 1];
+EnsembleClassify[cls_Association, record_?VectorQ, "Votes"] :=
+    First@Keys@TakeLargest[EnsembleClassifierVotes[cls, record], 1];
 
-ClassifyByEnsemble[cls_Association, records_?MatrixQ, "Votes"] :=
-    Map[First@Keys@TakeLargest[#, 1] &, ClassifierEnsembleVotes[cls, records]];
+EnsembleClassify[cls_Association, records_?MatrixQ, "Votes"] :=
+    Map[First@Keys@TakeLargest[#, 1] &, EnsembleClassifierVotes[cls, records]];
 
-ClassifyByEnsemble[cls_Association, record_?VectorQ, "ProbabilitiesMean"] :=
+EnsembleClassify[cls_Association, record_?VectorQ, "ProbabilitiesMean"] :=
     First@Keys@
         TakeLargest[Mean[Through[Values[cls][record, "Probabilities"]]], 1];
 
-ClassifyByEnsemble[cls_Association, records_?MatrixQ, "ProbabilitiesMean"] :=
+EnsembleClassify[cls_Association, records_?MatrixQ, "ProbabilitiesMean"] :=
     Map[First@Keys@TakeLargest[#, 1] &,
-      ClassifierEnsembleProbabilities[cls, records]];
+      EnsembleClassifierProbabilities[cls, records]];
 
-ClassifyByEnsemble[___] := (Message[ClassifyByEnsemble::nargs]; $Failed);
+EnsembleClassify[___] := (Message[EnsembleClassify::nargs]; $Failed);
 
 
-Clear[ClassifyByEnsembleThreshold]
-ClassifyByEnsembleThreshold::nargs =
+Clear[EnsembleClassifyByThreshold]
+EnsembleClassifyByThreshold::nargs =
     "The first argument is expected to be an Association of classfier IDs to \
 classifer functions. The second argument is expected to be a vector or a \
 matrix. The third argument is expected to be a rule, label->threshold, where \
 threshold is numerical. The fourth argument is expected to be one of \
 \"Votes\" or \"ProbabilitiesMean\".";
 
-ClassifyByEnsembleThreshold[cls_Association, record_?VectorQ,
+EnsembleClassifyByThreshold[cls_Association, record_?VectorQ,
   label_ -> threshold_?NumericQ, method_String: "ProbabilitiesMean"] :=
     Block[{pmeans},
       If[TrueQ[method == "ProbabilitiesMean"],
-        pmeans = ClassifierEnsembleProbabilities[cls, record],
-        pmeans = Join[<|label -> 0|>, ClassifierEnsembleVotes[cls, record]]
+        pmeans = EnsembleClassifierProbabilities[cls, record],
+        pmeans = Join[<|label -> 0|>, EnsembleClassifierVotes[cls, record]]
       ];
       If[pmeans[label] >= threshold, label, First@Keys@TakeLargest[pmeans, 1]]
     ];
 
-ClassifyByEnsembleThreshold[cls_Association, records_?MatrixQ,
+EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
   label_ -> threshold_?NumericQ, method_String: "ProbabilitiesMean"] :=
 
     Block[{pmeans},
       If[TrueQ[method == "ProbabilitiesMean"],
-        pmeans = ClassifierEnsembleProbabilities[cls, records],
+        pmeans = EnsembleClassifierProbabilities[cls, records],
         pmeans =
-            Map[Join[<|label -> 0|>, #] &, ClassifierEnsembleVotes[cls, records]]
+            Map[Join[<|label -> 0|>, #] &, EnsembleClassifierVotes[cls, records]]
       ];
       Map[If[#[label] >= threshold, label, First@Keys@TakeLargest[#, 1]] &,
         pmeans]
     ];
 
-ClassifyByEnsembleThreshold[___] := (Message[ClassifyByEnsembleThreshold::nargs]; $Failed);
+EnsembleClassifyByThreshold[___] := (Message[EnsembleClassifyByThreshold::nargs]; $Failed);
 
 End[] (* `Private` *)
 
