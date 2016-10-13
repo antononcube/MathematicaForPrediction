@@ -153,6 +153,8 @@ The third argument is a rule label->threshold. The fourth argument is one of \"V
 The specified label is returned if its votes or average probability are higher or equal than \
 the specified threshold."
 
+ClassifyByThreshold::usage = "A shortcut to calling EnsembleClassifyByThreshold using a classifier functon \
+instead of a classifier ensemble."
 
 Begin["`Private`"]
 
@@ -261,6 +263,10 @@ EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
     ];
 
 EnsembleClassifyByThreshold[___] := (Message[EnsembleClassifyByThreshold::nargs]; $Failed);
+
+ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ),
+  label_ -> threshold_?NumericQ ] :=
+    EnsembleClassifyByThreshold[ <| "cf"->cf |>, data, label->threshold, "ProbabilitiesMean" ];
 
 End[] (* `Private` *)
 
