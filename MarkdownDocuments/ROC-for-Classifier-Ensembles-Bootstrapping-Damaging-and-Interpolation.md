@@ -318,9 +318,9 @@ Again we can see that the bootstrapping ensemble produced better ROC points than
 
 This section tries to explain why the bootstrapping with resampling to smaller sizes produces good results.
 
-In short, the training data has outliers; if we remove small fraction of the training data we might get better results.
+In short, the training data has outliers; if we remove small fractions of the training data we might get better results.
 
-The procedure described in this section can be used in conjunction with the procedures described in the guide for importance of variables investigation \[8\]. <!--reference-->
+The procedure described in this section can be used in conjunction with the procedures described in the guide for importance of variables investigation \[[7](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Importance-of-variables-investigation-guide.md)\].
 
 ## Ordering function
 
