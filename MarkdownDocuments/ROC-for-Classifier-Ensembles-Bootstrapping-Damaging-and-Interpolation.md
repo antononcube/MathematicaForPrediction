@@ -13,7 +13,7 @@ The main goals of this document are:
 
 **ii)** to apply the Receiver Operating Characteristic (ROC) technique into evaluating the created classifiers (see \[[2](https://en.wikipedia.org/wiki/Receiver_operating_characteristic),[3](https://ccrma.stanford.edu/workshops/mir2009/references/ROCintro.pdf)\]) and 
 
-**iii)** to illustrate the use of the *Mathematica* packages \[[5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m),6\]. <!--reference-->
+**iii)** to illustrate the use of the *Mathematica* packages \[[5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m),[6](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m)\].
 
 The concrete steps taken are the following:
 
@@ -65,7 +65,7 @@ This document started as being a part of a conference presentation about illustr
 
 To make those points clearer and more memorable we are going to assume that exposition is a result of the research actions of a certain protagonist with a suitably selected character.
 
-A by-product of the exposition is that it illustrates the following lessons from machine learning practices. (See \[1\].) <!--reference-->
+A by-product of the exposition is that it illustrates the following lessons from machine learning practices. (See \[1\].)
 
 1. For a given classification task there often are multiple competing models.
 
@@ -73,7 +73,7 @@ A by-product of the exposition is that it illustrates the following lessons from
 
 3. Having high dimensional data can be very useful.
 
-In \[1\] these three points and discussed under the names *"Rashomon", "Occam",* and *"Bellman"*. To quote: <!--reference-->
+In \[1\] these three points and discussed under the names *"Rashomon", "Occam",* and *"Bellman"*. To quote: 
 
  > *Rashomon*: the multiplicity of good models;  
  > *Occam*: the conflict between simplicity and accuracy;  
@@ -87,7 +87,7 @@ SNP is capable of coming up with ROC if he is not aware of it already. ROC is ve
 
 # Used packages 
 
-These commands load the used *Mathematica* packages \[[4](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m),[5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m),6\]: <!--reference-->
+These commands load the used *Mathematica* packages \[[4](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m),[5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m),[6](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m)\]:
 
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
@@ -132,7 +132,7 @@ This command makes a classifier ensemble of two built-in classifiers "NearestNei
 
 [![Classifier][3]][3]
 
-A classifier ensemble of the package \[6\] is simply an association mapping classifier IDs to classifier functions. <!--reference-->
+A classifier ensemble of the package \[[6](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m)\] is simply an association mapping classifier IDs to classifier functions.
 
 The first argument given to `EnsembleClassifier` can be `Automatic`:
 
