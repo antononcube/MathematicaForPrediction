@@ -294,7 +294,7 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
         aColumnNames =
             AssociationThread[Range[Dimensions[data][[2]]] -> Range[Dimensions[data][[2]]]],
         ListQ[columnNames] && Length[columnNames] == Dimensions[data][[2]],
-        aColumnNames = AssociationMap[columnNames -> Range[Dimensions[data][[2]]]],
+        aColumnNames = AssociationThread[columnNames -> Range[Dimensions[data][[2]]]],
         AssociationQ[columnNames],
         aColumnNames = columnNames,
         True,
