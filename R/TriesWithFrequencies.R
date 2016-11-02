@@ -18,7 +18,7 @@
 # antononcube @ gmail. com ,
 # Windermere, Florida, USA.
 #
-# Version 0.5
+# Version 0.6
 # The R code in this file corresponds to the Mathematica package
 # "Tries with frequencies" also written by Anton Antonov.
 # Both packages are part of the MathematicaForPrediction project at GitHub.
@@ -28,17 +28,21 @@
 # sampleSeq <- llply( sampleSeq, function(x) strsplit(x, "")[[1]] )
 # strie <- TrieCreate( sampleSeq )
 # pstrie <- TrieNodeProbabilities( sampleSeq )
+#
+# Using the CRAN package data.tree the corresponding trees can be printed:
+# TrieForm(strie)
+# TrieForm(pstrie)
 
 # ToDo
 # 1. Make a real R package.
 # 2. Better explanations.
-# 3. Implement functions that find probabilities of the leaves from a given node.
-# 4. Implement conversion functions for the new (released 7/2016) CRAN package data.tree .
+# 3. DONE Implement functions that find probabilities of the leaves from a given node.
+# 4. DONE Implement conversion functions for the new (released 7/2016) CRAN package data.tree .
 
 #' @detail Trie node structure
 # <node> := list( Key=<obj>, Value=<number>, Children=list( <key1>=<node>, <key2>=<node>, ... ) )
 
-#' @description Find the dept of a trie
+#' @description Find the depth of a trie
 #' @details This is an universal function.
 ListDepth <- function(this) ifelse(is.list(this), 1L + max(sapply(this, ListDepth)), 0L)
 
@@ -340,8 +344,8 @@ TrieLeafProbabilities <- function( trie, aggregateFunc = sum  ) {
 #' @param trie the trie to find the leaf probabilities for
 #' @param level intermediate level of the tree
 TrieLeafProbabilitiesRec <- function( trie, level, leafValHash, prob ) {
-  if ( is.null(trie) ) { NULL }
-  else if ( length(trie$Children) == 0 ) { 
+  if ( is.null(trie) || is.na(trie) ) { NULL }
+  else if ( is.null(trie$Children) || is.na(trie$Children) || length(trie$Children) == 0 ) {
     if ( is.na( leafValHash[ trie$Key ] ) ) { 
       leafValHash[[ trie$Key ]] <- prob * trie$Value
     } else { 
@@ -383,4 +387,20 @@ TrieAppendHashMaps <- function( trie, minNumberOfChildren = 100 ) {
           Children = llply( trie$Children, function(x) TrieAppendHashMaps( x, minNumberOfChildren ) ),
           Hash = hashMap )
   }
-} 
+}
+
+#' @description Converts a trie in data.tree object.
+#' @param trie a trie object (list of lists)
+#' @param topKeyIsNullName if the key of the top element of the trie is NULL it hast be given a value
+#' @return a data.tree object
+TrieToDataTree <- function( trie, topKeyIsNullName = "ALL" ) {
+  if( !require(data.tree) ) { stop("Install the CRAN package 'data.tree'.") }
+  if( is.null(trie$Key) ) { trie$Key = "ALL" }
+  as.Node( trie, mode = "explicit", childrenName = "Children", nameName = "Key" )
+}
+
+#' @description Prints a tree corresponding to a trie using a data.tree object.
+#' @param trie a trie object (list of lists)
+TrieForm <- function( trie ) {
+  print( TrieToDataTree(trie), "Value")
+}
