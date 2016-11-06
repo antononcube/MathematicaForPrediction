@@ -78,7 +78,10 @@ FromRXTabsForm::usage = "Transforms RObject result of xtabsViaRLink into an asso
 
 Begin["`Private`"]
 
-Needs["MosaicPlot`"]
+
+If[Length[DownValues[MosaicPlot`MosaicPlot]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
+];
 
 Clear[KurtosisUpperBound, ExcessKurtosis]
 
