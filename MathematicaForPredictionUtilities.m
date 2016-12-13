@@ -80,7 +80,7 @@ Begin["`Private`"]
 
 
 If[Length[DownValues[MosaicPlot`MosaicPlot]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
+  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
 ];
 
 Clear[KurtosisUpperBound, ExcessKurtosis]
@@ -218,10 +218,6 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
             Range[1, Length[t]]}]] /. {XXX -> #}]]
     ];
 
-
-If[ TrueQ[ Needs["MosaicPlot`"] === $Failed ],
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"];
-];
 
 Clear[VariableDependenceGrid]
 Options[VariableDependenceGrid] = {"IgnoreCategoricalVariables" -> False};
