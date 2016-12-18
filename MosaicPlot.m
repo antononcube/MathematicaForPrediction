@@ -200,8 +200,8 @@ of conditional probabilities from a trie path (suitable to be the second argumen
 
 Begin["`Private`"]
 
-If[ TrueQ[ Needs["TriesWithFrequencies`"] === $Failed ],
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"];
+If[Length[DownValues[TriesWithFrequencies`TrieMerge]] == 0,
+  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"]
 ];
 
 Clear[TrieUniqueRecords]
