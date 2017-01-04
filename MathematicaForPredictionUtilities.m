@@ -68,9 +68,11 @@ CrossTensorate::usage = "Finds the contingency co-occurance values for multiple 
 using a formula specification. The first argument is the formula with the form \
 Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ..."
 
-CrossTensorateSplit::usage = "Splits the result of CrossTensorate along a variable."
+CrossTensorateSplit::usage = "Splits the result of CrossTensorate along a variable. The result can be \
+shown with MatrixPlot."
 
-CrossTabulate::usage = "Finds the contigency co-occurance values in a matrix (2D array)."
+CrossTabulate::usage = "Finds the contigency co-occurance values in a matrix (2D array). The result can be \
+shown with MatrixPlot."
 
 xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
 
@@ -396,6 +398,11 @@ FromRXTabsForm[rres_RLink`RObject]:=
         "RowNames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
         "ColumnNames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
     ] /; (! FreeQ[rres, {"xtabs", "table"}, Infinity]);
+
+Unprotect[Association];
+MatrixForm[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"])] ^:=
+    (MatrixForm[#1, TableHeadings -> Rest[{##}]] & @@ x);
+Protect[Association];
 
 End[]
 
