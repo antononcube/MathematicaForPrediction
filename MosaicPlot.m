@@ -209,11 +209,11 @@ TrieUniqueRecords[data_?ArrayQ] :=
   Block[{uniqCVals, zeroRecs},
    uniqCVals = Table[Union[data[[All, i]]], {i, Dimensions[data][[2]]}];
    zeroRecs = Flatten[Outer[List, Sequence @@ uniqCVals], Length[uniqCVals] - 1];
-   TrieCreate[zeroRecs] /. {h_, p_?NumberQ} :> {h, 0}
+   TriesWithFrequencies`TrieCreate[zeroRecs] /. {h_, p_?NumberQ} :> {h, 0}
   ];
 
 Clear[TrieAddMissingValues]
-TrieAddMissingValues[trie_, data_?ArrayQ] := TrieMerge[trie, TrieUniqueRecords[data]];
+TrieAddMissingValues[trie_, data_?ArrayQ] := TriesWithFrequencies`TrieMerge[trie, TrieUniqueRecords[data]];
 
 Clear[TrieSortNodes]
 TrieSortNodes[trie_] :=
@@ -446,14 +446,14 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     If[Length[colors] == 0, colorInds = {}, {colorInds, colors} = Transpose[colors]]
   ];
 
-   trie = TrieCreate[dataRecords];
+   trie = TriesWithFrequencies`TrieCreate[dataRecords];
 
    If[expandLastColumnQ,
     trie = TriePruneNumericalLevel[trie, Dimensions[dataRecords][[2]]];
-    trie = TrieNodeProbabilities[trie];
+    trie = TriesWithFrequencies`TrieNodeProbabilities[trie];
     trie = TrieAddMissingValues[trie, dataRecords[[All, 1 ;; Dimensions[dataRecords][[2]] - 1]]],
     (* ELSE *)
-    trie = TrieNodeProbabilities[trie];
+    trie = TriesWithFrequencies`TrieNodeProbabilities[trie];
     trie = TrieAddMissingValues[trie, dataRecords]
    ];
 
