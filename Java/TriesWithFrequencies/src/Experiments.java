@@ -54,29 +54,39 @@ public class Experiments {
 		List<String> sampleSeq = new ArrayList<String>() {{ 
 			add("arm"); add("arms"); add("arc"); add("bar"); add("bark"); add("barman"); add("arcola"); }};
 
-			List< List<String> > sampleSeqList = new ArrayList<>();
+		List< List<String> > sampleSeqList = new ArrayList<>();
 
-			for ( String s : sampleSeq ) {			
-				sampleSeqList.add( Arrays.asList( s.split("") ) );
-			}
+        for ( String s : sampleSeq ) {
+            sampleSeqList.add( Arrays.asList( s.split("") ) );
+        }
 
-			System.out.println( sampleSeqList );
+        System.out.println( sampleSeqList );
 
-			Trie strie = TrieFunctions.create( sampleSeqList );
+        Trie strie = TrieFunctions.create( sampleSeqList );
 
-			System.out.println("strie = ");
-			System.out.println( strie + "\n");
+        System.out.println("strie = ");
+        System.out.println( strie + "\n");
 
-			List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
-			Trie ftrie = TrieFunctions.retrieve( strie, sword );
+        List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
+        Trie ftrie = TrieFunctions.retrieve( strie, sword );
 
-			System.out.println("ftrie = ");
-			System.out.println( ftrie + "\n" );
+        System.out.println("ftrie = ");
+        System.out.println( ftrie + "\n" );
 
-			Trie pstrie = TrieFunctions.nodeProbabilities( strie );
+        Trie pstrie = TrieFunctions.nodeProbabilities( strie );
 
-			System.out.println("pstrie = ");
-			System.out.println( pstrie + "\n" );
+        System.out.println("pstrie = ");
+        System.out.println( pstrie + "\n" );
+
+        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
+        sampleSeqList = new ArrayList<>();
+        for ( String s : sampleSeq ) {
+            sampleSeqList.add( Arrays.asList( s.split("") ) );
+        }
+
+        strie = TrieFunctions.create( sampleSeqList );
+
+        System.out.println( strie.toJSON() );
 	}
 
 }

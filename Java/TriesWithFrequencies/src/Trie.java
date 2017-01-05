@@ -96,4 +96,29 @@ public class Trie {
 	public String toString( ) { 
 		return this.toStringRec( 1 );
 	}
+
+
+	public String toJSONRec( int n ) {
+		String childStr = "";
+		int k = 0;
+		if ( this.getChildren() != null ) {
+			for ( Trie elem : this.getChildren().values() ) {
+				if ( k == 0  ) {
+					childStr = elem.toJSONRec( n+1 );
+				} else {
+					childStr = childStr + ", " + elem.toJSONRec( n+1 );
+				}
+				k++;
+			}
+			childStr = "[" + childStr + "]";
+		} else {
+			childStr = "[]";
+		}
+		return "{ \"key\":" + "\"" + this.getKey() +  "\"" + ", \"value\":" + this.getValue() + ", \"children\":" + childStr + "}";
+	}
+
+	public String toJSON( ) {
+		return this.toJSONRec( 1 );
+	}
+
 }
