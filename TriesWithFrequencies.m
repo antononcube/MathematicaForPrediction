@@ -76,6 +76,10 @@ TrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the
 TrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
 TrieCompleteMatch::usage = "TrieCompleteMatch[ t, pos ] checks is the position list pos of \"word\" is a complete match in the trie t."
+
+ToTrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
+ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
+the specified element names for the conversion."
 	
 Begin["`Private`"]
 
@@ -455,6 +459,28 @@ TrieCompleteMatch[trie_, pos : {_Integer ..}] :=
     False
    ]
   ];
+
+Clear[ToTrieFromJSON, ToTrieFromJSONRec]
+
+ToTrieFromJSON[jsonTrie : {_Rule ...}] :=
+    ToTrieFromJSON[jsonTrie, {"key", "value", "children"}];
+
+ToTrieFromJSON[jsonTrie : {_Rule ...}, elementNames : {key_String, value_String, children_String}] :=
+    Block[{},
+      ToTrieFromJSONRec[jsonTrie, {key, value, children}, 0]
+    ];
+
+ToTrieFromJSONRec[jsonTrie : {_Rule ...}, elementNames : {key_String, value_String, children_String}, n_Integer] :=
+    Block[{tr},
+      If[Length[jsonTrie] == 0, {},
+      (*ELSE*)
+        tr = {{key, value} /. jsonTrie};
+        If[Length[children /. jsonTrie] > 0,
+          tr = Join[tr, Map[ToTrieFromJSONRec[#, {key, value, children}, n + 1] &, children /. jsonTrie]]
+        ];
+        tr
+      ]
+    ];
 
 End[]
 
