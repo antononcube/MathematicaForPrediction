@@ -30,6 +30,7 @@
 //# "Tries with frequencies for data mining",
 //# https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/ .
 
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -51,25 +52,44 @@ public class Experiments {
 
 	public static void basic() {
 
-		List<String> sampleSeq = new ArrayList<String>() {{ 
-			add("arm"); add("arms"); add("arc"); add("bar"); add("bark"); add("barman"); add("arcola"); }};
+//		List<String> sampleSeq = new ArrayList<String>() {{
+//			add("arm"); add("arms"); add("arc"); add("bar"); add("bark"); add("barman"); add("arcola"); }};
 
-		List< List<String> > sampleSeqList = new ArrayList<>();
+        List<String> sampleSeq = new ArrayList<String>() {{
+            add("a;r;m"); add("a;r;m;s"); add("a;r;c"); add("b;a;r"); add("b;a;r;k"); add("b;a;r;m;a;n"); add("a;r;c;o;l;a"); }};
 
-        for ( String s : sampleSeq ) {
-            sampleSeqList.add( Arrays.asList( s.split("") ) );
-        }
 
-        System.out.println( sampleSeqList );
+//		List< List<String> > sampleSeqList = new ArrayList<>();
+//
+//        for ( String s : sampleSeq ) {
+//            sampleSeqList.add( Arrays.asList( s.split("") ) );
+//        }
+//
+//        System.out.println( sampleSeqList );
+//
+//        Trie strie = TrieFunctions.create( sampleSeqList );
 
-        Trie strie = TrieFunctions.create( sampleSeqList );
+        Trie strie = TrieFunctions.createBySplit( sampleSeq, ";");
 
         System.out.println("strie = ");
         System.out.println( strie + "\n");
 
-        List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
-        Trie ftrie = TrieFunctions.retrieve( strie, sword );
+        List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); add("e"); add("d"); }};
+        System.out.println("For " + sword );
+        System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
+        System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
+        System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
+        System.out.println();
 
+        sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
+
+        System.out.println("For " + sword );
+        System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
+        System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
+        System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
+        System.out.println();
+
+        Trie ftrie = TrieFunctions.retrieve( strie, sword );
         System.out.println("ftrie = ");
         System.out.println( ftrie + "\n" );
 
@@ -78,15 +98,15 @@ public class Experiments {
         System.out.println("pstrie = ");
         System.out.println( pstrie + "\n" );
 
-        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
-        sampleSeqList = new ArrayList<>();
-        for ( String s : sampleSeq ) {
-            sampleSeqList.add( Arrays.asList( s.split("") ) );
-        }
-
-        strie = TrieFunctions.create( sampleSeqList );
-
-        System.out.println( strie.toJSON() );
+//        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
+//        List< List<String> > sampleSeqList = new ArrayList<>();
+//        for ( String s : sampleSeq ) {
+//            sampleSeqList.add( Arrays.asList( s.split("") ) );
+//        }
+//
+//        strie = TrieFunctions.create( sampleSeqList );
+//
+//        System.out.println( strie.toJSON() );
 	}
 
 }
