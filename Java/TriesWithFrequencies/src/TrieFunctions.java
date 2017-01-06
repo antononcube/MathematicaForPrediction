@@ -101,14 +101,18 @@ public class TrieFunctions {
         );
     }
 
-    public static Trie createBySplit( List< String > words, String regex ) {
+    public static List< List<String> > splitWords( List< String > words, String regex ) {
         List< List<String> > seqList = new ArrayList<>();
 
         for ( String s : words ) {
             seqList.add( Arrays.asList( s.split(regex) ) );
         }
 
-        return create( seqList );
+        return seqList;
+    }
+
+    public static Trie createBySplit( List< String > words, String regex ) {
+        return create( splitWords( words, regex ) );
     }
 
     public static Trie merge( Trie tr1, Trie tr2 ) {
@@ -206,6 +210,14 @@ public class TrieFunctions {
         }
     }
 
+    public static List< List<String> > mapPosition( Trie tr, List< List<String> > words ) {
+        List< List<String> > res = new ArrayList<>();
+        for ( List<String> s : words ) {
+            res.add( position( tr, s) );
+        }
+        return res;
+    }
+
 
     public static Trie retrieve( Trie tr, List<String> word ) {
 
@@ -224,6 +236,14 @@ public class TrieFunctions {
         }
     }
 
+    public static List< Trie > mapRetrieve( Trie tr, List< List<String> > words ) {
+        List< Trie > res = new ArrayList<>();
+        for ( List<String> s : words ) {
+            res.add( retrieve( tr, s) );
+        }
+        return res;
+    }
+
     public static Boolean completeMatch( Trie tr, List<String> word ) {
         Trie subTr = retrieve( tr, word );
 
@@ -237,6 +257,15 @@ public class TrieFunctions {
             return chValue < tr.getValue();
         }
     }
+
+    public static List<Boolean> mapCompleteMatch( Trie tr, List< List<String> > words ) {
+        List<Boolean> res = new ArrayList<>();
+        for ( List<String> s : words ) {
+            res.add( completeMatch( tr, s) );
+        }
+        return res;
+    }
+
 
     public static Boolean contains( Trie tr, List<String> word ) {
         List<String> pos = position( tr, word);
