@@ -1,5 +1,9 @@
 # Tries with frequencies in Java
 
+Anton Antonov  
+[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
+January 2017
+
 ## Structure
 
 The file ["src/Trie.java"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Java/TriesWithFrequencies/src/Trie.java) 
@@ -7,6 +11,9 @@ contains the definition of the class `Trie`.
 
 The file ["src/TrieFunctions.java"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Java/TriesWithFrequencies/src/TrieFunctions.java)
 has implementations of a variety of functions that can used over tries.
+
+The file ["src/Experiments.java"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Java/TriesWithFrequencies/src/Experiments.java)
+is only used to do sanity check tests over the implementations. 
 
 We call a trie "word" a list of strings.
 
@@ -90,7 +97,7 @@ Get JSON form of the sub-trie:
            "children" -> {{"value" -> 1., "key" -> "g", 
               "children" -> {}}}}}}}} *)
 
-If we load the package [TriesWithFrequencies.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m)
+If we load the package [TriesWithFrequencies.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m) :
 
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"]    
 
@@ -99,3 +106,7 @@ we can visualize the obtained sub-trie (Java object) using the function `ToTrieF
     TrieForm@ToTrieFromJSON@ImportString[jSubTr@toJSON[], "JSON"]    
     
 !["SubTrie-of-dictionary-trie-by-bark"](http://i.imgur.com/sRlL357.png)
+
+## How to use in R
+
+TBD...
