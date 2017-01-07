@@ -244,6 +244,10 @@ public class TrieFunctions {
         return res;
     }
 
+    /// @description For a given trie finds if the retrievable part of a word is complete match.
+    /// @param tr a trie object
+    /// @param word a list of strings
+    /// @details Despite the name this function works on the part of the word that can be found in the trie.
     public static Boolean completeMatch( Trie tr, List<String> word ) {
         Trie subTr = retrieve( tr, word );
 
@@ -258,6 +262,9 @@ public class TrieFunctions {
         }
     }
 
+    /// @description Optimization of completeMatch over a list of words.
+    /// @param tr a trie object
+    /// @param words list of words
     public static List<Boolean> mapCompleteMatch( Trie tr, List< List<String> > words ) {
         List<Boolean> res = new ArrayList<>();
         for ( List<String> s : words ) {
@@ -266,16 +273,21 @@ public class TrieFunctions {
         return res;
     }
 
-
+    /// @description Does the trie object tr contains a word.
+    /// @param tr a trie object
+    /// @param word a word to be checked
     public static Boolean contains( Trie tr, List<String> word ) {
         List<String> pos = position( tr, word);
-        if ( pos.size() < word.size() ) {
+        if ( pos == null || pos.size() < word.size() ) {
             return false;
         } else {
             return completeMatch( tr, pos );
         }
     }
 
+    /// @description Does the trie object tr contains each of the list of words.
+    /// @param tr a trie object
+    /// @param words a list of words
     public static List<Boolean> mapContains( Trie tr, List< List<String> > words ) {
         List<Boolean> res = new ArrayList<>();
         for ( List<String> s : words ) {
@@ -284,12 +296,16 @@ public class TrieFunctions {
         return res;
     }
 
+    /// @description Converts the counts (frequencies) at the nodes into node probabilities.
+    /// @param tr a trie object
     public static Trie nodeProbabilities( Trie tr ) {
         Trie res = nodeProbabilitiesRec( tr );
         res.setValue(1.0);
         return res;
     }
 
+    /// @description Recursive step function for converting node frequencies into node probabilities.
+    /// @param tr a trie object
     protected static Trie nodeProbabilitiesRec( Trie tr ) {
         double chSum=0;
 
@@ -332,14 +348,16 @@ public class TrieFunctions {
         public String toString(){
             return "{" + getKey() + ", " + getValue() + "}";
         }
+        public String toJSON(){ return "{ \"key\" : \"" + getKey() + "\"" + ", \"value\" : " + getValue() + "}";
+        }
     }
 
+    /// @description Converts to rows a trie for a given path.
     protected static void toRows(
             List< List< Map.Entry<String, Double> > > rows,
             Trie tr,
             List< Map.Entry<String, Double> > path  )
     {
-        TrieFunctions tp = new TrieFunctions();
 
         List< Map.Entry<String, Double> > currentPath = new ArrayList<>();
         currentPath.addAll( path );
@@ -354,6 +372,8 @@ public class TrieFunctions {
         }
     }
 
+    /// @description Finds the paths from the root of a trie to the leaves.
+    /// @param tr a trie object
     public static List< List< Map.Entry<String, Double> > > rootToLeafPaths( Trie tr ) {
         List< List< Map.Entry<String, Double> > > rows = new ArrayList();
         List< Map.Entry<String, Double> > path = new ArrayList();
@@ -361,6 +381,122 @@ public class TrieFunctions {
         toRows( rows, tr, path);
 
         return rows;
+    }
+
+    /// @description Converts a list of root-to-leaf paths into JSON.
+    /// @param paths a list of lists with Map.Entry elements
+    public static String pathsToJSON( List< List< Map.Entry<String, Double> > > paths ) {
+        String res;
+        int k = 0;
+
+        res = "[";
+        for( List< Map.Entry<String, Double> > ps : paths ) {
+            if ( k > 0 ) { res += ","; }
+            k++;
+            res += "[";
+            int g = 0;
+            for( Map.Entry<String, Double> p : ps ) {
+                if (g > 0 ) { res += ","; }
+                g++;
+                res += "{ \"key\" : \"" + p.getKey() + "\"" + ", \"value\" : " + p.getValue() + "}";
+            }
+            res += "]";
+        }
+        res += "]";
+        return res;
+    }
+
+
+    /// @description Finds all words in the trie tr that start with the word searchWord.
+    /// @param tr a trie object
+    /// @param sword search word
+    public static List< List<String> > getWords( Trie tr, List<String> sword ) {
+
+        List<String> pos = position(tr, sword);
+
+        if( pos == null || pos.isEmpty() ) {
+            return null;
+        } else {
+
+            List< List< Map.Entry<String, Double> > > paths = rootToLeafPaths( retrieve( tr, sword ) );
+
+            List< List<String> > res = new ArrayList<>();
+            for( List< Map.Entry<String, Double> > ps : paths ) {
+                List<String> w = new ArrayList<>();
+                w.addAll( sword.subList(0, sword.size()-1) );
+                for( Map.Entry<String, Double> p : ps ) {
+                    w.add(p.getKey());
+                }
+                res.add(w);
+            }
+            return res;
+        }
+    }
+
+    /// @description Shrinks a trie by finding prefixes.
+    public static Trie shrink( Trie tr ) {
+        return shrinkRec( tr, "", 0 );
+    }
+
+    /// @description Shrinks a trie by finding prefixes.
+    /// @param tr a trie object
+    /// @param delimiter a delimiter to be used when strings are joined
+    public static Trie shrink( Trie tr, String delimiter ) {
+        return shrinkRec( tr, delimiter, 0 );
+    }
+
+    /// @description Shrinking recursive function.
+    protected static Trie shrinkRec( Trie tr, String delimiter, int n ) {
+        Trie trRes = new Trie();
+        Boolean rootQ = (n == 0 && tr.getKey() == "");
+
+        if ( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
+
+            return tr;
+
+        } else if ( !rootQ && tr.getChildren().size() == 1 ) {
+            List<Trie> arr = new ArrayList<Trie>( tr.getChildren().values() );
+
+            if ( tr.getValue().equals( arr.get(0).getValue() ) ) {
+                // Only one child : proceed with recursion and join with result.
+
+                Trie chTr = shrinkRec( arr.get(0), delimiter, n+1 );
+
+                trRes.setKey(tr.getKey() + delimiter + chTr.getKey());
+                trRes.setValue(chTr.getValue());
+
+                if(  !(chTr.getChildren() == null || chTr.getChildren().isEmpty()) ) {
+                    trRes.setChildren( chTr.getChildren() );
+                }
+
+            } else {
+                // Only one child but the current node makes a complete match.
+
+                Trie chTr = shrinkRec( arr.get(0), delimiter, n+1 );
+
+                trRes.setKey(tr.getKey());
+                trRes.setValue(tr.getValue());
+                trRes.setChildren( new HashMap<String,Trie>() );
+                trRes.getChildren().put( chTr.getKey(), chTr );
+            }
+
+            return trRes;
+
+        } else {
+            // No shrinking at this node. Proceed with recursion.
+            Map<String, Trie> recChildren = new HashMap<>();
+
+            for( Trie chTr : tr.getChildren().values() ) {
+                Trie nTr = shrinkRec( chTr, delimiter, n+1 );
+                recChildren.put( nTr.getKey(), nTr );
+            }
+
+            trRes.setKey(tr.getKey());
+            trRes.setValue(tr.getValue());
+            trRes.setChildren( recChildren );
+
+            return trRes;
+        }
     }
 
 }
