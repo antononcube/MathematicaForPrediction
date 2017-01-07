@@ -69,7 +69,7 @@ TrieLeafProbabilitiesWithPositions::usage = "Gives the probabilities to end up a
 
 TriePositionParts::usage = "Transforms a list of the form {a[1],a[2],...,a[n],1} into {{1}, {a[1],1}, {a[1],a[2],1}, ..., {a[1],a[2],...,a[n],1}}."
 
-TriePathFromPosition::usage = "TriePathFromPosition[trie_,pos_] gives a list of nodes from the root of a trie to the node at a specified position."
+TriePathFromPosition::usage = "TriePathFromPosition[trie,pos] gives a list of nodes from the root of a trie to the node at a specified position."
 
 TrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the root node to the leaf nodes."
 
@@ -77,36 +77,53 @@ TrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
 TrieCompleteMatch::usage = "TrieCompleteMatch[ t, pos ] checks is the position list pos of \"word\" is a complete match in the trie t."
 
+TrieMemberQ::usage = "TrieMemberQ[t, w] checks is the \"word\" w in the trie t."
+
 ToTrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
 the specified element names for the conversion."
 	
 Begin["`Private`"]
 
+Clear[TrieRootQ]
+TrieRootQ[t_]:= TrueQ[ ListQ[t[[1]]] && Length[t[[1]]] == 0 ];
 
-Clear[TriePosition]
+Clear[TriePosition, TriePositionRec]
 TriePosition[t_, word_String] := TriePosition[t, Characters[word]];
 TriePosition[t_, {}] := {};
 TriePosition[{}, _] := {};
 TriePosition[{_}, _] := {};
 TriePosition[t_, chars_] :=
+    Block[{res},
+      If[ TrieRootQ[ t[[1]] ],
+        TriePositionRec[ t, chars ],
+        res = TriePositionRec[ { {{}, t[[1, 2]] }, t }, chars ];
+        If[Length[res] == 0, {}, Rest[res] ]
+      ]
+    ];
+TriePositionRec[t_, {}] := {};
+TriePositionRec[{}, _] := {};
+TriePositionRec[{_}, _] := {};
+TriePositionRec[t_, chars_] :=
   Block[{i = 2},
+   (* This assumes that the first node is a standard root i.e. empty list. *)
    While[i <= Length[t] && t[[i, 1, 1]] =!= chars[[1]], i++];
    If[i > Length[t], {},
-    Join[{i}, TriePosition[t[[i]], Rest[chars]]]
+    Join[{i}, TriePositionRec[t[[i]], Rest[chars]]]
    ]
   ];
 
 TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
 TrieRetrieve[t_, chars_] :=
-  Block[{pos},
-   pos = TriePosition[t, chars];
-   Which[
-    Length[pos] == 0, {},
-    Length[pos] == Length[chars], t[[Sequence @@ pos, 1]],
-    True, {}
-   ]
-  ];
+    Block[{pos},
+      pos = TriePosition[t, chars];
+      Which[
+        Length[pos] == 0, {},
+        TrieRootQ[t[[1]]] && Length[pos] == Length[chars], t[[Sequence @@ pos, 1]],
+        Length[pos] + 1 == Length[chars], t[[Sequence @@ pos, 1]],
+        True, {}
+      ]
+    ];
 
 
 Clear[MakeTrie]
@@ -185,7 +202,7 @@ Clear[TrieShrink, TrieShrinkRec];
 TrieShrink[t_] := TrieShrinkRec[t] /. TH -> List;
 TrieShrinkRec[{}] := {};
 TrieShrinkRec[t_] :=
-  Block[{tt, newnode, rootQ = TrueQ[ ListQ[t[[1, 1]]] && Length[t[[1, 1]]] == 0 ] },
+  Block[{tt, newnode, rootQ = TrieRootQ[t[[1]]] },
    Which[
     ! rootQ && Length[t] == 1, {{NodeJoin[t[[1, 1]]], t[[1, 2]]}},
     ! rootQ && Length[t] == 2 && t[[1, 2]] == t[[2, 1, 2]],
@@ -453,12 +470,33 @@ Clear[TrieCompleteMatch]
 TrieCompleteMatch[trie_, {}] := False;
 TrieCompleteMatch[trie_, pos : {_Integer ..}] :=
   Block[{},
-   If[Length[trie[[Sequence @@ pos]]] == 1 || 
-     trie[[Sequence @@ pos, 1, 2]] > Total[trie[[Sequence @@ pos, 2 ;; -1, 1, 2]]],
-    True,
-    False
-   ]
+    If[ TrieRootQ[ trie[[1]] ],
+      If[Length[trie[[Sequence @@ pos]]] == 1 ||
+          trie[[Sequence @@ pos, 1, 2]] > Total[trie[[Sequence @@ pos, 2 ;; -1, 1, 2]]],
+        True,
+        False
+      ],
+      (* ELSE *)
+      TrieCompleteMatch[{ { {}, trie[[1,2]] }, trie }, Prepend[ pos, 2 ] ]
+    ]
   ];
+
+Clear[TrieMemberQ]
+TrieMemberQ[trie_, {}] := False;
+TrieMemberQ[trie_, word_String ] := TrieMemberQ[ trie, Characters[word] ];
+TrieMemberQ[trie_, sword_List] :=
+    Block[{pos},
+      pos = TriePosition[ trie, sword ];
+      Which[
+        TrieRootQ[ trie[[1]] ] && Length[pos] == Length[sword],
+        TrieCompleteMatch[trie, pos],
+        Length[pos] + 1 == Length[sword],
+        TrieCompleteMatch[trie, pos],
+        True,
+        False
+      ]
+    ];
+
 
 Clear[ToTrieFromJSON, ToTrieFromJSONRec]
 
