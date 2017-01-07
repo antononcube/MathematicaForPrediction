@@ -98,4 +98,4 @@ we can visualize the obtained sub-trie (Java object) using the function `ToTrieF
 
     TrieForm@ToTrieFromJSON@ImportString[jSubTr@toJSON[], "JSON"]    
     
-!["SubTrie-of-dictionary-trie-by-bark"](http://imgur.com/sRlL357)
+[!["SubTrie-of-dictionary-trie-by-bark"]](http://imgur.com/sRlL357)
