@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2017 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -83,7 +83,31 @@
 
   Several examples of building tries and operations over them follow.
 
+    words = {"barks", "barkers", "barked", "barkeeps", "barkeepers", "barking"};
 
+    jTr = JavaTrieCreateBySplit[words];
+
+    JavaTrieCompleteMatch[jTr, Characters@"bark"]
+    (* False *)
+
+    JavaTrieContains[jTr, Characters@"barked"]
+    (* True *)
+
+    JavaTrieToJSON@JavaTrieShrink@jTr
+
+    (* {"value" -> 6., "key" -> "",
+     "children" -> {{"value" -> 6., "key" -> "ba",
+        "children" -> {{"value" -> 7., "key" -> "r",
+           "children" -> {{"value" -> 6., "key" -> "k",
+              "children" -> {{"value" -> 1., "key" -> "s",
+                 "children" -> {}}, {"value" -> 1., "key" -> "ing",
+                 "children" -> {}}, {"value" -> 4., "key" -> "e",
+                 "children" -> {{"value" -> 1., "key" -> "rs",
+                    "children" -> {}}, {"value" -> 1., "key" -> "d",
+                    "children" -> {}}, {"value" -> 2., "key" -> "ep",
+                    "children" -> {{"value" -> 1., "key" -> "s",
+                       "children" -> {}}, {"value" -> 1., "key" -> "ers",
+                       "children" -> {}}}}}}}}}}}}}} *)
 
   Anton Antonov
   Windermere, FL
