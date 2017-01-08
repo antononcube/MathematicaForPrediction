@@ -73,6 +73,7 @@ public class TrieFunctions {
         return make( chars, 1.0, null );
     }
 
+    //! @description Creates a trie from a given list of list of strings. (Non-recursively.)
     protected static Trie create1( List< List<String> > words) {
         if ( words == null || words.isEmpty() ) {
             return null;
@@ -86,6 +87,7 @@ public class TrieFunctions {
         return res;
     }
 
+    //! @description Creates a trie from a given list of list of strings. (Recursively.)
     public static Trie create( List< List<String> > words) {
         if ( words == null || words.isEmpty() ) {
             return null;
@@ -101,6 +103,7 @@ public class TrieFunctions {
         );
     }
 
+    //! @description Slits each string of a list of string using a given regex.
     public static List< List<String> > splitWords( List< String > words, String regex ) {
         List< List<String> > seqList = new ArrayList<>();
 
@@ -111,6 +114,7 @@ public class TrieFunctions {
         return seqList;
     }
 
+    //! @description Creates a trie by splitting each of the strings in the given list of strings.
     public static Trie createBySplit( List< String > words, String regex ) {
         return create( splitWords( words, regex ) );
     }
@@ -170,11 +174,12 @@ public class TrieFunctions {
         return null;
     }
 
-
+    //! @description Inserts a "word" (a list of strings) into a trie.
     public static Trie insert( Trie tr, List<String> word ) {
         return insert( tr, word, null );
     }
 
+    //! @description Inserts a "word" (a list of strings) into a trie with a given associated value.
     public static Trie insert( Trie tr, List<String> word, Double value ) {
 
         if ( value == null ) {
@@ -184,6 +189,9 @@ public class TrieFunctions {
         }
     }
 
+    //! @description Find the position of a given word (or part of it) in the trie.
+    //! @param tr a trie object
+    //! @param word a list of strings
     public static List<String> position( Trie tr, List<String> word ) {
 
         if ( word == null || word.isEmpty() ) {
@@ -210,6 +218,9 @@ public class TrieFunctions {
         }
     }
 
+    //! @description Optimization of position over a list of words.
+    //! @param tr a trie object
+    //! @param words a list of lists of strings
     public static List< List<String> > mapPosition( Trie tr, List< List<String> > words ) {
         List< List<String> > res = new ArrayList<>();
         for ( List<String> s : words ) {
@@ -218,7 +229,9 @@ public class TrieFunctions {
         return res;
     }
 
-
+    //! @description Retrieval of a sub-trie corresponding to a "word".
+    //! @param tr a trie object
+    //! @param word a list of strings
     public static Trie retrieve( Trie tr, List<String> word ) {
 
         if ( word == null || word.isEmpty() ) {
@@ -236,6 +249,9 @@ public class TrieFunctions {
         }
     }
 
+    //! @description Optimization of retrieve over a list of words.
+    //! @param tr a trie object
+    //! @param words a list of lists of strings
     public static List< Trie > mapRetrieve( Trie tr, List< List<String> > words ) {
         List< Trie > res = new ArrayList<>();
         for ( List<String> s : words ) {
@@ -244,10 +260,10 @@ public class TrieFunctions {
         return res;
     }
 
-    /// @description For a given trie finds if the retrievable part of a word is complete match.
-    /// @param tr a trie object
-    /// @param word a list of strings
-    /// @details Despite the name this function works on the part of the word that can be found in the trie.
+    //! @description For a given trie finds if the retrievable part of a word is complete match.
+    //! @param tr a trie object
+    //! @param word a list of strings
+    //! @details Despite the name this function works on the part of the word that can be found in the trie.
     public static Boolean completeMatch( Trie tr, List<String> word ) {
         Trie subTr = retrieve( tr, word );
 
@@ -262,9 +278,9 @@ public class TrieFunctions {
         }
     }
 
-    /// @description Optimization of completeMatch over a list of words.
-    /// @param tr a trie object
-    /// @param words list of words
+    //! @description Optimization of completeMatch over a list of words.
+    //! @param tr a trie object
+    //! @param words list of words
     public static List<Boolean> mapCompleteMatch( Trie tr, List< List<String> > words ) {
         List<Boolean> res = new ArrayList<>();
         for ( List<String> s : words ) {
@@ -273,9 +289,9 @@ public class TrieFunctions {
         return res;
     }
 
-    /// @description Does the trie object tr contains a word.
-    /// @param tr a trie object
-    /// @param word a word to be checked
+    //! @description Does the trie object tr contains a word.
+    //! @param tr a trie object
+    //! @param word a word to be checked
     public static Boolean contains( Trie tr, List<String> word ) {
         List<String> pos = position( tr, word);
         if ( pos == null || pos.size() < word.size() ) {
@@ -285,9 +301,9 @@ public class TrieFunctions {
         }
     }
 
-    /// @description Does the trie object tr contains each of the list of words.
-    /// @param tr a trie object
-    /// @param words a list of words
+    //! @description Does the trie object tr contains each of the list of words.
+    //! @param tr a trie object
+    //! @param words a list of words
     public static List<Boolean> mapContains( Trie tr, List< List<String> > words ) {
         List<Boolean> res = new ArrayList<>();
         for ( List<String> s : words ) {
@@ -296,16 +312,16 @@ public class TrieFunctions {
         return res;
     }
 
-    /// @description Converts the counts (frequencies) at the nodes into node probabilities.
-    /// @param tr a trie object
+    //! @description Converts the counts (frequencies) at the nodes into node probabilities.
+    //! @param tr a trie object
     public static Trie nodeProbabilities( Trie tr ) {
         Trie res = nodeProbabilitiesRec( tr );
         res.setValue(1.0);
         return res;
     }
 
-    /// @description Recursive step function for converting node frequencies into node probabilities.
-    /// @param tr a trie object
+    //! @description Recursive step function for converting node frequencies into node probabilities.
+    //! @param tr a trie object
     protected static Trie nodeProbabilitiesRec( Trie tr ) {
         double chSum=0;
 
@@ -352,7 +368,7 @@ public class TrieFunctions {
         }
     }
 
-    /// @description Converts to rows a trie for a given path.
+    //! @description Converts to rows a trie for a given path.
     protected static void toRows(
             List< List< Map.Entry<String, Double> > > rows,
             Trie tr,
@@ -372,8 +388,8 @@ public class TrieFunctions {
         }
     }
 
-    /// @description Finds the paths from the root of a trie to the leaves.
-    /// @param tr a trie object
+    //! @description Finds the paths from the root of a trie to the leaves.
+    //! @param tr a trie object
     public static List< List< Map.Entry<String, Double> > > rootToLeafPaths( Trie tr ) {
         List< List< Map.Entry<String, Double> > > rows = new ArrayList();
         List< Map.Entry<String, Double> > path = new ArrayList();
@@ -383,8 +399,8 @@ public class TrieFunctions {
         return rows;
     }
 
-    /// @description Converts a list of root-to-leaf paths into JSON.
-    /// @param paths a list of lists with Map.Entry elements
+    //! @description Converts a list of root-to-leaf paths into JSON.
+    //! @param paths a list of lists with Map.Entry elements
     public static String pathsToJSON( List< List< Map.Entry<String, Double> > > paths ) {
         String res;
         int k = 0;
@@ -407,15 +423,17 @@ public class TrieFunctions {
     }
 
 
-    /// @description Finds all words in the trie tr that start with the word searchWord.
-    /// @param tr a trie object
-    /// @param sword search word
+    //! @description Finds all words in the trie tr that start with the word searchWord.
+    //! @param tr a trie object
+    //! @param sword search word
     public static List< List<String> > getWords( Trie tr, List<String> sword ) {
 
         List<String> pos = position(tr, sword);
 
-        if( pos == null || pos.isEmpty() ) {
+        if( pos == null || pos.isEmpty() || pos.size() < sword.size() ) {
+
             return null;
+
         } else {
 
             List< List< Map.Entry<String, Double> > > paths = rootToLeafPaths( retrieve( tr, sword ) );
@@ -423,7 +441,7 @@ public class TrieFunctions {
             List< List<String> > res = new ArrayList<>();
             for( List< Map.Entry<String, Double> > ps : paths ) {
                 List<String> w = new ArrayList<>();
-                w.addAll( sword.subList(0, sword.size()-1) );
+                w.addAll( pos.subList(0, pos.size()-1) );
                 for( Map.Entry<String, Double> p : ps ) {
                     w.add(p.getKey());
                 }
@@ -433,22 +451,22 @@ public class TrieFunctions {
         }
     }
 
-    /// @description Shrinks a trie by finding prefixes.
+    //! @description Shrinks a trie by finding prefixes.
     public static Trie shrink( Trie tr ) {
         return shrinkRec( tr, "", 0 );
     }
 
-    /// @description Shrinks a trie by finding prefixes.
-    /// @param tr a trie object
-    /// @param delimiter a delimiter to be used when strings are joined
+    //! @description Shrinks a trie by finding prefixes.
+    //! @param tr a trie object
+    //! @param delimiter a delimiter to be used when strings are joined
     public static Trie shrink( Trie tr, String delimiter ) {
         return shrinkRec( tr, delimiter, 0 );
     }
 
-    /// @description Shrinking recursive function.
+    //! @description Shrinking recursive function.
     protected static Trie shrinkRec( Trie tr, String delimiter, int n ) {
         Trie trRes = new Trie();
-        Boolean rootQ = (n == 0 && tr.getKey() == "");
+        Boolean rootQ = ((n == 0) && tr.getKey().equals(""));
 
         if ( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
 
