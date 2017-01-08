@@ -312,7 +312,7 @@ public class TrieFunctions {
         return res;
     }
 
-    //! @description Converts the counts (frequencies) at the nodes into node probabilities.
+    //! @description Converts the counts (frequencies) at the nodes into node probabilities. Changes the object!
     //! @param tr a trie object
     public static Trie nodeProbabilities( Trie tr ) {
         Trie res = nodeProbabilitiesRec( tr );
@@ -326,7 +326,7 @@ public class TrieFunctions {
         double chSum=0;
 
         if ( tr == null || tr.getChildren() == null || tr.getChildren().isEmpty() ) {
-            return tr;
+            return new Trie( tr.getKey(), tr.getValue() );
         }
 
         if ( tr.getValue() == 0 ) {
@@ -348,6 +348,7 @@ public class TrieFunctions {
 
         return new Trie( tr.getKey(), tr.getValue(), resChildren );
     }
+
 
     protected static class Pair<T1, T2> implements Map.Entry<T1, T2> {
         T1 key;
