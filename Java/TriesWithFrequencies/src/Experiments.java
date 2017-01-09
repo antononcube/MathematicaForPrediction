@@ -45,18 +45,18 @@ import java.util.logging.Logger;
 
 public class Experiments {
 
-        public static void main( String args[] ) {
+    public static void main( String args[] ) {
 
-                basic();
-        }
+        basic();
+    }
 
-        public static void basic() {
+    public static void basic() {
 
 //		List<String> sampleSeq = new ArrayList<String>() {{
 //			add("arm"); add("arms"); add("arc"); add("bar"); add("bark"); add("barman"); add("arcola"); }};
 
-                List<String> sampleSeq = new ArrayList<String>() {{
-                        add("a;r;m"); add("a;r;m;s"); add("a;r;c"); add("b;a;r"); add("b;a;r;k"); add("b;a;r;m;a;n"); add("a;r;c;o;l;a"); }};
+        List<String> sampleSeq = new ArrayList<String>() {{
+            add("a;r;m"); add("a;r;m;s"); add("a;r;c"); add("b;a;r"); add("b;a;r;k"); add("b;a;r;m;a;n"); add("a;r;c;o;l;a"); }};
 
 
 //		List< List<String> > sampleSeqList = new ArrayList<>();
@@ -69,58 +69,62 @@ public class Experiments {
 //
 //        Trie strie = TrieFunctions.create( sampleSeqList );
 
-                Trie strie = TrieFunctions.createBySplit( sampleSeq, ";");
+        Trie strie = TrieFunctions.createBySplit( sampleSeq, ";");
 
-                System.out.println("strie = ");
-                System.out.println( strie );
-                System.out.println();
+        System.out.println("strie = ");
+        System.out.println( strie );
+        System.out.println();
 
-                sampleSeq = new ArrayList<String>() {{
-                        add("bark"); add("barkeeper"); add("barkeepers"); add("barkeep"); add("barks");
-                        add("barking"); add("barked"); add("barker"); add("barkers"); }};
+        sampleSeq = new ArrayList<String>() {{
+            add("bark"); add("barkeeper"); add("barkeepers"); add("barkeep"); add("barks");
+            add("barking"); add("barked"); add("barker"); add("barkers"); }};
 
-                strie = TrieFunctions.createBySplit( sampleSeq, "");
+        strie = TrieFunctions.createBySplit( sampleSeq, "");
 
-                System.out.println( "shrink trie:");
-                System.out.println( TrieFunctions.shrink( strie, ":" ) );
-                System.out.println();
+        System.out.println( "shrink trie:");
+        System.out.println( TrieFunctions.shrink( strie, ":" ) );
+        System.out.println();
 
-                List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); add("e"); add("d"); }};
-                System.out.println("For " + sword );
-                System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
-                System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
-                System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
-                System.out.println();
+        List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); add("e"); add("d"); }};
+        System.out.println("For " + sword );
+        System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
+        System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
+        System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
+        System.out.println();
 
-                sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
+        sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
 
-                System.out.println("For " + sword );
-                System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
-                System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
-                System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
-                System.out.println();
+        System.out.println("For " + sword );
+        System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
+        System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
+        System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
+        System.out.println();
 
-                Trie ftrie = TrieFunctions.retrieve( strie, sword );
-                System.out.println("ftrie = ");
-                System.out.println( ftrie + "\n" );
+        Trie ftrie = TrieFunctions.retrieve( strie, sword );
+        System.out.println("ftrie = ");
+        System.out.println( ftrie + "\n" );
 
-                Trie pstrie = TrieFunctions.nodeProbabilities( strie );
+        Trie pstrie = TrieFunctions.nodeProbabilities( strie );
 
-                System.out.println("pstrie = ");
-                System.out.println( pstrie + "\n" );
+        System.out.println("pstrie = ");
+        System.out.println( pstrie + "\n" );
 
 
-                System.out.println("strie = ");
-                System.out.println( strie + "\n" );
+        System.out.println("strie = ");
+        System.out.println( strie + "\n" );
 
-                sword = new ArrayList() {{ add("a"); add("r"); }};
-                System.out.println( "words for:" + sword );
-                System.out.println( TrieFunctions.getWords( strie, sword ) );
-                System.out.println();
+        sword = new ArrayList() {{ add("a"); add("r"); }};
+        System.out.println( "words for:" + sword );
+        System.out.println( TrieFunctions.getWords( strie, sword ) );
+        System.out.println();
 
-                System.out.println( "paths to JSON:");
-                System.out.println( TrieFunctions.pathsToJSON( TrieFunctions.rootToLeafPaths( strie) ) );
-                System.out.println();
+        System.out.println( "paths to JSON:");
+        System.out.println( TrieFunctions.pathsToJSON( TrieFunctions.rootToLeafPaths( strie) ) );
+        System.out.println();
+
+        System.out.println( "node counts:");
+        System.out.println( TrieFunctions.nodeCounts( strie) );
+        System.out.println();
 
 //        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
 //        List< List<String> > sampleSeqList = new ArrayList<>();
@@ -131,6 +135,6 @@ public class Experiments {
 //        strie = TrieFunctions.create( sampleSeqList );
 //
 //        System.out.println( strie.toJSON() );
-        }
+    }
 
 }
