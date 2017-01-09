@@ -140,6 +140,8 @@ JavaTrieMemberQ::usage = "Same as JavaTrieContains."
 
 JavaTrieMerge::usage = "Merges two Java tries."
 
+JavaTrieNodeCounts::usage = "Returns the node counts in trie (total, internal, leaves.)"
+
 JavaTrieNodeProbabilities::usage = "Gives the corresponding Java trie with node frequencies converted\
  to probabilities."
 
@@ -201,6 +203,10 @@ JavaTrieInsert[jTr_?JavaObjectQ, words : {{_String ..} ..}] :=
       jTr2 = JavaTrieCreate[words];
       TrieFunctions`merge[jTr, jTr2]
     ];
+
+Clear[JavaTrieNodeCounts]
+JavaTrieNodeCounts[jTr_?JavaObjectQ] :=
+    AssociationThread[{"total","internal","leaves"}->JLink`JavaObjectToExpression[TrieFunctions`nodeCounts[jTr]]];
 
 Clear[JavaTrieNodeProbabilities]
 JavaTrieNodeProbabilities[jTr_?JavaObjectQ] :=
