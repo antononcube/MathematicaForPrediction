@@ -168,6 +168,14 @@ JavaTrieCreateBySplit[words : {_String ..}, regex_String: ""] :=
       TrieFunctions`createBySplit[jWords, jSp]
     ];
 
+JavaTrieCreateBySplit[ swords : {{_String ..} ..}, regex_String: "®ø®"] :=
+    Block[{jWords, jSp},
+      jWords = MakeJavaObject[Map[StringJoin @@ Riffle[#, regex] &, swords]];
+      jWords = Arrays`asList[jWords];
+      jSp = MakeJavaObject[regex];
+      TrieFunctions`createBySplit[jWords, jSp]
+    ];
+
 Clear[JavaTrieCreate]
 JavaTrieCreate[swords : {{_String ..} ..}] :=
     Block[{jWords, jW},
