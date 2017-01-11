@@ -35,7 +35,7 @@ Some of the algorithms have counterparts implementations in R or other languages
 
 There is a blog associated with this project: http://mathematicaforprediction.wordpress.com .
 
-Anton Antonov
-04.07.2013, Florida, USA
-11.01.2017, Florida, USA (updated)
+Anton Antonov   
+04.07.2013, Florida, USA   
+11.01.2017, Florida, USA (updated)   
 
