@@ -134,6 +134,9 @@ JavaTrieGetWords::usage = "JavaTrieGetWords[ jTr_, sw:{_String..}] gives a list 
 JavaTrieInsert::usage = "JavaTrieInsert[ jTr_, sw:{_String..}] inserts a list of strings into the Java trie jTr.\
  JavaTrieInsert[ jTr_, sws:{{_String..}..}] inserts each of the \"words\" of sws into jTr."
 
+JavaTrieInstall::usage = "JavaTrieInstall[path_String] installs Java and loads the JavaTrie classes\
+ from the jar file in the specified class path."
+
 JavaTrieMapOptimizationCall::usage = "Used for optimization calls over lists of \"words\"."
 
 JavaTrieMemberQ::usage = "Same as JavaTrieContains."
@@ -202,6 +205,21 @@ JavaTrieInsert[jTr_?JavaObjectQ, words : {{_String ..} ..}] :=
     Block[{jTr2},
       jTr2 = JavaTrieCreate[words];
       TrieFunctions`merge[jTr, jTr2]
+    ];
+
+Clear[JavaTrieInstall]
+JavaTrieInstall[path_String, opts:OptionsPattern[]] :=
+    Block[{},
+      Needs["JLink`"];
+      JLink`AddToClassPath[path];
+      If[ Length[{opts}] > 0,
+        JLink`ReinstallJava[opts],
+        JLink`ReinstallJava[JLink`JVMArguments -> "-Xmx2g"]
+      ];
+      JLink`LoadJavaClass["java.util.Collections"];
+      JLink`LoadJavaClass["java.util.Arrays"];
+      JLink`LoadJavaClass["Trie"];
+      JLink`LoadJavaClass["TrieFunctions"];
     ];
 
 Clear[JavaTrieNodeCounts]
