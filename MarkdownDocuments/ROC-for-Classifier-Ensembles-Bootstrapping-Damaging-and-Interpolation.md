@@ -57,7 +57,7 @@ Given a classifier the ROC point closest to \{0,1\}, generally, would be conside
 
 ## The wider perspective
 
-This document started as being a part of a conference presentation about illustrating the cultural differences between Statistics and Machine learning (for [Wolfram Technology Conference 2016](https://www.wolfram.com/events/technology-conference/2016/)). Its exposition become both deeper and wider than expected. Here are the alternative, original goals of the document:
+This document started as being a part of [a conference presentation about illustrating the cultural differences between Statistics and Machine learning](https://www.youtube.com/watch?v=eiFpnl0rbcI) (for [Wolfram Technology Conference 2016](https://www.wolfram.com/events/technology-conference/2016/)). Its exposition become both deeper and wider than expected. Here are the alternative, original goals of the document:
 
 **i)** to demonstrate how using ROC a researcher can explore classifiers performance without intimate knowledge of the classifiers` mechanisms, and
 
