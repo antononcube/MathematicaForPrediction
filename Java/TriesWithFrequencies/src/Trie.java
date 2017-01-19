@@ -30,14 +30,16 @@
 //# "Tries with frequencies for data mining",
 //# https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/ .
 
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Trie {
 
-	String key;
-	Double value;
-	Map<String, Trie> children;
+	protected String key;
+	protected Double value;
+	protected Map<String, Trie> children;
 
 	public String getKey() {
 		return key;
@@ -71,14 +73,14 @@ public class Trie {
 		this.setChildren(children);
 	}
 
-	public String toStringRec( int n ) {
+	protected String toStringRec( int n ) {
 		String offset = "";
 		String childStr = "";
 		int k=0;
 		for ( int i = 0; i < n; i++ ){
 			offset = offset + " ";
 		}
-		if ( this.getChildren() != null ) {
+		if ( this.getChildren() != null && !this.getChildren().isEmpty() ) {
 			for ( Trie elem : this.getChildren().values() ) {
 				if ( k == 0  ) {
 					childStr = "\n" + offset + elem.toStringRec( n+1 );
@@ -98,7 +100,7 @@ public class Trie {
 	}
 
 
-	public String toJSONRec( int n ) {
+	protected String toJSONRec( int n ) {
 		String childStr = "";
 		int k = 0;
 		if ( this.getChildren() != null ) {
@@ -121,4 +123,63 @@ public class Trie {
 		return this.toJSONRec( 1 );
 	}
 
+	//! @description Deep copy of a trie.
+	public Trie clone() {
+
+		Trie res = new Trie();
+
+		res.setKey( this.getKey() );
+		res.setValue( this.getValue() );
+
+		if ( !(this.getChildren() == null || this.getChildren().isEmpty() ) ) {
+
+			Map<String, Trie> resChildren = new HashMap<>();
+
+			for ( Trie elem : this.getChildren().values() ) {
+				resChildren.put( elem.getKey(), elem.clone() );
+			}
+
+			res.setChildren( resChildren );
+		}
+
+		return res;
+	}
+
+	//! @description Deep comparison of a trie.
+	public Boolean equals( Trie tr ) {
+
+		if ( !this.getKey().equals( tr.getKey() ) || !this.getValue().equals( tr.getValue() ) ) {
+			return false;
+		}
+
+		Boolean b = !(this.getChildren() == null || this.getChildren().isEmpty() );
+		Boolean bTr = !(tr.getChildren() == null || tr.getChildren().isEmpty() );
+
+		if ( b && bTr ) {
+
+			if ( this.getChildren().size() != tr.getChildren().size() ) {
+				return false;
+			}
+
+			for ( Trie elem : this.getChildren().values() ) {
+
+				if ( !tr.getChildren().containsKey( elem.getKey() ) ) {
+					return false;
+				}
+
+				if ( ! elem.equals( tr.getChildren().get( elem.getKey() ) ) ) {
+					return false;
+				}
+			}
+
+			return true;
+
+		} else if ( b != bTr ) {
+
+			return false;
+
+		}
+
+		return true;
+	}
 }
