@@ -75,7 +75,11 @@ VerificationTest[(* 2 *)
 ]
 
 VerificationTest[(* 3 *)
-	CompoundExpression[Set[words, List["bark", "barkeeper", "barkeepers", "barkeep", "barks", "barking", "barked", "barker", "barkers"]], Set[jTr, JavaTrieCreateBySplit[words]], StringMatchQ[SymbolName[jTr], StringExpression["JavaObject", BlankSequence[]]]]
+	CompoundExpression[
+		Set[words, List["bark", "barkeeper", "barkeepers", "barkeep", "barks", "barking", "barked", "barker", "barkers"]],
+		Set[jTr, JavaTrieCreateBySplit[words]],
+		StringMatchQ[SymbolName[jTr], StringExpression["JavaObject", BlankSequence[]]]
+	]
 	,
 	True	
 	,
@@ -83,7 +87,11 @@ VerificationTest[(* 3 *)
 ]
 
 VerificationTest[(* 4 *)
-	CompoundExpression[Set[words2, List["bar", "barring", "car", "care", "caress", "cold", "colder"]], Set[jTr2, JavaTrieCreateBySplit[words2]], StringMatchQ[SymbolName[jTr2], StringExpression["JavaObject", BlankSequence[]]]]
+	CompoundExpression[
+		Set[words2, List["bar", "barring", "car", "care", "caress", "cold", "colder"]],
+		Set[jTr2, JavaTrieCreateBySplit[words2]],
+		StringMatchQ[SymbolName[jTr2], StringExpression["JavaObject", BlankSequence[]]]
+	]
 	,
 	True	
 	,
@@ -91,7 +99,10 @@ VerificationTest[(* 4 *)
 ]
 
 VerificationTest[(* 5 *)
-	CompoundExpression[Set[jTr1, JavaTrieCreate[Map[Characters, words]]], StringMatchQ[SymbolName[jTr1], StringExpression["JavaObject", BlankSequence[]]]]
+	CompoundExpression[
+		Set[jTr1, JavaTrieCreate[Map[Characters, words]]],
+		StringMatchQ[SymbolName[jTr1], StringExpression["JavaObject", BlankSequence[]]]
+	]
 	,
 	True	
 ]
@@ -180,6 +191,26 @@ VerificationTest[(* 16 *)
 	List[List["bark"], List["bark", "s"], List["bark", "ing"], List["bark", "e", "r"], List["bark", "e", "r", "s"], List["bark", "e", "d"], List["bark", "e", "ep"], List["bark", "e", "ep", "er"], List["bark", "e", "ep", "er", "s"]]	
 	,
 	TestID->"JavaTrieShrinkAndGetWords1"
+]
+
+VerificationTest[(* 17 *)
+  CompoundExpression[
+  	Set[jTr, JavaTrieCreateBySplit[words]],
+  	Set[jTr1, JavaTrieCreate[Map[Characters, words]]],
+  	JavaTrieEqualQ[jTr, jTr1]
+	]
+  ,
+  True
+  ,
+  TestID->"JavaTrieEqual1"
+]
+
+VerificationTest[(* 18 *)
+	(JavaTrieToJSON@JavaTrieShrink@jTr) == (JavaTrieToJSON@JavaTrieShrink@JavaTrieClone@jTr)
+  ,
+  True
+  ,
+  TestID->"JavaTrieCloneEquality1"
 ]
 
 EndTestSection[]

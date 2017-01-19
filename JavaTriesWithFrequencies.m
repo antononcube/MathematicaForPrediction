@@ -119,6 +119,8 @@
 
 BeginPackage["JavaTriesWithFrequencies`"]
 
+JavaTrieClone::usage = "JavaTrieClone[ jTr ] makes a deep clone of a given Java trie."
+
 JavaTrieCompleteMatch::usage = "JavaTrieCompleteMatch[ jTr_, sw:{_String..}] finds is fraction\
  of the list of strings sw a complete match in the Java trie jTr."
 
@@ -129,6 +131,9 @@ JavaTrieCreate::usage = "JavaTrieCreate[ ws:{{_String..}..}] creates a Java trie
 
 JavaTrieCreateBySplit::usage = "JavaTrieCreate[ ws:{_String..}, regex_String:\"\"] creates a Java trie object\
  from a list of strings that are split with a given regex."
+
+JavaTrieEqualQ::usage = "JavaTrieEqualQ[ jTr1, jTr2] compares two Java tries and returns True if\
+ the tries have the same shape and all corresponding keys and values are the same."
 
 JavaTrieGetWords::usage = "JavaTrieGetWords[ jTr_, sw:{_String..}] gives a list words in jTr that start with sw."
 
@@ -165,6 +170,9 @@ Begin["`Private`"]
 
 Needs["JLink`"]
 
+Clear[JavaTrieClone]
+JavaTrieClone[ jTr_?JavaObjectQ ] := jTr@clone[];
+
 Clear[JavaTrieCreateBySplit]
 JavaTrieCreateBySplit[words : {_String ..}, regex_String: ""] :=
     Block[{jWords, jSp},
@@ -193,6 +201,9 @@ JavaTrieCreate[swords : {{_String ..} ..}] :=
         {wl, swords}];
       TrieFunctions`create[jWords]
     ];
+
+Clear[JavaTrieEqualQ]
+JavaTrieEqualQ[ jTr1_?JavaObjectQ, jTr2_?JavaObjectQ ] := jTr1@equals[ jTr2 ];
 
 Clear[JavaTrieMerge]
 JavaTrieMerge[jTr1_?JavaObjectQ, jTr2_?JavaObjectQ] :=
