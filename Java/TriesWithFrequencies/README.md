@@ -1,7 +1,8 @@
 # Tries with frequencies in Java
 
 Anton Antonov  
-[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
+[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)  
+[MathematicaVsR at GitHub](https://github.com/antononcube/MathematicaVsR)  
 January 2017
 
 ## Structure
@@ -17,9 +18,22 @@ is only used to do sanity check tests over the implementations.
 
 We call a trie "word" a list of strings.
 
-## How to use in Mathematica
+## Use through a Mathematica package
 
-In order to use the defined functions in Mathematica the following steps have to be taken.
+The Mathematica package 
+[JavaTriesWithFrequencies.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m)
+provides functions for utilizing the implemented Java Trie functionalities. 
+
+The test file 
+[JavaTriesWithFrequencies-Unit-Tests.wlt](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/JavaTriesWithFrequencies-Unit-Tests.wlt)
+provides unit tests for
+[JavaTriesWithFrequencies.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m).
+
+In order to use the package the corresponding .jar file must be made -- see the next section.
+
+## How to use in Mathematica directly
+
+In order to use the defined Java functions in Mathematica the following steps have to be taken.
 
 ### Making a jar file
 
@@ -107,6 +121,10 @@ we can visualize the obtained sub-trie (Java object) using the function `ToTrieF
     
 !["SubTrie-of-dictionary-trie-by-bark"](http://i.imgur.com/sRlL357.png)
 
+
 ## How to use in R
 
 TBD...
+
+## References
+
