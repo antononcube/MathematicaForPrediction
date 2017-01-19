@@ -70,16 +70,13 @@
 
   Here is the Mathematica code for Step 2:
 
+    AppendTo[$Path, "/Users/antonov/MathFiles/MathematicaForPrediction"];
+    Needs["JavaTriesWithFrequencies`"]
+
     $JavaTriesWithFrequenciesPath =
       "/Users/antonov/MathFiles/MathematicaForPrediction/Java/TriesWithFrequencies";
 
-    Needs["JLink`"];
-    AddToClassPath[$JavaTriesWithFrequenciesPath];
-    ReinstallJava[JVMArguments -> "-Xmx2g"];
-    LoadJavaClass["java.util.Collections"];
-    LoadJavaClass["java.util.Arrays"];
-    LoadJavaClass["Trie"];
-    LoadJavaClass["TrieFunctions"];
+    JavaTrieInstall[$JavaTriesWithFrequenciesPath]
 
   Several examples of building tries and operations over them follow.
 
@@ -108,6 +105,10 @@
                     "children" -> {{"value" -> 1., "key" -> "s",
                        "children" -> {}}, {"value" -> 1., "key" -> "ers",
                        "children" -> {}}}}}}}}}}}}}} *)
+
+  For more usage examples see the corresponding unit tests file:
+
+    https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/JavaTriesWithFrequencies-Unit-Tests.wlt
 
   Anton Antonov
   Windermere, FL
