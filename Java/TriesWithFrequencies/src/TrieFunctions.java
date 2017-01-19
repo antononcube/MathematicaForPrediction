@@ -350,7 +350,7 @@ public class TrieFunctions {
     }
 
 
-    protected static class Pair<T1, T2> implements Map.Entry<T1, T2> {
+    public static class Pair<T1, T2> implements Map.Entry<T1, T2> {
         T1 key;
         T2 value;
 
@@ -393,11 +393,25 @@ public class TrieFunctions {
         currentPath.add(new Pair(tr.getKey(), tr.getValue()));
 
         if (tr.getChildren() == null || tr.getChildren().size() == 0) {
+
             rows.add(currentPath);
+
         } else {
+
+            double sum = 0;
+
+            for (Trie ch : tr.getChildren().values()) {
+                sum = sum + ch.getValue();
+            }
+
+            if ( sum < tr.getValue() ) {
+                rows.add(currentPath);
+            }
+
             for (Trie ch : tr.getChildren().values()) {
                 toRows(rows, ch, currentPath);
             }
+
         }
     }
 
@@ -457,8 +471,11 @@ public class TrieFunctions {
 
             List<List<String>> res = new ArrayList<>();
             for (List<Map.Entry<String, Double>> ps : paths) {
+
                 List<String> w = new ArrayList<>();
+
                 w.addAll(pos.subList(0, pos.size() - 1));
+
                 for (Map.Entry<String, Double> p : ps) {
                     w.add(p.getKey());
                 }
@@ -564,4 +581,40 @@ public class TrieFunctions {
             return new Pair<Integer, Integer>( res.getKey()+1, res.getValue() );
         }
     }
+
+    //! @description Interface for functions to be applied on the key and value of a Trie node.
+    public interface TrieKeyValueFunction {
+        Pair<String, Double> apply( String k, Double val );
+    }
+
+    //! @description Map a function over the key and value of each node in a trie.
+    public static Trie map( Trie tr,  TrieKeyValueFunction func ) {
+
+        if (tr == null ) {
+
+            return null;
+
+        } else if ( tr.getChildren() == null || tr.getChildren().isEmpty()) {
+
+            Pair<String, Double> pres = func.apply( tr.getKey(), tr.getValue() );
+
+            return new Trie( pres.getKey(), pres.getValue());
+
+        } else {
+
+            Map<String, Trie> resChildren = new HashMap<>();
+
+            for (Map.Entry<String, Trie> elem : tr.getChildren().entrySet()) {
+
+                Trie chNode = map(elem.getValue(), func);
+
+                resChildren.put(elem.getKey(), chNode);
+            }
+
+            Pair<String, Double> pres = func.apply(tr.getKey(), tr.getValue());
+
+            return new Trie(pres.getKey(), pres.getValue(), resChildren);
+        }
+    }
+
 }
