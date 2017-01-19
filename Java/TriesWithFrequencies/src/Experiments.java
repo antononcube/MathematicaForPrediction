@@ -135,6 +135,27 @@ public class Experiments {
 //        strie = TrieFunctions.create( sampleSeqList );
 //
 //        System.out.println( strie.toJSON() );
+
+
+        Trie mstrie = TrieFunctions.map( strie, ( String k, Double v) -> { return new TrieFunctions.Pair<String, Double>( k + ":M", 2*v ); } );
+
+        System.out.println( "Map function over nodes :");
+        System.out.println( mstrie );
+        System.out.println();
+
+        Trie mstrie2 = mstrie.clone();
+
+        System.out.println( "Clone of a trie :");
+        System.out.println( mstrie2 );
+        System.out.println();
+
+        System.out.println( "mstrie equal mstrie2 ? :");
+        System.out.println( mstrie.equals( mstrie2 ) );
+        System.out.println();
+
+        System.out.println( "mstrie equal strie ? :");
+        System.out.println( mstrie.equals( strie ) );
+        System.out.println();
     }
 
 }
