@@ -274,7 +274,8 @@ public class TrieFunctions {
             for (Trie ch : subTr.getChildren().values()) {
                 chValue += ch.getValue();
             }
-            return chValue < tr.getValue();
+
+            return chValue < subTr.getValue();
         }
     }
 
