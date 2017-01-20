@@ -213,4 +213,12 @@ VerificationTest[(* 18 *)
   TestID->"JavaTrieCloneEquality1"
 ]
 
+VerificationTest[(* 19 *)
+  JavaTrieCompleteMatch[jTr2, Characters@#] & /@ {"ba", "bar"}
+  ,
+	{False, True}
+  ,
+  TestID->"JavaTrieCompleteMatch1"
+]
+
 EndTestSection[]
