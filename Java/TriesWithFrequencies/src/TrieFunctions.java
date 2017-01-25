@@ -487,19 +487,31 @@ public class TrieFunctions {
     }
 
     //! @description Shrinks a trie by finding prefixes.
+    //! @param tr a trie object
     public static Trie shrink(Trie tr) {
-        return shrinkRec(tr, "", 0);
+        return shrinkRec(tr, "", -1, 0);
     }
 
     //! @description Shrinks a trie by finding prefixes.
     //! @param tr a trie object
     //! @param delimiter a delimiter to be used when strings are joined
     public static Trie shrink(Trie tr, String delimiter) {
-        return shrinkRec(tr, delimiter, 0);
+        return shrinkRec(tr, delimiter, -1,0);
+    }
+
+    //! @description Shrinks a trie by finding prefixes.
+    //! @param tr a trie object
+    //! @param delimiter a delimiter to be used when strings are joined
+    public static Trie shrinkByThreshold(Trie tr, String delimiter, double threshold ) {
+        return shrinkRec(tr, delimiter, threshold,0);
     }
 
     //! @description Shrinking recursive function.
-    protected static Trie shrinkRec(Trie tr, String delimiter, int n) {
+    //! @param tr a trie object
+    //! @param delimiter a delimiter for the concatenation of the node keys
+    //! @param threshold if negative automatic shrinking test is applied
+    //! @param n recursion level
+    protected static Trie shrinkRec(Trie tr, String delimiter, double threshold, int n) {
         Trie trRes = new Trie();
         Boolean rootQ = ((n == 0) && tr.getKey().equals(""));
 
@@ -509,14 +521,22 @@ public class TrieFunctions {
 
         } else if (!rootQ && tr.getChildren().size() == 1) {
             List<Trie> arr = new ArrayList<Trie>(tr.getChildren().values());
+            boolean shrinkQ = false;
 
-            if (tr.getValue().equals(arr.get(0).getValue())) {
-                // Only one child : proceed with recursion and join with result.
+            if (threshold < 0) {
+                shrinkQ = tr.getValue() == arr.get(0).getValue();
+            } else {
+                shrinkQ = arr.get(0).getValue() >= threshold;
+            }
 
-                Trie chTr = shrinkRec(arr.get(0), delimiter, n + 1);
+            if ( shrinkQ )  {
+                // Only one child and the current node does not make a complete match:
+                // proceed with recursion and join with result.
+
+                Trie chTr = shrinkRec(arr.get(0), delimiter, threshold, n + 1);
 
                 trRes.setKey(tr.getKey() + delimiter + chTr.getKey());
-                trRes.setValue(chTr.getValue());
+                trRes.setValue(tr.getValue());
 
                 if (!(chTr.getChildren() == null || chTr.getChildren().isEmpty())) {
                     trRes.setChildren(chTr.getChildren());
@@ -525,7 +545,7 @@ public class TrieFunctions {
             } else {
                 // Only one child but the current node makes a complete match.
 
-                Trie chTr = shrinkRec(arr.get(0), delimiter, n + 1);
+                Trie chTr = shrinkRec(arr.get(0), delimiter, threshold,n + 1);
 
                 trRes.setKey(tr.getKey());
                 trRes.setValue(tr.getValue());
@@ -540,7 +560,7 @@ public class TrieFunctions {
             Map<String, Trie> recChildren = new HashMap<>();
 
             for (Trie chTr : tr.getChildren().values()) {
-                Trie nTr = shrinkRec(chTr, delimiter, n + 1);
+                Trie nTr = shrinkRec(chTr, delimiter, threshold, n + 1);
                 recChildren.put(nTr.getKey(), nTr);
             }
 
@@ -595,6 +615,10 @@ public class TrieFunctions {
 
             return null;
 
+        } else if ( func == null ) {
+
+            return tr.clone();
+
         } else if ( tr.getChildren() == null || tr.getChildren().isEmpty()) {
 
             Pair<String, Double> pres = func.apply( tr.getKey(), tr.getValue() );
@@ -616,6 +640,110 @@ public class TrieFunctions {
 
             return new Trie(pres.getKey(), pres.getValue(), resChildren);
         }
+    }
+
+    //! @description Interface for functions to be applied on a Trie node.
+    public interface TrieNodeFunction {
+        Trie apply( Trie node );
+    }
+
+    //! @description Map a function over the key and value of each node in a trie.
+    //! @param tr a trie object
+    //! @param preFunc a function object to be applied before the recursive call to map
+    //! @param postFunc a function object to be applied after the recursive call to map
+    //! @return Another trie object. Each node of the resulting trie is new Trie object.
+    public static Trie map( Trie tr,  TrieNodeFunction preFunc, TrieNodeFunction postFunc ) {
+
+        if (tr == null ) {
+
+            return null;
+
+        } else if ( preFunc == null && postFunc == null ) {
+
+            return tr.clone();
+
+        } else {
+
+            Trie res;
+            Map<String, Trie> resChildren = null;
+
+            if ( preFunc != null ) {
+                res = preFunc.apply(tr);
+            } else {
+                res = tr;
+            }
+
+            if ( tr.getChildren() == null || tr.getChildren().isEmpty()) {
+
+                resChildren = null;
+
+            } else {
+
+                resChildren = new HashMap<>();
+
+                for (Map.Entry<String, Trie> elem : res.getChildren().entrySet()) {
+
+                    Trie chNode = map(elem.getValue(), preFunc, postFunc);
+
+                    resChildren.put(elem.getKey(), chNode);
+                }
+
+            }
+
+            if ( postFunc != null ) {
+                res = postFunc.apply(res);
+            }
+
+            res.setChildren( resChildren );
+
+            return res;
+        }
+    }
+
+
+
+    private static class ThresholdRemoval implements TrieNodeFunction {
+        ThresholdRemoval() { threshold = 1; belowThresholdQ = true; }
+        ThresholdRemoval( double th ) { threshold = th; belowThresholdQ = true; }
+        ThresholdRemoval( double th, boolean bQ ) { threshold = th; belowThresholdQ = bQ; }
+
+        public double threshold;
+        public boolean belowThresholdQ;
+
+        public Trie apply( Trie tr ) {
+            if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
+                return tr.clone();
+            } else {
+                Map<String, Trie> resChildren = new HashMap<>();
+
+                for (Map.Entry<String, Trie> elem : tr.getChildren().entrySet()) {
+
+                    if ( belowThresholdQ && elem.getValue().getValue() >= threshold ||
+                            !belowThresholdQ && elem.getValue().getValue() < threshold ) {
+                        resChildren.put( elem.getKey(), elem.getValue() );
+                    }
+                }
+
+                Trie res = new Trie( tr.getKey(), tr.getValue() );
+                res.setChildren( resChildren );
+
+                return res;
+            }
+        }
+    }
+
+    //! @description Remove nodes with values below a specified threshold.
+    public static Trie removeByThreshold( Trie tr, double threshold) {
+        return removeByThreshold( tr, threshold, true );
+    }
+
+
+    //! @description Remove nodes with values below or above a specified threshold.
+    public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ ) {
+
+        ThresholdRemoval thRemovalObj = new ThresholdRemoval( threshold, belowThresholdQ);
+
+        return map( tr, thRemovalObj, null );
     }
 
 }

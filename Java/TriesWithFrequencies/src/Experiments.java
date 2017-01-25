@@ -76,8 +76,8 @@ public class Experiments {
         System.out.println();
 
         sampleSeq = new ArrayList<String>() {{
-            add("bark"); add("barkeeper"); add("barkeepers"); add("barkeep"); add("barks");
-            add("barking"); add("barked"); add("barker"); add("barkers"); }};
+            add("bar"); add("barks"); add("barkeep"); add("barn"); add("balm");
+            add("car"); add("care"); add("caress"); add("card"); add("cold"); add("colder"); }};
 
         strie = TrieFunctions.createBySplit( sampleSeq, "");
 
@@ -85,14 +85,14 @@ public class Experiments {
         System.out.println( TrieFunctions.shrink( strie, ":" ) );
         System.out.println();
 
-        List<String> sword = new ArrayList() {{ add("a"); add("r"); add("m"); add("e"); add("d"); }};
+        List<String> sword = new ArrayList() {{ add("b"); add("a"); add("r"); }};
         System.out.println("For " + sword );
         System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
         System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
         System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
         System.out.println();
 
-        sword = new ArrayList() {{ add("a"); add("r"); add("m"); }};
+        sword = new ArrayList() {{ add("b"); add("a"); }};
 
         System.out.println("For " + sword );
         System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
@@ -156,6 +156,21 @@ public class Experiments {
         System.out.println( "mstrie equal strie ? :");
         System.out.println( mstrie.equals( strie ) );
         System.out.println();
+
+        pstrie = TrieFunctions.nodeProbabilities( strie );
+        System.out.println("Node probabilities trie:");
+        System.out.print( pstrie );
+        System.out.println("\n");
+
+        Trie pstrie2 = TrieFunctions.removeByThreshold( pstrie, 0.34 );
+        System.out.println("Node probabilities trie reduced by threshold:");
+        System.out.print( pstrie2 );
+        System.out.println("\n");
+
+        Trie pstrie3 = TrieFunctions.shrinkByThreshold( pstrie2, "~", 0.7 );
+        System.out.println("Node probabilities trie shrunk by threshold:");
+        System.out.print( pstrie3 );
+        System.out.println("\n");
     }
 
 }
