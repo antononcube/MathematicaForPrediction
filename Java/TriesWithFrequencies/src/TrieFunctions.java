@@ -764,4 +764,49 @@ public class TrieFunctions {
         return map( tr, thRemovalObj, null );
     }
 
+    private static class ByKeyRegexRemoval implements TrieNodeFunction {
+        ByKeyRegexRemoval(String kp ) { keyPattern = kp; removalTerminal = null; }
+        ByKeyRegexRemoval(String kp, String rt ) { keyPattern = kp; removalTerminal = rt; }
+
+        public String keyPattern;
+        public String removalTerminal;
+
+        public Trie apply( Trie tr ) {
+            if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
+                return tr.clone();
+            } else {
+                Map<String, Trie> resChildren = new HashMap<>();
+                double removedSum = 0;
+
+                for (Map.Entry<String, Trie> elem : tr.getChildren().entrySet()) {
+
+                    if ( !elem.getKey().matches( keyPattern )) {
+                        resChildren.put( elem.getKey(), elem.getValue() );
+                    } else {
+                        if ( removalTerminal != null ) {
+                            removedSum = removedSum + elem.getValue().getValue();
+                        }
+                    }
+                }
+
+                if ( removalTerminal != null && removedSum > 0 ) {
+                    resChildren.put( removalTerminal, new Trie( removalTerminal, removedSum ) );
+                }
+
+                Trie res = new Trie( tr.getKey(), tr.getValue() );
+                res.setChildren( resChildren );
+
+                return res;
+            }
+        }
+    }
+
+
+    //! @description Remove nodes with keys satisfying a regexp.
+    public static Trie removeByKeyRegex( Trie tr, String keyRegex, String removalTerminal ) {
+
+        ByKeyRegexRemoval kpRemovalObj = new ByKeyRegexRemoval( keyRegex, removalTerminal);
+
+        return map( tr, kpRemovalObj, null );
+    }
 }

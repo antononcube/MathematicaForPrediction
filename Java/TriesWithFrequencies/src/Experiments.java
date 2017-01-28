@@ -176,6 +176,11 @@ public class Experiments {
         System.out.println("Node probabilities trie shrunk by threshold:");
         System.out.print( pstrie3 );
         System.out.println("\n");
+
+        Trie pstrie4 = TrieFunctions.removeByKeyRegex( pstrie, "r", null );
+        System.out.println("Node probabilities trie reduced by key regex pattern:");
+        System.out.print( pstrie4 );
+        System.out.println("\n");
     }
 
 }
