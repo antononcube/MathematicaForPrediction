@@ -161,8 +161,12 @@ JavaTrieRetrieve::usage = "JavaTrieRetrieve[ jTr_, sw:{_String..}] retrieves the
 JavaTrieRootToLeafPaths::usage = "Gives lists of key-value pairs corresponding to the root-to-leaf paths\
  in a given trie."
 
+JavaTrieRegexRemove::usage = "Remove nodes that have keys adhering to a regex expression."
+
 JavaTrieShrink::usage = "JavaTrieShrink[ jTr_, sep_String:\"\"] concatenates the \"single path\" nodes\
  in the trie jTr using the given separator sep."
+
+JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above) a threshold."
 
 JavaTrieToJSON::usage = "Converts a Java trie to a corresponding JSON expression."
 
@@ -295,6 +299,26 @@ Clear[JavaTrieRootToLeafPaths]
 JavaTrieRootToLeafPaths[jTr_?JavaObjectQ] :=
     Map[{"key", "value"} /. # &,
       ImportString[TrieFunctions`pathsToJSON[TrieFunctions`rootToLeafPaths[jTr]], "JSON"], {2}];
+
+Clear[JavaTrieRegexRemove]
+JavaTrieRegexRemove[jTr_?JavaObjectQ, regex_String ] :=
+      TrieFunctions`removeByKeyRegex[jTr, regex];
+
+JavaTrieRegexRemove[jTr_?JavaObjectQ, regex_String, postfix_String ] :=
+    TrieFunctions`removeByKeyRegex[jTr, regex, postfix];
+
+Clear[JavaTrieThresholdRemove]
+JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ, belowThresholdQ:(True|False), postfix_String ] :=
+    TrieFunctions`removeByThreshold[jTr, threshold, belowThresholdQ, postfix];
+
+JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ, belowThresholdQ:(True|False) ] :=
+    TrieFunctions`removeByThreshold[jTr, threshold, belowThresholdQ];
+
+JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ] :=
+    TrieFunctions`removeByThreshold[jTr, threshold];
+
+JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ, postfix_String] :=
+    TrieFunctions`removeByThreshold[jTr, threshold, True, postfix];
 
 End[] (* `Private` *)
 
