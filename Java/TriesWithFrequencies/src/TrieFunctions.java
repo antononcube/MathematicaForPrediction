@@ -703,25 +703,38 @@ public class TrieFunctions {
 
 
     private static class ThresholdRemoval implements TrieNodeFunction {
-        ThresholdRemoval() { threshold = 1; belowThresholdQ = true; }
-        ThresholdRemoval( double th ) { threshold = th; belowThresholdQ = true; }
-        ThresholdRemoval( double th, boolean bQ ) { threshold = th; belowThresholdQ = bQ; }
+        ThresholdRemoval() { threshold = 1; belowThresholdQ = true; removalTerminal = null; }
+        ThresholdRemoval( double th ) { threshold = th; belowThresholdQ = true; removalTerminal = null; }
+        ThresholdRemoval( double th, boolean bQ ) { threshold = th; belowThresholdQ = bQ; removalTerminal = null; }
+        ThresholdRemoval( double th, boolean bQ, String tm ) {
+            threshold = th; belowThresholdQ = bQ; removalTerminal = tm;
+        }
 
         public double threshold;
         public boolean belowThresholdQ;
+        public String removalTerminal;
 
         public Trie apply( Trie tr ) {
             if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
                 return tr.clone();
             } else {
                 Map<String, Trie> resChildren = new HashMap<>();
+                double removedSum = 0;
 
                 for (Map.Entry<String, Trie> elem : tr.getChildren().entrySet()) {
 
                     if ( belowThresholdQ && elem.getValue().getValue() >= threshold ||
                             !belowThresholdQ && elem.getValue().getValue() < threshold ) {
                         resChildren.put( elem.getKey(), elem.getValue() );
+                    } else {
+                        if ( removalTerminal != null ) {
+                            removedSum = removedSum + elem.getValue().getValue();
+                        }
                     }
+                }
+
+                if ( removalTerminal != null && removedSum > 0 ) {
+                    resChildren.put( removalTerminal, new Trie( removalTerminal, removedSum ) );
                 }
 
                 Trie res = new Trie( tr.getKey(), tr.getValue() );
@@ -733,15 +746,20 @@ public class TrieFunctions {
     }
 
     //! @description Remove nodes with values below a specified threshold.
-    public static Trie removeByThreshold( Trie tr, double threshold) {
-        return removeByThreshold( tr, threshold, true );
+    public static Trie removeByThreshold( Trie tr, double threshold ) {
+        return removeByThreshold( tr, threshold, true, null );
+    }
+
+    //! @description Remove nodes with values below a specified threshold.
+    public static Trie removeByThreshold( Trie tr, double threshold, String removalTerminal) {
+        return removeByThreshold( tr, threshold, true, removalTerminal );
     }
 
 
     //! @description Remove nodes with values below or above a specified threshold.
-    public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ ) {
+    public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ, String removalTerminal ) {
 
-        ThresholdRemoval thRemovalObj = new ThresholdRemoval( threshold, belowThresholdQ);
+        ThresholdRemoval thRemovalObj = new ThresholdRemoval( threshold, belowThresholdQ, removalTerminal);
 
         return map( tr, thRemovalObj, null );
     }

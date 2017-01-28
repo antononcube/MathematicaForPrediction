@@ -162,9 +162,14 @@ public class Experiments {
         System.out.print( pstrie );
         System.out.println("\n");
 
-        Trie pstrie2 = TrieFunctions.removeByThreshold( pstrie, 0.34 );
+        Trie pstrie2 = TrieFunctions.removeByThreshold( pstrie, 0.34, ".*" );
         System.out.println("Node probabilities trie reduced by threshold:");
         System.out.print( pstrie2 );
+        System.out.println("\n");
+
+        pstrie = TrieFunctions.nodeProbabilities( strie );
+        System.out.println("Node probabilities trie:");
+        System.out.print( pstrie );
         System.out.println("\n");
 
         Trie pstrie3 = TrieFunctions.shrinkByThreshold( pstrie2, "~", 0.7 );
