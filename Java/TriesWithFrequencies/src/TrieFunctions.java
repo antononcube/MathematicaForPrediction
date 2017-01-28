@@ -703,16 +703,16 @@ public class TrieFunctions {
 
 
     private static class ThresholdRemoval implements TrieNodeFunction {
-        ThresholdRemoval() { threshold = 1; belowThresholdQ = true; removalTerminal = null; }
-        ThresholdRemoval( double th ) { threshold = th; belowThresholdQ = true; removalTerminal = null; }
-        ThresholdRemoval( double th, boolean bQ ) { threshold = th; belowThresholdQ = bQ; removalTerminal = null; }
+        ThresholdRemoval() { threshold = 1; belowThresholdQ = true; postfix = null; }
+        ThresholdRemoval( double th ) { threshold = th; belowThresholdQ = true; postfix = null; }
+        ThresholdRemoval( double th, boolean bQ ) { threshold = th; belowThresholdQ = bQ; postfix = null; }
         ThresholdRemoval( double th, boolean bQ, String tm ) {
-            threshold = th; belowThresholdQ = bQ; removalTerminal = tm;
+            threshold = th; belowThresholdQ = bQ; postfix = tm;
         }
 
         public double threshold;
         public boolean belowThresholdQ;
-        public String removalTerminal;
+        public String postfix;
 
         public Trie apply( Trie tr ) {
             if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
@@ -727,14 +727,14 @@ public class TrieFunctions {
                             !belowThresholdQ && elem.getValue().getValue() < threshold ) {
                         resChildren.put( elem.getKey(), elem.getValue() );
                     } else {
-                        if ( removalTerminal != null ) {
+                        if ( postfix != null ) {
                             removedSum = removedSum + elem.getValue().getValue();
                         }
                     }
                 }
 
-                if ( removalTerminal != null && removedSum > 0 ) {
-                    resChildren.put( removalTerminal, new Trie( removalTerminal, removedSum ) );
+                if ( postfix != null && removedSum > 0 ) {
+                    resChildren.put(postfix, new Trie(postfix, removedSum ) );
                 }
 
                 Trie res = new Trie( tr.getKey(), tr.getValue() );
@@ -751,25 +751,25 @@ public class TrieFunctions {
     }
 
     //! @description Remove nodes with values below a specified threshold.
-    public static Trie removeByThreshold( Trie tr, double threshold, String removalTerminal) {
-        return removeByThreshold( tr, threshold, true, removalTerminal );
+    public static Trie removeByThreshold( Trie tr, double threshold, String postfix) {
+        return removeByThreshold( tr, threshold, true, postfix );
     }
 
 
     //! @description Remove nodes with values below or above a specified threshold.
-    public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ, String removalTerminal ) {
+    public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ, String postfix ) {
 
-        ThresholdRemoval thRemovalObj = new ThresholdRemoval( threshold, belowThresholdQ, removalTerminal);
+        ThresholdRemoval thRemovalObj = new ThresholdRemoval( threshold, belowThresholdQ, postfix);
 
         return map( tr, thRemovalObj, null );
     }
 
     private static class ByKeyRegexRemoval implements TrieNodeFunction {
-        ByKeyRegexRemoval(String kp ) { keyPattern = kp; removalTerminal = null; }
-        ByKeyRegexRemoval(String kp, String rt ) { keyPattern = kp; removalTerminal = rt; }
+        ByKeyRegexRemoval(String kp ) { keyPattern = kp; postfix = null; }
+        ByKeyRegexRemoval(String kp, String rt ) { keyPattern = kp; postfix = rt; }
 
         public String keyPattern;
-        public String removalTerminal;
+        public String postfix;
 
         public Trie apply( Trie tr ) {
             if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
@@ -783,14 +783,14 @@ public class TrieFunctions {
                     if ( !elem.getKey().matches( keyPattern )) {
                         resChildren.put( elem.getKey(), elem.getValue() );
                     } else {
-                        if ( removalTerminal != null ) {
+                        if ( postfix != null ) {
                             removedSum = removedSum + elem.getValue().getValue();
                         }
                     }
                 }
 
-                if ( removalTerminal != null && removedSum > 0 ) {
-                    resChildren.put( removalTerminal, new Trie( removalTerminal, removedSum ) );
+                if ( postfix != null && removedSum > 0 ) {
+                    resChildren.put(postfix, new Trie(postfix, removedSum ) );
                 }
 
                 Trie res = new Trie( tr.getKey(), tr.getValue() );
@@ -801,11 +801,18 @@ public class TrieFunctions {
         }
     }
 
-
     //! @description Remove nodes with keys satisfying a regexp.
-    public static Trie removeByKeyRegex( Trie tr, String keyRegex, String removalTerminal ) {
+    public static Trie removeByKeyRegex( Trie tr, String keyRegex ) {
 
-        ByKeyRegexRemoval kpRemovalObj = new ByKeyRegexRemoval( keyRegex, removalTerminal);
+        ByKeyRegexRemoval kpRemovalObj = new ByKeyRegexRemoval( keyRegex );
+
+        return map( tr, kpRemovalObj, null );
+    }
+
+    //! @description Remove nodes with keys satisfying a regexp and replacing them laterally with postfix.
+    public static Trie removeByKeyRegex( Trie tr, String keyRegex, String postfix ) {
+
+        ByKeyRegexRemoval kpRemovalObj = new ByKeyRegexRemoval( keyRegex, postfix);
 
         return map( tr, kpRemovalObj, null );
     }
