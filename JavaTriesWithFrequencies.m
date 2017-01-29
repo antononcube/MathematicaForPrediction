@@ -168,6 +168,9 @@ JavaTrieShrink::usage = "JavaTrieShrink[ jTr_, sep_String:\"\"] concatenates the
 
 JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above) a threshold."
 
+JavaTrieParetoFractionRemove::usage = "Remove nodes that have values below (or above) thresholds derived\
+ from a specified Pareto fraction."
+
 JavaTrieToJSON::usage = "Converts a Java trie to a corresponding JSON expression."
 
 Begin["`Private`"]
@@ -319,6 +322,19 @@ JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ] :=
 
 JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ, postfix_String] :=
     TrieFunctions`removeByThreshold[jTr, threshold, True, postfix];
+
+Clear[JavaTrieParetoFractionRemove]
+JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, removeBottomElementsQ:(True|False), postfix_String ] :=
+    TrieFunctions`removeByParetoFraction[jTr, paretoFraction, removeBottomElementsQ, postfix];
+
+JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, removeBottomElementsQ:(True|False) ] :=
+    TrieFunctions`removeByParetoFraction[jTr, paretoFraction, removeBottomElementsQ];
+
+JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ] :=
+    TrieFunctions`removeByParetoFraction[jTr, paretoFraction];
+
+JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, postfix_String] :=
+    TrieFunctions`removeByParetoFraction[jTr, paretoFraction, True, postfix];
 
 End[] (* `Private` *)
 
