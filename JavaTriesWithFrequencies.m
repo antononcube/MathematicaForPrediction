@@ -252,6 +252,8 @@ JavaTrieNodeProbabilities[jTr_?JavaObjectQ] :=
 Clear[JavaTrieShrink]
 JavaTrieShrink[jTr_?JavaObjectQ, sep_String: ""] := TrieFunctions`shrink[jTr, sep];
 
+JavaTrieShrink[jTr_?JavaObjectQ, sep_String, th_?NumberQ ] := TrieFunctions`shrinkByThreshold[jTr, sep, th];
+
 Clear[JavaTrieToJSON]
 JavaTrieToJSON[jTr_?JavaObjectQ] := ImportString[jTr@toJSON[], "JSON"];
 
