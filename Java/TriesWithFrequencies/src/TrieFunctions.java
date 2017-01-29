@@ -540,7 +540,7 @@ public class TrieFunctions {
             boolean shrinkQ = false;
 
             if (threshold < 0) {
-                shrinkQ = tr.getValue() == arr.get(0).getValue();
+                shrinkQ = tr.getValue().equals( arr.get(0).getValue() );
             } else {
                 shrinkQ = arr.get(0).getValue() >= threshold;
             }
