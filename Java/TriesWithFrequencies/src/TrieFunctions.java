@@ -36,6 +36,10 @@ import java.util.*;
 
 public class TrieFunctions {
 
+    ///**************************************************************
+    /// Core functions -- creation, merging, insertion, node frequencies
+    ///**************************************************************
+
     //! @description Makes a base trie from a list
     //! @param chars a list of objects
     //! @param val value (e.g. frequency) to be assigned
@@ -189,6 +193,49 @@ public class TrieFunctions {
         }
     }
 
+    //! @description Converts the counts (frequencies) at the nodes into node probabilities. Changes the object!
+    //! @param tr a trie object
+    public static Trie nodeProbabilities(Trie tr) {
+        Trie res = nodeProbabilitiesRec(tr);
+        res.setValue(1.0);
+        return res;
+    }
+
+    //! @description Recursive step function for converting node frequencies into node probabilities.
+    //! @param tr a trie object
+    protected static Trie nodeProbabilitiesRec(Trie tr) {
+        double chSum = 0;
+
+        if (tr == null || tr.getChildren() == null || tr.getChildren().isEmpty()) {
+            return new Trie(tr.getKey(), tr.getValue());
+        }
+
+        if (tr.getValue() == 0) {
+            // This is a strange case -- that generally should not happen.
+            chSum = 0;
+            for (Trie ch : tr.getChildren().values()) {
+                chSum += ch.getValue();
+            }
+        } else {
+            chSum = tr.getValue();
+        }
+
+        Map<String, Trie> resChildren = new HashMap<>();
+
+        for (Map.Entry<String, Trie> elem : tr.getChildren().entrySet()) {
+            Trie chNode = nodeProbabilitiesRec(elem.getValue());
+            chNode.setValue(chNode.getValue() / chSum);
+            resChildren.put(elem.getKey(), chNode);
+        }
+
+        return new Trie(tr.getKey(), tr.getValue(), resChildren);
+    }
+
+
+    ///**************************************************************
+    /// Retrieval functions
+    ///**************************************************************
+
     //! @description Find the position of a given word (or part of it) in the trie.
     //! @param tr a trie object
     //! @param word a list of strings
@@ -313,43 +360,6 @@ public class TrieFunctions {
         return res;
     }
 
-    //! @description Converts the counts (frequencies) at the nodes into node probabilities. Changes the object!
-    //! @param tr a trie object
-    public static Trie nodeProbabilities(Trie tr) {
-        Trie res = nodeProbabilitiesRec(tr);
-        res.setValue(1.0);
-        return res;
-    }
-
-    //! @description Recursive step function for converting node frequencies into node probabilities.
-    //! @param tr a trie object
-    protected static Trie nodeProbabilitiesRec(Trie tr) {
-        double chSum = 0;
-
-        if (tr == null || tr.getChildren() == null || tr.getChildren().isEmpty()) {
-            return new Trie(tr.getKey(), tr.getValue());
-        }
-
-        if (tr.getValue() == 0) {
-            chSum = 0;
-            for (Trie ch : tr.getChildren().values()) {
-                chSum += ch.getValue();
-            }
-        } else {
-            chSum = tr.getValue();
-        }
-
-        Map<String, Trie> resChildren = new HashMap<>();
-
-        for (Map.Entry<String, Trie> elem : tr.getChildren().entrySet()) {
-            Trie chNode = nodeProbabilitiesRec(elem.getValue());
-            chNode.setValue(chNode.getValue() / chSum);
-            resChildren.put(elem.getKey(), chNode);
-        }
-
-        return new Trie(tr.getKey(), tr.getValue(), resChildren);
-    }
-
 
     public static class Pair<T1, T2> implements Map.Entry<T1, T2> {
         T1 key;
@@ -393,7 +403,7 @@ public class TrieFunctions {
         currentPath.addAll(path);
         currentPath.add(new Pair(tr.getKey(), tr.getValue()));
 
-        if (tr.getChildren() == null || tr.getChildren().size() == 0) {
+        if (tr.getChildren() == null || tr.getChildren().isEmpty() ) {
 
             rows.add(currentPath);
 
@@ -402,10 +412,12 @@ public class TrieFunctions {
             double sum = 0;
 
             for (Trie ch : tr.getChildren().values()) {
-                sum = sum + ch.getValue();
+                sum += ch.getValue();
             }
 
-            if ( sum < tr.getValue() ) {
+            //System.out.println( sum + " " + tr.getValue() );
+            if ( tr.getValue() >= 1.0 &&  sum < tr.getValue() ||
+                    tr.getValue() < 1.0 && sum < 1.0 ) {
                 rows.add(currentPath);
             }
 
@@ -485,6 +497,10 @@ public class TrieFunctions {
             return res;
         }
     }
+
+    ///**************************************************************
+    /// Shrinking functions
+    ///**************************************************************
 
     //! @description Shrinks a trie by finding prefixes.
     //! @param tr a trie object
@@ -572,15 +588,15 @@ public class TrieFunctions {
         }
     }
 
+    ///**************************************************************
+    /// Statistics functions
+    ///**************************************************************
+
     public static List<Integer> nodeCounts(Trie tr) {
         // The result would like { "total"->23, "internal"->12, leaves->"11" }.
 
         Pair<Integer, Integer> res = nodeCountsRec(tr, 0, 0);
 
-//        return new HashMap<String, Integer>()
-//            {{ put("total", res.getKey() + res.getValue());
-//               put("internal", res.getKey());
-//               put("leaves", res.getValue()); }};
         return new ArrayList<Integer>()
            {{ add(res.getKey() + res.getValue()); add(res.getKey()); add(res.getValue()); }};
     }
@@ -602,6 +618,10 @@ public class TrieFunctions {
             return new Pair<Integer, Integer>( res.getKey()+1, res.getValue() );
         }
     }
+
+    ///**************************************************************
+    /// General traversal functions
+    ///**************************************************************
 
     //! @description Interface for functions to be applied on the key and value of a Trie node.
     public interface TrieKeyValueFunction {
@@ -700,8 +720,11 @@ public class TrieFunctions {
         }
     }
 
+    ///**************************************************************
+    /// Removal functions
+    ///**************************************************************
 
-
+    //! @description A class for removal by a threshold.
     private static class ThresholdRemoval implements TrieNodeFunction {
         ThresholdRemoval() { threshold = 1; belowThresholdQ = true; postfix = null; }
         ThresholdRemoval( double th ) { threshold = th; belowThresholdQ = true; postfix = null; }
@@ -755,6 +778,10 @@ public class TrieFunctions {
         return removeByThreshold( tr, threshold, true, postfix );
     }
 
+    //! @description Remove nodes with values below/above a specified threshold.
+    public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ ) {
+        return removeByThreshold( tr, threshold, belowThresholdQ, null );
+    }
 
     //! @description Remove nodes with values below or above a specified threshold.
     public static Trie removeByThreshold( Trie tr, double threshold, boolean belowThresholdQ, String postfix ) {
@@ -809,11 +836,120 @@ public class TrieFunctions {
         return map( tr, kpRemovalObj, null );
     }
 
-    //! @description Remove nodes with keys satisfying a regexp and replacing them laterally with postfix.
+    //! @description Remove nodes with keys satisfying a regexp and replace them laterally with postfix.
     public static Trie removeByKeyRegex( Trie tr, String keyRegex, String postfix ) {
 
         ByKeyRegexRemoval kpRemovalObj = new ByKeyRegexRemoval( keyRegex, postfix);
 
         return map( tr, kpRemovalObj, null );
+    }
+
+    private static class ByParetoFractionRemoval implements TrieNodeFunction {
+        ByParetoFractionRemoval( ) {
+            this.paretoFraction = 0.8;
+            this.removeBottomElementsQ = true;
+            this.postfix = null;
+        }
+        ByParetoFractionRemoval(double paretoFraction ) {
+            this.paretoFraction = paretoFraction;
+            this.removeBottomElementsQ = true;
+            this.postfix = null;
+        }
+        ByParetoFractionRemoval(double paretoFraction, boolean removeBottomElementsQ ) {
+            this.paretoFraction = paretoFraction;
+            this.removeBottomElementsQ = removeBottomElementsQ;
+            this.postfix = null;
+        }
+        ByParetoFractionRemoval(double paretoFraction, boolean removeBottomElementsQ, String postfix ) {
+            this.paretoFraction = paretoFraction;
+            this.removeBottomElementsQ = removeBottomElementsQ;
+            this.postfix = postfix;
+        }
+
+        public double paretoFraction;
+        public boolean removeBottomElementsQ;
+        public String postfix;
+
+        public Trie apply( Trie tr ) {
+            if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
+                return tr.clone();
+            } else {
+                Map<String, Trie> resChildren = new HashMap<>();
+                double removedSum = 0;
+                double cumSum = 0;
+                double threshold = 0;
+                List<Double> valCumSums = new ArrayList<Double>();
+                List<Trie> childrenList = new ArrayList<Trie>( tr.getChildren().values() );
+
+                // Calculate the cumulative sum
+                for ( Trie elem : childrenList ) {
+                    cumSum += elem.getValue();
+                }
+
+                Collections.sort(childrenList, (Trie a1, Trie a2) -> a2.getValue().compareTo( a1.getValue() ) );
+
+                threshold = paretoFraction * cumSum;
+
+                // Remove children
+                removedSum = 0; cumSum = 0;
+                for ( Trie elem : childrenList ) {
+
+                    if ( removeBottomElementsQ && cumSum <= threshold ||
+                            !removeBottomElementsQ && cumSum > threshold ) {
+                        resChildren.put( elem.getKey(), elem );
+                    } else {
+                        if ( postfix != null ) {
+                            removedSum = removedSum + elem.getValue();
+                        }
+                    }
+                    cumSum += elem.getValue();
+                }
+
+                if ( postfix != null && removedSum > 0 ) {
+                    resChildren.put(postfix, new Trie(postfix, removedSum ) );
+                }
+
+                if ( resChildren.isEmpty() ) {
+                    return tr.clone();
+                }
+
+                Trie res = new Trie(tr.getKey(), tr.getValue());
+                res.setChildren(resChildren);
+
+                return res;
+            }
+        }
+    }
+
+    //! @description Remove nodes with values below/above a Pareto threshold.
+    public static Trie removeByParetoFraction( Trie tr, double paretoFraction) {
+
+        ByParetoFractionRemoval removalObj = new ByParetoFractionRemoval( paretoFraction );
+
+        return map( tr, removalObj, null );
+    }
+
+    //! @description Remove nodes with values below a Pareto thresholds and replace them laterally with postfix.
+    public static Trie removeByParetoFraction( Trie tr, double paretoFraction, String postfix ) {
+
+        ByParetoFractionRemoval removalObj = new ByParetoFractionRemoval( paretoFraction, true, postfix );
+
+        return map( tr, removalObj, null );
+    }
+
+    //! @description Remove nodes with values below/above a Pareto threshold.
+    public static Trie removeByParetoFraction( Trie tr, double paretoFraction, boolean removeBottomElementsQ ) {
+
+        ByParetoFractionRemoval removalObj = new ByParetoFractionRemoval( paretoFraction, removeBottomElementsQ, null);
+
+        return map( tr, removalObj, null );
+    }
+
+    //! @description Remove nodes with values below/above a Pareto threshold and replace them laterally with postfix.
+    public static Trie removeByParetoFraction( Trie tr, double paretoFraction, boolean removeBottomElementsQ, String postfix ) {
+
+        ByParetoFractionRemoval removalObj = new ByParetoFractionRemoval( paretoFraction, removeBottomElementsQ, postfix );
+
+        return map( tr, removalObj, null );
     }
 }
