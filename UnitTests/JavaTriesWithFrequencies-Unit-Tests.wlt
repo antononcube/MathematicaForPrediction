@@ -221,4 +221,33 @@ VerificationTest[(* 19 *)
   TestID->"JavaTrieCompleteMatch1"
 ]
 
+VerificationTest[(* 20 *)
+  JavaTrieGetWords[jTr, {"b", "a", "r", "k"}] ==
+      JavaTrieGetWords[JavaTrieNodeProbabilities[jTr], {"b", "a", "r", "k"}]
+  ,
+  True
+  ,
+  TestID->"JavaTrieGetWords1"
+]
+
+VerificationTest[(* 21 *)
+	(JavaTrieRootToLeafPaths[
+    JavaTrieRetrieve[jTr, {"b", "a", "r", "k"}]] /. x_?NumberQ :> 0) ==
+			(JavaTrieRootToLeafPaths[
+        JavaTrieRetrieve[JavaTrieNodeProbabilities[jTr], {"b", "a", "r", "k"}]] /. x_?NumberQ :> 0)
+  ,
+  True
+  ,
+  TestID->"JavaTrieRootToLeafPaths1"
+]
+
+VerificationTest[(* 22 *)
+  Cases[JavaTrieToJSON[JavaTrieShrink[jTr]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity] ==
+      Cases[JavaTrieToJSON[JavaTrieShrink[JavaTrieNodeProbabilities[jTr]]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
+  ,
+  True
+  ,
+  TestID->"JavaTrieShrink2"
+]
+
 EndTestSection[]
