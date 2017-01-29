@@ -173,6 +173,12 @@ JavaTrieParetoFractionRemove::usage = "Remove nodes that have values below (or a
 
 JavaTrieToJSON::usage = "Converts a Java trie to a corresponding JSON expression."
 
+JSONTrieToRules::usage = "Converts a JSON trie into rules for GraphPlot."
+
+JavaTrieForm::usage = "Plots a given Java trie object."
+
+JavaTrieComparisonGrid::usage = "Makes a grid trie plots for a specified list of Java trie expressions."
+
 Begin["`Private`"]
 
 Needs["JLink`"]
@@ -337,6 +343,52 @@ JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ] :=
 
 JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, postfix_String] :=
     TrieFunctions`removeByParetoFraction[jTr, paretoFraction, True, postfix];
+
+
+Clear[JSONTrieToRules]
+JSONTrieToRules[tree_] := Block[{ORDER = 0}, JSONTrieToRules[tree, 0, 0]];
+JSONTrieToRules[tree_, level_, order_] :=
+    Block[{nodeRules},
+      Which[
+        tree === {}, {},
+        Rest[tree] === {}, {},
+        True,
+        nodeRules = Map[{{"key","value"}/.tree, {level, order}} -> {{"key","value"}/.#, {level + 1, ORDER++}} &, "children"/.tree, {1}];
+        Join[
+          nodeRules,
+          Flatten[MapThread[JSONTrieToRules[#1, level + 1, #2] &, {"children"/.tree, nodeRules[[All, 2, 2, 2]]}], 1]
+        ]
+      ]
+    ];
+
+
+Clear[GrFramed]
+GrFramed[text_] :=
+    Framed[text, {Background -> RGBColor[1, 1, 0.8],
+      FrameStyle -> RGBColor[0.94, 0.85, 0.36],
+      FrameMargins -> Automatic}];
+
+
+Clear[JavaTrieForm]
+JavaTrieForm[jTr_?JavaObjectQ, opts:OptionsPattern[]] :=
+    LayeredGraphPlot[JSONTrieToRules[JavaTrieToJSON[jTr]],
+      VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
+
+
+ClearAll[JavaTrieComparisonGrid]
+SetAttributes[JavaTrieComparisonGrid, HoldAll]
+JavaTrieComparisonGrid[jTrs : {_?JavaObjectQ ..}, opts : OptionsPattern[]] :=
+    Block[{},
+      Grid[{
+        HoldForm /@ Inactivate[jTrs],
+        If[ Length[{opts}] == 0,
+          Map[JavaTrieForm, jTrs],
+          Map[JavaTrieForm[#] /. (gr_Graphics) :> Append[gr, opts] &, jTrs],
+          Map[JavaTrieForm, jTrs]
+        ]
+      }, Dividers -> All, FrameStyle -> LightGray]
+    ];
+
 
 End[] (* `Private` *)
 
