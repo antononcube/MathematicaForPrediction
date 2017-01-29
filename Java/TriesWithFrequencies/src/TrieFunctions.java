@@ -539,8 +539,10 @@ public class TrieFunctions {
             List<Trie> arr = new ArrayList<Trie>(tr.getChildren().values());
             boolean shrinkQ = false;
 
-            if (threshold < 0) {
-                shrinkQ = tr.getValue().equals( arr.get(0).getValue() );
+            if (threshold < 0 && tr.getValue() >= 1.0 && arr.get(0).getValue() >= 1.0 ) {
+                shrinkQ = tr.getValue().equals(arr.get(0).getValue());
+            } else if (threshold < 0 ) {
+                shrinkQ = arr.get(0).getValue() == 1.0 ;
             } else {
                 shrinkQ = arr.get(0).getValue() >= threshold;
             }
