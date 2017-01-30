@@ -594,8 +594,11 @@ public class TrieFunctions {
     /// Statistics functions
     ///**************************************************************
 
+    //! @description Finding the counts of nodes in a trie.
+    //! @param tr trie object
+    //! @return Returns the values for "total", "internal", "leaves".
     public static List<Integer> nodeCounts(Trie tr) {
-        // The result would like { "total"->23, "internal"->12, leaves->"11" }.
+        // The result would like { "total"->23, "internal"->12, "leaves"->11 }.
 
         Pair<Integer, Integer> res = nodeCountsRec(tr, 0, 0);
 
@@ -603,6 +606,11 @@ public class TrieFunctions {
            {{ add(res.getKey() + res.getValue()); add(res.getKey()); add(res.getValue()); }};
     }
 
+    //! @description Finding the counts of internal nodes and leaf nodes in a trie.
+    //! @param tr trie object
+    //! @param nInternal number of internal nodes
+    //! @param nLeaves number of leaf nodes
+    //! @return A pair object with the new values of nInternal and nLeaves.
     protected static Pair<Integer, Integer> nodeCountsRec(Trie tr, int nInternal, int nLeaves) {
 
         if ( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
@@ -621,6 +629,7 @@ public class TrieFunctions {
         }
     }
 
+
     ///**************************************************************
     /// General traversal functions
     ///**************************************************************
@@ -631,6 +640,11 @@ public class TrieFunctions {
     }
 
     //! @description Map a function over the key and value of each node in a trie.
+    //! @param tr a trie object
+    //! @param func a function object (can be a anonymous)
+    //! @return A trie of the same shape as the original one but with changed keys and values.
+    //! @details Here is way to use:
+    //! TrieFunctions.map( myTrie, ( String k, Double v) -> { return new TrieFunctions.Pair<String, Double>( k + ":M", 2*v ); } );
     public static Trie map( Trie tr,  TrieKeyValueFunction func ) {
 
         if (tr == null ) {
