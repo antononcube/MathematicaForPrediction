@@ -217,7 +217,7 @@ Note that for given frequencies trie the threshold shrinking produces different 
 
 There are several functions for removing nodes from tries. 
 
-!["JavaTrie-Remove-functions-table"](http://i.imgur.com/PjXQ33N.png)
+!["JavaTrie-Remove-functions-table"](http://i.imgur.com/TXN70Qx.png)
 
 Here is an example with `JavaTrieRegexRemove`:
 
