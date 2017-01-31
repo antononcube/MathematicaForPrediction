@@ -8,21 +8,22 @@ January 2017
 
 ## Introduction
 
-This document describes the installation and use in Mathematica of Tries with frequencies [1] implemented in Java [2] through a corresponding Mathematica package [3].
+This document describes the installation and use in Mathematica of Tries with frequencies [[1](https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/)] implemented in Java [[2](https://github.com/antononcube/MathematicaForPrediction/tree/master/Java/TriesWithFrequencies)] through a corresponding Mathematica package [[3](https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m)].
 
-Prefix tree or Trie, [6], is a tree data structure that stores a set of "words" that consist of "characters" -- each element can be seen as a key to itself. The article [1] and packages [2,3,4] extend that data structure to have additional data (frequencies) associated with each key.
+Prefix tree or Trie, [[6](https://en.wikipedia.org/wiki/Trie)], is a tree data structure that stores a set of "words" that consist of "characters" -- each element can be seen as a key to itself. The article [1] and packages [2,3,4] extend that data structure to have additional data (frequencies) associated with each key.
 
 The packages [2,3] work with lists of strings only. The package [4] can work with more general data but it is much slower.
 
-The main motivation to create the package [3] was to bring the fast Trie functions implementations of [2] into Mathematica in order to prototype, implement, and experiment with different text processing algorithms. (Like, inductive grammar parsers generation and entity name recognition.) The speed of combining [2] and [3] is evaluated in the section "Performance tests" below.
+The main motivation to create the package [3] was to bring the fast Trie functions implementations of [2] into Mathematica in order to prototype, implement, and experiment with different text processing algorithms. 
+(Like, inductive grammar parsers generation and entity name recognition.) 
+The speed of combining [2] and [3] is evaluated in the section "Performance tests" below.
 
 ## Set-up
 
 This following directory path has to have the jar file "TriesWithFrequencies.jar".
 
     $JavaTriesWithFrequenciesPath = 
-      "/Users/antonov/MathFiles/MathematicaForPrediction/Java/\
-    TriesWithFrequencies";
+      "/Users/antonov/MathFiles/MathematicaForPrediction/Java/TriesWithFrequencies";
     FileExistsQ[
      FileNameJoin[{$JavaTriesWithFrequenciesPath, 
        "TriesWithFrequencies.jar"}]]
@@ -70,7 +71,9 @@ Let us create a trie with the list:
 
     (* JLink`Objects`vm6`JavaObject17871328887439361 *)
 
-If we have a large list of words the function JavaTrieCreate will be slow since that list is converted to even larger list of lists of characters. For better performance it is better to send the list of words to a Java function that then will do the word splitting (on the Java side). This is done with the function JavaTrieCreateBySplit.
+If we have a large list of words the function JavaTrieCreate will be slow since that list is converted to even larger list of lists of characters. 
+For better performance it is better to send the list of words to a Java function that then will do the word splitting (on the Java side). 
+This is done with the function `JavaTrieCreateBySplit`.
 
     jTr1 = JavaTrieCreateBySplit[words]
 
@@ -82,7 +85,7 @@ We can convince ourselves that the two Java objects are the same trie:
 
     (* True *)
 
-The function JavaTrieCreateBySplit takes a second argument for the splitting string. For the list of words:
+The function `JavaTrieCreateBySplit` takes a second argument for the splitting string. For the list of words:
 
     t = StringRiffle[Characters[#], "~"] & /@ words
 
@@ -130,7 +133,7 @@ The packages [2,3] have functions for conversion to JSON.
                        {"value" -> 2., "key" -> "o", "children" -> {{"value" -> 2., "key" -> "l", "children" -> {{"value" -> 2., "key" -> "d", 
                  "children" -> {{"value" -> 1., "key" -> "e", "children" -> {{"value" -> 1., "key" -> "r", "children" -> {}}}}}}}}}}}}}} *)
 
-The function JavaTrieForm can be used for visualizing Java tries (and it is similar to TrieForm from [4].)
+The function `JavaTrieForm` can be used for visualizing Java tries (and it is similar to `TrieForm` from [4].)
 
     JavaTrieForm@jTr
 
@@ -142,15 +145,15 @@ We can also view the trie content by finding all paths from the trie root to its
 
 ### Probabilities
 
-We transform the node frequencies into probabilities using JavaTrieNodeProbabilities.
+We transform the node frequencies into probabilities using `JavaTrieNodeProbabilities`.
 
     JavaTrieComparisonGrid[{jTr, JavaTrieNodeProbabilities[jTr]}, ImageSize -> 350]
 
 !["JavaTrieNodeProbabilities"](http://i.imgur.com/hl5cF34.png)
 
-As it was mentioned above, given a node from the first trie, $\text{jTr}$, node's value says how many times node's key appears after the sequence of keys made from the root to the node.
+As it was mentioned above, given a node from the first trie, `jTr`, node's value says how many times node's key appears after the sequence of keys made from the root to the node.
 
-Given a node of the second trie, $\text{JavaTrieNodeProbabilities}(\text{jTr})$, node's value is the conditional probability of node's key occurrence after the sequence of keys made from the root to the node.
+Given a node of the second trie, `JavaTrieNodeProbabilities[jTr]`, node's value is the conditional probability of node's key occurrence after the sequence of keys made from the root to the node.
 
 We are going to use the names "frequency trie" and "probabilities trie" to distinguish between the two types of tries.
 
@@ -176,13 +179,13 @@ We can examine the obtained sub-trie by finding the root-to-leaves paths.
 
     (* {False, True, False} *)
 
-The function JavaTrieCompleteMatch finds does the prefix of a given word that is in the trie is also a complete word.
+The function `JavaTrieCompleteMatch` finds does the prefix of a given word that is in the trie is also a complete word.
 
     JavaTrieCompleteMatch[jTr, Characters@#] & /@ {"ba", "bar", "bard"}
 
     (* {False, True, True} *)
 
-To get the words that have a certain prefix we can use the function JavaTrieGetWords.
+To get the words that have a certain prefix we can use the function `JavaTrieGetWords`.
 
     ColumnForm@JavaTrieGetWords[jTr, Characters@#] & /@ {"ba", "ca"}
 
@@ -190,7 +193,7 @@ To get the words that have a certain prefix we can use the function JavaTrieGetW
 
 ### Shrinking
 
-One of the most beneficial and interesting operations over a trie is to shrink it in order to expose its prefixes. This done with the function JavaTrieShrink.
+One of the most beneficial and interesting operations over a trie is to shrink it in order to expose its prefixes. This done with the function `JavaTrieShrink`.
 
     JavaTrieComparisonGrid[{jTr, JavaTrieShrink[jTr]}, ImageSize -> 350]
 
@@ -202,7 +205,7 @@ We can do the trie shrinking by inserting a string between the joined node keys.
 
 !["JavaTrieShrink-tilde"](http://i.imgur.com/jwFhPVn.png)
 
-The shrinking can be done based on a threshold specification, given as a third argument to JavaTrieShrink.
+The shrinking can be done based on a threshold specification, given as a third argument to `JavaTrieShrink`.
 
     JavaTrieComparisonGrid[{jTr, JavaTrieShrink[jTr, "", 2]}, ImageSize -> 350]
 
@@ -232,7 +235,7 @@ There are several functions for removing nodes from tries.
 
 !["JavaTrie-Remove-functions-table"](http://i.imgur.com/PjXQ33N.png)
 
-Here is an example with JavaTrieRegexRemove:
+Here is an example with `JavaTrieRegexRemove`:
 
     JavaTrieComparisonGrid[{JavaTrieShrink[jTr], 
       JavaTrieRegexRemove[JavaTrieShrink[jTr], "s.*"]}, 
@@ -240,7 +243,7 @@ Here is an example with JavaTrieRegexRemove:
 
 !["JavaTrieShrink-JavaTrieRegexRemove-s"](http://i.imgur.com/SXq6isi.png)
 
-Here is an example with JavaTrieThresholdRemove in which the removed branches are replaced with nodes that have the key "®".
+Here is an example with `JavaTrieThresholdRemove` in which the removed branches are replaced with nodes that have the key "®".
 
     JavaTrieComparisonGrid[{jTr, JavaTrieThresholdRemove[jTr, 2, "®"]}, 
      ImageSize -> 350]
@@ -249,7 +252,7 @@ Here is an example with JavaTrieThresholdRemove in which the removed branches ar
 
 ### Node counts
 
-In order to find the number of nodes in a trie we can use the function JavaTrieNodeCounts:
+In order to find the number of nodes in a trie we can use the function `JavaTrieNodeCounts`:
 
     JavaTrieNodeCounts[jTr]
 
@@ -271,7 +274,10 @@ Further statistics can be obtained through conversion to JSON. Here is an exampl
 
 As it was mentioned above the packages [2,3] work with lists of strings only. 
 
-In order to transfer the lists of strings quickly to the Java Trie objects instead of incremental building of Java (array) lists there is are dedicated functions in [2] that produce a list of lists of strings from a list of strings and or hash-maps. Further [2] has functions to make creation, retrieval, and other functions "listable". These Java functions are used internally in [3] to make the following functions work on lists of strings
+In order to transfer the lists of strings quickly to the Java Trie objects instead of incremental building of Java (array) lists 
+there is are dedicated functions in [2] that produce a list of lists of strings from a list of strings and or hash-maps. 
+Further, [2] has functions to make creation, retrieval, and other functions "listable". 
+These Java functions are used internally in [3] to make the following functions work on lists of strings.
 
     JavaTrieContains[jTr, 
       Characters /@ {"bard", "cat", "car"}] // JavaObjectToExpression
@@ -296,9 +302,12 @@ In order to transfer the lists of strings quickly to the Java Trie objects inste
 
 ### Trie traversal
 
-The Java tries with frequencies implementation [3] has functions for traversal of tries. (See the signatures of the function map.) Such traversal us a convenient way to implement certain functions. (Like the functions for removal.)
+The Java tries with frequencies implementation [2] has functions for traversal of tries. (See the signatures of the function map.) 
+Such traversal us a convenient way to implement certain functions. (Like the functions for removal.)
 
-One of the traversal function implementations of [3] changes keys and values, but does not change the shape of the trie. The second traversal function takes function objects that can change the trie shape. These traversal functions cannot be interfaced in the package [4]. (Or only partially.)
+One of the traversal function implementations of [2] changes keys and values, but does not change the shape of the trie. 
+The second traversal function takes function objects that can change the trie shape. 
+These traversal functions cannot be interfaced in the package [3]. (Or only partially.)
 
 Here are the signatures:
 
@@ -310,13 +319,14 @@ The second and third arguments are function objects.
 
 ## Performance evaluation
 
-Assume we want find the words of "Hamlet" that are not in the book "Origin of Species". This section shows that the Java trie creation and query times for this task are quite small.
+Assume we want find the words of "Hamlet" that are not in the book "Origin of Species". 
+This section shows that the Java trie creation and query times for this task are quite small.
 
 ### Membership of words
 
 #### Read words
 
-The following code reads the words in the texts. We get $\text{$\$$Failed}$ words from "Hamlet" and $\text{$\$$Failed}$ words from "Origin of Species".
+The following code reads the words in the texts. We get 33000 words from "Hamlet" and 151000 words from "Origin of Species".
 
     hWords =
       Block[{words},
@@ -493,9 +503,9 @@ Many of example shown in this document have corresponding tests in the file [Jav
 
 [1] Anton Antonov, ["Tries with frequencies for data mining"](https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/), (2013), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*. *URL: [https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/](https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/) .
 
-[2] Anton Antonov, [Java tries with frequencies Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m), (2017), source code at [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), package [JavaTriesWithFrequencies.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/JavaTriesWithFrequencies.m) .
+[2] Anton Antonov, [Tries with frequencies in Java](https://github.com/antononcube/MathematicaForPrediction/tree/master/Java/TriesWithFrequencies), (2017), source code at [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), project [Java/TriesWithFrequencies](https://github.com/antononcube/MathematicaForPrediction/tree/master/Java/TriesWithFrequencies).
 
-[3] Anton Antonov, [Tries with frequencies in Java](https://github.com/antononcube/MathematicaForPrediction/tree/master/Java/TriesWithFrequencies), (2017), source code at [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), project [Java/TriesWithFrequencies](https://github.com/antononcube/MathematicaForPrediction/tree/master/Java/TriesWithFrequencies).
+[3] Anton Antonov, [Java tries with frequencies Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m), (2017), source code at [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), package [JavaTriesWithFrequencies.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/JavaTriesWithFrequencies.m) .
 
 [4] Anton Antonov, [Tries with frequencies Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m), (2013), source code at [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction), package [TriesWithFrequencies.m](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m) .
 
