@@ -292,6 +292,8 @@ In order to transfer the lists of strings quickly to the Java Trie objects inste
 
     With[{res = %}, JavaTrieComparisonGrid[res]]
 
+!["JavaTrieRetrieve-bard-cat-car"](http://i.imgur.com/L2o6mqf.png)
+
 ### Trie traversal
 
 The Java tries with frequencies implementation [3] has functions for traversal of tries. (See the signatures of the function map.) Such traversal us a convenient way to implement certain functions. (Like the functions for removal.)
@@ -300,9 +302,9 @@ One of the traversal function implementations of [3] changes keys and values, bu
 
 Here are the signatures:
 
-public static Trie map (Trie tr, TrieKeyValueFunction func)
+    public static Trie map (Trie tr, TrieKeyValueFunction func)
 
-public static Trie map (Trie tr, TrieNodeFunction preFunc, TrieNodeFunction postFunc)
+    public static Trie map (Trie tr, TrieNodeFunction preFunc, TrieNodeFunction postFunc)
 
 The second and third arguments are function objects.
 
