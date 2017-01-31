@@ -111,47 +111,24 @@ The packages [2,3] have functions for conversion to JSON.
     JavaTrieToJSON@jTr
 
     (* {"value" -> 13., "key" -> "", 
-     "children" -> {{"value" -> 6., "key" -> "b", 
-        "children" -> {{"value" -> 6., "key" -> "a", 
-           "children" -> {{"value" -> 5., "key" -> "r", 
-              "children" -> {{"value" -> 1., "key" -> "s", 
-                 "children" -> {}}, {"value" -> 2., 
-                 "key" -> "k", 
-                 "children" -> {{"value" -> 1., 
-                    "key" -> "s", 
-                    "children" -> {}}, {"value" -> 1., 
-                    "key" -> "e", 
-                    "children" -> {{"value" -> 1., 
-                       "key" -> "e", 
-                       "children" -> {{"value" -> 1., 
-                        "key" -> "p", 
-                        "children" -> {}}}}}}}}, {"value" -> 1.,
-                  "key" -> "n", 
-                 "children" -> {}}}}, {"value" -> 1., 
-              "key" -> "l", 
-              "children" -> {{"value" -> 1., "key" -> "m", 
-                 "children" -> {}}}}}}}}, {"value" -> 7., 
-        "key" -> "c", 
-        "children" -> {{"value" -> 5., "key" -> "a", 
-           "children" -> {{"value" -> 5., "key" -> "r", 
-              "children" -> {{"value" -> 1., "key" -> "s", 
-                 "children" -> {}}, {"value" -> 1., 
-                 "key" -> "d", 
-                 "children" -> {}}, {"value" -> 2., 
-                 "key" -> "e", 
-                 "children" -> {{"value" -> 1., 
-                    "key" -> "s", 
-                    "children" -> {{"value" -> 1., 
-                       "key" -> "s", 
-                       "children" -> {}}}}}}}}}}, {"value" -> 
-            2., "key" -> "o", 
-           "children" -> {{"value" -> 2., "key" -> "l", 
-              "children" -> {{"value" -> 2., "key" -> "d", 
-                 "children" -> {{"value" -> 1., 
-                    "key" -> "e", 
-                    "children" -> {{"value" -> 1., 
-                       "key" -> "r", 
-                       "children" -> {}}}}}}}}}}}}}} *)
+     "children" -> {
+       {"value" -> 6., "key" -> "b", 
+         "children" -> {{"value" -> 6., "key" -> "a", 
+            "children" -> {{"value" -> 5., "key" -> "r", 
+               "children" -> {{"value" -> 1., "key" -> "s", 
+                  "children" -> {}}, {"value" -> 2., "key" -> "k", "children" -> {{"value" -> 1., "key" -> "s", "children" -> {}}, {"value" -> 1., "key" -> "e", 
+                     "children" -> {{"value" -> 1., "key" -> "e", "children" -> {{"value" -> 1., "key" -> "p", 
+                        "children" -> {}}}}}}}}, {"value" -> 1., "key" -> "n", "children" -> {}}}}, {"value" -> 1., 
+              "key" -> "l", "children" -> {{"value" -> 1., "key" -> "m", "children" -> {}}}}}}}}, 
+       {"value" -> 7., "key" -> "c", 
+         "children" -> {{"value" -> 5., "key" -> "a", 
+            "children" -> {{"value" -> 5., "key" -> "r", 
+               "children" -> {{"value" -> 1., "key" -> "s", 
+                  "children" -> {}}, {"value" -> 1., "key" -> "d", "children" -> {}}, {"value" -> 2., "key" -> "e", 
+                    "children" -> {{"value" -> 1., "key" -> "s", "children" -> {{"value" -> 1., "key" -> "s", 
+                       "children" -> {}}}}}}}}}}, 
+                       {"value" -> 2., "key" -> "o", "children" -> {{"value" -> 2., "key" -> "l", "children" -> {{"value" -> 2., "key" -> "d", 
+                 "children" -> {{"value" -> 1., "key" -> "e", "children" -> {{"value" -> 1., "key" -> "r", "children" -> {}}}}}}}}}}}}}} *)
 
 The function JavaTrieForm can be used for visualizing Java tries (and it is similar to TrieForm from [4].)
 
@@ -490,32 +467,12 @@ Here are the node statistics of the original and shrunk tries:
 
 Find the infixes that have more than three characters and appear more than 10 times:
 
-    Select[SortBy[
-      Tally[Cases[
-        jsonRes, ("key" -> v_) :> v, Infinity]], -#[[-1]] &], StringLength[#[[1]]] > 3 && #[[2]] > 10 &]
+    Multicolumn[#, 4] &@
+     Select[SortBy[
+       Tally[Cases[
+         jsonRes, ("key" -> v_) :> v, Infinity]], -#[[-1]] &], StringLength[#[[1]]] > 3 && #[[2]] > 10 &]
 
-    (* {{"ness", 1358}, {"ment", 350}, {"able", 332}, {"ation", 
-      284}, {"ally", 242}, {"ility", 217}, {"less", 178}, {"tion", 
-      141}, {"cation", 65}, {"ance", 47}, {"house", 44}, {"board", 
-      40}, {"land", 39}, {"work", 36}, {"ster", 35}, {"olog", 
-      34}, {"head", 32}, {"room", 30}, {"back", 29}, {"wood", 
-      29}, {"graph", 27}, {"ward", 27}, {"meter", 26}, {"ious", 
-      25}, {"book", 24}, {"hood", 24}, {"ress", 24}, {"tone", 
-      23}, {"ilit", 22}, {"line", 22}, {"ling", 22}, {"ular", 
-      22}, {"down", 21}, {"iness", 21}, {"ical", 20}, {"like", 
-      20}, {"over", 20}, {"ting", 20}, {"tive", 20}, {"atic", 
-      19}, {"ight", 19}, {"most", 18}, {"sion", 18}, {"ware", 
-      18}, {"yard", 18}, {"hole", 17}, {"ship", 17}, {"time", 
-      17}, {"field", 16}, {"itis", 16}, {"proof", 16}, {"hearted", 
-      15}, {"maker", 15}, {"ying", 15}, {"ette", 14}, {"fish", 
-      14}, {"tude", 14}, {"ball", 13}, {"fold", 13}, {"ford", 
-      13}, {"gram", 13}, {"load", 13}, {"tail", 13}, {"tial", 
-      13}, {"ulat", 13}, {"well", 13}, {"etic", 12}, {"lock", 
-      12}, {"nder", 12}, {"onic", 12}, {"ption", 12}, {"ssion", 
-      12}, {"stic", 12}, {"ther", 12}, {"ture", 12}, {"ught", 
-      12}, {"ated", 11}, {"cake", 11}, {"ding", 11}, {"holder", 
-      11}, {"light", 11}, {"master", 11}, {"more", 11}, {"ring", 
-      11}, {"rson", 11}, {"tick", 11}, {"worm", 11}} *)
+!["Long-infixes-in-shrunk-dictionary-trie"](http://i.imgur.com/DtOoGIB.png)
 
 ## Unit tests
 
