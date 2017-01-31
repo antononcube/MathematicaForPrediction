@@ -216,8 +216,26 @@ Note that for given frequencies trie the threshold shrinking produces different 
 ### Removal functionalities
 
 There are several functions for removing nodes from tries. 
+<table>
+  <tr>
+    <th>function</th>
+    <th>usage</th>
+  </tr>
+  <tr>
+    <td>JavaTrieRegexRemove</td>
+    <td>Removes nodes that have keys adhering to a regex expression.</td>
+  </tr>
+  <tr>
+    <td>JavaTrieThresholdRemove</td>
+    <td>Removes nodes that have values below (or above) a threshold.</td>
+  </tr>
+  <tr>
+    <td>JavaTrieParetoFractionRemove</td>
+    <td>Removes nodes that have values below (or above) thresholds derived from a specified Pareto fraction.</td>
+  </tr>
+</table>
 
-!["JavaTrie-Remove-functions-table"](http://i.imgur.com/TXN70Qx.png)
+<!--- !["JavaTrie-Remove-functions-table"](http://i.imgur.com/TXN70Qx.png) -->
 
 Here is an example with `JavaTrieRegexRemove`:
 
