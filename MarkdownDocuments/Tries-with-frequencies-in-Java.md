@@ -321,10 +321,10 @@ The second and third arguments are function objects.
 
 ## Performance evaluation
 
+### Membership of words
+
 Assume we want find the words of "Hamlet" that are not in the book "Origin of Species". 
 This section shows that the Java trie creation and query times for this task are quite small.
-
-### Membership of words
 
 #### Read words
 
