@@ -57,9 +57,6 @@ Consider this list of words:
 
 We make tries with the lists of their characters. Here is an example:
 
-    JavaTrieForm[
-     JavaTrieCreateBySplit[words]](*//Magnify[#,1.2]&*)
-    AutoCollapse[]
 
 !["JavaTrieForm"](http://i.imgur.com/WRYWKRE.png)
 
@@ -163,9 +160,6 @@ The most important functionality for tries is the retrieval. The packages [2,3] 
 
     jSubTr = JavaTrieRetrieve[jTr, Characters@"ba"];
 
-    JavaTrieComparisonGrid[{JavaTrieRetrieve[jTr, {"b", "a"}]}, 
-     ImageSize -> 250]
-    AutoCollapse[]
 
 !["JavaTrieRetrieve-{b,a}"](http://i.imgur.com/rtmfTP3.png)
 
@@ -222,16 +216,6 @@ Note that for given frequencies trie the threshold shrinking produces different 
 ### Removal functionalities
 
 There are several functions for removing nodes from tries. 
-
-    funcs = {JavaTrieRegexRemove, JavaTrieThresholdRemove, JavaTrieParetoFractionRemove};
-    Grid[Transpose@{funcs,
-       Map[Style[#, FontFamily -> "Times"] &,
-        {"Removes nodes that have keys adhering to a regex expression.",
-         "Removes nodes that have values (or above) a threshold.",
-         "Removes nodes that have values below (or above) thresholds from a specified Pareto fraction."}]},
-     Alignment -> Left, Dividers -> All, 
-     FrameStyle -> LightGray]
-    AutoCollapse[]
 
 !["JavaTrie-Remove-functions-table"](http://i.imgur.com/PjXQ33N.png)
 
@@ -466,14 +450,6 @@ JSON form extraction:
     (* {3.85955, Null} *)
 
 Here are the node statistics of the original and shrunk tries:
-
-    Grid[{{"Original trie", 
-       "Shrunk trie"}, {GridTableForm[
-        List @@@ Normal[JavaTrieNodeCounts[jDTrie]], 
-        TableHeadings -> {"type", "count"}], 
-       GridTableForm[List @@@ Normal[JavaTrieNodeCounts[jDShTrie]], 
-        TableHeadings -> {"type", "count"}]}}]
-    AutoCollapse[]
 
 !["Orginal-trie-vs-Shrunk-trie-Node-Counts"](http://i.imgur.com/uH0yq5s.png)
 
