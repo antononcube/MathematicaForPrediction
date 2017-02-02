@@ -193,7 +193,7 @@ public class TrieFunctions {
         }
     }
 
-    //! @description Converts the counts (frequencies) at the nodes into node probabilities. Changes the object!
+    //! @description Converts the counts (frequencies) at the nodes into node probabilities.
     //! @param tr a trie object
     public static Trie nodeProbabilities(Trie tr) {
         Trie res = nodeProbabilitiesRec(tr);
@@ -496,6 +496,91 @@ public class TrieFunctions {
             }
             return res;
         }
+    }
+
+    public static String leafProbabilitiesJSON( Trie tr) {
+        return leafProbabilitiesJSON(tr, tr.getValue() );
+    }
+
+    //! @description Gives JSON form of the probabilities to reach leaves of the trie.
+    //! @param tr the trie to find the leaf probabilities for
+    public static String leafProbabilitiesJSON( Trie tr, double initProb ) {
+
+        Map<String, Double> leafValHash = leafProbabilities(tr, initProb);
+
+        String res = "[";
+
+        for( Map.Entry<String, Double> elem : leafValHash.entrySet() ) {
+            if (res.length() > 1 ) { res = res + ", "; }
+            Pair<String, Double> p = new Pair( elem.getKey(), elem.getValue() );
+            res = res + p.toJSON();
+        }
+        res = res + "]";
+
+        return res;
+    }
+
+    public static Map<String, Double> leafProbabilities( Trie tr) {
+        return leafProbabilities(tr, tr.getValue() );
+    }
+
+    //! @description Gives the probabilities to end up at each of the leaves by paths from the root of the trie.
+    //! @param tr the trie to find the leaf probabilities for
+    public static Map<String, Double> leafProbabilities( Trie tr, double initProb ) {
+
+        Map<String, Double>leafValHash = new HashMap<String, Double>();
+
+        if ( initProb < 0 ) {
+            leafProbabilitiesRec(tr, 0, leafValHash, tr.getValue());
+        } else {
+            leafProbabilitiesRec(tr, 0, leafValHash, initProb );
+        }
+
+        return leafValHash;
+    }
+
+    //! @description Recursive function to find the leaf probabilities.
+    //! @param tr a trie object
+    //! @param level the level of recursion
+    //! @param leafValHash a hash map to store the result
+    //! @param prob current probability
+    protected static void leafProbabilitiesRec( Trie tr, int level, Map<String, Double> leafValHash, Double prob ) {
+
+        //System.out.println( tr.getKey()  + ", atLevel = " + atLevel + ", level = " + level );
+
+        if ( tr == null ) { return; }
+
+        if ( tr.getChildren() == null || tr.getChildren().size() == 0 ) {
+
+            if ( ! leafValHash.containsKey( tr.getKey() ) ) {
+                leafValHash.put( tr.getKey(), tr.getValue() * prob );
+            } else {
+                leafValHash.put( tr.getKey(), leafValHash.get( tr.getKey() ) + tr.getValue() * prob );
+            }
+
+        } else {
+
+            double chSum = 0.0;
+
+            for ( Trie ch : tr.getChildren().values() ) {
+                chSum += ch.getValue();
+                leafProbabilitiesRec( ch, level + 1, leafValHash, prob * tr.getValue() );
+            }
+
+            // System.out.println( tr.getKey() + ", chSum = " + chSum + ", level = " + level );
+
+            if ( chSum < 1.0 && tr.getKey() != null ) {
+
+                if ( ! leafValHash.containsKey( tr.getKey() ) ) {
+                    leafValHash.put( tr.getKey(), (1 - chSum) * prob );
+                } else {
+                    leafValHash.put( tr.getKey(), leafValHash.get( tr.getKey() ) + (1 - chSum) * prob );
+                }
+
+            }
+        }
+
+        return;
     }
 
     ///**************************************************************
