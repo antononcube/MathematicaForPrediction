@@ -143,6 +143,8 @@ JavaTrieInsert::usage = "JavaTrieInsert[ jTr_, sw:{_String..}] inserts a list of
 JavaTrieInstall::usage = "JavaTrieInstall[path_String] installs Java and loads the JavaTrie classes\
  from the jar file in the specified class path."
 
+JavaTrieLeafProbabilities::usage = "Gives the probabilities to reach the leaves of a trie."
+
 JavaTrieMapOptimizationCall::usage = "Used for optimization calls over lists of \"words\"."
 
 JavaTrieMemberQ::usage = "Same as JavaTrieContains."
@@ -246,6 +248,13 @@ JavaTrieInstall[path_String, opts:OptionsPattern[]] :=
       JLink`LoadJavaClass["Trie"];
       JLink`LoadJavaClass["TrieFunctions"];
     ];
+
+Clear[JavaTrieLeafProbabilities]
+JavaTrieLeafProbabilities[jTr_?JavaObjectQ] :=
+    ImportString[ TrieFunctions`leafProbabilitiesJSON[jTr, 1], "JSON"];
+
+JavaTrieLeafProbabilities[jTr_?JavaObjectQ, initProb_?NumericQ ] :=
+    ImportString[ TrieFunctions`leafProbabilitiesJSON[jTr, initProb ], "JSON"];
 
 Clear[JavaTrieNodeCounts]
 JavaTrieNodeCounts[jTr_?JavaObjectQ] :=
@@ -377,16 +386,20 @@ JavaTrieForm[jTr_?JavaObjectQ, opts:OptionsPattern[]] :=
 
 ClearAll[JavaTrieComparisonGrid]
 SetAttributes[JavaTrieComparisonGrid, HoldAll]
+Options[JavaTrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision"->3}];
 JavaTrieComparisonGrid[jTrs : {_?JavaObjectQ ..}, opts : OptionsPattern[]] :=
-    Block[{},
+    Block[{graphOpts,gridOpts,nfp},
+      graphOpts = Select[{opts}, MemberQ[Options[Graphics][[All, 1]], #[[1]]] &];
+      gridOpts = Select[{opts}, MemberQ[Options[Grid][[All, 1]], #[[1]]] &];
+      nfp = OptionValue["NumberFormPrecision"];
       Grid[{
         HoldForm /@ Inactivate[jTrs],
-        If[ Length[{opts}] == 0,
-          Map[JavaTrieForm, jTrs],
-          Map[JavaTrieForm[#] /. (gr_Graphics) :> Append[gr, opts] &, jTrs],
-          Map[JavaTrieForm, jTrs]
+        If[ Length[{graphOpts}] == 0,
+          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]}, jTrs],
+          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} /. (gr_Graphics) :> Append[gr, graphOpts] &, jTrs],
+          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]}, jTrs]
         ]
-      }, Dividers -> All, FrameStyle -> LightGray]
+      }, gridOpts, Dividers -> All, FrameStyle -> LightGray]
     ];
 
 
