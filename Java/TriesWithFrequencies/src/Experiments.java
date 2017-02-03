@@ -75,9 +75,13 @@ public class Experiments {
         System.out.println( strie );
         System.out.println();
 
+//        sampleSeq = new ArrayList<String>() {{
+//            add("bar"); add("barks"); add("barkeep"); add("barn"); add("balm");
+//            add("car"); add("care"); add("caress"); add("card"); add("cold"); add("colder"); }};
+
         sampleSeq = new ArrayList<String>() {{
-            add("bar"); add("barks"); add("barkeep"); add("barn"); add("balm");
-            add("car"); add("care"); add("caress"); add("card"); add("cold"); add("colder"); }};
+            add("barks"); add("barkers"); add("barked"); add("barkeeps"); add("barkeepers");
+            add("barking"); add("balm"); }};
 
         strie = TrieFunctions.createBySplit( sampleSeq, "");
 
@@ -118,13 +122,29 @@ public class Experiments {
         System.out.println( TrieFunctions.getWords( strie, sword ) );
         System.out.println();
 
-        System.out.println( "paths to JSON:");
-        System.out.println( TrieFunctions.pathsToJSON( TrieFunctions.rootToLeafPaths( strie) ) );
+//        System.out.println( "paths to JSON:");
+//        System.out.println( TrieFunctions.pathsToJSON( TrieFunctions.rootToLeafPaths( strie) ) );
+//        System.out.println();
+
+        System.out.println( "paths strie:");
+        System.out.println( TrieFunctions.rootToLeafPaths( strie) );
         System.out.println();
+
+        System.out.println( "paths pstrie:");
+        System.out.println( TrieFunctions.rootToLeafPaths( pstrie) );
+        System.out.println();
+
 
         System.out.println( "node counts:");
         System.out.println( TrieFunctions.nodeCounts( strie) );
         System.out.println();
+
+        System.out.println( "leaf probabilities :");
+        System.out.println( TrieFunctions.leafProbabilities( pstrie ) );
+        System.out.println();
+        System.out.println( TrieFunctions.leafProbabilitiesJSON( pstrie ) );
+        System.out.println();
+
 
 //        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
 //        List< List<String> > sampleSeqList = new ArrayList<>();
@@ -137,50 +157,55 @@ public class Experiments {
 //        System.out.println( strie.toJSON() );
 
 
-        Trie mstrie = TrieFunctions.map( strie, ( String k, Double v) -> { return new TrieFunctions.Pair<String, Double>( k + ":M", 2*v ); } );
-
-        System.out.println( "Map function over nodes :");
-        System.out.println( mstrie );
-        System.out.println();
-
-        Trie mstrie2 = mstrie.clone();
-
-        System.out.println( "Clone of a trie :");
-        System.out.println( mstrie2 );
-        System.out.println();
-
-        System.out.println( "mstrie equal mstrie2 ? :");
-        System.out.println( mstrie.equals( mstrie2 ) );
-        System.out.println();
-
-        System.out.println( "mstrie equal strie ? :");
-        System.out.println( mstrie.equals( strie ) );
-        System.out.println();
-
-        pstrie = TrieFunctions.nodeProbabilities( strie );
-        System.out.println("Node probabilities trie:");
-        System.out.print( pstrie );
-        System.out.println("\n");
-
-        Trie pstrie2 = TrieFunctions.removeByThreshold( pstrie, 0.34, ".*" );
-        System.out.println("Node probabilities trie reduced by threshold:");
-        System.out.print( pstrie2 );
-        System.out.println("\n");
-
-        pstrie = TrieFunctions.nodeProbabilities( strie );
-        System.out.println("Node probabilities trie:");
-        System.out.print( pstrie );
-        System.out.println("\n");
-
-        Trie pstrie3 = TrieFunctions.shrinkByThreshold( pstrie2, "~", 0.7 );
-        System.out.println("Node probabilities trie shrunk by threshold:");
-        System.out.print( pstrie3 );
-        System.out.println("\n");
-
-        Trie pstrie4 = TrieFunctions.removeByKeyRegex( pstrie, "r", null );
-        System.out.println("Node probabilities trie reduced by key regex pattern:");
-        System.out.print( pstrie4 );
-        System.out.println("\n");
+//        Trie mstrie = TrieFunctions.map( strie, ( String k, Double v) -> { return new TrieFunctions.Pair<String, Double>( k + ":M", 2*v ); } );
+//
+//        System.out.println( "Map function over nodes :");
+//        System.out.println( mstrie );
+//        System.out.println();
+//
+//        Trie mstrie2 = mstrie.clone();
+//
+//        System.out.println( "Clone of a trie :");
+//        System.out.println( mstrie2 );
+//        System.out.println();
+//
+//        System.out.println( "mstrie equal mstrie2 ? :");
+//        System.out.println( mstrie.equals( mstrie2 ) );
+//        System.out.println();
+//
+//        System.out.println( "mstrie equal strie ? :");
+//        System.out.println( mstrie.equals( strie ) );
+//        System.out.println();
+//
+//        pstrie = TrieFunctions.nodeProbabilities( strie );
+//        System.out.println("Node probabilities trie:");
+//        System.out.print( pstrie );
+//        System.out.println("\n");
+//
+//        Trie pstrie2 = TrieFunctions.removeByThreshold( pstrie, 0.34, ".*" );
+//        System.out.println("Node probabilities trie reduced by threshold:");
+//        System.out.print( pstrie2 );
+//        System.out.println("\n");
+//
+//        pstrie = TrieFunctions.nodeProbabilities( strie );
+//        System.out.println("Node probabilities trie:");
+//        System.out.print( pstrie );
+//        System.out.println("\n");
+//
+//        Trie pstrie3 = TrieFunctions.shrinkByThreshold( pstrie2, "~", 0.7 );
+//        System.out.println("Node probabilities trie shrunk by threshold:");
+//        System.out.print( pstrie3 );
+//        System.out.println("\n");
+//
+//        Trie pstrie4 = TrieFunctions.removeByKeyRegex( pstrie, "r", null );
+//        System.out.println("Node probabilities trie reduced by key regex pattern:");
+//        System.out.print( pstrie4 );
+//        System.out.println("\n");
+//
+//        Trie pstrie5 = TrieFunctions.removeByParetoFraction( pstrie, 0.9,null );
+//        System.out.println("Node probabilities trie reduced by Pareto fraction:");
+//        System.out.print( pstrie5 );
+//        System.out.println("\n");
     }
 
 }

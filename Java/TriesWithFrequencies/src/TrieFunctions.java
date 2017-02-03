@@ -498,15 +498,11 @@ public class TrieFunctions {
         }
     }
 
-    public static String leafProbabilitiesJSON( Trie tr) {
-        return leafProbabilitiesJSON(tr, tr.getValue() );
-    }
-
     //! @description Gives JSON form of the probabilities to reach leaves of the trie.
     //! @param tr the trie to find the leaf probabilities for
-    public static String leafProbabilitiesJSON( Trie tr, double initProb ) {
+    public static String leafProbabilitiesJSON( Trie tr ) {
 
-        Map<String, Double> leafValHash = leafProbabilities(tr, initProb);
+        Map<String, Double> leafValHash = leafProbabilities(tr);
 
         String res = "[";
 
@@ -520,23 +516,24 @@ public class TrieFunctions {
         return res;
     }
 
-    public static Map<String, Double> leafProbabilities( Trie tr) {
-        return leafProbabilities(tr, tr.getValue() );
-    }
 
     //! @description Gives the probabilities to end up at each of the leaves by paths from the root of the trie.
     //! @param tr the trie to find the leaf probabilities for
-    public static Map<String, Double> leafProbabilities( Trie tr, double initProb ) {
+    public static Map<String, Double> leafProbabilities( Trie tr ) {
 
-        Map<String, Double>leafValHash = new HashMap<String, Double>();
+        Map<String, Double> res = new HashMap<String, Double>();
 
-        if ( initProb < 0 ) {
-            leafProbabilitiesRec(tr, 0, leafValHash, tr.getValue());
-        } else {
-            leafProbabilitiesRec(tr, 0, leafValHash, initProb );
+        List< Pair<String, Double> > probList = leafProbabilitiesRec(tr, 0);
+
+        for( Pair<String, Double> p : probList ) {
+            if ( ! res.containsKey( p.getKey() ) ) {
+                res.put( p.getKey(), p.getValue() );
+            } else {
+                res.put( p.getKey(), res.get( p.getKey() ) + p.getValue() );
+            }
         }
 
-        return leafValHash;
+        return res;
     }
 
     //! @description Recursive function to find the leaf probabilities.
@@ -544,19 +541,18 @@ public class TrieFunctions {
     //! @param level the level of recursion
     //! @param leafValHash a hash map to store the result
     //! @param prob current probability
-    protected static void leafProbabilitiesRec( Trie tr, int level, Map<String, Double> leafValHash, Double prob ) {
+    protected static List< Pair<String, Double> > leafProbabilitiesRec( Trie tr, int level) {
 
         //System.out.println( tr.getKey()  + ", atLevel = " + atLevel + ", level = " + level );
+        if ( tr == null ) { return null; }
 
-        if ( tr == null ) { return; }
+        List< Pair<String, Double> > res = new ArrayList<>();
 
         if ( tr.getChildren() == null || tr.getChildren().size() == 0 ) {
 
-            if ( ! leafValHash.containsKey( tr.getKey() ) ) {
-                leafValHash.put( tr.getKey(), tr.getValue() * prob );
-            } else {
-                leafValHash.put( tr.getKey(), leafValHash.get( tr.getKey() ) + tr.getValue() * prob );
-            }
+            res.add( new Pair( tr.getKey(), tr.getValue() ) );
+
+            return res;
 
         } else {
 
@@ -564,24 +560,26 @@ public class TrieFunctions {
 
             for ( Trie ch : tr.getChildren().values() ) {
                 chSum += ch.getValue();
-                leafProbabilitiesRec( ch, level + 1, leafValHash, prob * tr.getValue() );
+                res.addAll( leafProbabilitiesRec( ch, level + 1 ) );
             }
 
             // System.out.println( tr.getKey() + ", chSum = " + chSum + ", level = " + level );
 
             if ( chSum < 1.0 && tr.getKey() != null ) {
-
-                if ( ! leafValHash.containsKey( tr.getKey() ) ) {
-                    leafValHash.put( tr.getKey(), (1 - chSum) * prob );
-                } else {
-                    leafValHash.put( tr.getKey(), leafValHash.get( tr.getKey() ) + (1 - chSum) * prob );
-                }
-
+                res.add( new Pair( tr.getKey(), (1 - chSum) ) );
             }
+
+            List< Pair<String, Double> > res2 = new ArrayList<>();
+
+            for( Pair<String, Double> elem : res ) {
+                res2.add( new Pair( elem.getKey(), elem.getValue() * tr.getValue() ) );
+            }
+
+            return res2;
         }
 
-        return;
     }
+
 
     ///**************************************************************
     /// Shrinking functions
