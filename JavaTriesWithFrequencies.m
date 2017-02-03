@@ -251,10 +251,10 @@ JavaTrieInstall[path_String, opts:OptionsPattern[]] :=
 
 Clear[JavaTrieLeafProbabilities]
 JavaTrieLeafProbabilities[jTr_?JavaObjectQ] :=
-    ImportString[ TrieFunctions`leafProbabilitiesJSON[jTr, 1], "JSON"];
+    ImportString[ TrieFunctions`leafProbabilitiesJSON[jTr], "JSON"];
 
 JavaTrieLeafProbabilities[jTr_?JavaObjectQ, initProb_?NumericQ ] :=
-    ImportString[ TrieFunctions`leafProbabilitiesJSON[jTr, initProb ], "JSON"];
+    ImportString[ TrieFunctions`leafProbabilitiesJSON[jTr], "JSON"];
 
 Clear[JavaTrieNodeCounts]
 JavaTrieNodeCounts[jTr_?JavaObjectQ] :=
