@@ -168,6 +168,10 @@ JavaTrieRegexRemove::usage = "Remove nodes that have keys adhering to a regex ex
 JavaTrieShrink::usage = "JavaTrieShrink[ jTr_, sep_String:\"\"] concatenates the \"single path\" nodes\
  in the trie jTr using the given separator sep."
 
+JavaTrieShrinkInternalNodes::usage = "JavaTrieShrinkInternalNodes[ jTr_, sep_String:\"\"] concatenates\
+ the \"single path\" internal nodes in the trie jTr using the given separator sep."
+
+
 JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above) a threshold."
 
 JavaTrieParetoFractionRemove::usage = "Remove nodes that have values below (or above) thresholds derived\
@@ -268,6 +272,13 @@ Clear[JavaTrieShrink]
 JavaTrieShrink[jTr_?JavaObjectQ, sep_String: ""] := TrieFunctions`shrink[jTr, sep];
 
 JavaTrieShrink[jTr_?JavaObjectQ, sep_String, th_?NumberQ ] := TrieFunctions`shrinkByThreshold[jTr, sep, th];
+
+Clear[JavaTrieShrinkInternalNodes]
+JavaTrieShrinkInternalNodes[jTr_?JavaObjectQ, sep_String: ""] :=
+    TrieFunctions`shrinkInternalNodes[jTr, sep, 1.0 ];
+
+JavaTrieShrinkInternalNodes[jTr_?JavaObjectQ, sep_String, th_?NumberQ ] :=
+    TrieFunctions`shrinkInternalNodes[jTr, sep, th];
 
 Clear[JavaTrieToJSON]
 JavaTrieToJSON[jTr_?JavaObjectQ] := ImportString[jTr@toJSON[], "JSON"];
