@@ -236,6 +236,11 @@ public class TrieFunctions {
     /// Retrieval functions
     ///**************************************************************
 
+    //! @description Test is a trie object a leaf.
+    protected static boolean leafQ( Trie tr ) {
+        return tr.getChildren() == null || tr.getChildren().isEmpty();
+    }
+
     //! @description Find the position of a given word (or part of it) in the trie.
     //! @param tr a trie object
     //! @param word a list of strings
@@ -588,21 +593,28 @@ public class TrieFunctions {
     //! @description Shrinks a trie by finding prefixes.
     //! @param tr a trie object
     public static Trie shrink(Trie tr) {
-        return shrinkRec(tr, "", -1, 0);
+        return shrinkRec(tr, "", -1, false, 0);
     }
 
     //! @description Shrinks a trie by finding prefixes.
     //! @param tr a trie object
     //! @param delimiter a delimiter to be used when strings are joined
     public static Trie shrink(Trie tr, String delimiter) {
-        return shrinkRec(tr, delimiter, -1,0);
+        return shrinkRec(tr, delimiter, -1, false, 0);
     }
 
     //! @description Shrinks a trie by finding prefixes.
     //! @param tr a trie object
     //! @param delimiter a delimiter to be used when strings are joined
     public static Trie shrinkByThreshold(Trie tr, String delimiter, double threshold ) {
-        return shrinkRec(tr, delimiter, threshold,0);
+        return shrinkRec(tr, delimiter, threshold, false, 0);
+    }
+
+    //! @description Shrinks a trie by finding prefixes.
+    //! @param tr a trie object
+    //! @param delimiter a delimiter to be used when strings are joined
+    public static Trie shrinkInternalNodes(Trie tr, String delimiter, double threshold ) {
+        return shrinkRec(tr, delimiter, threshold, true, 0);
     }
 
     //! @description Shrinking recursive function.
@@ -610,7 +622,7 @@ public class TrieFunctions {
     //! @param delimiter a delimiter for the concatenation of the node keys
     //! @param threshold if negative automatic shrinking test is applied
     //! @param n recursion level
-    protected static Trie shrinkRec(Trie tr, String delimiter, double threshold, int n) {
+    protected static Trie shrinkRec(Trie tr, String delimiter, double threshold, boolean internalOnly, int n) {
         Trie trRes = new Trie();
         Boolean rootQ = ((n == 0) && tr.getKey().equals(""));
 
@@ -630,11 +642,11 @@ public class TrieFunctions {
                 shrinkQ = arr.get(0).getValue() >= threshold;
             }
 
-            if ( shrinkQ )  {
+            if ( shrinkQ && (!internalOnly || internalOnly && !leafQ( arr.get(0) ) ) )  {
                 // Only one child and the current node does not make a complete match:
                 // proceed with recursion and join with result.
 
-                Trie chTr = shrinkRec(arr.get(0), delimiter, threshold, n + 1);
+                Trie chTr = shrinkRec(arr.get(0), delimiter, threshold, internalOnly, n + 1);
 
                 trRes.setKey(tr.getKey() + delimiter + chTr.getKey());
                 trRes.setValue(tr.getValue());
@@ -646,7 +658,7 @@ public class TrieFunctions {
             } else {
                 // Only one child but the current node makes a complete match.
 
-                Trie chTr = shrinkRec(arr.get(0), delimiter, threshold,n + 1);
+                Trie chTr = shrinkRec(arr.get(0), delimiter, threshold, internalOnly, n + 1);
 
                 trRes.setKey(tr.getKey());
                 trRes.setValue(tr.getValue());
@@ -658,10 +670,10 @@ public class TrieFunctions {
 
         } else {
             // No shrinking at this node. Proceed with recursion.
-            Map<String, Trie> recChildren = new HashMap<>();
+            Map<String, Trie> recChildren = new HashMap<String, Trie>();
 
             for (Trie chTr : tr.getChildren().values()) {
-                Trie nTr = shrinkRec(chTr, delimiter, threshold, n + 1);
+                Trie nTr = shrinkRec(chTr, delimiter, threshold, internalOnly, n + 1);
                 recChildren.put(nTr.getKey(), nTr);
             }
 

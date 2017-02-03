@@ -89,6 +89,10 @@ public class Experiments {
         System.out.println( TrieFunctions.shrink( strie, ":" ) );
         System.out.println();
 
+        System.out.println( "shrink internal nodes only trie:");
+        System.out.println( TrieFunctions.shrinkInternalNodes( strie, ":", 1.0 ) );
+        System.out.println();
+
         List<String> sword = new ArrayList() {{ add("b"); add("a"); add("r"); }};
         System.out.println("For " + sword );
         System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
