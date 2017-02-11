@@ -292,7 +292,7 @@ References
 
 \[3\] A. Antonov, [Independent Component Analysis Mathematica
 package](https://github.com/antononcube/MathematicaForPrediction/blob/master/IndependentComponentAnalysis.m),
-(2016), source code [MathematicaForPrediction at
+(2016), source code at [MathematicaForPrediction at
 GitHub](https://github.com/antononcube/MathematicaForPrediction/
 ),
 package
