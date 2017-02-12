@@ -100,15 +100,15 @@ public class Trie {
 	}
 
 
-	protected String toJSONRec( int n ) {
+	protected String toJSONRec( int maxLevel, int n ) {
 		String childStr = "";
 		int k = 0;
-		if ( this.getChildren() != null ) {
+		if ( this.getChildren() != null && ( maxLevel < 0 || n <= maxLevel ) ) {
 			for ( Trie elem : this.getChildren().values() ) {
 				if ( k == 0  ) {
-					childStr = elem.toJSONRec( n+1 );
+					childStr = elem.toJSONRec( maxLevel,n+1 );
 				} else {
-					childStr = childStr + ", " + elem.toJSONRec( n+1 );
+					childStr = childStr + ", " + elem.toJSONRec( maxLevel,n+1 );
 				}
 				k++;
 			}
@@ -119,8 +119,12 @@ public class Trie {
 		return "{ \"key\":" + "\"" + this.getKey() +  "\"" + ", \"value\":" + this.getValue() + ", \"children\":" + childStr + "}";
 	}
 
+	public String toJSON( int maxLevel ) {
+		return this.toJSONRec( maxLevel, 1 );
+	}
+
 	public String toJSON( ) {
-		return this.toJSONRec( 1 );
+		return this.toJSONRec( -1, 1 );
 	}
 
 	//! @description Deep copy of a trie.
