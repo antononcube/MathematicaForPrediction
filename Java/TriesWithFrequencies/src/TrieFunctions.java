@@ -1133,5 +1133,21 @@ public class TrieFunctions {
         return selectObj.keyPath;
     }
 
+    //! @description Random choice of a root-to-leaf path.
+    //! @param tr a trie object
+    //! @param weightedQ should a weighted random choice be used or not
+    public static List< List<String> > randomChoice( Trie tr, int n, boolean weightedQ ) {
 
+        List< List<String> > res = new ArrayList<>();
+
+        for( int i = 0; i < n; i++ ) {
+            ChildRandomChoice selectObj = new ChildRandomChoice(weightedQ);
+
+            Trie trRes = map(tr, selectObj, null);
+
+            res.add( selectObj.keyPath );
+        }
+
+        return res;
+    }
 }
