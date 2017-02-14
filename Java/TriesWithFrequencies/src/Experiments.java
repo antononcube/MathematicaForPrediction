@@ -149,6 +149,12 @@ public class Experiments {
         System.out.println( TrieFunctions.leafProbabilitiesJSON( pstrie ) );
         System.out.println();
 
+        System.out.println( "randomChoice :");
+        System.out.println( TrieFunctions.randomChoice( pstrie, true ) );
+        System.out.println();
+        System.out.println( TrieFunctions.randomChoice( pstrie, false ) );
+        System.out.println();
+
 
 //        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
 //        List< List<String> > sampleSeqList = new ArrayList<>();

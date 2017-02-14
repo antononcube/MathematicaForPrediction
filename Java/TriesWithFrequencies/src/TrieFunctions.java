@@ -281,15 +281,17 @@ public class TrieFunctions {
         return res;
     }
 
+
     //! @description Retrieval of a sub-trie corresponding to a "word".
     //! @param tr a trie object
     //! @param word a list of strings
+    //! @param
     public static Trie retrieve(Trie tr, List<String> word) {
 
         if (word == null || word.isEmpty()) {
             return tr;
         } else {
-            if (tr.getChildren() == null) {
+            if (tr.getChildren() == null || tr.getChildren().isEmpty() ) {
                 return tr;
             }
             Trie pos = tr.getChildren().get(word.get(0));
@@ -301,16 +303,6 @@ public class TrieFunctions {
         }
     }
 
-    //! @description Optimization of retrieve over a list of words.
-    //! @param tr a trie object
-    //! @param words a list of lists of strings
-    public static List<Trie> mapRetrieve(Trie tr, List<List<String>> words) {
-        List<Trie> res = new ArrayList<>();
-        for (List<String> s : words) {
-            res.add(retrieve(tr, s));
-        }
-        return res;
-    }
 
     //! @description For a given trie finds if the retrievable part of a word is complete match.
     //! @param tr a trie object
@@ -698,7 +690,7 @@ public class TrieFunctions {
         Pair<Integer, Integer> res = nodeCountsRec(tr, 0, 0);
 
         return new ArrayList<Integer>()
-           {{ add(res.getKey() + res.getValue()); add(res.getKey()); add(res.getValue()); }};
+        {{ add(res.getKey() + res.getValue()); add(res.getKey()); add(res.getValue()); }};
     }
 
     //! @description Finding the counts of internal nodes and leaf nodes in a trie.
@@ -804,7 +796,7 @@ public class TrieFunctions {
                 res = tr;
             }
 
-            if ( tr.getChildren() == null || tr.getChildren().isEmpty()) {
+            if ( res.getChildren() == null || res.getChildren().isEmpty()) {
 
                 resChildren = null;
 
@@ -1063,4 +1055,79 @@ public class TrieFunctions {
 
         return map( tr, removalObj, null );
     }
+
+    ///**************************************************************
+    /// Random choice functions
+    ///**************************************************************
+
+    private static class ChildRandomChoice implements TrieNodeFunction {
+        ChildRandomChoice( boolean wsQ ) { weightedQ = wsQ; keyPath = new ArrayList(); }
+
+        public boolean weightedQ;
+        public List<String> keyPath;
+
+        private Trie randomSelection( Collection<Trie> children ) {
+
+            // Compute the total weight of all items together
+            double totalWeight = 0.0d;
+            if ( weightedQ ) {
+                for (Trie elem : children) {
+                    totalWeight += elem.getValue();
+                }
+            } else {
+                for (Trie elem : children) {
+                    totalWeight += 1.0;
+                }
+            }
+            // Now choose a random trie
+            Trie randomTrie = null;
+            double random = Math.random() * totalWeight;
+            int i = 0;
+            for ( Trie elem : children ) {
+                random -= elem.getValue();
+                if( randomTrie == null ) { randomTrie = elem; }
+                if (random <= 0.0d) {
+                    randomTrie = elem;
+                    break;
+                }
+                i++;
+            }
+
+            return randomTrie;
+        }
+
+        public Trie apply( Trie tr ) {
+
+            keyPath.add( tr.getKey() );
+
+            if( tr.getChildren() == null || tr.getChildren().isEmpty() ) {
+                return tr.clone();
+            } else {
+
+                Trie res = new Trie( tr.getKey(), tr.getValue() );
+                Trie sel = randomSelection( tr.getChildren().values() );
+
+                Map<String,Trie> resChildren = new HashMap();
+                resChildren.put( sel.getKey(), sel );
+                res.setChildren( resChildren );
+
+                return res;
+            }
+        }
+    }
+
+
+    //! @description Random choice of a root-to-leaf path.
+    //! @param tr a trie object
+    //! @param weightedQ should a weighted random choice be used or not
+    public static List<String> randomChoice( Trie tr, boolean weightedQ ) {
+
+        ChildRandomChoice selectObj = new ChildRandomChoice( weightedQ );
+
+        Trie res = map( tr, selectObj, null );
+
+        return selectObj.keyPath;
+    }
+
+
 }
