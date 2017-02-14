@@ -1084,7 +1084,11 @@ public class TrieFunctions {
             double random = Math.random() * totalWeight;
             int i = 0;
             for ( Trie elem : children ) {
-                random -= elem.getValue();
+                if ( weightedQ ) {
+                    random -= elem.getValue();
+                } else {
+                    random -= 1.0;
+                }
                 if( randomTrie == null ) { randomTrie = elem; }
                 if (random <= 0.0d) {
                     randomTrie = elem;
