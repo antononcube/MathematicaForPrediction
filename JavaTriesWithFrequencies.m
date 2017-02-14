@@ -177,6 +177,8 @@ JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above)
 JavaTrieParetoFractionRemove::usage = "Remove nodes that have values below (or above) thresholds derived\
  from a specified Pareto fraction."
 
+JavaTrieRandomChoice::usage = "Random choice of a root-to-leaf path."
+
 JavaTrieToJSON::usage = "Converts a Java trie to a corresponding JSON expression."
 
 JSONTrieToRules::usage = "Converts a JSON trie into rules for GraphPlot."
@@ -253,9 +255,29 @@ JavaTrieInstall[path_String, opts:OptionsPattern[]] :=
       JLink`LoadJavaClass["TrieFunctions"];
     ];
 
-Clear[JavaTrieLeafProbabilities]
-JavaTrieLeafProbabilities[jTr_?JavaObjectQ] :=
+Clear[JavaTrieLeafProbabilities, JavaTrieLeafProbabilitiesSimple]
+
+Options[JavaTrieLeafProbabilities] = { "Normalized"->False, "ChopValue"->Automatic };
+
+JavaTrieLeafProbabilities[jTr_?JavaObjectQ, opts:OptionsPattern[]] :=
+    Block[{rootVal, chopVal, res},
+      res =
+          If[ TrueQ[ OptionValue["Normalized"] ],
+            rootVal = "value" /. JavaTrieToJSON[jTr, 0];
+            JavaTrieLeafProbabilitiesSimple[jTr] /. ("value" -> x_?NumberQ) :> ("value" -> x/rootVal),
+          (*ELSE*)
+            JavaTrieLeafProbabilitiesSimple[jTr]
+          ];
+      chopVal = OptionValue["ChopValue"];
+      If[ TrueQ[NumericQ[chopVal]],
+        Select[res, ("value" /. #) >= chopVal &],
+        res
+      ]
+    ];
+
+JavaTrieLeafProbabilitiesSimple[jTr_?JavaObjectQ]:=
     ImportString[ StringReplace[ TrieFunctions`leafProbabilitiesJSON[jTr], "\"\"\"" -> "\"\\\"\""], "JSON"];
+
 
 Clear[JavaTrieNodeCounts]
 JavaTrieNodeCounts[jTr_?JavaObjectQ] :=
@@ -362,6 +384,9 @@ JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ] :=
 JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, postfix_String] :=
     TrieFunctions`removeByParetoFraction[jTr, paretoFraction, True, postfix];
 
+Clear[JavaTrieRandomChoice]
+JavaTrieRandomChoice[jTr_?JavaObjectQ, weightedQ:(True|False):True] :=
+    JavaObjectToExpression[ TrieFunctions`randomChoice[jTr, weightedQ] ];
 
 Clear[JSONTrieToRules]
 JSONTrieToRules[tree_] := Block[{ORDER = 0}, JSONTrieToRules[tree, 0, 0]];
