@@ -385,8 +385,12 @@ JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, postfix
     TrieFunctions`removeByParetoFraction[jTr, paretoFraction, True, postfix];
 
 Clear[JavaTrieRandomChoice]
-JavaTrieRandomChoice[jTr_?JavaObjectQ, weightedQ:(True|False):True] :=
-    JavaObjectToExpression[ TrieFunctions`randomChoice[jTr, weightedQ] ];
+Options[JavaTrieRandomChoice] = { "Weighted"->True };
+JavaTrieRandomChoice[jTr_?JavaObjectQ, opts:OptionsPattern[] ] :=
+    JavaObjectToExpression[ TrieFunctions`randomChoice[jTr, TrueQ[OptionValue["Weighted"]] ] ];
+
+JavaTrieRandomChoice[jTr_?JavaObjectQ, n_Integer, opts:OptionsPattern[] ] :=
+    JavaObjectToExpression /@ JavaObjectToExpression[ TrieFunctions`randomChoice[jTr, n, TrueQ[OptionValue["Weighted"]] ] ];
 
 Clear[JSONTrieToRules]
 JSONTrieToRules[tree_] := Block[{ORDER = 0}, JSONTrieToRules[tree, 0, 0]];
