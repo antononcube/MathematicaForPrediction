@@ -182,9 +182,11 @@
   large the gaps between the rectangles might "eat" the recntagles
   areas. Use smaller gap size for the option "Gap".
 
-  TODO 
-  1. Pearson chi-squared correlation coloring. (After I
+  TODO
+  1. Make MosaicPlot work with Dataset objects.
+  2. Pearson chi-squared correlation coloring. (After I
   implemented the option ColorRules this TODO item has low priority.)
+
 
 *)
 
@@ -347,12 +349,13 @@ TrieMosaicRec[trie_, triePath_, posPath_, r_Rectangle,
       ]
     ];
 
-MosaicPlot::nargs = "MosaicPlot takes as an argument a full array (that is list of records).";
+MosaicPlot::nargs = "MosaicPlot takes as an argument a full array (that is list of records) or a dataset.";
 MosaicPlot::ncno = "The value of the option \"ColumnNamesOffset\" should be a number.";
 MosaicPlot::npnum = "The value of the option `1` should be a positive number.";
 MosaicPlot::nfax = "The value of the option \"FirstAxis\" should be either \"x\" or \"y\".";
 MosaicPlot::nlr = "The value of the option \"LabelRotation\" should be a pair of numbers or two pairs of numbers.";
-MosaicPlot::ncr = "The value of the option ColorRules should be a list of rules of the form columnIndex->color. If coloring for only one column index is specified its rule can be of the form colorIndex->{color1,color2,...} .";
+MosaicPlot::ncr = "The value of the option ColorRules should be a list of rules of the form columnIndex->color.\
+ If coloring for only one column index is specified its rule can be of the form colorIndex->{color1,color2,...} .";
 
 Clear[MosaicPlot]
 Options[MosaicPlot] =
@@ -360,6 +363,23 @@ Options[MosaicPlot] =
       "ZeroProbability" -> 0.001, "FirstAxis" -> "y",
       "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {},
       "ExpandLastColumn" -> False, "Tooltips"->True, ColorRules -> Automatic}, Options[Graphics]];
+
+MosaicPlot[dataRecords_, opts : OptionsPattern[] ] :=
+    Block[{dsetColNames, columnNames},
+
+      columnNames = OptionValue[MosaicPlot, "ColumnNames"];
+
+      dsetColNames = Normal[ Keys@First@dataRecords ];
+
+      If[ TrueQ[columnNames === None || Length[Intersection[ columnNames, dsetColNames]] == 0 ],
+        MosaicPlot[ Values@Normal@ dataRecords, Sequence @@ Prepend[ {opts},  "ColumnNames"->dsetColNames] ],
+        (* ELSE *)
+        dsetColNames = Intersection[ columnNames, dsetColNames];
+        MosaicPlot[ Values@Normal@ dataRecords[All, columnNames], Sequence @@ Prepend[ {opts},  "ColumnNames"->dsetColNames] ]
+      ]
+
+    ]/;TrueQ[Head[dataRecords]===Dataset];
+
 MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
     Block[{trie, rs,
       gap = OptionValue[MosaicPlot, "Gap"],
@@ -375,6 +395,7 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
       colorRules = OptionValue[MosaicPlot, ColorRules],
       LABELS = {}, frameLabels, frameLabelCoords, frameLabelRotation,
       colors, colorInds, t, nvals},
+
 
       If[! (ArrayQ[dataRecords] && Length[Dimensions[dataRecords]]==2),
         Message[MosaicPlot::nargs];
