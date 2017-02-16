@@ -37,10 +37,10 @@
 (* 
   This package defines the function MosaicPlot that summarizes the
   conditional probabilities of co-occurrence of the categorical values
-  in a list of records of the same length. (The list of records is
-  assumed to be a full array and the columns to represent categorical
-  values.) Note, that if a column is numerical but has a small number
-  of different values it can be seen as categorical.
+  in a Dataset object or a list of records of the same length.
+  (The list of records isassumed to be a full array and the columns to
+  represent categorical values.) Note, that if a column is numerical
+  but has a small number of different values it can be seen as categorical.
 
   Descriptions of the mosaic plots can be found in books about
   programming and statistics with R. See for example "R in Action" by
@@ -182,20 +182,21 @@
   large the gaps between the rectangles might "eat" the recntagles
   areas. Use smaller gap size for the option "Gap".
 
+
   TODO
-  1. Make MosaicPlot work with Dataset objects.
-  2. Pearson chi-squared correlation coloring. (After I
+  1. Pearson chi-squared correlation coloring. (After I
   implemented the option ColorRules this TODO item has low priority.)
 
+  2. DONE Make MosaicPlot work with Dataset objects.
 
 *)
 
 BeginPackage["MosaicPlot`"]
 
 MosaicPlot::usage = "MosaicPlot[rarr] makes a mosaic plot that summarizes the conditional probabilities of categorical \
-values co-occurrence in a list of records of the same length (a full array). MosaicPlot has options for adjusting \
-the gap between the rectangles, the style of the labels, the rotation of the labels, and from which side to start \
-the rectangle splitting. MosaicPlot also takes all the options of Graphics."
+values co-occurrence in a list of records of the same length (a full array or dataset). MosaicPlot has options for \
+adjusting the gap between the rectangles, the style of the labels, the rotation of the labels, and from which side to \
+start the rectangle splitting. MosaicPlot also takes all the options of Graphics."
 
 MosaicPlotTooltipTable::usage = "MosaicPlotTriePathTable[triePath:{{catVal_?AtomQ,prob_?NumberQ}..}] makes a table \
 of conditional probabilities from a trie path (suitable to be the second argument of Tooltip.)"
