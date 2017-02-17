@@ -19,7 +19,10 @@ We can say that the Object-oriented paradigm came to maturity with OOP Design Pa
 
 It is beyond the scope of this document to give an OOP introduction to Design Patterns. For detailed description of the patterns implemented and discussed we are going to refer to \[5\]. (All of the design patterns considered in this document have entries in Wikipedia.)
 
-The following Venn-like diagram shows the large context of patterns. This document is for the patterns in the dark red area ("Design Patterns by GoF").
+The following Venn-like diagram shows the large context of patterns. 
+This document is for the patterns in the dark red area, "Design Patterns by GoF". 
+(See \[14\] for patterns in kenjutsu and the martial arts in general.)
+
 
 [![][1]][1]
 
@@ -1007,7 +1010,9 @@ URL: http://www.wolfram.com/broadcast/video.php?c=400&v=1470 .
 
 \[12\] Anton Antonov, ["Natural language processing with functional parsers"](https://mathematicaforprediction.wordpress.com/2014/02/13/natural-language-processing-with-functional-parsers/), (2014), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com/). URL: https://mathematicaforprediction.wordpress.com/2014/02/13/natural-language-processing-with-functional-parsers/ .
 
-\[13\]  Anton Antonov, [Object-oriented framework for large scale air pollution models](http://orbit.dtu.dk/en/publications/objectoriented-framework-for-large-scale-air-pollution-models(8fc409c0-def9-451b-9d29-1bd9fc5250a6).html), 2001. Ph.D. thesis, Informatics and Mathematical Modelling, Technical University of Denmark, DTU.
+\[13\] Anton Antonov, [Object-oriented framework for large scale air pollution models](http://orbit.dtu.dk/en/publications/objectoriented-framework-for-large-scale-air-pollution-models(8fc409c0-def9-451b-9d29-1bd9fc5250a6).html), 2001. Ph.D. thesis, Informatics and Mathematical Modelling, Technical University of Denmark, DTU.
+
+\[14\] Miyamoto Musashi, [The Book of Five Rings (Go Rin No Sho)](https://en.wikipedia.org/wiki/The_Book_of_Five_Rings), 1645.
 
 <!---
 [1]:.png
@@ -1032,7 +1037,7 @@ URL: http://www.wolfram.com/broadcast/video.php?c=400&v=1470 .
 -->
 
 
-[1]:http://i.imgur.com/XFqxn15.png
+[1]:http://i.imgur.com/XFqxn15l.png
 [2]:http://i.imgur.com/ymRrgcJ.png
 [3]:http://i.imgur.com/893Gidy.png
 [4]:http://i.imgur.com/lN2GbCI.png
