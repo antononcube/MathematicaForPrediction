@@ -1,4 +1,4 @@
-# **Implementation of Object-Oriented Programming Design Patterns in *Mathematica***
+# **Implementation of Object-Oriented Programming Design Patterns in Mathematica**
 
 Anton Antonov   
 antononcube@gmail.com   
@@ -993,17 +993,17 @@ At this point it is easy enough to develop interpreters for the parsed sentences
 \[6\] Anton Antonov, [Air pollution modeling with grid *Mathematica*](http://library.wolfram.com/infocenter/Conferences/6532/), Wofram Technology Conference 2006.
 URL: http://library.wolfram.com/infocenter/Conferences/6532/ .
 
-\[7\] Anton Antonov, [GitHubPlots, *Mathematica* package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubPlots.m), MathematicaForPrediction at GitHub, 2015.
+\[7\] Anton Antonov, [GitHubPlots Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubPlots.m), MathematicaForPrediction at GitHub, 2015.
 URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubPlots.m .    
 
-\[8\] Anton Antonov, [GitHubObjects, *Mathematica* package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m), MathematicaForPrediction at GitHub, 2015. URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m .
+\[8\] Anton Antonov, [GitHubObjects Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m), MathematicaForPrediction at GitHub, 2015. URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m .
 
 \[9\] Anton Antonov, [Object Oriented Design Patterns](http://www.wolfram.com/broadcast/video.php?c=400&v=1470), [Wofram Technology Conference 2015](https://www.wolfram.com/events/technology-conference/2015/).
 URL: http://www.wolfram.com/broadcast/video.php?c=400&v=1470 .
 
-\[10\] Anton Antonov, [UML Diagram Generation,  *Mathematica* package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/UMLDiagramGeneration.m), MathematicaForPrediction at GitHub, 2016. URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/UMLDiagramGeneration.m.
+\[10\] Anton Antonov, [UML Diagram Generation Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/UMLDiagramGeneration.m), MathematicaForPrediction at GitHub, 2016. URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/UMLDiagramGeneration.m.
 
-\[11\] Anton Antonov, [Functional parsers, *Mathematica* package](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m), MathematicaForPrediction at GitHub, 2014. URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
+\[11\] Anton Antonov, [Functional parsers Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m), MathematicaForPrediction at GitHub, 2014. URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
 
 \[12\] Anton Antonov, ["Natural language processing with functional parsers"](https://mathematicaforprediction.wordpress.com/2014/02/13/natural-language-processing-with-functional-parsers/), (2014), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com/). URL: https://mathematicaforprediction.wordpress.com/2014/02/13/natural-language-processing-with-functional-parsers/ .
 
