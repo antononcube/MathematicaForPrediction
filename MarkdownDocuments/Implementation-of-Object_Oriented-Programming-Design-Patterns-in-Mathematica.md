@@ -525,7 +525,7 @@ We can do something more elaborated and create a `StrategyContext` object initia
 
 As it was mentioned above all second order functions (`Map`, `Fold`, `Nest`, `FixedPoint`, etc.) provide good examples of the functionality achieved by Strategy. Further, very often the algorithms specified by the Method option in different functions can be seen -- at least conceptually -- as playing within the Strategy design pattern.
 
-## Other concrete examples**
+## Other concrete examples
 
 The plotting functionality of the main GitHub data class in \[5\] `GitHubData` given by the method "Plot" is changed through the Strategy design pattern. The data member "PlotFunction" can be set to one of the functions GHDDateListPlot, GHDBarPlot, or GHDGraphics3D. In this way different plots are derived for the representation of the ingested GitHub data.
 
@@ -637,14 +637,14 @@ Here is a core algorithm that takes randomly a specified number of words from a 
     Pane[CoreAlg[2000],
      ImageSize -> {400, 150}, Scrollbars -> {True, True}]
 
-    (* uncaptured~ *)
+![20]
 
 Further, we might want to show in red certain special words:
 
     Pane[CoreAlg[2000],
      ImageSize -> {400, 150}, Scrollbars -> {True, True}] /. Map[# -> Style[#, Red] &, {"Ham.", "Hamlet", "King", "Queen"}]
 
-    (* uncaptured~ *)
+![21]
 
 The two additional operations, imposing a window with scroll-bars and coloring of selected words, can be seen as operations that decorate the core algorithm.
 
@@ -1061,3 +1061,5 @@ URL: http://www.wolfram.com/broadcast/video.php?c=400&v=1470 .
 [17]:http://i.imgur.com/wSjZnz1.png
 [18]:http://i.imgur.com/8H7lLQt.png
 [19]:http://i.imgur.com/hR2RsoP.png
+[20]:http://i.imgur.com/80ajxrx.png
+[21]:http://imgur.com/8zrerUW.png
