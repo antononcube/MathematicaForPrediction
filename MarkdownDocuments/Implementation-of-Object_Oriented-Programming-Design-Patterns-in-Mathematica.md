@@ -26,7 +26,7 @@ This document is for the patterns in the dark red area, "Design Patterns by GoF"
 
 [![][1]][1]
 
-- **Design patterns history**
+## Design patterns history
 
 In 1975 the architect Christopher Alexander et al., \[2\], introduced a pattern language for architectural solutions. Alexander's book "The Timeless Way of Building", \[3\], is the more fundamental one -- some sort of philosophical prequel of \[1\] and \[2\].
 
@@ -36,7 +36,7 @@ In 1995 the book by Gamma et al. "Design Patterns: Elements of Reusable Object-O
 
 [![][2]][2]
 
-- **Design Patterns structure**
+## Design Patterns structure
 
 The OOP Design Patterns in \[5\] are classified in three groups: creational, structural, and behavioral. The application of the structural and behavioral patterns in a design brings the need for the application creational patterns. In this document we are mostly interested in the structural and behavioral patterns, since in *Mathematica* creation of objects is much more immediate than in languages like C++ and Java.
 
@@ -74,7 +74,7 @@ All enumerated parts are considered important.
 
 We are not going to follow the template given above. For each considered design pattern we are going to cite the intent from \[5\], provide code in *Mathematica*, and discuss applications inside *Mathematica* or with *Mathematica*.
 
-- **Narration**
+## Narration
 
 It is accepted in technical and scientific writings to use plural voice or make neutral objective-like statements. Since Design Patterns were (and are) discovered in successful software that narrative style seems applicable. Understanding and applying Design Patterns, though, rely on extensive experience of software systems programming, maintaining, and utilization. Trying to apply them within a functional and rule based programming language like *Mathematica* inevitably requires a more personal perspective of programming and software goals. 
 
@@ -82,11 +82,11 @@ Because of these observations I am going to use first person narration where obj
 
 It seems appropriate at this point to discuss my past programming experiences.
 
-- **Personal experiences with Design Patterns**
+## Personal experiences with Design Patterns
 
 This section is mostly to provide some background of why want to discuss the implementation of Design Patterns in *Mathematica* and why I think they are useful to apply in large development projects.
 
-- Large scale air-pollution modeling
+### Large scale air-pollution modeling
 
 In 2001 I obtained my Ph.D. in applied mathematics for writing an OOP framework for the numerical simulation of large scale air pollution (and writing related articles and thesis). Air pollution simulations over continents like Europe are grand challenge problems that encompass several scientific sub-cultures: computational fluid dynamics, computational chemistry, computational geometry, and parallel programming. I did not want to just a produce an OOP framework for addressing this problem -- I wanted to produce the best OOP framework for the set of adopted methods to solve these kind of problems. 
 
@@ -98,15 +98,15 @@ In my Ph.D. thesis I showed how to prove that Design Patterns provide robust cod
 
 While working at Wolfram Research Inc. I re-implemented that framework in order to demonstrate the capabilities of grid *Mathematica*. (And that demo became quite popular and presented in different conferences in 2006 and 2007.) The re-implementation in top-level *Mathematica* code was done using Design Patterns, \[[6](http://library.wolfram.com/infocenter/Conferences/6532/)\].
 
-- Numerical integration
+### Numerical integration
 
 After joining Wolfram Research, Inc. I designed, developed, and documented the (large) numerical integration framework of [NIntegrate](http://reference.wolfram.com/language/tutorial/NIntegrateOverview.html). The implementation was done using both C and *Mathematica* and I used Design Patterns with both languages.
 
-- Other applications
+### Other applications
 
 In the last 9 years I have worked in the field of machine learning and data mining. I have used Design Patterns to implement digital media search engines, recommendation engines, and a broadcast scheduler. I use Design Patterns when I program larger projects in *Mathematica* or R and I always use Design Patterns when I program in Java and C++.
 
-- **Small example of Design Patterns in *Mathematica*** 
+## Small example of Design Patterns in Mathematica 
 
 After I answered the question "[Import and Plot Git Commit History](http://mathematica.stackexchange.com/questions/94706/import-and-plot-git-commit-history)" in *Mathematica* StackExchange, I realized that the problem and desired functionalities presented there are both complex enough and simple enough to make a good example of object-oriented implementation in *Mathematica* using Design Patterns. The package [GitHubPlots.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubPlots.m), \[[7](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubPlots.m)\], provides are "standard" implementation, and the package [GitHubDataObjects.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m), \[[8](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m)\], provides an implementation with Design Patterns.
 
@@ -144,17 +144,17 @@ Here is a list of notions I assume the readers of this document to be familiar w
 
 5. DownValues, SubValues.
 
-## Class inheritance
+# Class inheritance
 
 Inheritance is the fundamental implementation to understand. This section shows delegation to a more abstract class. The section "Template Method" shows how to make the ancestor delegation even more useful.
 
 Consider the following example. We have three classes C0, C1, and C2. The class C1 inherits C0, C2 inherits C1. We write this as $C0 \leftarrow C1 \leftarrow C2$.
 
-- **UML diagram**
+## UML diagram
 
 [![][5]][5]
 
-- **Implementation**
+## Implementation
 
 The basic idea is to use symbols` sub-values.
 
@@ -171,7 +171,7 @@ The basic idea is to use symbols` sub-values.
     C2[d_][s_] := C1[d][s]
     C2[{a_, b_, c_}]["f2"[]] := a^b;
 
-- **Experiments**
+## Experiments
 
 Here we define a C2 object:
 
@@ -236,11 +236,11 @@ The idea of the static inheritance is simple: (i) we take the sub-values of the 
 
 Note that the classes have the same definitions of the "delegated" function members. Using static inheritance we have saved copying and assigning code.
 
-- **UML diagram**
+## UML diagram
 
 [![][6]][6]
 
-- **Implementation**
+## Implementation
 
     Clear[C0, C1, C2]
 
@@ -267,7 +267,7 @@ Static inheritance $C1 \hookrightarrow C2:$
 
 pos is for the positions of the overridden methods.
 
-- **Experiments**
+## Experiments
 
 Here we define a C2 object:
 
@@ -308,7 +308,7 @@ It is instructional to see the definitions of the symbols defined above.
  
     C0[{a_,b_,c_,___}][f2[]]:=a+b+c
 
-## Template Method
+# Template Method
 
 Function invocation by delegation through inheritance is a good first step but by itself is not enough to employ OOP in a powerful way. The next step is to provide an invariant algorithm in the abstract class and delegate the concrete operations of that invariant algorithm to the descendants. This is nicely demonstrated with the design pattern [Template Method](https://en.wikipedia.org/wiki/Template_method_pattern) which is a fundamental micro-architectural solution in OOP.
 
@@ -316,7 +316,7 @@ Here is the "intent" of [Template Method](https://en.wikipedia.org/wiki/Template
 
 *Define the skeleton of an algorithm in an operation, deferring some steps to subclasses. Template Method lets subclasses redefine certain steps of an algorithm without changing the algorithm's structure.*
 
-- **Motivational example**
+## Motivational example
 
 *Mathematica* has the function Inner that perfectly demonstrates the usefulness of Template-Method-like functionality code breakdown.
 
@@ -352,11 +352,11 @@ These concrete implementations of op1 and op2 provide different functionalities 
 
 Note that for \_Mat objects the code above returns the result in MatrixForm.
 
-- **UML diagram**
+## UML diagram
 
 [![][8]][8]
 
-- **Implementation**
+## Implementation
 
 For the implementation of Template Method we basically combine sub-values with `Block`'s dynamic scoping. 
 
@@ -376,7 +376,7 @@ For the implementation of Template Method we basically combine sub-values with `
     ConcreteTwo[d_]["PrimitiveOperation1"[]] := d[[1]];
     ConcreteTwo[d_]["PrimitiveOperation2"[]] := d[[3]]^d[[2]];
 
-- **Experiments**
+## Experiments
  
  
     t = AbstractClass[{a, b, c}]
@@ -423,9 +423,9 @@ This trace shows the call for the abstract algorithm (template method) for a con
 
 [![][10]][10]
 
-- **Other concrete examples**
+## Other concrete examples
 
-- Template Method version of the motivational example 
+### Template Method version of the motivational example 
 
 Using the motivational example let us implement a class hierarchy adhering to the Template Method that provides an invariant algorithm and different specializations of its concrete operations.
 
@@ -453,7 +453,7 @@ $$ {a1x+A1X+b1y+B1Y \choose a2x+A2X+b2y+B2Y} $$
 
 Note that there is the question of the right selection of a Template Method descendant for a given pair of argument objects. There are creational Design Patterns that address these type of problems (Abstract Factory, Factory Method); see \[5\]. In *Mathematica* we can easily address that problem with pattern matching.
 
-- GitHubData
+### GitHubData
 
 The functionality of the main GitHub data class in \[5\] `GitHubData` is modified with the descendant object `GitHubDataMessageHyperlinks`
  so the ticks of the plots have hyperlinks to the github.com pages corresponding to the commits. The template method algorithm is the method "Plot", the primitive operations are "ParseData", "TickLabels", and "DatePoints". The class `GitHubDataMessageHyperlinks` provides its own implementation of "TickLabels" (making the ticks click-able).
@@ -468,11 +468,11 @@ Generally Strategy's structure is not needed in *Mathematica* because of the fun
 
 Nevertheless, we are going to give an implementation of Strategy that might be useful when prototyping in *Mathematica* and considering moving to production languages like C++ or Java. The implementation is essentially similar to the one given in the section "Inheritance". Here we are going to endow it with additional code to facilitate the use of the class hierarchy within several Design Patterns.
 
-- **UML diagram**
+## UML diagram
 
 [![][11]][11]
 
-- **Implementation**
+## Implementation
 
 
     Clear[Strategy, StrategyContext, "ConcreteStrategy*"]
@@ -489,7 +489,7 @@ Nevertheless, we are going to give an implementation of Strategy that might be u
 
     StrategyContext[sobj_]["ContextInterface"[classHeadQ_, args___]] := Print[If[classHeadQ, ToString[Head[sobj]] <> " : ", ""], sobj["AlgorithmInterface"[args]]];
 
-- **Experiments**
+## Experiments
 
 Here we create an object of StrategyContext using a concrete strategy object:
 
@@ -521,15 +521,15 @@ We can do something more elaborated and create a `StrategyContext` object initia
 
     (* {Null, Null, Null} *)
 
-- **Uses in *Mathematica***
+## Uses in Mathematica
 
 As it was mentioned above all second order functions (`Map`, `Fold`, `Nest`, `FixedPoint`, etc.) provide good examples of the functionality achieved by Strategy. Further, very often the algorithms specified by the Method option in different functions can be seen -- at least conceptually -- as playing within the Strategy design pattern.
 
-- **Other concrete examples**
+## Other concrete examples**
 
 The plotting functionality of the main GitHub data class in \[5\] `GitHubData` given by the method "Plot" is changed through the Strategy design pattern. The data member "PlotFunction" can be set to one of the functions GHDDateListPlot, GHDBarPlot, or GHDGraphics3D. In this way different plots are derived for the representation of the ingested GitHub data.
 
-## Composite
+# Composite
 
 The design pattern [Composite](https://en.wikipedia.org/wiki/Composite_pattern) allows the treatment of multiple objects as one. More formally Composite's intent is, \[5\]:
 
@@ -537,11 +537,11 @@ The design pattern [Composite](https://en.wikipedia.org/wiki/Composite_pattern) 
 
  A typical example is moving one or several desktop icons by mouse selection and dragging.
 
-- **UML diagram**
+## UML diagram
 
 [![][12]][12]
 
-- **Implementation**
+## Implementation
 
 
     Clear[Component, LeafOne, LeafTwo, Composite];
@@ -565,7 +565,7 @@ The design pattern [Composite](https://en.wikipedia.org/wiki/Composite_pattern) 
     Composite[{a_, b_, c_}, sm_]["GetChild"[i_Integer]] := sm[[i]];
     Composite[{a_, b_, c_}, sm_]["Operation"[]] := Map[#1["Operation"[]] &, sm];
 
-- **Experiments**
+## Experiments
 
 First we create concrete non-composite Component objects (leafs).
 
@@ -613,7 +613,7 @@ Here is code creating and operating a second composite object that uses the firs
 
     (* {a, {a, a^b^c}} *)
 
-- **Other concrete examples**
+## Other concrete examples
 
 The `GitHubData` object utilizes Composite to visualize the commit histories of a collection of GitHub repositories.
 
@@ -625,7 +625,7 @@ The design pattern [Decorator](https://en.wikipedia.org/wiki/Decorator_pattern) 
 
 A typical example is adding scroll-bars to screen outputs.
 
-- **Motivational example**
+## Motivational example
 
 Here is a core algorithm that takes randomly a specified number of words from a text:
 
@@ -648,11 +648,11 @@ Further, we might want to show in red certain special words:
 
 The two additional operations, imposing a window with scroll-bars and coloring of selected words, can be seen as operations that decorate the core algorithm.
 
-- **UML diagram**
+## UML diagram
 
 [![][13]][13]
 
-- **Implementation**
+## Implementation
 
 
     Clear[Component, ConcreteComponent, ConcreateDecoratorA, ConcreateDecoratorB, Decorator];
@@ -673,7 +673,7 @@ The two additional operations, imposing a window with scroll-bars and coloring o
     ConcreateDecoratorB[d_, component_][s_] := Block[{SELFHEAD = ConcreateDecoratorB}, Decorator[d, component][s]]
     ConcreateDecoratorB[d_, component_]["Operation"[]] := 1/Decorator[d, component]["Operation"[]];
 
-- **Experiments**
+## Experiments
 
 First we create concrete components.
 
@@ -725,13 +725,13 @@ Next we create concrete decorators that wrap around the component objects.
 
     (((a + b + c)^-h)^g)^f
 
-- **Other concrete examples**
+## Other concrete examples
 
 In \[[6](http://library.wolfram.com/infocenter/Conferences/6532/)\] Decorator was used to implement a Single Instruction Multiple Data (SIMD) parallel algorithm for handling the simulations.
 
 `GitHubData` objects use Decorator for changing of the font styles and the colors of graphs and charts. See \[[8](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/GitHubDataObjects.m)\].
 
-## Observer
+# Observer
 
 The design pattern Observer is fully implemented and supported in *Mathematica* through the functionalities of `Dynamic`, `Manipulate`, and related functions. Here for didactic purposes we show an implementation that predates the introduction of Dynamic (in version 6.0). 
 
@@ -747,13 +747,13 @@ Here is a slightly modified version an example from the function page for Dynami
 
 The example above allows to change the value in the input field by moving the arrow, and change arrow's direction by changing the input value. (This MVC behavior is similar in spirit to the one in the  motivational example for Observer in \[5\].)
 
-- **UML diagram**
+## UML diagram
 
 For Observer it is beneficial to see not just an structural UML diagram but also an UML interaction sequence diagram, see\[5\]. Here is shown just a structural one.
 
 [![][15]][15]
 
-Implementation
+## Implementation
 
     ClearAll[Subject, ConcreteSubject, Observer, ConcreteObserver, ConcreteObserverPlot];
 
@@ -782,7 +782,7 @@ Implementation
     ConcreteObserverPlot[d___][s_] := Block[{OBSERVERHEAD = ConcreteObserverPlot}, Observer[d][s]];
     ConcreteObserverPlot[id_Symbol]["Update"[]] := Grid[{{"observer id", "output"}, {id, Apply[Plot, ConcreteObserverPlot[id]["GetSubject"[]]["GetState"[]]]}}, Dividers -> All];
 
-- **Experiments**
+## Experiments
 
 First let us we create a concrete subject to be observed. 
 
@@ -849,11 +849,11 @@ The design pattern [Interpreter](https://en.wikipedia.org/wiki/Interpreter_patte
 
 Interpreter is a powerful design pattern that allows to approach the solution of re-occurring problems using Domain Specific Languages (DSL's). 
 
-- **UML diagram**
+## UML diagram
 
 [![][18]][18]
 
-- **Backus-Naur Form (BNF)**
+## Backus-Naur Form (BNF)
 
 The implementation -- and explanation -- of the design pattern [Interpreter](https://en.wikipedia.org/wiki/Interpreter_pattern) is based on the [Backus-Naur Form](https://en.wikipedia.org/wiki/Extended_Backus%C3%A2%C2%80%C2%93Naur_Form) (BNF). For each BNF rule we program a class that provides an interpretation for it. Interpreter traverses a tree of linked objects corresponding to the BNF rules.
 
@@ -870,7 +870,7 @@ Here is the BNF of a DSL for handling Boolean expressions of a certain type:
 
 ---
 
-- **Implementation**
+## Implementation
 
 The implementation follows the BNF in the previous section.
 
@@ -909,7 +909,7 @@ The implementation follows the BNF in the previous section.
     Client[___]["Operation"[context_ExpContext, expr_BooleanExp, ___]] := expr["Evaluate"[context]]
     Client[{context_ExpContext, expr_}]["Evaluate"] := expr["Evaluate"[context]]
 
-- **Experiments**
+## Experiments
 
 ---
 
@@ -942,13 +942,15 @@ The implementation follows the BNF in the previous section.
 
     (* True *)
 
-- **Other concrete examples**
+## Other concrete examples
 
 I designed and implemented `NIntegrate`'s `Method` option using the Interpreter design pattern. (That design was also applied to `NSum`.) See \[[9](http://www.wolfram.com/broadcast/video.php?c=400&v=1470)\] for brief details.
 
-- **Extension**
+## Extension
 
-Interpreter is probably my favorite design pattern and I have extended it with the package [FunctionalParsers.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m), \[[11](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m)\]. With that package we can overcome one of the serious limitations of Interpreter, its applicability to simple grammars, \[5\]. A sufficiently complex and concise application of the package [FunctionalParsers.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m) is given in my blog post "Natural language processing with functional parsers", \[[12](https://mathematicaforprediction.wordpress.com/2014/02/13/natural-language-processing-with-functional-parsers/)\]. 
+Interpreter is probably my favorite design pattern and I have extended it with the package [FunctionalParsers.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m), \[[11](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m)\]. 
+With that package we can overcome one of the serious limitations of Interpreter, its applicability to simple grammars, \[5\]. 
+A sufficiently complex and concise application of the package [FunctionalParsers.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m) is given in my blog post "Natural language processing with functional parsers", \[[12](https://mathematicaforprediction.wordpress.com/2014/02/13/natural-language-processing-with-functional-parsers/)\]. 
 
 For example here is the Extended BNF (EBNF) of a simple grammar for expressing food desires:
 
@@ -971,13 +973,12 @@ These commands show the parsing of different sentences of the grammar defined ab
     Magnify[#, 0.8] &@
      ParsingTestTable[pLOVEFOOD, ToLowerCase@sentences, "Layout" -> "Vertical"]
 
-      (* ParsingTestTable[pLOVEFOOD, {i love sushi, we demand 2 ice creams, you crave chocolate and milk}, Layout -> Vertical] *)
-
+ 
 [![][19]][19]
 
 At this point it is easy enough to develop interpreters for the parsed sentences.
 
-## Future plans
+# Future plans
 
 1. Implement the generation of UML object interaction sequence diagrams using Design Patterns implementations (in *Mathematica*).
 
