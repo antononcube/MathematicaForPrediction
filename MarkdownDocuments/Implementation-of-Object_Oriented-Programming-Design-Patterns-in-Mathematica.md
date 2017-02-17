@@ -377,7 +377,8 @@ For the implementation of Template Method we basically combine sub-values with `
     ConcreteTwo[d_]["PrimitiveOperation2"[]] := d[[3]]^d[[2]];
 
 - **Experiments**
-
+ 
+ 
     t = AbstractClass[{a, b, c}]
     t["Data"[]]
     t["TemplateMethod"[]]
@@ -473,6 +474,7 @@ Nevertheless, we are going to give an implementation of Strategy that might be u
 
 - **Implementation**
 
+
     Clear[Strategy, StrategyContext, "ConcreteStrategy*"]
 
     CLASSHEAD = Strategy;
@@ -540,6 +542,7 @@ The design pattern [Composite](https://en.wikipedia.org/wiki/Composite_pattern) 
 [![][12]][12]
 
 - **Implementation**
+
 
     Clear[Component, LeafOne, LeafTwo, Composite];
 
@@ -650,6 +653,7 @@ The two additional operations, imposing a window with scroll-bars and coloring o
 [![][13]][13]
 
 - **Implementation**
+
 
     Clear[Component, ConcreteComponent, ConcreateDecoratorA, ConcreateDecoratorB, Decorator];
 
