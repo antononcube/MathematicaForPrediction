@@ -70,11 +70,11 @@ The neighborhoods (zones) are separated by roads.
 
 The zones on the out-most circle are industrial zones -- people drive to them on daily basis.
 
-![](ItemItemRecommender-CircularCity1.png)
+![ItemItemRecommender-CircularCity1.png](http://i.imgur.com/LinRQap.png)
 
 ## Interface
 
-![](ItemItemRecommender-CircularCity2.png)
+![ItemItemRecommender-CircularCity2.png](http://i.imgur.com/Q1RnGVG.png)
 
 # A points-of-interest recommender 
 
@@ -84,17 +84,17 @@ Nearly 4000 different points-of-interest in the Champaign-Urbana area.
 
 ## All points of interest
 
-![](ItemItemRecommender-PointOfInterest1.png)
+![ItemItemRecommender-PointOfInterest1.png](http://i.imgur.com/VuFgruB.png)
 
 ## Screenshot of the recommender
 
-![](ItemItemRecommender-PointOfInterest2.png)
+![ItemItemRecommender-PointOfInterest2.png](http://i.imgur.com/X8Gjb20.png)
 
 # General recommender design
 
 This is the high-level design of the item-item recommender.
 
-![](ItemItemRecommender-GeneralRecommender1.png)
+![ItemItemRecommender-GeneralRecommender1.png](http://i.imgur.com/fvwcCjN.png)
 
 # General interface design
 
@@ -102,7 +102,7 @@ Using linear algebra algorithms to compute user profile and recommendations from
 
 Using Model-View-Controllers (MVC's) to tweak the outcomes.
 
-![](ItemItemRecommender-GeneralInterface1.png)
+![ItemItemRecommender-GeneralInterface1.png](http://i.imgur.com/t2LzNIm.png)
 
 (MVC is also known as the Observer Design Pattern.)
 
@@ -274,7 +274,7 @@ If we sort those numbers descendingly and plot them we get:
     nts = pnts // Sort // Reverse;
     ListPlot[pnts, PlotStyle -> {PointSize[0.015]}, Filling -> Axis, PlotRange -> All]
 
-![](ItemItemRecommender-OutlierDetection1.png)
+![ItemItemRecommender-OutlierDetection1.png)](http://i.imgur.com/JvP2EFO.png)
 
 Let use the following outlier detection algorithm: 
 1. Find all values in the list that are larger than the mean value multiplied by 1.5;
@@ -290,7 +290,7 @@ Lets plot all points in blue and the so found outliers in red:
 
     ListPlot[{pnts, Transpose[{pos, pnts[[pos]]}]}, PlotStyle -> {PointSize[0.015], PointSize[0.009]}, Filling -> Axis, PlotRange -> All]
 
-![](ItemItemRecommender-OutlierDetection2.png)
+![ItemItemRecommender-OutlierDetection2.png](http://i.imgur.com/ePefH2t.png))
 
 Instead of the mean value we can use another reference point, like the median value. Obviously, we can also use a multiplier different than 1.5.
 
@@ -302,13 +302,13 @@ The recommendation algorithm shown above uses sparse linear algebra, hence it is
 
 Making the computations in parallel is (almost) trivial.
 
-![](ItemItemRecommender-ComplexityAndScale1.png)
+![ItemItemRecommender-ComplexityAndScale1.png](http://i.imgur.com/L2A312j.png))
 
 ## Multi recommender structure
 
 One can hook-up several recommenders for items of different types and provide cross-domain recommendations.
 
-![](ItemItemRecommender-ComplexityAndScale2.png)
+![ItemItemRecommender-ComplexityAndScale2.png](http://i.imgur.com/frYFsS5.png))
 
 ## Complexity analysis
 
@@ -341,15 +341,15 @@ It is beneficial to give rigorous mathematical deviation of the "carousel proble
 
 ## Netflix
 
-![](ItemItemRecommender-Carousels1.png)
+![ItemItemRecommender-Carousels1.png](http://i.imgur.com/XYY2iRb.png)
 
 ## Bing for iPad
 
-![](ItemItemRecommender-Carousels2.png)
+![ItemItemRecommender-Carousels2.png](http://i.imgur.com/HlP1dd7.png)
 
 ## Design
 
-![](ItemItemRecommender-Carousels3.png)
+![ItemItemRecommender-Carousels3.png](http://i.imgur.com/FDBhalv.png)
 
 # Extensions: Recommendation Query Language
 
