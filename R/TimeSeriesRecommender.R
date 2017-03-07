@@ -85,7 +85,7 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     corRecs <- data.frame( Score = recVec, 
                            channel.itemId = rownames(recVec), 
                            recsItemSplit, 
-                           artistName = itemIdtoNameRules[ recsItemSplit$itemId ], 
+                           itemName = itemIdtoNameRules[ recsItemSplit$itemId ],
                            stringsAsFactors = FALSE, row.names = NULL  )
     if ( is.null(nrecs)) { corRecs } else { corRecs[ 1:nrecs, ] }
     
