@@ -31,6 +31,7 @@
 #
 #=======================================================================================
 
+library(stringr)
 
 #' @description Finds Time Series (TS) recommendations for specified search row ID and / or search vector ID
 #' @param timeSeriesMat a matrix with TS signals
@@ -78,22 +79,28 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
   
   if ( is.null(smr) ) {
     ## Use only the correlations of the TS matrix rows
-    
+
     recVec <- cor( as.matrix( t(timeSeriesMat) ), searchVector, method = method )
     recVec <- recVec[ order(-recVec[,1]), ,drop=FALSE]
-    recsItemSplit <- setNames( ldply( strsplit( rownames(recVec), ":" ), function(x) x ), c( "channel", "itemId" ) )
+    recsItemSplit <- setNames( as.data.frame( str_split_fixed( rownames(recVec), pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
+    if( mean( nchar( recsItemSplit$itemId ) ) < 1 ) {
+      recsItemSplit <- data.frame( channel = "None", itemId = rownames(recVec), stringsAsFactors = FALSE)
+    }
     corRecs <- data.frame( Score = recVec, 
                            channel.itemId = rownames(recVec), 
                            recsItemSplit, 
-                           itemName = itemIdtoNameRules[ recsItemSplit$itemId ],
+                           itemName = itemIDtoNameRules[ recsItemSplit$itemId ], 
                            stringsAsFactors = FALSE, row.names = NULL  )
     if ( is.null(nrecs)) { corRecs } else { corRecs[ 1:nrecs, ] }
     
   } else {
     ## Use the SMR object first, and then correlations between the TS matrix rows.
-    
+
     recs <- SMRRecommendationsByProfileVector( smr, searchVectorMat, nrecs = smr.nrecs )
-    recsItemSplit <- setNames( ldply( strsplit( recs$Item, ":" ), function(x) x ), c( "channel", "itemId" ) )
+    recsItemSplit <- setNames( as.data.frame( str_split_fixed( recs$Item, pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
+    if( mean( nchar( recsItemSplit$itemId ) ) < 1 ) {
+      recsItemSplit <- data.frame( channel = "None", itemId = recs$Item, stringsAsFactors = FALSE)
+    }
     dotRecs <- cbind( Score = recs$Score, 
                       channel.itemId = recs$Item, 
                       recsItemSplit, 
@@ -104,7 +111,10 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
       
       recVec <- cor( as.matrix( t(timeSeriesMat[ dotRecs$channel.itemId, ]) ), searchVector, method = method )
       recVec <- recVec[ order(-recVec[,1]), ,drop=FALSE]
-      recsItemSplit <- setNames( ldply( strsplit( rownames(recVec), ":" ), function(x) x ), c( "channel", "itemId" ) )
+      recsItemSplit <- setNames( as.data.frame( str_split_fixed( rownames(recVec), pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
+      if( mean( nchar( recsItemSplit$itemId ) ) < 1 ) {
+        recsItemSplit <- data.frame( channel = "None", itemId = rownames(recVec), stringsAsFactors = FALSE)
+      }
       corRecs <- data.frame( Score = recVec, 
                              channel.itemId = rownames(recVec), 
                              recsItemSplit, 
