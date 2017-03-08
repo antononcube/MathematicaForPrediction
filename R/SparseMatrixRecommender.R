@@ -43,7 +43,7 @@
 # History
 # Started: November 2013,
 # Updated: December 2013, May 2014, June 2014, July 2014, December 2014,
-# January 2016, June 2016.
+# January 2016, June 2016, September 2016.
 #=======================================================================================
 #
 # TODO Argument type and ranks check
@@ -102,6 +102,10 @@
 # 2016-06-08
 # Added functions for converting the SMR sparse matrices data into data frames
 # both (long and wide forms).
+#
+# 2016-09-12
+# Added a classification computation function for a profile vector based on
+# specified number of top NNs.
 #=======================================================================================
 
 #' @detail Required libraries
@@ -382,10 +386,36 @@ SMRRecommendationsByProfileVector <- function( smr, profileVec, nrecs ) {
 }
 
 
+#' @description Classify a profile vector into the column names of a tag type sub-matrix.
+#' @param smar sparse matrix recommender
+#' @param tagType tag type for which the classification is done
+#' @param profileVec is a sparse matrix with 1 row (a row from a sparse matrix)
+#' @param nTopNNs number of top nearest neighbors to be used in the derive the classificationß
+#' @param voting boolean should simple voting be used or a weighted sum
+SMRClassifyByProfileVector <- function( smr, tagType, profileVec, nTopNNs, voting = FALSE ) {
+ 
+  recs <- SMRRecommendationsByProfileVector( smr = smr, profileVec = profileVec, nrecs = nTopNNs )
+  
+  ## Assuming the class labels sub-matrix is relatively small we can do this:
+  ## clMat <- SMRSubMatrix( smr = smr, tagType = tagType )
+  ## It can be optimized  using a class label matrix member inside the SMR object.
+  ## Hopefully, this is quick enough in most cases:
+  clMat <- smr$M[ recs$Item, smr$TagTypeRanges[tagType, "Begin"] : smr$TagTypeRanges[tagType, "End"], drop=F ]
+  
+  if ( voting ) {
+    clMat@x[ clMat@x > 0 ] <- 1
+    recs$Score <- 1
+  }
+  s <- (recs$Score / max(recs$Score) ) %*% clMat[ recs$Item, , drop=F]
+  s <- data.frame( Score = s[1,], Label = colnames(s) )
+  s[ order(-s[,1]), ] 
+}
+
+
 #' @description Calculate profile vector from item history
 #' @param smr a sparse matrix recommendation object
 #' @param itemHistory a data frame with items history with column names c("Rating", "Item")
-SMRProfileVector <- function( smr, itemHistory ) {
+SMRProfileVector <- function( smr, itemHistory ) { 
   pinds <- match( itemHistory[,2], rownames(smr$M) )
   names(itemHistory) <- c("Rating", "Item")
   hvec <- sparseMatrix( i=rep(1,nrow(itemHistory)), j=pinds, x=itemHistory$Rating, dims=c(1,dim(smr$M)[1]) )
@@ -855,6 +885,19 @@ ConsumptionProfile.SMR <- function( x, historyItems, historyRatings, allColumns 
   } else {
     SMRProfileDF( x, data.frame( Rating = historyRatings, Item = historyItems, stringsAsFactors = FALSE ) )[, c("Score", "Tag")]
   }
+}
+
+#' @description Classify a profile vector into the column names of a tag type sub-matrix.
+#' @param x recommender object
+#' @param tagType tag type for which the classification is done
+#' @param profileVec is a sparse matrix with 1 row (a row from a sparse matrix)
+#' @param nTopNNs number of top nearest neighbors to be used in to derive the classification
+#' @param voting boolean should simple voting be used or a weighted sum
+ClassifyByProfileVector <- function( x, tagType, profileVec, nTopNNs, voting = FALSE ) UseMethod( "ClassifyByProfileVector" )
+
+#' @description Specialization of ClassifyByProfileVector for SMR objects.
+ClassifyByProfileVector.SMR <- function ( x, tagType, profileVec, nTopNNs, voting = FALSE ) {
+  SMRClassifyByProfileVector( smr = x, tagType = tagType, profileVec = profileVec, nTopNNs = nTopNNs, voting = voting )
 }
 
 ##===========================================================

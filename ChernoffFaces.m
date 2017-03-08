@@ -61,7 +61,7 @@
 
        Keys[ChernoffFace["FacePartsProperties"]]
 
-       {"FaceLength", "ForheadShape", "EyesVerticalPosition", "EyeSize", \
+       {"FaceLength", "ForeheadShape", "EyesVerticalPosition", "EyeSize", \
         "EyeSlant", "LeftEyebrowSlant", "LeftIris", "NoseLength", \
         "MouthSmile", "LeftEyebrowTrim", "LeftEyebrowRaising", "MouthTwist", \
         "MouthWidth", "RightEyebrowTrim", "RightEyebrowRaising", \
@@ -193,7 +193,7 @@ PrototypeDeviationsRescale[prototypeItem_, items_] :=
     ];
 
 (* This was the initial development ordering (in case need for debugging.) *)
-(*DefaultChernoffFaceParameters[] := <|"ForheadShape" -> 0.5,*)
+(*DefaultChernoffFaceParameters[] := <|"ForeheadShape" -> 0.5,*)
 (*"FaceLength" -> 0.5, "EyesVerticalPosition" -> 0.5,*)
 (*"LeftEyebrowTrim" -> 0.5, "RightEyebrowTrim" -> 0.5,*)
 (*"LeftEyebrowRaising" -> 0.5, "RightEyebrowRaising" -> 0.5,*)
@@ -206,7 +206,7 @@ PrototypeDeviationsRescale[prototypeItem_, items_] :=
 (*"MakeSymmetric" -> True|>;*)
 
 DefaultChernoffFaceParameters[] := <|
-  "FaceLength" -> 0.5, "ForheadShape" -> 0.5, "EyesVerticalPosition" -> 0.5,
+  "FaceLength" -> 0.5, "ForeheadShape" -> 0.5, "EyesVerticalPosition" -> 0.5,
   "EyeSize" -> 0.5, "EyeSlant" -> 0.5,
   "LeftEyebrowSlant" -> 0.5, "LeftIris" -> 0.5,
   "NoseLength" -> 0.5, "MouthSmile" -> 0.5,
@@ -286,7 +286,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
             MakeSymmetricChernoffFaceParameters[pars, ChernoffFace["Properties"]],
             Merge[{pars, ChernoffFace["Properties"]}, First]
           ];
-      forheadTh = 2*Round@Rescale[pars["ForheadShape"], {0, 1}, {2, 15}];
+      forheadTh = 2*Round@Rescale[pars["ForeheadShape"], {0, 1}, {2, 15}];
       faceLength = Rescale[pars["FaceLength"], {0, 1}, {2, 3}];
       eyesVerticalPos = Rescale[pars["EyesVerticalPosition"], {0, 1}, {0.2, 0.6}];
       eyebrLeftTrim = Rescale[pars["LeftEyebrowTrim"], {0, 1}, {0, 1}];

@@ -379,7 +379,8 @@ MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns
 #' @description Replaces each a column of a integer matrix with number of columns corresponding to the integer values.
 #' The matrix [[2,3],[1,2]] is converted to [[0,1,0,0,0,1],[1,0,0,0,1,0]] .
 #' @param mat an integer matrix to be converted to column value incidence matrix.
-ToColumnValueIncidenceMatrix <- function( mat ) {
+#' @param rowNames boolean should the row names of the argumnet be assigned to the result or not 
+ToColumnValueIncidenceMatrix <- function( mat, rowNames = TRUE ) {
  
    tmat <- as( mat, "dgCMatrix")
    df <- summary(tmat)
@@ -394,5 +395,7 @@ ToColumnValueIncidenceMatrix <- function( mat ) {
    
    ## Convinient way to check the implmentation:
    ## sparseMatrix( i = df$i, j = df$j, x = df$x, dims = c( nrow(mat), ncol(mat)*step ) )
-   sparseMatrix( i = df$i, j = df$j, x = rep(1,length(df$x)), dims = c( nrow(mat), ncol(mat)*step ) )
+   resMat <- sparseMatrix( i = df$i, j = df$j, x = rep(1,length(df$x)), dims = c( nrow(mat), ncol(mat)*step ) )
+   if ( rowNames ) { rownames(resMat) <- rownames(mat) }
+   resMat
 }

@@ -15,9 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov,
-	antononcube @ gmail.com,
-	Windermere, Florida, USA.
+    Written by Anton Antonov,
+    antononcube @ gmail.com,
+    Windermere, Florida, USA.
 *)
 
 (*
@@ -428,6 +428,23 @@ ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
         "ColumnNames" -> resColumnNames, "DimensionNames" -> DimensionNames[r1]]
     ];
 
+Clear[ImposeRowNames, ImposeColumnNames]
+ImposeRowNames[rmat_RSparseMatrix, rowNames : {_String ..}] :=
+    Block[{rmRowNames = RowNames[rmat], resMat, pos},
+      resMat =
+          Table[SparseArray[{0}, ColumnsCount[rmat]], {Length[rowNames]}];
+      resMat =
+          Fold[Function[{m, rn},
+            pos = Position[rowNames, RowNames[rmat][[rn]]];
+            If[Length[pos] == 0, m,
+              pos = pos[[1, 1]];
+              ReplacePart[m, pos -> rmat[[rn, All]]]
+            ]
+          ], resMat, Range[RowsCount[rmat]]];
+      ToRSparseMatrix[SparseArray[resMat], "RowNames" -> rowNames, "ColumnNames" -> ColumnNames[rmat]]
+    ];
+ImposeColumnNames[rmat_RSparseMatrix, colNames : {_String ..}] :=
+    Transpose[ImposeRowNames[Transpose[rmat], colNames]];
 
 (* Delegation to SparseArray functions *)
 

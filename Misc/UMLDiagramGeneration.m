@@ -198,7 +198,7 @@ SubValueReferenceRules[symbols:{_Symbol..}] :=
 (* UMLClassGraph                                         *)
 (*********************************************************)
 Clear[UMLClassGraph]
-Options[UMLClassGraph] = Join[Options[UMLClassNode], Options[Graph]];
+Options[UMLClassGraph] = Join[{"GraphFunction"->Graph}, Options[UMLClassNode], Options[Graph]];
 
 UMLClassGraph[symbols:{_Symbol..}, abstractMethodsPerSymbol : {_Rule ...} : {},
   symbolAssociations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
@@ -214,7 +214,11 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
               symbolAssociations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
               symbolAggregations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
               opts : OptionsPattern[]] :=
-    Block[{grRules = inheritanceRules, assocOpts, symbols},
+    Block[{grRules = inheritanceRules, assocOpts, symbols, graphFunc},
+
+      graphFunc = OptionValue[UMLClassGraph,"GraphFunction"];
+      If[ TrueQ[ graphFunc === Automatic || !MemberQ[{Graph,Graph3D}, graphFunc]], graphFunc = Graph ];
+
       symbols = Union[Flatten[List @@@ Join[inheritanceRules,symbolAssociations, symbolAggregations]]];
       grRules = Map[
         Which[
@@ -229,14 +233,14 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
           Join[grRules,
             Map[Property[#, EdgeShapeFunction -> UMLAggregationEdgeFunc] &,
               symbolAggregations]];
-      Graph[grRules,
+      graphFunc[grRules,
         VertexLabels ->
             Map[# ->
                 UMLClassNode[#, "EntityColumn" -> OptionValue["EntityColumn"],
                   "Abstract" ->
                       Flatten[Join[{# /. Append[abstractMethodsPerSymbol, _ -> {}]},
                         OptionValue["Abstract"]]]] &, symbols],
-        Sequence @@ DeleteCases[{opts}, ("EntityColumn" -> _) | ("Abstract" -> _)]]
+        Sequence @@ DeleteCases[{opts}, ("EntityColumn" -> _) | ("Abstract" -> _) | ("GraphFunction" -> _) ]]
     ];
 
 End[] (* `Private` *)

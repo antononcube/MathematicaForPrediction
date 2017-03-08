@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube @ gmail . com, 
 	Windermere, Florida, USA.
 *)
 
@@ -28,26 +27,26 @@
  *) 
 
  <preamble> = 'find' | 'compute' | 'calculate' | 'show' ;
- <weather-spec-straight> = ( ( 'temperature' | 'pressure' | 'wind' , 'speed' ) \[LeftTriangle] ( 'of' | 'for' ) ) , <city-spec> <@ TSWeatherSpec[#]& ;
- <weather-spec-reverse> = [ 'the' ] \[RightTriangle] <city-spec> , ( 'temperature' | 'pressure' | 'wind' , 'speed' ) <@ TSWeatherSpec[Reverse[#]]& ;
+ <weather-spec-straight> = ( ( 'temperature' | 'pressure' | 'wind' , 'speed' ) <& ( 'of' | 'for' ) ) , <city-spec> <@ TSWeatherSpec[#]& ;
+ <weather-spec-reverse> = [ 'the' ] &> <city-spec> , ( 'temperature' | 'pressure' | 'wind' , 'speed' ) <@ TSWeatherSpec[Reverse[#]]& ;
  <weather-spec> = <weather-spec-straight> | <weather-spec-reverse> ;
  <city-spec> = '_LetterString' | '_LetterString' , [ ',' ] , '_LetterString' , [ [ ',' ] , '_LetterString' ] <@ TSCitySpec[Flatten[{#}]]& ;
  <company-spec> = '_String' <@ TSCompanySpec ;
- <finance-spec-straight> = ( [ 'the' ] \[RightTriangle] ( [ 'stock' ] \[RightTriangle] 'price' | 'trade' \[RightTriangle] 'volume' ) \[LeftTriangle] [ 'of' | 'for' ] ) , <company-spec> <@ TSFinancialData ;
- <finance-spec-reverse> =  [ 'the' ] \[RightTriangle] <company-spec> , ( [ 'stock' ] \[RightTriangle] 'price' | 'trade' \[RightTriangle] 'volume' ) <@ TSFinancialData[Reverse[#]]& ;
+ <finance-spec-straight> = ( [ 'the' ] &> ( [ 'stock' ] &> 'price' | 'trade' &> 'volume' ) <& [ 'of' | 'for' ] ) , <company-spec> <@ TSFinancialData ;
+ <finance-spec-reverse> =  [ 'the' ] &> <company-spec> , ( [ 'stock' ] &> 'price' | 'trade' &> 'volume' ) <@ TSFinancialData[Reverse[#]]& ;
  <finance-spec> = <finance-spec-straight> | <finance-spec-reverse> ; 
- <past-data-spec> = [ 'the' ] \[RightTriangle] 'last' , [ 'loaded' ] , ( 'data' | 'file' ) <@ TSPastData[Flatten[{#}]]& ;
+ <past-data-spec> = [ 'the' ] &> 'last' , [ 'loaded' ] , ( 'data' | 'file' ) <@ TSPastData[Flatten[{#}]]& ;
  <data-spec> = <weather-spec> | <finance-spec> | <past-data-spec> ;
  <regression-quantile-bsplines> = [ ( '1' | 'one' | 'a' ) ] , 'regression' , 'quantile' | 'quantile' , 'regression' <@ TSBSplineQRegression[1]& ;
- <regression-quantiles-bsplines> = [ 'Range[1,40]' ] \[LeftTriangle] ( 'regression' , 'quantiles' ) <@ TSBSplineQRegression[#]& ;
+ <regression-quantiles-bsplines> = [ 'Range[1,40]' ] <& ( 'regression' , 'quantiles' ) <@ TSBSplineQRegression[#]& ;
  <regression-quantiles> = <regression-quantile-bsplines> |  <regression-quantiles-bsplines> ;
- <outliers> = [ 'the' ] \[RightTriangle] [ ( 'top' | 'bottom' | 'largest' | 'smallest' | 'all' ) ] , 'outliers' <@ TSOutliers[Flatten[#]]& ;
- <least-squares> = ( 'least' , 'squares' , [ 'fit' ] , [ 'with' | 'of' ] ) \[RightTriangle] '_String' <@ TSLeastSquaresFit[#]& ;
+ <outliers> = [ 'the' ] &> [ ( 'top' | 'bottom' | 'largest' | 'smallest' | 'all' ) ] , 'outliers' <@ TSOutliers[Flatten[#]]& ;
+ <least-squares> = ( 'least' , 'squares' , [ 'fit' ] , [ 'with' | 'of' ] ) &> '_String' <@ TSLeastSquaresFit[#]& ;
  <operation-spec> = <regression-quantiles> | <least-squares> | <outliers> ;
- <operate-command> = [ <preamble> ] \[RightTriangle] <operation-spec> <@ TSOperateCommand[#]& ;
- <operate-on-data-command> = <operate-command> , ( 'for' | 'on' | 'in'  | 'over' | 'of' ) \[RightTriangle] <data-spec> <@ TSOperateOnDataCommand[#]& ;
- <load-file-command> = ( 'load' , [ 'data' ] , 'file'  ) \[RightTriangle] ( '_String' ) <@ TSLoadFile[#]& ;
- <load-data-command> = ( 'load' , [ 'the' ] , [ 'data' ] ) \[RightTriangle] <data-spec> <@ TSLoadData[#]& ;
+ <operate-command> = [ <preamble> ] &> <operation-spec> <@ TSOperateCommand[#]& ;
+ <operate-on-data-command> = <operate-command> , ( 'for' | 'on' | 'in'  | 'over' | 'of' ) &> <data-spec> <@ TSOperateOnDataCommand[#]& ;
+ <load-file-command> = ( 'load' , [ 'data' ] , 'file'  ) &> ( '_String' ) <@ TSLoadFile[#]& ;
+ <load-data-command> = ( 'load' , [ 'the' ] , [ 'data' ] ) &> <data-spec> <@ TSLoadData[#]& ;
  <start-over> = 'start' , 'over' | 'clear' <@ TSStartOver[Flatten[{#}]]& ;
  <clear-graphics> = 'clear' , ( 'plots' | 'plots' | 'graphics' ) <@ TSClearGraphics ;
  <what-operations> = 'what' , ( ( 'operations' , 'are'  |  [ 'are' ] , [ 'the' ] , 'operations' ) , [ 'implemented' | 'in' ] ) | [ 'what' ] , ( 'operation' | 'operations' ) , ( 'I' , 'can' | 'to' ) , ( 'use' | 'do' ) <@ TSWhatOperations[Flatten[{#}]]& ;

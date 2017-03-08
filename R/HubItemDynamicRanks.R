@@ -16,8 +16,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ## 
 ## Written by Anton Antonov, 
-## antononcube@gmail.com, 
-## 7320 Colbury Ave, 
+## antononcube @ gmail . com, 
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
@@ -91,35 +90,50 @@ PowerMethod <- function( mat, bvec, alpha, maxSteps = 100, tol = 10^(-6) ) {
 }
 
 #' @description Makes the adjacency matrix of a bi-partite graph connecting.
-#' @param hubItemScoresArray data frame with columns HubID, ItemID, Score, Awarded
-MakeBiPartiteGraphMatrix <- function ( hubItemScoresArray ) {
+#' @param hubItemScoresArray data frame or data table with columns 
+#' @param hubIDColName hub ID column name
+#' @param itemIDColName item ID column name
+#' @param hubItemScoreColName the column name of a hub-to-item scores; if NULL contingency values are used
+#' @param itemHubScoreColName the column name of a item-to-hub scores; if NULL contingency values are used
+#' @param columnStochastic should the resulting matrix be made column stochastic
+#' @return A list of three elements: matrix M, hub-to-index data frame Hubs, item-to-index data frame Items.
+MakeBiPartiteGraphMatrix <- function( hubItemScoresArray,
+                                      hubIDColName = "HubID", itemIDColName  = "ItemID", 
+                                      hubItemScoreColName = NULL, itemHubScoreColName  = NULL,
+                                      columnStochastic = TRUE ) {
   
-  hubIDs = unique( hubItemScoresArray[,c("HubID")] )
-  itemIDs = unique( hubItemScoresArray[,c("ItemID")] )
+  if ( sum( class(hubItemScoresArray) %in% "data.frame" ) == 0 ) {
+    stop( "The argument hubItemScoresArray is expected to be a data frame or a data table.", call. = TRUE )
+  }
+
+  if ( is.null(hubItemScoreColName) ) {
+    bmat1 <- xtabs( as.formula( paste( hubItemScoreColName, "~", hubIDColName, "+", itemIDColName ) ), hubItemScoresArray, sparse=TRUE ) 
+  } else {
+    bmat1 <- xtabs( as.formula( paste( "~", hubIDColName, "+", itemIDColName ) ), hubItemScoresArray, sparse=TRUE )
+  }
   
-  names(hubItemScoresArray) <- c( "HubID", "ItemID", "HubItemScore", "ItemHubScore" )
+  if ( is.null(itemHubScoreColName) ) {
+    bmat2 <- xtabs( as.formula( paste( "~", itemIDColName, "+", hubIDColName ) ), hubItemScoresArray, sparse=TRUE )
+  } else {
+    bmat2 <- xtabs( as.formula( paste( itemHubScoreColName, "~", itemIDColName, "+", hubIDColName ) ), hubItemScoresArray, sparse=TRUE )
+  }
   
-  
-  hubDF <- data.frame( HubID = hubIDs, HubIndex = 1:length(hubIDs) )
-  itemDF <- data.frame( ItemID = itemIDs, ItemIndex = length(hubIDs) + ( 1:length(itemIDs) ) )
-  
-  tempPTA <- hubItemScoresArray[,c( "HubID", "ItemID", "HubItemScore", "ItemHubScore" )]
-  
-  tempPTA <- join( x = tempPTA, y = hubDF, by = "HubID" )
-  tempPTA <- join( x = tempPTA, y = itemDF, by = "ItemID" )
-  
-  tempPTA <- tempPTA[, c("HubIndex", "ItemIndex", "HubItemScore", "ItemHubScore") ]
-  
-  
-  tempPTA <- rbind( setNames( tempPTA[, c( "HubIndex", "ItemIndex", "HubItemScore" ) ], c( "Index1", "Index2", "Score" ) ),
-                    setNames( tempPTA[, c( "ItemIndex", "HubIndex", "ItemHubScore" ) ], c( "Index1", "Index2", "Score" ) ) )
-  
-  bmat <- xtabs( Score ~ Index2 + Index1, tempPTA, sparse=TRUE )
+  hhZeroMat <- sparseMatrix( i = c(1), j = c(1), x=c(0), dims = c( nrow(bmat1), nrow(bmat1) ) )
+  iiZeroMat <- sparseMatrix( i = c(1), j = c(1), x=c(0), dims = c( ncol(bmat1), ncol(bmat1) ) )
+  bmat <- rBind( cBind( hhZeroMat, bmat1 ), cBind( bmat2, iiZeroMat ) )
   
   # make the matrix column stochastic
-  colNorms <- sqrt( colSums( bmat * bmat ) )
-  bmat <- bmat %*% Diagonal( x = 1 / ifelse( colNorms > 0, colNorms, 1) )
-  
+  if ( columnStochastic ) {
+     colNorms <- sqrt( colSums( bmat * bmat ) )
+     bmat <- bmat %*% Diagonal( x = 1 / ifelse( colNorms > 0, colNorms, 1) )
+  }
+
+  hubDF <- data.frame( HubID = rownames(bmat1), Index = 1:nrow(bmat1), stringsAsFactors = FALSE )
+  itemDF <- data.frame( ItemID = rownames(bmat2), Index = (1:nrow(bmat2)) + nrow(bmat1), stringsAsFactors = FALSE )
+
+  rownames(bmat) <- c( rownames(bmat1), rownames(bmat2) )
+  colnames(bmat) <- c( rownames(bmat1), rownames(bmat2) )
+
   list( M = bmat, Hubs = hubDF, Items = itemDF )
 }
 
@@ -219,7 +233,7 @@ HubItemRanks <- function( hubsAndItemsMat, hubIDs, hubTags, tagSets,
 #' @param tagSets list of lists of strings
 #' @param tset list of strings
 NearestTagSets <- function(tagSets, tset) {
-  ds <- dlply( tagSets, function(x) c( length(pmatch( tset, x )) / length(x), x ) )
+  ds <- dlply( tagSets, function(x) c( length(intersect( tset, x )) / length(x), x ) )
   names(ds) <- c("Score","TagSet")
   ds <- ds[ rev(order(ds$Score)) ]
   if ( ds$Score[1] == 0 ) {

@@ -109,13 +109,35 @@
 
   ### Handling of variable ranges
 
-    Explicit nesting in "UnitCubeRescaling" has to be done:
+    Using variable dependent ranges works "out of the box":
 
     NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, x, 12},
-      Method -> {"UnitCubeRescaling",
-          Method -> {LebesgueIntegration, "PointGenerator" -> Random}},
+      Method -> {LebesgueIntegration, "PointGenerator" -> Random},
       PrecisionGoal -> 3]
 
+
+  ### Handling of infinite ranges
+
+    In order to get correct results with infinite ranges the wrapper
+
+      Method->{"UnitCubeRescaling","FunctionalRangesOnly"->False, _}
+
+    has to be used:
+
+    NIntegrate[1/(x + y)^2, {x, 1, 2}, {y, 0, Infinity},
+      Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False,
+        Method -> {LebesgueIntegration, "PointGenerator" -> Random}},
+      PrecisionGoal -> 3]
+
+    For some integrands we have to specify inter-range points or larger MinRecursion.
+
+     NIntegrate[1/(x^2), {x, 1, Infinity}]
+     (* 1. *)
+
+     NIntegrate[1/(x^2), {x, 1, 12, Infinity},
+       Method -> {"UnitCubeRescaling", "FunctionalRangesOnly" -> False,
+         Method -> {LebesgueIntegrationRule, "Points" -> 1000}}]
+     (* 0.999466 *)
 
   ## Usage as an integration rule
 
@@ -252,7 +274,6 @@ LebesgueIntegration /:
     Block[{method, RNGenerator, npoints, pointwiseMeasure, lebesgueIntegralVar,
       t, symbproctime},
 
-
       t = NIntegrate`GetMethodOptionValues[LebesgueIntegration, LebesgueIntegrationProperties, strOpts];
 
       (* Method *)
@@ -296,6 +317,7 @@ LebesgueIntegration /:
       ];
 
       If[TrueQ[lebesgueIntegralVar === Automatic], lebesgueIntegralVar = f ];
+
 
       LebesgueIntegration[{method, nfs, ranges, RNGenerator, pointwiseMeasure, npoints, lebesgueIntegralVar, symbproctime}]
     ];

@@ -1,0 +1,67 @@
+
+(*
+    Time specifications grammar in EBNF
+    Copyright (C) 2016  Anton Antonov
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	Written by Anton Antonov,
+	antononcube @ gmail . com,
+	Windermere, Florida, USA.
+*)
+
+(* Version 0.7 *)
+
+(* This grammar is intended to be parsed by the functions in the Mathematica package FunctionalParses.m at GitHub,
+   see https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
+   In order to parse this grammar specification copy all of the grammar rule lines and paste them within
+   a pair of string quotes.
+ *)
+
+<time-interval> = <time-interval-spec> | <number-of-time-units> | <week-of-year> | <month-of-year> ;
+<time-unit> = 'hour' | 'day' | 'week' | 'month' | 'year' | 'lifetime' ;
+<time-units> = 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'lifetimes' ;
+<number-of-time-units> = <number> , <time-units> | ( 'a' | 'one' ) , <time-unit> ;
+<named-time-intervals> =  <day-name-relative> | <time-interval-relative> ;
+<time-interval-relative> = [ 'the' ] &> ( 'next' | 'last' ) , ( <time-unit> | ( 'few' | <number> ) , <time-units> ) ;
+<time-interval-spec> =  'between' , <time-spec> , 'and' , <time-spec> \
+| 'from' , <time-spec> , 'to' , <time-spec> | [ 'in' | 'during' ] &> \
+<named-time-intervals> | 'between' , <number> , 'and' , \
+<number-of-time-units> ;
+<time-spec> = <right-now> | <day-name> | <week-number> |  \
+<week-of-year> | <month-name> | <month-of-year> | <holiday-name> | \
+<hour-spec> | <holiday-offset> <@ TimeSpec[If[ListQ[#],Flatten[#],#]]& ;
+<right-now> = 'now' | 'right' , 'now' | 'just' , 'now' ;
+<day-name-relative> = 'today' | 'yesterday' | 'tomorrow' | 'the' , 'day' , 'before' , 'yesterday' ;
+<day-name-long> = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday' ;
+<day-name-long-plurals> = 'mondays' | 'tuesdays' | 'wednesdays' | 'thursdays' | 'fridays' | 'saturdays' | 'sundays' ;
+<day-name-abbr> = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' ;
+<day-name> = <day-name-long> | <day-name-abbr> | <day-name-long-plurals> ;
+<week-number> = 'week' , <week-number-range> ;
+<week-number-range> = 'Range[1,52]' ;
+<week-of-year> = [ 'the' ] , 'week' , <week-number-range>  , 'of' , <year> ;
+<month-name-long> = 'january' | 'february' | 'march' | 'april' | \
+'may' | 'june' | 'july' | 'august' | 'september' | 'october' | \
+'november' | 'december' ;
+<month-name-abbr> = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec' ;
+<month-name> = <month-name-long> | <month-name-abbr> ;
+<month-of-year> = <month-name> , [ 'of' ] , <year> ;
+<year> = 'year' , <year-number-range> | <year-number-range> ;
+<year-number-range> = 'Range[2000,2012]' ;
+<holiday-name> = 'ramadan' | 'christmas' | 'thanksgiving' | \
+'memorial' , 'day' | 'lincoln' , 'day' | 'new' , 'year' | 'mother' , 'day' ;
+<holiday-offset> = <number-of-time-units> , ( 'before' | 'after' ) , <holiday-name> ;
+<number> = '_?NumberQ' ;
+<hour-spec> = 'Range[0,23]' , [ ( 'am' | 'pm' ) ] ;
+<full-date-spec> = ( <number> , <month-name> | <month-name> , <number> ) , <number> , [ <number> , ( 'am' | 'pm' ) ] ;
