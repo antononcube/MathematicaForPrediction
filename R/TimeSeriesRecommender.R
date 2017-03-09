@@ -69,7 +69,7 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     }
     
   } 
-  
+
   ## Search vector for the correlation matrices
   if ( !is.null( searchRowID ) && !is.null( searchVector ) )  {
     searchVector <- timeSeriesMat[ searchRowID, ] + searchVector
@@ -109,6 +109,7 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     
     if ( method != 'dot' ) {
       
+      ## assertthat::assert_that( mean(dotRecs$channel.itemId %in% rownames(timeSeriesMat)) == 1 )
       recVec <- cor( as.matrix( t(timeSeriesMat[ dotRecs$channel.itemId, ]) ), searchVector, method = method )
       recVec <- recVec[ order(-recVec[,1]), ,drop=FALSE]
       recsItemSplit <- setNames( as.data.frame( str_split_fixed( rownames(recVec), pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
@@ -127,3 +128,51 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     }
   }
 }
+
+##===========================================================
+## Object-Oriented Programming implementations (S3)
+##===========================================================
+## TSCorrSMR objects are lists with elements
+##    list( TSMat = <time series matrix>, SMR = <SMR Object>, ClassLabelsMat = <sparse matrix>, 
+##          CorrelationMethod = "pearson", SMRNRecs = 2000, ItemIDtoNameRules = NULL )
+## and attribute 
+##    class(...) = "TSCorrSMR"
+## The dimensions of TSMat and SMR$M have to be the same.
+
+#' @description Specialization of ClassifyByProfileVector for TSCorrSMR objects.
+#' @param x a TSCorrSMR object
+#' @param tagType dummy variable one of the tag types of x$SMR
+ClassifyByProfileVector.TSCorrSMR <- function ( x, profileVec, nTopNNs, voting = FALSE ) {
+  
+  itemIDtoNameRules = x$ItemIDtoNameRules
+  if ( is.null(itemIDtoNameRules) ) { 
+    itemIDtoNameRules = setNames( rownames(x$SMR$M01), rownames(x$SMR$M01) ) 
+  }  
+    
+  # if ( !( tagType %in% x$SMR$TagTypes ) ) {
+  #   stop( "The argument tagType is expected to be one of the tag types of x$SMR .", call. = TRUE )
+  # }
+  
+  recs <- TSPSRCorrelationNNs( timeSeriesMat = x$TSMat, 
+                               smr = x$SMR, 
+                               itemIDtoNameRules = itemIDtoNameRules,
+                               searchVector = profileVec,
+                               nrecs = nTopNNs,
+                               smr.nrecs = x$SMRNRecs, 
+                               method = x$CorrelationMethod )
+  
+  names(recs) <- gsub( "itemName", "Item", names(recs) )
+  
+  ## This code is copied from SMRClassifyByProfileVector -- 
+  ##  read the comments in that code.
+  clMat <- x$ClassLabelsMat
+  
+  if ( voting ) {
+    clMat@x[ clMat@x > 0 ] <- 1
+    recs$Score <- 1
+  }
+  s <- (recs$Score / max(recs$Score) ) %*% clMat[ recs$Item, , drop=F]
+  s <- data.frame( Score = s[1,], Label = colnames(s), stringsAsFactors = FALSE )
+  s[ order(-s[,1]), ] 
+}
+
