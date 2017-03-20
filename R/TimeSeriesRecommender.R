@@ -139,6 +139,45 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
 ##    class(...) = "TSCorrSMR"
 ## The dimensions of TSMat and SMR$M have to be the same.
 
+#' @description Specialization of Recommendations for TSCorrSMR objects.
+Recommendations.TSCorrSMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
+
+  itemIDtoNameRules = x$ItemIDtoNameRules
+  if ( is.null(itemIDtoNameRules) ) { 
+    itemIDtoNameRules = setNames( rownames(x$SMR$M01), rownames(x$SMR$M01) ) 
+  }  
+
+  if ( length(historyItems) > length(historyRatings) ) { 
+    historyRatings <- rep_len( historyRatings, length.out = length(historyItems) )
+  }
+    
+  if ( length(historyItems) != length(historyRatings) ) {
+    stop( "The lengths of historyItems and historyRatings are expected to be the same.", call. = TRUE )
+  }
+  
+  if ( mean( historyItems %in% rownames(x$TSMat) ) < 1 ) {
+    stop( "Some elements of historyItems are not in the rownames(x$TSMat).", call. = TRUE )
+  }
+  
+  dMat <- sparseMatrix(  i = rep(1,length(historyItems)), j = 1:length(historyItems), x = historyRatings )
+  profileVec <- as.numeric( dMat %*% x$TSMat[ historyItems, , drop=F] )
+  
+  recs <- TSPSRCorrelationNNs( timeSeriesMat = x$TSMat, 
+                               smr = x$SMR, 
+                               itemIDtoNameRules = itemIDtoNameRules,
+                               searchVector = profileVec,
+                               nrecs = nrecs + if( removeHistory ) { length(historyItems) } else { 0 },
+                               smr.nrecs = x$SMRNRecs, 
+                               method = x$CorrelationMethod )
+  names(recs) <- gsub( "itemName", "Item", names(recs) )
+
+  recs <- recs[ , c("Score", "Item") ]
+  if ( removeHistory ) {
+    recs[ !( recs$Item %in% historyItems ), ]
+  }
+  recs
+}
+
 #' @description Specialization of ClassifyByProfileVector for TSCorrSMR objects.
 #' @param x a TSCorrSMR object
 #' @param tagType dummy variable one of the tag types of x$SMR
