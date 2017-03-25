@@ -91,6 +91,7 @@ library(ggplot2)
 #' @param classificationType a value for the type argument of predict
 #' @param classificationThreshold if classificationType is "prob" the threshold is used to determine the success label
 #' @param varTypePrefixes prefixes of variable types, if NULL the importance of individual variables is returned
+#' @param .progress is passed to plyr::ldply
 #' @return Several types of data frames a returned depending on the arguments.
 #' If varTypePrefixes == NULL and successLabel != NULL a data frame with column names c("Variable", "TPR", "FPR") .
 #' If varTypePrefixes == NULL and successLabel == NULL a data frame with column names c("Variable", "Accuracy") .
@@ -99,7 +100,7 @@ library(ggplot2)
 AccuracyByVariableShuffling <- function( classifier,
                                          testData, trainColInds = NULL, 
                                          successLabel = NULL, classificationType = "prob", classificationThreshold = 0.5,
-                                         varTypePrefixes = NULL ) {
+                                         varTypePrefixes = NULL, .progress = "none" ) {
 
     if ( is.null( varTypePrefixes ) ) {
       loopVarNames <-names(testData)[1:(ncol(testData)-1)]
@@ -180,7 +181,7 @@ AccuracyByVariableShuffling <- function( classifier,
         data.frame( "Variable" = vn, "Accuracy" = mean(clSuccess), stringsAsFactors = FALSE )
       }
       
-    }, .progress = "time" )
+    }, .progress = .progress )
   
   colnames(res) <- c( varColName, colnames(res)[-1] )
   
