@@ -98,95 +98,134 @@ library(ggplot2)
 #' If varTypePrefixes != NULL and successLabel != NULL a data frame with column names c("VariablePrefix", "TPR", "FPR") .
 #' If varTypePrefixes != NULL and successLabel == NULL a data frame with column names c("VariablePrefix", "Accuracy") .
 AccuracyByVariableShuffling <- function( classifier,
-                                         testData, trainColInds = NULL, 
+                                         testData, trainColInds = NULL,
                                          successLabel = NULL, classificationType = "prob", classificationThreshold = 0.5,
                                          varTypePrefixes = NULL, .progress = "none" ) {
 
-    if ( is.null( varTypePrefixes ) ) {
-      loopVarNames <-names(testData)[1:(ncol(testData)-1)]
-      varColName <- "Variable"
-    } else {
-      loopVarNames <- varTypePrefixes
-      varColName <- "VariablePrefix"
-    }
-  
+  if ( is.null( varTypePrefixes ) ) {
+    loopVarNames <-names(testData)[1:(ncol(testData)-1)]
+    varColName <- "Variable"
+  } else {
+    loopVarNames <- varTypePrefixes
+    varColName <- "VariablePrefix"
+  }
+
   if ( is.null(trainColInds) ) {
     testDF <- testData
   } else {
     testDF <- testData[ , trainColInds ]
   }
-  
+
   dataLabelIndex <- ncol(testDF)
-    
-  res <- 
-    ldply( c( "None", loopVarNames ), function(vn) {
-      
-      if ( is.null(varTypePrefixes) ) {
-        
-        if( vn %in% colnames(testDF) ) {
-          testDF[ , vn ] <- sample( testDF[ , vn ] )
-        }
-        
-      } else {
-        
-        if ( vn != "None" ) {
-          testDF <- Reduce( f = function(rdf, v) { rdf[, v] <- sample( rdf[, v]); rdf }, 
-                            init = testDF, 
-                            x =  grep( pattern = paste0( "^", vn), x = names(testDF), fixed = F ) )
-        }
-        
-      }
-      
-      if ( !is.null( successLabel ) ) {
-  
-        # This is expected to return a matrix the columns of which correspond to class labels
-        # and the entries are probabilities.
-        clRes <- predict( classifier, testDF[, -dataLabelIndex ],  type = "prob" ) 
-      
-        # The alternative of this check is more robust.
-        # if ( ! is.null(classfier$classes) && !( successLabel %in% classfier$classes ) ) {
-        if ( ! (successLabel %in% colnames(clRes) ) ) {
-          stop( "The given successLabel is not in classifier$classes", call. = TRUE )
-        }
-      
-        nonSuccessLabel <- paste0( "Not.", successLabel )
-        
-        testLabels <- as.character(testDF[ , dataLabelIndex])
-        testLabels[ testLabels != successLabel ] <- nonSuccessLabel
-          
-        clSuccessDF <- xtabs( ~  Label + Predicted, 
-                              data.frame( Predicted = ifelse( clRes[,successLabel] >= classificationThreshold, successLabel, nonSuccessLabel ), 
-                                          Label = testLabels,
-                                          stringsAsFactors = FALSE) )
-        clSuccessDF <- clSuccessDF / rowSums(clSuccessDF) 
 
-        if( !( successLabel %in% colnames(clSuccessDF) ) ) { 
-          clSuccessDF <- cbind( successLabel = 0, clSuccessDF) 
-          colnames( clSuccessDF ) <- c( successLabel, colnames(clSuccessDF)[-1] )
-        }
-        if( !( nonSuccessLabel %in% colnames(clSuccessDF) ) ) { 
-          clSuccessDF <- cbind( nonSuccessLabel = 0, clSuccessDF ) 
-          colnames( clSuccessDF ) <- c( nonSuccessLabel, colnames(clSuccessDF)[-1] )
-        }
+  res <-
+  ldply( c( "None", loopVarNames ), function(vn) {
 
-        data.frame( "Variable" = vn, "TPR" = clSuccessDF[ successLabel, successLabel ], "FPR" = clSuccessDF[ nonSuccessLabel, successLabel ],
-                    stringsAsFactors = FALSE)
-        
-      } else {
-        
-        clRes <- predict( classifier, testDF[, -dataLabelIndex ] ) 
-        # clSuccessDF <- xtabs( ~  Label + Predicted,  data.frame( Predicted = clRes, Label = testDF[ , -dataLabelIndex] ) )
-        clSuccess <- as.character(clRes) == as.character( testDF[ , dataLabelIndex] )
-        
-        data.frame( "Variable" = vn, "Accuracy" = mean(clSuccess), stringsAsFactors = FALSE )
+    if ( is.null(varTypePrefixes) ) {
+
+      if( vn %in% colnames(testDF) ) {
+        testDF[ , vn ] <- sample( testDF[ , vn ] )
       }
-      
-    }, .progress = .progress )
-  
+
+    } else {
+
+      if ( vn != "None" ) {
+        testDF <- Reduce( f = function(rdf, v) { rdf[, v] <- sample( rdf[, v]); rdf },
+        init = testDF,
+        x =  grep( pattern = paste0( "^", vn), x = names(testDF), fixed = F ) )
+      }
+
+    }
+
+    if ( !is.null( successLabel ) ) {
+
+      # This is expected to return a matrix the columns of which correspond to class labels
+      # and the entries are probabilities.
+      clRes <- predict( classifier, testDF[, -dataLabelIndex ],  type = "prob" )
+
+      # The alternative of this check is more robust.
+      # if ( ! is.null(classfier$classes) && !( successLabel %in% classfier$classes ) ) {
+      if ( ! (successLabel %in% colnames(clRes) ) ) {
+        stop( "The given successLabel is not in classifier$classes", call. = TRUE )
+      }
+
+      nonSuccessLabel <- paste0( "Not.", successLabel )
+
+      testLabels <- as.character(testDF[ , dataLabelIndex])
+      testLabels[ testLabels != successLabel ] <- nonSuccessLabel
+
+      clSuccessDF <- xtabs( ~  Label + Predicted,
+      data.frame( Predicted = ifelse( clRes[,successLabel] >= classificationThreshold, successLabel, nonSuccessLabel ),
+      Label = testLabels,
+      stringsAsFactors = FALSE) )
+      clSuccessDF <- clSuccessDF / rowSums(clSuccessDF)
+
+      if( !( successLabel %in% colnames(clSuccessDF) ) ) {
+        clSuccessDF <- cbind( successLabel = 0, clSuccessDF)
+        colnames( clSuccessDF ) <- c( successLabel, colnames(clSuccessDF)[-1] )
+      }
+      if( !( nonSuccessLabel %in% colnames(clSuccessDF) ) ) {
+        clSuccessDF <- cbind( nonSuccessLabel = 0, clSuccessDF )
+        colnames( clSuccessDF ) <- c( nonSuccessLabel, colnames(clSuccessDF)[-1] )
+      }
+
+      data.frame( "Variable" = vn, "TPR" = clSuccessDF[ successLabel, successLabel ], "FPR" = clSuccessDF[ nonSuccessLabel, successLabel ],
+      stringsAsFactors = FALSE)
+
+    } else {
+
+      clRes <- predict( classifier, testDF[, -dataLabelIndex ] )
+      # clSuccessDF <- xtabs( ~  Label + Predicted,  data.frame( Predicted = clRes, Label = testDF[ , -dataLabelIndex] ) )
+      clSuccess <- as.character(clRes) == as.character( testDF[ , dataLabelIndex] )
+
+      data.frame( "Variable" = vn, "Accuracy" = mean(clSuccess), stringsAsFactors = FALSE )
+    }
+
+  }, .progress = .progress )
+
   colnames(res) <- c( varColName, colnames(res)[-1] )
-  
+
   ## Sort descendingly, but keep 'None' on top.
   res[ c( 1, 1 + order( res[,2][-1] ) ), ]
+}
+
+
+#' @description
+#' @param classResMat classification matrix with probabilities
+#' @param range range of thresholds
+#' @param .progress parameter for ldply
+#' @return Returns a data frame with three columns: Threshold, TPR, FPR.
+#' @details The first column of the argument classResMat is assumed to be the success label.
+ROCValues <- function( classResMat, testLabels, range = seq(0,1,0.05), .progress = "none" ) {
+
+  successLabel <- colnames(classResMat)[[1]]
+  nonSuccessLabel <- paste0( "Not.", successLabel )
+
+  testLabels[ testLabels != successLabel ] <- nonSuccessLabel
+
+  ldply( range, function(th) {
+
+    clSuccessDF <- xtabs( ~  Label + Predicted,
+    data.frame( Predicted = ifelse( classResMat[,successLabel] >= th, successLabel, nonSuccessLabel ),
+    Label = testLabels,
+    stringsAsFactors = FALSE) )
+    clSuccessDF <- clSuccessDF / rowSums(clSuccessDF)
+
+    if( !( successLabel %in% colnames(clSuccessDF) ) ) {
+      clSuccessDF <- cbind( successLabel = 0, clSuccessDF)
+      colnames( clSuccessDF ) <- c( successLabel, colnames(clSuccessDF)[-1] )
+    }
+    if( !( nonSuccessLabel %in% colnames(clSuccessDF) ) ) {
+      clSuccessDF <- cbind( nonSuccessLabel = 0, clSuccessDF )
+      colnames( clSuccessDF ) <- c( nonSuccessLabel, colnames(clSuccessDF)[-1] )
+    }
+
+    data.frame( "Threshold" = th,
+    "TPR" = clSuccessDF[ successLabel, successLabel ],
+    "FPR" = clSuccessDF[ nonSuccessLabel, successLabel ],
+    stringsAsFactors = FALSE)
+
+  }, .progress = .progress )
 }
 
 #' @description Gives visual representation of the vatiable importance data.
@@ -198,26 +237,28 @@ AccuracyByVariableShuffling <- function( classifier,
 VariableImportancePlot <- function( varImportanceData, nTopVars = min(30,nrow(varImportanceData) ), title = NULL ) {
 
   if( mean( c( "FPR", "TPR" )  %in% colnames( varImportanceData ) ) == 1 ) {
-    
+
     ggplot( varImportanceData ) +
-      geom_point( aes( x = FPR, y = TPR ), color='blue' ) + 
-      geom_text( data = varImportanceData[1:nTopVars,], 
-                 aes(label = varImportanceData[1:nTopVars,1], x = FPR, y = TPR), 
-                 hjust = 1, vjust = runif(min=-2,max=2,n=nTopVars) ) + 
-      geom_point( data = varImportanceData[ varImportanceData[,1] == "None", ], aes(x = FPR, y = TPR), color="red" ) +
-      ggtitle( title )
-    
+    geom_point( aes( x = FPR, y = TPR ), color='blue' ) +
+    geom_text( data = varImportanceData[1:nTopVars,],
+    aes(label = varImportanceData[1:nTopVars,1], x = FPR, y = TPR),
+    hjust = 1, vjust = runif(min=-2,max=2,n=nTopVars) ) +
+    geom_point( data = varImportanceData[ varImportanceData[,1] == "None", ], aes(x = FPR, y = TPR), color="red" ) +
+    ggtitle( title )
+
   } else {
-    
+
     df <- cbind( SortIndex = 1:nrow(varImportanceData), varImportanceData[ order(varImportanceData$Accuracy), ] )
     ggplot(df) +
-      geom_point( aes( x = SortIndex, y = Accuracy ), color='blue' ) + 
-      geom_text( data = df[1:nTopVars,], 
-                 aes(label = df[1:nTopVars,2], x = SortIndex, y = Accuracy ), 
-                 hjust = -0.5, vjust = runif(min=-2,max=2,n=nTopVars) ) + 
-      geom_point( data = df[ df[,1] == "None", ], aes(x = SortIndex, y = Accuracy), color="red" ) +
-      ggtitle( title )
-    
+    geom_point( aes( x = SortIndex, y = Accuracy ), color='blue' ) +
+    geom_text( data = df[1:nTopVars,],
+    aes(label = df[1:nTopVars,2], x = SortIndex, y = Accuracy ),
+    hjust = -0.5, vjust = runif(min=-2,max=2,n=nTopVars) ) +
+    geom_point( data = df[ df[,1] == "None", ], aes(x = SortIndex, y = Accuracy), color="red" ) +
+    ggtitle( title )
+
   }
-  
+
 }
+
+
