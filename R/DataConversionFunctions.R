@@ -386,7 +386,8 @@ ToColumnValueIncidenceMatrix <- function( mat, rowNames = TRUE, colNames = TRUE 
    tmat <- as( mat, "dgCMatrix")
    df <- summary(tmat)
    df <- data.frame(df)
-   minInt <- min(mat); maxInt <- max(mat)
+   #minInt <- min(mat); maxInt <- max(mat)
+   minInt <- min(tmat@x); maxInt <- max(tmat@x)
    step <- maxInt - minInt + 1
 
    if( min(df$x) <= 0 ) {
