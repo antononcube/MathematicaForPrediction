@@ -73,34 +73,34 @@ TagBasketsMatrixIntoItemTagMatrix <- function( itemTagMat ) {
 FileColumnsIngest <- function( fname, sep="\t", expectedColumns=3, header=TRUE, apply.iconv = TRUE ) {
   con <- file(fname, "rb")
   if ( apply.iconv ) {
-    rawContent <- iconv( readLines(con) ) 
+    rawContent <- iconv( readLines(con) )
   } else {
     rawContent <- readLines(con)
   }
   close(con)  # close the connection to the file, to keep things tidy
-  
+
   # for each line in rawContent
   # count the number of delims and compare that number to expectedColumns
   indexToOffenders <-
     laply(rawContent, function(x) {
-      length(gregexpr(sep, x)[[1]]) != (expectedColumns-1)  
-    }) 
-  
+      length(gregexpr(sep, x)[[1]]) != (expectedColumns-1)
+    })
+
   # triplets <- read.csv2(rawContent[-indxToOffenders], header=TRUE, sep=cdelim)
   if ( sum(indexToOffenders) > 0 ) {
     rawContent <- rawContent[-indexToOffenders]
   }
-  
-  triplets <- 
-    ldply( rawContent, function(x) { 
-      if ( is.null(x) ) { 
-        NULL 
-      } else { 
+
+  triplets <-
+    ldply( rawContent, function(x) {
+      if ( is.null(x) ) {
+        NULL
+      } else {
         res <- strsplit(x, sep )
-        if ( is.null(res) || length(res) == 0 ) { NULL } else { res[[1]] } 
+        if ( is.null(res) || length(res) == 0 ) { NULL } else { res[[1]] }
       }
     } )
-  
+
   if ( header ) {
     names(triplets) <- triplets[1,]
     triplets <- triplets[-1,]
@@ -157,7 +157,7 @@ TripletsToSparseArray <-  function( triplets ) {
                         dims=c( length(itemIDs), length(propertyIDs) )  )
   rownames(smat) <- itemIDs
   colnames(smat) <- propertyIDs
-  
+
   # I don't think we need the rules arrays. We can always re-create them if needed.
   #list( Matrix=smat, ItemIDToIndex=itemIDToIndex, PropertyIDToIndex=propertyIDToIndex )
   smat
@@ -170,7 +170,7 @@ SparseMatrixToTriplets <- function( smat ) {
   # Use summary() over sparse matrix.
   # Then using rules over the indices.
   triplets <- summary(smat)
-  
+
   # Rules
   if( !is.null(colnames(smat)) && !is.null(rownames(smat)) ) {
     rowRules <- 1:nrow(smat)
@@ -180,7 +180,7 @@ SparseMatrixToTriplets <- function( smat ) {
     triplets$i <- names( rowRules[ triplets$i ] )
     triplets$j <- names( colRules[ triplets$j ] )
   }
-  
+
   triplets
 }
 
@@ -189,19 +189,19 @@ SparseMatrixToTriplets <- function( smat ) {
 #' @param rowIDs an array of row ID's
 #' @param smat a matrix with named rows
 ImposeRowIDs <- function( rowIDs, smat ) {
-  
+
   missingRows <- setdiff( rowIDs, rownames(smat) )
   nMissingRows <- length( missingRows )
-  
+
   if ( nMissingRows > 0 ) {
     # Rows are missing in the matrix
     complMat <- sparseMatrix(i=c(1), j=c(1), x=c(0), dims = c( nMissingRows, ncol(smat) ) )
-    
+
     rownames(complMat) <- missingRows
     colnames(complMat) <- colnames(smat)
-    
+
     smat <- rBind( smat, complMat )
-  } 
+  }
   # At this point each element of rowIDs should have a corresponding row in the matrix
   smat[rowIDs,,drop=FALSE]
 }
@@ -210,7 +210,7 @@ ImposeRowIDs <- function( rowIDs, smat ) {
 #' @param colIDs an array of col ID's
 #' @param smat a matrix with named columns
 ImposeColumnIDs <- function( colIDs, smat ) {
-  
+
   t( ImposeRowIDs( colIDs, t(smat)) )
 }
 
@@ -234,21 +234,21 @@ MakePiecewiseFunction <- function( points, tags=NULL ) {
     warning("The second argument is expected to be NULL or a numeric list.", call.=TRUE )
     return( NULL )
   }
-  
+
   points <- sort(points)
-  
+
   if ( is.null( tags ) ) {
     tags <- 0:length(points)
   }
-  
-  funcStr <- paste( "function(x){ ( x <=" , points[1], " ) *", tags[1] ) 
-  
+
+  funcStr <- paste( "function(x){ ( x <=" , points[1], " ) *", tags[1] )
+
   for( i in 1:(length(points)-1) ) {
     funcStr <- paste( funcStr, "+  (", points[i], "< x & x <=", points[i+1], ")*", tags[i+1] )
   }
-  
+
   funcStr <- paste( funcStr, "+ (", points[length(points)], " < x )*", tags[length(points)+1], "}" )
-  
+
   eval( parse( text=funcStr ) )
 }
 
@@ -257,19 +257,19 @@ MakePiecewiseFunction <- function( points, tags=NULL ) {
 #' @param itemIDName 
 #' @param nTagsPerField number of tags per field of the column colName in itemRows
 IngestMultiValuedDataColumn <- function( itemRows, tagTypeColName, itemIDColName = "ID", nTagsPerField = 12, split = "," ) {
-  
+
   spdf <- str_split_fixed( itemRows[, tagTypeColName], pattern = split, n=nTagsPerField )
   spdf <- as.data.frame( spdf, stringsAsFactors = FALSE )
   for( i in 1:ncol(spdf) ) {
     spdf[[i]] <- gsub( pattern = "^\\W", replacement = "", spdf[[i]] )
   }
   names( spdf ) <- paste( "tag", 1:nTagsPerField, sep="_" )
-  
+
   tags.itemRows <- cbind( "id"=itemRows[[itemIDColName]], spdf )
-  
+
   tags.itemRows$'tag_1'[ tags.itemRows$'tag_1' == "N/A" ] <- NA
   tags.itemRows <- tags.itemRows[ !is.na( tags.itemRows$'tag_1' ), ]
-  
+
   ## In order to fit the sparse matrix creation
   tags <- unique( do.call(c, spdf) )
   tags <- data.frame( 'id'=1:length(tags), 'name'=tags[order(tags)] )
@@ -278,7 +278,7 @@ IngestMultiValuedDataColumn <- function( itemRows, tagTypeColName, itemIDColName
     tags.itemRows[[i]] <- tagToIDRules[ tags.itemRows[[i]] ]
   }
   names(tags.itemRows) <- c( "id", paste( "tag_id", 1:nTagsPerField, sep="_" ) )
-  
+
   # result
   list( tags = tags, tags.items = tags.itemRows )
 }
@@ -294,29 +294,29 @@ IngestMovieDataColumn <- IngestMultiValuedDataColumn
 #' Obviously, the dependence of the SMRCreateItemTagMatrix can be removed.
 ConvertMultiColumnDataFrameToSparseMatrix <- function( multiColDF, itemColName, tagTypeColNames ) {
 
-  emptyColumns <- laply( tagTypeColNames, function(tt) mean( is.na( multiColDF[,tt] ) ) == 1 ) 
+  emptyColumns <- laply( tagTypeColNames, function(tt) mean( is.na( multiColDF[,tt] ) ) == 1 )
 
   if ( sum( !emptyColumns ) < 1 ) {
     stop( "All tag columns are empty.", call. = TRUE )
   }
   tagTypeColNames <- tagTypeColNames[ !emptyColumns ]
-  
+
   ## Find all the sub-matrices with for the tag types
   gmats <- llply( tagTypeColNames, function( tt ) {
     SMRCreateItemTagMatrix( dataRows = multiColDF, itemColumnName = itemColName, tagType = tt )
   } )
-  
+
   ## Find all tags
   allTags <- unique( unlist( llply( gmats, colnames ) ) )
   allIDs <- unique( unlist( llply( gmats, rownames ) ) )
 
   ## Impose the tags to all tags matrices
   gmats <- llply( gmats, function(m) { ImposeRowIDs( allIDs, ImposeColumnIDs( allTags, m ) ) })
-  
+
   ## Sum the tag matrices into one matrix
   gmat <- gmats[[1]]
   for( i in 2:length(gmats) ) { gmat <- gmat + gmats[[i]] }
-  
+
   gmat
 }
 
@@ -332,47 +332,47 @@ ConvertMultiColumnDataFrameToSparseMatrix <- function( multiColDF, itemColName, 
 #' @param rightOverlap vector of weights for the neighboring columns to right
 #' @param colnamesPrefix prefix for the columns names
 MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns, breaks = 10, leftOverlap = NULL, rightOverlap = NULL, colnamesPrefix = "" ) {
-  
+
   if( is.numeric( breaks ) && length( breaks ) == 1 ) {
     d0 <- min(data[[colNameForColumns]]); d1 <- max(data[[colNameForColumns]])
-    breaks <- seq( d0, d1, (d1-d0)/(breaks-1) )    
+    breaks <- seq( d0, d1, (d1-d0)/(breaks-1) )
   }
-  
+
   smat <- data[ , c(colNameForRows, colNameForColumns) ]
   qF <- MakePiecewiseFunction( breaks )
   smat <- cbind( smat, parts = laply( smat[[colNameForColumns]], qF ) )
   smat <- xtabs( as.formula( paste( "~", colNameForRows, "+ parts") ), smat, sparse = TRUE )
   colnames(smat) <- paste( colnamesPrefix, colnames(smat), sep="" )
-  
+
   if ( !is.null( leftOverlap ) && !is.null( rightOverlap ) ) {
     genMat <- smat
   }
-  
+
   if ( !is.null( leftOverlap ) ) {
-    
+
     addMat <- smat
     zeroCol <- sparseMatrix(  i = c(1), j = c(1), x = 0, dims = c( nrow(smat), 1 ) )
-    
+
     for( w in rev(leftOverlap) ) {
       addMat <- addMat[,2:ncol(addMat)]
       addMat <- cBind( addMat, zeroCol )
       smat <- smat + w * addMat
     }
   }
-  
+
   if ( !is.null( rightOverlap ) ) {
-    
+
     if ( is.null( leftOverlap ) ) { addMat <- smat } else { addMat <- genMat }
-    
+
     zeroCol <- sparseMatrix(  i = c(1), j = c(1), x = 0, dims = c( nrow(smat), 1 ) )
-    
+
     for( w in rightOverlap ) {
       addMat <- addMat[,1:(ncol(addMat)-1)]
       addMat <- cBind( zeroCol, addMat )
       smat <- smat + w * addMat
     }
   }
-  
+
   smat
 }
 
@@ -381,18 +381,22 @@ MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns
 #' @param mat an integer matrix to be converted to column value incidence matrix.
 #' @param rowNames boolean should the row names of the argumnet be assigned to the result or not 
 ToColumnValueIncidenceMatrix <- function( mat, rowNames = TRUE ) {
- 
+
    tmat <- as( mat, "dgCMatrix")
    df <- summary(tmat)
    df <- data.frame(df)
    minInt <- min(mat); maxInt <- max(mat)
    step <- maxInt - minInt + 1
-   
+
+   if( min(df$x) <= 0 ) {
+      warning( "The non-zero values of the matrix are expected to be positive integers.")
+   }
+
    df$j <- ( df$j - 1 ) * step + df$x
    ## In other words we are doing this:
-   ## triplets <- ddply( .data = df, .variables = .(i,j), 
+   ## triplets <- ddply( .data = df, .variables = .(i,j),
    ##                   .fun = function(row) { c(row[[1]], (row[[2]]-1)*step + row[[3]], 1) })
-   
+
    ## Convinient way to check the implmentation:
    ## sparseMatrix( i = df$i, j = df$j, x = df$x, dims = c( nrow(mat), ncol(mat)*step ) )
    resMat <- sparseMatrix( i = df$i, j = df$j, x = rep(1,length(df$x)), dims = c( nrow(mat), ncol(mat)*step ) )
