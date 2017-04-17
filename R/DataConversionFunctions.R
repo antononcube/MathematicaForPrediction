@@ -377,7 +377,7 @@ MakeMatrixByColumnPartition <- function( data, colNameForRows, colNameForColumns
 }
 
 #' @description Replaces each a column of a integer matrix with number of columns corresponding to the integer values.
-#' The matrix [[2,3],[1,2]] is converted to [[0,1,0,0,0,1],[1,0,0,0,1,0]] .
+#' The matrix [[2,3],[1,2]] is converted to [[0,0,1,0,0,0,0,1],[0,1,0,0,0,0,1,0]] .
 #' @param mat an integer matrix to be converted to column value incidence matrix.
 #' @param rowNames boolean to assign or not the result matrix row names to be the argument matrix row names
 #' @param colNames boolean to assign or not the result matrix column names derived from the argument matrix column names
@@ -386,27 +386,28 @@ ToColumnValueIncidenceMatrix <- function( mat, rowNames = TRUE, colNames = TRUE 
    tmat <- as( mat, "dgCMatrix")
    df <- summary(tmat)
    df <- data.frame(df)
-   #minInt <- min(mat); maxInt <- max(mat)
+   # minInt <- min(mat,na.rm = T); maxInt <- max(mat,na.rm = T)
    minInt <- min(tmat@x); maxInt <- max(tmat@x)
-   step <- maxInt - minInt + 1
+   #step <- maxInt - minInt + 1 ## this isincorrect df$j computed as  df$j <- ( df$j - 1 ) * step + df$x
+   step <- maxInt + 1
 
-   if( min(df$x) <= 0 ) {
-      warning( "The non-zero values of the matrix are expected to be positive integers.", call. = TRUE)
+   if( min(df$x) < 0 ) {
+      warning( "The non-zero values of the matrix are expected to be non-negative integers.", call. = TRUE)
    }
 
-   df$j <- ( df$j - 1 ) * step + df$x
+   df$j <- ( df$j - 1 ) * step + df$x + 1
    ## In other words we are doing this:
    ## triplets <- ddply( .data = df, .variables = .(i,j),
-   ##                   .fun = function(row) { c(row[[1]], (row[[2]]-1)*step + row[[3]], 1) })
+   ##                   .fun = function(row) { c(row[[1]], (row[[2]]-1)*step + row[[3]] + 1, 1) })
 
    ## Convinient way to check the implmentation:
-   ## sparseMatrix( i = df$i, j = df$j, x = df$x, dims = c( nrow(mat), ncol(mat)*step ) )
+   ## resMat <- sparseMatrix( i = df$i, j = df$j, x = df$x, dims = c( nrow(mat), ncol(mat)*step ) )
    resMat <- sparseMatrix( i = df$i, j = df$j, x = rep(1,length(df$x)), dims = c( nrow(mat), ncol(mat)*step ) )
    
    if ( rowNames ) { rownames(resMat) <- rownames(mat) }
-   
+
    if ( colNames ) { 
-     colnames(resMat) <- laply( colnames(mat), function(x) paste(x, minInt:maxInt, sep = ".") )
+     colnames(resMat) <- as.character(unlist(Map( function(x) { print(x); paste(x, 0:maxInt, sep = ".") }, colnames(mat))))
    }
    
    resMat
