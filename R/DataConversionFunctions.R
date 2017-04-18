@@ -407,7 +407,7 @@ ToColumnValueIncidenceMatrix <- function( mat, rowNames = TRUE, colNames = TRUE 
    if ( rowNames ) { rownames(resMat) <- rownames(mat) }
 
    if ( colNames ) { 
-     colnames(resMat) <- as.character(unlist(Map( function(x) { print(x); paste(x, 0:maxInt, sep = ".") }, colnames(mat))))
+     colnames(resMat) <- as.character(unlist(Map( function(x) { paste(x, 0:maxInt, sep = ".") }, colnames(mat))))
    }
    
    resMat
