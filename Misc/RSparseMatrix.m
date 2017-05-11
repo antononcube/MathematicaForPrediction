@@ -247,8 +247,8 @@ MatrixPlot[RSparseMatrix[obj_], args___] ^:=
 
 (*Sums*)
 
-RowSums[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"]];
-ColumnSums[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"], {2}];
+RowSums[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"], {2}];
+ColumnSums[rmat_RSparseMatrix] := Total[rmat[[1]]["sparseArray"]];
 
 Total[rmat_RSparseMatrix, args___] ^:= Total[rmat[[1]]["sparseArray"], args];
 
