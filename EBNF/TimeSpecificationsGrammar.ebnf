@@ -27,7 +27,7 @@
    see https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
    In order to parse this grammar specification either:
     - copy all of the grammar rule lines and paste them within a pair of string quotes, or
-    - use Get.
+    - use Get in Mathematica.
  *)
 
 "
@@ -35,7 +35,7 @@
 <time-unit> = 'hour' | 'day' | 'week' | 'month' | 'year' | 'lifetime' ;
 <time-units> = 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'lifetimes' ;
 <number-of-time-units> = <number> , <time-units> | ( 'a' | 'one' ) , <time-unit> ;
-<named-time-intervals> =  <day-name-relative> | <time-interval-relative> ;
+<named-time-intervals> =  <day-name-relative> | <time-interval-relative> | <month-name> ;
 <time-interval-relative> = [ 'the' ] &> ( 'next' | 'last' ) , ( <time-unit> | ( 'few' | <number> ) , <time-units> ) ;
 <time-interval-spec> =  'between' , <time-spec> , 'and' , <time-spec> \
 | 'from' , <time-spec> , 'to' , <time-spec> | [ 'in' | 'during' ] &> \
@@ -58,9 +58,9 @@
 'november' | 'december' ;
 <month-name-abbr> = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec' ;
 <month-name> = <month-name-long> | <month-name-abbr> ;
-<month-of-year> = <month-name> , [ 'of' ] , <year> ;
+<month-of-year> = <month-name> , [ 'of' ] , [ <year> ] ;
 <year> = 'year' , <year-number-range> | <year-number-range> ;
-<year-number-range> = 'Range[2000,2012]' ;
+<year-number-range> = 'Range[1900,2100]' ;
 <holiday-name> = 'ramadan' | 'christmas' | 'thanksgiving' | \
 'memorial' , 'day' | 'lincoln' , 'day' | 'new' , 'year' | 'mother' , 'day' ;
 <holiday-offset> = <number-of-time-units> , ( 'before' | 'after' ) , <holiday-name> ;
