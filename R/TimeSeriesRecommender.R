@@ -31,6 +31,7 @@
 #
 #=======================================================================================
 
+library(stringr)
 
 #' @description Finds Time Series (TS) recommendations for specified search row ID and / or search vector ID
 #' @param timeSeriesMat a matrix with TS signals
@@ -68,7 +69,7 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     }
     
   } 
-  
+
   ## Search vector for the correlation matrices
   if ( !is.null( searchRowID ) && !is.null( searchVector ) )  {
     searchVector <- timeSeriesMat[ searchRowID, ] + searchVector
@@ -78,22 +79,28 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
   
   if ( is.null(smr) ) {
     ## Use only the correlations of the TS matrix rows
-    
+
     recVec <- cor( as.matrix( t(timeSeriesMat) ), searchVector, method = method )
     recVec <- recVec[ order(-recVec[,1]), ,drop=FALSE]
-    recsItemSplit <- setNames( ldply( strsplit( rownames(recVec), ":" ), function(x) x ), c( "channel", "itemId" ) )
+    recsItemSplit <- setNames( as.data.frame( str_split_fixed( rownames(recVec), pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
+    if( mean( nchar( recsItemSplit$itemId ) ) < 1 ) {
+      recsItemSplit <- data.frame( channel = "None", itemId = rownames(recVec), stringsAsFactors = FALSE)
+    }
     corRecs <- data.frame( Score = recVec, 
                            channel.itemId = rownames(recVec), 
                            recsItemSplit, 
-                           itemName = itemIdtoNameRules[ recsItemSplit$itemId ],
+                           itemName = itemIDtoNameRules[ recsItemSplit$itemId ], 
                            stringsAsFactors = FALSE, row.names = NULL  )
     if ( is.null(nrecs)) { corRecs } else { corRecs[ 1:nrecs, ] }
     
   } else {
     ## Use the SMR object first, and then correlations between the TS matrix rows.
-    
+
     recs <- SMRRecommendationsByProfileVector( smr, searchVectorMat, nrecs = smr.nrecs )
-    recsItemSplit <- setNames( ldply( strsplit( recs$Item, ":" ), function(x) x ), c( "channel", "itemId" ) )
+    recsItemSplit <- setNames( as.data.frame( str_split_fixed( recs$Item, pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
+    if( mean( nchar( recsItemSplit$itemId ) ) < 1 ) {
+      recsItemSplit <- data.frame( channel = "None", itemId = recs$Item, stringsAsFactors = FALSE)
+    }
     dotRecs <- cbind( Score = recs$Score, 
                       channel.itemId = recs$Item, 
                       recsItemSplit, 
@@ -102,9 +109,13 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     
     if ( method != 'dot' ) {
       
+      ## assertthat::assert_that( mean(dotRecs$channel.itemId %in% rownames(timeSeriesMat)) == 1 )
       recVec <- cor( as.matrix( t(timeSeriesMat[ dotRecs$channel.itemId, ]) ), searchVector, method = method )
       recVec <- recVec[ order(-recVec[,1]), ,drop=FALSE]
-      recsItemSplit <- setNames( ldply( strsplit( rownames(recVec), ":" ), function(x) x ), c( "channel", "itemId" ) )
+      recsItemSplit <- setNames( as.data.frame( str_split_fixed( rownames(recVec), pattern = ":", n = 2 ), stringsAsFactors = F), c( "channel", "itemId" ) )
+      if( mean( nchar( recsItemSplit$itemId ) ) < 1 ) {
+        recsItemSplit <- data.frame( channel = "None", itemId = rownames(recVec), stringsAsFactors = FALSE)
+      }
       corRecs <- data.frame( Score = recVec, 
                              channel.itemId = rownames(recVec), 
                              recsItemSplit, 
@@ -117,3 +128,90 @@ TSPSRCorrelationNNs <- function( timeSeriesMat, smr, itemIDtoNameRules, searchRo
     }
   }
 }
+
+##===========================================================
+## Object-Oriented Programming implementations (S3)
+##===========================================================
+## TSCorrSMR objects are lists with elements
+##    list( TSMat = <time series matrix>, SMR = <SMR Object>, ClassLabelsMat = <sparse matrix>, 
+##          CorrelationMethod = "pearson", SMRNRecs = 2000, ItemIDtoNameRules = NULL )
+## and attribute 
+##    class(...) = "TSCorrSMR"
+## The dimensions of TSMat and SMR$M have to be the same.
+
+#' @description Specialization of Recommendations for TSCorrSMR objects.
+Recommendations.TSCorrSMR <- function( x, historyItems, historyRatings, nrecs, removeHistory = TRUE, ... ) {
+
+  itemIDtoNameRules = x$ItemIDtoNameRules
+  if ( is.null(itemIDtoNameRules) ) { 
+    itemIDtoNameRules = setNames( rownames(x$SMR$M01), rownames(x$SMR$M01) ) 
+  }  
+
+  if ( length(historyItems) > length(historyRatings) ) { 
+    historyRatings <- rep_len( historyRatings, length.out = length(historyItems) )
+  }
+    
+  if ( length(historyItems) != length(historyRatings) ) {
+    stop( "The lengths of historyItems and historyRatings are expected to be the same.", call. = TRUE )
+  }
+  
+  if ( mean( historyItems %in% rownames(x$TSMat) ) < 1 ) {
+    stop( "Some elements of historyItems are not in the rownames(x$TSMat).", call. = TRUE )
+  }
+  
+  dMat <- sparseMatrix(  i = rep(1,length(historyItems)), j = 1:length(historyItems), x = historyRatings )
+  profileVec <- as.numeric( dMat %*% x$TSMat[ historyItems, , drop=F] )
+  
+  recs <- TSPSRCorrelationNNs( timeSeriesMat = x$TSMat, 
+                               smr = x$SMR, 
+                               itemIDtoNameRules = itemIDtoNameRules,
+                               searchVector = profileVec,
+                               nrecs = nrecs + if( removeHistory ) { length(historyItems) } else { 0 },
+                               smr.nrecs = x$SMRNRecs, 
+                               method = x$CorrelationMethod )
+  names(recs) <- gsub( "itemName", "Item", names(recs) )
+
+  recs <- recs[ , c("Score", "Item") ]
+  if ( removeHistory ) {
+    recs[ !( recs$Item %in% historyItems ), ]
+  }
+  recs
+}
+
+#' @description Specialization of ClassifyByProfileVector for TSCorrSMR objects.
+#' @param x a TSCorrSMR object
+#' @param tagType dummy variable one of the tag types of x$SMR
+ClassifyByProfileVector.TSCorrSMR <- function ( x, profileVec, nTopNNs, voting = FALSE ) {
+  
+  itemIDtoNameRules = x$ItemIDtoNameRules
+  if ( is.null(itemIDtoNameRules) ) { 
+    itemIDtoNameRules = setNames( rownames(x$SMR$M01), rownames(x$SMR$M01) ) 
+  }  
+    
+  # if ( !( tagType %in% x$SMR$TagTypes ) ) {
+  #   stop( "The argument tagType is expected to be one of the tag types of x$SMR .", call. = TRUE )
+  # }
+  
+  recs <- TSPSRCorrelationNNs( timeSeriesMat = x$TSMat, 
+                               smr = x$SMR, 
+                               itemIDtoNameRules = itemIDtoNameRules,
+                               searchVector = profileVec,
+                               nrecs = nTopNNs,
+                               smr.nrecs = x$SMRNRecs, 
+                               method = x$CorrelationMethod )
+  
+  names(recs) <- gsub( "itemName", "Item", names(recs) )
+  
+  ## This code is copied from SMRClassifyByProfileVector -- 
+  ##  read the comments in that code.
+  clMat <- x$ClassLabelsMat
+  
+  if ( voting ) {
+    clMat@x[ clMat@x > 0 ] <- 1
+    recs$Score <- 1
+  }
+  s <- (recs$Score / max(recs$Score) ) %*% clMat[ recs$Item, , drop=F]
+  s <- data.frame( Score = s[1,], Label = colnames(s), stringsAsFactors = FALSE )
+  s[ order(-s[,1]), ] 
+}
+

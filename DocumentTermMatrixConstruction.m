@@ -90,7 +90,7 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
 
       If[ Length[stemmingRules] > 0,
         docTerms = docTerms /. stemmingRules;
-      ]
+      ];
       docTerms
     ];
 

@@ -40,7 +40,7 @@ In order to use the defined Java functions in Mathematica the following steps ha
 In the local directory "src" execute the following commands:
 
     src> mkdir build
-    src> javac -d ./build *.java cd build; jar cvf ../../TriesWithFrequencies.jar *; cd ../
+    src> javac -d ./build *.java; cd build; jar cvf ../../TriesWithFrequencies.jar *; cd ../
     
 (Skip the first line if you have the directory "src/build" already.)
 
