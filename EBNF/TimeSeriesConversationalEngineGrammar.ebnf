@@ -23,9 +23,12 @@
 (* Version 1.0 *)
 (* This grammar is intended to be parsed by the functions in the Mathematica package FunctionalParses.m at GitHub, 
    see https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
-   In order to parse this grammar specification copy all of the grammar rule lines and paste them within a pair of string quotes. 
+   In order to parse this grammar specification either:
+    - copy all of the grammar rule lines and paste them within a pair of string quotes, or
+    - use Get in Mathematica.
  *) 
 
+"
  <preamble> = 'find' | 'compute' | 'calculate' | 'show' ;
  <weather-spec-straight> = ( ( 'temperature' | 'pressure' | 'wind' , 'speed' ) <& ( 'of' | 'for' ) ) , <city-spec> <@ TSWeatherSpec[#]& ;
  <weather-spec-reverse> = [ 'the' ] &> <city-spec> , ( 'temperature' | 'pressure' | 'wind' , 'speed' ) <@ TSWeatherSpec[Reverse[#]]& ;
@@ -57,3 +60,4 @@
  <plot-data> = 'plot' , 'data' <@ TSPlotData ;
  <plot-command> = <plot-data> | <plot-joined> | <plot-not-joined> ;
  <ts-command> = <load-data-command> | <load-file-command> | <operate-command> | <operate-on-data-command> | <clear-graphics> | <start-over> | <help> | <plot-command> ;
+ "
