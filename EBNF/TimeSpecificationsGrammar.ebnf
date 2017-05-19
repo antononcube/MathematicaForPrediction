@@ -25,10 +25,12 @@
 
 (* This grammar is intended to be parsed by the functions in the Mathematica package FunctionalParses.m at GitHub,
    see https://github.com/antononcube/MathematicaForPrediction/blob/master/FunctionalParsers.m .
-   In order to parse this grammar specification copy all of the grammar rule lines and paste them within
-   a pair of string quotes.
+   In order to parse this grammar specification either:
+    - copy all of the grammar rule lines and paste them within a pair of string quotes, or
+    - use Get.
  *)
 
+"
 <time-interval> = <time-interval-spec> | <number-of-time-units> | <week-of-year> | <month-of-year> ;
 <time-unit> = 'hour' | 'day' | 'week' | 'month' | 'year' | 'lifetime' ;
 <time-units> = 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'lifetimes' ;
@@ -65,3 +67,4 @@
 <number> = '_?NumberQ' ;
 <hour-spec> = 'Range[0,23]' , [ ( 'am' | 'pm' ) ] ;
 <full-date-spec> = ( <number> , <month-name> | <month-name> , <number> ) , <number> , [ <number> , ( 'am' | 'pm' ) ] ;
+"
