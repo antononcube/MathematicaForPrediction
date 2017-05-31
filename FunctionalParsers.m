@@ -93,13 +93,16 @@ ParseEpsilon::usage = "ParseEpsilon parses and empty string."
 ParseSucceed::usage = "ParseSucceed[v] does not consume input and always returns v."
 ParseFail::usage = "ParseFail fails to recognize any input string."
 
+ParseComposeWithResults::usage = "ParseComposeWithResults[p_][res : {{_, _} ..}]  is building block function for ParseSequentialComposition."
 ParseSequentialComposition::usage = "ParseSequentialComposition parses a sequential composition of two or more parsers."
 ParseAlternativeComposition::usage = "ParseAlternativeComposition parses a composition of two or more alternative parsers."
 
 
 ParseSpaces::usage = "ParseSpaces[p] is a transformation of the parser p: the leading spaces of the input are dropped then the parser p is applied." 
 ParseJust::usage = "ParseJust[p] is a transformation of the parser p: those parts of output of p are selected that have empty rest strings."
-ParseApply::usage = "ParseApply[f,p] applies the function f to the output of p. ParseApply[{fNo, fYes}, p] applies the function fNo not unsuccessful parsing and the function fYes the output of successful parsing using p."
+ParseApply::usage = "ParseApply[f,p] applies the function f to each of the outputs of p.\
+ ParseApply[{fNo, fYes}, p] applies the function fNo not unsuccessful parsing and the function fYes the output of successful parsing using p."
+ParseModify::usage = "ParseModify[f,p] applies the function f to the list of all outputs of p."
 ParseSome::usage = "ParseSome[p] applies ParseJust[p] and takes the first non-empty output if it exists."
 ParseShortest::usage = "ParseShortest[p] takes the output with the shortests rest string." 
 ParseSequentialCompositionPickLeft::usage = "ParseSequentialCompositionPickLeft[p1,p2] drops the output of the p2 parser."
@@ -121,8 +124,9 @@ ParseCurlyBracketed::usage = "ParseCurlyBracketed[p] parses with p input enclose
 ParseOption::usage = "ParseOption[p] is optional parsing of p.";
 ParseOption1::usage = "ParseOption1[p] is optional parsing of p. (Different implementation of ParseOption.)";
 
-ParseMany1::usage = "ParseMany1[p] attempt to parse one or many times with p."
-ParseMany::usage = "ParseMany[p] attempt to parse zero or many times with p."
+ParseMany1::usage = "ParseMany1[p] attempts to parse one or many times with p."
+ParseMany::usage = "ParseMany[p] attempts to parse zero or many times with p."
+ParseManyByBranching::usage = "ParseManyByBranching[p] parsing many times with p and following branches."
 
 ParseListOf::usage = "ParseListOf[p_, sep_] parse a list of elements parsed by p and seprated by elements parsed by sep."
 
@@ -249,6 +253,8 @@ ParseApply[{fNo_, fYes_}, p_] :=
   With[{res = p[#]}, 
     Map[{#[[1]], If[#[[2]] === {}, fNo, fYes[#[[2]]]]} &, res]] &;
 
+ParseModify[f_, p_][xs_] := With[{res = p[xs]}, f[res] ];
+
 ParseSome[p_][xs_] := 
   With[{parsed = ParseJust[p][xs]}, 
    If[Length[parsed] > 0, Take[parsed, 1], parsed]];
@@ -323,8 +329,33 @@ ParseMany1[p_][xs_] :=
 
 ParseMany[p_] := ParseMany1[p]\[CirclePlus]ParseSucceed[{}];
 
-ParseListOf[p_, 
-   separatorParser_] := (Prepend[#[[2]], #[[1]]] &)\[CircleDot](p\[CircleTimes]ParseMany[separatorParser \[RightTriangle] p])\[CirclePlus]ParseSucceed[{}];
+Clear[ParseManyByBranching]
+ParseManyByBranching[p_][xs_] := ParseManyByBranching[p, {}, 100][xs];
+ParseManyByBranching[p_, epsilon_, maxSteps_Integer ][xs_] :=
+    Block[{res = {}, pres, pres1, k = 0, p1},
+      p1 = ParseAlternativeComposition[ParseSucceed[epsilon], p];
+      If[Length[xs] == 0, epsilon,
+        pres = p1[xs];
+        While[! (pres === {} || And @@ Map[#[[2]] === {} &, pres]) &&
+            k < maxSteps,
+          k++;
+          (*Print[{k, "before:"}, pres];*)
+          pres = DeleteCases[pres, {xs, _}];
+          res = Join[res, Cases[pres, {{}, ___}]];
+          pres = DeleteCases[pres, {{}, ___}];
+          pres1 = DeleteCases[pres, {_, {___, {___, epsilon}, epsilon}}];
+          (*Print[{k, "after delete:"}, pres1];*)
+          If[Length[pres1] == 0 && Length[res] == 0,
+            Return[DeleteDuplicates[pres]],
+            pres = DeleteDuplicates[ParseComposeWithResults[p1][pres1]]
+          ];
+          (*Print[{k, "after:"}, pres];*)
+        ]
+      ];
+      DeleteDuplicates[Join[res, pres]]
+    ];
+
+ParseListOf[p_, separatorParser_] := (Prepend[#[[2]], #[[1]]] &)\[CircleDot](p\[CircleTimes]ParseMany[separatorParser \[RightTriangle] p])\[CirclePlus]ParseSucceed[{}];
 
 ParseChainLeft[p_, separatorParser_] := 
   Fold[#2[[1]][#1, #2[[2]]] &, #[[1]], #[[2]]] &\[CircleDot](p\[CircleTimes]ParseMany[separatorParser\[CircleTimes]p])\[CirclePlus]ParseSucceed[{}];
@@ -369,23 +400,45 @@ ToTokens[text_, "EBNF"] :=
 
 Clear[ParseToTokens];
 ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :=
-    Block[{pWord, pQWord, pLongTermDelim, pTermDelim, res},
+    Block[{pApplyFunc, pWord, pQWord, pLongTermDelim, pTermDelim, res, procText = Characters[text]},
+
+      (* Dealing with apply functions written with terminal symbols. *)
+      pApplyFunc =
+          ParseApply[Riffle[Flatten[#], " "] &,
+            StringJoin\[CircleDot](ParseSymbol["<"]\[CircleTimes]ParseSymbol["@"])\[CircleTimes]
+            ParseSpaces[
+              StringJoin\[CircleDot]ParseMany1[
+                ParsePredicate[
+                  StringMatchQ[#, (Except[WhitespaceCharacter] ..)] &]]]\[CircleTimes]ParseSpaces[ParseSymbol[";"]]
+          ];
+      procText = (Flatten\[CircleDot]ParseMany1[ParseMany[ParseSpaces[pApplyFunc]\[CirclePlus]ParsePredicate[True &]]])[procText];
+      procText = procText[[1, 2]];
+
       pWord =
-          ParseSpaces[ParseMany1[ParsePredicate[!MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
-      pQWord =
-          ParseSpaces[(ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])\[CircleTimes]ParseMany1[
-            ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes](ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])];
-      If[ Length[Select[terminalDelimiters, StringLength[#] > 1 &]] > 0,
-        pLongTermDelim = ParseAlternativeComposition @@
-            Map[
-              ParseApply[StringJoin, ParseSequentialComposition @@ (ParseSymbol /@ Characters[#])] &,
-              Select[terminalDelimiters,StringLength[#] > 1 &]];
+          ParseSpaces[
+            ParseMany1[
+              ParsePredicate[!
+                  MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
+
+      pQWord = ParseSpaces[(ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])\[CircleTimes]
+        ParseMany1[ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes]
+        (ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])];
+
+      If[Length[Select[terminalDelimiters, StringLength[#] > 1 &]] > 0,
+        pLongTermDelim =
+            ParseAlternativeComposition @@
+                Map[ParseApply[StringJoin,
+                  ParseSequentialComposition @@ (ParseSymbol /@
+                      Characters[#])] &,
+                  Select[terminalDelimiters, StringLength[#] > 1 &]];
         pTermDelim =
-            ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]\[CirclePlus]pLongTermDelim],
+            ParseSpaces[
+              ParsePredicate[
+                MemberQ[terminalDelimiters, #] &]\[CirclePlus]pLongTermDelim],
         pTermDelim =
             ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]]
       ];
-      res = ParseMany1[((If[Length[#] > 0, StringJoin @@ #, #] &)\[CircleDot](pQWord\[CirclePlus]pWord))\[CirclePlus]pTermDelim][Characters[text]];
+      res = ParseMany1[((If[Length[#] > 0, StringJoin @@ #, #]&)\[CircleDot](pQWord\[CirclePlus]pWord))\[CirclePlus]pTermDelim][procText];
       res[[1, 2]]
     ];
 
