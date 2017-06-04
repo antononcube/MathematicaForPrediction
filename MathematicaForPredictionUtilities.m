@@ -158,6 +158,14 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
 RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2."
 
 Clear[RecordsSummary];
+RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ]:=
+    Block[{colKeys},
+      colKeys = Normal[ dataRecords[[1]] ];
+      If[ MatchQ[colKeys, _Association],
+        RecordsSummary[ Normal[dataRecords[All, Values]], Keys[colKeys], opts ],
+        RecordsSummary[ Normal[dataRecords], opts ]
+      ]
+    ];
 RecordsSummary[dataRecords_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
