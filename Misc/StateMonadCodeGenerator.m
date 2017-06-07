@@ -36,7 +36,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2017-06-05 *)
 
-(* :Package Version: 0.1 *)
+(* :Package Version: 0.8 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2017 Anton Antonov *)
 (* :Keywords: *)
@@ -81,13 +81,13 @@
     The failure symbol of the generated state monad is `None`. The option "FailureSymbol" can be used to
     specify a different symbol.
 
-    By default the binding function -- `StMonBind` in this case -- overloads the opeartor `NonCommutativeMultiply`.
+    By default the binding function -- `StMonBind` in this case -- overloads the operator `NonCommutativeMultiply`.
     This allows concise pipeline specification. (See the example.)
 
 
     ## Contexts
     
-    The contexts are assumend to be Association objects, but if the state monad functions are generated with
+    The contexts are assumed to be Association objects, but if the state monad functions are generated with
     the option `"StringContextNames" -> True`,
 
             GenerateStateMonadCode["StMon", "StringContextNames" -> True]
@@ -100,7 +100,7 @@
     `StMonContextes[S]` before proceeding with the binding.
 
 
-    ### Base functions
+    ## Base functions
 
     The base State monad functions give access to the value and the context and allow changing and modifying contexts.
 
@@ -124,6 +124,15 @@
     returns `StMon[x,context]` if `f[x]` would produce failure.
 
 
+    ### Adding the current pipeline value to the context
+
+    Adding the current pipeline value to the context associated with the key "data" can be done in two ways:
+
+    1. with `StMonAddToContext["data"] **`, or
+
+    2. with `(StMon[#1, Join[#2, <|"data" -> #1|>]]&) **` .
+
+
     ## Example
 
     Here is an example:
@@ -132,7 +141,8 @@
         StMon[RandomReal[{0, 1}, {3, 2}], <|"mark" -> "None", "threshold" -> 0.5|>] **
            StMonEchoValue **
            StMonEchoContext **
-           (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), Join[#2, <|"data" -> #1|>]] &) **
+           StMonAddToContext["data"] **
+           (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) **
            StMonEchoValue **
            StMonModifyContext[Join[#1, <|"mark" -> "Lesser", "threshold" -> 0.8|>] &] **
            StMonEchoContext **
@@ -178,10 +188,30 @@
                                    TakeDrop[xs, Floor[fr*Length[xs]]]], context] /; 0 < fr <= 1;
 
 
+    ## Context modules
+
+    Instead of making calls like
+
+        (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) **
+
+    in the example above we can make the call
+
+        StMonModule[$Value /. (x_ /; x < threshold :> mark)] **
+
+    The elements of the context are turned into symbol assignments by the package function `AssociationModule`
+    (implemented by Mr.Wizard in [2].)
+
+    The variable `$Value` is for the current value of the pipeline.
+
+
     ## References
 
-    [1] Wikipedia entry: Monad (functional programming), URL: https://en.wikipedia.org/wiki/Monad_(functional_programming) .
+    [1] Wikipedia entry: Monad (functional programming),
+        URL: https://en.wikipedia.org/wiki/Monad_(functional_programming) .
 
+    [2] Mathematica Stack Exchange discussion,
+        "Functions with changeable global variables",
+        URL: https://mathematica.stackexchange.com/q/134381/34008 .
 
     ## End matters
 
@@ -200,7 +230,19 @@ of a State monad that allows computations with a mutable context. Code for handl
 is generated depending on the Boolean values of the option \"StringContextNames\". \
 Monad's failure symbol is specified with the option \"FailureSymbol\"."
 
+AssociationModule::usage = "AssociationModule[asc_Association, body_] is transforms the elements of asc into \
+symbol assignments ascAssign and executes Module[ ascAssign, body ]. The keys of asc are assumed to be strings."
+
 Begin["`Private`"]
+
+Attributes[AssociationModule] = HoldRest;
+AssociationModule[asc_Association, body_] :=
+    Replace[Join @@
+        Cases[Hold @@ Normal @@ {asc},
+          h_[L : _Symbol | _String, R_] :>
+              With[{sy = Quiet@Symbol@ToString@L},
+                Hold[h[sy, R]] /; Depth[sy] === 1]], {(a_ -> b_) :> (a = b), (a_ :> b_) :> (a := b)}, {1}] /.
+                    _[sets__] :> Module[{sets}, body]
 
 ClearAll[GenerateStateMonadCode]
 Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol" -> None};
@@ -215,8 +257,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoContext = ToExpression[monadName <> "EchoContext"],
       MStateEchoFunctionContext = ToExpression[monadName <> "EchoFunctionContext"],
       MStatePutContext = ToExpression[monadName <> "PutContext"],
+      MStateAddToContext = ToExpression[monadName <> "AddToContext"],
       MStateModifyContext = ToExpression[monadName <> "ModifyContext"],
       MStateOption = ToExpression[monadName <> "Option"],
+      MStateModule = ToExpression[monadName <> "Module"],
       MStateFailureSymbol = OptionValue["FailureSymbol"]
     },
       ClearAll[MState, MStateUnitQ, MStateBind, MStateEchoValue,
@@ -247,27 +291,23 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateBind[___] := MStateFailureSymbol;
 
       MStateEchoValue[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
-      MStateEchoValue[x_, context_Association] := (Echo[x];
-      MState[x, context]);
+      MStateEchoValue[x_, context_Association] := (Echo[x]; MState[x, context]);
 
       MStateEchoFunctionValue[f_][MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoFunctionValue[f_][x_, context_Association] := (EchoFunction[f][x]; MState[x, context]);
 
       MStateEchoContext[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
-      MStateEchoContext[x_, context_Association] := (Echo[context];
-      MState[x, context]);
+      MStateEchoContext[x_, context_Association] := (Echo[context]; MState[x, context]);
 
       MStateEchoFunctionContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateEchoFunctionContext[f_][x_, context_Association] := (EchoFunction[f][context];
-      MState[x, context]);
+      MStateEchoFunctionContext[f_][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
 
       MStatePutContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutContext[newContext_Association][x_, context_Association] := MState[x, newContext];
       If[TrueQ[OptionValue["StringContextNames"]],
         MStatePutContext[newContext_String][x_, context_Association] :=
             If[! MatchQ[MStateContexts[newContext], _Association],
-              Echo[
-                TemplateApply[StringTemplate[MStateContexts::nocxt], newContext]];
+              Echo[TemplateApply[StringTemplate[MStateContexts::nocxt], newContext]];
               MStateFailureSymbol,
               MState[x, newContext]
             ];
@@ -276,9 +316,16 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateModifyContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateModifyContext[f_][x_, context_Association] := MState[x, f[context]];
 
+      MStateAddToContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateAddToContext[varName_String][x_, context_Association] := MState[x, Join[context,<|varName->x|>]];
+
       MStateOption[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateOption[f_][xs_, context_] :=
           Block[{res = f[xs, context]}, If[FreeQ[res, MStateFailureSymbol], res, MState[xs, context]]];
+
+      Attributes[MStateModule] = HoldAll;
+      MStateModule[body___][value_, context_Association] :=
+          MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
 
       Unprotect[NonCommutativeMultiply];
       NonCommutativeMultiply[x_, f_] :=
