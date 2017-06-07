@@ -328,8 +328,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
           MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
 
       Unprotect[NonCommutativeMultiply];
-      NonCommutativeMultiply[x_, f_] :=
-          If[MStateUnitQ[x], MStateBind[x, f], MStateBind[MStateBind[MState[##], x], f] &];
+      NonCommutativeMultiply[x_, f_] := MStateBind[x, f];
+      NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];
+
+      (* We should have an option for the pipeline symbol. *)
+      (*DoubleLongRightArrow[x_, f_] := MStateBind[x, f];*)
+      (*DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];*)
     ];
 
 End[] (* `Private` *)

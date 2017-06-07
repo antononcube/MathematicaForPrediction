@@ -156,11 +156,10 @@ GenerateStateMonadCode["ClCon"]
 (*Infix operators*)
 (*****************)
 
-(*This looks much more like a pipeline operator: (**):*)
+(* This looks much more like a pipeline operator than (**): *)
 
-Unprotect[System`Implies];
-System`Implies[x_, f_] := If[ClConUnitQ[x], ClConBind[x, f], ClConBind[ClConBind[ClCon[##], x], f] &];
-
+DoubleLongRightArrow[x_, f_] := ClConBind[x, f];
+DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
 
 (*******************)
 (*General functions*)
