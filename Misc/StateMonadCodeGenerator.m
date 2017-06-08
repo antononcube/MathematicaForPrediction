@@ -99,6 +99,9 @@
     If a string S is given as a context within a pipeline then an attempt is made in `StMonBind` to replace S with
     `StMonContextes[S]` before proceeding with the binding.
 
+    The keys of the `Association` contexts are expected to be strings made of word characters.
+    (I.e. this function `StringMatch[#, WordCharacter..]&` gives `True` applied to each key.)
+
 
     ## Base functions
 
@@ -213,6 +216,7 @@
         "Functions with changeable global variables",
         URL: https://mathematica.stackexchange.com/q/134381/34008 .
 
+
     ## End matters
 
     This file was created by Mathematica Plugin for IntelliJ IDEA.
@@ -247,7 +251,6 @@ AssociationModule[asc_Association, body_] :=
 ClearAll[GenerateStateMonadCode]
 Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol" -> None};
 GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
-
     With[{
       MState = ToExpression[monadName],
       MStateUnitQ = ToExpression[monadName <> "UnitQ"],
@@ -257,16 +260,23 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoContext = ToExpression[monadName <> "EchoContext"],
       MStateEchoFunctionContext = ToExpression[monadName <> "EchoFunctionContext"],
       MStatePutContext = ToExpression[monadName <> "PutContext"],
-      MStateAddToContext = ToExpression[monadName <> "AddToContext"],
       MStateModifyContext = ToExpression[monadName <> "ModifyContext"],
+      MStateAddToContext = ToExpression[monadName <> "AddToContext"],
+      MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
       MStateOption = ToExpression[monadName <> "Option"],
       MStateModule = ToExpression[monadName <> "Module"],
       MStateFailureSymbol = OptionValue["FailureSymbol"]
     },
-      ClearAll[MState, MStateUnitQ, MStateBind, MStateEchoValue,
-        MStateEchoFunctionValue, MStateEchoContext,
-        MStateEchoFunctionContext, MStatePutContext, MStateModifyContext,
-        MStateModifyContext, MStateOption, MStateUnitQ];
+
+      ClearAll[MState, MStateUnitQ, MStateBind,
+        MStateEchoValue, MStateEchoFunctionValue,
+        MStateEchoContext, MStateEchoFunctionContext,
+        MStatePutContext, MStateModifyContext,
+        MStateAddToContext, MStateRetrieveFromContext,
+        MStateOption, MStateModule];
+
+      (* What are the assumptions for monad's failure symbol? *)
+      (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
 
       MStateUnitQ[x_] := MatchQ[x, MStateFailureSymbol] || MatchQ[x, MState[_, _Association]];
 
@@ -318,6 +328,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MStateAddToContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStateAddToContext[varName_String][x_, context_Association] := MState[x, Join[context,<|varName->x|>]];
+
+      MStateRetrieveFromContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateRetrieveFromContext[varName_String][x_, context_Association] := MState[context[varName], context];
 
       MStateOption[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateOption[f_][xs_, context_] :=
