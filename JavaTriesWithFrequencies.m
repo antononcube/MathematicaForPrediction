@@ -121,8 +121,8 @@ BeginPackage["JavaTriesWithFrequencies`"]
 
 JavaTrieClone::usage = "JavaTrieClone[ jTr ] makes a deep clone of a given Java trie."
 
-JavaTrieCompleteMatch::usage = "JavaTrieCompleteMatch[ jTr_, sw:{_String..}] finds is fraction\
- of the list of strings sw a complete match in the Java trie jTr."
+JavaTrieCompleteMatch::usage = "JavaTrieCompleteMatch[ jTr_, sw:{_String..}] finds does a fraction\
+ of the list of strings sw is a complete match in the Java trie jTr."
 
 JavaTrieContains::usage = "JavaTrieContains[ jTr_, sw:{_String..}] finds is the list of strings\
  sw a complete match in the Java trie jTr."
@@ -170,7 +170,6 @@ JavaTrieShrink::usage = "JavaTrieShrink[ jTr_, sep_String:\"\"] concatenates the
 
 JavaTrieShrinkInternalNodes::usage = "JavaTrieShrinkInternalNodes[ jTr_, sep_String:\"\"] concatenates\
  the \"single path\" internal nodes in the trie jTr using the given separator sep."
-
 
 JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above) a threshold."
 
