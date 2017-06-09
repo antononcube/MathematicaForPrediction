@@ -140,6 +140,8 @@
 
     Here is an example:
 
+        GenerateStateMonadCode["StMon"]
+
         SeedRandom[34]
         StMon[RandomReal[{0, 1}, {3, 2}], <|"mark" -> "None", "threshold" -> 0.5|>] **
            StMonEchoValue **
@@ -164,14 +166,25 @@
         {{Lesser,0.831468},{Lesser,Lesser},{Lesser,Lesser}}
         *)
 
-    In the example above we start with monad object made of 3x2 random real matrix and a context holding
-    mark and threshold values.
+    In the example code above:
 
-    In the monadic pipeline:
+       - we generated the code for the monad `StMon`,
+
+       - then we started a pipeline with a monad object made of
+
+         - 3x2 random real matrix, and
+
+         - a context that holds values associated with "mark" and "threshold".
+
+    In example's monadic pipeline:
+
+       - pipeline's current value is added to pipeline's context with `StMonAddToContext`;
 
        - numbers of the matrix that are less than the context threshold are replaced with the context mark;
 
-       - at some point the context is replaced with a new one (by modification).
+       - at some point pipeline's context is replaced with a new context by `StMonModifyContext`;
+
+       - pipeline's current value and context are shown by `StMonEchoValue` and `StMonEchoContext` respectively.
 
 
     ## Extension functions
@@ -205,6 +218,62 @@
     (implemented by Mr.Wizard in [2].)
 
     The variable `$Value` is for the current value of the pipeline.
+
+
+    ## It is a monad indeed
+
+    Let us show that `StMon` satisfies the monad laws.
+
+    In monad laws formulas given below
+
+    - ">>=" denotes the monad binding operation,
+
+    - "===" stands for "is the same as", and
+
+    - an expression of the form `(x -> expr)` is for a function in anonymous form.
+
+
+    #### Left identity:
+
+        unit a >>= f === f a
+
+    #### Right identity:
+
+        m >>= unit === m
+
+    #### Associativity:
+
+        (m >>= f) >>= g === m >>= (x -> f x >>= g)
+
+
+    ### Verification
+
+    Note, that instead of the binding symbol ">>=" the code uses the binding infix operator "**".
+
+    - Left identity:
+
+        StMon[a, <|"k1" -> "v1"|>] ** f
+
+        (* f[a, <|"k1" -> "v1"|>] *)
+
+    - Right identity:
+
+        StMon[a, <|"k1" -> "v1"|>] ** StMon
+
+        (* StMon[a, <|"k1" -> "v1"|>] *)
+
+    - Associativity:
+
+        (StMon[a, <|"k1" -> "v1"|>] ** (StMon[f1[#1, #2], #2] &)) ** (StMon[f2[#1, #2], #2] &)
+
+        (* StMon[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
+
+        StMon[a, <|"k1" -> "v1"|>] ** Function[{x, c}, StMon[f1[x, c], c] ** (StMon[f2[#1, #2], #2] &)]
+
+        (* StMon[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
+
+        %% == %
+        (* True *)
 
 
     ## References
