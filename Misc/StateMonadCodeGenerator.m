@@ -334,7 +334,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
       MStateOption = ToExpression[monadName <> "Option"],
       MStateModule = ToExpression[monadName <> "Module"],
-      MStateFailureSymbol = OptionValue["FailureSymbol"]
+      MStateFailureSymbol = OptionValue["FailureSymbol"],
+      MStateContexts = ToExpression[monadName <> "Contexts"]
     },
 
       ClearAll[MState, MStateUnitQ, MStateBind,
@@ -346,6 +347,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       (* What are the assumptions for monad's failure symbol? *)
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
+
+      MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
+      MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
       MStateUnitQ[x_] := MatchQ[x, MStateFailureSymbol] || MatchQ[x, MState[_, _Association]];
 
@@ -363,8 +367,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               Which[
                 ! FreeQ[res, MStateFailureSymbol], MStateFailureSymbol,
                 StringQ[res[[2]]], res,
-                True, MStateContexts[context] = res[[2]];
-              MState[res[[1]], context]]
+                True, MStateContexts[context] = res[[2]]; MState[res[[1]], context]
+              ]
             ];
       ];
       MStateBind[___] := MStateFailureSymbol;
