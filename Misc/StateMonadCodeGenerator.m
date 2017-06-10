@@ -367,7 +367,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               Which[
                 ! FreeQ[res, MStateFailureSymbol], MStateFailureSymbol,
                 StringQ[res[[2]]], res,
-                True, MStateContexts[context] = res[[2]]; MState[res[[1]], context]
+                MatchQ[res,MState[_,_]], MStateContexts[context] = res[[2]]; MState[res[[1]], context],
+                True, MStateFailureSymbol
               ]
             ];
       ];
