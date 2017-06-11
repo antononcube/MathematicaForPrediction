@@ -322,8 +322,10 @@ Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol"
 GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
     With[{
       MState = ToExpression[monadName],
+      MStateUnit = ToExpression[monadName <> "Unit"],
       MStateUnitQ = ToExpression[monadName <> "UnitQ"],
       MStateBind = ToExpression[monadName <> "Bind"],
+      MStateFail = ToExpression[monadName <> "Fail"],
       MStateEchoValue = ToExpression[monadName <> "EchoValue"],
       MStateEchoFunctionValue = ToExpression[monadName <> "EchoFunctionValue"],
       MStateEchoContext = ToExpression[monadName <> "EchoContext"],
@@ -334,12 +336,13 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
       MStateOption = ToExpression[monadName <> "Option"],
       MStateWhen = ToExpression[monadName <> "When"],
+      MStateIfElse = ToExpression[monadName <> "IfElse"],
       MStateModule = ToExpression[monadName <> "Module"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
       MStateContexts = ToExpression[monadName <> "Contexts"]
     },
 
-      ClearAll[MState, MStateUnitQ, MStateBind,
+      ClearAll[MState, MStateUnit, MStateUnitQ, MStateBind, MStateFail,
         MStateEchoValue, MStateEchoFunctionValue,
         MStateEchoContext, MStateEchoFunctionContext,
         MStatePutContext, MStateModifyContext,
@@ -351,6 +354,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
+
+      MStateFail[__] := MStateFailureSymbol;
+
+      MStateUnit[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateUnit[{x_, c:(_String|_Association)}] := MState[x,c];
+      MStateUnit[ x_, c:(_String|_Association) ] := MState[x,c];
 
       MStateUnitQ[x_] := MatchQ[x, MStateFailureSymbol] || MatchQ[x, MState[_, _Association]];
 
@@ -411,9 +420,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateOption[f_][xs_, context_] :=
           Block[{res = f[xs, context]}, If[FreeQ[res, MStateFailureSymbol], res, MState[xs, context]]];
 
+      MStateIfElse[testFunc_, fYes_, fNo_][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateIfElse[testFunc_, fYes_, fNo_][xs_, context_] :=
+          Block[{testRes = testFunc[xs, context]}, If[TrueQ[testRes], fYes[xs, context], fNo[xs, context]]];
+
       MStateWhen[testFunc_, f_][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateWhen[testFunc_, f_][xs_, context_] :=
-          Block[{testRes = testFunc[xs, context]}, If[TrueQ[testRes], f[xs, context], MState[xs, context]]];
+      MStateWhen[testFunc_, f_][xs_, context_] := MStateIfElse[testFunc, f, MState][xs, context];
 
       Attributes[MStateModule] = HoldAll;
       MStateModule[body___][value_, context_Association] :=
