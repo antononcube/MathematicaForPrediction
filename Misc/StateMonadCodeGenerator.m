@@ -303,7 +303,7 @@ of a State monad that allows computations with a mutable context. Code for handl
 is generated depending on the Boolean values of the option \"StringContextNames\". \
 Monad's failure symbol is specified with the option \"FailureSymbol\"."
 
-AssociationModule::usage = "AssociationModule[asc_Association, body_] is transforms the elements of asc into \
+AssociationModule::usage = "AssociationModule[asc_Association, body_] transforms the elements of asc into \
 symbol assignments ascAssign and executes Module[ ascAssign, body ]. The keys of asc are assumed to be strings."
 
 Begin["`Private`"]
@@ -333,6 +333,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateAddToContext = ToExpression[monadName <> "AddToContext"],
       MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
       MStateOption = ToExpression[monadName <> "Option"],
+      MStateWhen = ToExpression[monadName <> "When"],
       MStateModule = ToExpression[monadName <> "Module"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
       MStateContexts = ToExpression[monadName <> "Contexts"]
@@ -343,7 +344,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
         MStateEchoContext, MStateEchoFunctionContext,
         MStatePutContext, MStateModifyContext,
         MStateAddToContext, MStateRetrieveFromContext,
-        MStateOption, MStateModule];
+        MStateOption, MStateWhen, MStateModule];
 
       (* What are the assumptions for monad's failure symbol? *)
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
@@ -409,6 +410,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateOption[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateOption[f_][xs_, context_] :=
           Block[{res = f[xs, context]}, If[FreeQ[res, MStateFailureSymbol], res, MState[xs, context]]];
+
+      MStateWhen[testFunc_, f_][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateWhen[testFunc_, f_][xs_, context_] :=
+          Block[{testRes = testFunc[xs, context]}, If[TrueQ[testRes], f[xs, context], MState[xs, context]]];
 
       Attributes[MStateModule] = HoldAll;
       MStateModule[body___][value_, context_Association] :=
