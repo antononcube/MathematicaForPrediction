@@ -43,6 +43,8 @@
 (* :Discussion:
 
 
+    ## In brief
+
     The code of this package is mostly made for demonstration purposes.
 
     To generate the "standard" Maybe monad code use the command:
@@ -53,6 +55,35 @@
 
         GenerateMaybeMonadSpeciaCode["Maybe", "FailureSymbol" -> None ]
 
+    ## Monad laws
+
+    ### Left identity
+
+        MaybeUnit[a] ** f
+
+        (* f[a] *)
+
+    ### Right identity
+
+        Maybe[a] ** MaybeUnit
+
+        (* Maybe[a] *)
+
+    ### Associativity
+
+        Maybe[a] ** (Maybe@f1[#1] &)) ** (Maybe@f2[#1] &)
+
+        (* Maybe[f2[f1[a]]] *)
+
+        Maybe[a] ** Function[{x}, Maybe[f1[x]] ** (Maybe[f2[#]] &)]
+
+        (* Maybe[f2[f1[a]]] *)
+
+        %% == %
+
+        (* True *)
+
+    ## End matters
 
     This file was created by Mathematica Plugin for IntelliJ IDEA.
 
@@ -84,6 +115,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeUnit = ToExpression[monadName <> "Unit"],
       MaybeUnitQ = ToExpression[monadName <> "UnitQ"],
       MaybeBind = ToExpression[monadName <> "Bind"],
+      MaybeFail = ToExpression[monadName <> "Fail"],
       MaybeFilter = ToExpression[monadName <> "Filter"],
       MaybeEcho = ToExpression[monadName <> "Echo"],
       MaybeEchoFunction = ToExpression[monadName <> "EchoFunction"],
@@ -93,7 +125,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeFailureSymbol = OptionValue["FailureSymbol"]
     },
 
-      ClearAll[Maybe, MaybeUnit, MaybeUnitQ, MaybeBind,
+      ClearAll[Maybe, MaybeUnit, MaybeUnitQ, MaybeBind, MaybeFail,
         MaybeEcho, MaybeEchoFunction,
         MaybeFilter, MaybeOption, MaybeIfElse, MaybeWhen,
         MaybeOption, MaybeWhen];
@@ -111,6 +143,8 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeBind[Maybe[x___], f_] :=
           Block[{res = f[x]}, If[FreeQ[res, MaybeFailureSymbol], res, MaybeFailureSymbol]];
 
+      MaybeFail[__] := MaybeFailureSymbol;
+
       MaybeFilter[filterFunc_][xs_] := Maybe@Select[xs, filterFunc[#] &];
 
       MaybeEcho = Maybe@*Echo;
@@ -122,7 +156,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeIfElse[testFunc_, fYes_, fNo_][xs_] :=
           Block[{testRes = testFunc[xs]}, If[TrueQ[testRes], fYes[xs], fNo[xs]]];
 
-      MaybeWhen[testFunc_, f_][xs_] := MaybeIfElse[testFunc, f, Maybe];
+      MaybeWhen[testFunc_, f_][xs_] := MaybeIfElse[testFunc, f, Maybe][xs];
 
 
       (************************************************************)
