@@ -147,8 +147,8 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MaybeFilter[filterFunc_][xs_] := Maybe@Select[xs, filterFunc[#] &];
 
-      MaybeEcho = Maybe@*Echo;
-      MaybeEchoFunction = (Maybe@*EchoFunction[#] &);
+      MaybeEcho[x_] := Maybe @ Echo[x];
+      MaybeEchoFunction[f_][x_] := Maybe @ EchoFunction[f][x];
 
       MaybeOption[f_][xs_] :=
           Block[{res = f[xs]}, If[FreeQ[res, MaybeFailureSymbol], res, Maybe@xs]];
@@ -162,7 +162,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       (************************************************************)
       (* Infix operators                                          *)
       (************************************************************)
-      DoubleRightArrow[x_?MaybeQ, f_] := MaybeBind[x, f];
+      DoubleRightArrow[x_, f_] := MaybeBind[x, f];
       DoubleRightArrow[x_, y_, z__] := DoubleRightArrow[DoubleRightArrow[x, y], z];
 
       Unprotect[NonCommutativeMultiply];
@@ -177,6 +177,8 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
     With[{
       Maybe = ToExpression[monadName],
       MaybeUnit = ToExpression[monadName <> "Unit"],
+      MaybeUnitQ = ToExpression[monadName <> "UnitQ"],
+      MaybeBind = ToExpression[monadName <> "Bind"],
       MaybeRandomChoice = ToExpression[monadName <> "RandomChoice"],
       MaybeMapToFail = ToExpression[monadName <> "MapToFail"],
       MaybeNegativeToFail = ToExpression[monadName <> "NegativeFailure"],
@@ -203,13 +205,13 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
             Maybe@Map[If[critFunc[#], MaybeFailureSymbol, #] &, xs]
           ];
 
-      MaybeNegativeToFail = MaybeMapToFail[NumberQ[#] && # < 0 &];
+      MaybeNegativeToFail[x_] = MaybeMapToFail[NumberQ[#] && # < 0 &][x];
 
       MaybeRandomReal[xs_] :=
           Block[{res = RandomReal[Sequence @@ xs]},
             If[NumberQ[res] || ListQ[res], Maybe@res, MaybeFailureSymbol]];
 
-      MaybeDivide[x_?MaybeQ, y_?MaybeQ] :=
+      MaybeDivide[x_?MaybeUnitQ, y_?MaybeUnitQ] :=
           Block[{yres = MaybeBind[y, MaybeMapToFail[# == 0 &]]},
             If[! FreeQ[yres, MaybeFailureSymbol], MaybeFailureSymbol, Maybe[x[[1]]/y[[1]]]]
           ];
