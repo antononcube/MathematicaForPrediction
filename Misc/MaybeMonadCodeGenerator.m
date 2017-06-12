@@ -196,14 +196,12 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeBind = ToExpression[monadName <> "Bind"],
       MaybeRandomChoice = ToExpression[monadName <> "RandomChoice"],
       MaybeMapToFail = ToExpression[monadName <> "MapToFail"],
-      MaybeNegativeToFail = ToExpression[monadName <> "NegativeFailure"],
       MaybeRandomReal = ToExpression[monadName <> "RandomReal"],
       MaybeDivide = ToExpression[monadName <> "Divide"],
       MaybeFailureSymbol = OptionValue["FailureSymbol"]
     },
 
-      ClearAll[ MaybeRandomChoice, MaybeMapToFail,
-        MaybeNegativeToFail, MaybeRandomReal, MaybeDivide];
+      ClearAll[ MaybeRandomChoice, MaybeMapToFail, MaybeRandomReal, MaybeDivide];
 
       (************************************************************)
       (* Special functions                                        *)
@@ -213,13 +211,11 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
           Maybe@Block[{res = RandomChoice[xs, n]},
             If[TrueQ[Head[res] === RandomChoice], MaybeFailureSymbol, res]];
 
-      MaybeMapToFail[critFunc_][xs_] :=
-          If[AtomQ[xs],
-            If[critFunc[xs], MaybeFailureSymbol, xs],
-            Maybe@Map[If[critFunc[#], MaybeFailureSymbol, #] &, xs]
+      MaybeMapToFail[critFunc_][xs_] := MaybeMapToFail[critFunc, 1][xs];
+      MaybeMapToFail[critFunc_, lvl_][xs_] :=
+          If[AtomQ[xs], If[critFunc[xs], None, xs],
+            Maybe@Map[If[critFunc[#], None, #, #] &, xs, lvl]
           ];
-
-      MaybeNegativeToFail[x_] := MaybeMapToFail[NumberQ[#] && # < 0 &][x];
 
       MaybeRandomReal[xs_] :=
           Block[{res = RandomReal[Sequence @@ xs]},
