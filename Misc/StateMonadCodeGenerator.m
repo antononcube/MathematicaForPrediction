@@ -318,7 +318,7 @@ AssociationModule[asc_Association, body_] :=
                     _[sets__] :> Module[{sets}, body]
 
 ClearAll[GenerateStateMonadCode]
-Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol" -> None};
+Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol" -> None, "EchoFailingFunction"->True};
 GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
     With[{
       MState = ToExpression[monadName],
@@ -338,8 +338,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateWhen = ToExpression[monadName <> "When"],
       MStateIfElse = ToExpression[monadName <> "IfElse"],
       MStateModule = ToExpression[monadName <> "Module"],
+      MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
-      MStateContexts = ToExpression[monadName <> "Contexts"]
+      MStateEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]]
     },
 
       ClearAll[MState, MStateUnit, MStateUnitQ, MStateBind, MStateFail,
@@ -352,6 +353,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       (* What are the assumptions for monad's failure symbol? *)
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
 
+      MStateBind::ffail = "Fail when applying: `1`";
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
@@ -365,7 +367,14 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MStateBind[MStateFailureSymbol] := MStateFailureSymbol;
       MStateBind[MState[x_, context_Association], f_] :=
-          Block[{res = f[x, context]}, If[FreeQ[res, MStateFailureSymbol], res, MStateFailureSymbol]];
+          Block[{res = f[x, context]},
+            If[FreeQ[res, MStateFailureSymbol], res,
+              If[MStateEchoFailingFunction,
+                Echo[TemplateApply[StringTemplate[MStateBind::ffail], Inactive[f]]]
+              ];
+              MStateFailureSymbol
+            ]
+          ];
       If[TrueQ[OptionValue["StringContextNames"]],
         MStateBind[MState[x_, context_String], f_] :=
             Block[{res},
@@ -375,7 +384,11 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               ];
               res = f[x, MStateContexts[context]];
               Which[
-                ! FreeQ[res, MStateFailureSymbol], MStateFailureSymbol,
+                ! FreeQ[res, MStateFailureSymbol],
+                If[MStateEchoFailingFunction,
+                  Echo[TemplateApply[StringTemplate[MStateBind::ffail], Inactive[f]]]
+                ];
+                MStateFailureSymbol,
                 StringQ[res[[2]]], res,
                 MatchQ[res,MState[_,_]], MStateContexts[context] = res[[2]]; MState[res[[1]], context],
                 True, MStateFailureSymbol
@@ -432,7 +445,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
           MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
 
       Unprotect[NonCommutativeMultiply];
-      NonCommutativeMultiply[x_, f_] := MStateBind[x, f];
+      NonCommutativeMultiply[x_?MStateUnitQ, f_] := MStateBind[x, f];
       NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];
 
       (* We should have an option for the pipeline symbol. *)

@@ -108,7 +108,7 @@ GenerateMaybeMonadSpecialCode is made for didactic purposes."
 Begin["`Private`"]
 
 ClearAll[GenerateMaybeMonadCode]
-Options[GenerateMaybeMonadCode] = {"FailureSymbol" -> None};
+Options[GenerateMaybeMonadCode] = {"FailureSymbol" -> None, "EchoFailingFunction"->True};
 GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
     With[{
       Maybe = ToExpression[monadName],
@@ -122,13 +122,16 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeOption = ToExpression[monadName <> "Option"],
       MaybeIfElse = ToExpression[monadName <> "IfElse"],
       MaybeWhen = ToExpression[monadName <> "When"],
-      MaybeFailureSymbol = OptionValue["FailureSymbol"]
+      MaybeFailureSymbol = OptionValue["FailureSymbol"],
+      MaybeEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]]
     },
 
       ClearAll[Maybe, MaybeUnit, MaybeUnitQ, MaybeBind, MaybeFail,
         MaybeEcho, MaybeEchoFunction,
         MaybeFilter, MaybeOption, MaybeIfElse, MaybeWhen,
         MaybeOption, MaybeWhen];
+
+      MaybeBind::ffail = "Fail when applying: `1`";
 
       (************************************************************)
       (* Core functions                                           *)
@@ -141,7 +144,14 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MaybeBind[MaybeFailureSymbol, f_] := MaybeFailureSymbol;
       MaybeBind[Maybe[x___], f_] :=
-          Block[{res = f[x]}, If[FreeQ[res, MaybeFailureSymbol], res, MaybeFailureSymbol]];
+          Block[{res = f[x]},
+            If[FreeQ[res, MaybeFailureSymbol], res,
+              If[MaybeEchoFailingFunction,
+                Echo[TemplateApply[StringTemplate[MaybeBind::ffail], Inactive[f]]]
+              ];
+              MaybeFailureSymbol
+            ]
+          ];
 
       MaybeFail[__] := MaybeFailureSymbol;
 
@@ -162,11 +172,11 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       (************************************************************)
       (* Infix operators                                          *)
       (************************************************************)
-      DoubleRightArrow[x_, f_] := MaybeBind[x, f];
-      DoubleRightArrow[x_, y_, z__] := DoubleRightArrow[DoubleRightArrow[x, y], z];
+      DoubleLongRightArrow[x_?MaybeUnitQ, f_] := MaybeBind[x, f];
+      DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
 
       Unprotect[NonCommutativeMultiply];
-      NonCommutativeMultiply[x_, f_] := MaybeBind[x, f];
+      NonCommutativeMultiply[x_?MaybeUnitQ, f_] := MaybeBind[x, f];
       NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];
 
     ];
@@ -187,8 +197,7 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeFailureSymbol = OptionValue["FailureSymbol"]
     },
 
-      ClearAll[Maybe, MaybeUnit,
-        MaybeRandomChoice, MaybeMapToFail,
+      ClearAll[ MaybeRandomChoice, MaybeMapToFail,
         MaybeNegativeToFail, MaybeRandomReal, MaybeDivide];
 
       (************************************************************)
