@@ -64,6 +64,9 @@ KurtosisUpperBound::usage = "KurtosisUpperBound[vec_?VectorQ] computes the upper
 KurtosisUpperBound[d_,n_Integer] computes the upper bound of the kurtosis of a sample of size n from \
 the distribution d."
 
+GridOfCodeAndComments::usage = "GridOfCodeAndComments[code_String, opts___] tabulates code and comments. \
+The tabulation function is specified with the option \"GridFunction\"."
+
 CrossTensorate::usage = "Finds the contingency co-occurance values for multiple columns of a matrix \
 using a formula specification. The first argument is the formula with the form \
 Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ..."
@@ -84,6 +87,8 @@ Begin["`Private`"]
 If[Length[DownValues[MosaicPlot`MosaicPlot]] == 0,
   Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
 ];
+
+Needs["MosaicPlot`"];
 
 Clear[KurtosisUpperBound, ExcessKurtosis]
 
@@ -231,6 +236,14 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
 
 Clear[VariableDependenceGrid]
 Options[VariableDependenceGrid] = {"IgnoreCategoricalVariables" -> False};
+VariableDependenceGrid[data_Dataset, args___] :=
+    Block[{colKeys},
+      colKeys = Normal[ data[[1]] ];
+      If[ MatchQ[colKeys, _Association],
+        VariableDependenceGrid[ Normal[data[All, Values]], Keys[colKeys], args ],
+        VariableDependenceGrid[ Normal[data], args ]
+      ]
+    ];
 VariableDependenceGrid[data_?MatrixQ, opts : OptionsPattern[]] :=
     VariableDependenceGrid[ data, Range[Dimensions[data][[2]]], opts];
 VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] :=
@@ -278,6 +291,41 @@ VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] 
           ] & /@ Flatten[Outer[List, ninds, ninds], 1];
 
       Grid[ArrayReshape[grs, {Length[ninds], Length[ninds]}], Dividers -> All]
+    ];
+
+
+(***********************************************************)
+(* GridOfCodeAndComments                                   *)
+(***********************************************************)
+
+ClearAll[GridOfCodeAndComments]
+Options[GridOfCodeAndComments] = {"GridFunction" -> (Grid[#, Alignment -> Left] &)};
+GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
+    Block[{grData, codeLines, commentLines, comPat, gridFunc},
+      gridFunc = OptionValue["GridFunction"];
+      If[TrueQ[gridFunc === Automatic],
+        gridFunc = (Grid[#, Alignment -> Left] &)];
+
+      (* Split the code into lines *)
+      codeLines = StringSplit[code, "\n"];
+
+      (* Split each line into a {code, comment} pair *)
+      comPat = ("(*" ~~ ___ ~~ "*)");
+      grData =
+          Map[
+            If[StringFreeQ[#, "(*"], {#, ""},
+              StringCases[#, (x__ ~~ y : (comPat) ~~ z___) :> {x <> z, y}][[1]]
+            ] &, codeLines];
+
+      (* Style the code and comments *)
+      grData[[All, 1]] = Map[Style[#, "Input"] &, grData[[All, 1]]];
+      grData[[All, 2]] =
+          Map[Style[#,
+            "CommentStyle" /. Options[$FrontEnd, AutoStyleOptions][[1, 2]]] &,
+            grData[[All, 2]]];
+
+      (* Show result *)
+      gridFunc[grData]
     ];
 
 (***********************************************************)
