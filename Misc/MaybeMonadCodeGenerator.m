@@ -47,13 +47,14 @@
 
     The code of this package is mostly made for demonstration purposes.
 
-    To generate the "standard" Maybe monad code use the command:
+    In order to generate the "standard" Maybe monad code use the command:
 
         GenerateMaybeMonadCode["Maybe", "FailureSymbol" -> None ]
 
     Illustrative special functions can be generated with :
 
         GenerateMaybeMonadSpeciaCode["Maybe", "FailureSymbol" -> None ]
+
 
     ## Monad laws
 
@@ -83,6 +84,7 @@
 
         (* True *)
 
+
     ## End matters
 
     This file was created by Mathematica Plugin for IntelliJ IDEA.
@@ -98,7 +100,10 @@ BeginPackage["MaybeMonadCodeGenerator`"]
 
 GenerateMaybeMonadCode::usage = "GenerateMaybeMonadCode[monadName_String] generates the basic functions \
 of a Maybe monad that allows sequential computations with optional failure. \
-Monad's failure symbol is specified with the option \"FailureSymbol\"."
+Monad's failure symbol is specified with the option \"FailureSymbol\",
+If the option \"EchoFailingFunction\" is set to True, then when a failure occurs in a monadic pipeline a message \
+with the failing function is echoed. \
+GenerateMaybeMonadCode is made for didactic purposes."
 
 GenerateMaybeMonadSpecialCode::usage = "GenerateMaybeMonadSpecialCode[monadName_String] generates the special \
 functions of a Maybe monad that allows sequential computations with optional failure. \
@@ -214,7 +219,7 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
             Maybe@Map[If[critFunc[#], MaybeFailureSymbol, #] &, xs]
           ];
 
-      MaybeNegativeToFail[x_] = MaybeMapToFail[NumberQ[#] && # < 0 &][x];
+      MaybeNegativeToFail[x_] := MaybeMapToFail[NumberQ[#] && # < 0 &][x];
 
       MaybeRandomReal[xs_] :=
           Block[{res = RandomReal[Sequence @@ xs]},
