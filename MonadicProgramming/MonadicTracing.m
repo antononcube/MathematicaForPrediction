@@ -18,6 +18,7 @@
     Written by Anton Antonov,
     antononcube @ gmail.com,
     Windermere, Florida, USA.
+
 *)
 
 (*
@@ -120,7 +121,7 @@
            comPat = ("(*" ~~ (Except["*"] ..) ~~ "*)");
            grData =
             Map[
-             If[StringFreeQ[#, "(*"], {#, ""},
+             If[StringFreeQ[#, "("~~"*"], {#, ""},
                StringCases[#, (x__ ~~ y : (comPat) ~~ z___) :> {x <> z, y}][[1]]
              ] &, codeLines];
 
@@ -154,7 +155,6 @@
     Anton Antonov
     Windermere, FL, USA
     2017-06-13
-
 
 *)
 
