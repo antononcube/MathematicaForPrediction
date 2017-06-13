@@ -131,9 +131,9 @@
 
     Adding the current pipeline value to the context associated with the key "data" can be done in two ways:
 
-    1. with `StMonAddToContext["data"] **`, or
+    1. with `StMonAddToContext["data"] ⟹`, or
 
-    2. with `(StMon[#1, Join[#2, <|"data" -> #1|>]]&) **` .
+    2. with `(StMon[#1, Join[#2, <|"data" -> #1|>]]&) ⟹` .
 
 
     ## Example
@@ -143,15 +143,15 @@
         GenerateStateMonadCode["StMon"]
 
         SeedRandom[34]
-        StMon[RandomReal[{0, 1}, {3, 2}], <|"mark" -> "None", "threshold" -> 0.5|>] **
-           StMonEchoValue **
-           StMonEchoContext **
-           StMonAddToContext["data"] **
-           (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) **
-           StMonEchoValue **
-           StMonModifyContext[Join[#1, <|"mark" -> "Lesser", "threshold" -> 0.8|>] &] **
-           StMonEchoContext **
-           (StMon[#2["data"] /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) **
+        StMon[RandomReal[{0, 1}, {3, 2}], <|"mark" -> "None", "threshold" -> 0.5|>] ⟹
+           StMonEchoValue ⟹
+           StMonEchoContext ⟹
+           StMonAddToContext["data"] ⟹
+           (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
+           StMonEchoValue ⟹
+           StMonModifyContext[Join[#1, <|"mark" -> "Lesser", "threshold" -> 0.8|>] &] ⟹
+           StMonEchoContext ⟹
+           (StMon[#2["data"] /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
            StMonEchoValue;
 
         (*
@@ -208,11 +208,11 @@
 
     Instead of making calls like
 
-        (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) **
+        (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
 
     in the example above we can make the call
 
-        StMonModule[$Value /. (x_ /; x < threshold :> mark)] **
+        StMonModule[$Value /. (x_ /; x < threshold :> mark)] ⟹
 
     The elements of the context are turned into symbol assignments by the package function `AssociationModule`
     (implemented by Mr.Wizard in [2].)
@@ -248,27 +248,27 @@
 
     ### Verification
 
-    Note, that instead of the binding symbol ">>=" the code uses the binding infix operator "**".
+    Note, that instead of the binding symbol ">>=" the code uses the binding infix operator "⟹".
 
     - Left identity:
 
-        StMon[a, <|"k1" -> "v1"|>] ** f
+        StMon[a, <|"k1" -> "v1"|>] ⟹ f
 
         (* f[a, <|"k1" -> "v1"|>] *)
 
     - Right identity:
 
-        StMon[a, <|"k1" -> "v1"|>] ** StMon
+        StMon[a, <|"k1" -> "v1"|>] ⟹ StMon
 
         (* StMon[a, <|"k1" -> "v1"|>] *)
 
     - Associativity:
 
-        (StMon[a, <|"k1" -> "v1"|>] ** (StMon[f1[#1, #2], #2] &)) ** (StMon[f2[#1, #2], #2] &)
+        (StMon[a, <|"k1" -> "v1"|>] ⟹ (StMon[f1[#1, #2], #2] &)) ⟹ (StMon[f2[#1, #2], #2] &)
 
         (* StMon[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
 
-        StMon[a, <|"k1" -> "v1"|>] ** Function[{x, c}, StMon[f1[x, c], c] ** (StMon[f2[#1, #2], #2] &)]
+        StMon[a, <|"k1" -> "v1"|>] ⟹ Function[{x, c}, StMon[f1[x, c], c] ⟹ (StMon[f2[#1, #2], #2] &)]
 
         (* StMon[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
 
@@ -445,13 +445,18 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateModule[body___][value_, context_Association] :=
           MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
 
-      Unprotect[NonCommutativeMultiply];
-      NonCommutativeMultiply[x_?MStateUnitQ, f_] := MStateBind[x, f];
-      NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];
-
       (* We should have an option for the pipeline symbol. *)
-      (*DoubleLongRightArrow[x_, f_] := MStateBind[x, f];*)
-      (*DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];*)
+    (* This looks much more like a pipeline operator than (**): *)
+      DoubleLongRightArrow[Global`x_?MStateUnitQ, Global`f_] := MStateBind[Global`x, Global`f];
+      (*DoubleLongRightArrow[Global`x_, Global`y_, Global`z__] :=*)
+          (*DoubleLongRightArrow[DoubleLongRightArrow[Global`x, Global`y], Global`z];*)
+
+      (*Unprotect[NonCommutativeMultiply];*)
+      (*ClearAttributes[NonCommutativeMultiply, Attributes[NonCommutativeMultiply]]*)
+      (*MState /: NonCommutativeMultiply[MState[Global`x_], Global`f_] := MStateBind[MState[Global`x], Global`f];*)
+      (*NonCommutativeMultiply[Global`x_, Global`y_, Global`z__] :=*)
+      (*NonCommutativeMultiply[NonCommutativeMultiply[Global`x, Global`y], Global`z];*)
+
     ];
 
 End[] (* `Private` *)
