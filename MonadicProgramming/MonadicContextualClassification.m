@@ -158,7 +158,7 @@ GenerateStateMonadCode["ClCon"]
 
 (* This looks much more like a pipeline operator than (**): *)
 
-DoubleLongRightArrow[x_, f_] := ClConBind[x, f];
+DoubleLongRightArrow[x_?ClConUnitQ, f_] := ClConBind[x, f];
 DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
 
 (*******************)

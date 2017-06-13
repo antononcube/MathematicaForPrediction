@@ -360,6 +360,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateFail[__] := MStateFailureSymbol;
 
       MStateUnit[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateUnit[x_] := MState[x, <||>];
       MStateUnit[{x_, c:(_String|_Association)}] := MState[x,c];
       MStateUnit[ x_, c:(_String|_Association) ] := MState[x,c];
 
