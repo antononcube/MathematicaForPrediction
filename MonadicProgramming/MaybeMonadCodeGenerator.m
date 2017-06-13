@@ -152,7 +152,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
           Block[{res = f[x]},
             If[FreeQ[res, MaybeFailureSymbol], res,
               If[MaybeEchoFailingFunction,
-                Echo[TemplateApply[StringTemplate[MaybeBind::ffail], Inactive[f]]]
+                Echo[TemplateApply[StringTemplate[MaybeBind::ffail], HoldForm[f]]]
               ];
               MaybeFailureSymbol
             ]

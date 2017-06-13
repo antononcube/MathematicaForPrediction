@@ -371,7 +371,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
           Block[{res = f[x, context]},
             If[FreeQ[res, MStateFailureSymbol], res,
               If[MStateEchoFailingFunction,
-                Echo[TemplateApply[StringTemplate[MStateBind::ffail], Inactive[f]]]
+                Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]]]
               ];
               MStateFailureSymbol
             ]
@@ -387,7 +387,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               Which[
                 ! FreeQ[res, MStateFailureSymbol],
                 If[MStateEchoFailingFunction,
-                  Echo[TemplateApply[StringTemplate[MStateBind::ffail], Inactive[f]]]
+                  Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]]]
                 ];
                 MStateFailureSymbol,
                 StringQ[res[[2]]], res,
