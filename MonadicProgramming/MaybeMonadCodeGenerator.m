@@ -60,23 +60,23 @@
 
     ### Left identity
 
-        MaybeUnit[a] ** f
+        MaybeUnit[a] ⟹ f
 
         (* f[a] *)
 
     ### Right identity
 
-        Maybe[a] ** MaybeUnit
+        Maybe[a] ⟹ MaybeUnit
 
         (* Maybe[a] *)
 
     ### Associativity
 
-        Maybe[a] ** (Maybe@f1[#1] &)) ** (Maybe@f2[#1] &)
+        Maybe[a] ⟹ (Maybe@f1[#1] &)) ⟹ (Maybe@f2[#1] &)
 
         (* Maybe[f2[f1[a]]] *)
 
-        Maybe[a] ** Function[{x}, Maybe[f1[x]] ** (Maybe[f2[#]] &)]
+        Maybe[a] ⟹ Function[{x}, Maybe[f1[x]] ⟹ (Maybe[f2[#]] &)]
 
         (* Maybe[f2[f1[a]]] *)
 
@@ -177,12 +177,14 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       (************************************************************)
       (* Infix operators                                          *)
       (************************************************************)
-      DoubleLongRightArrow[x_?MaybeUnitQ, f_] := MaybeBind[x, f];
-      DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
+      DoubleLongRightArrow[Global`x_?MaybeUnitQ, Global`f_] := MaybeBind[Global`x, Global`f];
+      DoubleLongRightArrow[Global`x_, Global`y_, Global`z__] :=
+          DoubleLongRightArrow[DoubleLongRightArrow[Global`x, Global`y], Global`z];
 
-      Unprotect[NonCommutativeMultiply];
-      NonCommutativeMultiply[x_?MaybeUnitQ, f_] := MaybeBind[x, f];
-      NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];
+      (*Unprotect[NonCommutativeMultiply];*)
+      (*Maybe /: NonCommutativeMultiply[Maybe[Global`x_], Global`f_] := MaybeBind[Maybe[Global`x], Global`f];*)
+      (*NonCommutativeMultiply[Global`x_, Global`y_, Global`z__] :=*)
+          (*NonCommutativeMultiply[NonCommutativeMultiply[Global`x, Global`y], Global`z];*)
 
     ];
 

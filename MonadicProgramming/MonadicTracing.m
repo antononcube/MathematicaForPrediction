@@ -60,14 +60,14 @@
 
         data = RandomInteger[10, 15];
 
-        TraceMonadUnit[MaybeUnit[data]] ** "lift to monad" **
-          TraceMonadEchoContext **
-          MaybeFilter[# > 3 &] ** "filter current value" **
-          MaybeEcho ** "display current value" **
+        TraceMonadUnit[MaybeUnit[data]] ⟹ "lift to monad" ⟹
+          TraceMonadEchoContext ⟹
+          MaybeFilter[# > 3 &] ⟹ "filter current value" ⟹
+          MaybeEcho ⟹ "display current value" ⟹
           MaybeWhen[#[[3]] > 3 &,
-          MaybeEchoFunction[Style[#, Red] &]] **
-          (Maybe[#/4] &) **
-          MaybeEcho ** "display current value again" **
+          MaybeEchoFunction[Style[#, Red] &]] ⟹
+          (Maybe[#/4] &) ⟹
+          MaybeEcho ⟹ "display current value again" ⟹
           TraceMonadEchoGrid[Grid[#, Alignment -> Left] &];
 
     Note that :
@@ -177,13 +177,8 @@ GenerateStateMonadCode["TraceMonad", "StringContextNames" -> False]
 (* Infix operators                                            *)
 (**************************************************************)
 
-DoubleLongRightArrow[x_?TraceMonadUnitQ, f_] := TraceMonadBind[x, f];
-DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
-
 (* Not needed here -- should have been already done by GenerateStateMonadCode. *)
-(*Unprotect[NonCommutativeMultiply]*)
-(*NonCommutativeMultiply[x_?TraceMonadUnitQ, f_] := TraceMonadBind[x, f];*)
-(*NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];*)
+(*DoubleLongRightArrow[x_?TraceMonadUnitQ, f_] := TraceMonadBind[x, f];*)
 
 
 (**************************************************************)
@@ -198,7 +193,7 @@ TraceMonadUnit[x_, binder_Symbol] :=
     TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> binder, "commands" -> {}, "comments" -> {""}|>];
 
 TraceMonadUnit[x_] :=
-    TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> NonCommutativeMultiply, "commands" -> {}, "comments" -> {""}|>];
+    TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> DoubleLongRightArrow, "commands" -> {}, "comments" -> {""}|>];
 
 
 ClearAll[TraceMonadBind]

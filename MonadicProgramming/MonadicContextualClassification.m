@@ -52,16 +52,16 @@
     Here is an example of a pipeline created with the functions in the package:
 
        res =
-         ClCon[ds, <||>] **
-           ClConSplitData[0.75] **
-           ClConMakeClassifier["NearestNeighbors"] **
-           ClConEchoFunctionContext[ClassifierInformation[#["classifier"]] &] **
-           ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}] **
-           ClConEchoValue **
-           (If[#1["Accuracy"] > 0.7, None, ClCon[#1, #2]] &) **
-           ClConMakeClassifier["RandomForest"] **
-           ClConEchoFunctionContext[ClassifierInformation[#["classifier"]] &] **
-           ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}] **
+         ClCon[ds, <||>] ⟹
+           ClConSplitData[0.75] ⟹
+           ClConMakeClassifier["NearestNeighbors"] ⟹
+           ClConEchoFunctionContext[ClassifierInformation[#["classifier"]] &] ⟹
+           ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}] ⟹
+           ClConEchoValue ⟹
+           (If[#1["Accuracy"] > 0.7, None, ClCon[#1, #2]] &) ⟹
+           ClConMakeClassifier["RandomForest"] ⟹
+           ClConEchoFunctionContext[ClassifierInformation[#["classifier"]] &] ⟹
+           ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}] ⟹
            ClConEchoValue;
 
 
@@ -107,7 +107,7 @@
     ## References
 
     [1] Anton Antonov, StateMonadCodeGenerator.m, 2017, MathematicaForPrediction at GitHub.
-        URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/StateMonadCodeGenerator.m
+        URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m
 
 
     ## End matters
@@ -134,45 +134,45 @@
 (*Begin["`Private`"]*)
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/StateMonadCodeGenerator.m"]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
 
 If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
 ];
 
+(*Needs["StateMonadCodeGenerator`"]*)
+(*Needs["VariableImportanceByClassifiers`"]*)
 
 (* The definitions are made to have a prefix "ClCon" . *)
 
-(************)
-(*Generation*)
-(************)
+(**************************************************************)
+(* Generation                                                 *)
+(**************************************************************)
 
 (* Generate base functions of ClCon monad (ClassifierWithContext) *)
 
 GenerateStateMonadCode["ClCon"]
 
-(*****************)
-(*Infix operators*)
-(*****************)
+(**************************************************************)
+(* Infix operators                                            *)
+(**************************************************************)
 
-(* This looks much more like a pipeline operator than (**): *)
+(* This should be already done by GenerateStateMonadCode. *)
+(*DoubleLongRightArrow[x_?ClConUnitQ, f_] := ClConBind[x, f];*)
 
-DoubleLongRightArrow[x_?ClConUnitQ, f_] := ClConBind[x, f];
-DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
-
-(*******************)
-(*General functions*)
-(*******************)
+(**************************************************************)
+(* General functions                                          *)
+(**************************************************************)
 
 Clear[ToNormalClassifierData]
 ToNormalClassifierData[td_Dataset] :=
     Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[DeleteMissing[td, 1, 2][All, Values]];
 
 
-(**************************)
-(*Monad specific functions*)
-(**************************)
+(**************************************************************)
+(* Monad specific functions                                   *)
+(**************************************************************)
 
 ClConSplitData[_][None] := None
 ClConSplitData[fr_?NumberQ][xs_, context_Association] :=
