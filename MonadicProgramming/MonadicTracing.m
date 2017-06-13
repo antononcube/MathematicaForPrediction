@@ -173,13 +173,17 @@ If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
 
 GenerateStateMonadCode["TraceMonad", "StringContextNames" -> False]
 
-
 (**************************************************************)
 (* Infix operators                                            *)
 (**************************************************************)
 
 DoubleLongRightArrow[x_?TraceMonadUnitQ, f_] := TraceMonadBind[x, f];
 DoubleLongRightArrow[x_, y_, z__] := DoubleLongRightArrow[DoubleLongRightArrow[x, y], z];
+
+(* Not needed here -- should have been already done by GenerateStateMonadCode. *)
+(*Unprotect[NonCommutativeMultiply]*)
+(*NonCommutativeMultiply[x_?TraceMonadUnitQ, f_] := TraceMonadBind[x, f];*)
+(*NonCommutativeMultiply[x_, y_, z__] := NonCommutativeMultiply[NonCommutativeMultiply[x, y], z];*)
 
 
 (**************************************************************)
@@ -229,7 +233,7 @@ TraceMonadEchoGrid[gridFunc_][x_, context_] :=
       grData =
           Transpose[{Prepend[HoldForm /@ context["commands"], context["data"]], context["comments"]}];
 
-      If[ context["binder"] === NonCommutativeMultiply, delim = "*", delim = "\[DoubleLongRightArrow]"];
+      If[ context["binder"] === NonCommutativeMultiply, delim = "**", delim = "\[DoubleLongRightArrow]"];
       delim = "\[ThinSpace]" <> delim;
 
       (* Style the code and comments *)
