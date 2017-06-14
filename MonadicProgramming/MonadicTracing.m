@@ -256,7 +256,7 @@ TraceMonadBind[TraceMonad[x_, context_], f_] :=
     Block[{res},
       res = context["binder"][x, f];
       If[res === None,
-        TraceMonadEchoGrid[Grid[#, Alignment -> Left] &][x, context];
+        TraceMonadEchoGrid[][x, context];
         None,
       (*ELSE*)
         TraceMonad[res,
@@ -265,6 +265,12 @@ TraceMonadBind[TraceMonad[x_, context_], f_] :=
               "comments" -> Append[context["comments"], ""]|>]]
       ]
     ];
+
+
+Grid87 = Framed@
+    Grid[#, Alignment -> Left, Dividers -> All, FrameStyle -> Directive[Dashing[2], GrayLevel[0.87]]] &;
+
+TraceMonadEchoGrid[][x_, context_] := TraceMonadEchoGrid[Grid87][x, context];
 
 TraceMonadEchoGrid[gridFunc_][x_, context_] :=
     Block[{grData, delim},
