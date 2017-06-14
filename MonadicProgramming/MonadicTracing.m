@@ -71,8 +71,9 @@
           TraceMonadEchoGrid[Grid[#, Alignment -> Left] &];
 
     Note that :
-      1) the tracing is initiated by just using TraceMonadUnit;
-      2) putting a comment string after a pipeline function is optional.
+      1) the tracing is initiated by just using `TraceMonadUnit`;
+      2) pipeline functions (actual code) and comments are interleaved;
+      3) putting a comment string after a pipeline function is optional.
 
 
     ## Longer motivational discussion
@@ -100,6 +101,9 @@
             0,(* initial value *)
             {1, 2, 3, 3, 100}(* arguments in repeated computations *)],
          "GridFunction" -> (Panel@Grid[#, Alignment -> Left] &)]
+
+
+    See [2] for a larger discussion on that problem.
 
 
     ### Definition of GridOfCodeAndComments
@@ -135,8 +139,47 @@
 
           ];
 
+    The problem gets simplified if we want to build code-comment grids for monad pipelines only.
+    The resulting `TraceMonad` code is fairly simple, and demonstrates well the "programming semicolon"
+    view of the binding operator in monadic programming.
 
-    [ The simplification of the problem for monad pipelines only. ]
+
+    ## Monad code design and steps outline
+
+    Generate a State monad code for the name `TraceMonad`.
+
+    The `TraceMonad` has a context with keys "binder", "data", "commands", "comments".
+    The values of "commands" and "comments" are incremented with new commands and comments
+    given in the pipeline. Each command has a corresponding comment. (Empty comments are appended if needed.)
+
+    Here are the steps for tracing a pipeline of a monad, e.g.
+
+          Maybe[data] ⟹ MaybeEchoValue ⟹ (Maybe[#/2]&)
+
+    1) `TraceMonadUnit`, monad's unit operator takes another monad object. E.g.
+
+         TraceMonad[Maybe[data]] ⟹ MaybeEchoValue ⟹ (Maybe[#/2]&)
+
+    2) The content of `TraceMonad[__]` is stored in the context for the key "data".
+
+    3) If a call to `TraceMonadBind` is with a pipeline "function" that is a string,
+       then append that string to the "comments" value in the context.
+
+    4) If the pipeline function -- converted to a string -- matches `"TraceMonad"~~__`
+       then handle as a `TraceMonad` pipeline function.
+
+    5) Otherwise
+    5.1. Call the wrapped monad binding operation with the function.
+    5.2. Check is the result a failure.
+    5.2.1.  If "yes", dump the current values of the context.
+    5.2.2.  If "no", append the function to a "commands" value in the context.
+
+    6) A grid of pipeline functions and comments can be displayed with `TraceMonadEchoGrid`.
+
+    7) If the result of the pipeline is assigned to a variable, say, `res`
+       then the pipeline can be can be re-executed with:
+
+          Fold[MaybeBind, ReleaseHold[res[[2]]["data"]], res[[2]]["commands"]]
 
 
     ## References
