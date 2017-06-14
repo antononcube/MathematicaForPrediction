@@ -177,7 +177,7 @@ ToNormalClassifierData[td_Dataset] :=
 ClConSplitData[_][None] := None
 ClConSplitData[fr_?NumberQ][xs_, context_Association] :=
     ClCon[AssociationThread[{"trainData", "testData"} ->
-        TakeDrop[xs, Floor[fr*Length[xs]]]], context] /; 0 < fr <= 1;
+        TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]]], context] /; 0 < fr <= 1;
 
 ClConRecoverData[None] := None
 ClConRecoverData[xs_, context_Association] :=
