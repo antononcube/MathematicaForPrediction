@@ -121,7 +121,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeUnitQ = ToExpression[monadName <> "UnitQ"],
       MaybeBind = ToExpression[monadName <> "Bind"],
       MaybeFail = ToExpression[monadName <> "Fail"],
-      MaybeFilter = ToExpression[monadName <> "Filter"],
+      MaybeSucceed = ToExpression[monadName <> "Succeed"],
       MaybeEcho = ToExpression[monadName <> "Echo"],
       MaybeEchoFunction = ToExpression[monadName <> "EchoFunction"],
       MaybeOption = ToExpression[monadName <> "Option"],
@@ -131,9 +131,9 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]]
     },
 
-      ClearAll[Maybe, MaybeUnit, MaybeUnitQ, MaybeBind, MaybeFail,
+      ClearAll[Maybe, MaybeUnit, MaybeUnitQ, MaybeBind, MaybeFail, MaybeSucceed,
         MaybeEcho, MaybeEchoFunction,
-        MaybeFilter, MaybeOption, MaybeIfElse, MaybeWhen,
+        MaybeOption, MaybeIfElse, MaybeWhen,
         MaybeOption, MaybeWhen];
 
       MaybeBind::ffail = "Fail when applying: `1`";
@@ -160,10 +160,11 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MaybeFail[__] := MaybeFailureSymbol;
 
-      MaybeFilter[filterFunc_][xs_] := Maybe@Select[xs, filterFunc[#] &];
+      MaybeSucceed[][__] := Maybe[{}];
+      MaybeSucceed[s_][__] := Maybe[s];
 
       MaybeEcho[x_] := Maybe @ Echo[x];
-      MaybeEchoFunction[f_][x_] := Maybe @ EchoFunction[f][x];
+      MaybeEchoFunction[f___][x_] := Maybe @ EchoFunction[f][x];
 
       MaybeOption[f_][xs_] :=
           Block[{res = f[xs]}, If[FreeQ[res, MaybeFailureSymbol], res, Maybe@xs]];
@@ -196,6 +197,7 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeUnit = ToExpression[monadName <> "Unit"],
       MaybeUnitQ = ToExpression[monadName <> "UnitQ"],
       MaybeBind = ToExpression[monadName <> "Bind"],
+      MaybeFilter = ToExpression[monadName <> "Filter"],
       MaybeRandomChoice = ToExpression[monadName <> "RandomChoice"],
       MaybeMapToFail = ToExpression[monadName <> "MapToFail"],
       MaybeRandomReal = ToExpression[monadName <> "RandomReal"],
@@ -203,11 +205,12 @@ GenerateMaybeMonadSpecialCode[monadName_String, opts : OptionsPattern[]] :=
       MaybeFailureSymbol = OptionValue["FailureSymbol"]
     },
 
-      ClearAll[ MaybeRandomChoice, MaybeMapToFail, MaybeRandomReal, MaybeDivide];
+      ClearAll[ MaybeFilter, MaybeRandomChoice, MaybeMapToFail, MaybeRandomReal, MaybeDivide];
 
       (************************************************************)
       (* Special functions                                        *)
       (************************************************************)
+      MaybeFilter[filterFunc_][xs_] := Maybe@Select[xs, filterFunc[#] &];
 
       MaybeRandomChoice[n_][xs_] :=
           Maybe@Block[{res = RandomChoice[xs, n]},
