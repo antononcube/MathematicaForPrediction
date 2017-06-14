@@ -343,6 +343,19 @@ CrossTensorate::wargs = "Wrong arguments.";
 CrossTensorate::mcnames = "Not all formula column names are found in the column names specified by \
 the third argument.";
 
+CrossTensorate[formula_Equal, data_Dataset, columnNames_: Automatic ] :=
+    Block[{colKeys},
+      colKeys = Normal[ data[[1]] ];
+      Which[
+        MatchQ[colKeys, _Association] && TrueQ[columnNames===Automatic],
+        CrossTensorate[ formula, Normal[data[All, Values]], Keys[colKeys] ],
+        MatchQ[colKeys, _Association],
+        CrossTensorate[ formula, Normal[data[All, Values]], columnNames ],
+        True,
+        CrossTensorate[ formula, Normal[data], columnNames ]
+      ]
+    ]/; Length[Dimensions[data]]==2;
+
 CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
     Block[{aColumnNames, idRules, formulaLHS, formulaRHS, t},
 
@@ -357,6 +370,9 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
         True,
         Message[CrossTensorate::wcnames]; Return[{}]
       ];
+
+      aColumnNames =
+          Join[ AssociationThread[Range[Dimensions[data][[2]]]->Range[Dimensions[data][[2]]]], aColumnNames ];
 
       formulaLHS = formula[[1]];
 
@@ -386,6 +402,7 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
       Join[<|"XTABTensor" -> t|>, AssociationThread[ Keys[aColumnNames][[formulaRHS]] -> Map[Normal[#][[All, 1]] &, idRules]]]
     ] /; (AssociationQ[columnNames] || ListQ[columnNames] || TrueQ[columnNames === Automatic]);
 
+
 ClearAll[CrossTensorateSplit]
 CrossTensorateSplit::nvar = "The second argument is expected to be a key in the first.";
 CrossTensorateSplit[varName_] := CrossTensorateSplit[#, varName] &;
@@ -407,6 +424,15 @@ Clear[CrossTabulate]
 
 CrossTabulate::narr = "The first argument is expected to be an array with two or three columns.
 If present the third column is expected to be numerical."
+
+CrossTabulate[ data_Dataset ] :=
+    Block[{colKeys},
+      colKeys = Normal[ data[[1]] ];
+      If[ MatchQ[colKeys, _Association],
+        CrossTabulate[ Normal[data[All, Values]] ],
+        CrossTabulate[ Normal[data] ]
+      ]
+    ]/; Length[Dimensions[data]]==2;
 
 CrossTabulate[ arr_?MatrixQ ] :=
     Block[{idRules,t},
