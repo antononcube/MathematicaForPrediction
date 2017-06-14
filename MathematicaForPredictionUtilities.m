@@ -180,7 +180,7 @@ RecordsSummary[dataRecords_, args___ ] :=
 RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
 
 Clear[GridTableForm]
-Options[GridTableForm] = {TableHeadings -> None};
+Options[GridTableForm] = Join[ {TableHeadings -> None}, Options[Grid] ];
 GridTableForm[data_, opts : OptionsPattern[]] :=
     Block[{gridData, gridHeadings, dataVecQ=False},
       gridHeadings = OptionValue[GridTableForm, TableHeadings];
@@ -199,7 +199,9 @@ GridTableForm[data_, opts : OptionsPattern[]] :=
       ];
       gridData = Prepend[gridData, gridHeadings];
       (*If[dataVecQ, gridData = Transpose[gridData] ];*)
-      Grid[gridData, Alignment -> Left,
+      Grid[gridData,
+        DeleteCases[ {opts}, (TableHeadings->_)],
+        Alignment -> Left,
         Dividers -> {Join[{1 -> Black, 2 -> Black},
           Thread[Range[3, Length[gridData[[2]]] + 1] -> GrayLevel[0.8]], {Length[gridData[[2]]] + 1 -> Black}], {True, True, {False}, True}},
         Background -> {Automatic, Flatten[Table[{White, GrayLevel[0.96]}, {Length[gridData]/2}]]}]
