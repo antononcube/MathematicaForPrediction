@@ -48,8 +48,8 @@
     The monadic implementations in this file (not a package yet) allow tracking of the pipeline execution
     of functions with other monads.
 
-    The primary reason for developing it was the ability to print a tabulated trace of code and comments
-    using the usual monad pipeline notation. (I.e. without conversion to strings etc.)
+    The primary reason for developing package was he desire to have the ability to print a tabulated trace
+    of code and comments using the usual monad pipeline notation. (I.e. without conversion to strings etc.)
 
     From that perspective the main function is `TraceMonadEchoGrid`.
 
