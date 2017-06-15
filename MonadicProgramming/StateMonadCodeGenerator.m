@@ -403,13 +403,13 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateBind[___] := MStateFailureSymbol;
 
       MStateEchoValue[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
-      MStateEchoValue[x_, context_Association] := (Echo[x]; MState[x, context]);
+      MStateEchoValue[x_, context_Association] := (Echo[x,"value:"]; MState[x, context]);
 
       MStateEchoFunctionValue[f___][MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoFunctionValue[f___][x_, context_Association] := (EchoFunction[f][x]; MState[x, context]);
 
       MStateEchoContext[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
-      MStateEchoContext[x_, context_Association] := (Echo[context]; MState[x, context]);
+      MStateEchoContext[x_, context_Association] := (Echo[context,"context:"]; MState[x, context]);
 
       MStateEchoFunctionContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateEchoFunctionContext[f_][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
