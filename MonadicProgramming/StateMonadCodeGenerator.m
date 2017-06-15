@@ -354,7 +354,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       (* What are the assumptions for monad's failure symbol? *)
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
 
-      MStateBind::ffail = "Fail when applying: `1`";
+      MStateBind::ffail = "Failure when applying: `1`";
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
@@ -375,7 +375,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
           Block[{res = f[x, context]},
             If[FreeQ[res, MStateFailureSymbol], res,
               If[MStateEchoFailingFunction,
-                Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]]]
+                Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]], ToString[MStateBind]<>":"]
               ];
               MStateFailureSymbol
             ]
@@ -391,7 +391,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               Which[
                 ! FreeQ[res, MStateFailureSymbol],
                 If[MStateEchoFailingFunction,
-                  Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]]]
+                  Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]], ToString[MStateBind]<>":"]
                 ];
                 MStateFailureSymbol,
                 StringQ[res[[2]]], res,

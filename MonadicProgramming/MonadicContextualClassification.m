@@ -189,7 +189,7 @@ ClConRecoverData[xs_, context_Association] :=
         KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
         ClCon[Join[context["trainData"], context["testData"]], context],
         True,
-        Print["ClConRecoverData:: Cannot recover data."];
+        Echo["Cannot recover data.","ClConRecoverData:"];
         None
       ]
     ];
@@ -204,7 +204,7 @@ ClConMakeClassifier[method_String][xs_, context_] :=
         KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
         dataAssoc = context; newContext = <||>,
         True,
-        Echo["ClConMakeClassifier:: Split the data first. (No changes in argument and context were made.)"];
+        Echo["Split the data first. (No changes in argument and context were made.)","ClConMakeClassifier:"];
         Return[ClCon[xs, context]]
       ];
       cf = Classify[ToNormalClassifierData[dataAssoc@"trainData"], Method -> method];
@@ -220,7 +220,7 @@ ClConClassifierMeasurements[measures : (_String | {_String ..})][xs_,
         cm = ClassifierMeasurements[context["classifier"], ToNormalClassifierData[context@"testData"]];
         ClCon[AssociationThread[measures -> cm /@ Flatten[{measures}]], context],
         True,
-        Echo["ClConClassifierMeasurements:: Make a classifier first."];
+        Echo["Make a classifier first.", "ClConClassifierMeasurements:"];
         None
       ]
     ];

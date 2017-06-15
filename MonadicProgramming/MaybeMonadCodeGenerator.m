@@ -136,7 +136,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
         MaybeOption, MaybeIfElse, MaybeWhen,
         MaybeOption, MaybeWhen];
 
-      MaybeBind::ffail = "Fail when applying: `1`";
+      MaybeBind::ffail = "Failure when applying: `1`";
 
       (************************************************************)
       (* Core functions                                           *)
@@ -152,7 +152,7 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
           Block[{res = f[x]},
             If[FreeQ[res, MaybeFailureSymbol], res,
               If[MaybeEchoFailingFunction,
-                Echo[TemplateApply[StringTemplate[MaybeBind::ffail], HoldForm[f]]]
+                Echo[TemplateApply[StringTemplate[MaybeBind::ffail], HoldForm[f]], ToString[MaybeBind]<>":"]
               ];
               MaybeFailureSymbol
             ]
