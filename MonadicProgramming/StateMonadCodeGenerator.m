@@ -412,7 +412,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoContext[x_, context_Association] := (Echo[context,"context:"]; MState[x, context]);
 
       MStateEchoFunctionContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateEchoFunctionContext[f_][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
+      MStateEchoFunctionContext[f___][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
 
       MStatePutContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutContext[newContext_Association][x_, context_Association] := MState[x, newContext];
@@ -450,10 +450,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
           MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
 
       (* We should have an option for the pipeline symbol. *)
-    (* This looks much more like a pipeline operator than (**): *)
+      (* This looks much more like a pipeline operator than (**): *)
       DoubleLongRightArrow[Global`x_?MStateUnitQ, Global`f_] := MStateBind[Global`x, Global`f];
-      (*DoubleLongRightArrow[Global`x_, Global`y_, Global`z__] :=*)
-          (*DoubleLongRightArrow[DoubleLongRightArrow[Global`x, Global`y], Global`z];*)
+      DoubleLongRightArrow[Global`x_, Global`y_, Global`z__] :=
+          DoubleLongRightArrow[DoubleLongRightArrow[Global`x, Global`y], Global`z];
 
       (*Unprotect[NonCommutativeMultiply];*)
       (*ClearAttributes[NonCommutativeMultiply, Attributes[NonCommutativeMultiply]]*)
