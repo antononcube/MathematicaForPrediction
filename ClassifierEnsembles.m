@@ -156,6 +156,10 @@ the specified threshold."
 ClassifyByThreshold::usage = "A shortcut to calling EnsembleClassifyByThreshold using a classifier function \
 instead of a classifier ensemble."
 
+EnsembleClassifierMeasurements::usage = "EnsembleClassifierMeasurements[ensCF, testData, props] \
+gives measurements corresponding to props when the ensemble of classifiers ensCF is evaluated over testData. \
+(Emulates ClassifierMeasurements for ensembles of classifiers.)"
+
 Begin["`Private`"]
 
 
@@ -264,9 +268,53 @@ EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
 
 EnsembleClassifyByThreshold[___] := (Message[EnsembleClassifyByThreshold::nargs]; $Failed);
 
-ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ),
-  label_ -> threshold_?NumericQ ] :=
+ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -> threshold_?NumericQ ] :=
     EnsembleClassifyByThreshold[ <| "cf"->cf |>, data, label->threshold, "ProbabilitiesMean" ];
+
+
+(* Calculating classifier enseble measurements *)
+
+Clear[IsClassifierDataQ]
+IsClassifierDataQ[data_] :=
+    MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+
+ClearAll[EnsembleClassifierMeasurements]
+
+Options[EnsembleClassifierMeasurements] = {"ClassificationFunction" -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
+
+EnsembleClassifierMeasurements[cls_Association,
+  testData_?IsClassifierDataQ, measure_String,
+  opts : OptionsPattern[]] :=
+    EnsembleClassifierMeasurements[cls, testData, {measure}, opts];
+
+EnsembleClassifierMeasurements[cls_Association, testData_, args___] :=
+    EnsembleClassifierMeasurements[cls, Thread[testData], args] /; MatchQ[testData, Rule[_?ArrayQ, _]];
+
+EnsembleClassifierMeasurements[cls_Association, testData_?IsClassifierDataQ, measures : {_String ..}, opts : OptionsPattern[]] :=
+    Block[{cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures},
+
+      cfMethod = OptionValue[EnsembleClassifierMeasurements, "ClassificationFunction"];
+      testLabels = testData[[All, 2]];
+
+      clVals = cfMethod[cls, testData[[All, 1]]];
+
+      clClasses = ClassifierInformation[cls[[1]], "Classes"];
+
+      knownMeasures = measures /. {"Precision" -> "PPV", "Recall" -> "TPR", "Accuracy" -> "ACC"};
+      clRes =
+          Table[
+            aROCs =
+                ToROCAssociation[RotateLeft[clClasses, i - 1], testLabels, clVals];
+            clClasses[[i]] ->
+                AssociationThread[measures -> Through[N[ROCFunctions[knownMeasures][aROCs]]]],
+            {i, Length[clClasses]}
+          ];
+
+      clRes = Dataset[Association@clRes];
+      clRes = Map[Normal[clRes[All, #]] &, measures];
+
+      MapThread[If[MemberQ[{"Accuracy", "ACC"}, #1], First@Values[#2], #2] &, {measures, clRes}]
+    ];
 
 End[] (* `Private` *)
 
