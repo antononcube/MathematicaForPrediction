@@ -183,11 +183,12 @@ ClConRecoverData[None] := None
 ClConRecoverData[xs_, context_Association] :=
     Block[{},
       Which[
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] &&
-            KeyExistsQ[xs, "testData"],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
         ClCon[Join[xs["trainData"], xs["testData"]], context],
+
         KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
         ClCon[Join[context["trainData"], context["testData"]], context],
+
         True,
         Echo["Cannot recover data.","ClConRecoverData:"];
         None
@@ -198,27 +199,37 @@ ClConRecoverData[xs_, context_Association] :=
 ClConMakeClassifier[_][None] := None;
 ClConMakeClassifier[method_String][xs_, context_] :=
     Block[{cf, dataAssoc, newContext},
+
       Which[
         MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
         dataAssoc = xs; newContext = Join[context, xs],
+
         KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
         dataAssoc = context; newContext = <||>,
+
         True,
-        Echo["Split the data first. (No changes in argument and context were made.)","ClConMakeClassifier:"];
+        Echo["Split the data first. (No changes in argument and context were made.)", "ClConMakeClassifier:"];
         Return[ClCon[xs, context]]
       ];
+
       cf = Classify[ToNormalClassifierData[dataAssoc@"trainData"], Method -> method];
-      ClCon[cf, Join[context, newContext, <|"classifier" -> cf|>]]
+
+      If[ ! MatchQ[cf, _ClassifierFunction],
+        Echo["Classifier making failure.", "ClConMakeClassifier:"];
+        None,
+        (* ELSE *)
+        ClCon[cf, Join[context, newContext, <|"classifier" -> cf|>]]
+      ]
     ];
 
 ClConClassifierMeasurements[_][None] := None;
-ClConClassifierMeasurements[measures : (_String | {_String ..})][xs_,
-  context_] :=
+ClConClassifierMeasurements[measures : (_String | {_String ..})][xs_, context_] :=
     Block[{cm},
       Which[
         KeyExistsQ[context, "classifier"],
         cm = ClassifierMeasurements[context["classifier"], ToNormalClassifierData[context@"testData"]];
         ClCon[AssociationThread[measures -> cm /@ Flatten[{measures}]], context],
+
         True,
         Echo["Make a classifier first.", "ClConClassifierMeasurements:"];
         None
@@ -229,7 +240,9 @@ ClConAccuracyByVariableShuffling[][xs_, context_] :=
     ClConAccuracyByVariableShuffling["FScoreLabels" -> None][xs, context];
 ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
     Block[{fsClasses = FilterRules[{opts}, "FScoreLabels"]},
+
       If[Length[fsClasses] == 0 || fsClasses === Automatic, fsClasses = None];
+
       ClCon[AccuracyByVariableShuffling[
         context["classifier"],
         ToNormalClassifierData[context["testData"]],
