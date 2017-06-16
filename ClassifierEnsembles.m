@@ -240,7 +240,8 @@ threshold is numerical. The fourth argument is expected to be one of \
 \"Votes\" or \"ProbabilitiesMean\".";
 
 EnsembleClassifyByThreshold[cls_Association, record_?VectorQ,
-  label_ -> threshold_?NumericQ, method_String: "ProbabilitiesMean"] :=
+  label_ -> threshold_?NumericQ,
+  method_String: "ProbabilitiesMean"] :=
     Block[{pmeans},
       If[TrueQ[method == "ProbabilitiesMean"],
         pmeans = EnsembleClassifierProbabilities[cls, record],
@@ -250,16 +251,15 @@ EnsembleClassifyByThreshold[cls_Association, record_?VectorQ,
     ];
 
 EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
-  label_ -> threshold_?NumericQ, method_String: "ProbabilitiesMean"] :=
-
+  label_ -> threshold_?NumericQ,
+  method_String: "ProbabilitiesMean"] :=
     Block[{pmeans},
       If[TrueQ[method == "ProbabilitiesMean"],
         pmeans = EnsembleClassifierProbabilities[cls, records],
         pmeans =
             Map[Join[<|label -> 0|>, #] &, EnsembleClassifierVotes[cls, records]]
       ];
-      Map[If[#[label] >= threshold, label, First@Keys@TakeLargest[#, 1]] &,
-        pmeans]
+      Map[If[#[label] >= threshold, label, First@Keys@TakeLargest[#, 1]] &, pmeans]
     ];
 
 EnsembleClassifyByThreshold[___] := (Message[EnsembleClassifyByThreshold::nargs]; $Failed);
