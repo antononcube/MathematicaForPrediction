@@ -60,7 +60,7 @@
 
   The variables for which the classification success rates are the worst are the most decisive.
 
-  Instead of overall classification accuracy the package can work with F-Scores of a given set of labels.
+  Instead of overall classification accuracy the package can work with precisions of a given set of labels.
 
   -------------------
   Examples
@@ -110,10 +110,10 @@
      MosaicPlot[t[[All, {1, 3, 4}]], ColorRules -> {3 -> ColorData[7, "ColorList"]} ]
 
 
-  4a. In order to use F-scores instead of overall accuracy the desired class labels are specified with
-      the option "FScoreLabels".
+  4a. In order to use precision per class labels instead of overall accuracy the desired class labels
+      are specified with the option "Classes".
 
-    accs = AccuracyByVariableShuffling[clFunc, testSet, varNames, "FScoreLabels" -> classLabels]
+    accs = AccuracyByVariableShuffling[clFunc, testSet, varNames, "Classes" -> classLabels]
 
     (* <|None -> {0.836158, 0.658824},
          "passenger class" -> {0.796992, 0.574803},
@@ -121,12 +121,12 @@
          "passenger sex" -> {0.704797, 0.344262}|> *)
 
 
-  4b. Here is another example that uses the class label with the smallest F-score.
+  4b. Here is another example that uses the class label with the smallest precision.
       (Probably the most important since it is most mis-classified).
 
     accs = AccuracyByVariableShuffling[clFunc, testSet, varNames,
-                                       "FScoreLabels" -> Position[#, Min[#]][[1, 1, 1]] &@
-                                                                  ClassifierMeasurements[clFunc, testSet, "FScore"]]
+                                       "Classes" -> Position[#, Min[#]][[1, 1, 1]] &@
+                                                                  ClassifierMeasurements[clFunc, testSet, "Precision"]]
 
     (* <|None -> {0.658824},
          "passenger class" -> {0.54321},
@@ -162,6 +162,13 @@
   2015-12-28
 
 *)
+(*
+  2017-06-17
+  Made it work with classifier ensembles.
+  Replaced the name of the option "FScoreLabels" with "Classes".
+
+*)
+
 
 BeginPackage["VariableImportanceByClassifiers`"]
 (* Exported symbols added here with SymbolName::usage *)
@@ -169,25 +176,42 @@ BeginPackage["VariableImportanceByClassifiers`"]
 AccuracyByVariableShuffling::usage = "AccuracyByVariableShuffling[clFunc, testData, variableNames, opts] computes classification \
 accuracies with the ClassiferFunction object clFunc over damaged versions of the data testData. The accuracies can be used \
 in variable importance finding. The names of the variables can be specified with variableNames. \
-With the option \"FScoreLabels\" the accuracies can be computed over a specific list of class labels. \
+With the option \"Classes\" the accuracies can be computed over a specific list of class labels. \
 The result is an Association object with keys the damaged column names of testData (variables) and with values the corresponding \
 accuracies."
 
 Begin["`Private`"]
 
-Clear[IsClassifierDataQ, AccuracyByVariableShuffling]
+(*Needs["ClassifierEnsembles`"]*)
 
-IsClassifierDataQ[data_] := MatchQ[ data, { Rule[_List, _] .. } ] && ArrayQ[ data[[ All, 1 ]] ];
+AccuracyByVariableShuffling::nfsc = "The option \"FScoreLabels\" is obsolete; use \"Classes\" instead.";
+
+Clear[ClassifierQ, ClassifierDataQ, AccuracyByVariableShuffling]
+
+ClassifierQ[ cl_ ] :=
+    MatchQ[ cl, _ClassifierFunction] ||
+    If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] > 0,
+      MatchQ[ cl, Association[(_ -> _ClassifierFunction) ..] ]
+    ];
+
+ClassifierDataQ[data_] := MatchQ[ data, { Rule[_List, _] .. } ] && ArrayQ[ data[[ All, 1 ]] ];
 
 AccuracyByVariableShuffling::varnames = "The third argument (variableNames) is expected to be Automatic or a list of strings."
 
-Options[AccuracyByVariableShuffling] = { "FScoreLabels" -> None };
+Options[AccuracyByVariableShuffling] = { "FScoreLabels" -> None, "Classes" -> None };
 
-AccuracyByVariableShuffling[ clFunc_ClassifierFunction, testData_?IsClassifierDataQ, variableNames_:Automatic, opts:OptionsPattern[] ] :=
-    Block[{ baseAccuracy, tmat, shuffledTestSets, accuraciesOfShuffledTestSets, varNames, fscoreLabels },
+AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, variableNames_:Automatic, opts:OptionsPattern[] ] :=
+    Block[{ baseAccuracy, tmat, shuffledTestSets, accuraciesOfShuffledTestSets, varNames, fscoreLabels, targetClasses },
 
       fscoreLabels = OptionValue["FScoreLabels"];
-      If[ TrueQ[ fscoreLabels =!= None ] && AtomQ[fscoreLabels], fscoreLabels = {fscoreLabels} ];
+      If[ TrueQ[ fscoreLabels =!= None ],
+        Message[AccuracyByVariableShuffling::nfsc];
+      ];
+
+      targetClasses = OptionValue["Classes"];
+      If[ TrueQ[ targetClasses =!= None ] && AtomQ[targetClasses], targetClasses = {targetClasses} ];
+
+      If[targetClasses === None && fscoreLabels =!= None, targetClasses = fscoreLabels ];
 
       (* Matrix/array of attributes *)
       tmat = testData[[All, 1]];
@@ -209,11 +233,20 @@ AccuracyByVariableShuffling[ clFunc_ClassifierFunction, testData_?IsClassifierDa
           ];
 
       (* Find the baseline accuracy. *)
-      If[ fscoreLabels === None,
+      Which[
+
+        targetClasses === None && MatchQ[ clFunc, _ClassifierFunction ],
         baseAccuracy = ClassifierMeasurements[ clFunc, testData, "Accuracy"],
-        (* ELSE *)
-        baseAccuracy = ClassifierMeasurements[ clFunc, testData, "FScore"];
-        baseAccuracy = baseAccuracy /@ fscoreLabels;
+
+        targetClasses =!= None && MatchQ[ clFunc, _ClassifierFunction ],
+        baseAccuracy = ClassifierMeasurements[ clFunc, testData, "Precision"];
+        baseAccuracy = baseAccuracy /@ targetClasses,
+
+        targetClasses === None,
+        baseAccuracy = ClassifierEnsembles`EnsembleClassifierMeasurements[ clFunc, testData, "Accuracy"],
+
+        targetClasses =!= None,
+        baseAccuracy = ClassifierEnsembles`EnsembleClassifierMeasurements[ clFunc, testData, "Precision", "Classes"->targetClasses];
       ];
 
       (* Shuffle each column of the test set. *)
@@ -225,13 +258,23 @@ AccuracyByVariableShuffling[ clFunc_ClassifierFunction, testData_?IsClassifierDa
           ], Range[Dimensions[tmat][[1]]]];
 
       (* Calculate the classifier accuracy for each of the datasets *)
-      If[ fscoreLabels === None,
+      Which[
+        targetClasses === None && MatchQ[ clFunc, _ClassifierFunction ],
         accuraciesOfShuffledTestSets =
             ClassifierMeasurements[clFunc, #, "Accuracy"] & /@ shuffledTestSets,
-        (* ELSE *)
+
+        targetClasses =!= None && MatchQ[ clFunc, _ClassifierFunction ],
         accuraciesOfShuffledTestSets =
-            ClassifierMeasurements[clFunc, #, "FScore"] & /@ shuffledTestSets;
-        accuraciesOfShuffledTestSets = Map[ # /@ fscoreLabels&, accuraciesOfShuffledTestSets ];
+            ClassifierMeasurements[clFunc, #, "Precision"] & /@ shuffledTestSets;
+        accuraciesOfShuffledTestSets = Map[ # /@ targetClasses&, accuraciesOfShuffledTestSets ],
+
+        targetClasses === None,
+        accuraciesOfShuffledTestSets =
+            ClassifierEnsembles`EnsembleClassifierMeasurements[clFunc, #, "Accuracy"] & /@ shuffledTestSets,
+
+        targetClasses =!= None,
+        accuraciesOfShuffledTestSets =
+            ClassifierEnsembles`EnsembleClassifierMeasurements[clFunc, #, "Precision", "Classes"->targetClasses] & /@ shuffledTestSets;
       ];
 
       (* Return result *)
