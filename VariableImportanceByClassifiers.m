@@ -247,6 +247,7 @@ AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, var
 
         targetClasses =!= None,
         baseAccuracy = ClassifierEnsembles`EnsembleClassifierMeasurements[ clFunc, testData, "Precision", "Classes"->targetClasses];
+        baseAccuracy = baseAccuracy /@ targetClasses;
       ];
 
       (* Shuffle each column of the test set. *)
@@ -275,6 +276,7 @@ AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, var
         targetClasses =!= None,
         accuraciesOfShuffledTestSets =
             ClassifierEnsembles`EnsembleClassifierMeasurements[clFunc, #, "Precision", "Classes"->targetClasses] & /@ shuffledTestSets;
+        accuraciesOfShuffledTestSets = Map[ # /@ targetClasses &, accuraciesOfShuffledTestSets];
       ];
 
       (* Return result *)
