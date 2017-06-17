@@ -129,12 +129,25 @@
 *)
 
 (*BeginPackage["MonadicContextualClassification`"]*)
-(* Exported symbols added here with SymbolName::usage *)
+
+(*ClConSplitData::usage = "ClConSplitData[fr_?NumberQ]";*)
+
+(*ClConRecoverData::usage = "ClConRecoverData";*)
+
+(*ClConMakeClassifier::usage = "ClConMakeClassifier[methodSpec_?MethodSpecQ]";*)
+
+(*ClConClassifierMeasurements::usage = "ClConClassifierMeasurements[measures : (_String | {_String ..})]";*)
+
+(*ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]]";*)
 
 (*Begin["`Private`"]*)
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
+];
+
+If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ClassifierEnsembles.m"]
 ];
 
 If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
@@ -165,8 +178,8 @@ GenerateStateMonadCode["ClCon"]
 (* General functions                                          *)
 (**************************************************************)
 
-Clear[ToNormalClassifierData]
-ToNormalClassifierData[td_Dataset] :=
+Clear[ClConToNormalClassifierData]
+ClConToNormalClassifierData[td_Dataset] :=
     Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[DeleteMissing[td, 1, 2][All, Values]];
 
 
@@ -196,8 +209,29 @@ ClConRecoverData[xs_, context_Association] :=
     ];
 
 
+(************************************************************)
+(* ClConMakeClassifier                                      *)
+(************************************************************)
+
+ClConMethodQ[x_] := StringQ[x]; (* And check is it known by Classifiy. *)
+
+ClConMethodListQ[x_] := MatchQ[ x, {_?ClConMethodQ..} ];
+
+ClConResamplingMethodQ[x_] := MatchQ[ x, (_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ];
+
+(* Note that is includes MethodListQ. *)
+ClConResamplingMethodListQ[x_] := MatchQ[ x, { _?ClConResamplingMethodQ .. } ];
+
+ClConMethodSpecQ[x_] := ClConMethodQ[x] || ClConResamplingMethodQ[x] || ClConResamplingMethodListQ[x];
+
+ClConClassifierQ[ cl_ ] :=
+    MatchQ[ cl, _ClassifierFunction] ||
+        If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] > 0,
+          MatchQ[ cl, Association[(_ -> _ClassifierFunction) ..] ]
+        ];
+
 ClConMakeClassifier[_][None] := None;
-ClConMakeClassifier[method_String][xs_, context_] :=
+ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
     Block[{cf, dataAssoc, newContext},
 
       Which[
@@ -212,9 +246,25 @@ ClConMakeClassifier[method_String][xs_, context_] :=
         Return[ClCon[xs, context]]
       ];
 
-      cf = Classify[ToNormalClassifierData[dataAssoc@"trainData"], Method -> method];
+      Which[
+        ClConMethodQ[methodSpec],
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainData"], Method -> methodSpec],
 
-      If[ ! MatchQ[cf, _ClassifierFunction],
+        ClConMethodListQ[methodSpec],
+        cf = EnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
+
+        ClConResamplingMethodQ[methodSpec],
+        cf = ResamplingEnsembleClassifier[ {methodSpec}, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
+
+        ClConResamplingMethodListQ[methodSpec],
+        cf = ResamplingEnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
+
+        True,
+        Echo["Uknown classifier specification.", "ClConMakeClassifier:"];
+        cf = None;
+      ];
+
+      If[ ! ClConClassifierQ[cf],
         Echo["Classifier making failure.", "ClConMakeClassifier:"];
         None,
         (* ELSE *)
@@ -222,19 +272,33 @@ ClConMakeClassifier[method_String][xs_, context_] :=
       ]
     ];
 
+
+(************************************************************)
+(* ClConClassifierMeasurements                              *)
+(************************************************************)
+
 ClConClassifierMeasurements[_][None] := None;
 ClConClassifierMeasurements[measures : (_String | {_String ..})][xs_, context_] :=
     Block[{cm},
       Which[
-        KeyExistsQ[context, "classifier"],
-        cm = ClassifierMeasurements[context["classifier"], ToNormalClassifierData[context@"testData"]];
+        KeyExistsQ[context, "classifier"] && MatchQ[ context["classifier"], _ClassifierFunction],
+        cm = ClassifierMeasurements[context["classifier"], ClConToNormalClassifierData[context@"testData"]];
         ClCon[AssociationThread[measures -> cm /@ Flatten[{measures}]], context],
+
+        KeyExistsQ[context, "classifier"],
+        cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], Flatten[{measures}]];
+        ClCon[AssociationThread[measures -> cm], context],
 
         True,
         Echo["Make a classifier first.", "ClConClassifierMeasurements:"];
         None
       ]
     ];
+
+
+(************************************************************)
+(* ClConAccuracyByVariableShuffling                         *)
+(************************************************************)
 
 ClConAccuracyByVariableShuffling[][xs_, context_] :=
     ClConAccuracyByVariableShuffling["FScoreLabels" -> None][xs, context];
@@ -245,12 +309,12 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
 
       ClCon[AccuracyByVariableShuffling[
         context["classifier"],
-        ToNormalClassifierData[context["testData"]],
+        ClConToNormalClassifierData[context["testData"]],
         Most@Keys[Normal@context["testData"][[1]]],
         fsClasses],
         context]
     ];
 
-(*End[] *)(* `Private` *)
+(*End[]  *`Private` *)
 
 (*EndPackage[]*)
