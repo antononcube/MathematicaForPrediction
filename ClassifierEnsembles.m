@@ -354,7 +354,7 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
           Table[
             If[ MemberQ[ targetClasses, clClasses[[i]] ],
               aROCs =
-                  ToROCAssociation[RotateLeft[clClasses, i - 1], testLabels, clVals];
+                  ToROCAssociation[{ clClasses[[i]], "Not-"<>ToString[clClasses[[i]]] }, testLabels, clVals];
               clClasses[[i]] ->
                   AssociationThread[measures -> Through[N[ROCFunctions[knownMeasures][aROCs]]]],
               Nothing
