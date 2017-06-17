@@ -323,7 +323,8 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
 
 ClearAll[EnsembleClassifierMeasurements]
 
-Options[EnsembleClassifierMeasurements] = {Method -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
+Options[EnsembleClassifierMeasurements] =
+    {"Classes"->Automatic, Method -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
 
 EnsembleClassifierMeasurements[cls_Association,
   testData_?IsClassifierDataQ, measure_String,
@@ -334,8 +335,9 @@ EnsembleClassifierMeasurements[cls_Association, testData_, args___] :=
     EnsembleClassifierMeasurements[cls, Thread[testData], args] /; MatchQ[testData, Rule[_?ArrayQ, _]];
 
 EnsembleClassifierMeasurements[cls_Association, testData_?IsClassifierDataQ, measures : {_String ..}, opts : OptionsPattern[]] :=
-    Block[{cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures},
+    Block[{targetClasses, cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures},
 
+      targetClasses = OptionValue[EnsembleClassifierMeasurements, "Classes"];
       cfMethod = OptionValue[EnsembleClassifierMeasurements, Method];
       testLabels = testData[[All, 2]];
 
@@ -343,13 +345,20 @@ EnsembleClassifierMeasurements[cls_Association, testData_?IsClassifierDataQ, mea
 
       clClasses = ClassifierInformation[cls[[1]], "Classes"];
 
+      If[ targetClasses === Automatic,
+        targetClasses = clClasses;
+      ];
+
       knownMeasures = measures /. {"Precision" -> "PPV", "Recall" -> "TPR", "Accuracy" -> "ACC"};
       clRes =
           Table[
-            aROCs =
-                ToROCAssociation[RotateLeft[clClasses, i - 1], testLabels, clVals];
-            clClasses[[i]] ->
-                AssociationThread[measures -> Through[N[ROCFunctions[knownMeasures][aROCs]]]],
+            If[ MemberQ[ targetClasses, clClasses[[i]] ],
+              aROCs =
+                  ToROCAssociation[RotateLeft[clClasses, i - 1], testLabels, clVals];
+              clClasses[[i]] ->
+                  AssociationThread[measures -> Through[N[ROCFunctions[knownMeasures][aROCs]]]],
+              Nothing
+            ],
             {i, Length[clClasses]}
           ];
 
