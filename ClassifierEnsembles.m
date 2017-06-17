@@ -192,12 +192,12 @@ EnsembleClassifier[___] := (Message[EnsembleClassify::nargs]; $Failed);
 (* Resampling classifier making                               *)
 (**************************************************************)
 
-Clear[IsClassifierDataQ]
-IsClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+Clear[ClassifierDataQ]
+ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
 
 Clear[ResamplingEnsembleClassifier]
 ResamplingEnsembleClassifier[methods : {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..},
-  data_?IsClassifierDataQ,
+  data_?ClassifierDataQ,
   opts : OptionsPattern[]] :=
     Block[{fullMethods, res},
       fullMethods =
@@ -327,14 +327,14 @@ Options[EnsembleClassifierMeasurements] =
     {"Classes"->Automatic, Method -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
 
 EnsembleClassifierMeasurements[cls_Association,
-  testData_?IsClassifierDataQ, measure_String,
+  testData_?ClassifierDataQ, measure_String,
   opts : OptionsPattern[]] :=
     EnsembleClassifierMeasurements[cls, testData, {measure}, opts];
 
 EnsembleClassifierMeasurements[cls_Association, testData_, args___] :=
     EnsembleClassifierMeasurements[cls, Thread[testData], args] /; MatchQ[testData, Rule[_?ArrayQ, _]];
 
-EnsembleClassifierMeasurements[cls_Association, testData_?IsClassifierDataQ, measures : {_String ..}, opts : OptionsPattern[]] :=
+EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measures : {_String ..}, opts : OptionsPattern[]] :=
     Block[{targetClasses, cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures},
 
       targetClasses = OptionValue[EnsembleClassifierMeasurements, "Classes"];
