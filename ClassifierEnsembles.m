@@ -335,7 +335,8 @@ EnsembleClassifierMeasurements[cls_Association, testData_, args___] :=
     EnsembleClassifierMeasurements[cls, Thread[testData], args] /; MatchQ[testData, Rule[_?ArrayQ, _]];
 
 EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measures : {_String ..}, opts : OptionsPattern[]] :=
-    Block[{targetClasses, cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures},
+    Block[{targetClasses, cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures,
+      ccNotLabel, ccTestLabels, ccModelVals},
 
       targetClasses = OptionValue[EnsembleClassifierMeasurements, "Classes"];
       cfMethod = OptionValue[EnsembleClassifierMeasurements, Method];
@@ -353,10 +354,14 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
       clRes =
           Table[
             If[ MemberQ[ targetClasses, clClasses[[i]] ],
+              ccNotLabel = "Not-"<>ToString[clClasses[[i]]];
+              ccTestLabels = Map[ If[# == clClasses[[i]], #, ccNotLabel]&, testLabels ];
+              ccModelVals = Map[ If[# == clClasses[[i]], #, ccNotLabel]&, clVals ];
               aROCs =
-                  ToROCAssociation[{ clClasses[[i]], "Not-"<>ToString[clClasses[[i]]] }, testLabels, clVals];
+                  ToROCAssociation[{ clClasses[[i]], ccNotLabel }, ccTestLabels, ccModelVals];
               clClasses[[i]] ->
                   AssociationThread[measures -> Through[N[ROCFunctions[knownMeasures][aROCs]]]],
+              (*ELSE*)
               Nothing
             ],
             {i, Length[clClasses]}
