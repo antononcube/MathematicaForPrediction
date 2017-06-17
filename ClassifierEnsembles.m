@@ -329,7 +329,7 @@ Options[EnsembleClassifierMeasurements] =
 EnsembleClassifierMeasurements[cls_Association,
   testData_?ClassifierDataQ, measure_String,
   opts : OptionsPattern[]] :=
-    EnsembleClassifierMeasurements[cls, testData, {measure}, opts];
+    First @ EnsembleClassifierMeasurements[cls, testData, {measure}, opts];
 
 EnsembleClassifierMeasurements[cls_Association, testData_, args___] :=
     EnsembleClassifierMeasurements[cls, Thread[testData], args] /; MatchQ[testData, Rule[_?ArrayQ, _]];
