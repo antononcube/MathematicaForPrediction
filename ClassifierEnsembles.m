@@ -160,8 +160,16 @@ EnsembleClassifierMeasurements::usage = "EnsembleClassifierMeasurements[ensCF, t
 gives measurements corresponding to props when the ensemble of classifiers ensCF is evaluated over testData. \
 (Emulates ClassifierMeasurements for ensembles of classifiers.)"
 
+ResamplingEnsembleClassifier::usage = "ResamplingEnsembleClassifier[{(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..}, data] \
+builds ensemble classifier based on a specification."
+
 Begin["`Private`"]
 
+If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
+];
+
+Needs["ROCFunctions`"]
 
 Clear[EnsembleClassifier]
 EnsembleClassifier::nargs =
@@ -179,6 +187,38 @@ EnsembleClassifier[clIDs : {_String ..}, args___] :=
 
 EnsembleClassifier[___] := (Message[EnsembleClassify::nargs]; $Failed);
 
+
+(**************************************************************)
+(* Resampling classifier making                               *)
+(**************************************************************)
+
+Clear[IsClassifierDataQ]
+IsClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+
+Clear[ResamplingEnsembleClassifier]
+ResamplingEnsembleClassifier[methods : {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..},
+  data_?IsClassifierDataQ,
+  opts : OptionsPattern[]] :=
+    Block[{fullMethods, res},
+      fullMethods =
+          Map[Which[StringQ[#], {#, 0.9, 1}, Length[#] == 2, Append[#, 1], True, #] &, methods];
+      fullMethods =
+          Map[If[! (0 < #[[2]] <= 1), {#[[1]], 0.9, #[[3]]}, #] &, fullMethods];
+      fullMethods =
+          Map[If[! (0 < #[[3]]), {#[[1]], #[[2]], 1}, #] &, fullMethods];
+      fullMethods = Map[Table[Take[#, 2], {#[[3]]}] &, fullMethods];
+      res =
+          Map[
+            Table[#[[i, 1]] <> "[" <> ToString[i] <> "," <> ToString[#[[i, 2]]] <> "]" ->
+                Classify[RandomSample[data, Floor[#[[i, 2]]*Length[data]]], Method -> #[[i, 1]]], {i, Length[#]}] &,
+            fullMethods];
+
+      Association@Flatten[res, 1]
+    ];
+
+(**************************************************************)
+(* Ensemble classification functions                          *)
+(**************************************************************)
 
 Clear[EnsembleClassifierVotes]
 EnsembleClassifierVotes::nargs =
@@ -235,6 +275,11 @@ EnsembleClassify[cls_Association, records_?MatrixQ, "ProbabilitiesMean"] :=
 EnsembleClassify[___] := (Message[EnsembleClassify::nargs]; $Failed);
 
 
+
+(**************************************************************)
+(* EnsembleClassifyByThreshold                                *)
+(**************************************************************)
+
 Clear[EnsembleClassifyByThreshold]
 EnsembleClassifyByThreshold::nargs =
     "The first argument is expected to be an Association of classfier IDs to \
@@ -272,15 +317,13 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
     EnsembleClassifyByThreshold[ <| "cf"->cf |>, data, label->threshold, "ProbabilitiesMean" ];
 
 
-(* Calculating classifier enseble measurements *)
-
-Clear[IsClassifierDataQ]
-IsClassifierDataQ[data_] :=
-    MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+(**************************************************************)
+(* Calculating classifier ensemble measurements               *)
+(**************************************************************)
 
 ClearAll[EnsembleClassifierMeasurements]
 
-Options[EnsembleClassifierMeasurements] = {"ClassificationFunction" -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
+Options[EnsembleClassifierMeasurements] = {Method -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
 
 EnsembleClassifierMeasurements[cls_Association,
   testData_?IsClassifierDataQ, measure_String,
@@ -293,7 +336,7 @@ EnsembleClassifierMeasurements[cls_Association, testData_, args___] :=
 EnsembleClassifierMeasurements[cls_Association, testData_?IsClassifierDataQ, measures : {_String ..}, opts : OptionsPattern[]] :=
     Block[{cfMethod, testLabels, clRes, clVals, clClasses, aROCs, knownMeasures},
 
-      cfMethod = OptionValue[EnsembleClassifierMeasurements, "ClassificationFunction"];
+      cfMethod = OptionValue[EnsembleClassifierMeasurements, Method];
       testLabels = testData[[All, 2]];
 
       clVals = cfMethod[cls, testData[[All, 1]]];
