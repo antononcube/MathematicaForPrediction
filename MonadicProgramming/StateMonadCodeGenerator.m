@@ -68,20 +68,20 @@
 
     ## State monads generation
 
-    This generates code of a monad the functions of which have prefixes "StMon" :
+    This generates code of a monad the functions of which have prefixes "MState" :
 
-        GenerateStateMonadCode["StMon"]
+        GenerateStateMonadCode["MState"]
 
     The monad pipeline objects have the form
 
-        StMon[ value_, context_Association ]
+        MState[ value_, context_Association ]
 
     Every function in the monad pipeline should return a result in that form. (Per point 2. of the definition.)
 
     The failure symbol of the generated state monad is `None`. The option "FailureSymbol" can be used to
     specify a different symbol.
 
-    By default the binding function -- `StMonBind` in this case -- overloads the operator `NonCommutativeMultiply`.
+    By default the binding function -- `MStateBind` in this case -- overloads the operator `NonCommutativeMultiply`.
     This allows concise pipeline specification. (See the example.)
 
 
@@ -90,14 +90,14 @@
     The contexts are assumed to be Association objects, but if the state monad functions are generated with
     the option `"StringContextNames" -> True`,
 
-            GenerateStateMonadCode["StMon", "StringContextNames" -> True]
+            GenerateStateMonadCode["MState", "StringContextNames" -> True]
 
     then the pipeline objects have the form
 
-            StMon[ value_, context: (_String | _Association) ]
+            MState[ value_, context: (_String | _Association) ]
 
-    If a string S is given as a context within a pipeline then an attempt is made in `StMonBind` to replace S with
-    `StMonContextes[S]` before proceeding with the binding.
+    If a string S is given as a context within a pipeline then an attempt is made in `MStateBind` to replace S with
+    `MStateContextes[S]` before proceeding with the binding.
 
     The keys of the `Association` contexts are expected to be strings made of word characters.
     (I.e. this function `StringMatch[#, WordCharacter..]&` gives `True` applied to each key.)
@@ -109,50 +109,50 @@
 
     Here are the access functions:
 
-        Names["StMonEcho*"]
-        (* {"StMonEchoContext",
-            "StMonEchoFunctionContext",
-            "StMonEchoFunctionValue",
-            "StMonEchoValue"} *)
+        Names["MStateEcho*"]
+        (* {"MStateEchoContext",
+            "MStateEchoFunctionContext",
+            "MStateEchoFunctionValue",
+            "MStateEchoValue"} *)
 
     Here are the state changing functions:
 
-        Complement[Names["StMon*Context"], Names["StMonEcho*"]]
-        (* {"StMonModifyContext", "StMonPutContext"} *)
+        Complement[Names["MState*Context"], Names["MStateEcho*"]]
+        (* {"MStateModifyContext", "MStatePutContext"} *)
 
     The optional failure function
 
-        StMonOption[f_][x_,context_Association]
+        MStateOption[f_][x_,context_Association]
 
-    returns `StMon[x,context]` if `f[x]` would produce failure.
+    returns `MState[x,context]` if `f[x]` would produce failure.
 
 
     ### Adding the current pipeline value to the context
 
     Adding the current pipeline value to the context associated with the key "data" can be done in two ways:
 
-    1. with `StMonAddToContext["data"] ⟹`, or
+    1. with `MStateAddToContext["data"] ⟹`, or
 
-    2. with `(StMon[#1, Join[#2, <|"data" -> #1|>]]&) ⟹` .
+    2. with `(MState[#1, Join[#2, <|"data" -> #1|>]]&) ⟹` .
 
 
     ## Example
 
     Here is an example:
 
-        GenerateStateMonadCode["StMon"]
+        GenerateStateMonadCode["MState"]
 
         SeedRandom[34]
-        StMon[RandomReal[{0, 1}, {3, 2}], <|"mark" -> "None", "threshold" -> 0.5|>] ⟹
-           StMonEchoValue ⟹
-           StMonEchoContext ⟹
-           StMonAddToContext["data"] ⟹
-           (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
-           StMonEchoValue ⟹
-           StMonModifyContext[Join[#1, <|"mark" -> "Lesser", "threshold" -> 0.8|>] &] ⟹
-           StMonEchoContext ⟹
-           (StMon[#2["data"] /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
-           StMonEchoValue;
+        MState[RandomReal[{0, 1}, {3, 2}], <|"mark" -> "None", "threshold" -> 0.5|>] ⟹
+           MStateEchoValue ⟹
+           MStateEchoContext ⟹
+           MStateAddToContext["data"] ⟹
+           (MState[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
+           MStateEchoValue ⟹
+           MStateModifyContext[Join[#1, <|"mark" -> "Lesser", "threshold" -> 0.8|>] &] ⟹
+           MStateEchoContext ⟹
+           (MState[#2["data"] /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
+           MStateEchoValue;
 
         (*
         {{0.789884,0.831468},{0.421298,0.50537},{0.0375957,0.289442}}
@@ -168,7 +168,7 @@
 
     In the example code above:
 
-       - we generated the code for the monad `StMon`,
+       - we generated the code for the monad `MState`,
 
        - then we started a pipeline with a monad object made of
 
@@ -178,29 +178,29 @@
 
     In example's monadic pipeline:
 
-       - pipeline's current value is added to pipeline's context with `StMonAddToContext`;
+       - pipeline's current value is added to pipeline's context with `MStateAddToContext`;
 
        - numbers of the matrix that are less than the context threshold are replaced with the context mark;
 
-       - at some point pipeline's context is replaced with a new context by `StMonModifyContext`;
+       - at some point pipeline's context is replaced with a new context by `MStateModifyContext`;
 
-       - pipeline's current value and context are shown by `StMonEchoValue` and `StMonEchoContext` respectively.
+       - pipeline's current value and context are shown by `MStateEchoValue` and `MStateEchoContext` respectively.
 
 
     ## Extension functions
 
     Project specific, extension functions have the signatures
 
-        _StMonNewFunc[xs_, context_Association]
+        _MStateNewFunc[xs_, context_Association]
 
     or
-        _StMonNewFunc[f_][xs_, context_Association]
+        _MStateNewFunc[f_][xs_, context_Association]
 
     Here is an example of a function that splits the current value and just passes the current context:
 
-        StMonSplitData[_][None] := None
-        StMonSplitData[fr_?NumberQ][xs_, context_Association] :=
-           StMon[AssociationThread[{"trainData", "testData"} ->
+        MStateSplitData[_][None] := None
+        MStateSplitData[fr_?NumberQ][xs_, context_Association] :=
+           MState[AssociationThread[{"trainData", "testData"} ->
                                    TakeDrop[xs, Floor[fr*Length[xs]]]], context] /; 0 < fr <= 1;
 
 
@@ -208,11 +208,11 @@
 
     Instead of making calls like
 
-        (StMon[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
+        (MState[#1 /. (x_ /; x < #2["threshold"] :> #2["mark"]), #2] &) ⟹
 
     in the example above we can make the call
 
-        StMonModule[$Value /. (x_ /; x < threshold :> mark)] ⟹
+        MStateModule[$Value /. (x_ /; x < threshold :> mark)] ⟹
 
     The elements of the context are turned into symbol assignments by the package function `AssociationModule`
     (implemented by Mr.Wizard in [2].)
@@ -222,7 +222,7 @@
 
     ## It is a monad indeed
 
-    Let us show that `StMon` satisfies the monad laws.
+    Let us show that `MState` satisfies the monad laws.
 
     In monad laws formulas given below
 
@@ -252,25 +252,25 @@
 
     - Left identity:
 
-        StMon[a, <|"k1" -> "v1"|>] ⟹ f
+        MState[a, <|"k1" -> "v1"|>] ⟹ f
 
         (* f[a, <|"k1" -> "v1"|>] *)
 
     - Right identity:
 
-        StMon[a, <|"k1" -> "v1"|>] ⟹ StMon
+        MState[a, <|"k1" -> "v1"|>] ⟹ MState
 
-        (* StMon[a, <|"k1" -> "v1"|>] *)
+        (* MState[a, <|"k1" -> "v1"|>] *)
 
     - Associativity:
 
-        (StMon[a, <|"k1" -> "v1"|>] ⟹ (StMon[f1[#1, #2], #2] &)) ⟹ (StMon[f2[#1, #2], #2] &)
+        (MState[a, <|"k1" -> "v1"|>] ⟹ (MState[f1[#1, #2], #2] &)) ⟹ (MState[f2[#1, #2], #2] &)
 
-        (* StMon[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
+        (* MState[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
 
-        StMon[a, <|"k1" -> "v1"|>] ⟹ Function[{x, c}, StMon[f1[x, c], c] ⟹ (StMon[f2[#1, #2], #2] &)]
+        MState[a, <|"k1" -> "v1"|>] ⟹ Function[{x, c}, MState[f1[x, c], c] ⟹ (MState[f2[#1, #2], #2] &)]
 
-        (* StMon[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
+        (* MState[f2[f1[a, <|"k1" -> "v1"|>], <|"k1" -> "v1"|>], <|"k1" -> "v1"|>] *)
 
         %% == %
         (* True *)
@@ -338,6 +338,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateOption = ToExpression[monadName <> "Option"],
       MStateWhen = ToExpression[monadName <> "When"],
       MStateIfElse = ToExpression[monadName <> "IfElse"],
+      MStateIterate = ToExpression[monadName <> "Iterate"],
       MStateModule = ToExpression[monadName <> "Module"],
       MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
@@ -349,7 +350,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
         MStateEchoContext, MStateEchoFunctionContext,
         MStatePutContext, MStateModifyContext,
         MStateAddToContext, MStateRetrieveFromContext,
-        MStateOption, MStateWhen, MStateModule];
+        MStateOption, MStateWhen, MStateIfElse, MStateIterate,
+        MStateModule, MStateContexts];
 
       (* What are the assumptions for monad's failure symbol? *)
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
@@ -444,7 +446,27 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MStateWhen[testFunc_, f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateWhen[testFunc_, f_][xs_, context_] := MStateIfElse[testFunc, f, MState][xs, context];
+      
+      (* Iteration functions *)
+      MStateIterate[___][___] := MStateFailureSymbol;
 
+      MStateIterate[itFunc : (Nest | NestWhile | FixedPoint), f_, args___][x_, context_Association] :=
+          itFunc[MStateBind[#, f] &, MStateUnit[x, context], args];
+
+      MStateIterate[itFunc : (NestList | NestWhileList | FixedPointList),
+                    f_, args___, contextVar : (None | _String)][x_, context_Association] :=
+          Block[{res},
+            res = itFunc[MStateBind[#, f] &, MStateUnit[x, context], args];
+            If[contextVar === None,
+              MStateUnit[res[[All, 1]], res[[-1, 2]]],
+              MStateUnit[res[[All, 1]], Join[res[[-1, 2]], <|contextVar -> res|>]]
+            ]
+          ];
+
+      MStateIterate[itFunc : (Fold | FoldList | Composition[__, FoldList]),
+                    f_, args___][x_, context_Association] :=
+          itFunc[f, MStateUnit[x, context], args];
+      
       Attributes[MStateModule] = HoldAll;
       MStateModule[body___][value_, context_Association] :=
           MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
