@@ -357,6 +357,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
 
       MStateBind::ffail = "Failure when applying: `1`";
+      MStateBind::mscxt = "The result is missing a context. Reusing the context argument.";
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
@@ -375,11 +376,22 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateBind[MStateFailureSymbol] := MStateFailureSymbol;
       MStateBind[MState[x_, context_Association], f_] :=
           Block[{res = f[x, context]},
-            If[FreeQ[res, MStateFailureSymbol], res,
+            Which[
+              !FreeQ[res, MStateFailureSymbol],
+
               If[MStateEchoFailingFunction,
                 Echo[TemplateApply[StringTemplate[MStateBind::ffail], HoldForm[f]], ToString[MStateBind]<>":"]
               ];
-              MStateFailureSymbol
+              MStateFailureSymbol,
+
+              MatchQ[res, MState[_]],
+
+              If[MStateEchoFailingFunction,
+                Echo[TemplateApply[StringTemplate[MStateBind::mscxt], HoldForm[f]], ToString[MStateBind]<>":"]
+              ];
+              MState[res[[1]],context],
+
+              True, res
             ]
           ];
       If[TrueQ[OptionValue["StringContextNames"]],
