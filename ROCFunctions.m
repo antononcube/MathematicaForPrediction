@@ -174,7 +174,7 @@ ToROCAssociation::usage = "ToROCAssociation[ {trueLabel, falseLabel}, actualLabe
 two labels lists (actual and predicted) into an Association that can be used as an argument for the ROC functions. \
 See ROCFunctions ."
 
-ROCAssociationQ::usage = "Verifies that the argument is a valid ROC Assocition object. \
+ROCAssociationQ::usage = "Verifies that the argument is a valid ROC Association object. \
 A ROC Association object has the keys \
 \"TruePositive\", \"FalsePositive\", \"TrueNegative\", and \"FalseNegative\" ."
 
