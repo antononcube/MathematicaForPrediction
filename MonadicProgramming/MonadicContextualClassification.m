@@ -187,10 +187,30 @@ ClConToNormalClassifierData[td_Dataset] :=
 (* Monad specific functions                                   *)
 (**************************************************************)
 
+Options[ClConSplitData] = {Method->"LabelsProportional"};
+
 ClConSplitData[_][None] := None
-ClConSplitData[fr_?NumberQ][xs_, context_Association] :=
-    ClCon[AssociationThread[{"trainData", "testData"} ->
-        TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]]], context] /; 0 < fr <= 1;
+ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{method=OptionValue[ClConSplitData, Method], dataLabels, indGroups, t, trainData, testData},
+
+      Which[
+        method == "LabelsProportional",
+        dataLabels =
+            Transpose[{Range[Length[xs]], Normal[xs[[All, -1]]]}];
+        indGroups = Map[#[[All, 1]] &, GroupBy[dataLabels, Last]];
+
+        t = TakeDrop[RandomSample[#], Floor[0.75*Length[#]]] & /@ indGroups;
+
+        trainData = xs[[Join[t[[1, 1]], t[[2, 1]]], All]];
+        testData = xs[[Join[t[[1, 2]], t[[2, 2]]], All]],
+
+        True,
+        {trainData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
+      ];
+
+      ClCon[AssociationThread[{"trainData", "testData"} -> {trainData, testData}], context]
+    ] /; 0 < fr <= 1;
+
 
 ClConRecoverData[None] := None
 ClConRecoverData[xs_, context_Association] :=
