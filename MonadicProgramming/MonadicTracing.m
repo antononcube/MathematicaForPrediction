@@ -270,10 +270,15 @@ TraceMonadBind[TraceMonad[x_, context_], f_] :=
 Grid87 = Framed@
     Grid[#, Alignment -> Left, Dividers -> All, FrameStyle -> Directive[Dashing[2], GrayLevel[0.87]]] &;
 
+ClearAll[TraceMonadEchoGrid]
+
+Options[TraceMonadEchoGrid] = { "ComplexStyling" -> True };
+
 TraceMonadEchoGrid[][x_, context_] := TraceMonadEchoGrid[Grid87][x, context];
 
-TraceMonadEchoGrid[gridFunc_][x_, context_] :=
-    Block[{grData, delim},
+TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
+    Block[{grData, delim, cStyleQ = TrueQ[OptionValue[TraceMonadEchoGrid,"ComplexStyling"]]},
+
       grData =
           Transpose[{Prepend[HoldForm /@ context["commands"], context["data"]], context["comments"]}];
 
@@ -281,7 +286,19 @@ TraceMonadEchoGrid[gridFunc_][x_, context_] :=
       delim = "\[ThinSpace]" <> delim;
 
       (* Style the code and comments *)
-      grData[[All, 1]] = Map[Row[{"  ", Style[#, "Input"], Style[delim, "Input"]}] &, grData[[All, 1]]];
+      If[ cStyleQ,
+        (* Using RuleCondition because the pipeline functions are kept in HoldForm. *)
+        (* Note that RuleCondition is undocumented. *)
+        (* The alternative is to use /. (z_String :> With[{eval = "\"" <> z <> "\""}, eval /; True]) *)
+        grData[[All, 1]] =
+            Map[
+              Row[{"  ",
+                Style[ # /. (z_String :> RuleCondition[("\"" <> z <> "\"")]), "Input"],
+                Style[delim, "Input"]}] &,
+              grData[[All, 1]]],
+        (* ELSE *)
+        grData[[All, 1]] = Map[Row[{"  ", Style[#, "Input"], Style[delim, "Input"]}] &, grData[[All, 1]]];
+      ];
       grData[[1, 1]] = Row[Rest@grData[[1, 1, 1]]];
       grData[[-1, 1]] = Row[Most@grData[[-1, 1, 1]]];
       grData[[All, 2]] =
