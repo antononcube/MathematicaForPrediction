@@ -323,8 +323,7 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
 
 ClearAll[EnsembleClassifierMeasurements]
 
-Options[EnsembleClassifierMeasurements] =
-    {"Classes"->Automatic, Method -> (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)};
+Options[EnsembleClassifierMeasurements] = {"Classes"->Automatic, Method -> Automatic};
 
 EnsembleClassifierMeasurements[cls_Association,
   testData_?ClassifierDataQ, measure_String,
@@ -339,7 +338,12 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
       ccNotLabel, ccTestLabels, ccModelVals},
 
       targetClasses = OptionValue[EnsembleClassifierMeasurements, "Classes"];
+
       cfMethod = OptionValue[EnsembleClassifierMeasurements, Method];
+      If[ cfMethod === Automatic,
+        cfMethod = (EnsembleClassify[#1, #2, "ProbabilitiesMean"] &)
+      ];
+
       testLabels = testData[[All, 2]];
 
       clVals = cfMethod[cls, testData[[All, 1]]];
