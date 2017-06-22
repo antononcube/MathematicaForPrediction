@@ -297,8 +297,10 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
 (* ClConClassifierMeasurements                              *)
 (************************************************************)
 
+Options[ClConClassifierMeasurements] = { Method -> Automatic };
+
 ClConClassifierMeasurements[_][None] := None;
-ClConClassifierMeasurements[measures : (_String | {_String ..})][xs_, context_] :=
+ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPattern[]][xs_, context_] :=
     Block[{cm},
       Which[
         KeyExistsQ[context, "classifier"] && MatchQ[ context["classifier"], _ClassifierFunction],
@@ -306,7 +308,7 @@ ClConClassifierMeasurements[measures : (_String | {_String ..})][xs_, context_] 
         ClCon[AssociationThread[measures -> cm /@ Flatten[{measures}]], context],
 
         KeyExistsQ[context, "classifier"],
-        cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], Flatten[{measures}]];
+        cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], Flatten[{measures}], opts];
         ClCon[AssociationThread[measures -> cm], context],
 
         True,
