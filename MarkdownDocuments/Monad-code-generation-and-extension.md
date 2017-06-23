@@ -497,9 +497,13 @@ The classifier contexts are Association objects. The pipeline values can have th
 The ClCon specific monad functions deposit or retrieve values from the context with the keys: "trainData", "testData", "classifier". The general idea is that if the current value of the pipeline cannot provide all arguments for a ClCon function, then the needed arguments are taken from the context. If that fails, then an message is issued.
 This is illustrated with the following pipeline with comments example.
 
-The pipeline and results above demonstrate polymorphic behaviour over the classifier variable in the context: different functions are used if that variable is a ClassifierFunction object or an association of named `ClassifierFunction` objects.
-
 [!["ClCon-basic-example"](http://imgur.com/98e60pN.png)](http://imgur.com/98e60pN.png)
+
+The pipeline and results above demonstrate polymorphic behaviour over the classifier variable in the context: 
+different functions are used if that variable is a ClassifierFunction object or an association of named `ClassifierFunction` objects.
+
+Note the demonstrated granularity and sequentiality of the operations coming from using a monad structure. 
+If those kind of operations it would be easy to make interpreters for natural language DSLs.
 
 ### Another usage example
 
