@@ -323,9 +323,9 @@ ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPat
 (************************************************************)
 
 ClConAccuracyByVariableShuffling[][xs_, context_] :=
-    ClConAccuracyByVariableShuffling["FScoreLabels" -> None][xs, context];
+    ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
 ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{fsClasses = FilterRules[{opts}, "FScoreLabels"]},
+    Block[{fsClasses = FilterRules[{opts}, "Classes"]},
 
       If[Length[fsClasses] == 0 || fsClasses === Automatic, fsClasses = None];
 
