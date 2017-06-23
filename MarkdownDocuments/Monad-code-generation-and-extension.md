@@ -503,7 +503,7 @@ The pipeline and results above demonstrate polymorphic behaviour over the classi
 different functions are used if that variable is a ClassifierFunction object or an association of named `ClassifierFunction` objects.
 
 Note the demonstrated granularity and sequentiality of the operations coming from using a monad structure. 
-If those kind of operations it would be easy to make interpreters for natural language DSLs.
+With those kind of operations it would be easy to make interpreters for natural language DSLs.
 
 ### Another usage example
 
