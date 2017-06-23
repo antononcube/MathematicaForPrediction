@@ -65,7 +65,7 @@ Note that:
 
 Here is an illustration formula showing a **monad pipeline**:
 
-[//]: # (No rules defined for DisplayFormulaNumbered)
+![Monad-formula-generic](http://imgur.com/JyNp2os.png)
 
 From the definition and formula it should be clear that if for the result of `Bind[_M,f[x]]` the test `MatchQ[f[x],_M]` is `True` then the result is ready to be fed to the next binding operation in monad's pipeline. Also, it is clear that it is easy to program the pipeline functionality with `Fold`:
 
@@ -79,11 +79,11 @@ The monad laws definitions are taken from [[H1](https://wiki.haskell.org/Monad_l
 
 Here is a table with the laws:
 
-
+![](http://imgur.com/E4VEucD.png)
 
 **Remark:** The monad laws are satisfied for every symbol in Mathematica / WL with List being the unit operation and Apply being the binding operation. 
 
-
+![](http://imgur.com/FR6S2Fu.png)
 
 ### Expected monadic programming features
 
@@ -107,7 +107,7 @@ The goal of the Maybe monad is to provide easy exception handling in a sequence 
 
 Here is the special version of the generic pipeline formula (1) for the Maybe monad:
 
-[//]: # (No rules defined for DisplayFormulaNumbered)
+!["Monad-formula-maybe"](http://imgur.com/DRNAhPG.png)
 
 Here is the minimal code to get a functional Maybe monad (for a more detailed exposition of code and explanations see [AA7]):
 
@@ -157,6 +157,7 @@ Let us convince ourselves that the current definition of `MaybeBind` gives a mon
 
 The verification is straightforward to program and shows that the implemented Maybe monad adheres to the monad laws.
 
+!["Monad-laws-table-Maybe"](http://imgur.com/N2PV9sY.png)
 
 ## Extensions with polymorphic behavior
 
@@ -166,7 +167,7 @@ For example the extension of the Maybe monad to handle of `Dataset` objects is f
 
 Here is the formula of the Maybe monad pipeline extended with `Dataset` objects:
 
-
+![](http://imgur.com/aWdtR6B.png)
 
 Here is an example of a polymorphic function definition for the Maybe monad:
 
@@ -223,7 +224,7 @@ The State monad is also basic and its programming in Mathematica / WL is not tha
 
 Here is the special version of the generic pipeline formula (1) for the State monad:
 
-[//]: # (No rules defined for DisplayFormula)
+!["Monad-formula-State"](http://imgur.com/rbXWydC.png)
 
 Note that since the State monad pipeline caries both a value and a state, it is a good idea to have functions that manipulate them separately.
 For example, we can have functions for context modification and context retrieval. (These are done in [[AA3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m)].)
@@ -371,7 +372,13 @@ Because of the associativity law we can design pipeline flows based on functions
 
     StMonUnit[7]⟹fEcho⟹fDIter⟹fEcho;
 
-!["StMon-iterate-short-pipeline-output"](http://imgur.com/Q6j53NKl.png)
+    (*
+      value: 7
+      context: <||>
+      value: {y^7,7 y^6,42 y^5,210 y^4,840 y^3,2520 y^2,5040 y,5040,0,0}
+      context: <||> *)
+
+<!-- !["StMon-iterate-short-pipeline-output"](http://imgur.com/Q6j53NKl.png) -->
 
 ## General work-flow of monad code generation utilization
 
