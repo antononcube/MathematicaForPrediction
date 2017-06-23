@@ -135,11 +135,15 @@ In order to make the pipeline form of the code we write let us give definitions 
 Here is an example of a Maybe monad pipeline using the definitions so far:
 
     data = {0.61, 0.48, 0.92, 0.90, 0.32, 0.11};
+ 
+    MaybeUnit[data]⟹(* lift data into the monad *)
+     (Maybe@ Join[#, RandomInteger[8, 3]] &)⟹(* add more values *)
+     MaybeEcho⟹(* display current value *)
+     (Maybe @ Map[If[# < 0.4, None, #] &, #] &)(* map values that are too small to None *)
 
+    (* {0.61,0.48,0.92,0.9,0.32,0.11,4,4,0}
+     None *)
 
-
-
-    (* None *)
 
 The result is `None` because:
 
@@ -162,7 +166,7 @@ For example the extension of the Maybe monad to handle of `Dataset` objects is f
 
 Here is the formula of the Maybe monad pipeline extended with `Dataset` objects:
 
-[//]: # (No rules defined for DisplayFormula)
+
 
 Here is an example of a polymorphic function definition for the Maybe monad:
 
@@ -180,6 +184,7 @@ The R package [dplyr](http://dplyr.tidyverse.org), [[R1](https://github.com/tidy
 
 Here is a diagram of a typical work-flow with dplyr:
 
+[!["dplyr-pipeline"](http://i.imgur.com/kqch4eUl.jpg)](http://i.imgur.com/kqch4eU.jpg)
 
 The diagram shows how a pipeline made with dplyr can be re-run (or reused) for data stored in different data structures.
 
@@ -201,9 +206,14 @@ Here is an example:
 
     data = {0.61, 0.48, 0.92, 0.90, 0.32, 0.11};
 
+    AnotherMaybeUnit[data]⟹(* lift data into the monad *)
+     (AnotherMaybe@Join[#, RandomInteger[8, 3]] &)⟹(* add more values *)
+     AnotherMaybeEcho⟹(* display current value *)
+     (AnotherMaybe @ Map[If[# < 0.4, None, #] &, #] &)(* map values that are too small to None *)
 
-
-    (* None *)
+    (* {0.61,0.48,0.92,0.9,0.32,0.11,8,7,6}
+       AnotherMaybeBind: Failure when applying: Function[AnotherMaybe[Map[Function[If[Less[Slot[1], 0.4], None, Slot[1]]], Slot[1]]]]
+       None *)
 
 We see that we get the same result as above (`None`) and a message prompting failure.
 
@@ -241,8 +251,15 @@ The following StMon pipeline code starts with a random matrix and then replaces 
       StMonEchoValue⟹
       StMonRetrieveFromContext["mark"]⟹
       StMonEchoValue;
+ 
+    (* value: {{0.789884,0.831468},{0.421298,0.50537},{0.0375957,0.289442}}
+       context: <|mark->TooSmall,threshold->0.5|>
+       context: <|mark->TooSmall,threshold->0.5,data->{{0.789884,0.831468},{0.421298,0.50537},{0.0375957,0.289442}}|>
+       value: {{0.789884,0.831468},{TooSmall,0.50537},{TooSmall,TooSmall}}
+       value: {{0.789884,0.831468},{0.421298,0.50537},{0.0375957,0.289442}}
+       value: TooSmall *)
 
-
+<!-- [!["StMon-generated-pipeline-output"](http://imgur.com/bAcUr0U.png)](http://imgur.com/bAcUr0U.png) -->
 
 ## Flow control in monads
 
@@ -262,7 +279,9 @@ Here is an example with `StMonOption` :
      StMonOption[If[# < 0.3, None] & /@ # &]⟹
      StMonEchoValue
 
-    (* StMon[{0.789884, 0.831468, 0.421298, 0.50537, 0.0375957}, <||>] *)
+    (* value: {0.789884,0.831468,0.421298,0.50537,0.0375957}
+       value: {0.789884,0.831468,0.421298,0.50537,0.0375957}
+       StMon[{0.789884, 0.831468, 0.421298, 0.50537, 0.0375957}, <||>] *)
 
 Without `StMonOption` we get failure:
 
@@ -272,7 +291,9 @@ Without `StMonOption` we get failure:
      (If[# < 0.3, None] & /@ # &)⟹
      StMonEchoValue
 
-    (* None *)
+    (* value: {0.789884,0.831468,0.421298,0.50537,0.0375957}
+       StMonBind: Failure when applying: Function[Map[Function[If[Less[Slot[1], 0.3], None]], Slot[1]]]
+       None *)
 
 ### Conditional execution of functions
 
@@ -290,6 +311,10 @@ This can be done with the functions `StMonIfElse` and `StMonWhen`.
       StMon[Style[#1, Blue], #2] &]⟹
      StMonEchoValue
 
+     (* value: {0.789884,0.831468,0.421298,0.50537,0.0375957}
+        warning: A too small value is present.
+        value: {0.789884,0.831468,0.421298,0.50537,0.0375957}
+        StMon[{0.789884,0.831468,0.421298,0.50537,0.0375957},<||>] *)
 
 **Remark:** Using flow control functions like `StMonIfElse` and `StMonWhen` with appropriate messages is a better way of handling computations that might fail. The silent failures handling of the basic Maybe monad is convenient only in a small number of use cases. 
 
@@ -346,6 +371,8 @@ Because of the associativity law we can design pipeline flows based on functions
 
     StMonUnit[7]⟹fEcho⟹fDIter⟹fEcho;
 
+!["StMon-iterate-short-pipeline-output"](http://imgur.com/Q6j53NKl.png)
+
 ## General work-flow of monad code generation utilization
 
 With the abilities to generate and utilize monad codes it is natural to consider the following work flow. (Also shown in the diagram below.)
@@ -363,6 +390,8 @@ With the abilities to generate and utilize monad codes it is natural to consider
    6. Start making pipelines for the problem domain of interest.
 
    7. Are the pipelines are satisfactory? If not go to **5**. (Or **2.**)
+
+[!["make-monads"](http://imgur.com/9iinzkzl.jpg)](http://imgur.com/9iinzkz.jpg)
 
 ### Monad templates
 
@@ -460,7 +489,9 @@ The classifier contexts are Association objects. The pipeline values can have th
 The ClCon specific monad functions deposit or retrieve values from the context with the keys: "trainData", "testData", "classifier". The general idea is that if the current value of the pipeline cannot provide all arguments for a ClCon function, then the needed arguments are taken from the context. If that fails, then an message is issued.
 This is illustrated with the following pipeline with comments example.
 
-The pipeline and results above demonstrate polymorphic behaviour over the classifier variable in the context: different functions are used if that variable is a ClassifierFunction object or an association of named ClassifierFunction objects.
+The pipeline and results above demonstrate polymorphic behaviour over the classifier variable in the context: different functions are used if that variable is a ClassifierFunction object or an association of named `ClassifierFunction` objects.
+
+[!["ClCon-basic-example"](http://imgur.com/98e60pN.png)](http://imgur.com/98e60pN.png)
 
 ### Another usage example
 
@@ -484,7 +515,6 @@ First let us define a function that takes a `Classify` method as an argument and
 
 Using the sub-pipeline function `ClSubPipe` we make the outlined pipeline.
 
-
     SeedRandom[12]
     res =
       ClConUnit[ds]⟹
@@ -498,6 +528,8 @@ Using the sub-pipeline function `ClSubPipe` we make the outlined pipeline.
           Echo["Make a new classifier", "Inaccurate:"]; 
           ClConUnit[#1, #2]] &)⟹
        ClSubPipe["RandomForest"];
+
+[!["ClCon-pipeline-2-output"](http://imgur.com/ffXPNMvl.png)](http://imgur.com/ffXPNMv.png)
 
 ## Tracing monad pipelines *(case study)*
 
