@@ -500,7 +500,8 @@ This is illustrated with the following pipeline with comments example.
 [!["ClCon-basic-example"](http://imgur.com/98e60pN.png)](http://imgur.com/98e60pN.png)
 
 The pipeline and results above demonstrate polymorphic behaviour over the classifier variable in the context: 
-different functions are used if that variable is a ClassifierFunction object or an association of named `ClassifierFunction` objects.
+different functions are used if that variable is a `ClassifierFunction` object or an association of 
+named `ClassifierFunction` objects.
 
 Note the demonstrated granularity and sequentiality of the operations coming from using a monad structure. 
 With those kind of operations it would be easy to make interpreters for natural language DSLs.
