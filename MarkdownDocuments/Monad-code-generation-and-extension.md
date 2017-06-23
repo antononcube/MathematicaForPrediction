@@ -425,7 +425,7 @@ The application of monadic programming to a particular problem domain is very si
 
 The answers of the question "When to use monadic programming?" can form a large list. This section provides only a couple of general, personal viewpoints on monadic programming in software design and architecture. The principles of monadic programming can be used to build systems from scratch (like Haskell and Scala.) Here we discuss making specialized software with or within already existing systems.
 
-#### Framework design
+### Framework design
 
 Software framework design is about architectural solutions that capture the commonality and variability in a problem domain in such a way that:
 1) significant speed-up can be achieved when making new applications, and
@@ -439,7 +439,7 @@ The point of utilizing monadic programming is to be able to easily create differ
 
 In my opinion making a software framework of small to moderate size with monadic programming principles would produce a library of functions each with polymorphic behaviour that can be easily sequenced in monadic pipelines. This can be contrasted with OOP framework design in which we are more likely to end up with backbone structures that (i) are static and tree-like, and (ii) are extended or specialized by plugging-in relevant objects. (Those plugged-in objects themselves can be trees, but hopefully short ones.)
 
-#### DSL development
+### DSL development
 
 Given a problem domain the general monad structure can be used to shape and guide the development of DSLs for that problem domain.
 
