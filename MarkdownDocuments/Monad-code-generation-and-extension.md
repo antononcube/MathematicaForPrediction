@@ -75,13 +75,14 @@ From the definition and formula it should be clear that if for the result of `Bi
 
 ### The monad laws
 
-The monad laws definitions are taken from [[H1](https://wiki.haskell.org/Monad_laws)] and [H3].[ ](https://wiki.haskell.org/Monad_laws)In the monad laws given below the symbol "⟹" is for monad's binding operation and ↦ is for a function in anonymous form.
+The monad laws definitions are taken from
+[[H1](https://wiki.haskell.org/Monad_laws)] and [H3]. In the monad laws given below the symbol "⟹" is for monad's binding operation and ↦ is for a function in anonymous form.
 
 Here is a table with the laws:
 
 ![](http://imgur.com/E4VEucD.png)
 
-**Remark:** The monad laws are satisfied for every symbol in Mathematica / WL with List being the unit operation and Apply being the binding operation. 
+**Remark:** The monad laws are satisfied for every symbol in Mathematica / WL with `List` being the unit operation and `Apply` being the binding operation. 
 
 ![](http://imgur.com/FR6S2Fu.png)
 
@@ -639,7 +640,7 @@ Ideally, the packages for the code generation of the basic Maybe and State monad
 [AA6] Anton Antonov, [MathematicaForPrediction utilities](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), (2014), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
     URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m) .
 
-[AA7] Anton Antonov, [Simple monadic programming](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Simple-monadic-programming.pdf), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+[AA7] Anton Antonov, ["Simple monadic programming"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Simple-monadic-programming.pdf), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
     (*Preliminary version, 40% done.)*
     URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Simple-monadic-programming.pdf](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Simple-monadic-programming.pdf) .
 
