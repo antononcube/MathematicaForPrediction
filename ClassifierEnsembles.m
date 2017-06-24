@@ -163,6 +163,12 @@ gives measurements corresponding to props when the ensemble of classifiers ensCF
 ResamplingEnsembleClassifier::usage = "ResamplingEnsembleClassifier[{(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..}, data] \
 builds ensemble classifier based on a specification."
 
+EnsembleClassifierROCData::usage = "EnsembleClassifierROCData[ensCF, testData, thRange, targetClasses] \
+returns an association of classifier ensemble ROC data."
+
+EnsembleClassifierROCPlots::usage = "EnsembleClassifierROCPlots[ensCF, testData, thRange, targetClasses, opts___] \
+returns an association of classifier ensemble ROC plots."
+
 Begin["`Private`"]
 
 If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
@@ -375,6 +381,52 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
       clRes = Map[Normal[clRes[All, #]] &, measures];
 
       MapThread[If[MemberQ[{"Accuracy", "ACC"}, #1], First@Values[#2], #2] &, {measures, clRes}]
+    ];
+
+(**************************************************************)
+(* Calculating classifier ensemble ROC data and plots         *)
+(**************************************************************)
+
+ClearAll[EnsembleClassifierROCData]
+EnsembleClassifierROCData[aCL_Association,
+  testData_?ClassifierEnsembles`Private`ClassifierDataQ,
+  thRange : {_?NumericQ ..}, targetClasses : (_List | All) : All] :=
+    Block[{clClasses, clRes, testLabels, ccLabel, ccNotLabel, ccTestLabels, rocs},
+
+      If[TrueQ[targetClasses === All || targetClasses === Automatic],
+        clClasses = ClassifierInformation[aCL[[1]], "Classes"],
+        clClasses = targetClasses
+      ];
+
+      clRes = EnsembleClassifierProbabilities[aCL, testData[[All, 1]]];
+
+      testLabels = testData[[All, 2]];
+
+      Table[
+        ccNotLabel = "Not-" <> ToString[ccLabel];
+        ccTestLabels =
+            Map[If[# == ccLabel, #, ccNotLabel] &, testLabels];
+        rocs =
+            Table[
+              ToROCAssociation[{ccLabel, ccNotLabel}, ccTestLabels,
+                Map[If[# >= th, ccLabel, ccNotLabel] &, Through[clRes[ccLabel]]]],
+              {th, thRange}];
+        ccLabel -> rocs,
+        {ccLabel, clClasses}]
+    ];
+
+
+ClearAll[EnsembleClassifierROCPlots];
+
+Options[EnsembleClassifierROCPlots] = Options[ROCPlot];
+
+EnsembleClassifierROCPlots[aCL_Association,
+  testData_?ClassifierEnsembles`Private`ClassifierDataQ,
+  thRange : {_?NumericQ ..}, targetClasses : (_List | All) : All,
+  opts : OptionsPattern[]] :=
+    Block[{rocRes},
+      rocRes = Association@EnsembleClassifierROCData[aCL, testData, thRange, targetClasses];
+      AssociationMap[ROCPlot[thRange, rocRes[#], opts] &, Keys[rocRes]]
     ];
 
 End[] (* `Private` *)
