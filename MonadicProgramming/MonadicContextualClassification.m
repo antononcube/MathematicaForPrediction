@@ -199,10 +199,10 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
             Transpose[{Range[Length[xs]], Normal[xs[[All, -1]]]}];
         indGroups = Map[#[[All, 1]] &, GroupBy[dataLabels, Last]];
 
-        t = TakeDrop[RandomSample[#], Floor[0.75*Length[#]]] & /@ indGroups;
+        t = TakeDrop[RandomSample[#], Ceiling[fr*Length[#]]] & /@ indGroups;
 
-        trainData = xs[[Join[t[[1, 1]], t[[2, 1]]], All]];
-        testData = xs[[Join[t[[1, 2]], t[[2, 2]]], All]],
+        trainData = xs[[ Join @@ t[[All, 1]], All]];
+        testData =  xs[[ Join @@ t[[All, 2]], All]],
 
         True,
         {trainData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
