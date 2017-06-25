@@ -55,6 +55,9 @@ It has the same signature and options as ListPlot."
 IntervalMappingFunction::usage = "IntervalMappingFunction[boundaries] makes a piece-wise function for mapping of \
 a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1]."
 
+ToCategoricalColumns::usage = "ToCategoricalColumns[data_?ArrayQ, qs_: Range[0, 1, 0.2]] \
+converts the numerical columns of an array to categorical. (Using IntervalMappingFunction.)"
+
 VariableDependenceGrid::usage = "VariableDependenceGrid[data_?MatrixQ,columnNames,opts] makes a grid with \
 variable dependence plots."
 
@@ -235,6 +238,20 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
             Range[1, Length[t]]}]] /. {XXX -> #}]]
     ];
 
+ClearAll[ToCategoricalColumns]
+ToCategoricalColumns[data_?ArrayQ, qs_: Range[0, 1, 0.2]] :=
+    Block[{inds, imFuncs, res},
+      inds =
+          Pick[Range[Dimensions[data][[2]]],
+            VectorQ[#, NumericQ] & /@ Transpose[Take[data, UpTo[12]]]];
+      imFuncs =
+          IntervalMappingFunction /@ (Quantile[#, qs] & /@
+              Transpose[data[[All, inds]]]);
+      res = data;
+      Do[res[[All, inds[[i]]]] =
+          imFuncs[[i]] /@ res[[All, inds[[i]]]], {i, Length[inds]}];
+      res
+    ] /; Length[Dimensions[data]] == 2;
 
 Clear[VariableDependenceGrid]
 Options[VariableDependenceGrid] = {"IgnoreCategoricalVariables" -> False};
