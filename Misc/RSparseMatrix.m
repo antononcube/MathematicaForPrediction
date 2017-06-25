@@ -395,6 +395,11 @@ There are three solutions (1) using array rules, (2) using matrix padding, Array
 *)
 
 Options[RowBind] = {"IgnoreColumnNames" -> False};
+
+RowBind[r1_RSparseMatrix, r2_RSparseMatrix, rm__] := RowBind[ RowBind[r1, r2], rm];
+
+RowBind[rm:{_RSparseMatrix..}] := Fold[RowBind, First[rm], Rest[rm]];
+
 RowBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
     Block[{sarr, joinedRowAssoc, resRowNames},
       sarr = Join[r1[[1]]["sparseArray"], r2[[1]]["sparseArray"]];
@@ -411,6 +416,11 @@ RowBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
     ];
 
 Options[ColumnBind] = {"IgnoreRowNames" -> False};
+
+ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, rm__] := ColumnBind[ ColumnBind[r1, r2], rm];
+
+ColumnBind[rm:{_RSparseMatrix..}] := Fold[ColumnBind, First[rm], Rest[rm]];
+
 ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
     Block[{sarr, joinedRowAssoc, resColumnNames},
       sarr = Transpose@
