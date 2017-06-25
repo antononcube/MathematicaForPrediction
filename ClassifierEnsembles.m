@@ -62,6 +62,8 @@
 
       https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m .
 
+    An attempt to import the package ROCFunctions.m is made if definitions of its functions are not found.
+
 
     Usage example
     =============
@@ -133,6 +135,7 @@
 (*
     TODO
       1. Better error messages.
+      2. Add error message for EnsembleClassifierROCData and EnsembleClassifierROCPlots.
 *)
 
 BeginPackage["ClassifierEnsembles`"]
@@ -329,6 +332,14 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
 
 ClearAll[EnsembleClassifierMeasurements]
 
+EnsembleClassifierMeasurements::nargs =
+    "The first argument, the classifier ensemble, is expected to be an Association of classfier IDs to \
+classifer functions. \
+The second argument, the test data, is expected to be a list of record-to-label rules. \
+The third argument is expected to be a list of measures; see ROCFunctions`ROCFunctions[\"FunctionNames\"]. \
+Use the option \"Classes\" to specify target classes. \
+Use the option Method to specify which method the classifier ensemble should classify with.";
+
 Options[EnsembleClassifierMeasurements] = {"Classes"->Automatic, Method -> Automatic};
 
 EnsembleClassifierMeasurements[cls_Association,
@@ -388,8 +399,16 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
 (**************************************************************)
 
 ClearAll[EnsembleClassifierROCData]
+
+EnsembleClassifierROCData::nargs =
+    "The first argument, the classifier ensemble, is expected to be an Association of classfier IDs to \
+classifer functions. \
+The second argument, the test data, is expected to be a list of record-to-label rules. \
+The optional third argument, the threshold range, is expected to be a list of numbers between 0 and 1. \
+The optional fourth argument, the target classes, is expected to be list of class labels or All."
+
 EnsembleClassifierROCData[aCL_Association,
-  testData_?ClassifierEnsembles`Private`ClassifierDataQ,
+  testData_?ClassifierDataQ,
   thRange : {_?NumericQ ..}, targetClasses : (_List | All) : All] :=
     Block[{clClasses, clRes, testLabels, ccLabel, ccNotLabel, ccTestLabels, rocs},
 
@@ -415,19 +434,32 @@ EnsembleClassifierROCData[aCL_Association,
         {ccLabel, clClasses}]
     ];
 
+EnsembleClassifierROCData[___] := (Message[EnsembleClassifierROCData::nargs]; $Failed);
+
 
 ClearAll[EnsembleClassifierROCPlots];
+
+EnsembleClassifierROCPlots::nargs =
+    "The first argument, the classifier ensemble, is expected to be an Association of classfier IDs to \
+classifer functions. \
+The second argument, the test data, is expected to be a list of record-to-label rules. \
+The optional third argument, the threshold range, is expected to be a list of numbers between 0 and 1. \
+The optional fourth argument, the target classes, is expected to be list of class labels or All. \
+As options the options of ROCFunctions`ROCPlot and Graphics can be given."
 
 Options[EnsembleClassifierROCPlots] = Options[ROCPlot];
 
 EnsembleClassifierROCPlots[aCL_Association,
-  testData_?ClassifierEnsembles`Private`ClassifierDataQ,
+  testData_?ClassifierDataQ,
   thRange : {_?NumericQ ..}, targetClasses : (_List | All) : All,
   opts : OptionsPattern[]] :=
     Block[{rocRes},
       rocRes = Association@EnsembleClassifierROCData[aCL, testData, thRange, targetClasses];
       AssociationMap[ROCPlot[thRange, rocRes[#], opts] &, Keys[rocRes]]
     ];
+
+EnsembleClassifierROCPlots[___] := (Message[EnsembleClassifierROCPlots::nargs]; $Failed);
+
 
 End[] (* `Private` *)
 
