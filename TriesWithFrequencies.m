@@ -365,8 +365,8 @@ TrieLeafProbabilitiesWithPositions[trieArg_] :=
          ], {res, Range[2, Length[trie]]}];
       If[sum < 1, res = Append[res, {{trie[[1, 1]], 1 - sum, {1}}}]];
       res = Map[{#[[1]], #[[2]]*trie[[1, 2]], #[[3]]} &, Flatten[res, 1]]
-      ]
-     ];
+     ]
+    ];
 
    If[trieArg[[1, 2]] == 0,
     TrieLeafProbabilitiesRec[trieArg],

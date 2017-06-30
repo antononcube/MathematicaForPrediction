@@ -1,6 +1,6 @@
 (*
     Implementation of the Apriori algorithm in Mathematica
-    Copyright (C) 2014-2015  Anton Antonov
+    Copyright (C) 2014-2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,13 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube@gmail.com,
-	Windermere, Florida, USA.
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2014 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -35,7 +35,7 @@
 (* This package contains definitions for the Apriori algorithm application. *)
 
 (* October, 30, 2014
-   
+
    Updated the function definitions to use Mathematica 10.1 dispatch rules.
 *)
 
