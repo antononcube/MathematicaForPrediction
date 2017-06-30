@@ -178,9 +178,16 @@ GenerateStateMonadCode["ClCon"]
 (* General functions                                          *)
 (**************************************************************)
 
-Clear[ClConToNormalClassifierData]
-ClConToNormalClassifierData[td_Dataset] :=
-    Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[DeleteMissing[td, 1, 2][All, Values]];
+ClearAll[ClConToNormalClassifierData]
+
+Options[ClConToNormalClassifierData] = {"DeleteMissing"->True};
+
+ClConToNormalClassifierData[td_Dataset,opts:OptionsPattern[]] :=
+    If[ TrueQ[ OptionValue[ClConToNormalClassifierData,"DeleteMissing"]],
+      Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[DeleteMissing[td, 1, 2][All, Values]],
+      (* ELSE *)
+      Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[td]
+    ];
 
 
 (**************************************************************)
