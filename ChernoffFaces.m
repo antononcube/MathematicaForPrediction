@@ -153,6 +153,7 @@
     3. (One more) advanced example.
     4. Optional use of tooltips for the facial parts interpretation.
     5. Better integration of auto coloring.
+    6. Handling of a dataset with named rows and columns.
 
 *)
 
@@ -171,8 +172,11 @@ VariablesRescale::usage = "VariablesRescale[data, opts] standardizes and rescale
 PrototypeDeviationsRescale::usage = "PrototypeDeviationsRescale[prototype, data] standardizes and rescales \
 the columns of the data assuming prototype is the most normal (central) row of data."
 
-ChernoffFaceAutoColored::usage = "ChernoffFaceAutoColored[pars_Association, colorFunc_, opts_] calls ChernoffFace \
-with automatically computed colors for the face parts using a specified color function."
+ChernoffFaceAutoColored::usage = "ChernoffFaceAutoColored[vec_?VectorQ, colorFunc_, opts_] calls ChernoffFace \
+with automatically computed colors for the face parts using a specified color function. \
+If the vector has less than 2 elements the face color is determined by the first element. \
+If the vector has more than 2 elements the face color is determined by the mean of the first and second elements. \
+(more...)"
 
 Begin["`Private`"]
 
