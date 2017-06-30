@@ -388,6 +388,38 @@ ChernoffFaceAutoColored[vec_?VectorQ, cdf_ColorDataFunction, opts : OptionsPatte
       ChernoffFace[asc, opts]
     ];
 
+
+(* Find the median and quartile faces (used to help interpretation.) *)
+ClearAll[ChernoffFaceLooksLegend]
+Options[ChernoffFaceLooksLegend] = {"ColorDataScheme" -> None, ImageSize -> 100};
+ChernoffFaceLooksLegend[rdata_, opts : OptionsPattern[]] :=
+    Block[{faceImageSize, colorDataScheme, qvals, cfFunc, firstQuFace,
+      medianFace, thirdQuFace, lowFace, neutralFace, highFace},
+
+      faceImageSize = OptionValue[ImageSize];
+      colorDataScheme = OptionValue["ColorDataScheme"];
+
+      qvals = Map[Quartiles, Transpose[rdata]];
+      If[TrueQ[colorDataScheme == "None" || colorDataScheme === None],
+        cfFunc =
+            ChernoffFace[#1, PlotLabel -> #2, ImageSize -> faceImageSize] &,
+      (*ELSE*)
+        cfFunc =
+            ChernoffFaceAutoColored[#1, ColorData[colorDataScheme], PlotLabel -> #2, ImageSize -> faceImageSize] &
+      ];
+
+      {firstQuFace, medianFace, thirdQuFace} =
+          MapThread[ cfFunc, {Transpose[qvals], {"1st Qu", "Median", "3d Qu"}}];
+      {lowFace, neutralFace, highFace} =
+          MapThread[
+            cfFunc,
+            {Transpose[ ConstantArray[{0.25, 0.5, 0.75}, Length@Transpose[rdata]]],
+            {"All 0.25", "All 0.5", "All 0.75"}}
+          ];
+
+      {{lowFace, neutralFace, highFace}, {firstQuFace, medianFace, thirdQuFace}}
+    ];
+
 End[] (* `Private` *)
 
 EndPackage[]
