@@ -178,6 +178,8 @@ If the vector has less than 2 elements the face color is determined by the first
 If the vector has more than 2 elements the face color is determined by the mean of the first and second elements. \
 (more...)"
 
+ChernoffFaceRecordsSummary::usage = "RecordsSummary of data with Chernoff faces. (The data is not rescaled.)"
+
 Begin["`Private`"]
 
 Options[VariablesRescale] = {
@@ -390,34 +392,38 @@ ChernoffFaceAutoColored[vec_?VectorQ, cdf_ColorDataFunction, opts : OptionsPatte
 
 
 (* Find the median and quartile faces (used to help interpretation.) *)
-ClearAll[ChernoffFaceLooksLegend]
-Options[ChernoffFaceLooksLegend] = {"ColorDataScheme" -> None, ImageSize -> 100};
-ChernoffFaceLooksLegend[rdata_, opts : OptionsPattern[]] :=
-    Block[{faceImageSize, colorDataScheme, qvals, cfFunc, firstQuFace,
-      medianFace, thirdQuFace, lowFace, neutralFace, highFace},
+ClearAll[ChernoffFaceRecordsSummary]
+Options[ChernoffFaceRecordsSummary] = { ImageSize -> 100};
+ChernoffFaceRecordsSummary[rdata_, cdf:(_ColorDataFunction|None|_String|_Integer), opts : OptionsPattern[]] :=
+    Block[{faceImageSize, cdfLocal, qvals, cfFunc,
+      quantileFaces, rangeFaces},
 
       faceImageSize = OptionValue[ImageSize];
-      colorDataScheme = OptionValue["ColorDataScheme"];
 
-      qvals = Map[Quartiles, Transpose[rdata]];
-      If[TrueQ[colorDataScheme == "None" || colorDataScheme === None],
+      If[ StringQ[cdf] || IntegerQ[cdf],
+        cdfLocal = ColorData[cdf],
+        cdfLocal = cdf
+      ];
+
+      qvals = Map[Quantile[#,{0,0.25,0.5,0.75,1}]&, Transpose[rdata]];
+      If[TrueQ[cdfLocal === None],
         cfFunc =
             ChernoffFace[#1, PlotLabel -> #2, ImageSize -> faceImageSize] &,
       (*ELSE*)
         cfFunc =
-            ChernoffFaceAutoColored[#1, ColorData[colorDataScheme], PlotLabel -> #2, ImageSize -> faceImageSize] &
+            ChernoffFaceAutoColored[#1, cdfLocal, PlotLabel -> #2, ImageSize -> faceImageSize] &
       ];
 
-      {firstQuFace, medianFace, thirdQuFace} =
-          MapThread[ cfFunc, {Transpose[qvals], {"1st Qu", "Median", "3d Qu"}}];
-      {lowFace, neutralFace, highFace} =
+      quantileFaces =
+          MapThread[ cfFunc, {Transpose[qvals], {"Min", "1st Qu", "Median", "3d Qu", "Max"}}];
+      rangeFaces =
           MapThread[
             cfFunc,
-            {Transpose[ ConstantArray[{0.25, 0.5, 0.75}, Length@Transpose[rdata]]],
-            {"All 0.25", "All 0.5", "All 0.75"}}
+            {Transpose[ ConstantArray[{0, 0.25, 0.5, 0.75, 1}, Length@Transpose[rdata]]],
+            {"All 0", "All 0.25", "All 0.5", "All 0.75", "All 1"}}
           ];
 
-      {{lowFace, neutralFace, highFace}, {firstQuFace, medianFace, thirdQuFace}}
+      <| "QuantileChernoffFaces"->quantileFaces, "RangeChernoffFaces"->rangeFaces |>
     ];
 
 End[] (* `Private` *)
