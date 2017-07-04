@@ -10,7 +10,8 @@ June 2017
 
 ## Introduction
 
-This document aims to introduce monadic programming in Mathematica / Wolfram Language (WL) in a concise and code-direct manner. The core of the monad codes discussed is simple, derived from the fundamental principles of Mathematica / WL.
+This document aims to introduce monadic programming in Mathematica / Wolfram Language (WL) in a concise and code-direct manner. 
+The core of the monad codes discussed is simple, derived from the fundamental principles of Mathematica / WL.
 
 The usefulness of the monadic programming approach manifests in multiple ways. Here are a few we are interested in:
 
@@ -22,25 +23,32 @@ Speaking informally,
 
 - Monad programming provides an interface that allows interactive, dynamic creation and change of sequentially structured computations with polymorphic and context-aware behavior.
 
-The theoretical background provided in this document is given in the Wikipedia article on Monadic programming, [[Wk1](https://en.wikipedia.org/wiki/Monad_(functional_programming))], and the article ["The essence of functional programming"](https://page.mi.fu-berlin.de/scravy/realworldhaskell/materialien/the-essence-of-functional-programming.pdf) by Philip Wadler, [[H3](https://page.mi.fu-berlin.de/scravy/realworldhaskell/materialien/the-essence-of-functional-programming.pdf)]. The code in this document is based on the primary monad definition given [Wk1,H3]. (Based on the ["Kleisli triple"](https://en.wikipedia.org/wiki/Kleisli_category) and used in Haskell.)
+The theoretical background provided in this document is given in the Wikipedia article on Monadic programming, [[Wk1](https://en.wikipedia.org/wiki/Monad_(functional_programming))], 
+and the article ["The essence of functional programming"](https://page.mi.fu-berlin.de/scravy/realworldhaskell/materialien/the-essence-of-functional-programming.pdf) by Philip Wadler, [[H3](https://page.mi.fu-berlin.de/scravy/realworldhaskell/materialien/the-essence-of-functional-programming.pdf)]. 
+The code in this document is based on the primary monad definition given in \[Wk1,H3\]. (Based on the ["Kleisli triple"](https://en.wikipedia.org/wiki/Kleisli_category) and used in Haskell.)
 
 The general monad structure can be seen as:
 
 1) a software design pattern;
-2) a fundamental programming construct (similar to class in object-oriented programming);
+2) a fundamental programming construct (similar to "class" in object-oriented programming);
 3) an interface for software types to have implementations of.
 
-In this document we treat the monad structure as a [design pattern](https://en.wikipedia.org/wiki/Software_design_pattern), [[Wk3](https://en.wikipedia.org/wiki/Software_design_pattern)]. (After reading [H3] point 2 becomes more obvious. A similar in spirit, minimalistic approach to [Object-oriented Design Patterns](https://en.wikipedia.org/wiki/Design_Patterns) is given in [[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Implementation-of-Object_Oriented-Programming-Design-Patterns-in-Mathematica.md)].)
+In this document we treat the monad structure as a [design pattern](https://en.wikipedia.org/wiki/Software_design_pattern), [[Wk3](https://en.wikipedia.org/wiki/Software_design_pattern)]. 
+(After reading [H3] point 2 becomes more obvious. A similar in spirit, minimalistic approach to [Object-oriented Design Patterns](https://en.wikipedia.org/wiki/Design_Patterns) is given in [[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Implementation-of-Object_Oriented-Programming-Design-Patterns-in-Mathematica.md)].)
 
 We do not deal with types for monads explicitly, we generate code for monads instead. One reason for this is the "monad design pattern" perspective; another one is that in Mathematica / WL the notion of algebraic data type is not needed -- pattern matching comes from the core "book of replacement rules" principle.
 
 The rest of the document is organized as follows. 
 
 **1.** *Fundamental sections*
-The section "What is a monad?" gives the necessary definitions. The section "The basic Maybe monad" shows how to program a monad from scratch in Mathematica / WL. The section "Extensions with polymorphic behavior" shows how extensions of the basic monad functions can be made. (These three sections form a complete read on monadic programming, the rest of document can be skipped.) 
+The section "What is a monad?" gives the necessary definitions. The section "The basic Maybe monad" shows how to program a monad from scratch in Mathematica / WL. 
+The section "Extensions with polymorphic behavior" shows how extensions of the basic monad functions can be made. 
+(These three sections form a complete read on monadic programming, the rest of the document can be skipped.) 
 
 **2.** *Monadic programming in practice*
-The section "Monad code generation" describes packages for generating monad code. The section "Flow control in monads" describes additional, control flow functionalities. The section "General work-flow of monad code generation utilization" gives a general perspective on the use monad code generation. The section "Software design with monadic programming" discusses (small scale) software design with monadic programming. 
+The section "Monad code generation" describes packages for generating monad code. The section "Flow control in monads" describes additional, control flow functionalities. 
+The section "General work-flow of monad code generation utilization" gives a general perspective on the use of monad code generation. 
+The section "Software design with monadic programming" discusses (small scale) software design with monadic programming. 
 
 **3.** *Case study sections*
 The case study sections "Contextual monad classification" and "Tracing monad pipelines" hopefully have interesting and engaging examples of monad code generation, extension, and utilization.
