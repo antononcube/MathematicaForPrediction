@@ -264,14 +264,17 @@ AUROC[pROCs:{_?ROCAssociationQ..}] :=
 
 
 aROCAcronyms =
-    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC"} ->
+    AssociationThread[
+      {"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "Recall", "Precision", "Accuracy"} ->
         {"true positive rate", "specificity", "positive predictive value",
           "negative predictive value", "false positive rate",
-          "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve"}];
+          "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve",
+          "same as TPR", "same as PPV", "same as ACC"}];
 
 aROCFunctions =
-    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC"} ->
-        {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUROC}];
+    AssociationThread[
+      {"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "Recall", "Precision", "Accuracy"} ->
+          {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUROC,TPR,PPV,ACC}];
 
 
 Clear[ROCFunctions]
