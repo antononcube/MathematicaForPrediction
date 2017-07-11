@@ -402,23 +402,10 @@ Clear[ParseToTokens];
 ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :=
     Block[{pApplyFunc, pWord, pQWord, pLongTermDelim, pTermDelim, res, procText = Characters[text]},
 
-      (* Dealing with apply functions written with terminal symbols. *)
-      pApplyFunc =
-          ParseApply[Riffle[Flatten[#], " "] &,
-            StringJoin\[CircleDot](ParseSymbol["<"]\[CircleTimes]ParseSymbol["@"])\[CircleTimes]
-            ParseSpaces[
-              StringJoin\[CircleDot]ParseMany1[
-                ParsePredicate[
-                  StringMatchQ[#, (Except[WhitespaceCharacter] ..)] &]]]\[CircleTimes]ParseSpaces[ParseSymbol[";"]]
-          ];
-      procText = (Flatten\[CircleDot]ParseMany1[ParseMany[ParseSpaces[pApplyFunc]\[CirclePlus]ParsePredicate[True &]]])[procText];
-      procText = procText[[1, 2]];
-
       pWord =
           ParseSpaces[
             ParseMany1[
-              ParsePredicate[!
-                  MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
+              ParsePredicate[!MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
 
       pQWord = ParseSpaces[(ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])\[CircleTimes]
         ParseMany1[ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes]
@@ -428,13 +415,10 @@ ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :
         pLongTermDelim =
             ParseAlternativeComposition @@
                 Map[ParseApply[StringJoin,
-                  ParseSequentialComposition @@ (ParseSymbol /@
-                      Characters[#])] &,
+                  ParseSequentialComposition @@ (ParseSymbol /@ Characters[#])] &,
                   Select[terminalDelimiters, StringLength[#] > 1 &]];
         pTermDelim =
-            ParseSpaces[
-              ParsePredicate[
-                MemberQ[terminalDelimiters, #] &]\[CirclePlus]pLongTermDelim],
+            ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]\[CirclePlus]pLongTermDelim],
         pTermDelim =
             ParseSpaces[ParsePredicate[MemberQ[terminalDelimiters, #] &]]
       ];
@@ -443,7 +427,7 @@ ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :
     ];
 
 ParseToEBNFTokens[text_, whitespaces_: {" ", "\n", "\t"}] :=
-    ParseToTokens[text, {"|", "&>", "<&", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
+    ParseToTokens[text, {"|", "&>", "<&", "<@", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
 
 
 (************************************************************)
