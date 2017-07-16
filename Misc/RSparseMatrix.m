@@ -387,8 +387,8 @@ Part[RSparseMatrix[obj_], s1_, s2_] ^:=
         smat,
         If[ MatrixQ[smat],
           ToRSparseMatrix[smat,
-            "RowNames" -> RowNames[RSparseMatrix[obj]][[s1]],
-            "ColumnNames" -> ColumnNames[RSparseMatrix[obj]][[s2]],
+            "RowNames" -> If[ RowNames[RSparseMatrix[obj]]===None, None, RowNames[RSparseMatrix[obj]][[s1]] ],
+            "ColumnNames" -> If[ ColumnNames[RSparseMatrix[obj]]===None, None, ColumnNames[RSparseMatrix[obj]][[s2]] ],
             "DimensionNames" -> DimensionNames[RSparseMatrix[obj]]],
         (* ELSE *)
           smat
