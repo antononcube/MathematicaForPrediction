@@ -105,6 +105,26 @@ MakeRSparseMatrix[rules_, dims_, val_, opts : OptionsPattern[]] :=
       ToRSparseMatrix[sarr, opts]
     ];
 
+MakeRSparseMatrix[triplets:_?ArrayQ, opts : OptionsPattern[]] :=
+    MakeRSparseMatrix[triplets, Automatic, 0, opts]/; Dimensions[triplets][[2]] == 3;
+
+MakeRSparseMatrix[triplets:_?ArrayQ, dims_, val_, opts : OptionsPattern[]] :=
+    Block[{sarr, rowNames, colNames, rules},
+
+      rowNames = Union[ triplets[[All,1]] ];
+      rowNames = AssociationThread[ rowNames, Range[Length[rowNames]]];
+
+      colNames = Union[ triplets[[All,2]] ];
+      colNames = AssociationThread[ colNames, Range[Length[colNames]]];
+
+      rules = triplets;
+      rules[[All,1]] = rowNames /@ rules[[All,1]];
+      rules[[All,2]] = colNames /@ rules[[All,2]];
+
+      sarr = SparseArray[Most[#]->Last[#]& /@ rules];
+      ToRSparseMatrix[sarr, "RowNames"-> Map[ToString,Keys[rowNames]], "ColumnNames"-> Map[ToString,Keys[colNames]], opts]
+    ]/; Dimensions[triplets][[2]] == 3;
+
 Options[ToRSparseMatrix] = Options[MakeRSparseMatrix];
 
 ToRSparseMatrix[rmat_RSparseMatrix, opts : OptionsPattern[]] :=
@@ -164,6 +184,15 @@ ToRSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
         ToRSparseMatrix[ res, opts ]
       ]
     ] /; Length[Dimensions[ds]] == 2;
+
+ToRSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
+    Block[{},
+      ToRSparseMatrix[ xtabs["XTABMatrix"],
+        "RowNames" -> ToString /@ xtabs["RowNames"],
+        "ColumnNames" -> ToString /@ xtabs["ColumnNames"],
+        opts
+      ]
+    ]/; MemberQ[ Keys[xtabs], "XTABMatrix" ];
 
 ToRSparseMatrix[___] := Message[ToRSparseMatrix::arg1];
 
