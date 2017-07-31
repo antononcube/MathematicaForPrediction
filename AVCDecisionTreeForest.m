@@ -1,7 +1,7 @@
 
 (*
 	Decision tree and random forest implementations in Mathematica
-    Copyright (C) 2013-2015  Anton Antonov
+    Copyright (C) 2013-2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@
 
 (* Version 0.8 *)
 (* This version contains functions to build decision trees and forests and classify with them. The building functions take options to control the recursive process. *)
+(* ToDo implement functions for conversion to ClassifierFunction objects. *)
+
 
 BeginPackage["AVCDecisionTreeForest`"]
 

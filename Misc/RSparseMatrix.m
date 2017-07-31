@@ -105,6 +105,26 @@ MakeRSparseMatrix[rules_, dims_, val_, opts : OptionsPattern[]] :=
       ToRSparseMatrix[sarr, opts]
     ];
 
+MakeRSparseMatrix[triplets:_?ArrayQ, opts : OptionsPattern[]] :=
+    MakeRSparseMatrix[triplets, Automatic, 0, opts]/; Dimensions[triplets][[2]] == 3;
+
+MakeRSparseMatrix[triplets:_?ArrayQ, dims_, val_, opts : OptionsPattern[]] :=
+    Block[{sarr, rowNames, colNames, rules},
+
+      rowNames = Union[ triplets[[All,1]] ];
+      rowNames = AssociationThread[ rowNames, Range[Length[rowNames]]];
+
+      colNames = Union[ triplets[[All,2]] ];
+      colNames = AssociationThread[ colNames, Range[Length[colNames]]];
+
+      rules = triplets;
+      rules[[All,1]] = rowNames /@ rules[[All,1]];
+      rules[[All,2]] = colNames /@ rules[[All,2]];
+
+      sarr = SparseArray[Most[#]->Last[#]& /@ rules];
+      ToRSparseMatrix[sarr, "RowNames"-> Map[ToString,Keys[rowNames]], "ColumnNames"-> Map[ToString,Keys[colNames]], opts]
+    ]/; Dimensions[triplets][[2]] == 3;
+
 Options[ToRSparseMatrix] = Options[MakeRSparseMatrix];
 
 ToRSparseMatrix[rmat_RSparseMatrix, opts : OptionsPattern[]] :=
@@ -164,6 +184,15 @@ ToRSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
         ToRSparseMatrix[ res, opts ]
       ]
     ] /; Length[Dimensions[ds]] == 2;
+
+ToRSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
+    Block[{},
+      ToRSparseMatrix[ xtabs["XTABMatrix"],
+        "RowNames" -> ToString /@ xtabs["RowNames"],
+        "ColumnNames" -> ToString /@ xtabs["ColumnNames"],
+        opts
+      ]
+    ]/; MemberQ[ Keys[xtabs], "XTABMatrix" ];
 
 ToRSparseMatrix[___] := Message[ToRSparseMatrix::arg1];
 
@@ -358,8 +387,8 @@ Part[RSparseMatrix[obj_], s1_, s2_] ^:=
         smat,
         If[ MatrixQ[smat],
           ToRSparseMatrix[smat,
-            "RowNames" -> RowNames[RSparseMatrix[obj]][[s1]],
-            "ColumnNames" -> ColumnNames[RSparseMatrix[obj]][[s2]],
+            "RowNames" -> If[ RowNames[RSparseMatrix[obj]]===None, None, RowNames[RSparseMatrix[obj]][[s1]] ],
+            "ColumnNames" -> If[ ColumnNames[RSparseMatrix[obj]]===None, None, ColumnNames[RSparseMatrix[obj]][[s2]] ],
             "DimensionNames" -> DimensionNames[RSparseMatrix[obj]]],
         (* ELSE *)
           smat
@@ -395,6 +424,11 @@ There are three solutions (1) using array rules, (2) using matrix padding, Array
 *)
 
 Options[RowBind] = {"IgnoreColumnNames" -> False};
+
+RowBind[r1_RSparseMatrix, r2_RSparseMatrix, rm__] := RowBind[ RowBind[r1, r2], rm];
+
+RowBind[rm:{_RSparseMatrix..}] := Fold[RowBind, First[rm], Rest[rm]];
+
 RowBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
     Block[{sarr, joinedRowAssoc, resRowNames},
       sarr = Join[r1[[1]]["sparseArray"], r2[[1]]["sparseArray"]];
@@ -411,6 +445,11 @@ RowBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
     ];
 
 Options[ColumnBind] = {"IgnoreRowNames" -> False};
+
+ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, rm__] := ColumnBind[ ColumnBind[r1, r2], rm];
+
+ColumnBind[rm:{_RSparseMatrix..}] := Fold[ColumnBind, First[rm], Rest[rm]];
+
 ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
     Block[{sarr, joinedRowAssoc, resColumnNames},
       sarr = Transpose@

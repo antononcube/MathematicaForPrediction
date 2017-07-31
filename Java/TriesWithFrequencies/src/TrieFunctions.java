@@ -303,6 +303,17 @@ public class TrieFunctions {
         }
     }
 
+    //! @description Optimization of retrieve over a list of words.
+    //! @param tr a trie object
+    //! @param words list of words
+    public static List<Trie> mapRetrieve(Trie tr, List<List<String>> words) {
+        List<Trie> res = new ArrayList<>();
+        for (List<String> s : words) {
+            res.add(retrieve(tr, s));
+        }
+        return res;
+    }
+
 
     //! @description For a given trie finds if the retrievable part of a word is complete match.
     //! @param tr a trie object

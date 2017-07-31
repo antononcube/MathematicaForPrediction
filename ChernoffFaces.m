@@ -152,6 +152,8 @@
     2. Make/describe comparison between the package function faces and the faces in the original Chernoff article.
     3. (One more) advanced example.
     4. Optional use of tooltips for the facial parts interpretation.
+    5. Better integration of auto coloring.
+    6. Handling of a dataset with named rows and columns.
 
 *)
 
@@ -170,17 +172,25 @@ VariablesRescale::usage = "VariablesRescale[data, opts] standardizes and rescale
 PrototypeDeviationsRescale::usage = "PrototypeDeviationsRescale[prototype, data] standardizes and rescales \
 the columns of the data assuming prototype is the most normal (central) row of data."
 
+ChernoffFaceAutoColored::usage = "ChernoffFaceAutoColored[vec_?VectorQ, colorFunc_, opts_] calls ChernoffFace \
+with automatically computed colors for the face parts using a specified color function. \
+If the vector has less than 2 elements the face color is determined by the first element. \
+If the vector has more than 2 elements the face color is determined by the mean of the first and second elements. \
+(more...)"
+
+ChernoffFaceRecordsSummary::usage = "RecordsSummary of data with Chernoff faces. (The data is not rescaled.)"
+
 Begin["`Private`"]
 
 Options[VariablesRescale] = {
   "StandardizingFunction" -> ( Standardize[#, Mean, StandardDeviation] &),
   "RescaleRangeFunction" -> MinMax }
-VariablesRescale[ data_?MatrixQ, opts:OptionsPattern[] ] :=
+VariablesRescale[ data_, opts:OptionsPattern[] ] :=
     Block[{ stFunc, rangeFunc },
       stFunc = OptionValue[ "StandardizingFunction" ];
       rangeFunc = OptionValue[ "RescaleRangeFunction" ];
       Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}], {0,1} ]&, stFunc /@ Transpose[data] ]
-    ];
+    ] /; MatrixQ[data, NumberQ];
 
 Clear[PrototypeDeviationsRescale];
 PrototypeDeviationsRescale[prototypeItem_, items_] :=
@@ -314,7 +324,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       ];
       (*forheadPts={{-1,0},{-1+0.3forheadTh,1.2},{1-0.3forheadTh,1.2},{1,0}};*)
       (*{Thick,BSplineCurve[forheadPts,SplineWeights\[Rule]({1,3,3,1}/8)]},*)
-      forheadPts = Table[{x, (1 - x^forheadTh)*faceLength eyesVerticalPos}, {x, Range[-1, 1, 0.05]}];
+      forheadPts = Table[{x, (1 - x^forheadTh)*faceLength*eyesVerticalPos}, {x, Range[-1, 1, 0.05]}];
       leftEye =
           {{eyeBallsColor, Disk[{-0.5, 0}, eyeSize {0.4, 0.2}]}, {Thick,
             Gray, Circle[{-0.5, 0}, eyeSize {0.4, 0.2}]},
@@ -336,7 +346,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
         {GeometricTransformation[leftEye, RotationTransform[eyesSlant, {-0.5, 0}]],
           GeometricTransformation[rightEye, RotationTransform[-eyesSlant, {0.5, 0}]]},
       (* Eyebrows trimming, raising, and slant *)
-        {Thickness[0.01],
+        {Thickness[0.02],
           GeometricTransformation[
             Circle[{-0.5, -0.2}, {0.7, eyebrRaiseLeft}, {Pi/2 - (eyebrLeftTrim Pi)/6, Pi/2 + (eyebrLeftTrim Pi)/6}],
             RotationTransform[eyebrSlantLeft, {-0.5, -0.2 + eyebrRaiseLeft}]],
@@ -353,6 +363,68 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
     ];
 
 ChernoffFace[___] := (Message[ChernoffFace::pars]; $Failed);
+
+
+ClearAll[ChernoffFaceAutoColored]
+
+ChernoffFaceAutoColored[vec_?VectorQ, opts : OptionsPattern[]] :=
+    ChernoffFaceAutoColored[vec, ColorData["Pastel"], opts];
+
+ChernoffFaceAutoColored[vec_?VectorQ, cdf_ColorDataFunction, opts : OptionsPattern[]] :=
+    Block[{asc},
+      asc = AssociationThread[Take[Keys[ChernoffFace["FacePartsProperties"]], UpTo[Length[vec]]] -> vec];
+      Which[
+        Length[vec] == 1,
+        asc = Join[asc, <|"FaceColor" -> cdf[vec[[1]]]|>],
+        Length[vec] <= 2,
+        asc = Join[asc, <|"FaceColor" -> cdf[vec[[1]]], "IrisColor" -> cdf[vec[[2]]]|>],
+        Length[vec] <= 6,
+        asc = Join[asc, <|"FaceColor" -> cdf[Mean@vec[[1 ;; 2]]], "IrisColor" -> cdf[Mean@vec[[3 ;; -1]]]|>],
+        True,
+        asc = Join[asc, <|
+          "FaceColor" -> cdf[Mean@vec[[1 ;; 2]]],
+          "MouthColor" -> cdf[Mean@vec[[1 ;; 3]]],
+          "IrisColor" -> cdf[Mean@vec[[4 ;; 6]]],
+          "NoseColor" -> cdf[Mean@vec[[7 ;; -1]]]|>]
+      ];
+      ChernoffFace[asc, opts]
+    ];
+
+
+(* Find the median and quartile faces (used to help interpretation.) *)
+ClearAll[ChernoffFaceRecordsSummary]
+Options[ChernoffFaceRecordsSummary] = { ImageSize -> 100};
+ChernoffFaceRecordsSummary[rdata_, cdf:(_ColorDataFunction|None|_String|_Integer), opts : OptionsPattern[]] :=
+    Block[{faceImageSize, cdfLocal, qvals, cfFunc,
+      quantileFaces, rangeFaces},
+
+      faceImageSize = OptionValue[ImageSize];
+
+      If[ StringQ[cdf] || IntegerQ[cdf],
+        cdfLocal = ColorData[cdf],
+        cdfLocal = cdf
+      ];
+
+      qvals = Map[Quantile[#,{0,0.25,0.5,0.75,1}]&, Transpose[rdata]];
+      If[TrueQ[cdfLocal === None],
+        cfFunc =
+            ChernoffFace[#1, PlotLabel -> #2, ImageSize -> faceImageSize] &,
+      (*ELSE*)
+        cfFunc =
+            ChernoffFaceAutoColored[#1, cdfLocal, PlotLabel -> #2, ImageSize -> faceImageSize] &
+      ];
+
+      quantileFaces =
+          MapThread[ cfFunc, {Transpose[qvals], {"Min", "1st Qu", "Median", "3d Qu", "Max"}}];
+      rangeFaces =
+          MapThread[
+            cfFunc,
+            {Transpose[ ConstantArray[{0, 0.25, 0.5, 0.75, 1}, Length@Transpose[rdata]]],
+            {"All 0", "All 0.25", "All 0.5", "All 0.75", "All 1"}}
+          ];
+
+      <| "QuantileChernoffFaces"->quantileFaces, "RangeChernoffFaces"->rangeFaces |>
+    ];
 
 End[] (* `Private` *)
 

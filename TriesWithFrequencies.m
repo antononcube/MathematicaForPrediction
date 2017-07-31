@@ -43,9 +43,14 @@
 
 BeginPackage["TriesWithFrequencies`"]
 
-TriePosition::usage = "TriePosition[t_, w :(_String | _List)] gives the position node corresponding to the last \"character\" of the \"word\" w in the trie t. Strings are converted to lists first."
+TriePosition::usage = "TriePosition[t_, w :(_String | _List)] gives the position node corresponding to the last \"character\" of the \"word\" w in the trie t.\
+ Strings are converted to lists first."
 
-TrieRetrieve::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the node corresponding to the last \"character\" of the \"word\" w in the trie t. Strings are converted to lists first."
+TrieRetrieve::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the node corresponding to the last \"character\" of the \"word\" w in the trie t.\
+ Strings are converted to lists first."
+
+TrieSubTrie::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the sub-trie corresponding to the last \"character\" of the \"word\" w in the trie t.\
+ Strings are converted to lists first."
 
 TrieCreate::usage = "TrieCreate[words:{(_String|_List)..}] creates a trie from a list of strings or a list of lists."
 
@@ -113,16 +118,23 @@ TriePositionRec[t_, chars_] :=
    ]
   ];
 
-TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
-TrieRetrieve[t_, chars_] :=
+TrieSubTrie[t_, word_String] := TrieSubTrie[t, Characters[word]];
+TrieSubTrie[t_, chars_] :=
     Block[{pos},
       pos = TriePosition[t, chars];
       Which[
         Length[pos] == 0, {},
-        TrieRootQ[t[[1]]] && Length[pos] == Length[chars], t[[Sequence @@ pos, 1]],
-        Length[pos] + 1 == Length[chars], t[[Sequence @@ pos, 1]],
+        TrieRootQ[t[[1]]] && Length[pos] == Length[chars], t[[Sequence @@ pos]],
+        Length[pos] + 1 == Length[chars], t[[Sequence @@ pos]],
         True, {}
       ]
+    ];
+
+TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
+TrieRetrieve[t_, chars_] :=
+    Block[{res},
+      res = TrieSubTrie[t, chars];
+      If[ Length[res] == 0, {}, res[[1]] ]
     ];
 
 
@@ -353,8 +365,8 @@ TrieLeafProbabilitiesWithPositions[trieArg_] :=
          ], {res, Range[2, Length[trie]]}];
       If[sum < 1, res = Append[res, {{trie[[1, 1]], 1 - sum, {1}}}]];
       res = Map[{#[[1]], #[[2]]*trie[[1, 2]], #[[3]]} &, Flatten[res, 1]]
-      ]
-     ];
+     ]
+    ];
 
    If[trieArg[[1, 2]] == 0,
     TrieLeafProbabilitiesRec[trieArg],

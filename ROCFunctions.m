@@ -174,7 +174,7 @@ ToROCAssociation::usage = "ToROCAssociation[ {trueLabel, falseLabel}, actualLabe
 two labels lists (actual and predicted) into an Association that can be used as an argument for the ROC functions. \
 See ROCFunctions ."
 
-ROCAssociationQ::usage = "Verifies that the argument is a valid ROC Assocition object. \
+ROCAssociationQ::usage = "Verifies that the argument is a valid ROC Association object. \
 A ROC Association object has the keys \
 \"TruePositive\", \"FalsePositive\", \"TrueNegative\", and \"FalseNegative\" ."
 
@@ -264,14 +264,17 @@ AUROC[pROCs:{_?ROCAssociationQ..}] :=
 
 
 aROCAcronyms =
-    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC"} ->
+    AssociationThread[
+      {"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "Recall", "Precision", "Accuracy"} ->
         {"true positive rate", "specificity", "positive predictive value",
           "negative predictive value", "false positive rate",
-          "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve"}];
+          "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve",
+          "same as TPR", "same as PPV", "same as ACC"}];
 
 aROCFunctions =
-    AssociationThread[{"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC"} ->
-        {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUROC}];
+    AssociationThread[
+      {"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "Recall", "Precision", "Accuracy"} ->
+          {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUROC,TPR,PPV,ACC}];
 
 
 Clear[ROCFunctions]
