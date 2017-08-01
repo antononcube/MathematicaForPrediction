@@ -403,7 +403,7 @@ QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : 
    sdScaleFunc = OptionValue[QuantileEnvelopeSimple, "StandardizingScaleFunction"];
    If[ TrueQ[sdScaleFunc===Automatic], sdScaleFunc = InterquartileRange];
 
-   center = sdShiftFunc /@ Transpose[data];
+   center = sdShiftFunc @ data;
    scale =  sdScaleFunc /@ Transpose[data];
    data = Map[(# - center)/scale &, data];
 
