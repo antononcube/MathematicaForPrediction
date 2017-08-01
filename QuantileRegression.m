@@ -367,7 +367,8 @@ QuantileEnvelope::qeqs = "The second argument is expected to be a number or a li
 QuantileEnvelope::qen = "The third argument is expected to be an integer greater than 2.";
 
 Clear[QuantileEnvelope]
-Options[QuantileEnvelope] = {"Tangents" -> True };
+Options[QuantileEnvelope] =
+    {"Tangents" -> True, "StandardizingShiftFunction" -> Mean, "StandardizingScaleFunction" -> InterquartileRange };
 QuantileEnvelope[data_, qs_, n_, opts : OptionsPattern[]] :=
   Block[{},
    If[! MatrixQ[data, NumberQ],
@@ -389,16 +390,23 @@ Clear[QuantileEnvelopeSimple]
 Options[QuantileEnvelopeSimple] = Options[QuantileEnvelope];
 QuantileEnvelopeSimple[data_?MatrixQ, q_?NumberQ, n_Integer, opts : OptionsPattern[]] := QuantileEnvelopeSimple[data, {q}, n, opts];
 QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : OptionsPattern[]] :=
-  Block[{data = dataArg, center, scale, rmat, rmats, qfuncs, x1, x2, y1, rqfuncs, intPoints, t, tangentsQ},
+  Block[{data = dataArg, center, scale, rmat, rmats, qfuncs, x1, x2, y1, rqfuncs, intPoints, t,
+    tangentsQ, sdShiftFunc, sdScaleFunc},
    
    (* Option values *)   
    tangentsQ = TrueQ[OptionValue[QuantileEnvelopeSimple, "Tangents"]];
  		
    (* Standardize *)
-   center = Mean /@ Transpose[data];
-   scale = InterquartileRange /@ Transpose[data];
+   sdShiftFunc = OptionValue[QuantileEnvelopeSimple, "StandardizingShiftFunction"];
+   If[ TrueQ[sdShiftFunc===Automatic], sdShiftFunc = Mean];
+
+   sdScaleFunc = OptionValue[QuantileEnvelopeSimple, "StandardizingScaleFunction"];
+   If[ TrueQ[sdScaleFunc===Automatic], sdScaleFunc = InterquartileRange];
+
+   center = sdShiftFunc /@ Transpose[data];
+   scale =  sdScaleFunc /@ Transpose[data];
    data = Map[(# - center)/scale &, data];
-   
+
    (* Rotation matrices *)
    rmat = N[RotationMatrix[2 \[Pi]/n]];
    rmats = NestList[rmat.# &, rmat, n - 1];
