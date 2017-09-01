@@ -99,6 +99,7 @@ library(ggplot2)
 #' If varTypePrefixes != NULL and successLabel == NULL a data frame with column names c("VariablePrefix", "Accuracy") .
 AccuracyByVariableShuffling <- function( classifier,
                                          testData, trainColInds = NULL,
+                                         predictFunction = function(object, df) predict( object = object, df,  type = "prob" ),
                                          successLabel = NULL, classificationType = "prob", classificationThreshold = 0.5,
                                          varTypePrefixes = NULL, .progress = "none" ) {
 
@@ -141,7 +142,8 @@ AccuracyByVariableShuffling <- function( classifier,
 
       # This is expected to return a matrix the columns of which correspond to class labels
       # and the entries are probabilities.
-      clRes <- predict( classifier, testDF[, -dataLabelIndex ],  type = "prob" )
+      ## clRes <- predict( classifier, testDF[, -dataLabelIndex ],  type = "prob" )
+      clRes <- predictFunction( classifier, testDF[, -dataLabelIndex ] )
 
       # The alternative of this check is more robust.
       # if ( ! is.null(classfier$classes) && !( successLabel %in% classfier$classes ) ) {
