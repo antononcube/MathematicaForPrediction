@@ -1,0 +1,3326 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Mapping Sparse Matrix Recommender to Streams Blending Recommender
+\end_layout
+
+\begin_layout Author
+Anton Antonov
+\begin_inset Newline newline
+\end_inset
+
+Accendo Data, LLC
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+This document provides theoretical background for the stream merging recommendat
+ions that approximate the functionalities of the Sparse Matrix Recommender
+ (SMR); see [
+\begin_inset CommandInset citation
+LatexCommand cite
+key "AAA-IIR-2017"
+
+\end_inset
+
+].
+\end_layout
+
+\begin_layout Standard
+The document briefly describes SMR and then defines streams, merging operations
+ of streams, and recommendations computed with them.
+\end_layout
+
+\begin_layout Standard
+Concrete partitioning of the metadata and similarity matrices are discussed.
+\end_layout
+
+\begin_layout Standard
+In order to have clear abbreviations we are going to use the name 
+\begin_inset Quotes eld
+\end_inset
+
+Stream Blending Recommender
+\begin_inset Quotes erd
+\end_inset
+
+ (SBR) instead of 
+\begin_inset Quotes eld
+\end_inset
+
+Stream Merging Recommender
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In this document the words 
+\begin_inset Quotes eld
+\end_inset
+
+merging
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+blending
+\begin_inset Quotes erd
+\end_inset
+
+ mean the same when we talk about to streams.
+\end_layout
+
+\begin_layout Standard
+The description of the recommenders is done through the entities 
+\begin_inset Quotes eld
+\end_inset
+
+product
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+maker
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+user
+\begin_inset Quotes erd
+\end_inset
+
+ for generality.
+ Concrete examples corresponding to those set entities are (i) music tracks,
+ artists and listener, (ii) services, providers, and clients, (iii) articles,
+ authors, and readers; etc.
+ Note that we assume that a product can have multiple makers, and a maker
+ can make multiple products.
+\end_layout
+
+\begin_layout Section
+Notation
+\end_layout
+
+\begin_layout Subsection
+Sizes notation
+\end_layout
+
+\begin_layout Standard
+The number of products is going to be denoted as 
+\begin_inset Formula $|products|$
+\end_inset
+
+, or 
+\begin_inset Formula $n_{products}$
+\end_inset
+
+, or when we have to save space as 
+\begin_inset Formula $np$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Similarly, the number of makers is going to be denoted as 
+\begin_inset Formula $|makers|$
+\end_inset
+
+, or 
+\begin_inset Formula $n_{makers}$
+\end_inset
+
+, or when we have to save space as 
+\begin_inset Formula $nm$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+When we want to speak about both products and makers we are going to use
+ the term 
+\begin_inset Quotes eld
+\end_inset
+
+items
+\begin_inset Quotes erd
+\end_inset
+
+ and use the notation 
+\begin_inset Formula $|items|$
+\end_inset
+
+ or 
+\begin_inset Formula $n_{items}$
+\end_inset
+
+ to denote the number of items.
+\end_layout
+
+\begin_layout Standard
+The total number of metadata is denoted as 
+\begin_inset Formula $n_{metadata}$
+\end_inset
+
+ or when we have to save space as 
+\begin_inset Formula $n_{md}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The length of a vector 
+\begin_inset Formula $v$
+\end_inset
+
+ is going to be denoted as 
+\begin_inset Formula $|v|$
+\end_inset
+
+.
+ (Note this is different from the norm of the vector, denoted as 
+\begin_inset Formula $\left\Vert v\right\Vert $
+\end_inset
+
+.)
+\end_layout
+
+\begin_layout Subsection
+Sub-matrix notation
+\end_layout
+
+\begin_layout Standard
+We are going to use the following notation for sub-matrices of the matrix
+ 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+The sub-matrix specification has the following general form:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M(index\;range\;specification,index\;range\;specification).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+An element of the vector 
+\begin_inset Formula $v$
+\end_inset
+
+ is denoted with 
+\begin_inset Formula $v(i)$
+\end_inset
+
+ or 
+\begin_inset Formula $v_{i}$
+\end_inset
+
+ where 
+\begin_inset Formula $i$
+\end_inset
+
+ is an integer.
+\end_layout
+
+\begin_layout Itemize
+An entry of the matrix 
+\begin_inset Formula $M$
+\end_inset
+
+ is denoted as 
+\begin_inset Formula $M(i,j)$
+\end_inset
+
+ where 
+\begin_inset Formula $i$
+\end_inset
+
+ and 
+\begin_inset Formula $j$
+\end_inset
+
+ are integers.
+\end_layout
+
+\begin_layout Itemize
+If we want to specify a sub-matrix formed by the rows from 1 to 10 of 
+\begin_inset Formula $M$
+\end_inset
+
+ and all columns of 
+\begin_inset Formula $M$
+\end_inset
+
+ we use
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M(1:10,:)\;or\;M(1:10)\,.
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Itemize
+If we want to specify a sub-matrix formed by the first 20 columns of 
+\begin_inset Formula $M$
+\end_inset
+
+ we use
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M(:,1:20)\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+A sub-matrix of 
+\begin_inset Formula $M$
+\end_inset
+
+ formed by its first ten rows and last five columns is specified as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M(1:10,-5:-1)\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+If we want to specify a sub-matrix formed by the rows 1, 2, 8, 23, 26 and
+ all columns of 
+\begin_inset Formula $M$
+\end_inset
+
+ we use 
+\begin_inset Formula 
+\[
+M(\left\{ 1,2,8,23,26\right\} ,:)\;or\;M(\{1,2,8,23,26\})\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Similarly, for a sub-matrix formed by all rows of 
+\begin_inset Formula $M$
+\end_inset
+
+ and the columns 5,7, and 26 we use:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M(:,\{5,7,26\})\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Linear algebra notation
+\end_layout
+
+\begin_layout Quote
+We write 
+\begin_inset Formula $diag(a_{1},\dots,a_{n})$
+\end_inset
+
+ for a 
+\series bold
+\emph on
+diagonal matrix
+\series default
+\emph default
+ whose diagonal entries starting in the upper left corner are 
+\begin_inset Formula $a_{1},\dots,a_{n}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+General theory of SMR
+\end_layout
+
+\begin_layout Subsection
+The main idea
+\end_layout
+
+\begin_layout Standard
+We have several types of metadata characterizing the products.
+ If the products are music tracks, the metadata types are genres, decades,
+ creators, acoustic features, and others.
+ Let us denote the set of metadata types with 
+\begin_inset Formula $TT:=\{type_{1},type_{2},\ldots\}$
+\end_inset
+
+.
+ (
+\begin_inset Quotes eld
+\end_inset
+
+TT
+\begin_inset Quotes erd
+\end_inset
+
+ stands for "tag type".)
+\end_layout
+
+\begin_layout Standard
+For each relation between the set of items (songs, shows, makers, ...) 
+\begin_inset Formula $S$
+\end_inset
+
+ and the set 
+\begin_inset Formula $MD(t)$
+\end_inset
+
+ of metadata from a given type 
+\begin_inset Formula $t$
+\end_inset
+
+, 
+\begin_inset Formula $t\in TT$
+\end_inset
+
+, we form a metadata matrix 
+\begin_inset Formula $M(t)$
+\end_inset
+
+.
+ The relationship (association) between an item and a tag (metadatum) can
+ be weighted (using, for example, the inverse document frequency formula).
+ The matrices are normalized so the maximum elements are 1.
+\end_layout
+
+\begin_layout Standard
+The normalized matrices are spliced into one matrix 
+\begin_inset Formula $M^{01}$
+\end_inset
+
+ in the following way:
+\end_layout
+
+\begin_layout Standard
+for 
+\begin_inset Formula $i\in\{1,|items|\}$
+\end_inset
+
+ the 
+\begin_inset Formula $i$
+\end_inset
+
+-th row of 
+\begin_inset Formula $M^{01}$
+\end_inset
+
+ is obtained by splicing the 
+\begin_inset Formula $i$
+\end_inset
+
+-th rows of the matrices 
+\begin_inset Formula $\{M(t)\}_{t\in TT}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Let us denote with 
+\begin_inset Formula $n_{metadata}$
+\end_inset
+
+ the sum
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n_{metadata}:={\displaystyle \sum_{t\in TT}}|MD(t)|.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The matrix 
+\begin_inset Formula $M^{01}$
+\end_inset
+
+ has dimensions 
+\begin_inset Formula $|items|\times n_{metadata}$
+\end_inset
+
+.
+ The matrix 
+\begin_inset Formula $M^{01}$
+\end_inset
+
+ represents all items, each row corresponds to an item.
+ 
+\begin_inset Formula $M^{01}$
+\end_inset
+
+ is assumed to be (very) sparse.
+\end_layout
+
+\begin_layout Standard
+In order to be able to tune the recommender we want to assign different
+ significance factors to the metadata.
+ In order to do that we select a weight 
+\begin_inset Formula $\omega_{t}$
+\end_inset
+
+ for each type of metadata 
+\begin_inset Formula $t\in TT$
+\end_inset
+
+.
+ Then using the notation 
+\begin_inset Formula $n_{t}:=|MD(t)|$
+\end_inset
+
+ we construct the
+\series bold
+ tag type significance weight vector
+\series default
+ 
+\begin_inset Formula $w$
+\end_inset
+
+ in the following way:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+w:=\{\underbrace{\omega_{type_{1}},\ldots,\omega_{type_{1}}},\underbrace{\omega_{type_{2}},\ldots,\omega_{type_{2}}},\ldots,\underbrace{\omega_{type_{|TT|}},\ldots,\omega_{type_{|TT|}}}\}.
+\]
+
+\end_inset
+
+Then we form the diagonal matrix 
+\begin_inset Formula $diag(w)$
+\end_inset
+
+ and use 
+\lang divehi
+matrix-martix
+\lang english
+ multiplication to obtain weighted sparse matrix item-metadata associations:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+M:=M^{01}diag(w)=M^{01}\left\{ \begin{array}{ccc}
+w(1) & \cdots & 0\\
+\vdots & \ddots & \vdots\\
+0 & \cdots & w(n_{metadata})
+\end{array}\right\} .\label{eq:M=M01diag(w)}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Similarity matrix
+\end_layout
+
+\begin_layout Standard
+If we multiply the metadata matrix with its transpose we are going to obtain
+ the item-item similarity matrix 
+\begin_inset Formula $S$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S:=M\;M^{T}.\label{eq:SymmetricSimilarityMatrix}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The similarity matrix as defined in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:SymmetricSimilarityMatrix"
+
+\end_inset
+
+ is symmetric.
+ If we divide the rows 
+\begin_inset Formula $S$
+\end_inset
+
+ by the diagonal elements, 
+\begin_inset Formula $\widetilde{S}:=1/diag(s)\,S$
+\end_inset
+
+, then the resulting matrix 
+\begin_inset Formula $\widetilde{S}$
+\end_inset
+
+ is no longer symmetric.
+\end_layout
+
+\begin_layout Subsubsection
+Metadata space
+\end_layout
+
+\begin_layout Standard
+We are going to call the vector space made of all metadata tags 
+\series bold
+\emph on
+metadata space
+\series default
+\emph default
+.
+\end_layout
+
+\begin_layout Subsubsection
+Recommendations
+\end_layout
+
+\begin_layout Standard
+The matrix 
+\begin_inset Formula $M$
+\end_inset
+
+ is used to compute the recommendations.
+ First, with a vector 
+\begin_inset Formula $v$
+\end_inset
+
+ in the vector space 
+\begin_inset Formula $R^{|items|}$
+\end_inset
+
+ we represent a consumption history of a user.
+ The recommended items are the items with the highest coordinates in the
+ vector:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S\,v=(M\,M^{T})v=M(v\,M)^{T}=M^{01}diag(w^{2})(v\,M^{01})^{T}.\label{eq:RecsFormula}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we have a user profile (which is a set of metadata tags) 
+\begin_inset Formula $p\in R^{|metadata|}$
+\end_inset
+
+ then the recommendations for that user are the items with the highest coordinat
+es in the vector 
+\begin_inset Formula $M\;p$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Metadata sub-matrices
+\end_layout
+
+\begin_layout Standard
+The metadata matrix 
+\begin_inset Formula $M$
+\end_inset
+
+ by definition is constructed by matrices corresponding to different metadata
+ types.
+ Given a metadata data type 
+\begin_inset Formula $t_{0}\in TT$
+\end_inset
+
+ we are going to use the notation 
+\begin_inset Formula $M(:,t_{0})$
+\end_inset
+
+ or 
+\begin_inset Formula $M_{t_{0}}$
+\end_inset
+
+ to denote the sub-matrix of 
+\begin_inset Formula $M$
+\end_inset
+
+ corresponding to the type 
+\begin_inset Formula $t_{0}$
+\end_inset
+
+.
+ We can go further and denote the metadata matrix corresponding to two (or
+ more) metadata types 
+\begin_inset Formula $t_{1},t_{2}\in TT$
+\end_inset
+
+, with 
+\begin_inset Formula $M(:,\{t_{1},t_{2}\})$
+\end_inset
+
+ and 
+\begin_inset Formula $M_{\{t_{1},t_{2}\}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Let us list some of the metadata sub-matrices a music recommender:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $TR_{genre}$
+\end_inset
+
+ tracks
+\begin_inset Formula $\times$
+\end_inset
+
+genres metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $TR_{maker}$
+\end_inset
+
+ tracks
+\begin_inset Formula $\times$
+\end_inset
+
+makers metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $TR_{acoustic}$
+\end_inset
+
+ tracks
+\begin_inset Formula $\times$
+\end_inset
+
+acoustics metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $TR_{release\,date}$
+\end_inset
+
+ tracks
+\begin_inset Formula $\times$
+\end_inset
+
+release-date metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $TR_{trend}$
+\end_inset
+
+ tracks
+\begin_inset Formula $\times$
+\end_inset
+
+trends metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $AR_{genre}$
+\end_inset
+
+ artists
+\begin_inset Formula $\times$
+\end_inset
+
+genre metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $AR_{decades}$
+\end_inset
+
+ artists
+\begin_inset Formula $\times$
+\end_inset
+
+decades metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $TR_{\{genre,popularity\}}$
+\end_inset
+
+ tracks
+\begin_inset Formula $\times$
+\end_inset
+
+{genre,popularity} metadata matrix;
+\end_layout
+
+\begin_layout Itemize
+and others...
+\end_layout
+
+\begin_layout Standard
+It is important to keep in mind what are the spaces corresponding to these
+ matrices.
+ In some cases it will be convenient to work with the transposed matrices.
+ (So we can form item streams based on metadata tags, see below.)
+\end_layout
+
+\begin_layout Subsubsection
+Similarity sub-matrices
+\end_layout
+
+\begin_layout Standard
+Similar to the partitioning of the metadata matrix 
+\begin_inset Formula $M$
+\end_inset
+
+ we can partition the similarity matrix 
+\begin_inset Formula $S$
+\end_inset
+
+ into sub-matrices that are derived from one or several metadata types.
+ 
+\end_layout
+
+\begin_layout Standard
+Let us list some the similarity sub-matrices:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $pSR_{maker}$
+\end_inset
+
+ products
+\begin_inset Formula $\times$
+\end_inset
+
+products similarity matrix based on common makers;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $pSR_{timestamp}$
+\end_inset
+
+ products
+\begin_inset Formula $\times$
+\end_inset
+
+products similarity matrix based on timestamps;
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $mSR_{\{location,trend\}}$
+\end_inset
+
+ makers
+\begin_inset Formula $\times$
+\end_inset
+
+makers similarity matrix based on maker locations and trends,
+\end_layout
+
+\begin_layout Itemize
+etc.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ The similarity sub-matrices do not need to be derived with formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:SymmetricSimilarityMatrix"
+
+\end_inset
+
+), they might be externally specified.
+\end_layout
+
+\begin_layout Subsection
+Mapping between metadata spaces
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Mapping-between-metadata"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Consider the graph made of the associations between the products and the
+ makers.
+ We can look at that graph as a bi-partite graph: one set of nodes for the
+ products, and the other set of nodes for the makers.
+ When we consider sub-graphs by edge types we (probably) most of the time
+ will deal with one set of nodes.
+ It is useful to consider the operations of mapping between the two sets.
+\end_layout
+
+\begin_layout Standard
+For example, the set of makers 
+\begin_inset Formula $nn(a)$
+\end_inset
+
+ that are the nearest neighbors of the maker 
+\begin_inset Formula $a$
+\end_inset
+
+ can be mapped into their products, 
+\begin_inset Formula $products(nn(a))$
+\end_inset
+
+.
+ The function 
+\begin_inset Formula $products(a)$
+\end_inset
+
+ maps the maker 
+\begin_inset Formula $a$
+\end_inset
+
+ to his products, the function 
+\begin_inset Formula $makers(t)$
+\end_inset
+
+ maps the product 
+\begin_inset Formula $t$
+\end_inset
+
+ into its makers.
+ 
+\end_layout
+
+\begin_layout Standard
+The functions 
+\begin_inset Formula $products$
+\end_inset
+
+ and 
+\begin_inset Formula $makers$
+\end_inset
+
+ are derived from the edges of the products-makers bi-partite graph.
+ The application of these functions over streams is going to be defined
+ below.
+ 
+\end_layout
+
+\begin_layout Subsection
+Graph interpretations
+\end_layout
+
+\begin_layout Standard
+The considered Products-Makers Graph (PMG) allows the nodes to be connected
+ with multiple edges.
+ Each edge has its own attributes.
+ We can postulate that each edge has a type.
+ (Type is one of the attributes.) Therefore, PMG is comprised of sub-graphs
+ corresponding to the different types of the graph edges.
+\end_layout
+
+\begin_layout Standard
+The metadata sub-matrices of SMR correspond to sub-graphs defined by the
+ edges types.
+\end_layout
+
+\begin_layout Section
+Mapping into the products-makers graph
+\end_layout
+
+\begin_layout Subsection
+The main idea
+\end_layout
+
+\begin_layout Standard
+The main idea is to use operations over pre-computed scored lists of items
+ (products or makers) in order to replace 
+\begin_inset Formula $S\,v$
+\end_inset
+
+ in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+).
+ These kind of scored lists are called streams.
+ The streams are derived from disjoint, or almost disjoint, metadata spaces.
+\end_layout
+
+\begin_layout Subsection
+Streams
+\end_layout
+
+\begin_layout Standard
+A 
+\series bold
+\emph on
+stream
+\series default
+\emph default
+ is a scored list of items (names or item ID's) with a descending order
+ of the scores.
+ Here is an example of a stream: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \begin{array}{ccc}
+4.2 & 34322 & Get\;some\\
+4.0 & 23212 & Heads\:will\:roll\\
+3.6 & 11221 & Big\;brat\\
+2.8 & 34232 & Everythin\;Zen\\
+2.7 & 34323 & I\;can\;levitate
+\end{array}\right\} .
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition:
+\series default
+ Given a stream 
+\begin_inset Formula $s$
+\end_inset
+
+ the operators 
+\begin_inset Formula $scores(s)$
+\end_inset
+
+ and 
+\begin_inset Formula $ids(s)$
+\end_inset
+
+ return the scores and the ID's of 
+\begin_inset Formula $s$
+\end_inset
+
+ respectively.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition:
+\series default
+ The 
+\series bold
+\emph on
+merging
+\series default
+\emph default
+ of two streams 
+\begin_inset Formula $s_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+ into 
+\begin_inset Formula $s_{3}$
+\end_inset
+
+ is defined in the following way:
+\end_layout
+
+\begin_layout Enumerate
+the items of 
+\begin_inset Formula $s_{3}$
+\end_inset
+
+ are the union of the items of 
+\begin_inset Formula $s_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Enumerate
+the items of 
+\begin_inset Formula $s_{1}$
+\end_inset
+
+ are matched with the items of 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+;
+\end_layout
+
+\begin_layout Enumerate
+the scores of the items in 
+\begin_inset Formula $s_{3}$
+\end_inset
+
+ are obtained by summing the scores of the ID's that match, and using the
+ scores from 
+\begin_inset Formula $s_{1}$
+\end_inset
+
+ or 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+ for the ones that do not match.
+\end_layout
+
+\begin_layout Standard
+Let us denote with 
+\begin_inset Formula $merge(s_{1},s_{2})$
+\end_inset
+
+ the merging of the two streams 
+\begin_inset Formula $s_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+.
+ Now we can write 
+\begin_inset Formula $s_{3}=merge(s_{1},s_{2})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It is important see the stream merging as a sum of two sparse vectors 
+\begin_inset Formula $\vec{s_{3}}=\vec{s_{1}}+\vec{s_{2}}$
+\end_inset
+
+ in the space of items 
+\begin_inset Formula $R^{|items|}$
+\end_inset
+
+ followed by the ordering of the non-zero coordinates of 
+\begin_inset Formula $\vec{s_{3}}$
+\end_inset
+
+ in descending order.
+ This observation can be used as a justification that we can approximate
+ the SMR functionalities by using streams.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ The sum of two sparse vectors does involve finding the intersection between
+ the indices of the non-zero coordinates.
+\end_layout
+
+\begin_layout Standard
+We can go further and represent by stream merging the 
+\series bold
+\emph on
+weighted sum
+\series default
+\emph default
+ of two vectors 
+\begin_inset Formula $\alpha\,\vec{s_{1}}+\beta\,\vec{s_{2}}$
+\end_inset
+
+: we just have to multiply the scores of 
+\begin_inset Formula $s1$
+\end_inset
+
+ with 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ and the scores of 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+ with 
+\begin_inset Formula $\beta$
+\end_inset
+
+.
+ Because of this observation we are going to denote with 
+\begin_inset Formula $\alpha\,s$
+\end_inset
+
+ the multiplication with 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ of the scores of the stream 
+\begin_inset Formula $s$
+\end_inset
+
+, an we can write 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s_{3}=merge(\alpha\,s_{1},\beta\,s_{2}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+
+\emph on
+Writing remarks
+\end_layout
+
+\begin_layout Enumerate
+I think we can go further and provide mathematical and algorithmic details
+ of the approximation.
+\end_layout
+
+\begin_layout Enumerate
+It is probably a good idea to provide a dictionary appendix of all notions
+ and notation introduced in this document.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $merge$
+\end_inset
+
+ probably has to be replaced with 
+\begin_inset Formula $mergesum$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Stream operations
+\end_layout
+
+\begin_layout Standard
+Assume that any stream 
+\begin_inset Formula $s$
+\end_inset
+
+ can be represented as a vector 
+\begin_inset Formula $\vec{s}\in R^{|items|}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition:
+\series default
+ The operation 
+\begin_inset Formula $ord(\vec{s})$
+\end_inset
+
+ takes a vector 
+\begin_inset Formula $\vec{s}\in R^{n}$
+\end_inset
+
+ and orders 
+\begin_inset Formula $\vec{s}$
+\end_inset
+
+ into a scored list in which the coordinates of 
+\begin_inset Formula $\vec{s}$
+\end_inset
+
+ are paired with their corresponding axes and ordered in a descending order.
+ More precisely, if
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v:=ord(\vec{s}),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+then
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v=\left\{ \begin{array}{cc}
+v_{i_{1}} & i_{1}\\
+v_{i_{2}} & i_{2}\\
+\vdots & \vdots\\
+v_{i_{n}} & i_{n}
+\end{array}\right\} ,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v_{i_{1}}\geq v_{i_{2}}\ldots\geq v_{i_{n}}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Further, we can enhance the function 
+\begin_inset Formula $ord$
+\end_inset
+
+ to take only the top 
+\begin_inset Formula $k$
+\end_inset
+
+ of the elements, so if 
+\begin_inset Formula $k\leq n$
+\end_inset
+
+ then
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v:=ord(\vec{s},k)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v=\left\{ \begin{array}{cc}
+v_{i_{1}} & i_{1}\\
+v_{i_{2}} & i_{2}\\
+\vdots & \vdots\\
+v_{i_{k}} & i_{k}
+\end{array}\right\} ,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v_{i_{1}}\geq v_{i_{2}}\ldots\geq v_{i_{k}}\geq\ldots\geq v_{i_{n}}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition:
+\series default
+ Using the vector representation of streams we define the following operations
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+scalarmult(\alpha,s)\equiv\alpha*s\coloneqq\alpha\,\vec{s},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergemax(s_{1},s_{2},k)\coloneqq ord(\{max(s_{1}(i),s_{2}(i))\}_{i},k),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergesum(s_{1},s_{2},k)\coloneqq ord(\vec{s_{1}}+\vec{s_{2}},k),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergemult(s_{1},s_{2},k)\coloneqq ord(\vec{s_{1}}*\vec{s_{2}},k)=ord(\{s_{1}(i)*s_{2}(i)\}_{i},k),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergedot(s_{1},s_{2})\coloneqq\vec{s_{1}}.\vec{s_{2}}=\sum(\vec{s_{1}}*\vec{s_{2}})\;.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The stream merging functions can be naturally extended to take multiple
+ stream arguments not just two.
+ Here is an example of such a definition of 
+\begin_inset Formula $mergesum$
+\end_inset
+
+ with multiple stream arguments:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergesum(s_{1},s_{2},\ldots,s_{n},k)\coloneqq ord(\vec{s_{1}}+\vec{s_{2}}+\ldots+\vec{s_{n}},k)\;.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ Note, that instead of the notation of equivalence 
+\begin_inset Formula $scalarmult(\alpha,s)\equiv\alpha*s$
+\end_inset
+
+ we can assume that all stream operations can make the multiplication of
+ streams with scalars, 
+\begin_inset Formula $scalarmult$
+\end_inset
+
+.
+ In both cases instead of
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergesum(scalarmult(\alpha,s_{1}),scalarmult(\beta,s_{2}),k)
+\]
+
+\end_inset
+
+ we can just write
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+mergesum(\alpha*s_{1},\beta*s_{2})\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ Note that 
+\begin_inset Formula $mergesum$
+\end_inset
+
+ is equivalent to 
+\begin_inset Formula $merge$
+\end_inset
+
+ defined in the previous section.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ In order to make the exposition easier we are going to assume that stream
+ merging functions work also over sparse vectors.
+ Sparse vectors are very often stored in a format directly corresponding
+ to a stream (without the descending order).
+\end_layout
+
+\begin_layout Subsection
+Stream action extensions of the graph mapping functions
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Extensions-of-products-and-makers-to-streams"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The definitions of the functions 
+\begin_inset Formula $products$
+\end_inset
+
+ and 
+\begin_inset Formula $makers$
+\end_inset
+
+ can be extended so they can be applied to streams.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition:
+\series default
+ For every maker (product) ID 
+\begin_inset Formula $i$
+\end_inset
+
+ the function 
+\begin_inset Formula $products$
+\end_inset
+
+ (
+\begin_inset Formula $makers$
+\end_inset
+
+) returns a stream of the products (makers) of 
+\begin_inset Formula $i$
+\end_inset
+
+.
+ This defines 
+\begin_inset Formula $products$
+\end_inset
+
+ (
+\begin_inset Formula $makers$
+\end_inset
+
+) as a function from the space of ID's to the space of streams.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Definition:
+\series default
+ Given a stream 
+\begin_inset Formula $s_{a}$
+\end_inset
+
+ of makers and a stream 
+\begin_inset Formula $s_{t}$
+\end_inset
+
+ of products the function applications 
+\begin_inset Formula $products(s_{a})$
+\end_inset
+
+ and 
+\begin_inset Formula $makers(s_{t})$
+\end_inset
+
+ are defined in the following way:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+products(s_{a})\coloneqq mergesum(\{products(i)\}_{i\in ids(s_{a})})\,,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+makers(s_{t})\coloneqq mergesum(\{makers(i)\}_{i\in ids(s_{t})})\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\blacksquare$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Using streams instead of vector-matrix multiplication
+\end_layout
+
+\begin_layout Standard
+The main operation of SMR, the recommendations calculation, is done with
+ the formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+).
+ Vector-vector multiplication can be implemented using the streams operation
+ 
+\begin_inset Formula $mergedot$
+\end_inset
+
+.
+ Hence, we can implement vector-matrix and matrix-vector operations with
+ streams.
+ This means that we can implement formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+) with streams.
+\end_layout
+
+\begin_layout Standard
+In order to replace sparse matrix linear algebra operations in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+) with streams operations we need to do some profiling of both types of
+ operations.
+\end_layout
+
+\begin_layout Standard
+For example, assume that 
+\begin_inset Formula $M\in R^{m\times n}$
+\end_inset
+
+, and 
+\begin_inset Formula $m=100,000$
+\end_inset
+
+ and 
+\begin_inset Formula $n=10,000$
+\end_inset
+
+.
+ (We have 
+\begin_inset Formula $m$
+\end_inset
+
+ items described by 
+\begin_inset Formula $n$
+\end_inset
+
+ tags.) Then for the vector-matrix multiplication 
+\begin_inset Formula $v\,M$
+\end_inset
+
+ we have to make 
+\begin_inset Formula $n=10,000$
+\end_inset
+
+ stream operations of the type 
+\begin_inset Formula $mergedot$
+\end_inset
+
+ each being between two sparse vectors of dimension 
+\begin_inset Formula $m=100,000$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Obviously, the operation 
+\begin_inset Formula $mergedot$
+\end_inset
+
+ has the same computational complexity as a sparse vector-matrix multiplication.
+ If we denote with 
+\begin_inset Formula $nnz(v)$
+\end_inset
+
+ and 
+\begin_inset Formula $nnz(M(:,i))$
+\end_inset
+
+ the number of the non-zero elements of 
+\begin_inset Formula $v$
+\end_inset
+
+ and the 
+\begin_inset Formula $i$
+\end_inset
+
+-the column of 
+\begin_inset Formula $M$
+\end_inset
+
+ respectively, then the computational complexity is
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+n\,O(2(nnz(v)+nnz(M(:,i))-1).\label{eq:mergemultComplexity}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we assume that 
+\begin_inset Formula $nnz(v)\approx1000$
+\end_inset
+
+ (a user history of thousand items) and 
+\begin_inset Formula $nnz(M(:,i))\approx m/n=10$
+\end_inset
+
+ (the tags are disjoint on average) then for formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:mergemultComplexity"
+
+\end_inset
+
+) we will have the value 
+\begin_inset Formula $\approx20,190,000$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+At this point we will assume that using streams for all types of vector-matrix
+ multiplications is too expensive.
+ 
+\end_layout
+
+\begin_layout Subsection
+Using streams of similarities
+\end_layout
+
+\begin_layout Standard
+Probably the most efficient application of streams is to the product 
+\begin_inset Formula $S\,v$
+\end_inset
+
+, in which the similarity matrix 
+\begin_inset Formula $S$
+\end_inset
+
+ is pre-computed.
+ Each row of 
+\begin_inset Formula $S$
+\end_inset
+
+ is a stream.
+ When the number of non-zero coordinates of 
+\begin_inset Formula $v$
+\end_inset
+
+ is relative small then 
+\begin_inset Formula $S\,v$
+\end_inset
+
+ can be done quickly with 
+\begin_inset Formula $mergesum$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+With the mapping functions (see 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Mapping-between-metadata"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Extensions-of-products-and-makers-to-streams"
+
+\end_inset
+
+) we can enhance the utilization of the metadata and similarity (sub-)matrices.
+ 
+\end_layout
+
+\begin_layout Standard
+For example, given a set of makers 
+\begin_inset Formula $A=\{a_{1},\ldots,a_{n}\}$
+\end_inset
+
+ we find the products by temporally similar makers with
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+products(mergesum(mSR_{timestamp}(A,:)))\,.\label{eq:ProductsOfTemporallySimilarMakers}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here is the breakdown of formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:ProductsOfTemporallySimilarMakers"
+
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Enumerate
+using 
+\begin_inset Formula $mSR_{timestamp}(A,:)$
+\end_inset
+
+ take the sub-matrix of 
+\begin_inset Formula $mSR_{timestamp}$
+\end_inset
+
+ defined by the rows 
+\begin_inset Formula $\{a_{1},\dots,a_{n}\}$
+\end_inset
+
+ ;
+\end_layout
+
+\begin_layout Enumerate
+using 
+\begin_inset Formula $mergesum(mSR_{timestamp}(A,:))$
+\end_inset
+
+ merge the streams derived from the rows of the sub-matrix 
+\begin_inset Formula $mSR_{timestamp}(A,:)$
+\end_inset
+
+ ;
+\end_layout
+
+\begin_layout Enumerate
+using 
+\begin_inset Formula $products$
+\end_inset
+
+ we map from the space of maker streams into the space of product streams
+ (obtaining one stream as a result).
+\end_layout
+
+\begin_layout Subsection
+Approximation by separation into primitive streams
+\end_layout
+
+\begin_layout Standard
+In order to approximate SMR recommendations with streams we are going to
+ define similarity and metadata matrices that are computed offline, and
+ then we are going to list the stream merging operations that are computed
+ online.
+\end_layout
+
+\begin_layout Standard
+The main challenge to approximate formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+) with stream merging is to device a way to approximate the dynamic similarity
+ provided by (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+) through the multiplication with the diagonal matrix 
+\begin_inset Formula $diag(w^{2})$
+\end_inset
+
+; see also formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:M=M01diag(w)"
+
+\end_inset
+
+).
+ The tag weights 
+\begin_inset Formula $w$
+\end_inset
+
+ can be different every time we calculate recommendations with (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+One way to approximate the dynamic similarity is to partition the similarity
+ matrix into sub-matrices across the columns using sets of metadata 
+\begin_inset Formula $\{md_{i}\}_{i=1}^{k}$
+\end_inset
+
+ that are disjoint, as in this formula: 
+\begin_inset Formula 
+\[
+S=[S(:,md_{1}),S(:,md_{2}),\dots,S(:,md_{k})]\,.
+\]
+
+\end_inset
+
+Then using stream merging with different weights for the streams derived
+ from the sub-matrices 
+\begin_inset Formula $S(:,md_{i})$
+\end_inset
+
+ we can provide dynamic similarity that approximates the one provided by
+ (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsubsection
+Offline computations
+\end_layout
+
+\begin_layout Standard
+If we assume that 
+\begin_inset Formula $S$
+\end_inset
+
+ is for products
+\begin_inset Formula $\times$
+\end_inset
+
+products similarities, then one natural selection of the collection of sets
+ 
+\begin_inset Formula $\{md_{i}\}_{i=1}^{k}$
+\end_inset
+
+ is the following:
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{1}$
+\end_inset
+
+ all of the makers names tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{2}$
+\end_inset
+
+ all of the composer names tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{3}$
+\end_inset
+
+ all of the producer names tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{4}$
+\end_inset
+
+ all of the label names tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{5}$
+\end_inset
+
+ all of the genre tags
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{6}$
+\end_inset
+
+ all of the release years tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{7}$
+\end_inset
+
+ all of the acoustic tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{8}$
+\end_inset
+
+ all of the popularity tags;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $md_{9}$
+\end_inset
+
+ all of the trendiness tags.
+\end_layout
+
+\begin_layout Standard
+The matrices 
+\begin_inset Formula $S(:,md_{5})=S(:,genre)$
+\end_inset
+
+ and 
+\begin_inset Formula $S(:,md_{6})=S(:,release\;years)$
+\end_inset
+
+ can be quite dense, and hence each with a large number of non-zero elements.
+ To see this consider the metadata matrix 
+\begin_inset Formula $M(genre)$
+\end_inset
+
+.
+ Because every product-genre association weight in 
+\begin_inset Formula $M(:,genre)$
+\end_inset
+
+ is binary (either 
+\begin_inset Formula $0$
+\end_inset
+
+ or 
+\begin_inset Formula $1$
+\end_inset
+
+) and because many products might have the same genres for every product
+ we would have a very large number of nearest neighbors with the same similarity
+ scores.
+ (The similarity scores are computed with 
+\begin_inset Formula $S(:,genre)=M(:,genre)\,M(:,genre)^{T}$
+\end_inset
+
+.
+ ) Hence for every row we have to keep all non-zero entries and their number
+ is going to be a significant fraction of 
+\begin_inset Formula $|products|$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+One way to reduce the number of nearest neighbors in a row of 
+\begin_inset Formula $M(:,genre)$
+\end_inset
+
+ is to combine the product genres with another metadata type that provides
+ association weights with great variance.
+ Let us consider two cases.
+\end_layout
+
+\begin_layout Enumerate
+In the metadata type 
+\begin_inset Quotes eld
+\end_inset
+
+popularity
+\begin_inset Quotes erd
+\end_inset
+
+ we observe an exponential distribution of the product popularities.
+ So we can replace 
+\begin_inset Formula $S(:,genre)$
+\end_inset
+
+ and 
+\begin_inset Formula $S(:,release\;years)$
+\end_inset
+
+ with the similarity matrices 
+\begin_inset Formula $S(:,\{genre,popularity\})$
+\end_inset
+
+ and 
+\begin_inset Formula $S(:,\{release\;years,popularity\})$
+\end_inset
+
+ respectively.
+ In the matrices 
+\begin_inset Formula $S(:,\{genre,popularity\})$
+\end_inset
+
+ and 
+\begin_inset Formula $S(:,\{release\;years,popularity\})$
+\end_inset
+
+ we drop the entries below a certain threshold or we keep the largest 
+\begin_inset Formula $l\in N$
+\end_inset
+
+ entries for each row.
+ 
+\end_layout
+
+\begin_layout Enumerate
+The 
+\begin_inset Quotes eld
+\end_inset
+
+overall
+\begin_inset Quotes erd
+\end_inset
+
+ similarity, that combines the tags of all metadata types and assigns weights
+ to them with IDF, would be non-constant and expected to greatly vary for
+ each item.
+ We can compute the similarity matrix 
+\begin_inset Formula $S$
+\end_inset
+
+ in such a way that the columns of 
+\begin_inset Formula $M$
+\end_inset
+
+ that correspond to the metadata type 
+\begin_inset Quotes eld
+\end_inset
+
+genre
+\begin_inset Quotes erd
+\end_inset
+
+ have weights several orders of magnitude larger than the rest.
+ Then for each row of 
+\begin_inset Formula $S$
+\end_inset
+
+ we take the entries above a certain threshold or we take the largest 
+\begin_inset Formula $l\in N$
+\end_inset
+
+ entries.
+ Note that since the 
+\begin_inset Quotes eld
+\end_inset
+
+genre
+\begin_inset Quotes erd
+\end_inset
+
+ tags have large weights, the resulting similarity matrix is still going
+ to be quite disjoint from the rest.
+\end_layout
+
+\begin_layout Standard
+The separation, computation, and additional transformation of the similarity
+ matrices are done offline.
+\end_layout
+
+\begin_layout Subsubsection
+Online computations: the approximation formula
+\end_layout
+
+\begin_layout Standard
+After the preparation of the similarity matrices we are ready to compute
+ the top 
+\begin_inset Formula $tn\in N$
+\end_inset
+
+ recommendations for a given product ID 
+\begin_inset Formula $tid$
+\end_inset
+
+ using the significance factors 
+\begin_inset Formula $\{f_{i}\}_{i=1}^{k}$
+\end_inset
+
+ corresponding to the metadata sets 
+\begin_inset Formula $\{md_{i}\}_{i=1}^{k}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+mergesum(f_{1}*S(tid,md_{1}),\dots,f_{k}*S(tid,md_{k}),tn)\,.\label{eq:RecommendationsByStreamMerging}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecommendationsByStreamMerging"
+
+\end_inset
+
+) gives the desired approximation of (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+).
+ The dynamic similarity provided by (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecommendationsByStreamMerging"
+
+\end_inset
+
+) is on a coarser level than (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecsFormula"
+
+\end_inset
+
+) because (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RecommendationsByStreamMerging"
+
+\end_inset
+
+) uses pre-computed similarity sub-matrices.
+\end_layout
+
+\begin_layout Subsection
+User profile calculation with streams
+\end_layout
+
+\begin_layout Section
+Concrete steps
+\end_layout
+
+\begin_layout Subsection
+Verification of the proposed operations
+\end_layout
+
+\begin_layout Standard
+The following stream operations can be represented/computed in the graph:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $ord(s)$
+\end_inset
+
+: the stream 
+\begin_inset Formula $s$
+\end_inset
+
+, assuming it corresponds to an item 
+\begin_inset Formula $i$
+\end_inset
+
+ whose vertex in the graph is 
+\begin_inset Formula $v_{i}$
+\end_inset
+
+, will be represented in the graph as a set of edges outgoing from 
+\begin_inset Formula $v_{i}$
+\end_inset
+
+, and each of such edges will have a property with the corresponding score.
+ Titan has the ability to create vertex-centric indices on edge properties,
+ which brings significant performance improvements.
+ Hence, the edges that represent 
+\begin_inset Formula $s$
+\end_inset
+
+ will be already sorted by score when retrieved from the graph.
+ This means that there will be no need to compute 
+\begin_inset Formula $ord(s)$
+\end_inset
+
+ on runtime.
+ In addition, it is not store in the graph all the elements in 
+\begin_inset Formula $s$
+\end_inset
+
+.
+ Instead, the graph will only store 
+\begin_inset Formula $ord(s,k)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $scarlarmult(\alpha,s)$
+\end_inset
+
+: will be computed on 
+\begin_inset Formula $s$
+\end_inset
+
+, runtime after reading 
+\begin_inset Formula $ord(s,k)$
+\end_inset
+
+ in memory.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $mergemax(s_{1},s_{2},k)$
+\end_inset
+
+, 
+\begin_inset Formula $mergesum(s_{1},s_{2},k)$
+\end_inset
+
+, 
+\begin_inset Formula $mergemult(s_{1},s_{2},k)$
+\end_inset
+
+, and 
+\begin_inset Formula $mergedot(s_{1},s_{2},k)$
+\end_inset
+
+ : will be computed on runtime after reading 
+\begin_inset Formula $ord(s_{1},k)$
+\end_inset
+
+ and 
+\begin_inset Formula $ord(s_{2},k)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+Each maker or product is represented as vertex in the graph, where a maker
+ has an edge to each of its products, and a product as an edge to each of
+ makers.
+ Hence, 
+\begin_inset Formula $products(s_{a})$
+\end_inset
+
+ is computed by retrieving the vertices that correspond to 
+\begin_inset Formula $s_{a}$
+\end_inset
+
+, and then retrieving the list of products for each vertex.
+ The function 
+\begin_inset Formula $makers(s_{t})$
+\end_inset
+
+ is computed in a similar fashion.
+\end_layout
+
+\begin_layout Standard
+All operations can be computed/stored in the graph as long as we only deal
+ in terms of 
+\begin_inset Formula $ord(s,k)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Which streams to create?
+\end_layout
+
+\begin_layout Subsubsection
+
+\emph on
+Writing remarks
+\end_layout
+
+\begin_layout Itemize
+Kind of answered already at the end of the previous section.
+\end_layout
+
+\begin_layout Subsubsection
+Product centric
+\end_layout
+
+\begin_layout Itemize
+products for a maker
+\end_layout
+
+\begin_layout Itemize
+Albums for a maker
+\end_layout
+
+\begin_layout Itemize
+products for a related set
+\end_layout
+
+\begin_layout Subsubsection
+Maker centric
+\end_layout
+
+\begin_layout Section
+Using stream merging for sequential product consumption
+\end_layout
+
+\begin_layout Standard
+Let us call a sequence of products a 
+\begin_inset Quotes eld
+\end_inset
+
+playlist
+\begin_inset Quotes erd
+\end_inset
+
+.
+ (Consider the case in which the products are music tracks, the makers are
+ artists.)
+\end_layout
+
+\begin_layout Subsection
+Preliminaries
+\end_layout
+
+\begin_layout Enumerate
+Playlist mining
+\begin_inset Separator latexpar
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+From the playlist mining we have N-gram models or prefix tree rules (of
+ conditional probability type).
+\end_layout
+
+\begin_layout Enumerate
+We have several conditional probability predictors, like,
+\begin_inset Separator latexpar
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+top tag predictor using the previous 
+\begin_inset Formula $k_{1}$
+\end_inset
+
+ top tags;
+\end_layout
+
+\begin_layout Enumerate
+maker popularity predictor using the previous 
+\begin_inset Formula $k_{2}$
+\end_inset
+
+ maker popularities;
+\end_layout
+
+\begin_layout Enumerate
+...
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+We have separation rules derived over different metadata tags.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Streams
+\begin_inset Separator latexpar
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+We have an implementation of retrieval of makers, products, and product-sets
+ streams based on one or several metadata tags.
+\end_layout
+
+\begin_layout Enumerate
+We have an implementation of stream merging.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Notation
+\begin_inset Separator latexpar
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+The iterative process of playlist generation builds the playlist 
+\begin_inset Formula $L$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+We have predictors 
+\begin_inset Formula $P_{i}$
+\end_inset
+
+ 
+\begin_inset Formula $i\in[1,n_{p}]$
+\end_inset
+
+ for the tag types 
+\begin_inset Formula $tt_{i}\in TTP$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Enumerate
+For each 
+\begin_inset Formula $tt_{i}$
+\end_inset
+
+ we can convert 
+\begin_inset Formula $L$
+\end_inset
+
+ into the list 
+\begin_inset Formula $L_{i}$
+\end_inset
+
+ of tags of type 
+\begin_inset Formula $tt_{i}$
+\end_inset
+
+.
+ Denote the function performing that conversion as 
+\begin_inset Formula $totags(tt_{i},L)$
+\end_inset
+
+ or 
+\begin_inset Formula $totags_{i}(L)$
+\end_inset
+
+ for short.
+ (The function 
+\begin_inset Formula $totags$
+\end_inset
+
+ converts its playlist argument into a sequence of tags of type 
+\begin_inset Formula $tt_{i}$
+\end_inset
+
+.
+ )
+\end_layout
+
+\begin_layout Enumerate
+Each predictor 
+\begin_inset Formula $P_{i}$
+\end_inset
+
+ is applied to the converted current playlist 
+\begin_inset Formula $totags_{i}(L)$
+\end_inset
+
+ and the wall-clock time, 
+\begin_inset Formula $t_{c}$
+\end_inset
+
+.
+ The predictors are functions defined as 
+\begin_inset Formula $P_{i}:\{tt_{i}\}\times R^{+}\rightarrow tt_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+The separation rules 
+\begin_inset Formula $R_{j}$
+\end_inset
+
+ 
+\begin_inset Formula $j\in[1,n_{r}]$
+\end_inset
+
+ are represented as functions with arguments 
+\begin_inset Formula $L$
+\end_inset
+
+ and wall-clock time 
+\begin_inset Formula $t_{c}$
+\end_inset
+
+ and with return values products that cannot be inserted into the current
+ playlist 
+\begin_inset Formula $L$
+\end_inset
+
+ as a next product.
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Algorithm
+\end_layout
+
+\begin_layout Subsubsection
+Next product step
+\end_layout
+
+\begin_layout Standard
+The fundamental step of the algorithm is the derivation of the next product
+ in the playlist being built.
+\end_layout
+
+\begin_layout Enumerate
+For each tag type 
+\begin_inset Formula $tt_{i}$
+\end_inset
+
+ with predictor 
+\begin_inset Formula $P_{i}$
+\end_inset
+
+ predict the next tag with 
+\begin_inset Formula $P_{i}(totags_{i}(L),t_{c})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+For each 
+\begin_inset Formula $tt_{i}\in TTP$
+\end_inset
+
+ form a stream corresponding to tag 
+\begin_inset Formula $P_{i}(totags_{i}(L),t_{c})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Merge the streams
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\[
+S:=mergesum(stream(P_{1}(totags_{1}(L))),\dots,stream(P_{n_{p}}(totags_{n_{p}}(L)))).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Remove from 
+\begin_inset Formula $S$
+\end_inset
+
+ the products that are in any of the penalty boxes.
+ I.e.
+ find the complement of 
+\begin_inset Formula $S$
+\end_inset
+
+ the union the products produced separation rules.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\bar{S}=S\smallsetminus\bigcup_{j=1}^{n_{r}}R_{j}(L).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Using 
+\begin_inset Formula $\bar{S}$
+\end_inset
+
+ make a random weighted choice.
+ The stream scores in 
+\begin_inset Formula $\bar{S}$
+\end_inset
+
+ are used as weights for the random choice.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ The streams can have assigned weights.
+ This needs further investigation and it is not detailed here at this time.
+\end_layout
+
+\begin_layout Subsubsection
+The playlist generation loop
+\end_layout
+
+\begin_layout Section
+Mapping stream scores to ranks
+\end_layout
+
+\begin_layout Subsection
+Problem set up
+\end_layout
+
+\begin_layout Standard
+Assume we have several streams with items of the same type (makers, products).
+ The scores of the streams are computed with different algorithms or taken
+ from different data sources.
+ Because of this the scores of the streams have different ranges and distributio
+ns.
+ Without preliminary normalization the merging of these streams might produce
+ unexpected results.
+ But even with rescaling and normalization the merging of the streams would
+ depend too much on the scores distributions within the streams.
+\end_layout
+
+\begin_layout Standard
+In order to resolve the outlined problems for each stream we map the scores
+ to ranks derived from a quantile partitioning of the scores.
+ We use the same number of quantiles for each stream.
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Subsection
+General strategy
+\end_layout
+
+\begin_layout Standard
+Assume we have (i) 
+\begin_inset Formula $n_{items}$
+\end_inset
+
+ number of items, and (ii) 
+\begin_inset Formula $na$
+\end_inset
+
+ number of algorithms for stream production and these algorithms are denoted
+ with 
+\begin_inset Formula $\alpha_{1},\alpha_{2},\dots,\alpha_{na}$
+\end_inset
+
+.
+ We have a stream corresponding to each algorithm.
+ The score of the item 
+\begin_inset Formula $i\in[1,\dots,n_{items}]$
+\end_inset
+
+ in the stream 
+\begin_inset Formula $s_{k}$
+\end_inset
+
+, 
+\begin_inset Formula $k\in[1,\dots,na]$
+\end_inset
+
+ is denoted with 
+\begin_inset Formula $sc_{k}(i)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The description of the general strategy follows.
+\end_layout
+
+\begin_layout Standard
+First, we map the scores computed by each algorithm 
+\begin_inset Formula $\alpha_{k}$
+\end_inset
+
+ into a set of relatively small number of integers 
+\begin_inset Formula $[1,\dots,nq]$
+\end_inset
+
+.
+ (For example, 
+\begin_inset Formula $nq=20$
+\end_inset
+
+.) We propose for each algorithm 
+\begin_inset Formula $\alpha_{k}$
+\end_inset
+
+ to use as a mapping function a piecewise constant function 
+\begin_inset Formula $\pi_{k}$
+\end_inset
+
+: 
+\begin_inset Formula $ℝ^{+}\rightarrow\text{ℕ}$
+\end_inset
+
+ generated by a set of quantiles for the set 
+\begin_inset Formula $sc_{k}(i),i\in[1,\dots,n_{items}]$
+\end_inset
+
+.
+ The larger the score is, the larger the integer to which it is mapped to.
+ More precisely,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+sc_{k}(i)\leq sc_{k}(j)\Rightarrow\pi_{k}(sc_{k}(i))\leq\pi_{k}(sc_{k}(j)).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Given a stream 
+\begin_inset Formula $s$
+\end_inset
+
+ we denote with 
+\begin_inset Formula $\pi_{k}(s)$
+\end_inset
+
+ the stream derived from 
+\begin_inset Formula $s$
+\end_inset
+
+ with scores mapped by 
+\begin_inset Formula $\pi_{k}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+After the mapping of all scores obtained by all algorithms, we can filter
+ the streams.
+\end_layout
+
+\begin_layout Enumerate
+From each stream 
+\begin_inset Formula $\pi_{k}(s_{k})$
+\end_inset
+
+, 
+\begin_inset Formula $k\in[1,\dots,na]$
+\end_inset
+
+ we take the top 
+\begin_inset Formula $m$
+\end_inset
+
+ items.
+\end_layout
+
+\begin_layout Enumerate
+Drop the items for which 
+\begin_inset Formula $\pi_{k}(sc_{k}(i))$
+\end_inset
+
+, 
+\begin_inset Formula $k\in[1,\dots,na]$
+\end_inset
+
+ ,
+\begin_inset Formula $i\in[1,\dots,n_{items}]$
+\end_inset
+
+ is too smaller than a certain (global) number.
+\end_layout
+
+\begin_layout Standard
+We are going to call the mapping described above 
+\series bold
+\emph on
+quantile mapping
+\series default
+\emph default
+, and call the numbers 
+\begin_inset Formula $\pi_{k}(sc_{l}(i))$
+\end_inset
+
+ 
+\series bold
+\emph on
+quantile scores
+\series default
+\emph default
+.
+ Below is given a detailed description of the quantile scores calculation.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Remark:
+\series default
+ If the streams are stored in a database table then the mappings with the
+ functions 
+\begin_inset Formula $\pi_{k}$
+\end_inset
+
+ can be stored using an additional column.
+\end_layout
+
+\begin_layout Subsection
+Calculation of the quantile scores
+\end_layout
+
+\begin_layout Enumerate
+For each stream 
+\begin_inset Formula $s_{k}$
+\end_inset
+
+ find the set of scores 
+\begin_inset Formula $sc_{k}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Choose a natural number 
+\begin_inset Formula $nq\in\mathbb{N}$
+\end_inset
+
+.
+ This is a parameter.
+ For each stream 
+\begin_inset Formula $s_{k}$
+\end_inset
+
+ we are going to form a piecewise constant function 
+\begin_inset Formula $\pi_{k}:\mathbb{R}^{+}\rightarrow\mathbb{N}$
+\end_inset
+
+ of 
+\begin_inset Formula $nq+1$
+\end_inset
+
+ pieces.
+\end_layout
+
+\begin_layout Enumerate
+For each set of scores 
+\begin_inset Formula $sc_{k}$
+\end_inset
+
+ calculate 
+\begin_inset Formula $nq$
+\end_inset
+
+ quantiles.
+ 
+\begin_inset Separator latexpar
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+The quantiles of 
+\begin_inset Formula $sc_{k}$
+\end_inset
+
+ form an array 
+\begin_inset Formula $p_{k}$
+\end_inset
+
+ of 
+\begin_inset Formula $nq$
+\end_inset
+
+ numbers.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+For each stream 
+\begin_inset Formula $s_{k}$
+\end_inset
+
+ (with each array 
+\begin_inset Formula $p_{k}$
+\end_inset
+
+) create the mapping function:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\pi_{k}(t):=\begin{cases}
+\begin{array}{cc}
+0 & t\leq p_{k,1}\\
+1 & p_{k,1}<t\leq p_{k,2}\\
+\dots & \dots\\
+nq & p_{k,nq}\leq t
+\end{array}\end{cases}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+For each stream 
+\begin_inset Formula $s_{k}$
+\end_inset
+
+ map the scores of 
+\begin_inset Formula $s_{k}$
+\end_inset
+
+ with 
+\begin_inset Formula $\pi_{k}$
+\end_inset
+
+.
+ This can be expressed more precisely with
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\[
+sc_{k}(i)\rightarrow\pi_{k}(sc_{k}(i)),i\in[1,\dots,n_{items}],k\in[1,\dots,na].
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "AAA17"
+key "AAA-IIR-2017"
+
+\end_inset
+
+ Anton Antonov, 
+\begin_inset Quotes eld
+\end_inset
+
+A Fast and Agile Item-Item Recommender: Design and Implementation
+\begin_inset Quotes erd
+\end_inset
+
+, 2011, URL: http://www.wolfram.com/events/technology-conference/2011/presentation
+s/AFastAndAgileIIR.cdf .
+\end_layout
+
+\end_body
+\end_document
