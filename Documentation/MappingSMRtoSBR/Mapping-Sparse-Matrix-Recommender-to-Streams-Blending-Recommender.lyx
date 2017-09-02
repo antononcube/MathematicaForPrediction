@@ -2169,12 +2169,12 @@ If we assume that
 \begin_inset Formula $S$
 \end_inset
 
- is for products
+ is for mustic track
 \begin_inset Formula $\times$
 \end_inset
 
-products similarities, then one natural selection of the collection of sets
- 
+music track similarities, then one natural selection of the collection of
+ sets 
 \begin_inset Formula $\{md_{i}\}_{i=1}^{k}$
 \end_inset
 
@@ -2185,7 +2185,7 @@ products similarities, then one natural selection of the collection of sets
 \begin_inset Formula $md_{1}$
 \end_inset
 
- all of the makers names tags;
+ all of the artist names tags;
 \end_layout
 
 \begin_layout Enumerate
@@ -2259,7 +2259,7 @@ The matrices
 \end_inset
 
 .
- Because every product-genre association weight in 
+ Because every track-genre association weight in 
 \begin_inset Formula $M(:,genre)$
 \end_inset
 
@@ -2271,8 +2271,8 @@ The matrices
 \begin_inset Formula $1$
 \end_inset
 
-) and because many products might have the same genres for every product
- we would have a very large number of nearest neighbors with the same similarity
+) and because many products might have the same genres for every track we
+ would have a very large number of nearest neighbors with the same similarity
  scores.
  (The similarity scores are computed with 
 \begin_inset Formula $S(:,genre)=M(:,genre)\,M(:,genre)^{T}$
@@ -2293,7 +2293,7 @@ One way to reduce the number of nearest neighbors in a row of
 \begin_inset Formula $M(:,genre)$
 \end_inset
 
- is to combine the product genres with another metadata type that provides
+ is to combine the track genres with another metadata type that provides
  association weights with great variance.
  Let us consider two cases.
 \end_layout
@@ -2307,7 +2307,7 @@ popularity
 \begin_inset Quotes erd
 \end_inset
 
- we observe an exponential distribution of the product popularities.
+ we observe an exponential distribution of the track popularities.
  So we can replace 
 \begin_inset Formula $S(:,genre)$
 \end_inset
@@ -2474,6 +2474,10 @@ reference "eq:RecommendationsByStreamMerging"
 
 \begin_layout Subsection
 User profile calculation with streams
+\end_layout
+
+\begin_layout Standard
+TBD...
 \end_layout
 
 \begin_layout Section
