@@ -39,7 +39,7 @@
 \pdf_backref false
 \pdf_pdfusetitle true
 \papersize default
-\use_geometry false
+\use_geometry true
 \use_package amsmath 1
 \use_package amssymb 1
 \use_package cancel 1
@@ -63,6 +63,13 @@
 \shortcut idx
 \color #008000
 \end_index
+\leftmargin 2cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\headheight 1.5cm
+\headsep 1.5cm
+\footskip 1.5cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -108,14 +115,14 @@ Introduction
 \begin_layout Standard
 This document provides theoretical background for the stream merging recommendat
 ions that approximate the functionalities of the Sparse Matrix Recommender
- (SMR); see [
+ (SMR); see 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "AAA-IIR-2017"
 
 \end_inset
 
-].
+.
 \end_layout
 
 \begin_layout Standard
@@ -1064,7 +1071,18 @@ The functions
  are derived from the edges of the products-makers bi-partite graph.
  The application of these functions over streams is going to be defined
  below.
- 
+\end_layout
+
+\begin_layout Standard
+A good example of a product-maker bi-partite graph and a related, useful
+ matrix-vector multiplication is given in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "AAA-RSM-2015"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -3324,6 +3342,26 @@ A Fast and Agile Item-Item Recommender: Design and Implementation
 
 , 2011, URL: http://www.wolfram.com/events/technology-conference/2011/presentation
 s/AFastAndAgileIIR.cdf .
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "AAA15"
+key "AAA-RSM-2015"
+
+\end_inset
+
+ Anton Antonov, 
+\begin_inset Quotes eld
+\end_inset
+
+RSparseMatrix for sparse matrices with named rows and columns
+\begin_inset Quotes erd
+\end_inset
+
+, 2015, URL: https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematr
+ix-for-sparse-matrices-with-named-rows-and-columns/ .
 \end_layout
 
 \end_body
