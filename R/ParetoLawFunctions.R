@@ -36,9 +36,9 @@ library(ggplot2)
 #' @param xlab label for the x-axis
 #' @param ylab label for the y-axis
 ParetoLawForCountsPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", ... ) {
-    taCounts <- plyr::count(dataVec)
-    taCounts <- taCounts[rev(order(taCounts$freq)),]
-    ParetoLawPlot( taCounts$freq, main, xlab=xlab, ylab=ylab, ...)
+  taCounts <- plyr::count(dataVec)
+  taCounts <- taCounts[rev(order(taCounts$freq)),]
+  ParetoLawPlot( taCounts$freq, main, xlab=xlab, ylab=ylab, ...)
 }
 
 #' @description Make a plot that demonstrates the adherence to the Pareto law of a numerical vector
@@ -48,28 +48,35 @@ ParetoLawForCountsPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab=
 #' @param xlab label for the x-axis
 #' @param ylab label for the y-axis
 ParetoLawPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", xFraction = 0.2, yFraction = 0.8, ... ) {
-    dataVec <- rev( sort(dataVec) )
-    plot( cumsum( dataVec ) / sum( dataVec ), type='l', main=main, xlab=xlab, ylab=ylab, ... )
-    grid()
-    ## grid(nx=4,ny=4)
-    abline( v=c(xFraction*length(dataVec)), h=c(yFraction), col="red", lty="dotted" )
+  dataVec <- rev( sort(dataVec) )
+  plot( cumsum( dataVec ) / sum( dataVec ), type='l', main=main, xlab=xlab, ylab=ylab, ... )
+  grid()
+  ## grid(nx=4,ny=4)
+  abline( v=c(xFraction*length(dataVec)), h=c(yFraction), col="red", lty="dotted" )
 }
 
 #' @description Sorts the tally of given categorical data descendingly and computes the list of the cumulative sums.
 #' @param dataVec a vector with categorical entries
-ParetoLawData <- function( dataVec ) {
-    dTally <- plyr::count( dataVec )
-    if( class(dataVec) == "character" ) { dTally[[1]] <- as.character(dTally[[1]]) }
-    dTally <- dTally[ rev(order(dTally[,c(2)])), ]
-    cumSums <- cumsum(dTally[,c(2)])/sum(dTally[,c(2)])
-    data.frame(cbind( dTally[1], ParetoFraction = cumSums ))
+#' @param weightVec a vector of weights for the values of dataVec; see the argument wt_var of plyr::count
+ParetoLawData <- function( dataVec, weightsVec = NULL ) {
+  if ( is.null(weightsVec) ) {
+    dTally <- plyr::count( dataVec ) 
+  } else {
+    weightsVec[ is.na(weightsVec) ] <- 0
+    dTally <- plyr::count( df = data.frame( dataVec = dataVec, weightsVec = weightsVec ), vars = "dataVec", wt_var = "weightsVec" )
+    dTally <- dTally[ !is.na( dTally[[1]] ), ]
+  }
+  if( class(dataVec) == "character" ) { dTally[[1]] <- as.character(dTally[[1]]) }
+  dTally <- dTally[ rev(order(dTally[,c(2)])), ]
+  cumSums <- cumsum(dTally[,c(2)])/sum(dTally[,c(2)])
+  data.frame(cbind( dTally[1], ParetoFraction = cumSums ))
 }
 
 #' @description Apply the ParetoLawData function over a list of names.
 #' @param data a data frame 
 #' @param colNames a list of column names corresponding to categrical columns in \param data
 ParetoLawDataForColumns <- function( data, colNames ) {
-    llply(colNames, function(c) {t<-ParetoLawData(data[[c]]); cbind(1:length(t[,1]), t[,2])})
+  llply(colNames, function(c) {t<-ParetoLawData(data[[c]]); cbind(1:length(t[,1]), t[,2])})
 }
 
 
@@ -79,21 +86,21 @@ ParetoLawDataForColumns <- function( data, colNames ) {
 #' @param paretoFraction a number between 0 and 1 specifying the Pareto fraction
 #' @return A data frame with columns c( "Item", "Score", "CumSums" ).
 ParetoItems <- function( data, colName, paretoFraction ) {
-
-    paretoItemsCount <- plyr::count( data[colName] )
-    paretoItemsCount[[1]] <- as.character( paretoItemsCount[[1]] )
-
-    paretoItemsCount <- paretoItemsCount[ order( -paretoItemsCount[,2] ), ]
-    cumSums <- cumsum( paretoItemsCount[,2] ) / sum( paretoItemsCount[,2] )
-    paretoItemsCount <- cbind( paretoItemsCount, cumSums = cumSums, stringsAsFactors = FALSE )
-
-    paretoItems <- paretoItemsCount[[1]][ paretoItemsCount$cumSums <= paretoFraction ]
-
-    paretoItemsCount <- paretoItemsCount[ paretoItemsCount[[1]] %in% paretoItems, ]
-    paretoItemsCount <- paretoItemsCount[ order(- paretoItemsCount$freq), ]
-    names(paretoItemsCount) <- c( "Item", "Score", "CumSums" )
-
-    paretoItemsCount
+  
+  paretoItemsCount <- plyr::count( data[colName] )
+  paretoItemsCount[[1]] <- as.character( paretoItemsCount[[1]] )
+  
+  paretoItemsCount <- paretoItemsCount[ order( -paretoItemsCount[,2] ), ]
+  cumSums <- cumsum( paretoItemsCount[,2] ) / sum( paretoItemsCount[,2] )
+  paretoItemsCount <- cbind( paretoItemsCount, cumSums = cumSums, stringsAsFactors = FALSE )
+  
+  paretoItems <- paretoItemsCount[[1]][ paretoItemsCount$cumSums <= paretoFraction ]
+  
+  paretoItemsCount <- paretoItemsCount[ paretoItemsCount[[1]] %in% paretoItems, ]
+  paretoItemsCount <- paretoItemsCount[ order(- paretoItemsCount$freq), ]
+  names(paretoItemsCount) <- c( "Item", "Score", "CumSums" )
+  
+  paretoItemsCount
 }
 
 
@@ -103,38 +110,50 @@ ParetoItems <- function( data, colName, paretoFraction ) {
 #' @return A data frame with columns c( "Index", "Score", "CumSums" ).
 #' @details "CumSums" should be "CumSumFractions" but it is left to be "CumSums" for backward compatibility.
 ParetoPositions <- function( dataVec, paretoFraction = 1 ) {
-
-    paretoItemsCount <- data.frame( Index = 1:length(dataVec), Score = dataVec )
-    paretoItemsCount <- paretoItemsCount[ rev( order( paretoItemsCount[,2] ) ), ]
-    cumSums <- cumsum( paretoItemsCount[,2] ) / sum( paretoItemsCount[,2] )
-    paretoItemsCount <- cbind( paretoItemsCount, CumSums = cumSums )
-
-    paretoItems <- paretoItemsCount[[1]][ paretoItemsCount$CumSums <= paretoFraction ]
-
-    paretoItemsCount <- paretoItemsCount[ paretoItemsCount[[1]] %in% paretoItems, ]
-    paretoItemsCount <- paretoItemsCount[ order( -paretoItemsCount$Score ), ]
-    names(paretoItemsCount) <- c( "Index", "Score", "CumSums" )
-
-    paretoItemsCount
+  
+  paretoItemsCount <- data.frame( Index = 1:length(dataVec), Score = dataVec )
+  paretoItemsCount <- paretoItemsCount[ rev( order( paretoItemsCount[,2] ) ), ]
+  cumSums <- cumsum( paretoItemsCount[,2] ) / sum( paretoItemsCount[,2] )
+  paretoItemsCount <- cbind( paretoItemsCount, CumSums = cumSums )
+  
+  paretoItems <- paretoItemsCount[[1]][ paretoItemsCount$CumSums <= paretoFraction ]
+  
+  paretoItemsCount <- paretoItemsCount[ paretoItemsCount[[1]] %in% paretoItems, ]
+  paretoItemsCount <- paretoItemsCount[ order( -paretoItemsCount$Score ), ]
+  names(paretoItemsCount) <- c( "Index", "Score", "CumSums" )
+  
+  paretoItemsCount
 }
 
 #' @description Apply the ParetoLawData function over a list of names and make a multi-panel ggplot.
 #' @param data a data frame
 #' @param colNames a list of column names corresponding to categrical columns in \param data
 #' @param scales a value for the scales argument of ggplot2::facet_wrap .
-ParetoLawPlotForColumns <- function( data, colNames = colnames(data), scales = "free_x" ) {
-    qdf <-
+ParetoLawPlotForColumns <- function( data, colNames = colnames(data), weights = NULL, scales = "free_x" ) {
+  
+  if( is.null(weights) ) {
+    weightsVec <- NULL
+  } else if ( is.character(weights) && ( weights %in% colnames(data) ) ) {   
+    weightsVec <- data[[weights]] 
+  } else if ( is.numeric(weights) && length(weights) == nrow(data) ) {
+    weightsVec <- weights
+  } else {
+    stop( "The argument weights is expected to be NULL, a column name of the argument data, or a numerical vector with length equal to nrow(data).", call. = T)
+  }
+  
+  qdf <-
     ldply( colNames, function(cn) {
-        pres <- ParetoLawData( data[[cn]] )
-        cbind( ColName = cn, Index = 1:nrow(pres), pres,
-        p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
+      pres <- ParetoLawData( data[[cn]], weightsVec = weightsVec )
+      cbind( ColName = cn, Index = 1:nrow(pres), pres,
+             p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
     }, .progress = "none" )
-    ggplot(qdf) +
-        geom_line( aes( x = Index, y = ParetoFraction) ) +
-        geom_vline( aes( xintercept = p10), linetype = 3 ) +
-        geom_vline( aes( xintercept = p20), linetype = 3 ) +
-        geom_vline( aes( xintercept = p30), linetype = 3 ) +
-        geom_vline( aes( xintercept = p40), linetype = 3 ) +
-        geom_vline( aes( xintercept = p50), linetype = 3 ) +
-        facet_wrap( ~ ColName, scales = scales )
+  
+  ggplot(qdf) +
+    geom_line( aes( x = Index, y = ParetoFraction) ) +
+    geom_vline( aes( xintercept = p10), linetype = 3 ) +
+    geom_vline( aes( xintercept = p20), linetype = 3 ) +
+    geom_vline( aes( xintercept = p30), linetype = 3 ) +
+    geom_vline( aes( xintercept = p40), linetype = 3 ) +
+    geom_vline( aes( xintercept = p50), linetype = 3 ) +
+    facet_wrap( ~ ColName, scales = scales )
 }
