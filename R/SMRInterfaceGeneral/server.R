@@ -42,9 +42,22 @@
 library(shiny)
 library(DT)
 
-searchColName <- "title"
-itemDataIDColName <- "id"
-itemDataColNames <- c("id", "title", "year", "rated", "imdb_rating" )
+
+if( !exists("searchColName") || !( searchColName %in% colnames(itemData) ) ) {
+  stop( "The variable searchColName is not defined or it is not a column name in itemData.")
+}
+
+if( !exists("itemDataIDColName") || !( itemDataIDColName %in% colnames(itemData) ) ) {
+  stop( "The variable itemDataIDColName is not defined or it is not a column name in itemData.")
+}
+
+if( !exists("itemDataColNames") || mean( itemDataColNames %in% colnames(itemData) ) < 1 ) {
+  stop( "The variable itemDataColNames is not defined or not all of its values are column names in itemData.")
+}
+
+# searchColName <- "title"
+# itemDataIDColName <- "id"
+# itemDataColNames <- c("id", "title", "year", "rated", "imdb_rating" )
 
 shinyServer(function(input, output) {
 
