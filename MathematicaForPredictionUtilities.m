@@ -129,9 +129,11 @@ ClassificationSuccessGrid[ctRules_] :=
 
 Clear[NumericVectorSummary, CategoricalVectorSummary]
 NumericVectorSummary[dvec_] :=
-    Block[{r},
+    Block[{r,cm},
       r = Flatten[Through[{Min, Max, Mean, Quartiles}[DeleteMissing[dvec]]]];
-      SortBy[Transpose[{{"Min", "Max", "Mean", "1st Qu", "Median", "3rd Qu"}, r}], #[[2]] &]
+      r = SortBy[Transpose[{{"Min", "Max", "Mean", "1st Qu", "Median", "3rd Qu"}, DeleteMissing[r]}], #[[2]] &];
+      cm = Count[dvec,Missing[___]];
+      If[ TrueQ[cm > 0], Append[r, { "Missing[___]", cm}], r ]
     ] /; VectorQ[DeleteMissing[dvec], NumberQ];
 CategoricalVectorSummary[dvec_, maxTallies_Integer: 7] :=
     Block[{r},
@@ -152,7 +154,7 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
       If[numberedColumnsQ,
         columnNames = MapIndexed[ToString[#2[[1]]] <> " " <> #1 &, columnNames]
       ];
-      columnTypes = Map[If[VectorQ[#,NumberQ], Number, Symbol] &, dataColumns];
+      columnTypes = Map[If[VectorQ[DeleteMissing[#],NumberQ], Number, Symbol] &, dataColumns];
       MapThread[
         Column[{
           Style[#1, Blue, FontFamily -> "Times"],
