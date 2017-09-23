@@ -50,7 +50,8 @@ GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimic
 (and producing fancier outlook)."
 
 ParetoLawPlot::usage = "ParetoLawPlot[data,opts] makes a list plot for the manifestation of the Pareto law. \
-It has the same signature and options as ListPlot."
+It has the same signature and options as ListPlot. \
+The argument data is expected to be a numerical a vector or a list of numerical vectors."
 
 IntervalMappingFunction::usage = "IntervalMappingFunction[boundaries] makes a piece-wise function for mapping of \
 a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1]."
