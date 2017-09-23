@@ -309,8 +309,8 @@ RecommenderTestRun <- function( recommenderObject, recommenderObjectFreq = NULL,
           }
           
           intermediateRes <- prof
-          
-          inds <- match( prof$Tag, testSpecs[[i]]$ResponseTags$Tag )
+
+          inds <- match( testSpecs[[i]]$ResponseTags$Tag, prof$Tag )
           prof <- prof[inds,]
           
           res <- mean( ( ( prof$Score - testSpecs[[i]]$ResponseTags$Score ) / testSpecs[[i]]$ResponseTags$Score ) >= -testSpecs[[i]]$Tolerance )
