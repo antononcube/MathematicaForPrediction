@@ -86,6 +86,7 @@ shinyServer(function(input, output) {
 
   itemListIDs <- reactive({
     ss <- strsplit( input$itemList, split = itemListIDsSplitPattern, fixed = FALSE )[[1]]
+    ss <- gsub("^[[:space:]]", "", ss)
     ss[ nchar(ss) > 0 ]
   })
 
