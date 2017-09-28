@@ -173,6 +173,56 @@ SMRCreateFromMatrices <- function( matrices, tagTypes, itemColumnName ){
 }
 
 
+#' @description Creates a sparse matrix recommender from transactions-like data and a meta-data specifiction.
+#' @param data transactions-like data frame
+#' @param metaDataSpec a data frame with specifications of which columns of \param data to be used and with what weight functions
+#' @param itemCol the name of the column containing the unique items
+SMRCreateFromSpecification <- function( data, metaDataSpec, itemCol, .progress="none", .verbose = FALSE ) {
+  
+  if( class(data) != "data.frame" || class(metaDataSpec) != "data.frame" ) {
+    stop("The first and second arguments are expected to be data frames.")
+  }
+  
+  if(.verbose){
+    cat("\t\tCreate item-tag matrices for meta data types.\n")
+  }
+  
+  matrices <- alply(as.character(metaDataSpec$ColumnName), 1, function(x){
+    SMRCreateItemTagMatrix( dataRows = data, tagType = x, itemColumnName = itemCol, sparse = T)
+  }, .progress=.progress)
+  
+  
+  if(.verbose){
+    cat("\t\tApply weight terms to each tag sub-matrix\n")
+  }
+  
+  matrices <-
+    dlply( metaDataSpec, c("ColumnName"), function(x) {
+      
+      smat <- SMRCreateItemTagMatrix( dataRows = data, tagType = x$ColumnName[[1]], itemColumnName = itemCol, sparse = TRUE )
+      
+      smat <- SMRApplyTermWeightFunctions( smat, 
+                                           x$GlobalWeightFunction[[1]],
+                                           x$LocalWeightFunction[[1]], 
+                                           x$NormalizingFunction[[1]] )      
+      
+      if ( !is.null(x$NormalizeByMax[[1]]) && metaDataSpec$NormalizeByMax[[1]] ) { 
+        smat <- smat / max( smat )
+      }
+      
+      smat      
+    }, .progress = .progress )
+  
+  allRowIDs <- unique( unlist( llply(matrices, function(x) rownames(x) ) ) )
+  
+  nms <- names(matrices)
+  matrices <- llply( matrices, function(x) ImposeRowIDs( rowIDs = allRowIDs, smat = x) )
+  names(matrices) <- nms
+  
+  SMRCreateFromMatrices( matrices = matrices, tagTypes = names(matrices), itemColumnName = itemCol )
+}
+
+
 #' @description Changes the weights of the tags of a sparse matrix recommender object
 #' @param smr a sparse matrix recommender object (list with named elements)
 #' @param weights a list of weights to be applied
