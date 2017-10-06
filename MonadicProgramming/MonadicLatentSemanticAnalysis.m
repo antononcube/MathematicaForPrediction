@@ -268,8 +268,11 @@ LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
 
 ClearAll[LSAMonBasisVectorInterpretation]
 
-LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), numberOfTerms_Integer][xs_, context_] :=
-    Block[{W, H, res},
+Options[LSAMonBasisVectorInterpretation] = { "NumberOfTerms" -> 12 };
+LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{W, H, res, numberOfTerms},
+
+      numberOfTerms = OptionValue[LSAMonBasisVectorInterpretation, "NumberOfTerms"];
 
       {W, H} = RightNormalizeMatrixProduct[context["W"], context["H"]];
 
@@ -304,7 +307,7 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
       topicsTbl =
           Table[
             TableForm[{NumberForm[#[[1]]/t[[1, 1]], {4, 3}], #[[2]]} & /@ t],
-            {t, First @ LSAMonBasisVectorInterpretation[Range[k], numberOfTerms][xs, context] }];
+            {t, First @ LSAMonBasisVectorInterpretation[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
 
       Echo @ Magnify[#, mFactor] & @
           Grid[
