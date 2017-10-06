@@ -232,7 +232,7 @@ LSAMonStatiscalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context
               numberOfNNs]} &,
               Sort[words]];
 
-        LSAMon[xs, Join[context, <|"statisticalThesaurus" -> thRes|>]],
+        LSAMon[thRes, Join[context, <|"statisticalThesaurus" -> thRes|>]],
 
         True,
         Echo["No factorization of the document-term matrix is made.", "LSAMonStatiscalThesaurus:"];
@@ -290,17 +290,13 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
     ];
 
 
-ClearAll[LSAMonEchoTopicsTable]
+ClearAll[LSAMonTopicsTable]
 
-Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "NumberOfTerms" -> 12, "MagnificationFactor" -> Automatic};
+Options[LSAMonTopicsTable] = { "NumberOfTerms" -> 12 };
+LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{topicsTbl, k, numberOfTerms},
 
-LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor},
-
-      numberOfTableColumns = OptionValue["NumberOfTableColumns"];
       numberOfTerms = OptionValue["NumberOfTerms"];
-      mFactor = OptionValue["MagnificationFactor"];
-      If[ TrueQ[mFactor === Automatic], mFactor = 0.8 ];
 
       k = Dimensions[context["W"]][[2]];
 
@@ -309,10 +305,32 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
             TableForm[{NumberForm[#[[1]]/t[[1, 1]], {4, 3}], #[[2]]} & /@ t],
             {t, First @ LSAMonBasisVectorInterpretation[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
 
+      LSAMon[ topicsTbl, Join[ context, <| "topicsTables"->topicsTbl|> ] ]
+    ];
+
+
+ClearAll[LSAMonEchoTopicsTable]
+
+Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "MagnificationFactor" -> Automatic};
+LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{topicsTbl, k, numberOfTableColumns, mFactor},
+
+      numberOfTableColumns = OptionValue["NumberOfTableColumns"];
+      mFactor = OptionValue["MagnificationFactor"];
+      If[ TrueQ[mFactor === Automatic], mFactor = 0.8 ];
+
+      k = Dimensions[context["W"]][[2]];
+
+      If[ KeyExistsQ[context, "topicsTable"],
+        topicsTbl = context["topicsTable"],
+        (*ELSE*)
+        topicsTbl = First @ LSAMonTopicsTable[][xs,context]
+      ];
+
       Echo @ Magnify[#, mFactor] & @
           Grid[
             Partition[ ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns],
             Dividers -> All, Alignment -> Left]
 
-      LSAMon[ xs, context ]
+      LSAMon[ topicsTbl, context ]
     ];
