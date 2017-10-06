@@ -131,7 +131,7 @@ ClassificationSuccessGrid[ctRules_] :=
 Clear[NumericVectorSummary, CategoricalVectorSummary]
 NumericVectorSummary[dvec_] :=
     Block[{r,cm},
-      r = Flatten[Through[{Min, Max, Mean, Quartiles}[DeleteMissing[dvec]]]];
+      r = Flatten[Through[{Min, Max, Mean, Quartiles}[DeleteMissing[dvec]]]] /. x_Rational :> N[x];
       r = SortBy[Transpose[{{"Min", "Max", "Mean", "1st Qu", "Median", "3rd Qu"}, DeleteMissing[r]}], #[[2]] &];
       cm = Count[dvec,Missing[___]];
       If[ TrueQ[cm > 0], Append[r, { "Missing[___]", cm}], r ]
