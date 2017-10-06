@@ -80,7 +80,7 @@
         LSAMonUnit[texts]⟹
         LSAMonMakeDocumentTermMatrix[{}, stopWords]⟹
         LSAMonApplyTermWeightFunctions[]⟹
-        LSAMonTopicExtraction[5, 12, 12, "MaxSteps" -> 6, "PrintProfilingInfo" -> True];
+        LSAMonTopicExtraction[5, 60, 12, "MaxSteps" -> 6, "PrintProfilingInfo" -> True];
 
       (* Show statistical thesaurus in two different ways. *)
       res⟹
@@ -247,6 +247,7 @@ LSAMonEchoStatiscalThesaurus[___][None] := None
 LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
     Block[{},
       Which[
+
         KeyExistsQ[context, "statisticalThesaurus"],
         Echo@
             Grid[
@@ -261,6 +262,7 @@ LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
         Echo["No statistical thesurus is computed.", "LSAMonEchoStatiscalThesaurus:"];
         None
       ]
+
     ];
 
 
@@ -268,14 +270,46 @@ ClearAll[LSAMonBasisVectorInterpretation]
 
 LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), numberOfTerms_Integer][xs_, context_] :=
     Block[{W, H, res},
+
       {W, H} = RightNormalizeMatrixProduct[context["W"], context["H"]];
+
       res =
           Map[
             BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
             Normal@H[[Flatten@{vectorIndices}]]
-        ];
+          ];
+
       If[ !MatchQ[res,{{{_?NumberQ, _String}..}..}],
         None,
         LSAMon[ res, context ]
       ]
+
+    ];
+
+
+ClearAll[LSAMonEchoTopicsTable]
+
+Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "NumberOfTerms" -> 12, "MagnificationFactor" -> Automatic};
+
+LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor},
+
+      numberOfTableColumns = OptionValue["NumberOfTableColumns"];
+      numberOfTerms = OptionValue["NumberOfTerms"];
+      mFactor = OptionValue["MagnificationFactor"];
+      If[ TrueQ[mFactor === Automatic], mFactor = 0.8 ];
+
+      k = Dimensions[context["W"]][[2]];
+
+      topicsTbl =
+          Table[
+            TableForm[{NumberForm[#[[1]]/t[[1, 1]], {4, 3}], #[[2]]} & /@ t],
+            {t, First @ LSAMonBasisVectorInterpretation[Range[k], numberOfTerms][xs, context] }];
+
+      Echo @ Magnify[#, mFactor] & @
+          Grid[
+            Partition[ ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns],
+            Dividers -> All, Alignment -> Left]
+
+      LSAMon[ xs, context ]
     ];
