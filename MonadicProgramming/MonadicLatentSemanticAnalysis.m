@@ -261,4 +261,21 @@ LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
         Echo["No statistical thesurus is computed.", "LSAMonEchoStatiscalThesaurus:"];
         None
       ]
-    ]
+    ];
+
+
+ClearAll[LSAMonBasisVectorInterpretation]
+
+LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), numberOfTerms_Integer][xs_, context_] :=
+    Block[{W, H, res},
+      {W, H} = RightNormalizeMatrixProduct[context["W"], context["H"]];
+      res =
+          Map[
+            BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
+            Normal@H[[Flatten@{vectorIndices}]]
+        ];
+      If[ !MatchQ[res,{{{_?NumberQ, _String}..}..}],
+        None,
+        LSAMon[ res, context ]
+      ]
+    ];
