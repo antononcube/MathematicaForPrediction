@@ -59,12 +59,12 @@ BeginPackage["HeatmapPlot`"]
 
 MatrixPlotWithTooltips::usage = "MatrixPlotWithTooltips[data, rowNames, columnNames] makes a MatrixPlot with tooltips."
 
-HeatmapPlot::usage = "HeatmapPlot[data, rowNames, columnNames] makes a heat-map plot based on MatrixPlot \
+HeatmapPlot::usage = "HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List] makes a heat-map plot based on MatrixPlot \
 and HierarchicalClustering`Agglomerate ."
 
 Begin["`Private`"]
 
-Get["HierarchicalClustering`"]
+Needs["HierarchicalClustering`"]
 
 
 MatrixPlotWithTooltips[mat_, rowNames_, columnNames_, opts : OptionsPattern[]] :=
@@ -90,19 +90,29 @@ MatrixPlotWithTooltips[mat_, rowNames_, columnNames_, opts : OptionsPattern[]] :
     ];
 
 
-ClearAll[HeatmapPlot]
+Clear[HeatmapPlot]
 
 Options[HeatmapPlot] =
     Join[
       { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic} },
       Options[MatrixPlot] ];
 
-HeatmapPlot[data_, {}, {}, opts:OptionsPattern[]] :=
-    HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]] ];
+HeatmapPlot[data_Association, opts:OptionsPattern[]] :=
+    Block[{},
+      HeatmapPlot[ data["XTABMatrix"], data["RowNames"], data["ColumnNames"], opts ]
+    ] /; KeyExistsQ[data, "XTABMatrix"];
 
-HeatmapPlot[data_, rowNames_List, columnNames_List, opts:OptionsPattern[]] :=
+HeatmapPlot[data_?MatrixQ, opts:OptionsPattern[]] :=
+    HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts];
+
+HeatmapPlot[data_?MatrixQ, {}|Automatic, {}|Automatic, opts:OptionsPattern[]] :=
+    HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts ];
+
+HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[]] :=
     Block[{distFunction, linkFunction, rowClustering, colClustering, rowReordering, columnReordering,
       rowNameTicks, columnNameTicks, mat, tOpts},
+
+      mat = If[ TrueQ[Head[data] === SparseArray], Normal[data], data];
 
       distFunction = OptionValue[HeatmapPlot, DistanceFunction];
       If[Length[distFunction] == 1, distFunction = {distFunction, distFunction}];
@@ -115,23 +125,23 @@ HeatmapPlot[data_, rowNames_List, columnNames_List, opts:OptionsPattern[]] :=
 
       If[ TrueQ[distFunction[[1]] =!= None],
         rowClustering =
-            HierarchicalClustering`Agglomerate[data -> Range[Length[data]],
+            HierarchicalClustering`Agglomerate[mat -> Range[Length[mat]],
               DistanceFunction -> distFunction[[1]],
               Linkage -> linkFunction[[1]]];
         rowReordering = HierarchicalClustering`ClusterFlatten[rowClustering];,
         (* ELSE *)
-        rowReordering = Range[Dimensions[data][[1]]]
+        rowReordering = Range[Dimensions[mat][[1]]]
       ];
 
       If[ TrueQ[distFunction[[2]] =!= None],
         colClustering =
             HierarchicalClustering`Agglomerate[
-              Transpose@data -> Range[Dimensions[data][[2]]],
+              Transpose@mat -> Range[Dimensions[mat][[2]]],
               DistanceFunction -> distFunction[[2]],
               Linkage -> linkFunction[[2]]];
         columnReordering = HierarchicalClustering`ClusterFlatten[colClustering];,
         (* ELSE *)
-        columnReordering = Range[Dimensions[data][[2]]];
+        columnReordering = Range[Dimensions[mat][[2]]];
       ];
 
       rowNameTicks =
