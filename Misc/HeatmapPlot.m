@@ -97,10 +97,15 @@ Options[HeatmapPlot] =
       { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic} },
       Options[MatrixPlot] ];
 
-HeatmapPlot[data_Association, opts:OptionsPattern[]] :=
+HeatmapPlot[data_RSparseMatrix, opts:OptionsPattern[]] :=
     Block[{},
-      HeatmapPlot[ data["XTABMatrix"], data["RowNames"], data["ColumnNames"], opts ]
-    ] /; KeyExistsQ[data, "XTABMatrix"];
+      HeatmapPlot[ data["sparseArray"], data["rownames"], data["colnames"], opts ]
+    ] /; KeyExistsQ[data, "sparseArray"];
+
+HeatmapPlot[xtabs_Association, opts:OptionsPattern[]] :=
+    Block[{},
+      HeatmapPlot[ xtabs["XTABMatrix"], xtabs["RowNames"], xtabs["ColumnNames"], opts ]
+    ] /; KeyExistsQ[xtabs, "XTABMatrix"];
 
 HeatmapPlot[data_?MatrixQ, opts:OptionsPattern[]] :=
     HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts];
