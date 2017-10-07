@@ -149,7 +149,7 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
       columnNameTicks =
           Table[{i, Rotate[#, Pi/2] & @ columnNames[[columnReordering[[i]]]], {0, 0}}, {i, 1, Length[columnReordering]}];
 
-      mat = data[[rowReordering,columnReordering]];
+      mat = mat[[rowReordering,columnReordering]];
 
       tOpts = DeleteCases[ {opts}, (DistanceFunction|Linkage) -> ___ ];
 
