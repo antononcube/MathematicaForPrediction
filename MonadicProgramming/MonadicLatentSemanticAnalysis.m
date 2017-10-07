@@ -115,6 +115,15 @@ If[Length[DownValues[DocumentTermMatrixConstruction`DocumentTermMatrix]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DocumentTermMatrixConstruction.m"]
 ];
 
+If[Length[DownValues[MathematicaForPredictionUtilities`CrossTensorate]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
+
+If[Length[DownValues[HeatmapPlot`HeatmapPlot]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/HeatmapPlot.m"]
+];
+
+
 (**************************************************************)
 (* Generation                                                 *)
 (**************************************************************)
@@ -182,7 +191,7 @@ ClearAll[LSAMonTopicExtraction]
 Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
 LSAMonTopicExtraction[___][None] := None
 LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=
-    Block[{documentsPerTerm, pos, W, H, M1, k, p, m, n},
+    Block[{documentsPerTerm, pos, W, H, M1, k, p, m, n, automaticTopicNames },
       Which[
         KeyExistsQ[context, "wDocTermMat"],
         documentsPerTerm = Total /@ Transpose[Clip[context["docTermMat"], {0, 1}]];
@@ -207,7 +216,12 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizing
         H = SparseArray[H];
         {W, H} = GDCLSGlobal[M1, W, H, opts];
 
-        LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos|>]],
+        automaticTopicNames =
+                Table[
+                    StringJoin[Riffle[BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
+                  {ind, 1, Dimensions[W][[2]]}];
+
+        LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames"->automaticTopicNames |>]],
 
         True,
         Echo["No document-term matrix is made.", "LSAMonTopicExtraction:"];
@@ -262,7 +276,6 @@ LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
         Echo["No statistical thesurus is computed.", "LSAMonEchoStatiscalThesaurus:"];
         None
       ]
-
     ];
 
 
@@ -311,7 +324,7 @@ LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
 
 ClearAll[LSAMonEchoTopicsTable]
 
-Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "MagnificationFactor" -> Automatic};
+Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "MagnificationFactor" -> Automatic };
 LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
     Block[{topicsTbl, k, numberOfTableColumns, mFactor},
 
@@ -323,7 +336,7 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
 
       If[ KeyExistsQ[context, "topicsTable"],
         topicsTbl = context["topicsTable"],
-        (*ELSE*)
+      (*ELSE*)
         topicsTbl = First @ LSAMonTopicsTable[][xs,context]
       ];
 
@@ -334,3 +347,78 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
 
       LSAMon[ topicsTbl, context ]
     ];
+
+
+ClearAll[LSAMonTopicsRepresentation]
+
+Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
+
+LSAMonTopicsRepresentation[][xs_, context_] :=
+    LSAMonTopicsRepresentation[Automatic,"ComputeTopicRepresentation" -> True][xs, context];
+
+LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, context_] :=
+    Block[{computeTopicRepresentaionQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
+
+      computeTopicRepresentaionQ = OptionValue[LSAMonTopicsRepresentation, "ComputeTopicRepresentation"];
+      assignAutomaticTopicNamesQ = OptionValue[LSAMonTopicsRepresentation, "AssignAutomaticTopicNames"];
+
+      If[ KeyExistsQ[context, "docTermMat"] && KeyExistsQ[context, "W"],
+
+        Which[
+
+          TrueQ[tags===Automatic] && KeyExistsQ[context, "docTags"],
+          ctTags = context["docTags"],
+
+          TrueQ[tags===Automatic],
+          ctTags = Range[Dimensions[context["docTermMat"]][[1]]],
+
+          Length[tags] == Dimensions[context["docTermMat"]][[1]],
+          ctTags = tags,
+
+          True,
+          Echo["The length of the argument tags is expected to be same as the number of rows of the document-term matrix.",
+            "LSAMonTopicsRepresentation:"];
+          Return[None]
+        ];
+
+        {W, H} = NormalizeMatrixProduct[context["W"], context["H"] ];
+        W = Clip[W, {0.01, 1}, {0, 1}];
+
+
+        If[ computeTopicRepresentaionQ || !KeyExistsQ[context, "docTopicIndices"],
+
+        (* This is expected to be fairly quick, less than 1 second. *)
+        (* If not, some sort of memoization has to be used, which will require consistency support. *)
+        (* Using the option "ComputeTopicRepresentation" comes from those computation management concerns. *)
+          docTopicIndices =
+              Block[{v = Select[#, # > 0 &], vpos, ts1, ts2},
+                vpos = Flatten@Position[#, x_ /; x > 0];
+                ts1 =
+                    OutlierPosition[v,
+                      TopOutliers@*SPLUSQuartileIdentifierParameters];
+                ts2 =
+                    OutlierPosition[v, TopOutliers@*HampelIdentifierParameters];
+                Which[
+                  Length[ts1] > 0, vpos[[ts1]],
+                  Length[ts2] > 0, vpos[[ts2]],
+                  True, vpos
+                ]
+              ] & /@ W;
+        ];
+
+        (* Note that CrossTabulate is going to sort the matrix rows. *)
+        (* The matrix rows correspond to the union of the tags. *)
+        ctMat = CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
+
+        If[ assignAutomaticTopicNamesQ,
+          ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ]
+        ];
+
+        LSAMon[ ctMat, Join[ context, <| "docTopicIndices"->docTopicIndices |> ] ],
+      (* ELSE *)
+
+        Echo["No document-term matrix factorization is computed.", "LSAMonTopicsRepresentation:"];
+        None
+      ]
+    ];
+
