@@ -42,6 +42,9 @@
 (* :Keywords: *)
 (* :Discussion:
 
+
+   # In brief
+
    This package provides a heatmap plot with hierarchical clustering reordering of the rows and columns.
    
    The rows and columns can be clustered with different distance and linkage functions.
@@ -50,12 +53,24 @@
 
    The dendrograms of the obtained clusters are not drawn by default because I don't like how the plot looks.
 
+
+   # Acknowledgements
+
+   I heavily borrowed ideas and code from:
+
+      - https://mathematica.stackexchange.com/a/103297/34008 (ZachB),
+
+      - https://mathematica.stackexchange.com/a/2559/34008 (kglr).
+
+
    # Usage examples
 
       HeatmapPlot[Transpose@ExampleData[{"Statistics", "EmployeeAttitude"}]]
 
-      HeatmapPlot[Transpose@ExampleData[{"Statistics", "EmployeeAttitude"}],
-         DistanceFunction -> {EuclideanDistance, CosineDistance}]
+      HeatmapPlot[ExampleData[{"Statistics", "EmployeeAttitude"}],
+          DistanceFunction -> {CosineDistance, None},
+          Dendrogram -> {True, False},
+          ImageSize -> 600, AspectRatio -> 1/1.5]
 
    Anton Antonov
    2017-10-06
