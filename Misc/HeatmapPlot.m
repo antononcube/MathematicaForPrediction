@@ -101,7 +101,8 @@ Clear[HeatmapPlot]
 
 Options[HeatmapPlot] =
     Join[
-      { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic}, Dendrogram -> False },
+      { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic},
+        Dendrogram -> False, "DendrogramRatio" -> {0.2} },
       Options[MatrixPlot] ];
 
 
@@ -124,10 +125,11 @@ HeatmapPlot[data_?MatrixQ, {}|Automatic, {}|Automatic, opts:OptionsPattern[]] :=
     HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts ];
 
 HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[]] :=
-    Block[{distFunction, linkFunction, dendrogramQs,
+    Block[{distFunction, linkFunction, dendrogramQs, dendrogramRatios,
       rowClustering, columnClustering, rowReordering, columnReordering,
       dendrogramRight = {}, dendrogramTop = {},
-      rowNameTicks, columnNameTicks, mat, tOpts},
+      rowNameTicks, columnNameTicks, mat, tOpts,
+      coords, bounds},
 
       mat = If[ TrueQ[Head[data] === SparseArray], Normal[data], data];
 
@@ -141,6 +143,9 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
       If[Length[dendrogramQs] < 2, dendrogramQs = Flatten@{dendrogramQs, dendrogramQs}];
       dendrogramQs = dendrogramQs /. None->False;
       dendrogramQs = TrueQ /@ dendrogramQs;
+
+      dendrogramRatios = OptionValue[HeatmapPlot, "DendrogramRatio"];
+      If[Length[dendrogramRatios] < 2, dendrogramRatios = Flatten@{dendrogramRatios, dendrogramRatios}];
 
       If[ distFunction[[1]] === Automatic, distFunction[[1]] = EuclideanDistance ];
       If[ distFunction[[2]] === Automatic, distFunction[[2]] = EuclideanDistance ];
@@ -160,7 +165,14 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
         rowReordering = HierarchicalClustering`ClusterFlatten[rowClustering];
 
         If[ dendrogramQs[[1]],
-          dendrogramRight = HierarchicalClustering`DendrogramPlot[rowClustering, Orientation -> Right]
+
+          dendrogramRight = HierarchicalClustering`DendrogramPlot[rowClustering, Orientation -> Right];
+
+          coords = Cases[dendrogramRight, Line[{x : {_, _} ..}] :> x, Infinity][[All, 1]];
+          bounds = {Min[coords], Max[coords]};
+          dendrogramRight = dendrogramRight
+               /. (Line[x : {{_, _} ..}] :>
+              Line[({Rescale[#[[1]], bounds, Dimensions[mat][[2]]*{1,1+dendrogramRatios[[1]]}], #[[2]] - 0.5}) & /@ x])
         ];
       ];
 
@@ -180,7 +192,15 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
         columnReordering = HierarchicalClustering`ClusterFlatten[columnClustering];
 
         If[ dendrogramQs[[2]],
-          dendrogramTop = HierarchicalClustering`DendrogramPlot[columnClustering, Orientation -> Top]
+
+          dendrogramTop = HierarchicalClustering`DendrogramPlot[columnClustering, Orientation -> Top];
+
+          coords = Cases[dendrogramTop, Line[{x : {_, _} ..}] :> x, Infinity][[All, 2]];
+          bounds = {Min[coords], Max[coords]};
+          dendrogramTop = dendrogramTop /. (Line[x : {{_, _} ..}] :>
+              Line[({#[[1]] - 0.5, Rescale[#[[2]], bounds, Dimensions[mat][[1]]*{1,1+dendrogramRatios[[2]]}]}) & /@ x])
+
+
         ];
       ];
 
@@ -192,7 +212,7 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
 
       mat = mat[[rowReordering,columnReordering]];
 
-      tOpts = DeleteCases[ {opts}, (DistanceFunction|Linkage|Dendrogram) -> ___ ];
+      tOpts = DeleteCases[ {opts}, (DistanceFunction|Linkage|Dendrogram|"DendrogramRatio") -> ___ ];
 
       Show[{
         MatrixPlotWithTooltips[mat, rowNames[[rowReordering]], columnNames[[columnReordering]],
@@ -204,13 +224,10 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
           ColorFunctionScaling -> True
         ],
         If[ TrueQ[dendrogramRight === {}], {},
-          Graphics[{GrayLevel[0.6],
-            Translate[
-              Translate[dendrogramRight[[1]], {Dimensions[mat][[2]], 0}], {0, -1 / 2}]}]
+          Graphics[{GrayLevel[0.6], dendrogramRight[[1]]}]
         ],
         If[ TrueQ[dendrogramTop === {}], {},
-          Graphics[{GrayLevel[0.6],
-            Translate[Translate[dendrogramTop[[1]], {0, Dimensions[mat][[1]]}], {-1 / 2, 0}]}]
+          Graphics[{GrayLevel[0.6], dendrogramTop[[1]]}]
         ]
       }]
     ] /; Dimensions[data] == { Length[rowNames], Length[columnNames] };
