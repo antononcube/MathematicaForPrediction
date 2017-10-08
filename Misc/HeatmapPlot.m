@@ -50,6 +50,13 @@
 
    The dendrograms of the obtained clusters are not drawn by default because I don't like how the plot looks.
 
+   # Usage examples
+
+      HeatmapPlot[Transpose@ExampleData[{"Statistics", "EmployeeAttitude"}]]
+
+      HeatmapPlot[Transpose@ExampleData[{"Statistics", "EmployeeAttitude"}],
+         DistanceFunction -> {EuclideanDistance, CosineDistance}]
+
    Anton Antonov
    2017-10-06
 
@@ -97,10 +104,13 @@ Options[HeatmapPlot] =
       { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic}, Dendrogram -> False },
       Options[MatrixPlot] ];
 
-HeatmapPlot[data_RSparseMatrix, opts:OptionsPattern[]] :=
+
+(*
+HeatmapPlot[data:_[Association[__]], opts:OptionsPattern[]] :=
     Block[{},
-      HeatmapPlot[ data["sparseArray"], data["rownames"], data["colnames"], opts ]
-    ] /; KeyExistsQ[data, "sparseArray"];
+      HeatmapPlot[ SparseArray[data], RSparseMatrix`RowNames[data], RSparseMatrix`ColumnNames[data], opts ]
+    ] /; SymbolName[Head[data]] == "RSparseMatrix";
+*)
 
 HeatmapPlot[xtabs_Association, opts:OptionsPattern[]] :=
     Block[{},
