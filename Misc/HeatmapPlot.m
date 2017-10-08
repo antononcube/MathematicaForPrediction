@@ -128,25 +128,35 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
       If[ distFunction[[1]] === Automatic, distFunction[[1]] = EuclideanDistance ];
       If[ distFunction[[2]] === Automatic, distFunction[[2]] = EuclideanDistance ];
 
-      If[ TrueQ[distFunction[[1]] =!= None],
+      Which[
+        TrueQ[distFunction[[1]] === None],
+        rowReordering = Range[Dimensions[mat][[1]]],
+
+        TrueQ[distFunction[[1]] === Sort],
+        rowReordering = Ordering[mat],
+
+        True,
         rowClustering =
             HierarchicalClustering`Agglomerate[mat -> Range[Length[mat]],
               DistanceFunction -> distFunction[[1]],
               Linkage -> linkFunction[[1]]];
-        rowReordering = HierarchicalClustering`ClusterFlatten[rowClustering];,
-        (* ELSE *)
-        rowReordering = Range[Dimensions[mat][[1]]]
+        rowReordering = HierarchicalClustering`ClusterFlatten[rowClustering];
       ];
 
-      If[ TrueQ[distFunction[[2]] =!= None],
+      Which[
+        TrueQ[distFunction[[2]] === None],
+        columnReordering = Range[Dimensions[mat][[2]]],
+
+        TrueQ[distFunction[[2]] === Sort],
+        columnReordering = Ordering[Transpose[mat]],
+
+        True,
         colClustering =
             HierarchicalClustering`Agglomerate[
               Transpose@mat -> Range[Dimensions[mat][[2]]],
               DistanceFunction -> distFunction[[2]],
               Linkage -> linkFunction[[2]]];
-        columnReordering = HierarchicalClustering`ClusterFlatten[colClustering];,
-        (* ELSE *)
-        columnReordering = Range[Dimensions[mat][[2]]];
+        columnReordering = HierarchicalClustering`ClusterFlatten[colClustering];
       ];
 
       rowNameTicks =
