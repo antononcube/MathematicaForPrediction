@@ -48,7 +48,7 @@
 
    The resulting heatmap has tooltips over the matrix elements: click on the plot and press "." .
 
-   The dendrograms of the optained clusters are not drawn at this point.
+   The dendrograms of the obtained clusters are not drawn by default because I don't like how the plot looks.
 
    Anton Antonov
    2017-10-06
@@ -94,7 +94,7 @@ Clear[HeatmapPlot]
 
 Options[HeatmapPlot] =
     Join[
-      { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic} },
+      { DistanceFunction -> {Automatic,Automatic}, Linkage -> {Automatic, Automatic}, Dendrogram -> False },
       Options[MatrixPlot] ];
 
 HeatmapPlot[data_RSparseMatrix, opts:OptionsPattern[]] :=
@@ -114,16 +114,23 @@ HeatmapPlot[data_?MatrixQ, {}|Automatic, {}|Automatic, opts:OptionsPattern[]] :=
     HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts ];
 
 HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[]] :=
-    Block[{distFunction, linkFunction, rowClustering, colClustering, rowReordering, columnReordering,
+    Block[{distFunction, linkFunction, dendrogramQs,
+      rowClustering, columnClustering, rowReordering, columnReordering,
+      dendrogramRight = {}, dendrogramTop = {},
       rowNameTicks, columnNameTicks, mat, tOpts},
 
       mat = If[ TrueQ[Head[data] === SparseArray], Normal[data], data];
 
       distFunction = OptionValue[HeatmapPlot, DistanceFunction];
-      If[Length[distFunction] == 1, distFunction = {distFunction, distFunction}];
+      If[Length[distFunction] < 2, distFunction = Flatten@{distFunction, distFunction}];
 
       linkFunction = OptionValue[HeatmapPlot, Linkage];
-      If[Length[linkFunction] == 1, linkFunction = {linkFunction, linkFunction}];
+      If[Length[linkFunction] < 2, linkFunction = Flatten@{linkFunction, linkFunction}];
+
+      dendrogramQs = OptionValue[HeatmapPlot, Dendrogram];
+      If[Length[dendrogramQs] < 2, dendrogramQs = Flatten@{dendrogramQs, dendrogramQs}];
+      dendrogramQs = dendrogramQs /. None->False;
+      dendrogramQs = TrueQ /@ dendrogramQs;
 
       If[ distFunction[[1]] === Automatic, distFunction[[1]] = EuclideanDistance ];
       If[ distFunction[[2]] === Automatic, distFunction[[2]] = EuclideanDistance ];
@@ -141,6 +148,10 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
               DistanceFunction -> distFunction[[1]],
               Linkage -> linkFunction[[1]]];
         rowReordering = HierarchicalClustering`ClusterFlatten[rowClustering];
+
+        If[ dendrogramQs[[1]],
+          dendrogramRight = HierarchicalClustering`DendrogramPlot[rowClustering, Orientation -> Right]
+        ];
       ];
 
       Which[
@@ -151,13 +162,18 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
         columnReordering = Ordering[Transpose[mat]],
 
         True,
-        colClustering =
+        columnClustering =
             HierarchicalClustering`Agglomerate[
               Transpose@mat -> Range[Dimensions[mat][[2]]],
               DistanceFunction -> distFunction[[2]],
               Linkage -> linkFunction[[2]]];
-        columnReordering = HierarchicalClustering`ClusterFlatten[colClustering];
+        columnReordering = HierarchicalClustering`ClusterFlatten[columnClustering];
+
+        If[ dendrogramQs[[2]],
+          dendrogramTop = HierarchicalClustering`DendrogramPlot[columnClustering, Orientation -> Top]
+        ];
       ];
+
 
       rowNameTicks =
           Table[{i, rowNames[[rowReordering[[i]]]], {0, 0}}, {i, 1, Length[rowReordering]}];
@@ -166,16 +182,27 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
 
       mat = mat[[rowReordering,columnReordering]];
 
-      tOpts = DeleteCases[ {opts}, (DistanceFunction|Linkage) -> ___ ];
+      tOpts = DeleteCases[ {opts}, (DistanceFunction|Linkage|Dendrogram) -> ___ ];
 
-      MatrixPlotWithTooltips[mat, rowNames[[rowReordering]], columnNames[[columnReordering]],
-        tOpts,
-        FrameStyle -> AbsoluteThickness[0],
-        FrameTicks -> {{rowNameTicks, None}, {None, columnNameTicks}},
-        BaseStyle -> {FontSize -> 10},
-        ColorFunction -> Automatic,
-        ColorFunctionScaling -> True
-      ]
+      Show[{
+        MatrixPlotWithTooltips[mat, rowNames[[rowReordering]], columnNames[[columnReordering]],
+          tOpts,
+          FrameStyle -> AbsoluteThickness[0],
+          FrameTicks -> {{rowNameTicks, None}, {columnNameTicks, None}},
+          BaseStyle -> {FontSize -> 10},
+          ColorFunction -> Automatic,
+          ColorFunctionScaling -> True
+        ],
+        If[ TrueQ[dendrogramRight === {}], {},
+          Graphics[{GrayLevel[0.6],
+            Translate[
+              Translate[dendrogramRight[[1]], {Dimensions[mat][[2]], 0}], {0, -1 / 2}]}]
+        ],
+        If[ TrueQ[dendrogramTop === {}], {},
+          Graphics[{GrayLevel[0.6],
+            Translate[Translate[dendrogramTop[[1]], {0, Dimensions[mat][[1]]}], {-1 / 2, 0}]}]
+        ]
+      }]
     ] /; Dimensions[data] == { Length[rowNames], Length[columnNames] };
 
 End[] (* `Private` *)
