@@ -119,10 +119,6 @@ If[Length[DownValues[MathematicaForPredictionUtilities`CrossTensorate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
 ];
 
-If[Length[DownValues[HeatmapPlot`HeatmapPlot]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/HeatmapPlot.m"]
-];
-
 
 (**************************************************************)
 (* Generation                                                 *)
@@ -403,7 +399,9 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
                   Length[ts2] > 0, vpos[[ts2]],
                   True, vpos
                 ]
-              ] & /@ W;
+              ] & /@ W,
+          (* ELSE *)
+          docTopicIndices = context["docTopicIndices"]
         ];
 
         (* Note that CrossTabulate is going to sort the matrix rows. *)
