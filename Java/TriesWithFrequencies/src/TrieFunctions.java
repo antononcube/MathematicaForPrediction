@@ -834,6 +834,7 @@ public class TrieFunctions {
         }
     }
 
+
     ///**************************************************************
     /// Removal functions
     ///**************************************************************
@@ -1066,6 +1067,45 @@ public class TrieFunctions {
 
         return map( tr, removalObj, null );
     }
+
+
+    ///**************************************************************
+    /// Prune functions
+    ///**************************************************************
+
+    protected static Trie pruneRec( Trie tr, int maxLevel, int n ) {
+
+        if ( tr.getChildren() != null && !tr.getChildren().isEmpty() && ( maxLevel < 0 || n < maxLevel ) ) {
+            Map<String, Trie> resChildren = new HashMap<>();
+
+            for (Trie elem : tr.getChildren().values()) {
+
+                Trie rElem = pruneRec(elem, maxLevel, n + 1);
+
+                resChildren.put(elem.getKey(), rElem);
+            }
+
+            if (resChildren.isEmpty()) {
+                return tr.clone();
+            }
+
+            Trie res = new Trie(tr.getKey(), tr.getValue());
+            res.setChildren(resChildren);
+
+            return res;
+        } else {
+            return new Trie(tr.getKey(), tr.getValue());
+        }
+    }
+
+    //! @description Prunes the trie to a specified maximum level.
+    //! @param tr trie object
+    //! @param maxLevel maximum level
+    public static Trie prune(Trie tr, int maxLevel ) {
+
+      return pruneRec( tr, maxLevel, 0);
+    }
+
 
     ///**************************************************************
     /// Random choice functions
