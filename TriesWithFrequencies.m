@@ -86,6 +86,8 @@ TrieMemberQ::usage = "TrieMemberQ[t, w] checks is the \"word\" w in the trie t."
 
 TriePrune::usage = "TriePrune[t,maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
 
+TrieNodeCounts::usage = "TrieNodeCounts[t] gives and association with the total number of nodes, internal nodes only, and leaves only."
+
 ToTrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
 the specified element names for the conversion."
@@ -527,6 +529,13 @@ TriePruneRec[tree_, maxLevel_Integer, level_Integer] :=
         Prepend[TriePruneRec[#, maxLevel, level + 1] & /@ Rest[tree],
           tree[[1]]]
       ]
+    ];
+
+Clear[TrieNodeCounts]
+TrieNodeCounts[tr_]:=
+    Block[{cs},
+      cs = { Count[tr, {{_,_}, __}, Infinity], Count[tr, {{_,_}}, Infinity] };
+      <| "total"->Total[cs], "internal"->cs[[1]], "leaves"->cs[[2]]|>
     ];
 
 Clear[ToTrieFromJSON, ToTrieFromJSONRec]
