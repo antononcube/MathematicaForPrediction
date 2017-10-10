@@ -84,6 +84,8 @@ TrieCompleteMatch::usage = "TrieCompleteMatch[ t, pos ] checks is the position l
 
 TrieMemberQ::usage = "TrieMemberQ[t, w] checks is the \"word\" w in the trie t."
 
+TriePrune::usage = "TriePrune[t,maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
+
 ToTrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
 the specified element names for the conversion."
@@ -509,6 +511,23 @@ TrieMemberQ[trie_, sword_List] :=
       ]
     ];
 
+Clear[TriePrune, TriePruneRec]
+TriePrune[trie_, maxLevel_Integer] :=
+    Block[{},
+      TriePruneRec[trie, maxLevel, 0]
+    ];
+TriePruneRec[tree_, maxLevel_Integer, level_Integer] :=
+
+    Block[{nodeRules},
+      Which[
+        tree === {}, {},
+        Length[tree] == 1, tree,
+        maxLevel <= level, Take[tree, 1],
+        True,
+        Prepend[TriePruneRec[#, maxLevel, level + 1] & /@ Rest[tree],
+          tree[[1]]]
+      ]
+    ];
 
 Clear[ToTrieFromJSON, ToTrieFromJSONRec]
 
@@ -531,6 +550,7 @@ ToTrieFromJSONRec[jsonTrie : {_Rule ...}, elementNames : {key_String, value_Stri
         tr
       ]
     ];
+
 
 End[]
 
