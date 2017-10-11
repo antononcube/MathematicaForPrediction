@@ -165,6 +165,8 @@ JavaTrieRootToLeafPaths::usage = "Gives lists of key-value pairs corresponding t
 
 JavaTrieRegexRemove::usage = "Remove nodes that have keys adhering to a regex expression."
 
+JavaTriePrune::usage = "Prune a trie to a specified maximum level. The root is level 0."
+
 JavaTrieShrink::usage = "JavaTrieShrink[ jTr_, sep_String:\"\"] concatenates the \"single path\" nodes\
  in the trie jTr using the given separator sep."
 
@@ -382,6 +384,10 @@ JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ] :=
 
 JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, postfix_String] :=
     TrieFunctions`removeByParetoFraction[jTr, paretoFraction, True, postfix];
+
+Clear[JavaTriePrune]
+JavaTriePrune[jTr_?JavaObjectQ, maxLevel_Integer ] :=
+    TrieFunctions`prune[jTr, maxLevel];
 
 Clear[JavaTrieRandomChoice]
 Options[JavaTrieRandomChoice] = { "Weighted"->True };
