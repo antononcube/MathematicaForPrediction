@@ -54,6 +54,12 @@
    The dendrograms of the obtained clusters are not drawn by default because I don't like how the plot looks.
 
 
+   # Details
+
+   The option DistanceFunction can take as values Sort and None. With Sort the rows and/or columns will be
+   sorted as vectors.
+
+
    # Acknowledgements
 
    I heavily borrowed ideas and code from:
@@ -68,7 +74,7 @@
       HeatmapPlot[Transpose@ExampleData[{"Statistics", "EmployeeAttitude"}]]
 
       HeatmapPlot[ExampleData[{"Statistics", "EmployeeAttitude"}],
-          DistanceFunction -> {CosineDistance, None},
+          DistanceFunction -> {CosineDistance, Sort},
           Dendrogram -> {True, False},
           ImageSize -> 600, AspectRatio -> 1/1.5]
 
