@@ -324,12 +324,17 @@ LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
 
 ClearAll[LSAMonEchoTopicsTable]
 
-Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic };
+Options[LSAMonEchoTopicsTable] = Join[
+  {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
+  Options[Multicolumn] ];
+
 LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor},
+    Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor, tOpts},
 
       numberOfTableColumns = OptionValue["NumberOfTableColumns"];
+
       numberOfTerms = OptionValue["NumberOfTerms"];
+
       mFactor = OptionValue["MagnificationFactor"];
       If[ TrueQ[mFactor === Automatic], mFactor = 0.8 ];
 
@@ -341,10 +346,18 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
         topicsTbl = First @ LSAMonTopicsTable["NumberOfTerms"->numberOfTerms][xs,context]
       ];
 
+      tOpts = Join[
+        DeleteCases[ {opts}, ("NumberOfTableColumns"|"NumberOfTerms"|"MagnificationFactor") -> __],
+        {Dividers -> All, Alignment -> Left} ];
+
       Echo @ Magnify[#, mFactor] & @
-          Grid[
-            Partition[ ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns],
-            Dividers -> All, Alignment -> Left]
+          If[ TrueQ[numberOfTableColumns === Automatic],
+            Multicolumn[
+              ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], tOpts],
+            (* ELSE *)
+            Multicolumn[
+              ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns, tOpts]
+          ];
 
       LSAMon[ topicsTbl, context ]
     ];
