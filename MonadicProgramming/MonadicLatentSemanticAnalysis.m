@@ -115,6 +115,10 @@ If[Length[DownValues[DocumentTermMatrixConstruction`DocumentTermMatrix]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DocumentTermMatrixConstruction.m"]
 ];
 
+If[Length[DownValues[NonNegativeMatrixFactorization`GDCLS]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/NonNegativeMatrixFactorization.m"]
+];
+
 If[Length[DownValues[MathematicaForPredictionUtilities`CrossTensorate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
 ];
@@ -320,11 +324,12 @@ LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
 
 ClearAll[LSAMonEchoTopicsTable]
 
-Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "MagnificationFactor" -> Automatic };
+Options[LSAMonEchoTopicsTable] = { "NumberOfTableColumns" -> 10, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic };
 LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{topicsTbl, k, numberOfTableColumns, mFactor},
+    Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor},
 
       numberOfTableColumns = OptionValue["NumberOfTableColumns"];
+      numberOfTerms = OptionValue["NumberOfTerms"];
       mFactor = OptionValue["MagnificationFactor"];
       If[ TrueQ[mFactor === Automatic], mFactor = 0.8 ];
 
@@ -333,7 +338,7 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
       If[ KeyExistsQ[context, "topicsTable"],
         topicsTbl = context["topicsTable"],
       (*ELSE*)
-        topicsTbl = First @ LSAMonTopicsTable[][xs,context]
+        topicsTbl = First @ LSAMonTopicsTable["NumberOfTerms"->numberOfTerms][xs,context]
       ];
 
       Echo @ Magnify[#, mFactor] & @
