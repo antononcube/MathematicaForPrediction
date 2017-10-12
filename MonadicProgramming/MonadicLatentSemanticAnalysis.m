@@ -438,3 +438,35 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
       ]
     ];
 
+Clear[LSAMonEchoTextCollectionStatistics]
+
+Options[LSAMonEchoTextCollectionStatistics] = Options[Histogram];
+
+LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
+    Block[{texts, textWords, eLabel=None, dOpts},
+
+      Which[
+        LSAMonTextCollectionQ[xs], texts = xs; eLabel = "Pipeline value:",
+        KeyExistsQ[context,"texts"], texts = context["texts"]; eLabel = "Context value \"texts\":",
+        True,
+        Echo["Ingest texts first.", "LSMonMakeDocumentTermMatrix:"];
+        None
+      ];
+
+
+      textWords = StringSplit /@ texts;
+
+      dOpts = Join[{opts}, {PlotRange -> All, PlotTheme -> "Detailed", ImageSize->300}];
+
+      Echo[
+          Grid[{
+            {Row[{"Number of texts:", Length[texts]}],
+              Row[{"Number of unique words:", Length[Union[Flatten[textWords]]]}]},
+            {Histogram[StringLength /@ texts, PlotLabel -> "Number of characters", dOpts],
+              Histogram[Length /@ textWords, PlotLabel -> "Number of words", dOpts]}
+          }],
+        eLabel
+      ];
+
+      LSAMon[xs,context]
+    ];
