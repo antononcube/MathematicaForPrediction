@@ -244,6 +244,9 @@ Transpose[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTe
       assoc
     ];
 
+
+Protect[Association];
+
 End[] (* `Private` *)
 
 EndPackage[]
