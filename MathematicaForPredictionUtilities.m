@@ -342,9 +342,6 @@ GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
       gridFunc[grData]
     ];
 
-
-Protect[Association];
-
 End[]
 
 EndPackage[]
