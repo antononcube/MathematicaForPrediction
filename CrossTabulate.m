@@ -44,6 +44,11 @@
 (* :Keywords: cross tabulation, xtabs *)
 (* :Discussion:
 
+    # Motivation
+
+    # Usage examples
+
+
 
 *)
 
@@ -227,6 +232,17 @@ MatrixPlot[
     (MatrixPlot[#1,
       Append[{opts}, FrameLabel -> {{Keys[x][[2]], None}, {Keys[x][[3]], None}}]] & @@ x);
 
+
+Transpose[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"]),args___] ^:=
+    Block[{assoc = x},
+      If[ KeyExistsQ[x, "XTABMatrix"],
+        assoc["XTABMatrix"] = Transpose[x["XTABMatrix"],args],
+        assoc["XTABTensor"] = Transpose[x["XTABTensor"],args]
+      ];
+      assoc["ColumnNames"] = x["RowNames"];
+      assoc["RowNames"] = x["ColumnNames"];
+      assoc
+    ];
 
 End[] (* `Private` *)
 
