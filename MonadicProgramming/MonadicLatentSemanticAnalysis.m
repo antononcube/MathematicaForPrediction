@@ -123,6 +123,10 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
+If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
+];
+
 
 (**************************************************************)
 (* Generation                                                 *)
@@ -214,11 +218,11 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizing
 
         W = SparseArray[W];
         H = SparseArray[H];
-        {W, H} = GDCLSGlobal[M1, W, H, opts];
+        {W, H} = NonNegativeMatrixFactorization`GDCLSGlobal[M1, W, H, opts];
 
         automaticTopicNames =
                 Table[
-                    StringJoin[Riffle[BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
+                    StringJoin[Riffle[NonNegativeMatrixFactorization`BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
                   {ind, 1, Dimensions[W][[2]]}];
 
         LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames"->automaticTopicNames |>]],
@@ -291,7 +295,7 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
 
       res =
           Map[
-            BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
+            NonNegativeMatrixFactorization`BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
             Normal@H[[Flatten@{vectorIndices}]]
           ];
 
@@ -408,10 +412,10 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
               Block[{v = Select[#, # > 0 &], vpos, ts1, ts2},
                 vpos = Flatten@Position[#, x_ /; x > 0];
                 ts1 =
-                    OutlierPosition[v,
-                      TopOutliers@*SPLUSQuartileIdentifierParameters];
+                    OutlierIdentifiers`OutlierPosition[v,
+                      OutlierIdentifiers`TopOutliers@*SPLUSQuartileIdentifierParameters];
                 ts2 =
-                    OutlierPosition[v, TopOutliers@*HampelIdentifierParameters];
+                    OutlierIdentifiers`OutlierPosition[v, OutlierIdentifiers`TopOutliers@*HampelIdentifierParameters];
                 Which[
                   Length[ts1] > 0, vpos[[ts1]],
                   Length[ts2] > 0, vpos[[ts2]],
@@ -424,7 +428,7 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
 
         (* Note that CrossTabulate is going to sort the matrix rows. *)
         (* The matrix rows correspond to the union of the tags. *)
-        ctMat = CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
+        ctMat = CrossTabulate`CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
 
         If[ assignAutomaticTopicNamesQ,
           ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ]
