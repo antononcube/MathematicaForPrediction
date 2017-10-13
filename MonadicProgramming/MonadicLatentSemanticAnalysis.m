@@ -119,8 +119,8 @@ If[Length[DownValues[NonNegativeMatrixFactorization`GDCLS]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/NonNegativeMatrixFactorization.m"]
 ];
 
-If[Length[DownValues[MathematicaForPredictionUtilities`CrossTensorate]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
 
