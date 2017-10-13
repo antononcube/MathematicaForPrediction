@@ -485,6 +485,16 @@ ImposeRowNames[rmat_RSparseMatrix, rowNames : {_String ..}] :=
 ImposeColumnNames[rmat_RSparseMatrix, colNames : {_String ..}] :=
     Transpose[ImposeRowNames[Transpose[rmat], colNames]];
 
+
+Clear[RSparseMatrixToTriplets]
+RSparseMatrixToTriplets[ rsmat_RSparseMatrix ] :=
+    Block[{t},
+      t = Most[ArrayRules[rsmat]];
+      t[[All, 1, 1]] = t[[All, 1, 1]] /. Thread[Range[RowsCount[rsmat]] -> RowNames[rsmat]];
+      t[[All, 1, 2]] = t[[All, 1, 2]] /. Thread[Range[ColumnsCount[rsmat]] -> ColumnNames[rsmat]];
+      Flatten/@ (List @@@ t)
+    ];
+
 (* Delegation to SparseArray functions *)
 
 (* This is similar to the OOP design pattern Decorator.
