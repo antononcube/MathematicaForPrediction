@@ -49,8 +49,8 @@ BeginTestSection["JavaTriesWithFrequencies-Unit-Tests"]
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-		Set[$JavaTriesWithFrequenciesPath, "/Users/antonov/MathFiles/MathematicaForPrediction/Java/TriesWithFrequencies"],
-    Set[dirName, "/Users/antonov/MathFiles/MathematicaForPrediction"],
+		Set[$JavaTriesWithFrequenciesPath, "/Users/antonov/MathematicaForPrediction/Java/TriesWithFrequencies"],
+    Set[dirName, "/Users/antonov/MathematicaForPrediction"],
 		{
 			DirectoryQ[$JavaTriesWithFrequenciesPath],
 			FileExistsQ[FileNameJoin[{$JavaTriesWithFrequenciesPath, "TriesWithFrequencies.jar"}]],
@@ -116,11 +116,11 @@ VerificationTest[(* 6 *)
 ]
 
 VerificationTest[(* 7 *)
-	JavaTrieHasCompleteMatch[jTr, Characters[#]] & /@ {"bark", "ba"}
+	JavaTrieHasCompleteMatchQ[jTr, Characters[#]] & /@ {"bark", "ba"}
 	,
 	{True,False}
 	,
-	TestID->"JavaTrieHasCompleteMatch"
+	TestID->"JavaTrieHasCompleteMatchQ"
 ]
 
 VerificationTest[(* 8 *)
@@ -148,7 +148,7 @@ VerificationTest[(* 10 *)
 ]
 
 VerificationTest[(* 11 *)
-	JLink`JavaObjectToExpression[JavaTrieHasCompleteMatch[jTr, Map[Characters, List["barked", "balm", "barking"]]]]
+	JLink`JavaObjectToExpression[JavaTrieHasCompleteMatchQ[jTr, Map[Characters, List["barked", "balm", "barking"]]]]
 	,
 	List[True, False, True]	
 ]
@@ -214,11 +214,11 @@ VerificationTest[(* 18 *)
 ]
 
 VerificationTest[(* 19 *)
-  JavaTrieHasCompleteMatch[jTr2, Characters@#] & /@ {"ba", "bar"}
+  JavaTrieHasCompleteMatchQ[jTr2, Characters@#] & /@ {"ba", "bar"}
   ,
 	{False, True}
   ,
-  TestID->"JavaTrieHasCompleteMatch1"
+  TestID->"JavaTrieHasCompleteMatchQ1"
 ]
 
 VerificationTest[(* 20 *)
