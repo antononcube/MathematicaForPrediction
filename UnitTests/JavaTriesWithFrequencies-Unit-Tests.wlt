@@ -116,11 +116,11 @@ VerificationTest[(* 6 *)
 ]
 
 VerificationTest[(* 7 *)
-	JavaTrieCompleteMatch[jTr, Characters[#]] & /@ {"bark", "ba"}
+	JavaTrieHasCompleteMatch[jTr, Characters[#]] & /@ {"bark", "ba"}
 	,
 	{True,False}
 	,
-	TestID->"JavaTrieCompleteMatch"
+	TestID->"JavaTrieHasCompleteMatch"
 ]
 
 VerificationTest[(* 8 *)
@@ -148,7 +148,7 @@ VerificationTest[(* 10 *)
 ]
 
 VerificationTest[(* 11 *)
-	JLink`JavaObjectToExpression[JavaTrieCompleteMatch[jTr, Map[Characters, List["barked", "balm", "barking"]]]]
+	JLink`JavaObjectToExpression[JavaTrieHasCompleteMatch[jTr, Map[Characters, List["barked", "balm", "barking"]]]]
 	,
 	List[True, False, True]	
 ]
@@ -214,11 +214,11 @@ VerificationTest[(* 18 *)
 ]
 
 VerificationTest[(* 19 *)
-  JavaTrieCompleteMatch[jTr2, Characters@#] & /@ {"ba", "bar"}
+  JavaTrieHasCompleteMatch[jTr2, Characters@#] & /@ {"ba", "bar"}
   ,
 	{False, True}
   ,
-  TestID->"JavaTrieCompleteMatch1"
+  TestID->"JavaTrieHasCompleteMatch1"
 ]
 
 VerificationTest[(* 20 *)
