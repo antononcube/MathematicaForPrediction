@@ -319,10 +319,14 @@ JavaTrieRetrieve[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
 
 Clear[JavaTriePosition]
 JavaTriePosition[jTr_?JavaObjectQ, sword : {_String ..}] :=
-    TrieFunctions`position[jTr, Arrays`asList[MakeJavaObject[sword]]];
+    JavaObjectToExpression @ TrieFunctions`position[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
 JavaTriePosition[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
-    JavaTrieMapOptimizationCall[TrieFunctions`position, jTr, swords];
+    JavaObjectToExpression /@
+        Map[
+          JavaObjectToExpression,
+          JavaTrieMapOptimizationCall[TrieFunctions`mapPosition, jTr, swords]
+        ];
 
 Clear[JavaTrieKeyQ]
 JavaTrieKeyQ[jTr_?JavaObjectQ, sword : {_String ..}] :=
