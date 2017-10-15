@@ -141,15 +141,14 @@ GenerateStateMonadCode[ "LSAMon", "StringContextNames" -> True ]
 (* General functions                                          *)
 (**************************************************************)
 
-
 Clear[LSAMonTextCollectionQ]
 LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ];
 
+
 ClearAll[LSAMonMakeDocumentTermMatrix]
 
-LSAMonMakeDocumentTermMatrix[___][None] := None
-LSAMonMakeDocumentTermMatrix[stemRules : {_String ...},
-  stopWords : {_String ...}][xs_, context_] :=
+LSAMonMakeDocumentTermMatrix[___][None] := None;
+LSAMonMakeDocumentTermMatrix[stemRules : {_String ...}, stopWords : {_String ...}][xs_, context_] :=
     Block[{docTermMat, terms},
       Which[
         LSAMonTextCollectionQ[xs],
@@ -169,7 +168,7 @@ LSAMonMakeDocumentTermMatrix[stemRules : {_String ...},
 
 ClearAll[LSAMonApplyTermWeightFunctions]
 
-LSAMonApplyTermWeightFunctions[___][None] := None
+LSAMonApplyTermWeightFunctions[___][None] := None;
 LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_] :=
     Block[{},
       Echo["Applying terms weight functions using their string names is not implemented yet.", "LSAMonApplyTermWeightFunctions:"];
@@ -193,7 +192,8 @@ LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
 ClearAll[LSAMonTopicExtraction]
 
 Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
-LSAMonTopicExtraction[___][None] := None
+
+LSAMonTopicExtraction[___][None] := None;
 LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=
     Block[{documentsPerTerm, pos, W, H, M1, k, p, m, n, automaticTopicNames },
       Which[
@@ -234,10 +234,10 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizing
     ];
 
 
-ClearAll[LSAMonStatiscalThesaurus]
+ClearAll[LSAMonStatisticalThesaurus]
 
-LSAMonStatiscalThesaurus[___][None] := None
-LSAMonStatiscalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
+LSAMonStatisticalThesaurus[___][None] := None;
+LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
     Block[{W, H, HNF, thRes},
       Which[
         KeyExistsQ[context, "H"] && KeyExistsQ[context, "W"],
@@ -259,10 +259,10 @@ LSAMonStatiscalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context
     ];
 
 
-ClearAll[LSAMonEchoStatiscalThesaurus]
+ClearAll[LSAMonEchoStatisticalThesaurus]
 
-LSAMonEchoStatiscalThesaurus[___][None] := None
-LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
+LSAMonEchoStatisticalThesaurus[___][None] := None;
+LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
     Block[{},
       Which[
 
@@ -286,6 +286,8 @@ LSAMonEchoStatiscalThesaurus[][xs_, context_] :=
 ClearAll[LSAMonBasisVectorInterpretation]
 
 Options[LSAMonBasisVectorInterpretation] = { "NumberOfTerms" -> 12 };
+
+LSAMonBasisVectorInterpretation[___][None] := None;
 LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:OptionsPattern[] ][xs_, context_] :=
     Block[{W, H, res, numberOfTerms},
 
@@ -310,6 +312,8 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
 ClearAll[LSAMonTopicsTable]
 
 Options[LSAMonTopicsTable] = { "NumberOfTerms" -> 12 };
+
+LSAMonTopicsTable[___][None] := None;
 LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
     Block[{topicsTbl, k, numberOfTerms},
 
@@ -332,6 +336,7 @@ Options[LSAMonEchoTopicsTable] = Join[
   {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
   Options[Multicolumn] ];
 
+LSAMonEchoTopicsTable[___][None] := None;
 LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
     Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor, tOpts},
 
@@ -371,13 +376,15 @@ ClearAll[LSAMonTopicsRepresentation]
 
 Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
+LSAMonTopicsRepresentation[___][None] := None;
+
 LSAMonTopicsRepresentation[][xs_, context_] :=
     LSAMonTopicsRepresentation[Automatic,"ComputeTopicRepresentation" -> True][xs, context];
 
 LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, context_] :=
-    Block[{computeTopicRepresentaionQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
+    Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
 
-      computeTopicRepresentaionQ = OptionValue[LSAMonTopicsRepresentation, "ComputeTopicRepresentation"];
+      computeTopicRepresentationQ = OptionValue[LSAMonTopicsRepresentation, "ComputeTopicRepresentation"];
       assignAutomaticTopicNamesQ = OptionValue[LSAMonTopicsRepresentation, "AssignAutomaticTopicNames"];
 
       If[ KeyExistsQ[context, "docTermMat"] && KeyExistsQ[context, "W"],
@@ -403,7 +410,7 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
         W = Clip[W, {0.01, 1}, {0, 1}];
 
 
-        If[ computeTopicRepresentaionQ || !KeyExistsQ[context, "docTopicIndices"],
+        If[ computeTopicRepresentationQ || !KeyExistsQ[context, "docTopicIndices"],
 
         (* This is expected to be fairly quick, less than 1 second. *)
         (* If not, some sort of memoization has to be used, which will require consistency support. *)
@@ -442,10 +449,12 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
       ]
     ];
 
+
 Clear[LSAMonEchoTextCollectionStatistics]
 
 Options[LSAMonEchoTextCollectionStatistics] = Options[Histogram];
 
+LSAMonEchoTextCollectionStatistics[___][None] := None;
 LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
     Block[{texts, textWords, eLabel=None, dOpts},
 
