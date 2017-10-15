@@ -319,7 +319,7 @@ public class TrieFunctions {
     //! @param tr a trie object
     //! @param word a list of strings
     //! @details Despite the name this function works on the part of the word that can be found in the trie.
-    public static Boolean completeMatch(Trie tr, List<String> word) {
+    public static Boolean hasCompleteMatch(Trie tr, List<String> word) {
         Trie subTr = retrieve(tr, word);
 
         if (subTr.getChildren() == null || subTr.getChildren().isEmpty()) {
@@ -334,13 +334,13 @@ public class TrieFunctions {
         }
     }
 
-    //! @description Optimization of completeMatch over a list of words.
+    //! @description Optimization of hasCompleteMatch over a list of words.
     //! @param tr a trie object
     //! @param words list of words
-    public static List<Boolean> mapCompleteMatch(Trie tr, List<List<String>> words) {
+    public static List<Boolean> mapHasCompleteMatch(Trie tr, List<List<String>> words) {
         List<Boolean> res = new ArrayList<>();
         for (List<String> s : words) {
-            res.add(completeMatch(tr, s));
+            res.add(hasCompleteMatch(tr, s));
         }
         return res;
     }
@@ -353,7 +353,7 @@ public class TrieFunctions {
         if (pos == null || pos.size() < word.size()) {
             return false;
         } else {
-            return completeMatch(tr, pos);
+            return hasCompleteMatch(tr, pos);
         }
     }
 
@@ -368,6 +368,28 @@ public class TrieFunctions {
         return res;
     }
 
+    //! @description Does the trie object tr has a word as key.
+    //! @param tr a trie object
+    //! @param word a word to be checked
+    public static Boolean isKey(Trie tr, List<String> word) {
+        List<String> pos = position(tr, word);
+        if (pos == null || pos.size() < word.size()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    //! @description Does the trie object tr has as keys each of the list of words.
+    //! @param tr a trie object
+    //! @param words a list of words
+    public static List<Boolean> mapIsKey(Trie tr, List<List<String>> words) {
+        List<Boolean> res = new ArrayList<>();
+        for (List<String> s : words) {
+            res.add(isKey(tr, s));
+        }
+        return res;
+    }
 
     public static class Pair<T1, T2> implements Map.Entry<T1, T2> {
         T1 key;
