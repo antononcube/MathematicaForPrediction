@@ -87,15 +87,15 @@ GenerateStateMonadCode[ "TextAMon", "StringContextNames" -> True ]
 (**************************************************************)
 
 
-if[ StringQ[$JavaTriesWithFrequenciesPath],
+If[ !StringQ[$JavaTriesWithFrequenciesPath],
   $JavaTriesWithFrequenciesPath = "/Users/antonov/MathematicaForPrediction/Java/TriesWithFrequencies";
 ];
 
-If[ StringQ[$POSTaggerPath],
+If[ !StringQ[$POSTaggerPath],
   $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-2015-12-09";
 ];
 
-If[ TrueQ[$LoadJava],
+If[ !( BooleanQ[$LoadJava] && ! $LoadJava ),
 
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
@@ -279,7 +279,7 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
       abbrTagRules = Reverse /@ tagSelectionRules;
 
       Echo @
-          With[{ jPOSWordTrie=jPOSWordTrie, imSize=imSize},
+          With[{ jPOSWordTrie=jPOSWordTrie, imSize=imSize, abbrTagRules=abbrTagRules},
             Manipulate[
               DynamicModule[{posTag, jjTr, leafProbs},
                 posTag = posAbbr /. abbrTagRules;
