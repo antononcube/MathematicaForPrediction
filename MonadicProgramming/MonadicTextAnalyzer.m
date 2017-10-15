@@ -305,6 +305,63 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
     ];
 
 
+ClearAll[TextAMonMakeWordTrie]
+
+TextAMonMakeWordTrie[___][None] := None;
+TextAMonMakeWordTrie[ separator_String:"®" ][xs_, context_] :=
+    Block[{words, jWordTrie},
+
+      Which[
+
+        KeyExistsQ[context, "posTags"],
+        words = context["posTags"][[All, All, 1]],
+
+        KeyExistsQ[context, "text"],
+        words = TextWords[context["text"]],
+
+        True,
+        Echo["Ingest text first.", "TextAMonCreateWordTrie:"];
+        Return[None]
+      ];
+
+      jWordTrie = JavaTrieCreateBySplit[ Map[StringJoin @@ Riffle[#, separator] &, words], separator];
+
+      TextAMon[ jWordTrie, Join[ context, <| "jWordTrie" -> jWordTrie |>] ]
+    ];
+
+
+ClearAll[TextAMonMakeNGramTrie]
+
+TextAMonMakeNGramTrie[___][None] := None;
+TextAMonMakeNGramTrie[___][xs_, context_] :=
+    Block[{},
+      Echo["Specify the number of words for the n-grams. (An integer.)", "TextAMonMakeNGramTrie:"];
+      None
+    ];
+TextAMonMakeNGramTrie[ n_Integer, separator_String:"~" ][xs_, context_] :=
+    Block[{words, ngrams, jNGramTrie},
+
+      Which[
+
+        KeyExistsQ[context, "posTags"],
+        words = context["posTags"][[All, All, 1]],
+
+        KeyExistsQ[context, "text"],
+        words = TextWords[context["text"]],
+
+        True,
+        Echo["Ingest text first.", "TextAMonMakeNGramTrie:"];
+        Return[None]
+      ];
+
+      ngrams = Map[StringJoin @@ Riffle[#, "~"] &, Flatten[Partition[#, n, 1] & /@ words, 1]];
+
+      jNGramTrie = JavaTrieNodeProbabilities[JavaTrieCreateBySplit[ngrams, "~"]];
+
+      TextAMon[ jNGramTrie, context ]
+    ];
+
+
 (*End[] * `Private` *)
 
 (*EndPackage[]*)
