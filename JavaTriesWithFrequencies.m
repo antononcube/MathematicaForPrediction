@@ -143,6 +143,9 @@ JavaTrieInsert::usage = "JavaTrieInsert[ jTr_, sw:{_String..}] inserts a list of
 JavaTrieInstall::usage = "JavaTrieInstall[path_String] installs Java and loads the JavaTrie classes\
  from the jar file in the specified class path."
 
+JavaTrieKeyQ::usage = "JavaTrieKeyQ[jTr_, sw:{_String..}] finds is the list of strings sw\
+a key in the Java trie jTr."
+
 JavaTrieLeafProbabilities::usage = "Gives the probabilities to reach the leaves of a trie."
 
 JavaTrieMapOptimizationCall::usage = "Used for optimization calls over lists of \"words\"."
@@ -152,6 +155,9 @@ JavaTrieMemberQ::usage = "Same as JavaTrieContains."
 JavaTrieMerge::usage = "Merges two Java tries."
 
 JavaTrieNodeCounts::usage = "Returns the node counts in trie (total, internal, leaves.)"
+
+JavaTriePosition::usage = "JavaTriePosition[ jTr_, sw:{_String..}] finds a sub-list of the list of strings\
+ sw that corresponds to a sub-trie in the Java trie jTr."
 
 JavaTrieNodeProbabilities::usage = "Gives the corresponding Java trie with node frequencies converted\
  to probabilities."
@@ -310,6 +316,20 @@ JavaTrieRetrieve[jTr_?JavaObjectQ, sword : {_String ..}] :=
 
 JavaTrieRetrieve[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
     JavaTrieMapOptimizationCall[TrieFunctions`mapRetrieve, jTr, swords];
+
+Clear[JavaTriePosition]
+JavaTriePosition[jTr_?JavaObjectQ, sword : {_String ..}] :=
+    TrieFunctions`position[jTr, Arrays`asList[MakeJavaObject[sword]]];
+
+JavaTriePosition[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
+    JavaTrieMapOptimizationCall[TrieFunctions`position, jTr, swords];
+
+Clear[JavaTrieKeyQ]
+JavaTrieKeyQ[jTr_?JavaObjectQ, sword : {_String ..}] :=
+    TrieFunctions`isKey[jTr, Arrays`asList[MakeJavaObject[sword]]];
+
+JavaTrieKeyQ[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
+    JavaTrieMapOptimizationCall[TrieFunctions`mapIsKey, jTr, swords];
 
 Clear[JavaTrieHasCompleteMatchQ]
 JavaTrieHasCompleteMatchQ[jTr_?JavaObjectQ, sword : {_String ..}] :=
