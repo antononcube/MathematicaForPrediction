@@ -121,7 +121,7 @@ BeginPackage["JavaTriesWithFrequencies`"]
 
 JavaTrieClone::usage = "JavaTrieClone[ jTr ] makes a deep clone of a given Java trie."
 
-JavaTrieCompleteMatch::usage = "JavaTrieCompleteMatch[ jTr_, sw:{_String..}] finds does a fraction\
+JavaTrieHasCompleteMatchQ::usage = "JavaTrieHasCompleteMatchQ[ jTr_, sw:{_String..}] finds does a fraction\
  of the list of strings sw is a complete match in the Java trie jTr."
 
 JavaTrieContains::usage = "JavaTrieContains[ jTr_, sw:{_String..}] finds is the list of strings\
@@ -129,7 +129,7 @@ JavaTrieContains::usage = "JavaTrieContains[ jTr_, sw:{_String..}] finds is the 
 
 JavaTrieCreate::usage = "JavaTrieCreate[ ws:{{_String..}..}] creates a Java trie object from a list of string lists."
 
-JavaTrieCreateBySplit::usage = "JavaTrieCreate[ ws:{_String..}, regex_String:\"\"] creates a Java trie object\
+JavaTrieCreateBySplit::usage = "JavaTrieCreateBySplit[ ws:{_String..}, regex_String:\"\"] creates a Java trie object\
  from a list of strings that are split with a given regex."
 
 JavaTrieEqualQ::usage = "JavaTrieEqualQ[ jTr1, jTr2] compares two Java tries and returns True if\
@@ -311,12 +311,12 @@ JavaTrieRetrieve[jTr_?JavaObjectQ, sword : {_String ..}] :=
 JavaTrieRetrieve[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
     JavaTrieMapOptimizationCall[TrieFunctions`mapRetrieve, jTr, swords];
 
-Clear[JavaTrieCompleteMatch]
-JavaTrieCompleteMatch[jTr_?JavaObjectQ, sword : {_String ..}] :=
-    TrieFunctions`completeMatch[jTr, Arrays`asList[MakeJavaObject[sword]]];
+Clear[JavaTrieHasCompleteMatchQ]
+JavaTrieHasCompleteMatchQ[jTr_?JavaObjectQ, sword : {_String ..}] :=
+    TrieFunctions`hasCompleteMatch[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
-JavaTrieCompleteMatch[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
-    JavaTrieMapOptimizationCall[TrieFunctions`mapCompleteMatch, jTr, swords];
+JavaTrieHasCompleteMatchQ[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
+    JavaTrieMapOptimizationCall[TrieFunctions`mapHasCompleteMatch, jTr, swords];
 
 Clear[JavaTrieContains]
 JavaTrieContains[jTr_?JavaObjectQ, sword : {_String ..}] :=
