@@ -331,6 +331,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoFunctionValue = ToExpression[monadName <> "EchoFunctionValue"],
       MStateEchoContext = ToExpression[monadName <> "EchoContext"],
       MStateEchoFunctionContext = ToExpression[monadName <> "EchoFunctionContext"],
+      MStateTakeContext = ToExpression[monadName <> "TakeContext"],
+      MStateTakeValue = ToExpression[monadName <> "TakeValue"],
       MStatePutContext = ToExpression[monadName <> "PutContext"],
       MStateModifyContext = ToExpression[monadName <> "ModifyContext"],
       MStateAddToContext = ToExpression[monadName <> "AddToContext"],
@@ -427,6 +429,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MStateEchoFunctionContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateEchoFunctionContext[f___][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
+
+      MStateTakeValue[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTakeValue[x_, context_] := x;
+
+      MStateTakeContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTakeContext[x_, context_] := context;
 
       MStatePutContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutContext[newContext_Association][x_, context_Association] := MState[x, newContext];
