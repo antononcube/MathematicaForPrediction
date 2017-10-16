@@ -199,12 +199,8 @@ TextAMonComputePOSTags[args___][xs_, context_] :=
         sentences = context["sentences"],
 
         True,
-        res = TextAMonSentences[args][xs, context];
-        If[ TrueQ[ res === None ],
-          Echo["Calculate POS tags first.", "TextAMonComputePOSTags:"];
-          Return[None]
-        ];
-        sentences = res[[2]]["sentences"]
+        Return[
+          TextAMon[xs,context] ⟹ TextAMonSentences[] ⟹ TextAMonComputePOSTags[args] ];
 
       ];
 
@@ -213,7 +209,6 @@ TextAMonComputePOSTags[args___][xs_, context_] :=
 
       TextAMon[ posTags, Join[ context, <| "posTags" -> posTags |>] ]
 ];
-
 
 ClearAll[TextAMonPOSWordsTrie]
 
