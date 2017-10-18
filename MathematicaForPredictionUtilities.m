@@ -75,16 +75,16 @@ Begin["`Private`"]
 
 
 If[Length[DownValues[MosaicPlot`MosaicPlot]] == 0,
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
 ];
 
-Needs["MosaicPlot`"];
+(*Needs["MosaicPlot`"];*)
 
 If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
-Needs["CrossTabulate`"];
+(*Needs["CrossTabulate`"];*)
 
 Clear[KurtosisUpperBound, ExcessKurtosis]
 
