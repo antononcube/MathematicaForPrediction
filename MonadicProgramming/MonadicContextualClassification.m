@@ -154,6 +154,10 @@ If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
 ];
 
+If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
+
 (*Needs["StateMonadCodeGenerator`"]*)
 (*Needs["VariableImportanceByClassifiers`"]*)
 
