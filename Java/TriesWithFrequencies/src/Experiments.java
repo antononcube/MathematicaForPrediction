@@ -97,7 +97,7 @@ public class Experiments {
         System.out.println("For " + sword );
         System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
         System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
-        System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
+        System.out.println( "complete match: " + TrieFunctions.hasCompleteMatch( strie, sword ));
         System.out.println();
 
         sword = new ArrayList() {{ add("b"); add("a"); }};
@@ -105,7 +105,7 @@ public class Experiments {
         System.out.println("For " + sword );
         System.out.println( "contains: " + TrieFunctions.contains( strie, sword ) );
         System.out.println( "position: " + TrieFunctions.position( strie, sword ) );
-        System.out.println( "complete match: " + TrieFunctions.completeMatch( strie, sword ));
+        System.out.println( "complete match: " + TrieFunctions.hasCompleteMatch( strie, sword ));
         System.out.println();
 
         Trie ftrie = TrieFunctions.retrieve( strie, sword );
