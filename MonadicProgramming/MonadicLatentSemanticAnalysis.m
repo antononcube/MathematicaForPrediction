@@ -225,6 +225,10 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizing
                     StringJoin[Riffle[NonNegativeMatrixFactorization`BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
                   {ind, 1, Dimensions[W][[2]]}];
 
+        If[ ! DuplicateFreeQ[automaticTopicNames],
+          automaticTopicNames = MapIndexed[ #1<>"-"<>ToString[#2]&, automaticTopicNames ];
+        ];
+
         LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames"->automaticTopicNames |>]],
 
         True,
