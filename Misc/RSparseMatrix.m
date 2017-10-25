@@ -188,8 +188,8 @@ ToRSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
 ToRSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
     Block[{},
       ToRSparseMatrix[ xtabs["XTABMatrix"],
-        "RowNames" -> ToString /@ xtabs["RowNames"],
-        "ColumnNames" -> ToString /@ xtabs["ColumnNames"],
+        "RowNames" -> Map[ToString, xtabs["RowNames"]],
+        "ColumnNames" -> Map[ToString, xtabs["ColumnNames"]],
         opts
       ]
     ]/; MemberQ[ Keys[xtabs], "XTABMatrix" ];
