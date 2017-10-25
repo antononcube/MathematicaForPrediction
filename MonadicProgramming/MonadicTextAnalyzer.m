@@ -199,9 +199,11 @@ TextAMonComputePOSTags[args___][xs_, context_] :=
         sentences = context["sentences"],
 
         True,
+        (* Return[
+          TextAMon[xs,context] ⟹ TextAMonSentences[] ⟹ TextAMonComputePOSTags[args] ]; *)
         Return[
-          TextAMon[xs,context] ⟹ TextAMonSentences[] ⟹ TextAMonComputePOSTags[args] ];
-
+          Fold[ TextAMon[xs,context], {TextAMonSentences[], TextAMonComputePOSTags[args]}];
+        ];
       ];
 
       posTags =
