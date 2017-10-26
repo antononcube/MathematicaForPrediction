@@ -184,6 +184,25 @@ TextAMonSentences[][xs_, context_] :=
     ];
 
 
+ClearAll[TextAMonWords]
+
+Options[TextAMonWords] = { Method-> TextWords };
+
+TextAMonWords[___][None] := None;
+TextAMonWords[][xs_, context_] :=
+    Block[{words, func = OptionValue[TextAMonWords, Method]},
+      Which[
+
+        KeyExistsQ[context, "sentences"],
+        words = Union[ Flatten[ func /@ context["sentences"] ] ];
+        TextAMon[ words, context ],
+
+        True,
+        Fold[ TextAMonBind, TextAMon[ xs, context ], { TextAMonSentences[], TextAMonWords[] }]
+      ]
+    ];
+
+
 ClearAll[TextAMonComputePOSTags]
 
 TextAMonComputePOSTags[___][None] := None;
