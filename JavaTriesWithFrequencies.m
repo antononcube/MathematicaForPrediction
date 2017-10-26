@@ -363,6 +363,11 @@ JavaTrieMapOptimizationCall[func_, jTr_?JavaObjectQ,
     ];
 
 Clear[JavaTrieGetWords]
+JavaTrieGetWords[jTr_?JavaObjectQ] :=
+    Block[{res},
+      res = JavaObjectToExpression /@ JavaObjectToExpression[TrieFunctions`getWords[jTr]];
+      If[res === Null, {}, res]
+    ];
 JavaTrieGetWords[jTr_?JavaObjectQ, sword : {_String ..}] :=
     Block[{res},
       res = JavaObjectToExpression /@
