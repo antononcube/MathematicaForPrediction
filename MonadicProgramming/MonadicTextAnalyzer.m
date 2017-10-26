@@ -95,7 +95,7 @@ If[ !StringQ[$POSTaggerPath],
   $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-2015-12-09";
 ];
 
-If[ ( BooleanQ[$LoadJava] && $LoadJava ) || !( BooleanQ[$LoadJava] && ! $LoadJava ),
+If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava] || ! $LoadJava,
 
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
