@@ -496,6 +496,26 @@ public class TrieFunctions {
         return res;
     }
 
+    //! @description Finds all words in the trie tr that start with the word searchWord.
+    //! @param tr a trie object
+    //! @param sword search word
+    public static List<List<String>> getWords(Trie tr) {
+
+        // Simple copy of the code below, too short and trivial to refactor at this point.
+        List<List<Map.Entry<String, Double>>> paths = rootToLeafPaths(tr);
+
+        List<List<String>> res = new ArrayList<>();
+        for (List<Map.Entry<String, Double>> ps : paths) {
+
+            List<String> w = new ArrayList<>();
+
+            for (Map.Entry<String, Double> p : ps) {
+                w.add(p.getKey());
+            }
+            res.add(w);
+        }
+        return res;
+    }
 
     //! @description Finds all words in the trie tr that start with the word searchWord.
     //! @param tr a trie object
