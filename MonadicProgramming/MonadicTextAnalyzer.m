@@ -100,7 +100,7 @@ If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava] || ! $LoadJava
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
   AddToClassPath[$POSTaggerPath];
-  ReinstallJava[JVMArguments -> "-Xmx2g"];
+  ReinstallJava[JVMArguments -> "-Xmx6g"];
 
   LoadJavaClass["java.util.Collections"];
   LoadJavaClass["java.util.Arrays"];
@@ -166,19 +166,24 @@ ClearAll[TextAMonSentences]
 
 TextAMonSentences[___][None] := None;
 TextAMonSentences[][xs_, context_] :=
-    Block[{sentences},
+    Block[{text, sentences},
       Which[
 
         StringQ[xs],
         sentences = TextSentences[ xs ];
         TextAMon[ sentences, Join[ context, <|"text"->xs, "sentences"->sentences|> ] ],
 
+        VectorQ[xs,StringQ],
+        text = StringJoin[Riffle[xs," "]];
+        sentences = TextSentences[ text ];
+        TextAMon[ sentences, Join[ context, <|"text"->text, "sentences"->sentences|> ] ],
+
         KeyExistsQ[context, "text"],
         sentences = TextSentences[ context["text"] ];
         TextAMon[ sentences, Join[ context, <|"sentences"->sentences|> ] ],
 
         True,
-        Echo["Ingest texts first.", "TextAMonSentences:"];
+        Echo["Ingest text(s) first.", "TextAMonSentences:"];
         None
       ]
     ];
