@@ -95,7 +95,7 @@ If[ !StringQ[$POSTaggerPath],
   $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-2015-12-09";
 ];
 
-If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava] || ! $LoadJava,
+If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava],
 
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
@@ -265,18 +265,29 @@ TextAMonPOSWordsTrie[separator_String:"®"][xs_,context_] :=
 
 ClearAll[TextAMonEchoPOSWordsInterface];
 
-Options[TextAMonEchoPOSWordsInterface] = {ImageSize->400};
+Options[TextAMonEchoPOSWordsInterface] = {ImageSize->400, "ParetoFraction"->0.8, "ParetoApplicationThreshold"->300 };
 
 TextAMonEchoPOSWordsInterface[___][None] := None;
 TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
-    Block[{ jPOSWordTrie, allPosTags, tagSelectionRules, abbrTagRules, imSize },
+    Block[{ jPOSWordTrie, allPosTags, tagSelectionRules, abbrTagRules, imSize, paretoFraction, paretoApplicationThreshold },
 
       imSize = OptionValue[TextAMonEchoPOSWordsInterface, ImageSize];
       If[ !IntegerQ[imSize],
-        Echo["ImageSize should have values that a positive integers.", "TextAMonEchoPOSWordsInterface:"];
+        Echo["ImageSize should have values that are positive integers.", "TextAMonEchoPOSWordsInterface:"];
         Return[None]
       ];
 
+      paretoFraction = OptionValue[TextAMonEchoPOSWordsInterface, "ParetoFraction"];
+      If[ ! TrueQ[ NumberQ[paretoFraction] && 0 < paretoFraction <=1 ],
+        Echo["ParetoFraction should have values that are numbers in (0,1] .", "TextAMonEchoPOSWordsInterface:"];
+        Return[None]
+      ];
+
+      paretoApplicationThreshold = OptionValue[TextAMonEchoPOSWordsInterface, "ParetoApplicationThreshold"];
+      If[ !IntegerQ[paretoApplicationThreshold],
+        Echo["ParetoApplicationThreshold should have values that are positive integers.", "TextAMonEchoPOSWordsInterface:"];
+        Return[None]
+      ];
 
       If[ !KeyExistsQ[context, "posTags"],
         Echo["Calculate POS tags first.", "TextAMonEchoPOSWordsInterface:"];
@@ -300,12 +311,20 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
       abbrTagRules = Reverse /@ tagSelectionRules;
 
       Echo @
-          With[{ jPOSWordTrie=jPOSWordTrie, imSize=imSize, abbrTagRules=abbrTagRules},
+          With[{ jPOSWordTrie=jPOSWordTrie,
+            imSize=imSize,
+            paretoFraction=paretoFraction,
+            paretoApplicationThreshold=paretoApplicationThreshold,
+            abbrTagRules=abbrTagRules},
             Manipulate[
-              DynamicModule[{posTag, jjTr, leafProbs},
+              DynamicModule[{posTag, jjTr, leafProbs, paretoLeafProbs},
                 posTag = posAbbr /. abbrTagRules;
                 jjTr = JavaTrieRetrieve[jPOSWordTrie, {posTag}];
                 leafProbs = {"key", "value"} /. JavaTrieLeafProbabilities[jjTr, "Normalized" -> True];
+                If[ JavaTrieNodeCounts[jjTr]["leaves"] > paretoApplicationThreshold && paretoFraction < 1,
+                  jjTr = JavaTrieParetoFractionRemove[jjTr,paretoFraction,True,"LONG_TAIL_WORDS"]
+                ];
+                paretoLeafProbs = {"key", "value"} /. JavaTrieLeafProbabilities[jjTr, "Normalized" -> True];
                 Grid[{
                   Map[
                     Style[#, GrayLevel[0.5], FontFamily -> "Times"] &,
@@ -314,7 +333,7 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
                   {ParetoLawPlot[leafProbs[[All, 2]],
                     ImageSize -> Round[ 0.75*imSize ]],
                     Pane[
-                      GridTableForm[SortBy[leafProbs, -#[[2]] &], TableHeadings -> {"Literal", "Probability"}],
+                      GridTableForm[SortBy[paretoLeafProbs, -#[[2]] &], TableHeadings -> {"Literal", "Probability"}],
                       ImageSize -> {imSize, imSize}, Scrollbars -> {False, True}]
                   }}, Alignment -> {{Left, Left}, {Top, Top}}]
               ],
