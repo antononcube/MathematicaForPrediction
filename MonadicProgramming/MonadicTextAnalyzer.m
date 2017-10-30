@@ -100,7 +100,7 @@ If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava],
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
   AddToClassPath[$POSTaggerPath];
-  ReinstallJava[JVMArguments -> "-Xmx6g"];
+  ReinstallJava[JVMArguments -> "-Xmx8g -Xms1g"];
 
   LoadJavaClass["java.util.Collections"];
   LoadJavaClass["java.util.Arrays"];
@@ -378,8 +378,13 @@ TextAMonMakeNGramTrie[___][xs_, context_] :=
       Echo["Specify the number of words for the n-grams. (An integer.)", "TextAMonMakeNGramTrie:"];
       None
     ];
-TextAMonMakeNGramTrie[ n_Integer, separator_String:"~" ][xs_, context_] :=
+TextAMonMakeNGramTrie[ n_Integer, indexPermutation_:Automatic, separator_String:"~" ][xs_, context_] :=
     Block[{words, ngrams, jNGramTrie},
+
+      If[ !(TrueQ[indexPermutation===Automatic] || VectorQ[indexPermutation,IntegerQ] && Sort[indexPermutation] == Range[n]),
+        Echo["The argument indexOrder is expected to be Automatic or a variation of Range[n], where n is the first argument.", "TextAMonMakeNGramTrie:"];
+        Return[None]
+      ];
 
       Which[
 
@@ -394,9 +399,12 @@ TextAMonMakeNGramTrie[ n_Integer, separator_String:"~" ][xs_, context_] :=
         Return[None]
       ];
 
-      ngrams = Map[StringJoin @@ Riffle[#, "~"] &, Flatten[Partition[#, n, 1] & /@ words, 1]];
+      If[ TrueQ[indexPermutation===Automatic],
+        ngrams = Map[StringJoin @@ Riffle[#, separator] &, Flatten[Partition[#, n, 1] & /@ words, 1]],
+        ngrams = Map[StringJoin @@ Riffle[#[[indexPermutation]], separator] &, Flatten[Partition[#, n, 1] & /@ words, 1]]
+      ];
 
-      jNGramTrie = JavaTrieNodeProbabilities[JavaTrieCreateBySplit[ngrams, "~"]];
+      jNGramTrie = JavaTrieNodeProbabilities[JavaTrieCreateBySplit[ngrams, separator]];
 
       TextAMon[ jNGramTrie, context ]
     ];
