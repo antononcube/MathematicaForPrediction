@@ -42,7 +42,53 @@
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2017 Anton Antonov *)
 (* :Keywords: *)
-(* :Discussion: *)
+(* :Discussion:
+
+   # Introduction
+
+   This package provides various functions for analyzing text using the Stanford Parts Of Speech (POS) tagger [1],
+   Tries with frequencies, [2,3].
+
+   The Java ARchive (JAR) files of [1,2] are used through JLink. Since full paths are required when hooking up
+   with JLink, change accordingly the paths $JavaTriesWithFrequenciesPath and $POSTaggerPath .
+
+
+   # Usage
+
+   Here we get a collection of texts:
+
+    speeches = ResourceData[ResourceObject["Presidential Nomination Acceptance Speeches"]];
+    texts = Normal[speeches[[All, "Text"]]];
+
+
+   Here is create the monad object, extract sentences, tags POS, and make a trie with the POS-word pairs:
+
+    pObj =
+      TextAMonUnit[Take[RandomSample[texts], UpTo[550]]]⟹
+        TextAMonSentences[]⟹
+        TextAMonEchoFunctionContext["number of sentences:", Length[#["sentences"]] &]⟹
+        TextAMonComputePOSTags[]⟹
+        TextAMonPOSWordsTrie[];
+
+
+   Here we invoke an interactive interface for text analysis based on word frequencies for a selected POS:
+
+    pObj⟹
+      TextAMonEchoPOSWordsInterface[ImageSize -> 400, "ParetoFraction" -> 0.7, "ParetoApplicationThreshold" -> 300];
+
+
+   # References
+
+   [1] The Stanford parts of speech tagger,
+      https://nlp.stanford.edu/software/tagger.shtml .
+
+   [2] Anton Antonov, Java tries with frequencies Mathematica package, (2017),
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m .
+
+   [3] Anton Antonov, Tries with frequencies in Java, (2017),
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Tries-with-frequencies-in-Java.md .
+
+*)
 
 (*BeginPackage["MonadicTextAnalyzer`"]*)
 

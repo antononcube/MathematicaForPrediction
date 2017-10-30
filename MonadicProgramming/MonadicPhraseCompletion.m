@@ -87,11 +87,11 @@
 
   # References
 
-  [1] Monadic text analyzer Mathematica package
-      https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTextAnalyzer.m
+  [1] Anton Antonov, Monadic text analyzer Mathematica package, (2017),
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTextAnalyzer.m .
 
-  [2] Java tries with frequencies Mathematica package
-      https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m
+  [2] Anton Antonov, Java tries with frequencies Mathematica package, (2016),
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m .
 *)
 
 (*BeginPackage["MonadicPhraseCompletion`"]*)
