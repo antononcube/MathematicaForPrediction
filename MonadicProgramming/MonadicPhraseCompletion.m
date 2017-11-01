@@ -107,20 +107,22 @@ ClearAll[PhFillMonMakeNGramTrie]
 PhFillMonMakeNGramTrie[___][None] := None;
 PhFillMonMakeNGramTrie[indexPermutation_: {_Integer ..}][xs_, context_] :=
     Block[{jTr, p, ip},
+
       If[! TextAMonUnitQ[xs],
         Echo["The pipeline value is expected to be TextAMon.", "PhFillMonMakeNGramTrie:"];
         Return[None]
       ];
+
       p = FindPermutation[indexPermutation];
       ip = InversePermutation[p];
       ip = Permute[Range[Length[indexPermutation]], ip];
 
-      jTr = xs\[DoubleLongRightArrow]TextAMonMakeNGramTrie[
-        Length[indexPermutation],
-        indexPermutation]\[DoubleLongRightArrow]TextAMonTakeValue;
+      (*jTr = xs⟹TextAMonMakeNGramTrie[Length[indexPermutation], indexPermutation]⟹TextAMonTakeValue;*)
+
+      jTr = Fold[ TextAMonBind, xs, {TextAMonMakeNGramTrie[Length[indexPermutation], indexPermutation], TextAMonTakeValue} ];
+
       PhFillMon[JavaTrieNodeCounts[jTr],
-        Join[context, <|"trie" -> jTr, "indexPermutation" -> indexPermutation,
-          "indexReversePermutation" -> ip|>]]
+        Join[context, <|"trie" -> jTr, "indexPermutation" -> indexPermutation, "indexReversePermutation" -> ip|>]]
     ];
 
 
@@ -175,6 +177,17 @@ PhFillMonPhraseSuggestions[phrase : {_String ...}][xs_, context_] :=
                 "words" -> #[[context["indexReversePermutation"], 1]]|> &, res];
         PhFillMon[res, context]
       ]
+    ];
+
+
+ClearAll[PhFillMonPredictedIndex]
+PhFillMonPredictedIndex[][xs_,context_] :=
+    Block[{},
+      If[! KeyExistsQ[context["indexPermutation"]],
+        Echo["No n-gram trie is made.", "PhFillMonPredictedIndex:"];
+        Return[None]
+      ];
+      PhFillMon[Last[context["indexPermutation"]], context]
     ];
 
 (*End[] * `Private` *)
