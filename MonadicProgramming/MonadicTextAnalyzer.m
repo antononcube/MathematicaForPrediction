@@ -221,7 +221,7 @@ TextAMonComputePOSTags[args___][xs_, context_] :=
         (* Return[
           TextAMon[xs,context] ⟹ TextAMonSentences[] ⟹ TextAMonComputePOSTags[args] ]; *)
         Return[
-          Fold[ TextAMon[xs,context], {TextAMonSentences[], TextAMonComputePOSTags[args]}];
+          Fold[ TextAMon[xs,context], {TextAMonSentences[], TextAMonComputePOSTags[args]}]
         ];
       ];
 
