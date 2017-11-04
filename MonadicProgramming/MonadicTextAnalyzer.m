@@ -42,7 +42,53 @@
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2017 Anton Antonov *)
 (* :Keywords: *)
-(* :Discussion: *)
+(* :Discussion:
+
+   # Introduction
+
+   This package provides various functions for analyzing text using the Stanford Parts Of Speech (POS) tagger [1],
+   Tries with frequencies, [2,3].
+
+   The Java ARchive (JAR) files of [1,2] are used through JLink. Since full paths are required when hooking up
+   with JLink, change accordingly the paths $JavaTriesWithFrequenciesPath and $POSTaggerPath .
+
+
+   # Usage
+
+   Here we get a collection of texts:
+
+    speeches = ResourceData[ResourceObject["Presidential Nomination Acceptance Speeches"]];
+    texts = Normal[speeches[[All, "Text"]]];
+
+
+   Here is create the monad object, extract sentences, tags POS, and make a trie with the POS-word pairs:
+
+    pObj =
+      TextAMonUnit[Take[RandomSample[texts], UpTo[550]]]⟹
+        TextAMonSentences[]⟹
+        TextAMonEchoFunctionContext["number of sentences:", Length[#["sentences"]] &]⟹
+        TextAMonComputePOSTags[]⟹
+        TextAMonPOSWordsTrie[];
+
+
+   Here we invoke an interactive interface for text analysis based on word frequencies for a selected POS:
+
+    pObj⟹
+      TextAMonEchoPOSWordsInterface[ImageSize -> 400, "ParetoFraction" -> 0.7, "ParetoApplicationThreshold" -> 300];
+
+
+   # References
+
+   [1] The Stanford parts of speech tagger,
+      https://nlp.stanford.edu/software/tagger.shtml .
+
+   [2] Anton Antonov, Java tries with frequencies Mathematica package, (2017),
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m .
+
+   [3] Anton Antonov, Tries with frequencies in Java, (2017),
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Tries-with-frequencies-in-Java.md .
+
+*)
 
 (*BeginPackage["MonadicTextAnalyzer`"]*)
 
@@ -95,12 +141,12 @@ If[ !StringQ[$POSTaggerPath],
   $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-2015-12-09";
 ];
 
-If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava] || ! $LoadJava,
+If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava],
 
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
   AddToClassPath[$POSTaggerPath];
-  ReinstallJava[JVMArguments -> "-Xmx2g"];
+  ReinstallJava[JVMArguments -> "-Xmx8g -Xms1g"];
 
   LoadJavaClass["java.util.Collections"];
   LoadJavaClass["java.util.Arrays"];
@@ -166,19 +212,24 @@ ClearAll[TextAMonSentences]
 
 TextAMonSentences[___][None] := None;
 TextAMonSentences[][xs_, context_] :=
-    Block[{sentences},
+    Block[{text, sentences},
       Which[
 
         StringQ[xs],
         sentences = TextSentences[ xs ];
         TextAMon[ sentences, Join[ context, <|"text"->xs, "sentences"->sentences|> ] ],
 
+        VectorQ[xs,StringQ],
+        text = StringJoin[Riffle[xs," "]];
+        sentences = TextSentences[ text ];
+        TextAMon[ sentences, Join[ context, <|"text"->text, "sentences"->sentences|> ] ],
+
         KeyExistsQ[context, "text"],
         sentences = TextSentences[ context["text"] ];
         TextAMon[ sentences, Join[ context, <|"sentences"->sentences|> ] ],
 
         True,
-        Echo["Ingest texts first.", "TextAMonSentences:"];
+        Echo["Ingest text(s) first.", "TextAMonSentences:"];
         None
       ]
     ];
@@ -260,18 +311,29 @@ TextAMonPOSWordsTrie[separator_String:"®"][xs_,context_] :=
 
 ClearAll[TextAMonEchoPOSWordsInterface];
 
-Options[TextAMonEchoPOSWordsInterface] = {ImageSize->400};
+Options[TextAMonEchoPOSWordsInterface] = {ImageSize->400, "ParetoFraction"->0.8, "ParetoApplicationThreshold"->300 };
 
 TextAMonEchoPOSWordsInterface[___][None] := None;
 TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
-    Block[{ jPOSWordTrie, allPosTags, tagSelectionRules, abbrTagRules, imSize },
+    Block[{ jPOSWordTrie, allPosTags, tagSelectionRules, abbrTagRules, imSize, paretoFraction, paretoApplicationThreshold },
 
       imSize = OptionValue[TextAMonEchoPOSWordsInterface, ImageSize];
       If[ !IntegerQ[imSize],
-        Echo["ImageSize should have values that a positive integers.", "TextAMonEchoPOSWordsInterface:"];
+        Echo["ImageSize should have values that are positive integers.", "TextAMonEchoPOSWordsInterface:"];
         Return[None]
       ];
 
+      paretoFraction = OptionValue[TextAMonEchoPOSWordsInterface, "ParetoFraction"];
+      If[ ! TrueQ[ NumberQ[paretoFraction] && 0 < paretoFraction <=1 ],
+        Echo["ParetoFraction should have values that are numbers in (0,1] .", "TextAMonEchoPOSWordsInterface:"];
+        Return[None]
+      ];
+
+      paretoApplicationThreshold = OptionValue[TextAMonEchoPOSWordsInterface, "ParetoApplicationThreshold"];
+      If[ !IntegerQ[paretoApplicationThreshold],
+        Echo["ParetoApplicationThreshold should have values that are positive integers.", "TextAMonEchoPOSWordsInterface:"];
+        Return[None]
+      ];
 
       If[ !KeyExistsQ[context, "posTags"],
         Echo["Calculate POS tags first.", "TextAMonEchoPOSWordsInterface:"];
@@ -295,12 +357,20 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
       abbrTagRules = Reverse /@ tagSelectionRules;
 
       Echo @
-          With[{ jPOSWordTrie=jPOSWordTrie, imSize=imSize, abbrTagRules=abbrTagRules},
+          With[{ jPOSWordTrie=jPOSWordTrie,
+            imSize=imSize,
+            paretoFraction=paretoFraction,
+            paretoApplicationThreshold=paretoApplicationThreshold,
+            abbrTagRules=abbrTagRules},
             Manipulate[
-              DynamicModule[{posTag, jjTr, leafProbs},
+              DynamicModule[{posTag, jjTr, leafProbs, paretoLeafProbs},
                 posTag = posAbbr /. abbrTagRules;
                 jjTr = JavaTrieRetrieve[jPOSWordTrie, {posTag}];
                 leafProbs = {"key", "value"} /. JavaTrieLeafProbabilities[jjTr, "Normalized" -> True];
+                If[ JavaTrieNodeCounts[jjTr]["leaves"] > paretoApplicationThreshold && paretoFraction < 1,
+                  jjTr = JavaTrieParetoFractionRemove[jjTr,paretoFraction,True,"LONG_TAIL_WORDS"]
+                ];
+                paretoLeafProbs = {"key", "value"} /. JavaTrieLeafProbabilities[jjTr, "Normalized" -> True];
                 Grid[{
                   Map[
                     Style[#, GrayLevel[0.5], FontFamily -> "Times"] &,
@@ -309,7 +379,7 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
                   {ParetoLawPlot[leafProbs[[All, 2]],
                     ImageSize -> Round[ 0.75*imSize ]],
                     Pane[
-                      GridTableForm[SortBy[leafProbs, -#[[2]] &], TableHeadings -> {"Literal", "Probability"}],
+                      GridTableForm[SortBy[paretoLeafProbs, -#[[2]] &], TableHeadings -> {"Literal", "Probability"}],
                       ImageSize -> {imSize, imSize}, Scrollbars -> {False, True}]
                   }}, Alignment -> {{Left, Left}, {Top, Top}}]
               ],
@@ -354,8 +424,13 @@ TextAMonMakeNGramTrie[___][xs_, context_] :=
       Echo["Specify the number of words for the n-grams. (An integer.)", "TextAMonMakeNGramTrie:"];
       None
     ];
-TextAMonMakeNGramTrie[ n_Integer, separator_String:"~" ][xs_, context_] :=
+TextAMonMakeNGramTrie[ n_Integer, indexPermutation_:Automatic, separator_String:"~" ][xs_, context_] :=
     Block[{words, ngrams, jNGramTrie},
+
+      If[ !(TrueQ[indexPermutation===Automatic] || VectorQ[indexPermutation,IntegerQ] && Sort[indexPermutation] == Range[n]),
+        Echo["The argument indexOrder is expected to be Automatic or a variation of Range[n], where n is the first argument.", "TextAMonMakeNGramTrie:"];
+        Return[None]
+      ];
 
       Which[
 
@@ -370,9 +445,12 @@ TextAMonMakeNGramTrie[ n_Integer, separator_String:"~" ][xs_, context_] :=
         Return[None]
       ];
 
-      ngrams = Map[StringJoin @@ Riffle[#, "~"] &, Flatten[Partition[#, n, 1] & /@ words, 1]];
+      If[ TrueQ[indexPermutation===Automatic],
+        ngrams = Map[StringJoin @@ Riffle[#, separator] &, Flatten[Partition[#, n, 1] & /@ words, 1]],
+        ngrams = Map[StringJoin @@ Riffle[#[[indexPermutation]], separator] &, Flatten[Partition[#, n, 1] & /@ words, 1]]
+      ];
 
-      jNGramTrie = JavaTrieNodeProbabilities[JavaTrieCreateBySplit[ngrams, "~"]];
+      jNGramTrie = JavaTrieNodeProbabilities[JavaTrieCreateBySplit[ngrams, separator]];
 
       TextAMon[ jNGramTrie, context ]
     ];
