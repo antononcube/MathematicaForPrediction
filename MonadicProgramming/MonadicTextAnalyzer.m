@@ -309,6 +309,71 @@ TextAMonPOSWordsTrie[separator_String:"®"][xs_,context_] :=
     ];
 
 
+
+ClearAll[TextAMonComputeTagWordPairs]
+
+Options[TextAMonComputeTagWordPairs] = {"SentenceToTagWordPairsFunction" -> "StandfordTagger"};
+
+TextAMonComputeTagWordPairs[___][None] := None;
+TextAMonComputeTagWordPairs[opts : OptionsPattern[]][xs_, context_] :=
+    Block[{sentences, tagWordPairs, res, taggerFunc},
+
+      taggerFunc = OptionValue[TextAMonComputeTagWordPairs, "SentenceToTagWordPairsFunction"];
+
+      Which[
+        TrueQ[taggerFunc == "StandfordTagger" || taggerFunc === Automatic],
+        taggerFunc = (SeparatePOSTags[JavaStanfordTagString[ToLowerCase@#]] &),
+
+        TrueQ[taggerFunc == "MetaphoneTagger" || taggerFunc == "Metaphone3Tagger"],
+        taggerFunc = ({#, JavaMetaphone3[#]} & /@ TextWords[ToLowerCase@#] &),
+
+        TrueQ[taggerFunc == "SoundexTagger"],
+        taggerFunc = ({#, Soundex[#]} & /@ TextWords[ToLowerCase@#] &),
+
+        True,
+        taggerFunc = (SeparatePOSTags[JavaStanfordTagString[ToLowerCase@#]] &)
+      ];
+
+      Which[
+        VectorQ[xs, StringQ],
+        sentences = xs,
+
+        KeyExistsQ[context, "sentences"],
+        sentences = context["sentences"],
+
+        True,
+        Return[Fold[TextAMon[xs, context], {TextAMonSentences[], TextAMonComputeTagWordPairs[opts]}]];
+      ];
+
+      tagWordPairs = Map[taggerFunc, context["sentences"]];
+      TextAMon[tagWordPairs, Join[context, <|"tagWordPairs" -> tagWordPairs|>]]
+    ];
+
+
+ClearAll[TextAMonTagWordsTrie]
+
+TextAMonTagWordsTrie[___][None] := None;
+TextAMonTagWordsTrie[separator_String: "®"][xs_, context_] :=
+    Block[{jTagWordTrie},
+
+      Which[
+
+        KeyExistsQ[context, "tagWordPairs"],
+        jTagWordTrie =
+            JavaTrieNodeProbabilities@
+                JavaTrieCreateBySplit[
+                  Map[StringJoin[Riffle[#, separator]] &,
+                    Reverse /@ Flatten[context["tagWordPairs"], 1]], separator];
+        TextAMon[jTagWordTrie, Join[context, <|"jTagWordTrie" -> jTagWordTrie|>]],
+
+        True,
+        Echo["Calculate tag-to-words trie first.", "TextAMonTagWordsTrie:"];
+        None
+      ]
+    ];
+
+
+
 ClearAll[TextAMonEchoPOSWordsInterface];
 
 Options[TextAMonEchoPOSWordsInterface] = {ImageSize->400, "ParetoFraction"->0.8, "ParetoApplicationThreshold"->300 };
