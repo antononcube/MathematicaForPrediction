@@ -258,56 +258,17 @@ ClearAll[TextAMonComputePOSTags]
 
 TextAMonComputePOSTags[___][None] := None;
 TextAMonComputePOSTags[args___][xs_, context_] :=
-    Block[{sentences, posTags, res},
+    TextAMonBind[
+      TextAMon[xs,context],
+      TextAMonComputeTagWordPairs["SentenceToTagWordPairsFunction" -> (SeparatePOSTags[JavaStanfordTagString[ToLowerCase@#]] &)]
+    ];
 
-      Which[
-
-        VectorQ[xs, StringQ],
-        sentences = xs,
-
-        KeyExistsQ[context, "sentences" ],
-        sentences = context["sentences"],
-
-        True,
-        (* Return[
-          TextAMon[xs,context] ⟹ TextAMonSentences[] ⟹ TextAMonComputePOSTags[args] ]; *)
-        Return[
-          Fold[ TextAMon[xs,context], {TextAMonSentences[], TextAMonComputePOSTags[args]}]
-        ];
-      ];
-
-      posTags =
-            Map[SeparatePOSTags[JavaStanfordTagString[ToLowerCase@#]] &, context["sentences"] ];
-
-      TextAMon[ posTags, Join[ context, <| "posTags" -> posTags |>] ]
-];
 
 ClearAll[TextAMonPOSWordsTrie]
 
 TextAMonPOSWordsTrie[___][None] := None;
 TextAMonPOSWordsTrie[separator_String:"®"][xs_,context_] :=
-    Block[{jPOSWordTrie},
-
-      Which[
-        KeyExistsQ[context, "posTags"],
-
-        jPOSWordTrie =
-            JavaTrieNodeProbabilities@
-                JavaTrieCreateBySplit[
-                  Map[
-                    StringJoin[Riffle[#, separator]] &,
-                    Reverse /@ Flatten[ context["posTags"], 1] ],
-                  separator];
-
-        TextAMon[ jPOSWordTrie, Join[ context, <| "jPOSWordTrie"->jPOSWordTrie |>] ],
-
-        True,
-        Echo["Calculate POS-to-words trie first.", "TextAMonPOSWordsTrie:"];
-        None
-      ]
-
-    ];
-
+    TextAMonBind[ TextAMon[xs,context], TextAMonTagWordsTrie[separator] ];
 
 
 ClearAll[TextAMonComputeTagWordPairs]
@@ -328,10 +289,7 @@ TextAMonComputeTagWordPairs[opts : OptionsPattern[]][xs_, context_] :=
         taggerFunc = ({#, JavaMetaphone3[#]} & /@ TextWords[ToLowerCase@#] &),
 
         TrueQ[taggerFunc == "SoundexTagger"],
-        taggerFunc = ({#, Soundex[#]} & /@ TextWords[ToLowerCase@#] &),
-
-        True,
-        taggerFunc = (SeparatePOSTags[JavaStanfordTagString[ToLowerCase@#]] &)
+        taggerFunc = ({#, Soundex[#]} & /@ TextWords[ToLowerCase@#] &)
       ];
 
       Which[
@@ -342,7 +300,7 @@ TextAMonComputeTagWordPairs[opts : OptionsPattern[]][xs_, context_] :=
         sentences = context["sentences"],
 
         True,
-        Return[Fold[TextAMon[xs, context], {TextAMonSentences[], TextAMonComputeTagWordPairs[opts]}]];
+        Return[Fold[TextAMonBind, TextAMon[xs, context], {TextAMonSentences[], TextAMonComputeTagWordPairs[opts]}]];
       ];
 
       tagWordPairs = Map[taggerFunc, context["sentences"]];
@@ -380,7 +338,7 @@ Options[TextAMonEchoPOSWordsInterface] = {ImageSize->400, "ParetoFraction"->0.8,
 
 TextAMonEchoPOSWordsInterface[___][None] := None;
 TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
-    Block[{ jPOSWordTrie, allPosTags, tagSelectionRules, abbrTagRules, imSize, paretoFraction, paretoApplicationThreshold },
+    Block[{ jTagWordTrie, allPosTags, tagSelectionRules, abbrTagRules, imSize, paretoFraction, paretoApplicationThreshold },
 
       imSize = OptionValue[TextAMonEchoPOSWordsInterface, ImageSize];
       If[ !IntegerQ[imSize],
@@ -400,19 +358,19 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
         Return[None]
       ];
 
-      If[ !KeyExistsQ[context, "posTags"],
+      If[ !KeyExistsQ[context, "tagWordPairs"],
         Echo["Calculate POS tags first.", "TextAMonEchoPOSWordsInterface:"];
         Return[None]
       ];
 
-      If[ !KeyExistsQ[context, "jPOSWordTrie"],
-        Echo["Calculate jPOSWordTrie first.", "TextAMonEchoPOSWordsInterface:"];
+      If[ !KeyExistsQ[context, "jTagWordTrie"],
+        Echo["Calculate jTagWordTrie first.", "TextAMonEchoPOSWordsInterface:"];
         Return[None]
       ];
 
-      jPOSWordTrie = context["jPOSWordTrie"];
+      jTagWordTrie = context["jTagWordTrie"];
 
-      allPosTags = Union[Flatten[context["posTags"], 1][[All, 2]]];
+      allPosTags = Union[Flatten[context["tagWordPairs"], 1][[All, 2]]];
       Length[allPosTags];
 
       tagSelectionRules =
@@ -422,7 +380,7 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
       abbrTagRules = Reverse /@ tagSelectionRules;
 
       Echo @
-          With[{ jPOSWordTrie=jPOSWordTrie,
+          With[{ jTagWordTrie=jTagWordTrie,
             imSize=imSize,
             paretoFraction=paretoFraction,
             paretoApplicationThreshold=paretoApplicationThreshold,
@@ -430,7 +388,7 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
             Manipulate[
               DynamicModule[{posTag, jjTr, leafProbs, paretoLeafProbs},
                 posTag = posAbbr /. abbrTagRules;
-                jjTr = JavaTrieRetrieve[jPOSWordTrie, {posTag}];
+                jjTr = JavaTrieRetrieve[jTagWordTrie, {posTag}];
                 leafProbs = {"key", "value"} /. JavaTrieLeafProbabilities[jjTr, "Normalized" -> True];
                 If[ JavaTrieNodeCounts[jjTr]["leaves"] > paretoApplicationThreshold && paretoFraction < 1,
                   jjTr = JavaTrieParetoFractionRemove[jjTr,paretoFraction,True,"LONG_TAIL_WORDS"]
@@ -464,8 +422,8 @@ TextAMonMakeWordTrie[ separator_String:"®" ][xs_, context_] :=
 
       Which[
 
-        KeyExistsQ[context, "posTags"],
-        words = context["posTags"][[All, All, 1]],
+        KeyExistsQ[context, "tagWordPairs"],
+        words = context["tagWordPairs"][[All, All, 1]],
 
         KeyExistsQ[context, "text"],
         words = TextWords[context["text"]],
@@ -499,8 +457,8 @@ TextAMonMakeNGramTrie[ n_Integer, indexPermutation_:Automatic, separator_String:
 
       Which[
 
-        KeyExistsQ[context, "posTags"],
-        words = context["posTags"][[All, All, 1]],
+        KeyExistsQ[context, "tagWordPairs"],
+        words = context["tagWordPairs"][[All, All, 1]],
 
         KeyExistsQ[context, "text"],
         words = TextWords[context["text"]],
