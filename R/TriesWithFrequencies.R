@@ -232,13 +232,15 @@ TrieCreate <- function( words ) {
 #' @description Converts the frequencies at the nodes of a trie into probabilities. 
 #' @param trie a prifix tree
 TrieNodeProbabilities <- function( trie ) {
-  res <- TrieNodeProbabilitiesRec( trie )
+  res <- TrieNodeProbabilitiesRec( trie, level = 0 )
   res$Value <- 1
   res
 }
 
 #' @description Internal function for the recursive implementation of TrieNodeProbabilities.
-TrieNodeProbabilitiesRec <- function( trie ) {
+#' @param trie a prefix tree
+#' @param level a recursion level (redundant but useful while debugging)
+TrieNodeProbabilitiesRec <- function( trie, level ) {
   if ( is.null( trie$Children ) || length( trie$Children ) == 0 ) {
     trie
   } else {
@@ -248,7 +250,7 @@ TrieNodeProbabilitiesRec <- function( trie ) {
       chSum <- trie$Value
     }
     res <- llply( trie$Children, function(x) { 
-      xr <- TrieNodeProbabilitiesRec( x )
+      xr <- TrieNodeProbabilitiesRec( x, level + 1 )
       xr$Value <-  xr$Value / chSum
       xr
     })
@@ -358,6 +360,7 @@ TrieLeafProbabilitiesRec <- function( trie, level, leafValHash, prob ) {
     ## cat( "after:", leafValHash, "\n" )
     ## cat("Level:", level, ", res:", "\n" ); print(res)
     if ( chSum < 1 && !is.null(trie$Key) ) {
+      cat("internal", trie$Key, "\n" )
       if ( is.na( leafValHash[ trie$Key ] ) ) { 
         leafValHash[[ trie$Key ]] <- (1 - chSum) * prob
       } else { 
