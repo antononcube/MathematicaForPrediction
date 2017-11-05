@@ -107,7 +107,7 @@ public class TrieFunctions {
         );
     }
 
-    //! @description Slits each string of a list of string using a given regex.
+    //! @description Splits each string of a list of strings using a given regex.
     public static List<List<String>> splitWords(List<String> words, String regex) {
         List<List<String>> seqList = new ArrayList<>();
 
@@ -116,6 +116,18 @@ public class TrieFunctions {
         }
 
         return seqList;
+    }
+
+    //! @description Splits each string of an array of strings using a given regex.
+    public static List<List<String>> splitWords(String words[], String regex) {
+
+        return splitWords( Arrays.asList( words ), regex );
+    }
+
+    //! @description Converts a string array to a string list. (For easier use in rJava.)
+    public static List<String> wordArrayToList(String words[] ) {
+
+        return Arrays.asList( words );
     }
 
     //! @description Creates a trie by splitting each of the strings in the given list of strings.
