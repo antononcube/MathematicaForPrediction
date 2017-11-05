@@ -52,10 +52,10 @@
 
     https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m
 
-  the functions in this package can be used indepenedently of TriesWithFrequencies.m -- that is why I made this
+  the functions in this package can be used independently of TriesWithFrequencies.m -- that is why I made this
   separate package.
 
-  This package can convert the Java tries to JSON, and TriesWithFrequencies.m can convert JSON experessions to tries.
+  This package can convert the Java tries to JSON, and TriesWithFrequencies.m can convert JSON expressions to tries.
   Therefore, functions of TriesWithFrequencies.m (like TrieForm) can be used over the tries made with this package.
 
   Before using the package there are two necessary steps:
