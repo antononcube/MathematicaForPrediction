@@ -34,7 +34,7 @@
 #   
 #   1. the building of the jar file TriesWithFrequencies.jar, and
 # 
-#   2. the appropriate Java installation in Mathematica.
+#   2. the appropriate Java installation in R (with the library rJava).
 # 
 # Prescriptions for Step 1 are given in :
 #   
@@ -67,7 +67,7 @@ if( FALSE || !exists(".jniInitialized") ) {
   # See https://stackoverflow.com/q/30738974 .
   
   .jinit('.',force.init = T)
-  .jaddClassPath( path = '/Users/antonov/MathematicaForPrediction/Java/TriesWithFrequencies/TriesWithFrequencies.jar' )
+  .jaddClassPath( path = '~/MathematicaForPrediction/Java/TriesWithFrequencies/TriesWithFrequencies.jar' )
 
 }
   
