@@ -127,7 +127,7 @@ JavaTrieInsertList <- function(jTr, words) {
 #' @description Counts of Java trie nodes.
 JavaTrieNodeCounts <- function( jTr ) {
   c("total","internal","leaves")
-  jTRIEFUNCTIONS$nodeCounts(jTr1)
+  jTRIEFUNCTIONS$nodeCounts(jTr)
 }
 
 #' @description Gives the corresponding Java trie with node frequencies 
