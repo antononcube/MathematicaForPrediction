@@ -49,7 +49,7 @@ dashboardPage(
       
       tabItem( tabName = "NNs",
                
-               selectInput( "searchID", "Entety (diagnose, race, zip code):", rownames(tsSMR$M) ),
+               selectInput( "searchID", "Entety:", rownames(tsSMR$M) ),
                
                numericInput( "numberOfNNs", "Number of NNs:", 12 ),
                

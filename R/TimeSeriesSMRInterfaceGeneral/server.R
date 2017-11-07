@@ -26,16 +26,16 @@
 ## In order to run this interface.
 ##
 ## 1. Create a time series SMR object. 
-##    Assign to the varible 'tsSMR' .
+##    Assign to the variable 'tsSMR' .
 ##
 ## 2. Create a time series matrix.
 ##    Assign to the variable 'tsMat'.
 ##
 ## 3. Create a vector with named elements that maps column names to time interval boundaries.
-##    Assign to the variable 'tibNameToTIBRulesRules' .
+##    Assign to the variable 'tibNameToTIBRules' .
 ##
 ## 4. Create a vector with named elements that maps itemID to item names.
-##    Assign to the variable 'tibNameToTIBRules' .
+##    Assign to the variable 'itemIDtoNameRules' .
 ## 
 ## 5. If desired create a another/different list of search vectors to be used in the interface. 
 ##    Each element of that list is named. Assign to 'tsSearchVectors' .
