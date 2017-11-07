@@ -215,3 +215,46 @@ ClassifyByProfileVector.TSCorrSMR <- function ( x, profileVec, nTopNNs, voting =
   s[ order(-s[,1]), ] 
 }
 
+
+##===========================================================
+## Time series search vectors
+##===========================================================
+#' @description Creates a list of search vectors for a given matrix.
+#' @param tsMat a sparse matrix with rows corresponding to time series
+MakeTimeSeriesSearchVectors <- function( tsMat ) {
+  
+  ## Search for trends
+  tsSearchVectors <- c()
+  
+  ## Straight ascending line
+  searchVector <- ( 1:ncol(tsMat) ) / ncol(tsMat)
+  tsSearchVectors <- c( tsSearchVectors, list(StraightUp = searchVector) )
+  
+  ## Increasing in the last half
+  searchVector <- ( 1:ncol(tsMat) ) - ( ncol(tsMat) / 2 ); searchVector[ searchVector < 0 ] <- 0
+  searchVector <- searchVector / ncol(tsMat)
+  tsSearchVectors <- c( tsSearchVectors, list(SecondHalfUp = searchVector) )
+  
+  ## Decreasing in first half, increasing in the last half
+  searchVector1 <- ( 1:ncol(tsMat) ) - ( ncol(tsMat) / 2 ); searchVector1[ searchVector1 < 0 ] <- 0
+  searchVector2 <- rev( 1:ncol(tsMat) ) - ( ncol(tsMat) / 2 ); searchVector2[ searchVector2 < 0 ] <- 0
+  searchVector <- searchVector1 + searchVector2
+  searchVector <- searchVector / ncol(tsMat)
+  tsSearchVectors <- c( tsSearchVectors, list(DownAndUp = searchVector) )
+  
+  ## Decreasing in first half, increasing in the last half
+  tsSearchVectors <- c( tsSearchVectors, list(UpAndDown = (-searchVector) + max(searchVector) ) )
+  
+  ## Sin
+  searchVector <- sin( 1:ncol(tsMat) / ( 1.5 * 10 ) )
+  searchVector <- searchVector + 1
+  tsSearchVectors <- c( tsSearchVectors, list(Sin = searchVector) )
+  
+  
+  ## Cos
+  searchVector <- 1-cos( 1:ncol(tsMat) / ( 1.5 * 10 ) )
+  searchVector <- searchVector + 1
+  tsSearchVectors <- c( tsSearchVectors, list(Cos = searchVector) )
+
+  tsSearchVectors
+}
