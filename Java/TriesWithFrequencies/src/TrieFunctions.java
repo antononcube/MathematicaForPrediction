@@ -192,16 +192,18 @@ public class TrieFunctions {
 
     //! @description Inserts a "word" (a list of strings) into a trie.
     public static Trie insert(Trie tr, List<String> word) {
-        return insert(tr, word, null);
+        return insert(tr, word, null, null );
     }
 
     //! @description Inserts a "word" (a list of strings) into a trie with a given associated value.
-    public static Trie insert(Trie tr, List<String> word, Double value) {
+    public static Trie insert(Trie tr, List<String> word, Double value, Double bottomVal ) {
 
-        if (value == null) {
+        if (value == null && bottomVal == null ) {
             return merge(tr, make(word, 1.0, null));
+        } else if( bottomVal == null ) {
+            return merge(tr, make(word, value, null));
         } else {
-            return merge(tr, make(word, 0.0, value));
+            return merge(tr, make(word, value, bottomVal));
         }
     }
 

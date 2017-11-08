@@ -241,6 +241,12 @@ Clear[JavaTrieInsert]
 JavaTrieInsert[jTr_?JavaObjectQ, word : {_String ..}] :=
     TrieFunctions`insert[jTr, Arrays`asList[MakeJavaObject[word]]];
 
+JavaTrieInsert[jTr_?JavaObjectQ, word : {_String ..}, val_?NumericQ] :=
+    TrieFunctions`insert[jTr, Arrays`asList[JLink`MakeJavaObject[word]], JLink`MakeJavaObject[N[val]], JLink`MakeJavaObject[Null]];
+
+JavaTrieInsert[jTr_?JavaObjectQ, word : {_String ..}, val_?NumericQ, bottomVal_?NumberQ] :=
+    TrieFunctions`insert[jTr, Arrays`asList[JLink`MakeJavaObject[word]], JLink`MakeJavaObject[N[val]], JLink`MakeJavaObject[N[bottomVal]]];
+
 JavaTrieInsert[jTr_?JavaObjectQ, words : {{_String ..} ..}] :=
     Block[{jTr2},
       jTr2 = JavaTrieCreate[words];
