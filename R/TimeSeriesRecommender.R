@@ -230,6 +230,10 @@ MakeTimeSeriesSearchVectors <- function( tsMat ) {
   searchVector <- ( 1:ncol(tsMat) ) / ncol(tsMat)
   tsSearchVectors <- c( tsSearchVectors, list(StraightUp = searchVector) )
   
+  ## Straight descending line
+  searchVector <- seq( ncol(tsMat), 1, -1 ) / ncol(tsMat)
+  tsSearchVectors <- c( tsSearchVectors, list(StraightDown = searchVector) )
+  
   ## Increasing in the last half
   searchVector <- ( 1:ncol(tsMat) ) - ( ncol(tsMat) / 2 ); searchVector[ searchVector < 0 ] <- 0
   searchVector <- searchVector / ncol(tsMat)
