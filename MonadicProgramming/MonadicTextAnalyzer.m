@@ -112,6 +112,10 @@ If[Length[DownValues[JavaTriesWithFrequencies`JavaTrieCreate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/JavaTriesWithFrequencies.m"]
 ];
 
+If[Length[DownValues[Soundex`Soundex]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/Soundex.m"]
+];
+
 (*
 Needs["StateMonadCodeGenerator`"];
 Needs["CrossTabulate`"];
