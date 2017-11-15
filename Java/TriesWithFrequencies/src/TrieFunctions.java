@@ -483,6 +483,40 @@ public class TrieFunctions {
         return rows;
     }
 
+    //! @description Converts a list of root-to-leaf paths into root-to-leaf keys.
+    //! @param paths a list of lists with Map.Entry elements
+    public static List< List< String > > pathsKeys( List<List<Map.Entry<String, Double>>> paths ) {
+        List< List< String > > rows = new ArrayList();
+
+        for (List<Map.Entry<String, Double>> ps : paths) {
+            List< String > keyPath = new ArrayList();
+
+            for (Map.Entry<String, Double> p : ps) {
+                keyPath.add( p.getKey() );
+            }
+            rows.add( keyPath );
+        }
+
+        return rows;
+    }
+
+    //! @description Converts a list of root-to-leaf paths into root-to-leaf values.
+    //! @param paths a list of lists with Map.Entry elements
+    public static List< List< Double > > pathsValues( List<List<Map.Entry<String, Double>>> paths ) {
+        List< List< Double > > rows = new ArrayList();
+
+        for (List<Map.Entry<String, Double>> ps : paths) {
+            List< Double > valuePath = new ArrayList();
+
+            for (Map.Entry<String, Double> p : ps) {
+                valuePath.add( p.getValue() );
+            }
+            rows.add( valuePath );
+        }
+
+        return rows;
+    }
+
     //! @description Converts a list of root-to-leaf paths into JSON.
     //! @param paths a list of lists with Map.Entry elements
     public static String pathsToJSON(List<List<Map.Entry<String, Double>>> paths) {
