@@ -166,6 +166,9 @@ JavaTrieRetrieve::usage = "JavaTrieRetrieve[ jTr_, sw:{_String..}] retrieves the
  that corresponds to sw. Note that only a leading part of sw can be found jTr. \
  The last found element of sw is the root of the returned sub-trie."
 
+JavaTrieJSONRootToLeafPaths::usage = "Gives lists of key-value pairs corresponding to the root-to-leaf paths\
+ in a given trie. (Using a JSON string.)"
+
 JavaTrieRootToLeafPaths::usage = "Gives lists of key-value pairs corresponding to the root-to-leaf paths\
  in a given trie."
 
@@ -382,10 +385,19 @@ JavaTrieGetWords[jTr_?JavaObjectQ, sword : {_String ..}] :=
       If[res === Null, {}, res]
     ];
 
-Clear[JavaTrieRootToLeafPaths]
-JavaTrieRootToLeafPaths[jTr_?JavaObjectQ] :=
+Clear[JavaTrieJSONRootToLeafPaths]
+JavaTrieJSONRootToLeafPaths[jTr_?JavaObjectQ] :=
     Map[{"key", "value"} /. # &,
       ImportString[TrieFunctions`pathsToJSON[TrieFunctions`rootToLeafPaths[jTr]], "JSON"], {2}];
+
+Clear[JavaTrieRootToLeafPaths]
+JavaTrieRootToLeafPaths[jTr_?JavaObjectQ] :=
+    Block[{pathsObj, keyPaths, valuePaths},
+      pathsObj = JLink`ReturnAsJavaObject[ TrieFunctions`rootToLeafPaths[ jTr ] ];
+      keyPaths = JLink`JavaObjectToExpression[TrieFunctions`pathsKeys[ pathsObj ]];
+      valuePaths = JLink`JavaObjectToExpression[TrieFunctions`pathsValues[ pathsObj ]];
+      MapThread[Transpose[{#1,#2}]&, {JLink`JavaObjectToExpression/@keyPaths, JLink`JavaObjectToExpression/@valuePaths}]
+    ];
 
 Clear[JavaTrieRegexRemove]
 JavaTrieRegexRemove[jTr_?JavaObjectQ, regex_String ] :=
