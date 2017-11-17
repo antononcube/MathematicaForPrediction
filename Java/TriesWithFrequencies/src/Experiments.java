@@ -30,6 +30,7 @@
 //# "Tries with frequencies for data mining",
 //# https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/ .
 
+package TriesWithFrequencies;
 
 import java.io.File;
 import java.io.FileNotFoundException;
