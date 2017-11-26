@@ -205,22 +205,28 @@ Clear[ClassifierDataQ]
 ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
 
 Clear[ResamplingEnsembleClassifier]
-ResamplingEnsembleClassifier[methods : {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..},
-  data_?ClassifierDataQ,
-  opts : OptionsPattern[]] :=
-    Block[{fullMethods, res},
-      fullMethods =
-          Map[Which[StringQ[#], {#, 0.9, 1}, Length[#] == 2, Append[#, 1], True, #] &, methods];
-      fullMethods =
-          Map[If[! (0 < #[[2]] <= 1), {#[[1]], 0.9, #[[3]]}, #] &, fullMethods];
-      fullMethods =
-          Map[If[! (0 < #[[3]]), {#[[1]], #[[2]], 1}, #] &, fullMethods];
-      fullMethods = Map[Table[Take[#, 2], {#[[3]]}] &, fullMethods];
+ResamplingEnsembleClassifier[specs : {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer} | {_String, _?NumberQ, _Integer, RandomSample|RandomChoice}) ..},
+  data_?ClassifierDataQ] :=
+    Block[{fullSpecs},
+      fullSpecs =
+          specs /. {
+            m_String :> <| "method"-> m |>,
+            { m_String, f_?NumberQ} :>  <| "method"->m, "samplingFraction"->f|>,
+            { m_String, f_?NumberQ, n_Integer } :>  <| "method"->m, "samplingFraction"->f, "nClassifiers"->n|>,
+            { m_String, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "samplingFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
+          };
+
+      ResamplingEnsembleClassifier[ fullSpecs, data ]
+    ];
+
+ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ ] :=
+    Block[{fullSpecs, res},
+      fullSpecs = Map[ Join[ <| "method"->"LogisticRegression", "sampleFraction"->0.9, "nClassifiers"->1, "samplingFunction"->RandomChoice |>, # ]&, specs];
       res =
           Map[
-            Table[#[[i, 1]] <> "[" <> ToString[i] <> "," <> ToString[#[[i, 2]]] <> "]" ->
-                Classify[RandomSample[data, Floor[#[[i, 2]]*Length[data]]], Method -> #[[i, 1]]], {i, Length[#]}] &,
-            fullMethods];
+            Table[#["method"] <> "[" <> ToString[i] <> "," <> ToString[#["sampleFraction"]] <> "]" ->
+                Classify[#["samplingFunction"][data, Floor[#["sampleFraction"]*Length[data]]], Method -> #["method"]], {i, #["nClassifiers"]}] &,
+            fullSpecs];
 
       Association@Flatten[res, 1]
     ];
