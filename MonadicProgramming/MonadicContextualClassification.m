@@ -244,11 +244,11 @@ ClConRecoverData[xs_, context_Association] :=
 (* ClConMakeClassifier                                      *)
 (************************************************************)
 
-ClConMethodQ[x_] := StringQ[x]; (* And check is it known by Classifiy. *)
+ClConMethodQ[x_] := StringQ[x]; (* And check is it known by Classify. *)
 
 ClConMethodListQ[x_] := MatchQ[ x, {_?ClConMethodQ..} ];
 
-ClConResamplingMethodQ[x_] := MatchQ[ x, (_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ];
+ClConResamplingMethodQ[x_] := MatchQ[ x, (_Association | _String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer} | {_String, _?NumberQ, _Integer, RandomSample | RandomChoice}) ];
 
 (* Note that is includes MethodListQ. *)
 ClConResamplingMethodListQ[x_] := MatchQ[ x, { _?ClConResamplingMethodQ .. } ];
