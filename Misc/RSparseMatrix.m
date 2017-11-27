@@ -423,15 +423,15 @@ There are three solutions (1) using array rules, (2) using matrix padding, Array
         Since Association removes duplication of keys special care has to be taken when joining the row and column names.
 *)
 
-Options[RowBind] = {"IgnoreColumnNames" -> False};
+(*Options[RowBind] = {"IgnoreColumnNames" -> False};*)
 
 RowBind[r1_RSparseMatrix, r2_RSparseMatrix, rm__] := RowBind[ RowBind[r1, r2], rm];
 
 RowBind[rm:{_RSparseMatrix..}] := Fold[RowBind, First[rm], Rest[rm]];
 
-RowBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
+RowBind[r1_RSparseMatrix, r2_RSparseMatrix ] :=
     Block[{sarr, joinedRowAssoc, resRowNames},
-      sarr = Join[r1[[1]]["sparseArray"], r2[[1]]["sparseArray"]];
+      sarr = Join[ SparseArray[r1], SparseArray[r2] ];
       (* Special handling of duplication of row names in the result. *)
 
       joinedRowAssoc = Join[r1[[1]]["rownames"], r2[[1]]["rownames"]];
@@ -444,17 +444,16 @@ RowBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
         "ColumnNames" -> ColumnNames[r1], "DimensionNames" -> DimensionNames[r1]]
     ];
 
-Options[ColumnBind] = {"IgnoreRowNames" -> False};
+(*Options[ColumnBind] = {"IgnoreRowNames" -> False};*)
 
 ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, rm__] := ColumnBind[ ColumnBind[r1, r2], rm];
 
 ColumnBind[rm:{_RSparseMatrix..}] := Fold[ColumnBind, First[rm], Rest[rm]];
 
-ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix, opts : OptionsPattern[]] :=
+ColumnBind[r1_RSparseMatrix, r2_RSparseMatrix ] :=
     Block[{sarr, joinedRowAssoc, resColumnNames},
       sarr = Transpose@
-          Join[Transpose@r1[[1]]["sparseArray"],
-            Transpose@r2[[1]]["sparseArray"]];
+          Join[Transpose@SparseArray[r1], Transpose@SparseArray[r2]];
       (* Special handling of duplication of column names in the result. *)
 
       joinedRowAssoc = Join[r1[[1]]["colnames"], r2[[1]]["colnames"]];
