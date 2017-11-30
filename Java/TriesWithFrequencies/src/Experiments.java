@@ -82,7 +82,7 @@ public class Experiments {
 
         sampleSeq = new ArrayList<String>() {{
             add("barks"); add("barkers"); add("barked"); add("barkeeps"); add("barkeepers");
-            add("barking"); add("balm"); }};
+            add("barking"); add("balm"); add("barman"); }};
 
         strie = TrieFunctions.createBySplit( sampleSeq, "");
 
@@ -156,6 +156,10 @@ public class Experiments {
         System.out.println( TrieFunctions.randomChoice( pstrie, false ) );
         System.out.println();
 
+
+        System.out.println( "Top 3 paths :");
+        System.out.println( TrieFunctions.topRootToLeafPaths( pstrie, 3 ) );
+        System.out.println();
 
 //        sampleSeq = new ArrayList<String>() {{ add("ar"); add("as"); }};
 //        List< List<String> > sampleSeqList = new ArrayList<>();

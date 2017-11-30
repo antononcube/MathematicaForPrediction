@@ -406,6 +406,12 @@ public class TrieFunctions {
         return res;
     }
 
+
+
+    ///**************************************************************
+    /// Path derivation and retrieval functions
+    ///**************************************************************
+
     public static class Pair<T1, T2> implements Map.Entry<T1, T2> {
         T1 key;
         T2 value;
@@ -462,7 +468,7 @@ public class TrieFunctions {
 
             //System.out.println( sum + " " + tr.getValue() );
             if ( tr.getValue() >= 1.0 &&  sum < tr.getValue() ||
-                    tr.getValue() < 1.0 && sum < 1.0 ) {
+                    tr.getValue() < 1.0 && sum + 2.0d * Math.ulp(sum) < 1.0d ) {
                 rows.add(currentPath);
             }
 
@@ -484,7 +490,7 @@ public class TrieFunctions {
         return rows;
     }
 
-    //! @description Converts a list of root-to-leaf paths into root-to-leaf keys.
+    //! @description Converts a list of root-to-leaf paths into a list of root-to-leaf keys.
     //! @param paths a list of lists with Map.Entry elements
     public static List< List< String > > pathsKeys( List<List<Map.Entry<String, Double>>> paths ) {
         List< List< String > > rows = new ArrayList();
@@ -501,7 +507,7 @@ public class TrieFunctions {
         return rows;
     }
 
-    //! @description Converts a list of root-to-leaf paths into root-to-leaf values.
+    //! @description Converts a list of root-to-leaf paths into a list of root-to-leaf values.
     //! @param paths a list of lists with Map.Entry elements
     public static List< List< Double > > pathsValues( List<List<Map.Entry<String, Double>>> paths ) {
         List< List< Double > > rows = new ArrayList();
@@ -516,6 +522,24 @@ public class TrieFunctions {
         }
 
         return rows;
+    }
+
+
+    //! @description Converts a list of root-to-leaf paths into a list of probabilities.
+    //! @param paths a list of lists with Map.Entry elements
+    public static List< Double > pathsProbabilities( List<List<Map.Entry<String, Double>>> paths ) {
+        List<Double> probs = new ArrayList();
+
+        for (List<Map.Entry<String, Double>> ps : paths) {
+            Double pval = 1.0;
+
+            for (Map.Entry<String, Double> p : ps) {
+                pval = pval * p.getValue();
+            }
+            probs.add( pval );
+        }
+
+        return probs;
     }
 
     //! @description Converts a list of root-to-leaf paths into JSON.
@@ -544,6 +568,7 @@ public class TrieFunctions {
         res += "]";
         return res;
     }
+
 
     //! @description Finds all words in the trie tr that start with the word searchWord.
     //! @param tr a trie object
@@ -596,6 +621,53 @@ public class TrieFunctions {
             return res;
         }
     }
+
+
+    //! @description Transforms a list of root-to-leaves paths into a list of word-probability pairs.
+    //! @param paths
+    public static List< Map.Entry< List<String>, Double > > pathsToWordsWithProbabilities( List<List<Map.Entry<String, Double>>> paths ) {
+
+        List< Map.Entry< List<String>, Double > > res = new ArrayList<>();
+
+        for (List<Map.Entry<String, Double>> ps : paths) {
+
+            List<String> keyPath = new ArrayList<>();
+            for( Map.Entry<String,Double> p : ps ) { keyPath.add(p.getKey()); }
+
+            Double prob=1.0;
+            for( Map.Entry<String,Double> p : ps ) { prob = prob * p.getValue(); }
+
+            Pair< List<String>, Double > wp = new Pair<>( keyPath, prob );
+
+            res.add( wp );
+        }
+
+        return res;
+    }
+
+    public static List< Map.Entry< List<String>, Double > > topRootToLeafPaths( Trie tr, int k ) {
+
+        List< Map.Entry< List<String>, Double > > res = new ArrayList<>();
+
+        List< List< Map.Entry<String,Double> > > paths = rootToLeafPaths( tr );
+
+        List< Map.Entry< List<String>, Double > > wpPairs = pathsToWordsWithProbabilities( paths );
+
+        // Sorting in descending order
+        Collections.sort( wpPairs, (a,b) -> a.getValue() > b.getValue() ? -1 : a.getValue() == b.getValue() ? 0 : 1 );
+
+        for( int i=0; i < k; i++ ) {
+            res.add( wpPairs.get(i) );
+        }
+
+        return res;
+    }
+
+
+    ///**************************************************************
+    /// Conversion to probabilities functions
+    ///**************************************************************
+
 
     //! @description Gives JSON form of the probabilities to reach leaves of the trie.
     //! @param tr the trie to find the leaf probabilities for
@@ -1292,4 +1364,5 @@ public class TrieFunctions {
 
         return res;
     }
+
 }
