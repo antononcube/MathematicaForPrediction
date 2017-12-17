@@ -32,8 +32,8 @@ several packages are developed for different tasks in Machine Learning and Natur
 - Phrase completion, [MonadicPhraseCompletion.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicPhraseCompletion.m).
 
 
-The [monad tracing package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m)
-demonstrates how monad can act as Decorator in the [Decorator design pattern](https://en.wikipedia.org/wiki/Decorator_pattern).
+The monad tracing package [MonadicTracing.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m)
+demonstrates how a monad can act as Decorator in the [Decorator design pattern](https://en.wikipedia.org/wiki/Decorator_pattern).
  
   
 ## References
