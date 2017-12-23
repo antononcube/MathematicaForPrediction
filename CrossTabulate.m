@@ -224,8 +224,8 @@ FromRXTabsForm[rres_RLink`RObject]:=
 
 Unprotect[Association];
 
-MatrixForm[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"])] ^:=
-    (MatrixForm[#1, TableHeadings -> Rest[{##}]] & @@ x);
+MatrixForm[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"]), opts___] ^:=
+    (MatrixForm[#1, Append[{opts}, TableHeadings -> Rest[{##}]]] & @@ x);
 
 MatrixPlot[
   x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"]), opts___] ^:=
