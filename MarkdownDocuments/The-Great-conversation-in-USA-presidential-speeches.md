@@ -11,7 +11,7 @@ December 2017
 
 This document shows a way to chart in Mathematica / WL the evolution of topics in collections of texts. 
 The making of this document (and related code) is primarily motivated by the fascinating concept of the [Great Conversation](https://en.wikipedia.org/wiki/Great_Conversation), [[Wk1](https://en.wikipedia.org/wiki/Great_Conversation), MA1]. 
-In brief, all western civilization books are based on $103$ great ideas; if we find the great ideas in each significant book is based on we can construct a time-line (spanning centuries) of the great conversation between the authors; see [MA1, MA2, MA3].
+In brief, all western civilization books are based on $103$ great ideas; if we find the great ideas each significant book is based on we can construct a time-line (spanning centuries) of the great conversation between the authors; see [MA1, MA2, MA3].
 
 Instead of finding the great ideas in a text collection we extract topics statistically, using dimension reduction with [Non-Negative Matrix Factorization (NNMF)](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization), [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
 
