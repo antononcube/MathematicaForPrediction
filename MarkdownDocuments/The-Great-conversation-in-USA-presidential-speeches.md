@@ -9,36 +9,40 @@ December 2017
 
 ## Introduction
 
-This document/notebook shows a way to chart in Mathematica / WL the evolution of topics in collections of texts. 
+This document shows a way to chart in Mathematica / WL the evolution of topics in collections of texts. 
 The making of this document (and related code) is primarily motivated by the fascinating concept of the [Great Conversation](https://en.wikipedia.org/wiki/Great_Conversation), [[Wk1](https://en.wikipedia.org/wiki/Great_Conversation), MA1]. 
-In brief, all western civilization books are based on $103$ great ideas; if we find the great ideas on which each significant book is based on we can construct a time-line (spanning centuries) of the great conversation between the authors; see [MA1, MA2, MA3].
+In brief, all western civilization books are based on $103$ great ideas; if we find the great ideas in each significant book is based on we can construct a time-line (spanning centuries) of the great conversation between the authors; see [MA1, MA2, MA3].
 
-Instead of finding the great ideas in a text collection we extract topics statistically, using dimension reduction with Non-Negative Matrix Factorization (NNMF), [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
+Instead of finding the great ideas in a text collection we extract topics statistically, using dimension reduction with [Non-Negative Matrix Factorization (NNMF)](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization), [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
 
-The presented computational results are based on the text collections of state of union speeches of USA presidents \[D2\].
-For reproducibility of the computations and results we refer to [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)]. 
+The presented computational results are based on the text collections of State of the Union speeches of USA presidents \[D2\].
+The code in this notebool/document can be easily configured to use the much smaller text collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] available online and in Mathematica/WL.
 (The collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] is fairly small, $51$ documents; the collection [D2] is much larger, $2453$ documents.) 
 
-The technique described in this document/notebook, of course, works on other types of text data with a time axis. 
-For example, movie reviews, podcasts, editorial articles of a magazine, etc.
+The procedures (and code) described in this document, of course, work on other types of text collections. 
+For example: movie reviews, podcasts, editorial articles of a magazine, etc.
 
-A secondary objective of this document/notebook is to illustrate the use of the monadic programming pipeline as a design pattern, [[AA3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)]. 
+A secondary objective of this document is to illustrate the use of the monadic programming pipeline as a [Software design pattern](https://en.wikipedia.org/wiki/Software_design_pattern), [[AA3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)]. 
 In order to make the code concise in this document I wrote the package  [MonadicLatentSemanticAnalysis.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m), [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)]. 
 Compare with the code given in [[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf)].
 
+The very first version of this document was written for the 2017 summer course ["Data Science for the Humanities"](http://www.dhoxss.net/datascienceforhumanities) at the University of Oxford, UK.
+
 ## Outline of the procedure applied
 
-The procedure described in this document / notebook has the following steps.
+The procedure described in this document has the following steps.
 
    1. Get a collection of documents with known dates of publishing.
 
+      - Or other types of tags associated with the documents. 
+
    2. Do preliminary analysis of the document collection.
 
-      1. Number of documents; number of unique words.
+      - Number of documents; number of unique words.
 
-      2. Number of words per document; number of documents per word.
+      - Number of words per document; number of documents per word.
 
-      3. (Some of the statistics of this step are done easier after the Linear vector space representation step.)
+      - (Some of the statistics of this step are done easier after the Linear vector space representation step.)
 
    3. Optionally perform Natural Language Processing (NLP) tasks.
 
@@ -48,31 +52,35 @@ The procedure described in this document / notebook has the following steps.
 
       3. Apply [stemming](https://en.wikipedia.org/wiki/Stemming) to the words in the texts.
 
-   4. Linear vector space representation
+   4. Linear vector space representation.
 
-      1. This means that we represent the collection with document*word matrix.
+      - This means that we represent the collection with a document-word matrix.
 
-      2. Each unique word is a basis vector in that space.
+      - Each unique word is a basis vector in that space.
 
-      3. For each document the corresponding point in that space is derived from the number of appearances of document's words.
+      - For each document the corresponding point in that space is derived from the number of appearances of document's words.
 
    5. Extract topics.
 
-      1. In this notebook Non-Negative Matrix Factorization (NNMF) is used.
+      - In this document [NNMF](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization) is used.
 
-      2. In order to obtain better results with NNMF some experimentation and refinements of the topics search have to be done.
+      - In order to obtain better results with NNMF some experimentation and refinements of the topics search have to be done.
 
    6. Map the documents over the extracted topics.
 
-      1. The original matrix of the vector space representation is replaced with a matrix with columns representing topics (instead of words.)
+      - The original matrix of the vector space representation is replaced with a matrix with columns representing topics (instead of words.)
 
-   7. Order the topics according to their presence across the years.
+   7. Order the topics according to their presence across the years (or other related tags).
 
-      1. This can be done with hierarchical clustering.
+      - This can be done with hierarchical clustering.
 
-      2. Alternatively, (i) for a given topic find the weighted mean of the years of the documents that have that topic, and (ii) order the topics according to those mean values.
+      - Alternatively, 
+      
+        1. for a given topic find the weighted mean of the years of the documents that have that topic, and 
+        
+        2. order the topics according to those mean values.
 
-   8. List or plot the evolution (time-line) of the documents according to their topics.
+   8. Visualize the evolution of the documents according to their topics.
 
       1. This can be done by simply finding the contingency matrix year vs topic.
 
@@ -93,7 +101,7 @@ This loads the packages [AAp1-AAp8]:
 
 (Note that some of the packages that are imported automatically by [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)].)
 
-The functions of central package in this document / notebook, [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)], have the prefix "LSAMon". Here is a sample of those names:
+The functions of the central package in this document, [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)], have the prefix "LSAMon". Here is a sample of those names:
 
     Short@Names["LSAMon*"]
 
@@ -101,18 +109,16 @@ The functions of central package in this document / notebook, [[AAp5](https://gi
 
 ## Data load
 
-In this section we load a text collection from a specified source. The text collection from [D1] is small and can be used for code verification, re-running. The text collection from [D2] was converted to a Mathematica/WL object by Christopher Wolfram (and sent to me in a private communication.) The second collection provides far more interesting results.
+In this section we load a text collection from a specified source. 
 
-    If[False,
-      speeches = 
-       ResourceData[
-        ResourceObject["Presidential Nomination Acceptance Speeches"]];
-      (*this is way too slow*)
-      (* names=Through[Normal[speeches[[All,"Person"]]]["Name"]]; *)
+The text collection from ["Presidential Nomination Acceptance Speeches"](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches), [D1], is small and can be used for multiple code verifications and re-runnings. The "State of Union addresses of USA presidents" text collection from [D2] was converted to a Mathematica/WL object by Christopher Wolfram (and sent to me in a private communication.) The text collection [D2] provides far more interesting results (and they are shown below.)
+
+    If[True,
+      speeches = ResourceData[ResourceObject["Presidential Nomination Acceptance Speeches"]];
       names = StringSplit[Normal[speeches[[All, "Person"]]][[All, 2]], "::"][[All, 1]],
+
       (*ELSE*)
-      (*State of the union addresses provided by Christopher Wolfram. *)
-      
+      (*State of the union addresses provided by Christopher Wolfram. *)      
       Get["~/MathFiles/Digital humanities/Presidential speeches/speeches.mx"];
       names = Normal[speeches[[All, "Name"]]];
     ];
@@ -124,17 +130,13 @@ In this section we load a text collection from a specified source. The text coll
 
     (* {2453, 4} *)
 
-The purposes of brevity and speed the computations the notebook code was developed with the first dataset, 
-["Presidential Nomination Acceptance Speeches"](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches). More interesting results are obtained with second data set, "State of Union addresses of USA presidents".
-The results shown are with the second dataset, \[D2\].
+
 
 ## Basic statistics for the texts
 
-Using different contingency matrices we can derive basic statistical information about the document collection.
+Using different [contingency matrices](https://en.wikipedia.org/wiki/Contingency_table) we can derive basic statistical information about the document collection. (The document-word matrix is a contingency matrix.)
 
-(Also, note that the document-term matrix is a contingency matrix.)
-
-First we make convert the document data in long-form:
+First we convert the text data in long-form:
 
     docWordRecords = 
       Join @@ MapThread[
@@ -156,7 +158,7 @@ Here is a summary:
 
 [!["USA-presidents-speeches-words-long-form-summary"](https://imgur.com/ASBFWQ6l.png)](https://imgur.com/ASBFWQ6.png)
 
-Using the long form we can compute the document-term matrix:
+Using the long form we can compute the document-word matrix:
 
     ctMat = CrossTabulate[docWordRecords[[All, {1, -1}]]];
     MatrixPlot[Transpose@Sort@Map[# &, Transpose[ctMat@"XTABMatrix"]], 
@@ -172,7 +174,7 @@ Here is the president-word matrix:
 
 [!["USA-presidents-speeches-president-vs-term-contingency-matrix"](https://imgur.com/2MLCq7pl.png)](https://imgur.com/2MLCq7p.png)
 
-Here is alternative way to compute the statistics through the document-term matrix computed with the monadic functions:
+Here is an alternative way to compute text collection statistics through the document-word matrix computed within the monad `LSAMon`:
 
     LSAMonUnit[texts]⟹LSAMonEchoTextCollectionStatistics[];
 
@@ -182,7 +184,7 @@ Here is alternative way to compute the statistics through the document-term matr
 
 ### Stop words
 
-Here is one way to obtain stop words:
+Here is one way to obtain [stop words](https://en.wikipedia.org/wiki/Stop_words):
 
     stopWords = Complement[DictionaryLookup["*"], DeleteStopwords[DictionaryLookup["*"]]];
     Length[stopWords]
@@ -196,7 +198,9 @@ We can complete this list with additional stop words derived from the collection
 
 ### Linear vector space representation and dimension reduction
 
-The following code makes a document term matrix from the document collection, exaggerates the representations of the terms using ["TF-IDF"](https://en.wikipedia.org/wiki/Tfâidf), and then does topic extraction through dimension reduction. The dimension reduction is done with [NNMF](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization); see  [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
+**Remark:** In the rest of the document we use "term" to mean "word" or "stemmed word".
+
+The following code makes a document-term matrix from the document collection, exaggerates the representations of the terms using ["TF-IDF"](https://en.wikipedia.org/wiki/Tfâidf), and then does topic extraction through dimension reduction. The dimension reduction is done with [NNMF](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization); see  [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
 
     SeedRandom[312]
 
@@ -213,7 +217,7 @@ This table shows the pipeline commands above with comments:
 
 #### Detailed description
 
-The monad object mObj has a context of named values that is an Association with the following keys:
+The monad object `mObj` has a context of named values that is an Association with the following keys:
 
     Keys[mObj⟹LSAMonTakeContext]
 
@@ -227,27 +231,27 @@ Let us clarify the values by briefly describing the computational steps.
 
       - This is done with `LSAMonMakeDocumentTermMatrix`.
 
-   2. From docTermMat is derived the (weighted) matrix wDocTermMat using ["TF-IDF"](https://en.wikipedia.org/wiki/Tfâidf).
+   2. From `docTermMat` is derived the (weighted) matrix wDocTermMat using ["TF-IDF"](https://en.wikipedia.org/wiki/Tfâidf).
 
       - This is done with `LSAMonApplyTermWeightFunctions`.
 
-   3. Using docTermMat we find the terms that are present in sufficiently large number of documents and their column indices are assigned to topicColumnPositions.
+   3. Using `docTermMat` we find the terms that are present in sufficiently large number of documents and their column indices are assigned to topicColumnPositions.
 
    4. Matrix factorization.
 
       1. Assign to $\text{wDocTermMat}[[\text{All},\text{topicsColumnPositions}]]$, $\text{wDocTermMat}[[\text{All},\text{topicsColumnPositions}]]\in \mathbb{R}^{m_1 \times n}$, where $m_1 = |topicsColumnPositions|$.
 
-      2. Compute using NNFM the factorization $\text{wDocTermMat}[[\text{All},\text{topicsColumnPositions}]]\approx H W$, where $W\in \mathbb{R}^{k \times n}$, $H\in \mathbb{R}^{k \times m_1}$, and $k$ is the number of topics.
+      2. Compute using NNMF the factorization $\text{wDocTermMat}[[\text{All},\text{topicsColumnPositions}]]\approx H W$, where $W\in \mathbb{R}^{k \times n}$, $H\in \mathbb{R}^{k \times m_1}$, and $k$ is the number of topics.
 
       3. The values for the keys "W, "H", and "topicColumnPositions" are computed and assigned by `LSAMonTopicExtraction`.
 
-   5. From the top terms of each topic the are derived automatic topic names and assigned to `automaticTopicNames`.
+   5. From the top terms of each topic are derived automatic topic names and assigned to the key `automaticTopicNames` in the monad context.
 
       - Also done by `LSAMonTopicExtraction`.
 
 ### Statistical thesaurus
 
-At this point in the object mObj we have the factors of NNMF. Using those factors we can find a statistical thesaurus for a given set of words. The following code calculates such a thesaurus, and echoes it in a tabulated form.
+At this point in the object `mObj` we have the factors of NNMF. Using those factors we can find a statistical thesaurus for a given set of words. The following code calculates such a thesaurus, and echoes it in a tabulated form.
 
     queryWords = {"arms", "banking", "economy", "education", "freedom", 
        "tariff", "welfare", "disarmament", "health", "police"};
@@ -270,15 +274,17 @@ Note, that the word "welfare" strongly associates with "[applause]". The rest of
 
     (* {"[applause]", "[applause]"} *)
 
-The second word is "education".
+The second "[applause]" associated word is "education".
 
 #### Detailed description
 
 The statistical thesaurus is computed by using the NNMF's right factor $H$.
 
-For a given term, its corresponding column in $H$ is found and the nearest neighbors of that column are found in the space $\mathbb{R}^m$ using Euclidean norm.
+For a given term, its corresponding column in $H$ is found and the nearest neighbors of that column are found in the space $\mathbb{R}^{m_1}$ using Euclidean norm.
 
 ### Extracted topics
+
+The topics are the rows of the right factor $H$ of the factorization obtained with NNMF .
 
 Let us tabulate the topics found above with `LSAMonTopicExtraction` :
 
@@ -288,14 +294,14 @@ Let us tabulate the topics found above with `LSAMonTopicExtraction` :
 
 ### Map documents over the topics
 
-The function LSAMonTopicsRepresentation finds the top outliers for each row of NNMF's left factor $W$. (The outliers are found using the package [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m)].) The obtained list of indices gives the topic representation of the collection of texts.
+The function `LSAMonTopicsRepresentation` finds the top outliers for each row of NNMF's left factor $W$. (The outliers are found using the package [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m)].) The obtained list of indices gives the topic representation of the collection of texts.
 
     Short@(mObj⟹LSAMonTopicsRepresentation[]⟹LSAMonTakeContext)["docTopicIndices"]
     
     {{53}, {47, 53}, {25}, {46}, {44}, {15, 42}, {18}, <<2439>>, {30}, {33}, {7, 60}, {22, 25}, {12, 13, 25, 30, 49, 59}, {48, 57}, {14, 41}}
 
-Further we can see that if the documents have tags associated with them -- like author names or dates -- we can make a contingency matrix of the tags vs topics. (See [[AAp8](https://github.com/antononcube/MathematicaForPrediction/blob/master/CrossTabulate.m), [AA4](https://mathematicaforprediction.wordpress.com/2016/10/04/contingency-tables-creation-examples/)].)
-This is also done by the function `LSAMonTopicsRepresentation` that takes the tags as an argument. If the tags argument is `Automatic`, then the tags are simply the document indices.
+Further we can see that if the documents have tags associated with them -- like author names or dates -- we can make a contingency matrix of tags vs topics. (See [[AAp8](https://github.com/antononcube/MathematicaForPrediction/blob/master/CrossTabulate.m), [AA4](https://mathematicaforprediction.wordpress.com/2016/10/04/contingency-tables-creation-examples/)].)
+This is also done by the function `LSAMonTopicsRepresentation` that takes tags as an argument. If the tags argument is `Automatic`, then the tags are simply the document indices.
 
 Here is a an example:
 
@@ -311,7 +317,7 @@ Here is an example of calling the function LSAMonTopicsRepresentation with arbit
 
 [!["USA-presidents-speeches-dateMonth-vs-topic-contigency-matrix-plot"](https://imgur.com/0TZYBnM.png)](https://imgur.com/0TZYBnM.png)
 
-Note that the matrix plots  above are very close to the charting of the Great conversation that we are looking for. This can be made obvious by observing the row names of columns names in the tabulation of the transposed matrix rsmat:
+Note that the matrix plots  above are very close to the charting of the Great conversation that we are looking for. This can be made more obvious by observing the row names and columns names in the tabulation of the transposed matrix `rsmat`:
 
     Magnify[#, 0.6] &@MatrixForm[Transpose[rsmat]]
 
@@ -323,9 +329,9 @@ Note that the matrix plots  above are very close to the charting of the Great co
 
 In this section we show several ways to chart the Great Conversation in the collection of speeches. 
 
-There are several possible ways to make the chart: using a time-line plot, using heat-map plot, and using appropriate tabulation (with MatrixForm or Grid).
+There are several possible ways to make the chart: using a time-line plot, using heat-map plot, and using appropriate tabulation (with `MatrixForm` or `Grid`).
 
-In order to make the code in this section more concise the package [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m)] is used.
+In order to make the code in this section more concise the package [RSparseMatrix.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m), \[[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m), [AA5](https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematrix-for-sparse-matrices-with-named-rows-and-columns/)\], is used.
 
 ### Topic name to topic words
 
@@ -362,9 +368,9 @@ The plot is too cluttered, so it is a good idea to investigate other visualizati
 
 ### By topic vs president
 
-We can use the USA president names instead of years in the Great Conversation chart because USA presidents terms do not overlap.
+We can use the USA president names instead of years in the Great Conversation chart because the USA presidents terms do not overlap.
 
-This makes a contingency matrix president vs topic:
+This makes a contingency matrix presidents vs topics:
 
     rsmat2 = ToRSparseMatrix[
        mObj⟹LSAMonTopicsRepresentation[
@@ -377,7 +383,7 @@ Here we compute the chronological order of the presidents based on the dates of 
        GatherBy[MapThread[List, {names, ToExpression[DateString[#, "Year"]] & /@ dates}], First]];
     ordRowInds = Ordering[RowNames[rsmat2] /. nameToMeanYearRules];
 
-This heat-map plot uses the (experimental) package [RSparseMatrix.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m) is used; [[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m), [AA5](https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematrix-for-sparse-matrices-with-named-rows-and-columns/)]:
+This heat-map plot uses the (experimental) package [HeatmapPlot.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m), \[[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m)\]:
 
     Block[{m = rsmat2[[ordRowInds, All]]},
      HeatmapPlot[SparseArray[m], RowNames[m], 
