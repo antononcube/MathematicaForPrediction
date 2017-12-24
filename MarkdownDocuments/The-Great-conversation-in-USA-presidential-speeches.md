@@ -9,13 +9,22 @@ December 2017
 
 ## Introduction
 
-This document/notebook shows a way to chart in Mathematica / WL the evolution of topics in collections of texts. The making of this document (and related code) is primarily motivated by the fascinating concept of the [Great Conversation](https://en.wikipedia.org/wiki/Great_Conversation), [[Wk1](https://en.wikipedia.org/wiki/Great_Conversation), MA1]. In brief, all western civilization books are based on $103$ great ideas; if we find the great ideas on which each significant book is based on we can construct a time-line (spanning centuries) of the great conversation between the authors; see [MA1, MA2, MA3].
+This document/notebook shows a way to chart in Mathematica / WL the evolution of topics in collections of texts. 
+The making of this document (and related code) is primarily motivated by the fascinating concept of the [Great Conversation](https://en.wikipedia.org/wiki/Great_Conversation), [[Wk1](https://en.wikipedia.org/wiki/Great_Conversation), MA1]. 
+In brief, all western civilization books are based on $103$ great ideas; if we find the great ideas on which each significant book is based on we can construct a time-line (spanning centuries) of the great conversation between the authors; see [MA1, MA2, MA3].
 
 Instead of finding the great ideas in a text collection we extract topics statistically, using dimension reduction with Non-Negative Matrix Factorization (NNMF), [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
 
-The presented computational results are based on two text collections of speeches of USA presidents, [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] and [D2]. (The collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] is fairly small, $51$ documents; the collection [D2] is much larger, $2453$ documents.) The technique described in this document/notebook, of course, works on other types of text data with a time axis. For example, movie reviews, podcasts, editorial articles of a magazine, etc.
+The presented computational results are based on the text collections of state of union speeches of USA presidents \[D2\].
+For reproducibility of the computations and results we refer to [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)]. 
+(The collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] is fairly small, $51$ documents; the collection [D2] is much larger, $2453$ documents.) 
 
-A secondary objective of this document/notebook is to illustrate the use of the monadic programming pipeline as a design pattern, [[AA3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)].  In order to make the code concise in this document I wrote the package  [MonadicLatentSemanticAnalysis.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m), [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)]. Compare with the code given in [[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf)].
+The technique described in this document/notebook, of course, works on other types of text data with a time axis. 
+For example, movie reviews, podcasts, editorial articles of a magazine, etc.
+
+A secondary objective of this document/notebook is to illustrate the use of the monadic programming pipeline as a design pattern, [[AA3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)]. 
+In order to make the code concise in this document I wrote the package  [MonadicLatentSemanticAnalysis.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m), [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)]. 
+Compare with the code given in [[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf)].
 
 ## Outline of the procedure applied
 
@@ -75,9 +84,7 @@ The procedure described in this document / notebook has the following steps.
 
 ## Packages
 
-This loads the packages [AAp1-AAp7]:
-
-
+This loads the packages [AAp1-AAp8]:
 
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicTracing.m"]
@@ -117,7 +124,9 @@ In this section we load a text collection from a specified source. The text coll
 
     (* {2453, 4} *)
 
-The purposes of reproducibility, brevity, and speed the computations and results in this notebook are with the first dataset, ["Presidential Nomination Acceptance Speeches"](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches). More interesting results are obtained with second data set, "State of Union addresses of USA presidents".
+The purposes of brevity and speed the computations the notebook code was developed with the first dataset, 
+["Presidential Nomination Acceptance Speeches"](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches). More interesting results are obtained with second data set, "State of Union addresses of USA presidents".
+The results shown are with the second dataset, \[D2\].
 
 ## Basic statistics for the texts
 
