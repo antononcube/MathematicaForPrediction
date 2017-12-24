@@ -16,7 +16,7 @@ In brief, all western civilization books are based on $103$ great ideas; if we f
 Instead of finding the great ideas in a text collection we extract topics statistically, using dimension reduction with [Non-Negative Matrix Factorization (NNMF)](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization), [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/)].
 
 The presented computational results are based on the text collections of State of the Union speeches of USA presidents \[D2\].
-The code in this notebool/document can be easily configured to use the much smaller text collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] available online and in Mathematica/WL.
+The code in this document can be easily configured to use the much smaller text collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] available online and in Mathematica/WL.
 (The collection [[D1](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches)] is fairly small, $51$ documents; the collection [D2] is much larger, $2453$ documents.) 
 
 The procedures (and code) described in this document, of course, work on other types of text collections. 
