@@ -366,7 +366,7 @@ This time-plot shows great conversation in the USA presidents state of union spe
 
 The plot is too cluttered, so it is a good idea to investigate other visualizations.
 
-### By topic vs president
+### Topic vs president heatmap
 
 We can use the USA president names instead of years in the Great Conversation chart because the USA presidents terms do not overlap.
 
