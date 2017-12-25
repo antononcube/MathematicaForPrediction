@@ -410,9 +410,9 @@ Note the value of the option `DistanceFunction`: there is not re-ordering of the
 
 ### Packages
 
-[AAp1] Anton Antonov, [MathematicaForPrediction utilities ](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)*[Mathematica ](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)*[package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), (2014), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
+[AAp1] Anton Antonov, [MathematicaForPrediction utilities](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), (2014), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
-[AAp2] Anton Antonov, [Implementation of document-term matrix construction and re-weighting functions in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)[, ](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)(2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
+[AAp2] Anton Antonov, [Implementation of document-term matrix construction and re-weighting functions in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)(2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
 [AAp3] Anton Antonov, [Implementation of the Non-Negative Matrix Factorization algorithm in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), (2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
@@ -428,7 +428,7 @@ Note the value of the option `DistanceFunction`: there is not re-ordering of the
 
 ### Books and articles
 
-[AA1] Anton Antonov, $$ (2013),  [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.*
+[AA1] Anton Antonov, ["Topic and thesaurus extraction from a document collection"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), (2013),  [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
 [AA2] Anton Antonov, ["Statistical thesaurus from NPR podcasts"](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/), (2013), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
 
