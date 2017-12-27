@@ -169,7 +169,7 @@ If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
 
 (* Generate base functions of ClCon monad (ClassifierWithContext) *)
 
-GenerateStateMonadCode["ClCon"]
+GenerateStateMonadCode["ClCon","FailureSymbol" -> $ClConFailure]
 
 (**************************************************************)
 (* Infix operators                                            *)
