@@ -213,15 +213,11 @@ ParetoLawPlot[dataVecs : {{_?NumberQ ..} ..}, opts : OptionsPattern[]] :=
     ParetoLawPlot[MapThread[Tooltip, {dataVecs, Range[Length[dataVecs]]}], opts];
 ParetoLawPlot[dataVecs : {Tooltip[{_?NumberQ ..}, _] ..}, opts : OptionsPattern[]] :=
     Block[{t, mc = 0.5},
-      t = Map[
-        Tooltip[(Accumulate[#]/Total[#] &)[SortBy[#[[1]], -# &]], #[[2]]] &,
-        dataVecs];
+      t = Map[ Tooltip[(Accumulate[#]/Total[#] &)[SortBy[#[[1]], -# &]], #[[2]]] &, dataVecs];
       ListPlot[t, opts, PlotRange -> All,
         GridLines -> {Length[t[[1, 1]]] Range[0.1, mc, 0.1], {0.8}},
         Frame -> True,
-        FrameTicks -> {{Automatic, Automatic}, {Automatic,
-          Table[{Length[t[[1, 1]]] c, ToString[Round[100 c]] <> "%"}, {c,
-            Range[0.1, mc, 0.1]}]}}]
+        FrameTicks -> {{Automatic, Automatic}, {Automatic, Table[{Length[t[[1, 1]]] c, ToString[Round[100 c]] <> "%"}, {c, Range[0.1, mc, 0.1]}]}}]
     ];
 
 Clear[IntervalMappingFunction]
@@ -229,8 +225,7 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
     Block[{XXX, t = Partition[Join[{-\[Infinity]}, qBoundaries, {\[Infinity]}], 2, 1]},
       Function[
         Evaluate[Piecewise[
-          MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t,
-            Range[1, Length[t]]}]] /. {XXX -> #}]]
+          MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t, Range[1, Length[t]]}]] /. {XXX -> #}]]
     ];
 
 ClearAll[ToCategoricalColumns]
@@ -240,13 +235,31 @@ ToCategoricalColumns[data_?ArrayQ, qs_: Range[0, 1, 0.2]] :=
           Pick[Range[Dimensions[data][[2]]],
             VectorQ[#, NumericQ] & /@ Transpose[Take[data, UpTo[12]]]];
       imFuncs =
-          IntervalMappingFunction /@ (Quantile[#, qs] & /@
-              Transpose[data[[All, inds]]]);
+          IntervalMappingFunction /@ (Quantile[DeleteMissing[#], qs] & /@ Transpose[data[[All, inds]]]);
       res = data;
-      Do[res[[All, inds[[i]]]] =
-          imFuncs[[i]] /@ res[[All, inds[[i]]]], {i, Length[inds]}];
+      Do[res[[All, inds[[i]]]] = res[[All, inds[[i]]]] /. x_?NumericQ :> imFuncs[[i]][x], {i, Length[inds]}];
       res
     ] /; Length[Dimensions[data]] == 2;
+
+ToCategoricalColumns[ds_Dataset, qs_: Range[0, 1, 0.2]] :=
+    Block[{aNumColsQ, numCols, imFuncs},
+      aNumColsQ =
+          Normal@ds[
+            Transpose /*
+                Query[All, VectorQ[DeleteMissing[#], NumericQ] &]];
+
+      numCols = Keys[Pick[aNumColsQ, Values[aNumColsQ]]];
+
+      imFuncs =
+          IntervalMappingFunction /@ (Quantile[DeleteMissing[#], qs] & /@ Transpose[ds[All, numCols]]);
+
+      imFuncs = Normal@imFuncs;
+
+      Fold[
+        Function[{d, k}, d[All, <|#, k -> (Slot[k] /. y_?NumericQ :> (imFuncs[k])[y])|> &]],
+        ds,
+        Keys[imFuncs]]
+    ];
 
 Clear[VariableDependenceGrid]
 Options[VariableDependenceGrid] = {"IgnoreCategoricalVariables" -> False};
