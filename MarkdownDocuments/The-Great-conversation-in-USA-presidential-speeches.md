@@ -400,49 +400,49 @@ Note the value of the option `DistanceFunction`: there is not re-ordering of the
 
 ### Text data
 
-[D1] Wolfram Data Repository, ["Presidential Nomination Acceptance Speeches"](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches).
+\[D1\] Wolfram Data Repository, ["Presidential Nomination Acceptance Speeches"](https://resources.wolframcloud.com/DataRepository/resources/Presidential%2BNomination%2BAcceptance%2BSpeeches).
 
-[D2] US Presidents, [State of the Union Addresses](https://books.google.com/books?id=eRRYCwAAQBAJ), Trajectory, 2016. ‪ISBN‬1681240009, 9781681240008‬.
+\[D2\] US Presidents, [State of the Union Addresses](https://books.google.com/books?id=eRRYCwAAQBAJ), Trajectory, 2016. ‪ISBN‬1681240009, 9781681240008‬.
 
-[D3] Gerhard Peters, ["Presidential Nomination Acceptance Speeches and Letters, 1880-2016"](http://www.presidency.ucsb.edu/nomination.php), [The American Presidency Project](http://www.presidency.ucsb.edu/index.php).
+\[D3\] Gerhard Peters, ["Presidential Nomination Acceptance Speeches and Letters, 1880-2016"](http://www.presidency.ucsb.edu/nomination.php), [The American Presidency Project](http://www.presidency.ucsb.edu/index.php).
 
-[D4] Gerhard Peters, ["State of the Union Addresses and Messages"](http://www.presidency.ucsb.edu/sou.php), [The American Presidency Project](http://www.presidency.ucsb.edu/index.php).
+\[D4\] Gerhard Peters, ["State of the Union Addresses and Messages"](http://www.presidency.ucsb.edu/sou.php), [The American Presidency Project](http://www.presidency.ucsb.edu/index.php).
 
 ### Packages
 
-[AAp1] Anton Antonov, [MathematicaForPrediction utilities](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), (2014), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
+\[AAp1\] Anton Antonov, [MathematicaForPrediction utilities](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), (2014), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
-[AAp2] Anton Antonov, [Implementation of document-term matrix construction and re-weighting functions in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)(2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
+\[AAp2\] Anton Antonov, [Implementation of document-term matrix construction and re-weighting functions in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)(2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
-[AAp3] Anton Antonov, [Implementation of the Non-Negative Matrix Factorization algorithm in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), (2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
+\[AAp3\] Anton Antonov, [Implementation of the Non-Negative Matrix Factorization algorithm in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), (2013), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
-[AAp4] Anton Antonov, [Implementation of one dimensional outlier identifying algorithms in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m), (2013), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+\[AAp4\] Anton Antonov, [Implementation of one dimensional outlier identifying algorithms in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m), (2013), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-[AAp5] Anton Antonov, [Monadic latent semantic analysis Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+\[AAp5\] Anton Antonov, [Monadic latent semantic analysis Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-[AAp6] Anton Antonov, [Heatmap plot Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+\[AAp6\] Anton Antonov, [Heatmap plot Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-[AAp7] Anton Antonov, [RSparseMatrix Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m), (2015), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+\[AAp7\] Anton Antonov, [RSparseMatrix Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m), (2015), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-[AAp8] Anton Antonov, [Cross tabulation implementation in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/CrossTabulate.m), (2017), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
+\[AAp8\] Anton Antonov, [Cross tabulation implementation in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/CrossTabulate.m), (2017), [MathematicaForPrediction at GitHub.](https://github.com/antononcube/MathematicaForPrediction)
 
 ### Books and articles
 
-[AA1] Anton Antonov, ["Topic and thesaurus extraction from a document collection"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), (2013),  [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
+\[AA1\] Anton Antonov, ["Topic and thesaurus extraction from a document collection"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), (2013),  [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-[AA2] Anton Antonov, ["Statistical thesaurus from NPR podcasts"](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/), (2013), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
+\[AA2\] Anton Antonov, ["Statistical thesaurus from NPR podcasts"](https://mathematicaforprediction.wordpress.com/2013/10/15/statistical-thesaurus-from-npr-podcasts/), (2013), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
 
-[AA3] Anton Antonov, ["Monad code generation and extension](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)", (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.*
+\[AA3\] Anton Antonov, ["Monad code generation and extension](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)", (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.*
 
-[AA4] Anton Antonov, ["Contingency tables creation examples"](https://mathematicaforprediction.wordpress.com/2016/10/04/contingency-tables-creation-examples/), (2016), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
+\[AA4\] Anton Antonov, ["Contingency tables creation examples"](https://mathematicaforprediction.wordpress.com/2016/10/04/contingency-tables-creation-examples/), (2016), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
 
-[AA5] Anton Antonov, ["RSparseMatrix for sparse matrices with named rows and columns"](https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematrix-for-sparse-matrices-with-named-rows-and-columns/), (2015), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
+\[AA5\] Anton Antonov, ["RSparseMatrix for sparse matrices with named rows and columns"](https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematrix-for-sparse-matrices-with-named-rows-and-columns/), (2015), [MathematicaForPrediction at WordPress blog](https://mathematicaforprediction.wordpress.com)*.*
 
-[Wk1] Wikipedia entry, [Great Conversation](https://en.wikipedia.org/wiki/Great_Conversation).
+\[Wk1\] Wikipedia entry, [Great Conversation](https://en.wikipedia.org/wiki/Great_Conversation).
 
-[MA1] Mortimer Adler, "The Great Conversation Revisited," in The Great Conversation: A Peoples Guide to Great Books of the Western World, Encyclopædia Britannica, Inc., Chicago,1990, p. 28.
+\[MA1\] Mortimer Adler, "The Great Conversation Revisited," in The Great Conversation: A Peoples Guide to Great Books of the Western World, Encyclopædia Britannica, Inc., Chicago,1990, p. 28.
 
-[MA2] Mortimer Adler, ["Great Ideas"](https://www.thegreatideas.org/greatideas1.html).
+\[MA2\] Mortimer Adler, ["Great Ideas"](https://www.thegreatideas.org/greatideas1.html).
 
-[MA3] Mortimer Adler, ["How to Think About the Great Ideas: From the Great Books of Western Civilization"](https://www.goodreads.com/book/show/136043.How_to_Think_About_the_Great_Ideas), 2000, Open Court.
+\[MA3\] Mortimer Adler, ["How to Think About the Great Ideas: From the Great Books of Western Civilization"](https://www.goodreads.com/book/show/136043.How_to_Think_About_the_Great_Ideas), 2000, Open Court.
 
