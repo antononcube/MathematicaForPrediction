@@ -141,7 +141,7 @@
 BeginPackage["ClassifierEnsembles`"]
 
 EnsembleClassifier::usage = "Create an ensemble of classifiers over the same data. \
-Returns an Association of IDs mapped to classifier funcitons."
+Returns an Association of IDs mapped to classifier functions."
 
 EnsembleClassifierVotes::usage = "Find votes by a classifier ensemble for a record ora a list of records."
 
@@ -237,8 +237,8 @@ ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ ] :=
 
 Clear[EnsembleClassifierVotes]
 EnsembleClassifierVotes::nargs =
-    "The first argument is expected to be an Association of classfier IDs to \
-classifer functions. The second argument is expected to be a vector or a \
+    "The first argument is expected to be an Association of classifier IDs to \
+classifier functions. The second argument is expected to be a vector or a \
 matrix.";
 
 EnsembleClassifierVotes[cls_Association, record_?VectorQ] :=
@@ -251,8 +251,8 @@ EnsembleClassifierVotes[___] := (Message[EnsembleClassifierVotes::nargs]; $Faile
 
 Clear[EnsembleClassifierProbabilities]
 EnsembleClassifierProbabilities::nargs =
-    "The first argument is expected to be an Association of classfier IDs to \
-classifer functions. The second argument is expected to be a vector or a \
+    "The first argument is expected to be an Association of classifier IDs to \
+classifier functions. The second argument is expected to be a vector or a \
 matrix.";
 
 EnsembleClassifierProbabilities[cls_Association, record_?VectorQ] :=
@@ -266,8 +266,8 @@ EnsembleClassifierProbabilities[___] := (Message[EnsembleClassifierProbabilities
 
 Clear[EnsembleClassify]
 EnsembleClassify::nargs =
-    "The first argument is expected to be an Association of classfier IDs to \
-classifer functions. The second argument is expected to be a vector or a \
+    "The first argument is expected to be an Association of classifier IDs to \
+classifier functions. The second argument is expected to be a vector or a \
 matrix. The third argument is expected to be one of \"Votes\" or \
 \"ProbabilitiesMean\".";
 
@@ -297,8 +297,8 @@ EnsembleClassify[___] := (Message[EnsembleClassify::nargs]; $Failed);
 
 Clear[EnsembleClassifyByThreshold]
 EnsembleClassifyByThreshold::nargs =
-    "The first argument is expected to be an Association of classfier IDs to \
-classifer functions. The second argument is expected to be a vector or a \
+    "The first argument is expected to be an Association of classifier IDs to \
+classifier functions. The second argument is expected to be a vector or a \
 matrix. The third argument is expected to be a rule, label->threshold, where \
 threshold is numerical. The fourth argument is expected to be one of \
 \"Votes\" or \"ProbabilitiesMean\".";
@@ -339,8 +339,8 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
 ClearAll[EnsembleClassifierMeasurements]
 
 EnsembleClassifierMeasurements::nargs =
-    "The first argument, the classifier ensemble, is expected to be an Association of classfier IDs to \
-classifer functions. \
+    "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
+classifier functions. \
 The second argument, the test data, is expected to be a list of record-to-label rules. \
 The third argument is expected to be a list of measures; see ROCFunctions`ROCFunctions[\"FunctionNames\"]. \
 Use the option \"Classes\" to specify target classes. \
@@ -407,8 +407,8 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
 ClearAll[EnsembleClassifierROCData]
 
 EnsembleClassifierROCData::nargs =
-    "The first argument, the classifier ensemble, is expected to be an Association of classfier IDs to \
-classifer functions. \
+    "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
+classifier functions. \
 The second argument, the test data, is expected to be a list of record-to-label rules. \
 The optional third argument, the threshold range, is expected to be a list of numbers between 0 and 1. \
 The optional fourth argument, the target classes, is expected to be list of class labels or All."
@@ -446,8 +446,8 @@ EnsembleClassifierROCData[___] := (Message[EnsembleClassifierROCData::nargs]; $F
 ClearAll[EnsembleClassifierROCPlots];
 
 EnsembleClassifierROCPlots::nargs =
-    "The first argument, the classifier ensemble, is expected to be an Association of classfier IDs to \
-classifer functions. \
+    "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
+classifier functions. \
 The second argument, the test data, is expected to be a list of record-to-label rules. \
 The optional third argument, the threshold range, is expected to be a list of numbers between 0 and 1. \
 The optional fourth argument, the target classes, is expected to be list of class labels or All. \
