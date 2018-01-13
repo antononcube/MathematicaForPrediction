@@ -196,10 +196,18 @@ SMRCreateFromSpecification <- function( data, metaDataSpec, itemCol, .progress="
     cat("\t\tApply weight terms to each tag sub-matrix\n")
   }
   
+  if( !( "ValueColumnName" %in% colnames(metaDataSpec) ) ) { 
+    metaDataSpec <- cbind( metaDataSpec, ValueColumnName = NA )
+  }
+  
   matrices <-
-    dlply( metaDataSpec, c("ColumnName"), function(x) {
-      
-      smat <- SMRCreateItemTagMatrix( dataRows = data, tagType = x$ColumnName[[1]], itemColumnName = itemCol, sparse = TRUE )
+    dlply( metaDataSpec, c("ColumnName", "ValueColumnName"), function(x) {
+
+      if ( is.null(x$ValueColumnName) || is.na(x$ValueColumnName) ) {
+        smat <- SMRCreateItemTagMatrix( dataRows = data, tagType = x$ColumnName[[1]], itemColumnName = itemCol, sparse = TRUE )
+      } else {
+        smat <- xtabs( as.formula( paste( x$ValueColumnName[[1]], "~", itemCol, "+", x$ColumnName[[1]] ) ), data = data, sparse = TRUE )
+      }
       
       smat <- SMRApplyTermWeightFunctions( smat, 
                                            x$GlobalWeightFunction[[1]],
