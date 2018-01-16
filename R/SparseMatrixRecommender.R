@@ -878,7 +878,29 @@ SMRMatricesToWideDF <- function( smr, tagTypes = NULL, sep = ", ", .progress = "
                              value.var = "Value", fun.aggregate = function(x) paste(x, collapse = sep ) )
 }
 
-
+#' @description Parses a search string into a vector of values or into a named list of tag-type-and-value pairs.
+#' @param tags tag names to look for; expected to be names of elements
+#' @param search search string
+#' @details The original version is to parse the string 
+#' "State=1, Default=0.2"
+#' into
+#' c( State=1, City=0.2, ZipCode=0.2 )                 
+SMRParseTagValues <- function( tags, search ) {
+  
+  pres <- eval( parse( text= paste( "c(", search, ")" ) ) )
+  
+  if ( is.null( names(pres) ) ) {
+    pres <- setNames( c( pres, rep( 0, length(tags) - length(pres) ) ), tags )
+  } else {
+    default <- if ( is.na( pres["Default"] ) ) { 0 } else { pres["Default"] }
+    cnames <- intersect( tags, names(pres) )
+    diffnames <- setdiff( tags, cnames )
+    pres <- c( pres[cnames], setNames( rep( default, length(diffnames) ), diffnames ) )
+    pres <- pres[ tags ]
+  }
+  
+  pres
+}
 #=======================================================================================
 # Object-Oriented Programming (OOP) implementations
 #=======================================================================================
