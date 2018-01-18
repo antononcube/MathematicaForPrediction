@@ -881,50 +881,6 @@ SMRMatricesToWideDF <- function( smr, tagTypes = NULL, sep = ", ", .progress = "
                              value.var = "Value", fun.aggregate = function(x) paste(x, collapse = sep ) )
 }
 
-#' @description Parses a search string into a vector of values or into a named list of tag-type-and-value pairs.
-#' @param smr a sparse matrix object
-#' @param search search string
-#' @details The original version is to parse the string 
-#' "State=1, Default=0.2"
-#' into
-#' c( State=1, City=0.2, ZipCode=0.2 )                 
-SMRParseTagTypeValues <- function( smr, search ) {
-  
-  pres <- eval( parse( text= paste( "c(", search, ")" ) ) )
-  
-  if ( is.null( names(pres) ) ) {
-    pres <- setNames( c( pres, rep( 0, length(smr$TagTypes) - length(pres) ) ), smr$TagTypes )
-    return( pres )
-  } 
-  
-  default <- if ( is.na( pres["Default"] ) ) { 0 } else { pres["Default"] }
-  cnames <- intersect( smr$TagTypes, names(pres) )
-  diffnames <- setdiff( smr$TagTypes, cnames )
-  pres <- c( pres[cnames], setNames( rep( default, length(diffnames) ), diffnames ) )
-  pres <- pres[ smr$TagTypes ]
-  
-  pres
-}
-
-#' @description Parse a profile specifications of named elements into key-value pairs.
-#' @param smr a sparse matrix recommender object; can be NULL
-#' @param spec a specification given in the form "Actor=Scott, Director"
-SMRParseProfileSpecification <- function( smr, spec ) {
-  
-  ## Using Shiny's function made for similar purposes.
-  pres <- parseQueryString(gsub(",", "&", gsub( "\\s", "", spec ) ) )
-  
-  if( is.null(smr) ) { return(pres) }
-  
-  cnames <- intersect( smr$TagTypes, names(pres) )
-  
-  if( length(cnames) == 0 ) {
-    warning( "Empty parse result for the given SMR object.", call. = TRUE )
-    return(NULL)
-  }
-  
-  pres[ cnames ]
-}  
   
 #=======================================================================================
 # Object-Oriented Programming (OOP) implementations

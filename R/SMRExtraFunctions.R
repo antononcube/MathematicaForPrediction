@@ -25,8 +25,12 @@
 # Sparse matrix recommender framework implmented in R, implemented in:
 #   https://github.com/antononcube/MathematicaForPrediction/blob/master/R/SparseMatrixRecommender.R
 # 
-# The first version of this file is based in the functional parsers implemented in:
+# The first version of this file is based on the functional parsers implemented in:
 #   https://github.com/antononcube/MathematicaForPrediction/blob/master/R/FunctionalParsers/FunctionalParsers.R
+#
+# TODO:
+#   1. [ ] Rename the parsers into (much more) specific names.
+#   2. [ ] Move functions from SparseMatrixRecommender.R to here.
 #
 # Anton Antonov
 # 2018.01.18
@@ -39,13 +43,61 @@ if( !exists("p.pack") ) {
   source_url("https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/R/FunctionalParsers/FunctionalParsers.R")
 }
 
-#' @details 
+
+#' @description Parses a search string into a vector of values or into a named list of tag-type-and-value pairs.
+#' @param smr a sparse matrix object
+#' @param search search string
+#' @details The original version is to parse the string 
+#' "State=1, Default=0.2"
+#' into
+#' c( State=1, City=0.2, ZipCode=0.2 )                 
+SMRParseTagTypeValues <- function( smr, search ) {
+  
+  pres <- eval( parse( text= paste( "c(", search, ")" ) ) )
+  
+  if ( is.null( names(pres) ) ) {
+    pres <- setNames( c( pres, rep( 0, length(smr$TagTypes) - length(pres) ) ), smr$TagTypes )
+    return( pres )
+  } 
+  
+  default <- if ( is.na( pres["Default"] ) ) { 0 } else { pres["Default"] }
+  cnames <- intersect( smr$TagTypes, names(pres) )
+  diffnames <- setdiff( smr$TagTypes, cnames )
+  pres <- c( pres[cnames], setNames( rep( default, length(diffnames) ), diffnames ) )
+  pres <- pres[ smr$TagTypes ]
+  
+  pres
+}
+
+#' @description Parse a profile specifications of named elements into key-value pairs.
+#' @param smr a sparse matrix recommender object; can be NULL
+#' @param spec a specification given in the form "Actor=Pitt, Director=Scott"
+#' @details Note that repetions of tag type names are ignored.
+#' (Because of using parseQueryString.)
+SMRParseProfileSpecification <- function( smr, spec ) {
+  
+  ## Using Shiny's function made for similar purposes.
+  pres <- parseQueryString(gsub(",", "&", gsub( "\\s", "", spec ) ) )
+  
+  if( is.null(smr) ) { return(pres) }
+  
+  cnames <- intersect( smr$TagTypes, names(pres) )
+  
+  if( length(cnames) == 0 ) {
+    warning( "Empty parse result for the given SMR object.", call. = TRUE )
+    return(NULL)
+  }
+  
+  pres[ cnames ]
+}  
+
+#' @details Finds the indices corresponding tag specified in a data frame with columns c("TagType", "Tag").
 #' @param smr a sparse matrix recommender object
 #' @param spec a data frame with columns c("TagType", "Tag")
 #' @param ... options to be passed to grep
 #' @return Adds the column "Index" to spec. 
 #' The column "Index" has column indices of smr$M corresponding to the tags in spec.
-FindTagIndexes <- function( smr, spec, ... ) {
+SMRFindTagIndexes <- function( smr, spec, ... ) {
   
   ddply( spec, c("TagType","Tag"), function(x) {
 
@@ -73,7 +125,7 @@ FindTagIndexes <- function( smr, spec, ... ) {
 #' @param spec a data frame with columns c("TagType", "Tag")
 #' @return Adds the column "Index" to spec. 
 #' The column "Index" has column indices of smr$M corresponding to the tags in spec.
-FindTagIndexesFirst <- function( smr, spec ) {
+SMRFindTagIndexesFirst <- function( smr, spec ) {
   
   ddply( presDF, "TagType", function(x) {
     
@@ -115,7 +167,7 @@ pSpec <- pPair %&% p.option( p.many( pSpaces %&>% pPair ) )
 #' @description Parse key-value specification into a data frame with columns c( "TagType", "TagSpec", "Tag", "Index" )
 #' @param smr a sparse matrix recommende object
 #' @param spec a specification string
-ParseTagValueQueryDF <- function( smr, spec ) {
+SMRParseTagValueQueryDF <- function( smr, spec ) {
 
   toTokens <- strsplit(spec, "")[[1]]
   
