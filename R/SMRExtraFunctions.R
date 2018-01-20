@@ -30,7 +30,7 @@
 #
 # TODO:
 #   1. [ ] Rename the parsers into (much more) specific names.
-#   2. [ ] Move functions from SparseMatrixRecommender.R to here.
+#   2. [X] Move functions from SparseMatrixRecommender.R to here.
 #
 # Anton Antonov
 # 2018.01.18
@@ -174,5 +174,63 @@ SMRParseTagValueQueryDF <- function( smr, spec ) {
   PPAIRRESDF <<- NULL
   pres <- p.shortest( pSpec )( toTokens )
   
-  FindTagIndexes( smr, PPAIRRESDF, ignore.case = T )
+  SMRFindTagIndexes( smr, PPAIRRESDF, ignore.case = T )
+}
+
+#' @description 
+#' @param smr a sparse matrix recommender object
+#' @param spec a string with key-value specification for recommendations
+#' @param nrecs number of recommendations
+#' @details If geoCoordMat is NULL or specGeoCoords is NULL the geo recommendations are not computed.
+#' If spec is NULL the tag recommendations are not computed.
+#' The argument tagGeoSliderRatio is number in [0,1].
+SMRGeoSpecRecommendations <- function( smr, spec, nrecs, 
+                                       geoCoordMat = NULL, specGeoCoords = NULL,
+                                       tagGeoSliderRatio = 1/2,
+                                       milesBreaks = c(2,5,10,15,20,40,50,100,200,300)
+                                       ) {
+  
+  toMeters <- 1609.344
+  milesIntervalNames = as.character( cut(milesBreaks,c(0,milesBreaks)) )
+  
+  if( !is.null(geoCoordMat) && ( is.null(rownames(geoCoordMat)) || sum( rownames(geoCoordMat) %in% rownames(smr$M) ) == 0 ) ) {
+    warning( "The row names of the geo coordinates matrix, geoCoordMat, do not intersect with the recomender item IDs.", call. = T )
+  }
+  
+  ## Geo coordinates vector
+  if( !is.null(geoCoordMat) && !is.null(specGeoCoords) ) {
+
+    dres <- distm( x = matrix( c(specGeoCoords$Lon, specGeoCoords$Lat), ncol = 2), y = geoCoordMat, fun=distGeo )
+    names(dres) <- rownames(geoCoordMat)
+    
+    idres <- length(milesIntervalNames) - findInterval( dres, milesBreaks * toMeters )
+    idres <- idres / max(idres)
+    
+    geoProf <- data.frame( Score = idres[ idres > 0 ], Tag = names(dres)[ idres > 0 ], stringsAsFactors = F )
+    
+    geoVec <- SMRProfileDFToVector( smr = smr, profile = geoProf )
+    
+  } else {
+    
+    geoVec <- sparseMatrix( i = c(1), j = c(1), p = c(0), dims = c(ncol(smr$M), 1) )
+    
+  }
+   
+  ## Tags spec vector
+  if( !is.null(spec) ) {
+    
+    qProf <- SMRParseTagValueQueryDF( smr, spec )
+    qProf <- data.frame( Score = 1, Index = qProf$Index, Tag = qProf$Tag, stringsAsFactors = F )
+    
+    tagVec <- SMRProfileDFToVector( smr = smr, profileDF = qProf ) 
+      
+  } else {
+    
+    tagVec <- sparseMatrix( i = c(1), j = c(1), p = c(0), dims = c(ncol(smr$M), 1) )
+    
+  }
+
+  ## Combined recommendations
+  SMRRecommendationsByProfileVector( smr = smr, profileVec = tagGeoSliderRatio * tagVec + (1-tagGeoSliderRatio) * geoVec, nrecs = nrecs )
+  
 }
