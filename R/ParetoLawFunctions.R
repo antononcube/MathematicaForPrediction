@@ -60,15 +60,15 @@ ParetoLawPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", xFra
 #' @param dataDF a two column data frame with the first column of a variable name and second column a numerical vector c("Name", "Value")
 #' @param plotTitle a string for the title of the plot
 ParetoLawGGPlot <- function( dataDF, main = NULL, scales = "free_x", ...  ) {
-  pres <- 
+  qdf <- 
     ddply( dataDF, c("Name"), function(x) {
       dataVec <- rev( sort(x$Value) )
       dataVec <- cumsum( dataVec ) / sum( dataVec )
-      data.frame( Name = x$Name[[1]], Index = 1:nrow(x), ParetoFraction = dataVec )
+      pres <- data.frame( Name = x$Name[[1]], Index = 1:nrow(x), ParetoFraction = dataVec )
+      qdf <- cbind( pres,
+                    p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
     })
 
-  qdf <- cbind( pres,
-                p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
   
   ggplot(qdf) +
     geom_line( aes( x = Index, y = ParetoFraction) ) +
