@@ -125,9 +125,9 @@
 
 (*
     TODO:
-     1. Add examples explaned in detail.
-     2. Make a true package.
-     3. Add classifier ensemble handling.
+     1. Add examples explained in detail.
+     2. CANCELED Make a true package.
+     3. DONE Add classifier ensemble handling.
      4. Give examples of tracking symbols.
 *)
 
