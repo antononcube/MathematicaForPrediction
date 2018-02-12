@@ -531,10 +531,11 @@ pEBNF = EBNF\[CircleDot]ParseMany1[pGRule];
 Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminalInterpreter, EBNFOptionInterpreter, EBNFRepetitionInterpreter,
       EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter]
 
-Clear[pNumber, pWord, pLetterWord, pIdentifierWord]
+Clear[pNumber, pInteger, pWord, pLetterWord, pIdentifierWord]
+
 pNumber = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] &];
 
-pInteger = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, DigitCharacter ..] &];
+pInteger = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, (DigitCharacter..) | (( "+" | "-" )~~(DigitCharacter..))] &];
 
 pWord = ParsePredicate[StringMatchQ[#, (WordCharacter | "_") ..] &];
 
