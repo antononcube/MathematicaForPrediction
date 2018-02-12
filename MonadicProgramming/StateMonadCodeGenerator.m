@@ -337,6 +337,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateModifyContext = ToExpression[monadName <> "ModifyContext"],
       MStateAddToContext = ToExpression[monadName <> "AddToContext"],
       MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
+      MStateDropFromContext = ToExpression[monadName <> "DropFromContext"],
       MStateOption = ToExpression[monadName <> "Option"],
       MStateWhen = ToExpression[monadName <> "When"],
       MStateIfElse = ToExpression[monadName <> "IfElse"],
@@ -451,10 +452,13 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateModifyContext[f_][x_, context_Association] := MState[x, f[context]];
 
       MStateAddToContext[MStateFailureSymbol] := MStateFailureSymbol;
-      MStateAddToContext[varName_String][x_, context_Association] := MState[x, Join[context,<|varName->x|>]];
+      MStateAddToContext[varName_String][x_, context_Association] := MState[x, Join[context, <|varName->x|>]];
 
       MStateRetrieveFromContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStateRetrieveFromContext[varName_String][x_, context_Association] := MState[context[varName], context];
+
+      MStateDropFromContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateDropFromContext[varNames:(_String|{_String..})][x_, context_Association] := MState[x, KeyDrop[context, varNames]];
 
       MStateOption[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateOption[f_][xs_, context_] :=
