@@ -238,7 +238,28 @@ ClConRecoverData[xs_, context_Association] :=
 
         True,
         Echo["Cannot recover data.","ClConRecoverData:"];
-        None
+        $ClConFailure
+      ]
+    ];
+
+
+ClConGetVariableNames[None] := None
+ClConGetVariableNames[xs_, context_Association] :=
+    Block[{},
+      Which[
+        TrueQ[Head[xs] === Dataset],
+        ClCon[Normal[xs[1,Keys]], context],
+
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && TrueQ[Head[xs["trainData"]] == Dataset],
+        ClCon[Normal[xs["trainData"][1,Keys]], context],
+
+        KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"] && TrueQ[Head[context["trainData"]] == Dataset],
+        ClCon[Normal[context["trainData"][1,Keys]], context],
+
+        True,
+        Echo["Cannot find the variable names: (1) the pipeline value is not a Dataset and (2) there is no \"trainData\" key in the context or the corresponding value is not a Dataset.",
+             "ClConGetVariableNames:"];
+        $ClConFailure
       ]
     ];
 
@@ -300,7 +321,7 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
 
       If[ ! ClConClassifierQ[cf],
         Echo["Classifier making failure.", "ClConMakeClassifier:"];
-        None,
+        $ClConFailure,
       (* ELSE *)
         ClCon[cf, Join[context, newContext, <|"classifier" -> cf|>]]
       ]
@@ -327,7 +348,7 @@ ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPat
 
         True,
         Echo["Make a classifier first.", "ClConClassifierMeasurements:"];
-        None
+        $ClConFailure
       ]
     ];
 
