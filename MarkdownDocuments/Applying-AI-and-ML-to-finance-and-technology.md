@@ -13,7 +13,7 @@ In this blog post I try to provide some further context for the panel discussion
 
 which was part of the conference ["Data Science Salon Miami 2018"](https://datascience.salon/miami/) held in Miami on February 8 and 9.
 
-The blog post can be read independently, but my intent is to provide a brief review of the discussion and further context to (some of) the answers. (It is probably better to see discussion's recording first.)
+The blog post can be read independently, but my intent is to provide a brief review of the discussion and further context to (some of) the answers. (It is probably better to see [discussion's recording first](https://medium.com/@formulatedby/latest).)
 
 Also, my comments and remarks are going to be saturated with links for reference and further reading. 
 
