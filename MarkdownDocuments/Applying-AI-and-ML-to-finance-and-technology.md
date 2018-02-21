@@ -19,7 +19,7 @@ Also, my comments and remarks are going to be saturated with links for reference
 
 You can also read [the post by panel's discussion host, Irma Becerra](https://www.linkedin.com/pulse/data-science-changing-our-lives-better-irma-becerra-fernandezphd/).
 
-This blog post is not written by someone particularly enamored by [Artificial Intelligence (AI)](https://en.wikipedia.org/wiki/Artificial_intelligence), [Data Science](https://en.wikipedia.org/wiki/Data_science), or [Machine Learning (ML)](https://en.wikipedia.org/wiki/Machine_learning). I do like working in those disciplines, but I do think that [Operations Research](https://en.wikipedia.org/wiki/Operations_research) gives the most fruitful perspective of their utilization. 
+This blog post is not written by someone particularly enamored by [Artificial Intelligence (AI)](https://en.wikipedia.org/wiki/Artificial_intelligence), [Data Science (DS)](https://en.wikipedia.org/wiki/Data_science), or [Machine Learning (ML)](https://en.wikipedia.org/wiki/Machine_learning). I do like working in those disciplines, but I do think there are more interesting and fascinating mathematical disciplines than them. Also, I think AI, DS, and ML should be seen through the lens of [Operations Research](https://en.wikipedia.org/wiki/Operations_research), which gives the most fruitful perspectives of their utilization. 
 
 
 ### Briefly about the event
@@ -193,7 +193,7 @@ I would like to point out that technology itself has already democratized and po
 
 - I would be much more interested in developing agriculture recommendation systems than recommenders for digital content consumption (movies, books, songs) or dating. 
 
-- Also, I am a big advocate of utilizing recommenders in Operations Research frameworks. 
+- Also, I am a big advocate of utilizing recommenders in [Operations Research](https://en.wikipedia.org/wiki/Operations_research) frameworks. 
 
     - Those frameworks optimize quantified satisfaction or financial goals of the organizations or customers.
 
