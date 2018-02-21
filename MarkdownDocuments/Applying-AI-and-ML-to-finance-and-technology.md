@@ -15,7 +15,7 @@ which was part of the conference ["Data Science Salon Miami 2018"](https://datas
 
 The blog post can be read independently, but my intent is to provide a brief review of the discussion and further context to (some of) the answers. (It is probably better to see [discussion's recording first](https://medium.com/@formulatedby/latest).)
 
-Also, my comments and remarks are going to be saturated with links for reference and further reading. 
+Also, my comments and remarks are saturated with links for reference and further reading. 
 
 You can also read [the post by panel's discussion host, Irma Becerra](https://www.linkedin.com/pulse/data-science-changing-our-lives-better-irma-becerra-fernandezphd/).
 
