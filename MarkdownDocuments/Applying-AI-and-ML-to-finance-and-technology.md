@@ -101,7 +101,7 @@ I side with the so called ["Weak AI"](https://en.wikipedia.org/wiki/Weak_AI). He
 
 Generally, my personal opinions on "AI", come from living through at least one [AI winter](https://en.wikipedia.org/wiki/AI_winter), and being a subject in the [AI effect](https://en.wikipedia.org/wiki/AI_effect).
 
-[!["AI-winters-and-winter-episodes"](https://imgur.com/k48lvD3.png)](https://imgur.com/k48lvD3.png)
+[!["AI-winters-and-winter-episodes"](https://imgur.com/k48lvD3l.png)](https://imgur.com/k48lvD3.png)
 
 #### The ingredients of coming to wrong ideas about AI
 
@@ -127,7 +127,7 @@ Any other way of fishing is something in between. (For example, using a net or a
 So, the high performance of draining the lake can be confused with the ability of bait selection and fishing-spot picking.
 (And yes, not knowing how the AI algorithms work is a big misconception maker too.)
 
-[!["Two-ways-to-fish"](https://imgur.com/30XTzl8l.png)](https://imgur.com/30XTzl8.png)
+[!["Two-ways-to-fish"](https://imgur.com/ToHBosK.png)](https://imgur.com/ToHBosK.png)
 
 As an illustration of "draining the lake" approach to interesting puzzles humans play with, review (skim over) this article: ["Solving Sudoku as an integer programming problem"](http://community.wolfram.com/groups/-/m/t/974303). 
 
