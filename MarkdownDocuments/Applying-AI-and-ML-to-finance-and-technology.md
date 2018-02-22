@@ -83,7 +83,7 @@ Of course, that is to be expected since the term "data science" and the related 
 This is of course a long and fruitful topic.
 
 Here -- and during the panel session -- I want to concentrate of what kind of thinking processes generate those misconceptions.
-(Obviously this a less laborious task than enumerating and discussing the different concrete misconceptions.)
+(Obviously this is a less laborious task than enumerating and discussing the different concrete misconceptions.)
 
 #### Weak AI
 
@@ -93,13 +93,13 @@ I side with the so called ["Weak AI"](https://en.wikipedia.org/wiki/Weak_AI). He
 
 - All algorithms are based on 0s and 1s, so generally, I find "AI" misleading and "Strong AI" an interesting thing to think about, but far from practical use.
 
-- Classifiers are just a complicated if-statement.
+- Classifiers are just complicated if-statements.
 
     - Derived with deep learning or other algorithms.
 
     - Also, classification problems belong to the conceptually simplest ML branch ([Supervised learning](https://en.wikipedia.org/wiki/Supervised_learning).)
 
-Generally, my personal opinions on "AI", come from living through at least one [AI winter](https://en.wikipedia.org/wiki/AI_winter), and being a subject in the [AI effect](https://en.wikipedia.org/wiki/AI_effect).
+Generally, my personal opinions on "AI" come from living through at least one [AI winter](https://en.wikipedia.org/wiki/AI_winter), and being a subject in the [AI effect](https://en.wikipedia.org/wiki/AI_effect).
 
 [!["AI-winters-and-winter-episodes"](https://imgur.com/k48lvD3l.png)](https://imgur.com/k48lvD3.png)
 
@@ -121,7 +121,7 @@ I think the major ingredients of getting the wrong AI ideas are two.
 
 My favorite analogy to point 1 above is the following.
 
-There are two principal ways to fish: with bait and a fishing rod, and by draining the lake and picking the fish you want.
+There are two principal ways to fish: (i) with bait and a fishing rod, and (ii) by draining the lake and picking the fish you want.
 Any other way of fishing is something in between. (For example, using a net or a bomb.)
 
 So, the high performance of draining the lake can be confused with the ability of bait selection and fishing-spot picking.
@@ -162,7 +162,7 @@ To clarify, if we have records with four columns:
         
        claim ID, claim total amount, transaction amount, timestamp
 
-then we already in a position to do fair amount of modeling and prediction.
+then we are already in a position to do a fair amount of modeling and prediction.
 
 
 ### What can we do make advancements in Data Science more accessible to the public?
