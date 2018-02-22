@@ -9,11 +9,11 @@ February, 2018
 
 In this blog post I try to provide some further context for the panel discussion:
 
-**"Artificial Intelligence and Machine Learning application in finance and technology"**,
+[**"Artificial Intelligence and Machine Learning application in finance and technology"**](https://youtu.be/mcyg25Ay_xs),
 
 which was part of the conference ["Data Science Salon Miami 2018"](https://datascience.salon/miami/) held in Miami on February 8 and 9.
 
-The blog post can be read independently, but my intent is to provide a brief review of the discussion and further context to (some of) the answers. (It is probably better to see [discussion's recording first](https://medium.com/@formulatedby/latest).)
+The blog post can be read independently, but my intent is to provide a brief review of the discussion and further context to (some of) the answers. (It is probably better to see [discussion's recording](https://youtu.be/mcyg25Ay_xs) first.)
 
 Also, my comments and remarks are saturated with links for reference and further reading. 
 
