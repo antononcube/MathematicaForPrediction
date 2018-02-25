@@ -147,6 +147,16 @@
 
 ClCon::gitimp = "Importing `1` from GitHub...";
 
+If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
+  Message[ClCon::gitimp, "MathematicaForPredictionUtilities.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
+
+If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
+  Message[ClCon::gitimp, "OutlierIdentifiers.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
+];
+
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
   Message[ClCon::gitimp, "StateMonadCodeGenerator.m"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
@@ -162,15 +172,12 @@ If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
 ];
 
-If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
-  Message[ClCon::gitimp, "MathematicaForPredictionUtilities.m"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Message[ClCon::gitimp, "CrossTabulate.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
-If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
-  Message[ClCon::gitimp, "OutlierIdentifiers.m"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
-];
+
 
 (*Needs["StateMonadCodeGenerator`"]*)
 (*Needs["VariableImportanceByClassifiers`"]*)
@@ -257,6 +264,10 @@ ClConRecoverData[xs_, context_Association] :=
 ClConTakeData[None] := None;
 ClConTakeData[xs_, context_] :=
     Fold[ ClConBind, ClConUnit[xs, context], {ClConRecoverData, ClConTakeValue}];
+
+
+ClConTakeClassifier[None] := None;
+ClConTakeClassifier[xs_, context_] := context["classifier"];
 
 
 ClConGetVariableNames[None] := None;
@@ -408,10 +419,96 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
 
 
 (************************************************************)
+(* ClConToLinearVectorSpaceRepresentation                   *)
+(************************************************************)
+
+ClConToLinearVectorSpaceRepresentation[data:(_?MatrixQ|_Dataset)] :=
+    Block[{catData, smats, resMat, res},
+
+      catData = ToCategoricalColumns[data];
+
+      smats =
+          Table[
+            CrossTabulate[ Transpose[{Range[Length[catData]], Normal[catData[All, i]]}] ],
+            {i, Length[data[1]]}];
+
+      resMat = Transpose[Join @@ Map[Transpose[#["XTABMatrix"]] &, smats]];
+
+      <| "XTABMatrix"->resMat, "RowNames"-> smats[[1]]["RowNames"], "ColumnNames" -> Join @@ Through[smats["ColumnNames"]] |>
+    ];
+
+ClConToLinearVectorSpaceRepresentation[][None] := None;
+
+ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
+    Block[{t},
+      t = ClConBind[ ClConUnit[xs, context], ClConTakeData ];
+
+      If[ t === $ClConFailure, Return[$ClConFailure] ];
+
+      t = ClConToLinearVectorSpaceRepresentation[t];
+
+      ClConUnit[t, context]
+    ];
+
+
+(************************************************************)
+(* ClConOutlierPosition                                     *)
+(************************************************************)
+
+Options[ClConOutlierPosition] = {
+  "CentralItemFunction" -> Mean,
+  DistanceFunction -> EuclideanDistance,
+  "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) };
+
+ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
+    Block[{avgFunc, distFunc, olParams, smat, avgItem, dists},
+
+      avgFunc = OptionValue[ ClConOutlierPosition, "CentralItemFunction" ];
+      distFunc = OptionValue[ ClConOutlierPosition, DistanceFunction ];
+      olParams = OptionValue[ ClConOutlierPosition, "OutlierIdentifierParameters" ];
+
+      Which[
+        MatrixQ[data, NumberQ], smat = data,
+        True, smat = ClConToLinearVectorSpaceRepresentation[data]["XTABMatrix"]
+      ];
+
+      avgItem = avgFunc[N@smat];
+
+      dists = Map[distFunc[#, avgItem] &, Identity /@ smat];
+
+      OutlierPosition[dists, olParams]
+    ];
+
+ClConOutlierPosition[___][None] := None;
+
+ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{},
+
+      Print[Short/@context];
+      Print[Short/@xs];
+
+      Which[
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
+        ClConUnit[<|"trainData"->ClConOutlierPosition[xs["trainData"],opts], "testData" -> ClConOutlierPosition[xs["testData"],opts] |>, context],
+
+        KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
+        ClConUnit[<|"trainData"->ClConOutlierPosition[context["trainData"],opts], "testData" -> ClConOutlierPosition[context["testData"],opts] |>, context],
+
+        TrueQ[Head[xs] === Dataset],
+        ClConUnit[ClConOutlierPosition[xs,opts], context],
+
+        True,
+        Echo["Cannot find data.","ClConOutlierPosition:"];
+        $ClConFailure
+      ]
+
+    ];
+
+(************************************************************)
 (* ClConFindOutliersPerClass                                *)
 (************************************************************)
 
-Options[ClConFindOutliersPerClass] = { "OutlierIdentifier" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) };
+Options[ClConFindOutliersPerClass] = { "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters), "TrainingDataOnly" -> True };
 
 ClConFindOutliersPerClass[___][None] := None;
 
@@ -419,9 +516,24 @@ ClConFindOutliersPerClass[][xs_, context_] :=
     ClConFindOutliersPerClass["OutlierIdentifier" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
 
 ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{data},
+    Block[{data, aClassInds, outlierIdentifier, trainingDataOnlyQ},
 
-      data = ClConGetData[xs, context];
+      outlierIdentifier = OptionValue[ ClConFindOutliersPerClass, "OutlierIdentifierParameters"];
+      trainingDataOnlyQ = OptionValue[ ClConFindOutliersPerClass, "TrainingDataOnly" ];
+
+      If[ trainingDataOnlyQ,
+        data = context["trainData"],
+        (* ELSE *)
+        data = ClConTakeData[xs, context];
+      ];
+
+      If[ Head[data] =!= Dataset && !MatrixQ[data],
+        Return[$ClConFailure]
+      ];
+
+
+      dataMat = Toc
+      aClassInds = GroupBy[Transpose[{Range[Length[data]], data[[All, -1]]}], #[[2]]& ];
 
       ClConUnit[xs, context]
     ];
