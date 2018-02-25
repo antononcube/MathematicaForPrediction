@@ -219,8 +219,17 @@ ResamplingEnsembleClassifier[specs : {(_String | {_String, _?NumberQ} | {_String
       ResamplingEnsembleClassifier[ fullSpecs, data ]
     ];
 
+ResamplingEnsembleClassifier::wskey = "The given specification key `1` is not one of `2`.";
+
 ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ ] :=
-    Block[{fullSpecs, res},
+    Block[{fullSpecs, res, knownSpecKeys, allSpecKeys},
+
+      knownSpecKeys = {"method", "sampleFraction", "nClassifiers", "samplingFunction"};
+      allSpecKeys = Union[Flatten[Keys/@specs]];
+      If[ Length[Complement[allSpecKeys, knownSpecKeys]] > 0,
+        Message[ResamplingEnsembleClassifier::wskey, #, knownSpecKeys ] & /@ Complement[allSpecKeys, knownSpecKeys]
+      ];
+
       fullSpecs = Map[ Join[ <| "method"->"LogisticRegression", "sampleFraction"->0.9, "nClassifiers"->1, "samplingFunction"->RandomChoice |>, # ]&, specs];
       res =
           Map[
