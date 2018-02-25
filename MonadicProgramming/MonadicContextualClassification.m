@@ -145,20 +145,31 @@
 
 (*Begin["`Private`"]*)
 
+ClCon::gitimp = "Importing `1` from GitHub...";
+
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
+  Message[ClCon::gitimp, "StateMonadCodeGenerator.m"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
 
 If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] == 0,
+  Message[ClCon::gitimp, "ClassifierEnsembles.m"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ClassifierEnsembles.m"]
 ];
 
 If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
+  Message[ClCon::gitimp, "VariableImportanceByClassifiers.m"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
 ];
 
 If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
+  Message[ClCon::gitimp, "MathematicaForPredictionUtilities.m"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
+
+If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
+  Message[ClCon::gitimp, "OutlierIdentifiers.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
 
 (*Needs["StateMonadCodeGenerator`"]*)
@@ -226,7 +237,7 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
     ] /; 0 < fr <= 1;
 
 
-ClConRecoverData[None] := None
+ClConRecoverData[None] := None;
 ClConRecoverData[xs_, context_Association] :=
     Block[{},
       Which[
@@ -243,7 +254,12 @@ ClConRecoverData[xs_, context_Association] :=
     ];
 
 
-ClConGetVariableNames[None] := None
+ClConTakeData[None] := None;
+ClConTakeData[xs_, context_] :=
+    Fold[ ClConBind, ClConUnit[xs, context], {ClConRecoverData, ClConTakeValue}];
+
+
+ClConGetVariableNames[None] := None;
 ClConGetVariableNames[xs_, context_Association] :=
     Block[{},
       Which[
@@ -261,6 +277,15 @@ ClConGetVariableNames[xs_, context_Association] :=
              "ClConGetVariableNames:"];
         $ClConFailure
       ]
+    ];
+
+
+ClConEchoVariableNames[None] := None;
+ClConEchoVariableNames[xs_, context_Association] :=
+    Block[{t},
+      t = Fold[ ClConBind, ClConUnit[xs,context], {ClConGetVariableNames, ClConTakeValue}];
+      Echo[t,"variable names:"];
+      ClConUnit[xs, context]
     ];
 
 
@@ -285,7 +310,10 @@ ClConClassifierQ[ cl_ ] :=
           MatchQ[ cl, Association[(_ -> _ClassifierFunction) ..] ]
         ];
 
-ClConMakeClassifier[_][None] := None;
+ClConMakeClassifier[___][None] := None;
+
+ClConMakeClassifier[][xs_, context_] := ClConMakeClassifier["LogisticRegression"][xs, context];
+
 ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
     Block[{cf, dataAssoc, newContext},
 
@@ -334,7 +362,7 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
 
 Options[ClConClassifierMeasurements] = { Method -> Automatic };
 
-ClConClassifierMeasurements[_][None] := None;
+ClConClassifierMeasurements[___][None] := None;
 ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPattern[]][xs_, context_] :=
     Block[{cm},
       Which[
@@ -357,8 +385,13 @@ ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPat
 (* ClConAccuracyByVariableShuffling                         *)
 (************************************************************)
 
+Options[ClConAccuracyByVariableShuffling] = { "Classes" -> None };
+
+ClConAccuracyByVariableShuffling[___][None] := None;
+
 ClConAccuracyByVariableShuffling[][xs_, context_] :=
     ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
+
 ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
     Block[{fsClasses = FilterRules[{opts}, "Classes"]},
 
@@ -371,6 +404,26 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
           Most@Keys[Normal@context["testData"][[1]]],
           fsClasses],
         context]
+    ];
+
+
+(************************************************************)
+(* ClConFindOutliersPerClass                                *)
+(************************************************************)
+
+Options[ClConFindOutliersPerClass] = { "OutlierIdentifier" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) };
+
+ClConFindOutliersPerClass[___][None] := None;
+
+ClConFindOutliersPerClass[][xs_, context_] :=
+    ClConFindOutliersPerClass["OutlierIdentifier" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
+
+ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_] :=
+    Block[{data},
+
+      data = ClConGetData[xs, context];
+
+      ClConUnit[xs, context]
     ];
 
 (*End[]  *`Private` *)
