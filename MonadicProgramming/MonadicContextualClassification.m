@@ -270,6 +270,35 @@ ClConTakeClassifier[None] := None;
 ClConTakeClassifier[xs_, context_Association] := context["classifier"];
 
 
+ClConTakeClassLabelIndex[___][None] := None;
+ClConTakeClassLabelIndex[][xs_, context_Association] := ClConTakeClassLabelIndex[Automatic][xs, context];
+ClConTakeClassLabelIndex[classLabel_][xs_, context_Association] :=
+    Block[{varNames},
+
+      varNames = ClConBind[ ClConUnit[xs, context], ClConTakeVariableNames ];
+
+      Which[
+
+        TrueQ[classLabel===Automatic] && KeyExistsQ[context, "classLabel"] && MemberQ[varNames, context["classLabel"]],
+        <| context["classLabel"] -> First@Flatten@Position[varNames, context["classLabel"]] |>,
+
+        TrueQ[classLabel===Automatic] && KeyExistsQ[context, "classLabel"] && !MemberQ[varNames, context["classLabel"]],
+        Echo["The context value for \"classLabel\" is one of " <> ToString[varNames], "ClConTakeClassLabelIndex::"];
+        $ClConFailure,
+
+        TrueQ[classLabel===Automatic],
+        <| varNames[[-1]] -> Length[varNames] |>,
+
+        MemberQ[varNames, classLabel],
+        <| classLabel -> First@Flatten@Position[varNames, classLabel] |>,
+
+        True,
+        Echo["The specified class label "<>ToString[classLabel]<>" is one of " <> ToString[varNames], "ClConTakeClassLabelIndex::"];
+        $ClConFailure
+      ]
+    ];
+
+
 ClConTakeVariableNames[None] := None;
 ClConTakeVariableNames[xs_, context_Association] :=
     Fold[ClConBind, ClConUnit[xs, context], {ClConGetVariableNames, ClConTakeValue}];
@@ -463,18 +492,29 @@ ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
 Options[ClConOutlierPosition] = {
   "CentralItemFunction" -> Mean,
   DistanceFunction -> EuclideanDistance,
-  "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) };
+  "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
+  "ClassLabel" -> Automatic,
+  "SimpleConversion" -> True
+};
 
 ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
-    Block[{avgFunc, distFunc, olParams, smat, avgItem, dists},
+    Block[{avgFunc, distFunc, olParams, simpleConversionQ, smat, avgItem, dists},
 
       avgFunc = OptionValue[ ClConOutlierPosition, "CentralItemFunction" ];
       distFunc = OptionValue[ ClConOutlierPosition, DistanceFunction ];
       olParams = OptionValue[ ClConOutlierPosition, "OutlierIdentifierParameters" ];
+      simpleConversionQ = TrueQ[OptionValue[ ClConOutlierPosition, "SimpleConversion" ]];
 
       Which[
-        MatrixQ[data, NumberQ], smat = data,
-        True, smat = ClConToLinearVectorSpaceRepresentation[data]["XTABMatrix"]
+        TrueQ[Head[data]===Dataset] && MatrixQ[Normal[data[Values]], NumberQ],
+        smat = Normal[data[Values]],
+
+        simpleConversionQ,
+        smat = Normal[data[All, Select[NumberQ]][Values]];
+        If[VectorQ[smat], smat = Transpose[{smat}] ],
+
+        True,
+        smat = ClConToLinearVectorSpaceRepresentation[data]["XTABMatrix"]
       ];
 
       avgItem = avgFunc[N@smat];
@@ -487,17 +527,27 @@ ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
 ClConOutlierPosition[___][None] := None;
 
 ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{},
+    Block[{classLabel, classLabelInd},
+
+      classLabel = OptionValue[ ClConOutlierPosition, "ClassLabel" ];
+
+      classLabelInd = ClConBind[ ClConUnit[xs,context], ClConTakeClassLabelIndex[classLabel]];
 
       Which[
         MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
-        ClConUnit[<|"trainData"->ClConOutlierPosition[xs["trainData"],opts], "testData" -> ClConOutlierPosition[xs["testData"],opts] |>, context],
+        ClConUnit[
+          <|"trainData"->ClConOutlierPosition[xs["trainData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
+            "testData" -> ClConOutlierPosition[xs["testData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts] |>,
+          context],
 
         KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
-        ClConUnit[<|"trainData"->ClConOutlierPosition[context["trainData"],opts], "testData" -> ClConOutlierPosition[context["testData"],opts] |>, context],
+        ClConUnit[
+          <|"trainData"->ClConOutlierPosition[context["trainData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
+            "testData" -> ClConOutlierPosition[context["testData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts] |>,
+          context],
 
-        TrueQ[Head[xs] === Dataset],
-        ClConUnit[ClConOutlierPosition[xs,opts], context],
+        TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]],
+        ClConUnit[ClConOutlierPosition[xs, opts], context],
 
         True,
         Echo["Cannot find data.","ClConOutlierPosition:"];
