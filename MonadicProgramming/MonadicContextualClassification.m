@@ -521,11 +521,80 @@ ClConFindOutliersPerClass[][xs_, context_Association] :=
     ClConFindOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
 
 ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{data, data2, aClassInds, outlierIdentifier, trainingDataOnlyQ, classLabel, classLabelInd, varNames, res},
+    Block[{data, res},
 
-      outlierIdentifier = OptionValue[ ClConFindOutliersPerClass, "OutlierIdentifierParameters"];
-      trainingDataOnlyQ = OptionValue[ ClConFindOutliersPerClass, "TrainingDataOnly" ];
-      classLabel = OptionValue[ ClConFindOutliersPerClass, "ClassLabel" ];
+      res = Fold[ ClConBind, ClConUnit[xs,context], {ClConOutliersOperationsProcessing[opts][##]&, ClConTakeValue}];
+
+      data = res["data"][ GroupBy[#[res["classLabel"]]&] ];
+
+      res =
+          AssociationThread[
+            Normal[Keys[data]],
+            Table[ClConOutlierPosition[data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"] ], {i, Length[data]}]
+          ];
+
+      ClConUnit[res, context]
+    ];
+
+
+(************************************************************)
+(* ClConDropOutliersPerClass                                *)
+(************************************************************)
+
+(*
+  This function drops the outliers for each class label in a Dataset object.
+  Here are the steps.
+
+  1. The Dataset object is split into parts corresponding to the unique values of the
+  specified class label.
+
+  2. For each part the outliers are found with the specified outlier identifier.
+
+  3. The obtained parts are joined into a dataset.
+
+  4. That dataset is returned as monad pipeline value.
+*)
+
+Options[ClConDropOutliersPerClass] = Options[ClConFindOutliersPerClass];
+
+ClConDropOutliersPerClass[___][None] := None;
+
+ClConDropOutliersPerClass[][xs_, context_Association] :=
+    ClConDropOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
+
+ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{data, res, t},
+
+      res = Fold[ ClConBind, ClConUnit[xs,context], {ClConOutliersOperationsProcessing[opts][##]&, ClConTakeValue}];
+
+      data = res["data"][ GroupBy[#[res["classLabel"]]&] ];
+
+      res =
+          Table[(
+            t = ClConOutlierPosition[data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"] ];
+            data[i][ Complement[ Range[Length[data[i]]], t] ]
+          ), {i, Length[data]}];
+
+      res = Join @@ res;
+
+      ClConUnit[res, context]
+    ];
+
+
+(************************************************************)
+(* ClConOutliersOperationsProcessing                        *)
+(************************************************************)
+
+Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClass];
+
+ClConOutliersOperationsProcessing[___][None] := None;
+
+ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{data, outlierIdentifier, trainingDataOnlyQ, classLabel, classLabelInd, varNames, res},
+
+      outlierIdentifier = OptionValue[ ClConOutliersOperationsProcessing, "OutlierIdentifierParameters"];
+      trainingDataOnlyQ = OptionValue[ ClConOutliersOperationsProcessing, "TrainingDataOnly" ];
+      classLabel = OptionValue[ ClConOutliersOperationsProcessing, "ClassLabel" ];
 
       If[ TrueQ[trainingDataOnlyQ],
 
@@ -566,14 +635,14 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
         IntegerQ[classLabel],
         classLabelInd = classLabel;
         If[ !(1 <= classLabelInd <= Length[varNames]),
-          Echo[ "The option \"ClassLabel\" value " <> classLabel <> " is not integer between 1 and " <> ToString[Length[varNames]] <>".", "ClConFindOutliersPerClass::"];
+          Echo[ "The option \"ClassLabel\" value " <> classLabel <> " is not integer between 1 and " <> ToString[Length[varNames]] <>".", "ClConOutliersOperationsProcessing::"];
           Return[$ClConFailure]
         ];
         classLabel = varNames[[classLabelInd]],
 
         StringQ[classLabel],
         If[ !MemberQ[ varNames, classLabel ],
-          Echo[ "The option \"ClassLabel\" value " <> classLabel <> " is not one of " <> ToString[varNames] <> ".", "ClConFindOutliersPerClass::"];
+          Echo[ "The option \"ClassLabel\" value " <> classLabel <> " is not one of " <> ToString[varNames] <> ".", "ClConOutliersOperationsProcessing::"];
           Return[$ClConFailure]
         ];
         classLabelInd = First@Flatten@Position[varNames, classLabel],
@@ -583,13 +652,7 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 
       ];
 
-      data2 = data[ GroupBy[#[classLabel]&] ];
-
-      res =
-          AssociationThread[
-            Normal[Keys[data2]],
-            Table[ClConOutlierPosition[ds2[i], "OutlierIdentifierParameters" -> outlierIdentifier], {i, Length[data2]}]
-          ];
+      res = <| "data"->data, "varNames"->varNames, "classLabel"->classLabel, "classLabelInd"->classLabelInd, "outlierIdentifier"->outlierIdentifier |>;
 
       ClConUnit[res, context]
     ];
