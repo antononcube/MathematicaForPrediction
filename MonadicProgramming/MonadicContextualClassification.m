@@ -498,19 +498,19 @@ Options[ClConOutlierPosition] = {
 };
 
 ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
-    Block[{avgFunc, distFunc, olParams, simpleConversionQ, smat, avgItem, dists},
+    Block[{avgFunc, distFunc, olParams, simpleConversion, smat, avgItem, dists},
 
       avgFunc = OptionValue[ ClConOutlierPosition, "CentralItemFunction" ];
       distFunc = OptionValue[ ClConOutlierPosition, DistanceFunction ];
       olParams = OptionValue[ ClConOutlierPosition, "OutlierIdentifierParameters" ];
-      simpleConversionQ = TrueQ[OptionValue[ ClConOutlierPosition, "SimpleConversion" ]];
+      simpleConversion = TrueQ[OptionValue[ ClConOutlierPosition, "SimpleConversion" ]];
 
       Which[
         TrueQ[Head[data]===Dataset] && MatrixQ[Normal[data[Values]], NumberQ],
         smat = Normal[data[Values]],
 
-        simpleConversionQ,
-        smat = Normal[data[All, Select[NumberQ]][Values]];
+        simpleConversion,
+        smat = Query[All, Values@*Select[NumberQ]]@ReplaceAll[Normal[data], _Missing -> 0];
         If[VectorQ[smat], smat = Transpose[{smat}] ],
 
         True,
@@ -563,7 +563,9 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 Options[ClConFindOutliersPerClass] = {
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
   "TrainingDataOnly" -> True,
-  "ClassLabel" -> Automatic };
+  "ClassLabel" -> Automatic,
+  "SimpleConversion" -> True
+};
 
 ClConFindOutliersPerClass[___][None] := None;
 
@@ -621,7 +623,7 @@ ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 
       res =
           Table[(
-            t = ClConOutlierPosition[data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"] ];
+            t = ClConOutlierPosition[ data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"], "SimpleConversion" -> res["simpleConversion"] ];
             data[i][ Complement[ Range[Length[data[i]]], t] ]
           ), {i, Length[data]}];
 
@@ -640,13 +642,14 @@ Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClass];
 ClConOutliersOperationsProcessing[___][None] := None;
 
 ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{data, outlierIdentifier, trainingDataOnlyQ, classLabel, classLabelInd, varNames, res},
+    Block[{data, outlierIdentifier, trainingDataOnly, simpleConversion, classLabel, classLabelInd, varNames, res},
 
       outlierIdentifier = OptionValue[ ClConOutliersOperationsProcessing, "OutlierIdentifierParameters"];
-      trainingDataOnlyQ = OptionValue[ ClConOutliersOperationsProcessing, "TrainingDataOnly" ];
+      trainingDataOnly = TrueQ[ OptionValue[ ClConOutliersOperationsProcessing, "TrainingDataOnly" ] ];
       classLabel = OptionValue[ ClConOutliersOperationsProcessing, "ClassLabel" ];
+      simpleConversion = TrueQ[ OptionValue[ClConOutliersOperationsProcessing, "SimpleConversion" ] ];
 
-      If[ TrueQ[trainingDataOnlyQ],
+      If[ trainingDataOnly,
 
         Which[
 
@@ -685,24 +688,24 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
         IntegerQ[classLabel],
         classLabelInd = classLabel;
         If[ !(1 <= classLabelInd <= Length[varNames]),
-          Echo[ "The option \"ClassLabel\" value " <> classLabel <> " is not integer between 1 and " <> ToString[Length[varNames]] <>".", "ClConOutliersOperationsProcessing::"];
+          Echo[ "The \"ClassLabel\" option value " <> classLabel <> " is not an integer between 1 and " <> ToString[Length[varNames]] <>".", "ClConOutliersOperationsProcessing::"];
           Return[$ClConFailure]
         ];
         classLabel = varNames[[classLabelInd]],
 
-        StringQ[classLabel],
-        If[ !MemberQ[ varNames, classLabel ],
-          Echo[ "The option \"ClassLabel\" value " <> classLabel <> " is not one of " <> ToString[varNames] <> ".", "ClConOutliersOperationsProcessing::"];
-          Return[$ClConFailure]
-        ];
+        MemberQ[ varNames, classLabel ],
         classLabelInd = First@Flatten@Position[varNames, classLabel],
 
         True,
+        Echo[ "The \"ClassLabel\" option value " <> classLabel <> " is not Automatic, a variable index, or one of " <> ToString[varNames] <> ".", "ClConOutliersOperationsProcessing::"];
         Return[$ClConFailure]
-
       ];
 
-      res = <| "data"->data, "varNames"->varNames, "classLabel"->classLabel, "classLabelInd"->classLabelInd, "outlierIdentifier"->outlierIdentifier |>;
+      res = <| "data"->data, "varNames"->varNames,
+        "trainingDataOnly" -> trainingDataOnly,
+        "simpleConversion" -> simpleConversion,
+        "classLabel"->classLabel, "classLabelInd"->classLabelInd,
+        "outlierIdentifier"->outlierIdentifier |>;
 
       ClConUnit[res, context]
     ];
