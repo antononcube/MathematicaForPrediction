@@ -206,7 +206,7 @@ ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All,
 
 Clear[ResamplingEnsembleClassifier]
 ResamplingEnsembleClassifier[specs : {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer} | {_String, _?NumberQ, _Integer, RandomSample|RandomChoice}) ..},
-  data_?ClassifierDataQ] :=
+  data_?ClassifierDataQ, args___] :=
     Block[{fullSpecs},
       fullSpecs =
           specs /. {
@@ -216,12 +216,12 @@ ResamplingEnsembleClassifier[specs : {(_String | {_String, _?NumberQ} | {_String
             { m_String, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
           };
 
-      ResamplingEnsembleClassifier[ fullSpecs, data ]
+      ResamplingEnsembleClassifier[ fullSpecs, data, args ]
     ];
 
 ResamplingEnsembleClassifier::wskey = "The given specification key `1` is not one of `2`.";
 
-ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ ] :=
+ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ, args___ ] :=
     Block[{fullSpecs, res, knownSpecKeys, allSpecKeys},
 
       knownSpecKeys = {"method", "sampleFraction", "nClassifiers", "samplingFunction"};
@@ -234,7 +234,7 @@ ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ ] :=
       res =
           Map[
             Table[#["method"] <> "[" <> ToString[i] <> "," <> ToString[#["sampleFraction"]] <> "]" ->
-                Classify[#["samplingFunction"][data, Floor[#["sampleFraction"]*Length[data]]], Method -> #["method"]], {i, #["nClassifiers"]}] &,
+                Classify[#["samplingFunction"][data, Floor[#["sampleFraction"]*Length[data]]], args, Method -> #["method"]], {i, #["nClassifiers"]}] &,
             fullSpecs];
 
       Association@Flatten[res, 1]
