@@ -75,7 +75,7 @@
     see the explanations in [1] for more details.
 
     Some of the specific functions set or retrieve values from contexts for the keys:
-    "trainData", "testData", "classifier".
+    "trainingData", "testData", "classifier".
 
 
     ## Error messages
@@ -240,7 +240,7 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
         {trainData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
       ];
 
-      ClCon[AssociationThread[{"trainData", "testData"} -> {trainData, testData}], context]
+      ClCon[AssociationThread[{"trainingData", "testData"} -> {trainData, testData}], context]
     ] /; 0 < fr <= 1;
 
 
@@ -248,11 +248,11 @@ ClConRecoverData[None] := None;
 ClConRecoverData[xs_, context_Association] :=
     Block[{},
       Which[
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
-        ClCon[Join[xs["trainData"], xs["testData"]], context],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
+        ClCon[Join[xs["trainingData"], xs["testData"]], context],
 
-        KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
-        ClCon[Join[context["trainData"], context["testData"]], context],
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
+        ClCon[Join[context["trainingData"], context["testData"]], context],
 
         True,
         Echo["Cannot recover data.","ClConRecoverData:"];
@@ -261,9 +261,9 @@ ClConRecoverData[xs_, context_Association] :=
     ];
 
 
-ClConSetTrainData[None] := None;
-ClConSetTrainData[data_][xs_, context_Association] :=
-    ClConUnit[xs, Join[ context, <| "trainData" -> data |> ] ];
+ClConSetTrainingData[None] := None;
+ClConSetTrainingData[data_][xs_, context_Association] :=
+    ClConUnit[xs, Join[ context, <| "trainingData" -> data |> ] ];
 
 
 ClConSetTestData[None] := None;
@@ -274,6 +274,11 @@ ClConSetTestData[data_][xs_, context_Association] :=
 ClConSetValidationData[None] := None;
 ClConSetValidationData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "validationData" -> data |> ] ];
+
+
+ClConSetClassifier[None] := None;
+ClConSetClassifier[cl_][xs_, context_Association] :=
+    ClConUnit[xs, Join[ context, <| "classifier" -> cl |> ] ];
 
 
 ClConTakeData[None] := None;
@@ -326,11 +331,11 @@ ClConGetVariableNames[xs_, context_Association] :=
         TrueQ[Head[xs] === Dataset],
         ClCon[Normal[xs[1,Keys]], context],
 
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && TrueQ[Head[xs["trainData"]] == Dataset],
-        ClCon[Normal[xs["trainData"][1,Keys]], context],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && TrueQ[Head[xs["trainingData"]] == Dataset],
+        ClCon[Normal[xs["trainingData"][1,Keys]], context],
 
-        KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"] && TrueQ[Head[context["trainData"]] == Dataset],
-        ClCon[Normal[context["trainData"][1,Keys]], context],
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"] && TrueQ[Head[context["trainingData"]] == Dataset],
+        ClCon[Normal[context["trainingData"][1,Keys]], context],
 
         True,
         Echo["Cannot find the variable names: (1) the pipeline value is not a Dataset and (2) there is no \"trainData\" key in the context or the corresponding value is not a Dataset.",
@@ -378,10 +383,10 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
     Block[{cf, dataAssoc, newContext},
 
       Which[
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
         dataAssoc = xs; newContext = Join[context, xs],
 
-        KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
         dataAssoc = context; newContext = <||>,
 
         True,
@@ -391,20 +396,20 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
 
       Which[
         ClConMethodQ[methodSpec] && ( !KeyExistsQ[context, "validationData"] || TrueQ[dataAssoc["validationData"] === Automatic] ),
-        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainData"], Method -> methodSpec ],
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], Method -> methodSpec ],
 
         ClConMethodQ[methodSpec] && KeyExistsQ[context, "validationData"],
-        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainData"], Method -> methodSpec,
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], Method -> methodSpec,
                       ValidationSet -> ClConToNormalClassifierData[dataAssoc@"validationData"] ],
 
         ClConMethodListQ[methodSpec],
-        cf = EnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
+        cf = EnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainingData"] ],
 
         ClConResamplingMethodQ[methodSpec],
-        cf = ResamplingEnsembleClassifier[ {methodSpec}, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
+        cf = ResamplingEnsembleClassifier[ {methodSpec}, ClConToNormalClassifierData[dataAssoc@"trainingData"] ],
 
         ClConResamplingMethodListQ[methodSpec],
-        cf = ResamplingEnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
+        cf = ResamplingEnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainingData"] ],
 
         True,
         Echo["Unknown classifier specification.", "ClConMakeClassifier:"];
@@ -553,15 +558,15 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
       classLabelInd = ClConBind[ ClConUnit[xs,context], ClConTakeClassLabelIndex[classLabel]];
 
       Which[
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainData"] && KeyExistsQ[xs, "testData"],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
         ClConUnit[
-          <|"trainData"->ClConOutlierPosition[xs["trainData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
+          <|"trainingData"->ClConOutlierPosition[xs["trainingData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
             "testData" -> ClConOutlierPosition[xs["testData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts] |>,
           context],
 
-        KeyExistsQ[context, "trainData"] && KeyExistsQ[context, "testData"],
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
         ClConUnit[
-          <|"trainData"->ClConOutlierPosition[context["trainData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
+          <|"trainingData"->ClConOutlierPosition[context["trainingData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
             "testData" -> ClConOutlierPosition[context["testData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts] |>,
           context],
 
@@ -672,11 +677,11 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
 
         Which[
 
-          AssociationQ[xs] && KeyExistsQ[xs, "trainData"],
-          data = xs["trainData"],
+          AssociationQ[xs] && KeyExistsQ[xs, "trainingData"],
+          data = xs["trainingData"],
 
-          KeyExistsQ[context, "trainData"],
-          data = context["trainData"],
+          KeyExistsQ[context, "trainingData"],
+          data = context["trainingData"],
 
           True,
           Echo["No training data.", "ClConFindOutliersPerClass::"];
