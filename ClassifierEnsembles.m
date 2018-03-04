@@ -211,9 +211,9 @@ ResamplingEnsembleClassifier[specs : {(_String | {_String, _?NumberQ} | {_String
       fullSpecs =
           specs /. {
             m_String :> <| "method"-> m |>,
-            { m_String, f_?NumberQ} :>  <| "method"->m, "samplingFraction"->f|>,
-            { m_String, f_?NumberQ, n_Integer } :>  <| "method"->m, "samplingFraction"->f, "nClassifiers"->n|>,
-            { m_String, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "samplingFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
+            { m_String, f_?NumberQ} :>  <| "method"->m, "sampleFraction"->f|>,
+            { m_String, f_?NumberQ, n_Integer } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n|>,
+            { m_String, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
           };
 
       ResamplingEnsembleClassifier[ fullSpecs, data ]
