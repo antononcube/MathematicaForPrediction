@@ -261,6 +261,21 @@ ClConRecoverData[xs_, context_Association] :=
     ];
 
 
+ClConSetTrainData[None] := None;
+ClConSetTrainData[data_][xs_, context_Association] :=
+    ClConUnit[xs, Join[ context, <| "trainData" -> data |> ] ];
+
+
+ClConSetTestData[None] := None;
+ClConSetTestData[data_][xs_, context_Association] :=
+    ClConUnit[xs, Join[ context, <| "testData" -> data |> ] ];
+
+
+ClConSetValidationData[None] := None;
+ClConSetValidationData[data_][xs_, context_Association] :=
+    ClConUnit[xs, Join[ context, <| "validationData" -> data |> ] ];
+
+
 ClConTakeData[None] := None;
 ClConTakeData[xs_, context_] :=
     Fold[ ClConBind, ClConUnit[xs, context], {ClConRecoverData, ClConTakeValue}];
@@ -375,8 +390,12 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
       ];
 
       Which[
-        ClConMethodQ[methodSpec],
-        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainData"], Method -> methodSpec],
+        ClConMethodQ[methodSpec] && ( !KeyExistsQ[context, "validationData"] || TrueQ[dataAssoc["validationData"] === Automatic] ),
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainData"], Method -> methodSpec ],
+
+        ClConMethodQ[methodSpec] && KeyExistsQ[context, "validationData"],
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainData"], Method -> methodSpec,
+                      ValidationSet -> ClConToNormalClassifierData[dataAssoc@"validationData"] ],
 
         ClConMethodListQ[methodSpec],
         cf = EnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainData"] ],
