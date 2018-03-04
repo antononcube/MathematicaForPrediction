@@ -362,7 +362,7 @@ ClConMethodQ[x_] := StringQ[x]; (* And check is it known by Classify. *)
 
 ClConMethodListQ[x_] := MatchQ[ x, {_?ClConMethodQ..} ];
 
-ClConResamplingMethodQ[x_] := MatchQ[ x, (_Association | _String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer} | {_String, _?NumberQ, _Integer, RandomSample | RandomChoice}) ];
+ClConResamplingMethodQ[x_] := MatchQ[ x, (Automatic | _Association | _String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer} | {_String, _?NumberQ, _Integer, RandomSample | RandomChoice}) ];
 
 (* Note that is includes MethodListQ. *)
 ClConResamplingMethodListQ[x_] := MatchQ[ x, { _?ClConResamplingMethodQ .. } ];
@@ -375,12 +375,14 @@ ClConClassifierQ[ cl_ ] :=
           MatchQ[ cl, Association[(_ -> _ClassifierFunction) ..] ]
         ];
 
+Optinos[ClConMakeClassifier] = Options[Classify];
+
 ClConMakeClassifier[___][None] := None;
 
 ClConMakeClassifier[][xs_, context_] := ClConMakeClassifier["LogisticRegression"][xs, context];
 
-ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
-    Block[{cf, dataAssoc, newContext},
+ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{cf, dataAssoc, newContext, methodSpec = methodSpecArg},
 
       Which[
         MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
@@ -394,22 +396,25 @@ ClConMakeClassifier[methodSpec_?ClConMethodSpecQ][xs_, context_] :=
         Return[ClCon[xs, context]]
       ];
 
+      (* Note that if opts has Method->_ then this setting is ignored. *)
+      If[ TrueQ[methodSpec===Automatic], methodSpec = "LogisticRegression" ];
+
       Which[
         ClConMethodQ[methodSpec] && ( !KeyExistsQ[context, "validationData"] || TrueQ[dataAssoc["validationData"] === Automatic] ),
-        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], Method -> methodSpec ],
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], opts, Method -> methodSpec ],
 
         ClConMethodQ[methodSpec] && KeyExistsQ[context, "validationData"],
-        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], Method -> methodSpec,
+        cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], opts, Method -> methodSpec,
                       ValidationSet -> ClConToNormalClassifierData[dataAssoc@"validationData"] ],
 
         ClConMethodListQ[methodSpec],
-        cf = EnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainingData"] ],
+        cf = EnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainingData"], opts ],
 
         ClConResamplingMethodQ[methodSpec],
-        cf = ResamplingEnsembleClassifier[ {methodSpec}, ClConToNormalClassifierData[dataAssoc@"trainingData"] ],
+        cf = ResamplingEnsembleClassifier[ {methodSpec}, ClConToNormalClassifierData[dataAssoc@"trainingData"], opts ],
 
         ClConResamplingMethodListQ[methodSpec],
-        cf = ResamplingEnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainingData"] ],
+        cf = ResamplingEnsembleClassifier[ methodSpec, ClConToNormalClassifierData[dataAssoc@"trainingData"], opts ],
 
         True,
         Echo["Unknown classifier specification.", "ClConMakeClassifier:"];
