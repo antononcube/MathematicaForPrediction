@@ -64,17 +64,17 @@ Options[ToBagOfWords] = {"SplittingCharacters" -> {Whitespace, "\n",
   " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
   "PostSplittingPredicate" -> (StringLength[#] > 2 &)};
 
-ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch), stopWords_List}, opts : OptionsPattern[]] :=
+ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch|_Association), stopWords_List}, opts : OptionsPattern[]] :=
     ToBagOfWords[{doc}, {stemmingRules, stopWords}, opts][[1]];
 
 ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_Dispatch), stopWords_List}, opts : OptionsPattern[]] :=
-    Block[{docTerms, splittingCharaters, pSPred, stopWordsRules},
+    Block[{docTerms, splittingCharacters, pSPred, stopWordsRules},
 
-      splittingCharaters = OptionValue[ToBagOfWords, "SplittingCharacters"];
+      splittingCharacters = OptionValue[ToBagOfWords, "SplittingCharacters"];
       pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
 
       If[ MatchQ[ docs, {_String..} ],
-        docTerms = Flatten[StringSplit[#, splittingCharaters]] & /@ docs,
+        docTerms = Flatten[StringSplit[#, splittingCharacters]] & /@ docs,
         docTerms = docs
       ];
 
@@ -88,14 +88,21 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
         docTerms = Pick[#, Not /@ (#/.stopWordsRules) ]& /@ docTerms;
       ];
 
-      If[ Length[stemmingRules] > 0,
-        docTerms = docTerms /. stemmingRules;
+      Which[
+
+        DispatchQ[stemmingRules] || Length[stemmingRules] > 0 && MatchQ[stemmingRules, {_Rule...}],
+        docTerms = docTerms /. stemmingRules,
+
+        AssociationQ[stemmingRules],
+        docTerms = stemmingRules /@ docTerms
+
       ];
+
       docTerms
     ];
 
 Clear[DocumentTermMatrix]
-DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:(_List|_Dispatch), stopWords_}, opts : OptionsPattern[]] :=
+DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:(_List|_Dispatch|_Association), stopWords_}, opts : OptionsPattern[]] :=
     Block[{terms, mat, docTerms, nDocuments, splittingCharaters,
       n = Length[docs], globalWeights, termToIndexRules},
 
@@ -105,7 +112,7 @@ DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:
       (* find all unique terms *)
       terms = Union[Flatten[docTerms]];
 
-      (* matrix of term occurances *)
+      (* matrix of term occurrences *)
       termToIndexRules = Dispatch[Thread[terms -> Range[Length[terms]]]];
       mat = Map[SparseArray[Rule @@@ (Tally[#] /. termToIndexRules), Length[terms]] &, docTerms];
       mat = SparseArray[mat];
