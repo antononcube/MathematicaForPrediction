@@ -148,9 +148,9 @@ LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ];
 ClearAll[LSAMonMakeDocumentTermMatrix]
 
 LSAMonMakeDocumentTermMatrix[___][None] := None;
-LSAMonMakeDocumentTermMatrix[stemRulesArg : (_List|_Dispatch|_Association), stopWords : {_String ...}][xs_, context_] :=
-    Block[{docTermMat, terms, stemRules = stemRulesArg},
-      If[AssociationQ[stemRules], stemRules = Dispatch[Normal[stemRules]]];
+LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWords : {_String ...}][xs_, context_] :=
+    Block[{docTermMat, terms},
+
       Which[
         LSAMonTextCollectionQ[xs],
         {docTermMat, terms} = DocumentTermMatrix[ToLowerCase /@ xs, {stemRules, stopWords}];
