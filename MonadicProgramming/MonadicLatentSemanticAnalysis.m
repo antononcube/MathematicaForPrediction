@@ -190,6 +190,90 @@ LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
     ];
 
 
+ClearAll[LSAMonMakeGraph]
+
+Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite" };
+
+LSAMonMakeGraph[___][None] := None;
+LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{weightedQ, type, am, res, knownGrTypes },
+
+      weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
+
+      type = OptionValue[LSAMonMakeGraph, "Type"];
+
+      knownGrTypes = { "Bipartite", "DocumentDocument", "TermTerm", "Document", "Term" };
+      If[ !MemberQ[knownGrTypes, type],
+        Echo[Row[{"The value of the option \"Type\" is expected to be one of:", knownGrTypes}], "LSAMonMakeGraph:"];
+        Return[None]
+      ];
+
+      Which[
+        MatrixQ[xs],
+        am = xs,
+
+        KeyExistsQ[context, "wDocTermMat"],
+        am = context["wDocTermMat"],
+
+        KeyExistsQ[context, "docTermMat"],
+        am = context["docTermMat"],
+
+        True,
+        Echo["Make a document-term matrix first.", "LSAMonMakeGraph:"];
+        Return[None]
+      ];
+
+      am = SparseArray[am];
+
+      Which[
+
+        weightedQ && type == "Bipartite",
+        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        am = SparseArray[ ArrayFlatten[{{Infinity, am}, {Transpose[am], Infinity}}] ];
+        res = WeightedAdjacencyGraph[am, DirectedEdges -> True],
+
+        !weightedQ && type == "Bipartite",
+        am = SparseArray[ArrayFlatten[{{0, am}, {Transpose[am], 0}}]];
+        res = AdjacencyGraph[am, DirectedEdges -> True],
+
+        weightedQ && ( type == "DocumentDocument" || type == "Document" ),
+        am = am . Transpose[am];
+        am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
+        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        res = WeightedAdjacencyGraph[am],
+
+        !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
+        am = am . Transpose[am];
+        res = AdjacencyGraph[Unitize[am]],
+
+        weightedQ && ( type == "TermTerm" || type == "Term" ),
+        am = Transpose[am] . am;
+        am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
+        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        res = WeightedAdjacencyGraph[am],
+
+        !weightedQ && ( type == "TermTerm" || type == "Term" ),
+        am = Transpose[am] . am;
+        res = AdjacencyGraph[Unitize[am]];
+
+      ];
+
+      LSAMon[res, context]
+
+    ];
+
+(*ClearAll[LSAMonMostImportantDocuments]*)
+
+(*Options[LSAMonMostImportantDocuments] = { "CentralityFunction" -> EigenvectorCentrality };*)
+
+
+(*LSAMonMostImportantDocuments[___][None] := None;*)
+(*LSAMonMostImportantDocuments[opts:OptionsPattern[]][xs_, context_] :=*)
+    (*Block[{},*)
+
+    (*];*)
+
+
 ClearAll[LSAMonTopicExtraction]
 
 Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
