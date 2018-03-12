@@ -262,16 +262,37 @@ LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
 
     ];
 
-(*ClearAll[LSAMonMostImportantDocuments]*)
-
-(*Options[LSAMonMostImportantDocuments] = { "CentralityFunction" -> EigenvectorCentrality };*)
 
 
-(*LSAMonMostImportantDocuments[___][None] := None;*)
-(*LSAMonMostImportantDocuments[opts:OptionsPattern[]][xs_, context_] :=*)
-    (*Block[{},*)
+ClearAll[LSAMonMostImportantTexts]
 
-    (*];*)
+Options[LSAMonMostImportantTexts] = { "CentralityFunction" -> EigenvectorCentrality };
+
+LSAMonMostImportantTexts[___][None] := None;
+LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{cFunc, gr, cvec, inds },
+
+      cFunc = OptionValue[LSAMonMostImportantTexts, "CentralityFunction"];
+
+      If[ !KeyExistsQ[context, "texts"],
+        Echo["No texts.", "LSAMonMostImportantTexts:"];
+        Return[None]
+      ];
+
+      If[ TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["texts"]] ,
+        gr = xs,
+        (*ELSE*)
+        gr = Fold[ LSAMonBind, LSMMon[xs,context], {LSAMonMakeGraph, LSAMonTakeValue} ]
+      ];
+
+      cvec = cFunc[gr];
+      If[ !ListQ[cvec], Return[None] ];
+
+      inds = Take[Reverse[Ordering[cvec]], UpTo[topN]];
+
+
+      LSAMonUnit[ Transpose[{cvec[[inds]], inds, context["texts"][[inds]]}], context ]
+    ];
 
 
 ClearAll[LSAMonTopicExtraction]
