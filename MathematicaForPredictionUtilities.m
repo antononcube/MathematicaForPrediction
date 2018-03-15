@@ -71,6 +71,8 @@ the distribution d."
 GridOfCodeAndComments::usage = "GridOfCodeAndComments[code_String, opts___] tabulates code and comments. \
 The tabulation function is specified with the option \"GridFunction\"."
 
+DataRulesForClassifyQ::usage = "Checks is the argument is a list of record->label rules that can be used by Classify."
+
 Begin["`Private`"]
 
 
@@ -119,6 +121,10 @@ ClassificationSuccessGrid[ctRules_] :=
         Dividers -> {{2 -> GrayLevel[0.5]}, {2 -> GrayLevel[0.5]}},
         Spacings -> {2, Automatic}]
     ];
+
+Clear[DataRulesForClassifyQ]
+DataRulesForClassifyQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+
 
 Clear[NumericVectorSummary, CategoricalVectorSummary]
 NumericVectorSummary[dvec_] :=
@@ -178,10 +184,7 @@ RecordsSummary[dataRecords_, opts : OptionsPattern[]] :=
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], columnNames, opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
 
-Clear[ClassifierDataQ]
-ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
-
-RecordsSummary[dataRecords_?ClassifierDataQ, varNames_Rule, opts : OptionsPattern[]] :=
+RecordsSummary[dataRecords_?DataRulesForClassifyQ, varNames_Rule, opts : OptionsPattern[]] :=
     Block[{newArgs={opts}},
       newArgs = DeleteCases[newArgs, Rule[Thread,__] ];
       Rule @@
@@ -189,9 +192,9 @@ RecordsSummary[dataRecords_?ClassifierDataQ, varNames_Rule, opts : OptionsPatter
             RecordsSummary[#1, #2, newArgs] &,
             {Transpose[List @@@ dataRecords], Map[Flatten@*List, List @@ varNames]}
           ]
-    ] /; ClassifierDataQ[List[varNames]] && MemberQ[{opts}, Thread->True ];
+    ] /; DataRulesForClassifyQ[List[varNames]] && MemberQ[{opts}, Thread->True ];
 
-RecordsSummary[dataRecords_?ClassifierDataQ, args___] :=
+RecordsSummary[dataRecords_?DataRulesForClassifyQ, args___] :=
     Block[{newArgs={args}},
       newArgs = DeleteCases[newArgs, Rule[Thread,__] ];
       Rule @@ Map[RecordsSummary[#, newArgs]&, Transpose[List @@@ dataRecords]] /; MemberQ[{args}, Thread->True ]
