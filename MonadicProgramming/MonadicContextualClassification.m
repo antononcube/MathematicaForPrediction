@@ -257,7 +257,7 @@ Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> A
 
 ClConSplitData[_][None] := None
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t, trainData, testData},
+    Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t, trainingData, testData},
 
       labelCol = OptionValue[ClConSplitData,"ClassLabelColumn"];
 
@@ -269,14 +269,14 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
 
         t = TakeDrop[RandomSample[#], Ceiling[fr*Length[#]]] & /@ indGroups;
 
-        trainData = xs[[ Join @@ t[[All, 1]], All]];
+        trainingData = xs[[ Join @@ t[[All, 1]], All]];
         testData =  xs[[ Join @@ t[[All, 2]], All]],
 
         True,
-        {trainData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
+        {trainingData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
       ];
 
-      ClCon[AssociationThread[{"trainingData", "testData"} -> {trainData, testData}], context]
+      ClCon[AssociationThread[{"trainingData", "testData"} -> {trainingData, testData}], context]
     ] /; 0 < fr <= 1;
 
 
@@ -374,7 +374,7 @@ ClConGetVariableNames[xs_, context_Association] :=
         ClCon[Normal[context["trainingData"][1,Keys]], context],
 
         True,
-        Echo["Cannot find the variable names: (1) the pipeline value is not a Dataset and (2) there is no \"trainData\" key in the context or the corresponding value is not a Dataset.",
+        Echo["Cannot find the variable names: (1) the pipeline value is not a Dataset and (2) there is no \"trainingData\" key in the context or the corresponding value is not a Dataset.",
              "ClConGetVariableNames:"];
         $ClConFailure
       ]
