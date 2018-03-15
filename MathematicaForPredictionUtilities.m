@@ -137,7 +137,8 @@ CategoricalVectorSummary[dvec_, maxTallies_Integer: 7] :=
     ] /; VectorQ[dvec];
 
 Clear[DataColumnsSummary]
-Options[DataColumnsSummary] = {"MaxTallies" -> 7, "NumberedColumns" -> True};
+(* The option Thread->False is just for compatibility with RecordsSummary. *)
+Options[DataColumnsSummary] = {"MaxTallies" -> 7, "NumberedColumns" -> True, Thread->False};
 DataColumnsSummary[dataColumns_, opts : OptionsPattern[]] :=
     DataColumnsSummary[dataColumns, Table["column " <> ToString[i], {i, 1, Length[dataColumns]}], opts];
 DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
@@ -161,6 +162,7 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
 RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2."
 
 Clear[RecordsSummary];
+
 RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ]:=
     Block[{colKeys},
       colKeys = Normal[ dataRecords[[1]] ];
@@ -169,13 +171,37 @@ RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ]:=
         RecordsSummary[ Normal[dataRecords], opts ]
       ]
     ];
+
 RecordsSummary[dataRecords_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
+
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], columnNames, opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
+
+Clear[ClassifierDataQ]
+ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+
+RecordsSummary[dataRecords_?ClassifierDataQ, varNames_Rule, opts : OptionsPattern[]] :=
+    Block[{newArgs={opts}},
+      newArgs = DeleteCases[newArgs, Rule[Thread,__] ];
+      Rule @@
+          MapThread[
+            RecordsSummary[#1, #2, newArgs] &,
+            {Transpose[List @@@ dataRecords], Map[Flatten@*List, List @@ varNames]}
+          ]
+    ] /; ClassifierDataQ[List[varNames]] && MemberQ[{opts}, Thread->True ];
+
+RecordsSummary[dataRecords_?ClassifierDataQ, args___] :=
+    Block[{newArgs={args}},
+      newArgs = DeleteCases[newArgs, Rule[Thread,__] ];
+      Rule @@ Map[RecordsSummary[#, newArgs]&, Transpose[List @@@ dataRecords]] /; MemberQ[{args}, Thread->True ]
+    ];
+
 RecordsSummary[dataRecords_, args___ ] :=
     RecordsSummary[ List /@ dataRecords, args ] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 1 );
+
 RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
+
 
 Clear[GridTableForm]
 Options[GridTableForm] = Join[ {TableHeadings -> None}, Options[Grid] ];
