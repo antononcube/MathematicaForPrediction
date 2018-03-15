@@ -205,13 +205,46 @@ GenerateStateMonadCode["ClCon","FailureSymbol" -> $ClConFailure]
 
 ClearAll[ClConToNormalClassifierData]
 
-Options[ClConToNormalClassifierData] = {"DeleteMissing"->True};
+Options[ClConToNormalClassifierData] = {"DeleteMissing"->True, "ClassLabelColumn" -> Automatic };
 
-ClConToNormalClassifierData[td_Dataset,opts:OptionsPattern[]] :=
-    If[ TrueQ[ OptionValue[ClConToNormalClassifierData,"DeleteMissing"]],
-      Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[DeleteMissing[td, 1, 2][All, Values]],
-    (* ELSE *)
-      Thread[#[[All, 1 ;; -2]] -> #[[All, -1]]] &@ Normal[td]
+(* Here we use MathematicaForPredictionUtilities`DataRulesForClassifyQ *)
+
+ClConToNormalClassifierData[ data_?DataRulesForClassifyQ, opts:OptionsPattern[] ] :=
+    Block[{},
+      If[ TrueQ[ OptionValue[ClConToNormalClassifierData,"DeleteMissing"]],
+        DeleteMissing[data,1,2],
+        data
+      ]
+    ];
+
+ClConToNormalClassifierData[ data_Association, opts:OptionsPattern[] ] :=
+    Block[{},
+      If[ TrueQ[ OptionValue[ClConToNormalClassifierData,"DeleteMissing"]],
+        DeleteMissing[data,2,2],
+        data
+      ]
+    ] /; MatchQ[ data, Association[(_?AtomQ -> _List) ..]];
+
+ClConToNormalClassifierData[ td_Dataset, opts:OptionsPattern[] ] :=
+    ClConToNormalClassifierData[ Normal[td[All, Values]], opts];
+
+ClConToNormalClassifierData[ data_?ArrayQ, opts:OptionsPattern[] ] :=
+    Block[{dmVal, labelCol, trainingRange, ncols},
+
+      ncols = Dimensions[data][[2]];
+
+      dmVal = TrueQ[ OptionValue[ClConToNormalClassifierData,"DeleteMissing"]];
+
+      labelCol = OptionValue[ClConToNormalClassifierData,"ClassLabelColumn"];
+      If[ TrueQ[labelCol === Automatic], labelCol = ncols ];
+
+      trainingRange = Complement[Range[ncols], {labelCol}];
+
+      If[ dmVal,
+        Thread[#[[All, trainingRange]] -> #[[All, labelCol]]] &@ DeleteMissing[data, 1, 2],
+      (* ELSE *)
+        Thread[#[[All, trainingRange]] -> #[[All, labelCol]]] &@ data
+      ]
     ];
 
 
@@ -219,11 +252,14 @@ ClConToNormalClassifierData[td_Dataset,opts:OptionsPattern[]] :=
 (* Monad specific functions                                   *)
 (**************************************************************)
 
-Options[ClConSplitData] = {Method->"LabelsProportional"};
+(* This function does not respect specified label column yet. *)
+Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
 
 ClConSplitData[_][None] := None
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{method=OptionValue[ClConSplitData, Method], dataLabels, indGroups, t, trainData, testData},
+    Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t, trainData, testData},
+
+      labelCol = OptionValue[ClConSplitData,"ClassLabelColumn"];
 
       Which[
         method == "LabelsProportional",
