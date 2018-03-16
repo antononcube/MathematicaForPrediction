@@ -189,7 +189,7 @@ SMRParseTagValueQueryDF <- function( spec ) {
 #' @param milesBreaks a sorted vector of distances in miles that specifies how to categorize geo distances
 #' @param units can be 'mile', 'miles', 'kilometer', 'kilometers', 'km'
 SMRGeoProfile <- function( smr, geoCoordMat, specGeoCoords, milesBreaks = c(2,5,10,15,20,40,50,100,200,300) ) {
-  
+
   toMeters <- 1609.344
   milesIntervalNames = as.character( cut(milesBreaks,c(0,milesBreaks)) )
   
@@ -212,7 +212,7 @@ SMRGeoProfile <- function( smr, geoCoordMat, specGeoCoords, milesBreaks = c(2,5,
 
 #' @description 
 #' @param smr a sparse matrix recommender object
-#' @param spec a string with key-value specification for recommendations
+#' @param spec a string with key-value specification for recommendations or a profile data frame
 #' @param nrecs number of recommendations
 #' @details If geoCoordMat is NULL or specGeoCoords is NULL the geo recommendations are not computed.
 #' If spec is NULL the tag recommendations are not computed.
@@ -222,9 +222,10 @@ SMRGeoSpecRecommendations <- function( smr, spec, nrecs,
                                        tagGeoSliderRatio = 0.5,
                                        milesBreaks = c(2,5,10,15,20,40,50,100,200,300)
 ) {
-  
+
   ## Tags spec vector
-  if( !is.null(spec) ) {
+  if( is.character(spec) ) {
+    ## String specification
     
     qSpecProf <- SMRParseTagValueQueryDF( spec )
     qProf <- SMRFindTagIndexes( smr, qSpecProf, ignore.case = T )
@@ -232,6 +233,12 @@ SMRGeoSpecRecommendations <- function( smr, spec, nrecs,
     qProf <- data.frame( Score = 1, Index = qProf$Index, Tag = qProf$Tag, stringsAsFactors = F )
     
     tagVec <- SMRProfileDFToVector( smr = smr, profileDF = qProf ) 
+    
+  } else if( is.data.frame(spec) ) {
+    ## Data frame -- profile
+    
+    qSpecProf <- spec
+    tagVec <- SMRProfileDFToVector( smr = smr, profileDF = spec ) 
     
   } else {
     
