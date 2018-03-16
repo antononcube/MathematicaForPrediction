@@ -154,8 +154,8 @@ ParetoPositions <- function( dataVec, paretoFraction = 1 ) {
 #' @description Apply the ParetoLawData function over a list of names and make a multi-panel ggplot.
 #' @param data a data frame
 #' @param colNames a list of column names corresponding to categrical columns in \param data
-#' @param scales a value for the scales argument of ggplot2::facet_wrap .
-ParetoLawPlotForColumns <- function( data, colNames = colnames(data), weights = NULL, scales = "free_x" ) {
+#' @param ... arguments for ggplot2::facet_wrap .
+ParetoLawPlotForColumns <- function( data, colNames = colnames(data), weights = NULL, ... ) {
   
   if( is.null(weights) ) {
     weightsVec <- NULL
@@ -181,5 +181,5 @@ ParetoLawPlotForColumns <- function( data, colNames = colnames(data), weights = 
     geom_vline( aes( xintercept = p30), linetype = 3 ) +
     geom_vline( aes( xintercept = p40), linetype = 3 ) +
     geom_vline( aes( xintercept = p50), linetype = 3 ) +
-    facet_wrap( ~ ColName, scales = scales )
+    facet_wrap( ~ ColName, ... )
 }
