@@ -507,13 +507,39 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
 
       If[Length[fsClasses] == 0 || fsClasses === Automatic, fsClasses = None];
 
-      ClCon[
-        AccuracyByVariableShuffling[
-          context["classifier"],
-          ClConToNormalClassifierData[context["testData"]],
-          Most@Keys[Normal@context["testData"][[1]]],
-          fsClasses],
-        context]
+      Which[
+
+        !KeyExistsQ[context, "testData"],
+        Echo["No test data is the context.", "ClConAccuracyByVariableShuffling:"];
+        $ClConFailure,
+
+        !KeyExistsQ[context, "classifier"],
+        Echo["No classifier in the context.", "ClConAccuracyByVariableShuffling:"];
+        $ClConFailure,
+
+        TrueQ[ Head[context["testData"]] === Dataset ],
+        ClCon[
+          AccuracyByVariableShuffling[
+            context["classifier"],
+            ClConToNormalClassifierData[context["testData"]],
+            Most@Keys[Normal@context["testData"][[1]]],
+            fsClasses],
+          context],
+
+        DataRulesForClassifyQ[context["testData"]],
+        ClCon[
+          AccuracyByVariableShuffling[
+            context["classifier"],
+            context["testData"],
+            Automatic,
+            fsClasses],
+          context],
+
+        True,
+        Echo["Unknown data type of the test data is the context.", "ClConAccuracyByVariableShuffling:"];
+        $ClConFailure
+
+      ]
     ];
 
 
