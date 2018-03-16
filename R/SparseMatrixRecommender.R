@@ -453,7 +453,7 @@ SMRRecommendationsByProfileVector <- function( smr, profileVec, nrecs ) {
 #' @param profileVec is a sparse matrix with 1 row (a row from a sparse matrix)
 #' @param nTopNNs number of top nearest neighbors to be used in the derive the classificationß
 #' @param voting boolean should simple voting be used or a weighted sum
-SMRClassifyByProfileVector <- function( smr, tagType, profileVec, nTopNNs, voting = FALSE ) {
+SMRClassifyByProfileVector <- function( smr, tagType, profileVec, nTopNNs, voting = FALSE, dropZeroScoredLabels = TRUE ) {
  
   recs <- SMRRecommendationsByProfileVector( smr = smr, profileVec = profileVec, nrecs = nTopNNs )
   
@@ -469,7 +469,10 @@ SMRClassifyByProfileVector <- function( smr, tagType, profileVec, nTopNNs, votin
   }
   s <- (recs$Score / max(recs$Score) ) %*% clMat[ recs$Item, , drop=F]
   s <- data.frame( Score = s[1,], Label = colnames(s) )
-  s[ order(-s[,1]), ] 
+  s <- s[ order(-s[,1]), ]
+
+  if( dropZeroScoredLabels ) { s[ s$Score > 0, ] }
+  else { s }
 }
 
 
