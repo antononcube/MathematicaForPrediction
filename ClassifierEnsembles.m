@@ -380,6 +380,7 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
 
       clVals = cfMethod[cls, testData[[All, 1]]];
 
+      (* It is assumed here that all ClassifierFunction objects have the same classes. *)
       clClasses = ClassifierInformation[cls[[1]], "Classes"];
 
       If[ targetClasses === Automatic,
@@ -442,8 +443,11 @@ EnsembleClassifierROCData[aCL_Association,
             Map[If[# == ccLabel, #, ccNotLabel] &, testLabels];
         rocs =
             Table[
-              ToROCAssociation[{ccLabel, ccNotLabel}, ccTestLabels,
-                Map[If[# >= th, ccLabel, ccNotLabel] &, Through[clRes[ccLabel]]]],
+              Join[
+                ToROCAssociation[{ccLabel, ccNotLabel}, ccTestLabels,
+                  Map[If[# >= th, ccLabel, ccNotLabel] &, Through[clRes[ccLabel]]]],
+                <|"ROCParameter"->th|>
+              ],
               {th, thRange}];
         ccLabel -> rocs,
         {ccLabel, clClasses}]
