@@ -186,8 +186,10 @@ ROCPlot::usage = "Makes a standard ROC plot for specified parameter list and cor
 ROCPlot takes all options of Graphics and additional options for \
 ROC points size, color, callouts, tooltips, and joining. \
 The allowed signatures are: \
-\nROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts]
-\nROCPlot[ xFuncName_String, yFuncName_String, parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts]"
+\nROCPlot[ aROCs:{_?ROCAssociationQ..}, opts] \
+\nROCPlot[ parVals:({_?NumericQ..}|Automatic), aROCs:{_?ROCAssociationQ..}, opts] \
+\nROCPlot[ xFuncName_String, yFuncName_String, aROCs:{_?ROCAssociationQ..}, opts] \
+\nROCPlot[ xFuncName_String, yFuncName_String, parVals:({_?NumericQ..}|Automatic), aROCs:{_?ROCAssociationQ..}, opts]"
 
 Begin["`Private`"]
 
@@ -289,25 +291,44 @@ ROCFunctions[fname_String] := aROCFunctions[fname];
 
 Clear[ROCPlot]
 
+ROCPlot::apv = "The parameter values are specified as Automatic, but extracting \"ROCParameter\" from the ROC data\
+ did not produce a numerical vector."
+
 Options[ROCPlot] =
     Join[ {"ROCPointSize"-> 0.02, "ROCColor"-> Lighter[Blue], "ROCPointColorFunction" -> Automatic,
       "ROCPointTooltips"->True, "ROCPointCallouts"->True, "PlotJoined" -> False }, Options[Graphics]];
 
+ROCPlot[ aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
+    ROCPlot[ "FPR", "TPR", Automatic, aROCs, opts];
+
 ROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
     ROCPlot[ "FPR", "TPR", parVals, aROCs, opts];
 
+ROCPlot[ xFuncName_String, yFuncName_String, aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
+    ROCPlot[ "FPR", "TPR", Automatic, aROCs, opts];
+
 ROCPlot[
   xFuncName_String, yFuncName_String,
-  parVals:{_?NumericQ..},
-  aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
-    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, pja, rocpcf, points},
+  parValsArg : (Automatic | {_?NumericQ..}),
+  aROCs : {_?ROCAssociationQ..}, opts : OptionsPattern[]] :=
+    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, pja, rocpcf, points, parVals=parValsArg},
+
       psize = OptionValue["ROCPointSize"];
       rocc = OptionValue["ROCColor"];
       rocpcf = OptionValue["ROCPointColorFunction"];
       {pt, pc, pj} = TrueQ[OptionValue[#]] & /@ { "ROCPointTooltips", "ROCPointCallouts", "PlotJoined" };
       pja = TrueQ[OptionValue["PlotJoined"]===Automatic];
+
       {xFunc, yFunc} = ROCFunctions[{xFuncName, yFuncName}];
+
       points = Map[Through[{xFunc,yFunc}[#1]] &, aROCs];
+
+      If[TrueQ[parVals===Automatic], parVals = Map[#["ROCParameter"]&,aROCs] ];
+      If[ !VectorQ[parVals,NumericQ],
+        Message[ROCPlot::apv];
+        Return[$Failed]
+      ];
+
       Graphics[{
         If[pja, {Lighter[rocc],Line[points]},{}],
         PointSize[psize], rocc,
@@ -341,7 +362,8 @@ ROCPlot[
           ( "ROCPointSize" | "ROCColor" | "ROCPointColorFunction" |
             "ROCPointTooltips" | "ROCPointCallouts" | "PlotJoined") -> _ ]
       ]
-    ]/; Length[parVals] == Length[aROCs];
+    ] /; Length[parValsArg] == Length[aROCs] || TrueQ[parValsArg===Automatic];
+
 
 End[] (* `Private` *)
 
