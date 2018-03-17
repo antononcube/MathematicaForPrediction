@@ -255,7 +255,7 @@ ClConToNormalClassifierData[ data_?ArrayQ, opts:OptionsPattern[] ] :=
 (* This function does not respect specified label column yet. *)
 Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
 
-ClConSplitData[_][None] := None
+ClConSplitData[_][$ClConFailure] := $ClConFailure
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t, trainingData, testData},
 
@@ -280,7 +280,7 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
     ] /; 0 < fr <= 1;
 
 
-ClConRecoverData[None] := None;
+ClConRecoverData[$ClConFailure] := $ClConFailure;
 ClConRecoverData[xs_, context_Association] :=
     Block[{},
       Which[
@@ -297,36 +297,36 @@ ClConRecoverData[xs_, context_Association] :=
     ];
 
 
-ClConSetTrainingData[None] := None;
+ClConSetTrainingData[$ClConFailure] := $ClConFailure;
 ClConSetTrainingData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "trainingData" -> data |> ] ];
 
 
-ClConSetTestData[None] := None;
+ClConSetTestData[$ClConFailure] := $ClConFailure;
 ClConSetTestData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "testData" -> data |> ] ];
 
 
-ClConSetValidationData[None] := None;
+ClConSetValidationData[$ClConFailure] := $ClConFailure;
 ClConSetValidationData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "validationData" -> data |> ] ];
 
 
-ClConSetClassifier[None] := None;
+ClConSetClassifier[$ClConFailure] := $ClConFailure;
 ClConSetClassifier[cl_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "classifier" -> cl |> ] ];
 
 
-ClConTakeData[None] := None;
+ClConTakeData[$ClConFailure] := $ClConFailure;
 ClConTakeData[xs_, context_] :=
     Fold[ ClConBind, ClConUnit[xs, context], {ClConRecoverData, ClConTakeValue}];
 
 
-ClConTakeClassifier[None] := None;
+ClConTakeClassifier[$ClConFailure] := $ClConFailure;
 ClConTakeClassifier[xs_, context_Association] := context["classifier"];
 
 
-ClConTakeClassLabelIndex[___][None] := None;
+ClConTakeClassLabelIndex[___][$ClConFailure] := $ClConFailure;
 ClConTakeClassLabelIndex[][xs_, context_Association] := ClConTakeClassLabelIndex[Automatic][xs, context];
 ClConTakeClassLabelIndex[classLabel_][xs_, context_Association] :=
     Block[{varNames},
@@ -355,12 +355,12 @@ ClConTakeClassLabelIndex[classLabel_][xs_, context_Association] :=
     ];
 
 
-ClConTakeVariableNames[None] := None;
+ClConTakeVariableNames[$ClConFailure] := $ClConFailure;
 ClConTakeVariableNames[xs_, context_Association] :=
     Fold[ClConBind, ClConUnit[xs, context], {ClConGetVariableNames, ClConTakeValue}];
 
 
-ClConGetVariableNames[None] := None;
+ClConGetVariableNames[$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[xs_, context_Association] :=
     Block[{},
       Which[
@@ -381,7 +381,7 @@ ClConGetVariableNames[xs_, context_Association] :=
     ];
 
 
-ClConEchoVariableNames[None] := None;
+ClConEchoVariableNames[$ClConFailure] := $ClConFailure;
 ClConEchoVariableNames[xs_, context_Association] :=
     Block[{t},
       t = Fold[ ClConBind, ClConUnit[xs,context], {ClConGetVariableNames, ClConTakeValue}];
@@ -413,7 +413,7 @@ ClConClassifierQ[ cl_ ] :=
 
 Optinos[ClConMakeClassifier] = Options[Classify];
 
-ClConMakeClassifier[___][None] := None;
+ClConMakeClassifier[___][$ClConFailure] := $ClConFailure;
 
 ClConMakeClassifier[][xs_, context_] := ClConMakeClassifier["LogisticRegression"][xs, context];
 
@@ -470,23 +470,51 @@ ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_,
 (* ClConClassifierMeasurements                              *)
 (************************************************************)
 
-Options[ClConClassifierMeasurements] = { Method -> Automatic };
+Options[ClConClassifierMeasurements] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
-ClConClassifierMeasurements[___][None] := None;
-ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPattern[]][xs_, context_] :=
-    Block[{cm},
+ClConClassifierMeasurements[___][$ClConFailure] := $ClConFailure;
+
+ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:OptionsPattern[]][xs_, context_] :=
+    Block[{cm, measures = Flatten[{measuresArg}], cmROC, rocRange},
+
+      rocRange = OptionValue[ ClConClassifierMeasurements, "ROCRange"];
+      If[ !( VectorQ[rocRange,NumberQ] && Apply[And, 0 <= # <= 1& /@ rocRange] ),
+        Echo["The value of the option \"ROCRange\" is expected to be a list of numbers between 0 and 1.", "ClConClassifierMeasurements:"];
+        Echo["Continuing with \"ROCRange\"-> Range[0,1,0.025].", "ClConClassifierMeasurements:"];
+        rocRange = Range[0,1,0.025];
+      ];
+
       Which[
-        KeyExistsQ[context, "classifier"] && MatchQ[ context["classifier"], _ClassifierFunction],
-        cm = ClassifierMeasurements[context["classifier"], ClConToNormalClassifierData[context@"testData"]];
-        ClCon[AssociationThread[measures -> cm /@ Flatten[{measures}]], context],
 
-        KeyExistsQ[context, "classifier"],
-        cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], Flatten[{measures}], opts];
+        !KeyExistsQ[context, "classifier"],
+        Echo["Make a classifier first.", "ClConClassifierMeasurements:"];
+        $ClConFailure,
+
+        !( MatchQ[ context["classifier"], _ClassifierFunction] || MatchQ[ context["classifier"], Association[(_ -> _ClassifierFunction) ..] ] ),
+        Echo["The value of \"classifier\" in the context is not a ClassifierFunction object or an Association of ClassifierFunction objects.", "ClConClassifierMeasurements:"];
+        $ClConFailure,
+
+        MatchQ[ context["classifier"], _ClassifierFunction],
+        cm = ClassifierMeasurements[context["classifier"], ClConToNormalClassifierData[context@"testData"]];
+        ClCon[AssociationThread[measures -> cm /@ measures], context],
+
+        !MemberQ[measures, "ROCCurve"],
+        cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], measures, opts];
         ClCon[AssociationThread[measures -> cm], context],
 
         True,
-        Echo["Make a classifier first.", "ClConClassifierMeasurements:"];
-        $ClConFailure
+        (* This here reconciles EnsembleClassifierMeasurements with ClassifierMeasurements.
+           It is probably better to be handled in ClassifierEnsembles.m .
+           The advantage of handling it here is that ClassifierEnsembles.m does not have to be changed. *)
+        cmROC =
+            EnsembleClassifierROCPlots[
+              context["classifier"], ClConToNormalClassifierData @ context["testData"], rocRange,
+              PlotJoined -> True, PlotRange -> {{0, 1}, {0, 1}},
+              GridLines -> Automatic];
+        measures = DeleteCases[measures, "ROCCurve"];
+        cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], measures, opts];
+        ClCon[Join[AssociationThread[measures -> cm], <|"ROCCurve"->cmROC|>], context]
+
       ]
     ];
 
@@ -497,7 +525,7 @@ ClConClassifierMeasurements[measures : (_String | {_String ..}), opts:OptionsPat
 
 Options[ClConAccuracyByVariableShuffling] = { "Classes" -> None };
 
-ClConAccuracyByVariableShuffling[___][None] := None;
+ClConAccuracyByVariableShuffling[___][$ClConFailure] := $ClConFailure;
 
 ClConAccuracyByVariableShuffling[][xs_, context_] :=
     ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
@@ -562,7 +590,7 @@ ClConToLinearVectorSpaceRepresentation[data:(_?MatrixQ|_Dataset)] :=
       <| "XTABMatrix"->resMat, "RowNames"-> smats[[1]]["RowNames"], "ColumnNames" -> Join @@ Through[smats["ColumnNames"]] |>
     ];
 
-ClConToLinearVectorSpaceRepresentation[][None] := None;
+ClConToLinearVectorSpaceRepresentation[][$ClConFailure] := $ClConFailure;
 
 ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
     Block[{t},
@@ -615,7 +643,7 @@ ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
       OutlierPosition[dists, olParams]
     ];
 
-ClConOutlierPosition[___][None] := None;
+ClConOutlierPosition[___][$ClConFailure] := $ClConFailure;
 
 ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
     Block[{classLabel, classLabelInd},
@@ -658,7 +686,7 @@ Options[ClConFindOutliersPerClass] = {
   "SimpleConversion" -> True
 };
 
-ClConFindOutliersPerClass[___][None] := None;
+ClConFindOutliersPerClass[___][$ClConFailure] := $ClConFailure;
 
 ClConFindOutliersPerClass[][xs_, context_Association] :=
     ClConFindOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
@@ -700,7 +728,7 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 
 Options[ClConDropOutliersPerClass] = Options[ClConFindOutliersPerClass];
 
-ClConDropOutliersPerClass[___][None] := None;
+ClConDropOutliersPerClass[___][$ClConFailure] := $ClConFailure;
 
 ClConDropOutliersPerClass[][xs_, context_Association] :=
     ClConDropOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
@@ -730,7 +758,7 @@ ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 
 Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClass];
 
-ClConOutliersOperationsProcessing[___][None] := None;
+ClConOutliersOperationsProcessing[___][$ClConFailure] := $ClConFailure;
 
 ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{data, outlierIdentifier, trainingDataOnly, simpleConversion, classLabel, classLabelInd, varNames, res},
