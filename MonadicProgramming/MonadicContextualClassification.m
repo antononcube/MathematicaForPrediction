@@ -145,38 +145,41 @@
 
 (*Begin["`Private`"]*)
 
-ClCon::gitimp = "Importing `1` from GitHub...";
 
 If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
-  Message[ClCon::gitimp, "MathematicaForPredictionUtilities.m"];
+  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
 ];
 
 If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
-  Message[ClCon::gitimp, "OutlierIdentifiers.m"];
+  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
-  Message[ClCon::gitimp, "StateMonadCodeGenerator.m"];
+  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
 
 If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] == 0,
-  Message[ClCon::gitimp, "ClassifierEnsembles.m"];
+  Echo["ClassifierEnsembles.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ClassifierEnsembles.m"]
 ];
 
 If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
-  Message[ClCon::gitimp, "VariableImportanceByClassifiers.m"];
+  Echo["VariableImportanceByClassifiers.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
 ];
 
 If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
-  Message[ClCon::gitimp, "CrossTabulate.m"];
+  Echo["CrossTabulate.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
+If[Length[DownValues[Global`ToRSparseMatrix]] == 0,
+  Echo["RSparseMatrix.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RSparseMatrix.m"]
+];
 
 
 (*Needs["StateMonadCodeGenerator`"]*)
@@ -373,8 +376,11 @@ ClConGetVariableNames[xs_, context_Association] :=
         KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"] && TrueQ[Head[context["trainingData"]] == Dataset],
         ClCon[Normal[context["trainingData"][1,Keys]], context],
 
+        KeyExistsQ[context, "variableNames"],
+        ClCon[context["variableNames"], context],
+
         True,
-        Echo["Cannot find the variable names: (1) the pipeline value is not a Dataset and (2) there is no \"trainingData\" key in the context or the corresponding value is not a Dataset.",
+        Echo["Cannot find the variable names: (1) there is no context key \"variableNames\", (2) the pipeline value is not a Dataset, and (3) there is no \"trainingData\" key in the context or the corresponding value is not a Dataset.",
              "ClConGetVariableNames:"];
         $ClConFailure
       ]
@@ -388,6 +394,44 @@ ClConEchoVariableNames[xs_, context_Association] :=
       Echo[t,"variable names:"];
       ClConUnit[xs, context]
     ];
+
+
+(************************************************************)
+(* ClConSummarizeData                                       *)
+(************************************************************)
+
+
+Options[ClConSummarizeData] = {"Type" -> Automatic};
+
+ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
+
+ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
+    ClConSummarizeDataLongForm[DeleteCases[{opts},"Type"->_]][xs, context];
+
+Options[ClConSummarizeDataLongForm] = Options[MathematicaForPredictionUtilities`DataColumnsSummary];
+
+ClConSummarizeDataLongForm[___][$ClConFailure] := $ClConFailure;
+
+ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{varNames, data, sMat, dataLongForm},
+
+      data = ClConBind[ ClConUnit[xs,context], ClConTakeData];
+      If[ TrueQ[data === $ClConFailure], Return[$ClConFailure] ];
+
+      varNames = ClConBind[ ClConUnit[xs,context], ClConTakeVariableNames ];
+      If[ varNames == $ClConFailure, varNames = ToString/@Range[Dimensions[data][[2]]] ];
+
+      data = ClConToNormalClassifierData[data];
+
+      sMat = ToRSparseMatrix[SparseArray@(Flatten@*List @@@ data),
+        "ColumnNames" -> varNames,
+        "RowNames" -> ToString /@ Range[Length[data]]];
+
+      dataLongForm = RSparseMatrixToTriplets[sMat];
+
+      ClConUnit[ RecordsSummary[dataLongForm, {"RowID", "Variable", "Value"}, opts], context]
+    ];
+
 
 
 (************************************************************)
@@ -411,7 +455,7 @@ ClConClassifierQ[ cl_ ] :=
           MatchQ[ cl, Association[(_ -> _ClassifierFunction) ..] ]
         ];
 
-Optinos[ClConMakeClassifier] = Options[Classify];
+Options[ClConMakeClassifier] = Options[Classify];
 
 ClConMakeClassifier[___][$ClConFailure] := $ClConFailure;
 
@@ -494,6 +538,10 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
         Echo["The value of \"classifier\" in the context is not a ClassifierFunction object or an Association of ClassifierFunction objects.", "ClConClassifierMeasurements:"];
         $ClConFailure,
 
+        !KeyExistsQ[context, "testData"],
+        Echo["Cannot find test data in the context.","ClConClassifierMeasurements:"];
+        $ClConFailure,
+
         MatchQ[ context["classifier"], _ClassifierFunction],
         cm = ClassifierMeasurements[context["classifier"], ClConToNormalClassifierData[context@"testData"]];
         ClCon[AssociationThread[measures -> cm /@ measures], context],
@@ -518,6 +566,57 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
       ]
     ];
 
+(************************************************************)
+(* ClConROCData                                             *)
+(************************************************************)
+(* This is done as a separate function because it is important to be able to extract and manipulate that data. *)
+(* Another reason is that there is no easy way of extracting that from the ClassifierMeasurements objects. *)
+(* Here we extract that data as "black box" wise. *)
+(* Note that there is an *Echo* version. This prompts as possible computation optimization. *)
+
+Options[ClConROCData] = { "ROCRange" -> Range[0,1,0.025], "TargetClasses" -> All };
+
+ClConROCData[___][$ClConFailure] = $ClConFailure;
+
+(* (Of course) this implementation is very similar to ClConClassifierMeasurements. *)
+(* So, some proper refactoring has to be done. *)
+ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
+    Block[{ rocRange, targetClasses, cl},
+
+      rocRange = OptionValue[ ClConROCData, "ROCRange"];
+      If[ !( VectorQ[rocRange,NumberQ] && Apply[And, 0 <= # <= 1& /@ rocRange] ),
+        Echo["The value of the option \"ROCRange\" is expected to be a list of numbers between 0 and 1.", "ClConROCData:"];
+        Echo["Continuing with \"ROCRange\"-> Range[0,1,0.025].", "ClConROCData:"];
+        rocRange = Range[0,1,0.025];
+      ];
+
+      targetClasses = OptionValue[ ClConROCData, "TargetClasses"];
+
+      Which[
+
+        !KeyExistsQ[context, "classifier"],
+        Echo["Make a classifier first.", "ClConROCData:"];
+        $ClConFailure,
+
+        !( MatchQ[ context["classifier"], _ClassifierFunction] || MatchQ[ context["classifier"], Association[(_ -> _ClassifierFunction) ..] ] ),
+        Echo["The value of \"classifier\" in the context is not a ClassifierFunction object or an Association of ClassifierFunction objects.", "ClConROCData:"];
+        $ClConFailure,
+
+        !KeyExistsQ[context, "testData"],
+        Echo["Cannot find test data in the context.","ClConROCData:"];
+        $ClConFailure,
+
+        MatchQ[ context["classifier"], _ClassifierFunction],
+        cl = <| ClassifierInformation[context["classifier"],Method] -> context["classifier"] |>,
+
+        True,
+        cl = context["classifier"]
+      ];
+
+      res = EnsembleClassifierROCData[ cl, ClConToNormalClassifierData[context["testData"]], rocRange, targetClasses];
+      ClConUnit[ Association[res], context ]
+
+    ];
 
 (************************************************************)
 (* ClConAccuracyByVariableShuffling                         *)
