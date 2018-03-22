@@ -36,7 +36,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2015-09-27 *)
 
-(* :Package Version: 0.4 *)
+(* :Package Version: 0.6 *)
 (* :Mathematica Version: 10.2 *)
 (* :Copyright: (c) 2015 Anton Antonov *)
 (* :Keywords: R, sparse array, sparse matrix, named rows, named columns *)
@@ -66,6 +66,7 @@ References:
 This file was created using Mathematica Plugin for IntelliJ IDEA.
 
 Anton Antonov
+Windermere, FL, USA
 2015-09-27
 
 *)
@@ -74,7 +75,7 @@ Anton Antonov
 ClearAll[RSparseMatrix, MakeRSparseMatrix, ToRSparseMatrix, RowNames,
   ColumnNames, DimensionNames, RowsCount, ColumnsCount, SetRowNames, SetColumnNames, SetDimensionNames ]
 
-Predicate(s)
+(* Predicate(s) *)
 
 RSparseMatrixQ[x_] := Head[x] === RSparseMatrix;
 
