@@ -200,7 +200,7 @@ or a list of an atomic label and a list of atomic labels."
 
 ToROCAssociation::nvecs = "The the second and third arguments are expected to be vectors of the same length."
 
-ToROCAssociation::sgntrs = "The alllowed signatures are one of : \
+ToROCAssociation::sgntrs = "The allowed signatures are one of : \
 \nToROCAssociation[ {trueLabel_?AtomQ, falseLabel:(_?AtomQ|{_?AtomQ..})}, actualLabels_, predictedLabels_ ] , \
 \nToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, apfAssoc_Association] ."
 
@@ -305,7 +305,7 @@ ROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts:OptionsPatter
     ROCPlot[ "FPR", "TPR", parVals, aROCs, opts];
 
 ROCPlot[ xFuncName_String, yFuncName_String, aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
-    ROCPlot[ "FPR", "TPR", Automatic, aROCs, opts];
+    ROCPlot[ xFuncName, yFuncName, Automatic, aROCs, opts];
 
 ROCPlot[
   xFuncName_String, yFuncName_String,
