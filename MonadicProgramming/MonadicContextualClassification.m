@@ -143,6 +143,16 @@
 
 (*ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]]";*)
 
+(*ClConTakeData::usage = "ClConTakeData";*)
+
+(*ClConTakeVariableNames::usage = "ClConTakeVariableNames";*)
+
+(*ClConTakeClassifier::usage = "ClConTakeClassifier";*)
+
+(*ClConSummarizeData::usage = "ClConSummarizeData";*)
+
+(*ClConSummarizeDataLongForm::usage = "ClConSummarizeDataLongForm";*)
+
 (*Begin["`Private`"]*)
 
 
@@ -176,7 +186,7 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
-If[Length[DownValues[Global`ToRSparseMatrix]] == 0,
+If[Length[DownValues[Global`RSparseMatrixToTriplets]] == 0,
   Echo["RSparseMatrix.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RSparseMatrix.m"]
 ];
@@ -211,6 +221,8 @@ ClearAll[ClConToNormalClassifierData]
 Options[ClConToNormalClassifierData] = {"DeleteMissing"->True, "ClassLabelColumn" -> Automatic };
 
 (* Here we use MathematicaForPredictionUtilities`DataRulesForClassifyQ *)
+
+ClConToNormalClassifierData[ {}, opts:OptionsPattern[] ] := {};
 
 ClConToNormalClassifierData[ data_?DataRulesForClassifyQ, opts:OptionsPattern[] ] :=
     Block[{},
@@ -400,7 +412,6 @@ ClConEchoVariableNames[xs_, context_Association] :=
 (* ClConSummarizeData                                       *)
 (************************************************************)
 
-
 Options[ClConSummarizeData] = {"Type" -> Automatic};
 
 ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
@@ -413,23 +424,43 @@ Options[ClConSummarizeDataLongForm] = Options[MathematicaForPredictionUtilities`
 ClConSummarizeDataLongForm[___][$ClConFailure] := $ClConFailure;
 
 ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{varNames, data, sMat, dataLongForm},
+    Block[{varNames, ctData, data, sMat, dataLongForm, res},
 
-      data = ClConBind[ ClConUnit[xs,context], ClConTakeData];
-      If[ TrueQ[data === $ClConFailure], Return[$ClConFailure] ];
+      Which[
+        Head[xs] === Dataset || DataRulesForClassifyQ[xs],
+        ctData = <|Anonymous->xs|>,
+
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
+        ctData = xs,
+
+        True,
+        ctData = KeyTake[context, {"trainingData", "testData", "validationData"}]
+      ];
+
+      If[ And @@ Map[ Length[#]==0 &, ctData],
+        Echo["Cannot find data in the context.", "ClConSummarizeDataLongForm:"];
+        $ClConFailure
+      ];
 
       varNames = ClConBind[ ClConUnit[xs,context], ClConTakeVariableNames ];
-      If[ varNames == $ClConFailure, varNames = ToString/@Range[Dimensions[data][[2]]] ];
+      If[ varNames == $ClConFailure, varNames = ToString/@Range[Dimensions[ctData][[2]]] ];
 
-      data = ClConToNormalClassifierData[data];
+      ctData = ClConToNormalClassifierData /@ ctData;
 
-      sMat = ToRSparseMatrix[SparseArray@(Flatten@*List @@@ data),
-        "ColumnNames" -> varNames,
-        "RowNames" -> ToString /@ Range[Length[data]]];
+      res =
+          Function[{data},
+            If[Length[data] == 0, {},
 
-      dataLongForm = RSparseMatrixToTriplets[sMat];
+              sMat = ToRSparseMatrix[SparseArray@(Flatten@*List @@@ data),
+                "ColumnNames" -> varNames,
+                "RowNames" -> ToString /@ Range[Length[data]]];
 
-      ClConUnit[ RecordsSummary[dataLongForm, {"RowID", "Variable", "Value"}, opts], context]
+              dataLongForm = RSparseMatrixToTriplets[sMat];
+              RecordsSummary[dataLongForm, {"RowID", "Variable", "Value"}, opts]
+            ]
+          ] /@ ctData;
+
+      ClConUnit[ Normal@res, context]
     ];
 
 
@@ -928,6 +959,6 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
       ClConUnit[res, context]
     ];
 
-(*End[]  *`Private` *)
+(*End[]  *`Private`*)
 
 (*EndPackage[]*)
