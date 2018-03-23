@@ -443,7 +443,7 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
       ];
 
       varNames = ClConBind[ ClConUnit[xs,context], ClConTakeVariableNames ];
-      If[ varNames == $ClConFailure, varNames = ToString/@Range[Dimensions[ctData][[2]]] ];
+      If[ TrueQ[varNames === $ClConFailure], varNames = ToString/@Range[Dimensions[ctData][[2]]] ];
 
       ctData = ClConToNormalClassifierData /@ ctData;
 
