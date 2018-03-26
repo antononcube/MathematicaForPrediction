@@ -194,14 +194,14 @@ CrossTabulate[ arr_?MatrixQ ] :=
         Message[CrossTabulate::narr];
         Return[{}]
       ];
-      <| "XTABMatrix" -> t[[1]], "RowNames" -> t[[2,1]], "ColumnNames" -> t[[2,2]] |>
+      <| "SparseMatrix" -> t[[1]], "RowNames" -> t[[2,1]], "ColumnNames" -> t[[2,2]] |>
     ];
 
 Clear[CrossTabulationMatrixQ]
 
 CrossTabulationMatrixQ[arg_Association] :=
-    Length[Intersection[Keys[arg],{"XTABMatrix", "RowNames", "ColumnNames"}]] == 3 &&
-        MatrixQ[arg["XTABMatrix"]];
+    Length[Intersection[Keys[arg],{"SparseMatrix", "RowNames", "ColumnNames"}]] == 3 &&
+        MatrixQ[arg["SparseMatrix"]];
 
 CrossTabulationMatrixQ[___] := False;
 
@@ -228,26 +228,26 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse:(
 Clear[FromRXTabsForm];
 FromRXTabsForm[rres_RLink`RObject]:=
     Block[{},
-      <|"XTABMatrix" -> rres[[1]],
+      <|"SparseMatrix" -> rres[[1]],
         "RowNames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
         "ColumnNames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
     ] /; (! FreeQ[rres, {"xtabs", "table"}, Infinity]);
 
 Unprotect[Association];
 
-MatrixForm[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"]), opts___] ^:=
+MatrixForm[x_Association /; (KeyExistsQ[x, "SparseMatrix"] || KeyExistsQ[x, "XTABTensor"]), opts___] ^:=
     (MatrixForm[#1, Append[{opts}, TableHeadings -> Rest[{##}]]] & @@ x);
 
 MatrixPlot[
-  x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"]), opts___] ^:=
+  x_Association /; (KeyExistsQ[x, "SparseMatrix"] || KeyExistsQ[x, "XTABTensor"]), opts___] ^:=
     (MatrixPlot[#1,
       Append[{opts}, FrameLabel -> {{Keys[x][[2]], None}, {Keys[x][[3]], None}}]] & @@ x);
 
 
-Transpose[x_Association /; (KeyExistsQ[x, "XTABMatrix"] || KeyExistsQ[x, "XTABTensor"]),args___] ^:=
+Transpose[x_Association /; (KeyExistsQ[x, "SparseMatrix"] || KeyExistsQ[x, "XTABTensor"]),args___] ^:=
     Block[{assoc = x},
-      If[ KeyExistsQ[x, "XTABMatrix"],
-        assoc["XTABMatrix"] = Transpose[x["XTABMatrix"],args],
+      If[ KeyExistsQ[x, "SparseMatrix"],
+        assoc["SparseMatrix"] = Transpose[x["SparseMatrix"],args],
         assoc["XTABTensor"] = Transpose[x["XTABTensor"],args]
       ];
       assoc["ColumnNames"] = x["RowNames"];
