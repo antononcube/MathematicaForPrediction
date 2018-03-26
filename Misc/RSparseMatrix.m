@@ -187,14 +187,15 @@ ToRSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
       ]
     ] /; Length[Dimensions[ds]] == 2;
 
+
 ToRSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
     Block[{},
-      ToRSparseMatrix[ xtabs["XTABMatrix"],
+      ToRSparseMatrix[ xtabs["SparseMatrix"],
         "RowNames" -> Map[ToString, xtabs["RowNames"]],
         "ColumnNames" -> Map[ToString, xtabs["ColumnNames"]],
         opts
       ]
-    ]/; MemberQ[ Keys[xtabs], "XTABMatrix" ];
+    ]/; KeyExistsQ[xtabs, "SparseMatrix"] && KeyExistsQ[xtabs, "RowNames"] && KeyExistsQ[xtabs, "ColumnNames"];
 
 ToRSparseMatrix[___] := Message[ToRSparseMatrix::arg1];
 
