@@ -161,7 +161,7 @@ Here is a summary:
 Using the long form we can compute the document-word matrix:
 
     ctMat = CrossTabulate[docWordRecords[[All, {1, -1}]]];
-    MatrixPlot[Transpose@Sort@Map[# &, Transpose[ctMat@"XTABMatrix"]], 
+    MatrixPlot[Transpose@Sort@Map[# &, Transpose[ctMat@"SparseMatrix"]], 
      MaxPlotPoints -> 300, ImageSize -> 800, 
      AspectRatio -> 1/3]
 
@@ -170,7 +170,7 @@ Using the long form we can compute the document-word matrix:
 Here is the president-word matrix:
 
     ctMat = CrossTabulate[docWordRecords[[All, {2, -1}]]];
-    MatrixPlot[Transpose@Sort@Map[# &, Transpose[ctMat@"XTABMatrix"]], MaxPlotPoints -> 300, ImageSize -> 800, AspectRatio -> 1/3]
+    MatrixPlot[Transpose@Sort@Map[# &, Transpose[ctMat@"SparseMatrix"]], MaxPlotPoints -> 300, ImageSize -> 800, AspectRatio -> 1/3]
 
 [!["USA-presidents-speeches-president-vs-term-contingency-matrix"](https://imgur.com/2MLCq7pl.png)](https://imgur.com/2MLCq7p.png)
 
