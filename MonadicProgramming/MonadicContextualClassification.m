@@ -715,9 +715,9 @@ ClConToLinearVectorSpaceRepresentation[data:(_?MatrixQ|_Dataset)] :=
             CrossTabulate[ Transpose[{Range[Length[catData]], Normal[catData[All, i]]}] ],
             {i, Length[data[1]]}];
 
-      resMat = Transpose[Join @@ Map[Transpose[#["XTABMatrix"]] &, smats]];
+      resMat = Transpose[Join @@ Map[Transpose[#["SparseMatrix"]] &, smats]];
 
-      <| "XTABMatrix"->resMat, "RowNames"-> smats[[1]]["RowNames"], "ColumnNames" -> Join @@ Through[smats["ColumnNames"]] |>
+      <| "SparseMatrix"->resMat, "RowNames"-> smats[[1]]["RowNames"], "ColumnNames" -> Join @@ Through[smats["ColumnNames"]] |>
     ];
 
 ClConToLinearVectorSpaceRepresentation[][$ClConFailure] := $ClConFailure;
@@ -763,7 +763,7 @@ ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
         If[VectorQ[smat], smat = Transpose[{smat}] ],
 
         True,
-        smat = ClConToLinearVectorSpaceRepresentation[data]["XTABMatrix"]
+        smat = ClConToLinearVectorSpaceRepresentation[data]["SparseMatrix"]
       ];
 
       avgItem = avgFunc[N@smat];
