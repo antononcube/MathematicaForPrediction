@@ -64,6 +64,9 @@ shown with MatrixPlot."
 CrossTabulate::usage = "Finds the contingency co-occurrence values in a matrix (2D array). The result can be \
 shown with MatrixPlot."
 
+CrossTabulationMatrixQ::usage = "Gives True if the argument is an Association with keys \
+\"SparseMatrix\", \"RowNames\", and \"ColumnNames\"."
+
 xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
 
 FromRXTabsForm::usage = "Transforms RObject result of xtabsViaRLink into an association."
@@ -193,6 +196,14 @@ CrossTabulate[ arr_?MatrixQ ] :=
       ];
       <| "XTABMatrix" -> t[[1]], "RowNames" -> t[[2,1]], "ColumnNames" -> t[[2,2]] |>
     ];
+
+Clear[CrossTabulationMatrixQ]
+
+CrossTabulationMatrixQ[arg_Association] :=
+    Length[Intersection[Keys[arg],{"XTABMatrix", "RowNames", "ColumnNames"}]] == 3 &&
+        MatrixQ[arg["XTABMatrix"]];
+
+CrossTabulationMatrixQ[___] := False;
 
 Clear[xtabsViaRLink];
 xtabsViaRLink::norlink = "R is not installed.";
