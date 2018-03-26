@@ -136,8 +136,8 @@ HeatmapPlot[data:_[Association[__]], opts:OptionsPattern[]] :=
 
 HeatmapPlot[xtabs_Association, opts:OptionsPattern[]] :=
     Block[{},
-      HeatmapPlot[ xtabs["XTABMatrix"], xtabs["RowNames"], xtabs["ColumnNames"], opts ]
-    ] /; KeyExistsQ[xtabs, "XTABMatrix"];
+      HeatmapPlot[ xtabs["SparseMatrix"], xtabs["RowNames"], xtabs["ColumnNames"], opts ]
+    ] /; KeyExistsQ[xtabs, "SparseMatrix"] && KeyExistsQ[xtabs, "RowNames"] && KeyExistsQ[xtabs, "ColumnNames"];
 
 HeatmapPlot[data_?MatrixQ, opts:OptionsPattern[]] :=
     HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts];
