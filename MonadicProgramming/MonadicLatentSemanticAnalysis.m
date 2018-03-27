@@ -192,15 +192,17 @@ LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
 
 ClearAll[LSAMonMakeGraph]
 
-Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite" };
+Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite", "RemoveLoops"->True };
 
 LSAMonMakeGraph[___][None] := None;
 LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{weightedQ, type, am, res, knownGrTypes },
+    Block[{weightedQ, type, am, res, knownGrTypes, removeLoopsQ },
 
       weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
 
       type = OptionValue[LSAMonMakeGraph, "Type"];
+
+      removeLoopsQ = TrueQ[OptionValue[LSAMonMakeGraph, "RemoveLoops"]];
 
       knownGrTypes = { "Bipartite", "DocumentDocument", "TermTerm", "Document", "Term" };
       If[ !MemberQ[knownGrTypes, type],
@@ -240,24 +242,24 @@ LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
         am = am . Transpose[am];
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
         am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        am = am - DiagonalMatrix[Diagonal[am]];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
         res = WeightedAdjacencyGraph[am],
 
         !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
         am = am . Transpose[am];
-        am = am - DiagonalMatrix[Diagonal[am]];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
         res = AdjacencyGraph[Unitize[am]],
 
         weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
         am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        am = am - DiagonalMatrix[Diagonal[am]];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
         res = WeightedAdjacencyGraph[am],
 
         !weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
-        am = am - DiagonalMatrix[Diagonal[am]];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
         res = AdjacencyGraph[Unitize[am]];
 
       ];
