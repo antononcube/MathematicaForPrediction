@@ -240,20 +240,24 @@ LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
         am = am . Transpose[am];
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
         am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        am = am - DiagonalMatrix[Diagonal[am]];
         res = WeightedAdjacencyGraph[am],
 
         !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
         am = am . Transpose[am];
+        am = am - DiagonalMatrix[Diagonal[am]];
         res = AdjacencyGraph[Unitize[am]],
 
         weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
         am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        am = am - DiagonalMatrix[Diagonal[am]];
         res = WeightedAdjacencyGraph[am],
 
         !weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
+        am = am - DiagonalMatrix[Diagonal[am]];
         res = AdjacencyGraph[Unitize[am]];
 
       ];
@@ -279,10 +283,15 @@ LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
         Return[None]
       ];
 
-      If[ TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["texts"]] ,
+      Which[
+        TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["texts"]] ,
         gr = xs,
-        (*ELSE*)
-        gr = Fold[ LSAMonBind, LSMMon[xs,context], {LSAMonMakeGraph, LSAMonTakeValue} ]
+
+        TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["texts"]] + Length[context["terms"]],
+        gr = xs,
+
+        True,
+        gr = Fold[ LSAMonBind, LSAMon[xs,context], {LSAMonMakeGraph["Type"->"Bipartite"], LSAMonTakeValue} ]
       ];
 
       cvec = cFunc[gr];
@@ -290,8 +299,17 @@ LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
 
       inds = Take[Reverse[Ordering[cvec]], UpTo[topN]];
 
+      Which[
 
-      LSAMonUnit[ Transpose[{cvec[[inds]], inds, context["texts"][[inds]]}], context ]
+        VertexCount[gr] == Length[context["texts"]],
+        LSAMonUnit[ Transpose[{cvec[[inds]], inds, context["texts"][[inds]]}], context ],
+
+        VertexCount[gr] == Length[context["texts"]] + Length[context["terms"]],
+        LSAMonUnit[ Transpose[{cvec[[inds]], inds, Join[context["texts"],context["terms"]][[inds]]}], context ],
+
+        True,
+        None
+      ]
     ];
 
 
