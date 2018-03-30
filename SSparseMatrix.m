@@ -93,10 +93,13 @@ SetRowNames::usage = "Sets row names of a SSparseMatrix object."
 
 SetDimensionNames::usage = "Sets dimension names of a SSparseMatrix object."
 
-ColumnCount::usage = "Gives the number of columns of a SSparseMatrix object."
+ColumnsCount::usage = "Gives the number of columns of a SSparseMatrix object."
 
-RowCount::usage = "Gives the number of rows of a SSparseMatrix object."
+RowsCount::usage = "Gives the number of rows of a SSparseMatrix object."
 
+ColumnSums::usage = "Gives the sums of the columns of a SSparseMatrix object."
+
+RowSums::usage = "Gives the sums of the rows of a SSparseMatrix object."
 
 ColumnBind::usage = "Binds SSparseMatrix objects column-wise."
 
