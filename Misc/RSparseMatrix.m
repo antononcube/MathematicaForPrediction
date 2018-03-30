@@ -42,6 +42,10 @@
 (* :Keywords: R, sparse array, sparse matrix, named rows, named columns *)
 (* :Discussion:
 
+THESE IMPLEMENTATIONS (PACKAGE) ARE OBSOLETE. Please use SSparseMatrix.m:
+
+  https://github.com/antononcube/MathematicaForPrediction/blob/master/SSparseMatrix.m
+
 This notebook has the function implementations for manipulating objects with head RSparseMatrix that behave like
 SparseArray objects but have the added functionalities to use row names and column names in a manner similar to
 that of the sparse arrays objects from the base library Matrix [2] for the programming language R [1].
