@@ -159,7 +159,7 @@ ItemRecommenderCreation[id_String, smats : {_SparseArray ..},
     ] /; Length[smats] == Length[tagTypeNames] == Length[columnNames];
 
 
-ItemRecommenderCreation[id_String, smats : Association[ _ -> _SSparseMatrix ..]] :=
+ItemRecommenderCreation[id_String, smats : Association[ (_ -> _SSparseMatrix) ..]] :=
     Block[{tagTypeNames, rowNames, columnNames},
 
       tagTypeNames = Keys[smats];
@@ -233,6 +233,7 @@ ItemRecommender[d___]["MakeColumnInterpretation"][tagTypes:{_String...},tagsList
       (* global-local column indexes rules *)
       offsets=FoldList[Plus,0,Length/@tagsLists];
       ItemRecommender[d]["tagTypeIndexOffsets"]=offsets;
+      ItemRecommender[d]["tagTypeRanges"] = AssociationThread[tagTypes, Transpose[{Most[offsets]+1, Rest[offsets]}]];
       ItemRecommender[d]["TypeFunction"]=With[{w=Which@@Flatten[Map[Function[{arg},{#>arg[[1]],arg[[2]]}],Transpose[{Rest[Reverse@offsets],Reverse@tagTypes}]]]},
         Function[w]
       ];
@@ -457,6 +458,34 @@ ItemRecommender[d___]["ProfileFromVector"][pvec_SparseArray] :=
 	  res[[Reverse[Ordering[res[[All, 1]]]]]]	  
     ] /; VectorQ[pvec];
 
+
+(*=========================================================*)
+(* Classify                                                *)
+(*=========================================================*)
+
+ItemRecommender[d___]["Classify"][tagType_String, pvec_SparseArray, nTopNNs_Integer,
+  voting:(True|False):False, dropZeroScoredLabels:(True|False):True] :=
+    Block[{recs, clMat, s, t},
+      recs = ItemRecommender[d]["RecommendationsByProfile"][pvec,nTopNNs];
+
+      clMat = ItemRecommender[d]["M"][[All, ItemRecommender[d]["tagTypeRanges"][tagType] ]];
+
+      If[ voting,
+        t = Most[ArrayRules[clMat]]; t[[All,2]] = 1;
+        clMat = SparseArray[t,Dimensions[clMat]];
+        recs[[All,1]] = 1;
+      ];
+
+      s = (recs[[All,1]] / Max[recs[[All,1]]] ) . clMat[[ recs[[All,2]], All ]];
+
+      s = AssociationThread[ ItemRecommender[d]["ColumnInterpretation"][[ ItemRecommender[d]["tagTypeRanges"][tagType] ]] -> s ];
+
+      Reverse[Sort[s]]
+    ];
+
+(*=========================================================*)
+(* RatingPrediction                                        *)
+(*=========================================================*)
 
 (* ::Subsection:: *)
 (*RatingPrediction*)
