@@ -142,9 +142,17 @@ If[Length[DownValues[SSparseMatrix`MakeSSparseMatrix]] == 0,
   Echo["...Done.", "SparseMatrixRecommenderFramework:"]
 ];
 
-ItemRecommenderCreation::rneq = "The row names of SSparseMatrix objects are not the same."
+If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Echo["Importing CrossTabulate.m from GitHub...", "SparseMatrixRecommenderFramework:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
+  Echo["...Done.", "SparseMatrixRecommenderFramework:"]
+];
 
 Clear[ItemRecommenderCreation]
+
+ItemRecommenderCreation::rneq = "The row names of SSparseMatrix objects are not the same."
+ItemRecommenderCreation::niid = "The specified item variable name is not one of the column names of the dataset."
+
 ItemRecommenderCreation[id_String, smats : {_SparseArray ..},
   tagTypeNames : {_String ..}, rowNames : {_String ..},
   columnNames : {{_String ..} ..}] :=
@@ -177,6 +185,32 @@ ItemRecommenderCreation[id_String, smats : Association[ (_ -> _SSparseMatrix) ..
 
       ItemRecommenderCreation[id, SparseArray /@ Values[smats], tagTypeNames, rowNames, columnNames ]
     ];
+
+ItemRecommenderCreation[id_String, ds_Dataset, itemVarName_String ] :=
+    Block[{ncol, varNames, smats, idPos},
+
+      ncol = Dimensions[ds][[2]];
+
+      varNames = Normal[Keys[ds[1]]];
+
+      idPos = Flatten[Position[varNames, itemVarName]];
+      If[ Length[idPos]==0,
+        Message[ItemRecommenderCreation::niid];
+        Return[$Failed]
+      ];
+      idPos = First[idPos];
+
+      smats = ToSSparseMatrix /@
+          Table[CrossTabulate[ds[All, {idPos, i}]], {i, Complement[Range[ncol], {idPos}]}];
+
+      smats = AssociationThread[Flatten[List @@ Complement[varNames,{itemVarName}]] -> smats];
+
+      ItemRecommenderCreation[id, smats]
+    ];
+
+Clear[MakeItemRecommender]
+MakeItemRecommender = ItemRecommenderCreation;
+
 
 (* Makes the item-tag sparse martix \[Element] {0,1}^(Subscript[n, items]*Subscript[n, tags]) *)
 ItemRecommender[d___]["MakeM01"][args___]:=ItemRecommender[d]["M01"]=SparseArray[RandomInteger[{0,1},{100,20}]];
@@ -443,6 +477,8 @@ ItemRecommender[d___]["MakeProfileVector"][tags_List]:=
     ItemRecommender[d]["MakeProfileVector"][tags,ConstantArray[1.,Length[tags]]];
 ItemRecommender[d___]["MakeProfileVector"][tags_List,weights_]:=
     ItemRecommender[d]["MakeProfileVector"][Thread[tags->weights]];
+ItemRecommender[d___]["MakeProfileVector"][aTagWeights_Association]:=
+    ItemRecommender[d]["MakeProfileVector"][Normal[aTagWeights]];
 ItemRecommender[d___]["MakeProfileVector"][tagWeightRules:{Rule[_,_?NumberQ]..}]:=
     Block[{t=tagWeightRules},
       t[[All,1]]=t[[All,1]]/.ItemRecommender[d]["tagToColumnIndexRules"];
@@ -462,6 +498,12 @@ ItemRecommender[d___]["ProfileFromVector"][pvec_SparseArray] :=
 (*=========================================================*)
 (* Classify                                                *)
 (*=========================================================*)
+
+ItemRecommender[d___]["Classify"][tagType_String, tags:({_String..} | {_Rule..} | _Association), args___] :=
+    ItemRecommender[d]["Classify"][tagType, ItemRecommender[d]["MakeProfileVector"][tags], args];
+
+ItemRecommender[d___]["Classify"][tagType_String, tags:{_String..}, weights_List, args___] :=
+    ItemRecommender[d]["Classify"][tagType, ItemRecommender[d]["MakeProfileVector"][tags,weights], args] /; Length[tags] == Length[weights];
 
 ItemRecommender[d___]["Classify"][tagType_String, pvec_SparseArray, nTopNNs_Integer,
   voting:(True|False):False, dropZeroScoredLabels:(True|False):True] :=
