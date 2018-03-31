@@ -176,7 +176,7 @@ MakeSSparseMatrix[triplets:_?MatrixQ, dims_, val_, opts : OptionsPattern[]] :=
 Options[ToSSparseMatrix] = Options[MakeSSparseMatrix];
 
 ToSSparseMatrix[rmat_SSparseMatrix, opts : OptionsPattern[]] :=
-    ToSSparseMatrix[rmat[[1]]["SparseMatrix"], opts,
+    ToSSparseMatrix[First[rmat]["SparseMatrix"], opts,
       "RowNames" -> RowNames[rmat], "ColumnNames" -> ColumnNames[rmat],
       "DimensionNames" -> DimensionNames[rmat]];
 
@@ -245,7 +245,7 @@ ToSSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
 
 ToSSparseMatrix[___] := Message[ToSSparseMatrix::arg1];
 
-SparseArray[rmat_SSparseMatrix] ^:= rmat[[1]]["SparseMatrix"];
+SparseArray[rmat_SSparseMatrix] ^:= First[rmat]["SparseMatrix"];
 
 
 (* Setters *)
@@ -264,7 +264,7 @@ SetAttributes[SetColumnNames, HoldFirst]
 SetColumnNames[ rmat_, names_:{_String..} ] :=
     Block[{res},
       res = ToSSparseMatrix[rmat,"RowNames"->RowNames[rmat],"ColumnNames"->names,"DimensionNames"->DimensionNames[rmat]];
-      If[ Head[res] === SSparseMatrix,
+      If[ TrueQ[Head[res] === SSparseMatrix],
         rmat = res; rmat,
         $Failed
       ]
@@ -275,7 +275,7 @@ SetAttributes[SetDimensionNames, HoldFirst]
 SetDimensionNames[ rmat_, names_:{_String..} ] :=
     Block[{res},
       res = ToSSparseMatrix[rmat,"RowNames"->RowNames[rmat],"ColumnNames"->ColumnNames[rmat],"DimensionNames"->names];
-      If[ Head[res] === SSparseMatrix,
+      If[ TrueQ[Head[res] === SSparseMatrix],
         rmat = res; rmat,
         $Failed
       ]
@@ -284,20 +284,20 @@ SetDimensionNames[ rmat_, names_:{_String..} ] :=
 
 (*Query methods*)
 
-RowNames[sarr_SSparseMatrix] :=
-    If[sarr[[1]]["RowNames"] === None, None, Keys[sarr[[1]]["RowNames"]]];
+RowNames[SSparseMatrix[obj_]] :=
+    If[obj["RowNames"] === None, None, Keys[obj["RowNames"]]];
 
-ColumnNames[sarr_SSparseMatrix] :=
-    If[sarr[[1]]["ColumnNames"] === None, None, Keys[sarr[[1]]["ColumnNames"]]];
+ColumnNames[SSparseMatrix[obj_]] :=
+    If[obj["ColumnNames"] === None, None, Keys[obj["ColumnNames"]]];
 
-DimensionNames[sarr_SSparseMatrix] :=
-    If[sarr[[1]]["DimensionNames"] === None, {None, None}, Keys[sarr[[1]]["DimensionNames"]]];
+DimensionNames[SSparseMatrix[obj_]] :=
+    If[obj["DimensionNames"] === None, {None, None}, Keys[obj["DimensionNames"]]];
 
 ArrayRules[SSparseMatrix[obj_]] ^:=
-    ArrayRules[SSparseMatrix[obj][[1]]["SparseMatrix"]];
+    ArrayRules[obj["SparseMatrix"]];
 
 Dimensions[SSparseMatrix[obj_]] ^:=
-    Dimensions[SSparseMatrix[obj][[1]]["SparseMatrix"]];
+    Dimensions[obj["SparseMatrix"]];
 
 RowsCount[r_SSparseMatrix] := Dimensions[r][[1]];
 ColumnsCount[r_SSparseMatrix] := Dimensions[r][[2]];
@@ -321,14 +321,14 @@ MatrixForm[SSparseMatrix[obj_], args___] ^:=
         ColumnNames[SSparseMatrix[obj]]}];
 
 MatrixPlot[SSparseMatrix[obj_], args___] ^:=
-    MatrixPlot[SSparseMatrix[obj][[1]]["SparseMatrix"], args];
+    MatrixPlot[obj["SparseMatrix"], args];
 
 (*Sums*)
 
-RowSums[rmat_SSparseMatrix] := Total[rmat[[1]]["SparseMatrix"], {2}];
-ColumnSums[rmat_SSparseMatrix] := Total[rmat[[1]]["SparseMatrix"]];
+RowSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"], {2}];
+ColumnSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"]];
 
-Total[rmat_SSparseMatrix, args___] ^:= Total[rmat[[1]]["SparseMatrix"], args];
+Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
 
 (*Dot product*)
 
@@ -408,6 +408,8 @@ Plus[x_, rmat1_SSparseMatrix] ^:=
 
 (* Part *)
 
+(*Part[SSparseMatrix[obj_], s1:(_Integer | {_Integer..} | _Span ) ] ^:= Part[obj["SparseMatrix"], s1, All];*)
+
 Part[SSparseMatrix[obj_], s1 : (_String | {_String ..})] ^:=
     Block[{ i1 },
       i1 = If[ ListQ[s1], obj["RowNames"] /@ s1, obj["RowNames"] @ s1 ];
@@ -444,7 +446,6 @@ Part[SSparseMatrix[obj_], s1_, s2_] ^:=
         ]
       ]
     ];
-
 
 (* RowBind, ColumnBind *)
 
@@ -561,7 +562,7 @@ Format[SSparseMatrix[obj_]] := obj["SparseMatrix"];
       (*Print["SSparseMatrix decoration::res=",res];*)
       (*If[MatrixQ[res],*)
         (*SSparseMatrix[*)
-          (*Join[<|"SparseMatrix" -> SparseArray[res]|>, Rest[rmat[[1]]]]],*)
+          (*Join[<|"SparseMatrix" -> SparseArray[res]|>, Rest[First[rmat]]]],*)
         (*res*)
       (*]*)
     (*] /;*)
