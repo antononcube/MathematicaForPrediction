@@ -136,6 +136,13 @@
 
 Clear[ItemRecommender]
 
+If[Length[DownValues[SSparseMatrix`MakeSSparseMatrix]] == 0,
+  Echo["Importing SSparseMatrix.m from GitHub...", "SparseMatrixRecommenderFramework:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
+  Echo["...Done.", "SparseMatrixRecommenderFramework:"]
+];
+
+ItemRecommenderCreation::rneq = "The row names of SSparseMatrix objects are not the same."
 
 Clear[ItemRecommenderCreation]
 ItemRecommenderCreation[id_String, smats : {_SparseArray ..},
@@ -151,6 +158,25 @@ ItemRecommenderCreation[id_String, smats : {_SparseArray ..},
       objIR
     ] /; Length[smats] == Length[tagTypeNames] == Length[columnNames];
 
+
+ItemRecommenderCreation[id_String, smats : Association[ _ -> _SSparseMatrix ..]] :=
+    Block[{tagTypeNames, rowNames, columnNames},
+
+      tagTypeNames = Keys[smats];
+
+      rowNames = RowNames /@ Values[smats];
+
+      If[ !(Equal @@ rowNames),
+        Message[ItemRecommenderCreation::rneq];
+        Return[$Failed]
+      ];
+
+      rowNames = First[rowNames];
+
+      columnNames = ColumnNames /@ Values[smats];
+
+      ItemRecommenderCreation[id, SparseArray /@ Values[smats], tagTypeNames, rowNames, columnNames ]
+    ];
 
 (* Makes the item-tag sparse martix \[Element] {0,1}^(Subscript[n, items]*Subscript[n, tags]) *)
 ItemRecommender[d___]["MakeM01"][args___]:=ItemRecommender[d]["M01"]=SparseArray[RandomInteger[{0,1},{100,20}]];
@@ -430,6 +456,7 @@ ItemRecommender[d___]["ProfileFromVector"][pvec_SparseArray] :=
 	  res = Transpose[{arules[[All, 2]], Flatten[arules[[All, 1]]], ItemRecommender[d]["ColumnInterpretation"][[Flatten[arules[[All, 1]]]]]}];
 	  res[[Reverse[Ordering[res[[All, 1]]]]]]	  
     ] /; VectorQ[pvec];
+
 
 (* ::Subsection:: *)
 (*RatingPrediction*)
