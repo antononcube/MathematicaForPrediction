@@ -255,7 +255,7 @@ ItemRecommender[d___]["SpliceMatrices"][smats:{_SparseArray...},weights:{_?Numbe
 
 
 (* ::Subsection:: *)
-(*UserItemsToLove*)
+(*Recommendations*)
 
 
 (* ::Text:: *)
@@ -268,7 +268,7 @@ ItemRecommender[d___]["SpliceMatrices"][smats:{_SparseArray...},weights:{_?Numbe
 
 
 (* ::Text:: *)
-(*This is a a specification of the algorithm below in UserItemsToLove.*)
+(*This is a a specification of the algorithm below in Recommendations.*)
 
 
 (* ::Text:: *)
@@ -278,8 +278,9 @@ ItemRecommender[d___]["SpliceMatrices"][smats:{_SparseArray...},weights:{_?Numbe
 (*4. Sort descendingly sp according to the first value of each pair. *)
 (*5. Take the indexes of the first k pairs, i.e. take sp(1:k,2).*)
 
+ItemRecommender[d___]["UserItemsToLove"][args___] := ItemRecommender[d]["Recommendations"][args];
 
-ItemRecommender[d___]["UserItemsToLove"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...},nRes_Integer, removeHistoryQ_:True]:=
+ItemRecommender[d___]["Recommendations"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...},nRes_Integer, removeHistoryQ_:True]:=
     Block[{inds,vec,maxScores,smat=ItemRecommender[d]["M"]},
     (*userMatrix=MapThread[#1*#2&,{smat\[LeftDoubleBracket]inputShowInds\[RightDoubleBracket],inputRatings},1];*)
     (*1*)
@@ -293,11 +294,13 @@ ItemRecommender[d___]["UserItemsToLove"][inputShowInds:{_Integer...},inputRating
         If[Length[#]>nRes,Take[#,nRes],#]&[Select[Transpose[{vec[[inds]],inds}],#[[1]]>0&]]
       ]
     ]/;Length[inputShowInds]==Length[inputRatings];
-ItemRecommender[d___]["UserItemsToLove"][{},_,nRes_Integer]:=
+ItemRecommender[d___]["Recommendations"][{},_,nRes_Integer]:=
     Block[{inds=Range[1,nRes]},Transpose[{ConstantArray[1,{Length[inds]}],inds}]];
 
 
-ItemRecommender[d___]["UserItemsToLoveByProfile"][profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer]:=
+ItemRecommender[d___]["UserItemsToLoveByProfile"][args___] := ItemRecommender[d]["RecommendationsByProfile"][args];
+
+ItemRecommender[d___]["RecommendationsByProfile"][profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer]:=
     Block[{inds,vec,smat=ItemRecommender[d]["M"]},
       vec=SparseArray[Thread[profileInds->profileScores],{Dimensions[smat][[2]]}];
       vec=smat.vec;
@@ -305,7 +308,7 @@ ItemRecommender[d___]["UserItemsToLoveByProfile"][profileInds:{_Integer...},prof
       (*If[Length[#]>nRes,Take[#,nRes],#]&[Select[Transpose[{vec\[LeftDoubleBracket]inds\[RightDoubleBracket],inds}],#\[LeftDoubleBracket]1\[RightDoubleBracket]>0&]]*)
       If[Length[#]>nRes,Take[#,nRes],#]&[DeleteCases[Transpose[{vec[[inds]],inds}],{0.,_}]]
     ]/;Length[profileInds]==Length[profileScores];
-ItemRecommender[d___]["UserItemsToLoveByProfile"][profileVec_SparseArray,nRes_Integer]:=
+ItemRecommender[d___]["RecommendationsByProfile"][profileVec_SparseArray,nRes_Integer]:=
     Block[{inds,vec,smat=ItemRecommender[d]["M"]},
       vec=smat.profileVec;
       (*inds=Most[ArrayRules[vec]]\[LeftDoubleBracket]All,1,1\[RightDoubleBracket];
@@ -317,14 +320,14 @@ If[Length[#]>nRes,Take[#,nRes],#]&[SortBy[Select[Transpose[{vec\[LeftDoubleBrack
 
 
 (* The code is almost identical to the definition above *)
-ItemRecommender[d___]["UserItemsToLoveByProfile"][rowInds:{_Integer..},profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer]:=
+ItemRecommender[d___]["RecommendationsByProfile"][rowInds:{_Integer..},profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer]:=
     Block[{inds,vec,smat=ItemRecommender[d]["M"][[rowInds]]},
       vec=SparseArray[Thread[profileInds->profileScores],{Dimensions[smat][[2]]}];
       vec=smat.vec;
       inds=Reverse@Ordering[vec//Normal];
       If[Length[#]>nRes,Take[#,nRes],#]&[Select[Transpose[{vec[[inds]],inds}],#[[1]]>0&]]
     ]/;Length[profileInds]==Length[profileScores];
-ItemRecommender[d___]["UserItemsToLoveByProfile"][rowInds:{_Integer..},profileVec_SparseArray,nRes_Integer]:=
+ItemRecommender[d___]["RecommendationsByProfile"][rowInds:{_Integer..},profileVec_SparseArray,nRes_Integer]:=
     Block[{inds,vec,smat=ItemRecommender[d]["M"][[rowInds]]},
       vec=smat.profileVec;
       inds=Reverse@Ordering[vec//Normal];
@@ -334,10 +337,11 @@ ItemRecommender[d___]["UserItemsToLoveByProfile"][rowInds:{_Integer..},profileVe
 
 
 (* ::Subsection:: *)
-(*UserItemsToLoveByProfile with filtering*)
+(*RecommendationsByProfile with filtering*)
 
+ItemRecommender[d___]["UserItemsToLoveByFilterAndProfile"][args___] := ItemRecommender[d]["RecommendationsByFilterAndProfile"][args];
 
-ItemRecommender[d___]["UserItemsToLoveByFilterAndProfile"][filterInds:{_Integer..},profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer,strictQ:(True|False)]:=
+ItemRecommender[d___]["RecommendationsByFilterAndProfile"][filterInds:{_Integer..},profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer,strictQ:(True|False)]:=
     Block[{finds,inds,vec,maxScores,smat,fmat=ItemRecommender[d]["F"],indexArray,tf=Length[filterInds]},
       finds=filterInds/.ItemRecommender[d]["globalIndexToFilterIndexRules"];
       vec=fmat.DiagonalMatrix[SparseArray[Thread[finds->1.],{Dimensions[fmat][[1]]}]];
@@ -351,7 +355,7 @@ ItemRecommender[d___]["UserItemsToLoveByFilterAndProfile"][filterInds:{_Integer.
     ]/;Length[profileInds]==Length[profileScores]&&MatrixQ[ItemRecommender[d]["F"]]&&Dimensions[ItemRecommender[d]["F"]][[2]]==Dimensions[ItemRecommender[d]["M"]][[1]];
 
 
-ItemRecommender[d___]["UserItemsToLoveByFilterAndProfile"][filterVec_SparseArray,profileVec_SparseArray,nRes_Integer,strictQ:(True|False)]:=
+ItemRecommender[d___]["RecommendationsByFilterAndProfile"][filterVec_SparseArray,profileVec_SparseArray,nRes_Integer,strictQ:(True|False)]:=
     Block[{finds,inds,vec,maxScores,smat,fmat=ItemRecommender[d]["F"],indexArray,tf=Total[filterVec]},
       finds=Most[ArrayRules[filterVec]][[All,1,1]]/.ItemRecommender[d]["globalIndexToFilterIndexRules"];
       vec=SparseArray[Thread[finds->1.],{Dimensions[fmat][[1]]}].fmat;
@@ -365,7 +369,7 @@ ItemRecommender[d___]["UserItemsToLoveByFilterAndProfile"][filterVec_SparseArray
 
 
 (* Not an universal solution and it is only few %'s faster than the above *)
-(*ItemRecommender[d___]["UserItemsToLoveByFilterAndProfile"][filterVec_SparseArray,profileVec_SparseArray,nRes_Integer]:=
+(*ItemRecommender[d___]["RecommendationsByFilterAndProfile"][filterVec_SparseArray,profileVec_SparseArray,nRes_Integer]:=
 Block[{finds,inds,vec,maxScores,smat,fmat=ItemRecommender[d]["F"],indexRules,indexArray},
 vec=filterVec[[ItemRecommender[d]["tagTypeIndexOffsets"][[2]]+1;;ItemRecommender[d]["tagTypeIndexOffsets"][[2+1]]]];
 vec=vec.fmat;
@@ -384,21 +388,25 @@ If[Length[#]>nRes,Take[#,nRes],#]&[Select[Transpose[{vec[[inds]],indexArray[[ind
 (* ::Subsection:: *)
 (*UserProfile*)
 
+ItemRecommender[d___]["UserProfileVector"][args___] := ItemRecommender[d]["ProfileVector"][args];
 
-ItemRecommender[d___]["UserProfileVector"][inputShowInds:{_Integer...}]:=
-    ItemRecommender[d]["UserProfileVector"][inputShowInds,ConstantArray[1.,Length[inputShowInds]]];
-ItemRecommender[d___]["UserProfileVector"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...}]:=
+ItemRecommender[d___]["ProfileVector"][inputShowInds:{_Integer...}]:=
+    ItemRecommender[d]["ProfileVector"][inputShowInds,ConstantArray[1.,Length[inputShowInds]]];
+ItemRecommender[d___]["ProfileVector"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...}]:=
     Block[{vec,smat=ItemRecommender[d]["M"]},
       vec=SparseArray[Thread[inputShowInds->inputRatings],{smat//Length}];
       vec.smat
     ]/;Length[inputShowInds]==Length[inputRatings];
 
 
-ItemRecommender[d___]["UserProfile"][inputShowInds:{_Integer...}]:=
-    ItemRecommender[d]["UserProfile"][inputShowInds,ConstantArray[1.,Length[inputShowInds]]];
-ItemRecommender[d___]["UserProfile"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...}]:=
+ItemRecommender[d___]["UserProfile"][args___] := ItemRecommender[d]["Profile"][args];
+
+
+ItemRecommender[d___]["Profile"][inputShowInds:{_Integer...}]:=
+    ItemRecommender[d]["Profile"][inputShowInds,ConstantArray[1.,Length[inputShowInds]]];
+ItemRecommender[d___]["Profile"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...}]:=
     Block[{inds,vec},
-      vec=ItemRecommender[d]["UserProfileVector"][inputShowInds,inputRatings];
+      vec=ItemRecommender[d]["ProfileVector"][inputShowInds,inputRatings];
       inds=Most[ArrayRules[vec]][[All,1,1]];
       SortBy[Select[Transpose[{vec[[inds]],inds,inds/.ItemRecommender[d]["columnIndexToTagRules"]}],#[[1]]>0&],-#[[1]]&]
     ]/;Length[inputShowInds]==Length[inputRatings];
@@ -414,7 +422,9 @@ ItemRecommender[d___]["MakeProfileVector"][tagWeightRules:{Rule[_,_?NumberQ]..}]
       SparseArray[t,{Dimensions[ItemRecommender[d]["M01"]][[2]]}]
     ];
 
-ItemRecommender[d___]["UserProfileFromVector"][pvec_SparseArray] :=
+ItemRecommender[d___]["UserProfileFromVector"][args___] := ItemRecommender[d]["ProfileFromVector"][args];
+
+ItemRecommender[d___]["ProfileFromVector"][pvec_SparseArray] :=
     Block[{arules,res},
       arules = Most[ArrayRules[pvec]];
 	  res = Transpose[{arules[[All, 2]], Flatten[arules[[All, 1]]], ItemRecommender[d]["ColumnInterpretation"][[Flatten[arules[[All, 1]]]]]}];
@@ -663,8 +673,8 @@ InterfaceUserToLoveCalculation[irecTargetObj_ItemRecommender,irecSourceObj_ItemR
     Block[{res,loved,pvec},
       irecSourceObj["UseTagTypeWeights"][metaDataWeights];
       irecTargetObj["UseTagTypeWeights"][metaDataWeights];
-      pvec=irecSourceObj["UserProfileVector"][userInds];
-      res=irecTargetObj["UserItemsToLoveByProfile"][pvec,nResults];
+      pvec=irecSourceObj["ProfileVector"][userInds];
+      res=irecTargetObj["RecommendationsByProfile"][pvec,nResults];
       loved=Transpose[{res[[All,1]],res[[All,2]],data[[res[[All,2]]]]}];
       loved
     ]/;(userInds==={}||Length[userInds]==Length[userRatings])&&Length[irecTargetObj["tagTypes"]]==Length[metaDataWeights]&&Length[irecSourceObj["tagTypes"]]==Length[metaDataWeights];
