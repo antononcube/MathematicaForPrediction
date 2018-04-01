@@ -484,7 +484,7 @@ RowBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
       sarr = Join[ SparseArray[r1], SparseArray[r2] ];
       (* Special handling of duplication of row names in the result. *)
 
-      joinedRowAssoc = Join[r1[[1]]["RowNames"], r2[[1]]["RowNames"]];
+      joinedRowAssoc = Join[First[r1]["RowNames"], First[r2]["RowNames"]];
       If[Length[joinedRowAssoc] == Dimensions[sarr][[1]],
         resRowNames = Join[RowNames[r1], RowNames[r2]],
         resRowNames =
