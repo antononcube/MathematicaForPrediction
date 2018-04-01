@@ -166,6 +166,7 @@ ItemRecommenderCreation[id_String, smats : {_SparseArray ..},
       objIR["itemNames"] = rowNames;
       objIR["tagTypes"] = tagTypeNames;
       objIR["M01"] = objIR["SpliceMatrices"][smats];
+      objIR["MakeRowInterpretation"][rowNames];
       objIR["MakeColumnInterpretation"][tagTypeNames, columnNames];
       objIR["UseTagTypeWeights"][ConstantArray[1, Length[tagTypeNames]]];
       objIR
@@ -285,6 +286,7 @@ ItemRecommender[d___]["MakeColumnInterpretation"][tagTypes:{_String...},tagsList
 ItemRecommender[d___]["MakeRowInterpretation"][rowIDs:{(_Integer|_String)..}]:=
     Block[{},
       ItemRecommender[d]["RowIDs"]=rowIDs;
+      ItemRecommender[d]["itemNames"]=rowIDs; (* Note the redundancy of names here!*)
       ItemRecommender[d]["RowIDToIndexRules"]=Dispatch[Thread[rowIDs->Range[Dimensions[ItemRecommender[d]["M01"]][[1]]]]];
       ItemRecommender[d]["RowIndexToIDRules"]=Dispatch[Thread[Range[Dimensions[ItemRecommender[d]["M01"]][[1]]]->rowIDs]];
     ]/;Dimensions[ItemRecommender[d]["M01"]][[1]]==Length[rowIDs];
