@@ -505,30 +505,59 @@ ItemRecommender[d___]["ProfileFromVector"][pvec_SparseArray] :=
 (* SMR Algebra                                             *)
 (*=========================================================*)
 
-(*ItemRecommender[d___]["Join"][smr2_ItemRecommender] :=*)
-    (*Block[{},*)
+ItemRecommender::nmcols = "`1`: The column names of the specified SSparseMatrix object are not a subset of the column names of the recommender object."
 
-    (*];*)
+ItemRecommender[d___]["SSparseMatrix"][m:("M"|"M01")] :=
+    Block[{},
+      MakeSSparseMatrix[
+        ItemRecommender[d][m],
+        "RowNames"->ItemRecommender[d]["itemNames"],
+        "ColumnNames"->ItemRecommender[d]["ColumnInterpretation"]
+      ]
+    ];
 
-(*ItemRecommender[d___]["ColumnBind"][smat_SparseArray] :=*)
-    (*Block[{},*)
+ItemRecommender[d___]["RowBind"][smat_SSparseMatrix] :=
+    Block[{bmat},
 
-    (*];*)
+      bmat = ItemRecommender[d]["SSparseMatrix"]["M01"];
 
-(*ItemRecommender[d___]["RowBind"][smat_SparseArray] :=*)
-    (*Block[{},*)
+      Which[
 
-    (*];*)
+        ColumnNames[bmat] == ColumnNames[smat],
+        bmat = RowBind[ bmat, smat ],
+
+        Length[Complement[ ColumnNames[smat], ColumnNames[bmat] ]] == 0,
+        bmat = RowBind[ bmat, ImposeColumnNames[ smat, ColumnNames[bmat] ] ],
+
+        True,
+        Message[ItemRecommender::nmcols,"\"RowBind\""];
+        Return[$Failed]
+      ];
+
+      If[ ! TrueQ[Head[bmat]===SSparseMatrix],
+        Return[$Failed]
+      ];
+
+      ItemRecommender[d]["M01"] = SparseArray[bmat];
+
+      ItemRecommender[d]["MakeRowInterpretation"][ RowNames[bmat] ];
+
+      ItemRecommender[d]["UseTagTypeWeights"][ Table[1, {Length[ItemRecommender[d]["tagTypes"]]}] ];
+
+      ItemRecommender[d]
+    ];
 
 (*ItemRecommender[d___]["ColumnBind"][smat_SSparseMatrix] :=*)
     (*Block[{},*)
 
     (*];*)
 
-(*ItemRecommender[d___]["RowBind"][smat_SSparseMatrix] :=*)
-    (*Block[{},*)
+(*ItemRecommender[d___]["Join"][smr2_ItemRecommender] :=*)
+(*Block[{},*)
 
-    (*];*)
+(*];*)
+
+
 
 (*=========================================================*)
 (* Classify                                                *)
@@ -602,9 +631,9 @@ ItemRecommender[d___]["RatingPrediction"][inputShowInds:{_Integer...},inputRatin
     ];
 
 
-(* ::Section:: *)
-(*Deteriorate old ratings*)
-
+(*=========================================================*)
+(* Deteriorate old ratings                                 *)
+(*=========================================================*)
 
 (* ::Text:: *)
 (*Inherit dynamically ItemRecommender*)
