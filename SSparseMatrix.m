@@ -1,6 +1,6 @@
 (*
     SSparseMatrix Mathematica package
-    Copyright (C) 2015  Anton Antonov
+    Copyright (C) 2018  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,11 +34,11 @@
 
 (* :Title: SSparseMatrix *)
 (* :Author: Anton Antonov *)
-(* :Date: 2015-09-27 *)
+(* :Date: 2018-03-30 *)
 
 (* :Package Version: 1.0 *)
-(* :Mathematica Version: 10.2 *)
-(* :Copyright: (c) 2015 Anton Antonov *)
+(* :Mathematica Version: 11.2 *)
+(* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: S, R, sparse array, sparse matrix, named rows, named columns *)
 (* :Discussion:
 
@@ -46,18 +46,32 @@
 
 This package has the function implementations for manipulating objects with head SSparseMatrix that behave like
 SparseArray objects but have the added functionalities to use row names and column names in a manner similar to
-that of the sparse arrays objects from the base library Matrix [2] for the programming languages S and R [1].
+that of the sparse matrix objects from the base library Matrix [2] for the programming language R [1].
+(Similar to regular matrices in S and R.)
 
 The idea is fairly simple: we can use associations or replacement rules to map row names and column names into integers.
 Similarly to how it is done in S and R, SSparseMatrix handles only strings as row names and column names.
 
-Note that assignment (with Set[__]) is not implemented.
-
-See the commented out delegation to SparseArray implementation at the of the file.
-
 Here are the overloaded core WL functions:
 
     ArrayRules, Dimensions, Dot, MatrixForm, MatrixPlot, SparseArray, Plus, Times, Total
+
+Note that assignment (with Set[__]) is not implemented.
+
+See the commented out delegation to SparseArray implementation at the end of the file.
+
+
+# The previous version, RSparseMatrix.m
+
+The first version of this package was made in 2015 with the name RSparseMatrix.m, [4].
+
+The reason for renaming RSparseMatrix into SSparseMatrix is becaus of the naming convention of the
+RLink functions. (E.g. RList, REvaluate, etc.)
+
+Since the language S precedes R and "S" stands for "Statistics" and S has matrices with named rows and columns,
+the "SSparseMatrix" was chosen.
+
+"SSparseMatrix" should mean "statistical sparse matrix" or "S inspired sparse matrix".
 
 
 # Unit tests
@@ -108,6 +122,9 @@ the unit test file SSparseMatrix-tests.wlt was made, [3].
 
 [3] Anton Antonov, SSparseMatrix Mathematica unit tests, (2018), MathematicaForPrediction at GitHub.
      URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/SSparseMatrix-tests.wlt
+
+[4] Anton Antonov, RSparseMatrix Mathematica package, (2015), MathematicaForPrediction at GitHub.
+     URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/RSparseMatrix.m
 
 
 This file was created using Mathematica Plugin for IntelliJ IDEA.
