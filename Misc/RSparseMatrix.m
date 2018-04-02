@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2015 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -55,7 +55,7 @@ Similarly to how it is done in R, RSparseMatrix handles only strings as row name
 
 Note that assignment (with Set[__]) is not implemented.
 
-See the commented out delegation to SparseArray implementation at the of the file.
+See the commented out delegation to SparseArray implementation at the end of the file.
 
 Since the package is under development it is not a real Mathematica package.
 
