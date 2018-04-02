@@ -186,9 +186,9 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
-If[Length[DownValues[Global`RSparseMatrixToTriplets]] == 0,
-  Echo["RSparseMatrix.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RSparseMatrix.m"]
+If[Length[DownValues[SSparseMatrix`SSparseMatrixToTriplets]] == 0,
+  Echo["SSparseMatrix.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
 ];
 
 
