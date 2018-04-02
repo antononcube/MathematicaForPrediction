@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2015 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -36,11 +36,13 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2015-09-27 *)
 
-(* :Package Version: 0.6 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: 10.2 *)
 (* :Copyright: (c) 2015 Anton Antonov *)
 (* :Keywords: S, R, sparse array, sparse matrix, named rows, named columns *)
 (* :Discussion:
+
+# In brief
 
 This package has the function implementations for manipulating objects with head SSparseMatrix that behave like
 SparseArray objects but have the added functionalities to use row names and column names in a manner similar to
@@ -53,13 +55,50 @@ Note that assignment (with Set[__]) is not implemented.
 
 See the commented out delegation to SparseArray implementation at the of the file.
 
-Since the package is under development it is not a real Mathematica package.
-
 Here are the overloaded core WL functions:
 
     ArrayRules, Dimensions, Dot, MatrixForm, MatrixPlot, SparseArray, Plus, Times, Total
 
-References:
+
+# Unit tests
+
+In order to facilitate further package development (and demonstrate what the package functions do)
+the unit test file SSparseMatrix-tests.wlt was made, [3].
+
+
+# Usage examples
+
+      rmat = MakeSSparseMatrix[
+             {{1, 1} -> 1, {2, 2} -> 2, {4, 3} -> 3, {1, 4} -> 4, {3, 5} -> 2},
+             "ColumnNames" -> {"a", "b", "c", "d", "e"},
+             "RowNames" -> {"A", "B", "C", "D"},
+             "DimensionNames" -> {"U", "V"}]
+
+      rmat // MatrixForm
+
+      rmat // MatrixPlot
+
+      RowNames[rmat]
+      (* {"A", "B", "C", "D"} *)
+
+      ColumnNames[rmat]
+      (* {"a", "b", "c", "d", "e"} *)
+
+      DimensionNames[rmat]
+      (* {"U", "V"} *)
+
+      rmat.Transpose[rmat[[{1}, All]]]
+
+      rmat[[{"C", "D", "A", "B"}, {"c", "d", "e", "a", "b"}]]
+
+      rmat2 = ToSSparseMatrix[rmat, "RowNames" -> Map["s." <> # &, RowNames[rmat]]];
+
+      RowBind[rmat, rmat] // MatrixForm
+
+      RowBind[rmat, rmat2] // MatrixForm
+
+
+# References:
 
 [1] The R Core Team, R Language Definition, (2015).
      URL: https://cran.r-project.org/doc/manuals/r-release/R-lang.pdf
@@ -67,11 +106,16 @@ References:
 [2] D. Bates, M. Maechler, Sparse and Dense Matrix Classes and Methods, Package 'Matrix', (2015).
      URL: https://cran.r-project.org/web/packages/Matrix/Matrix.pdf.
 
+[3] Anton Antonov, SSparseMatrix Mathematica unit tests, (2018), MathematicaForPrediction at GitHub.
+     URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/SSparseMatrix-tests.wlt
+
+
 This file was created using Mathematica Plugin for IntelliJ IDEA.
 
 Anton Antonov
 Windermere, FL, USA
 2015-09-27
+2018-04-02 (reviewed)
 
 *)
 
