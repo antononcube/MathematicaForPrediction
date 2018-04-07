@@ -518,7 +518,7 @@ JavaTrieClassify[tr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPa
     Take[JavaTrieClassify[tr, record, "Probabilities", opts], UpTo[n]];
 
 JavaTrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
-    Block[{res, dval = OptionValue[TrieClassify, "Default"]},
+    Block[{res, dval = OptionValue[JavaTrieClassify, "Default"]},
       res = JavaTrieLeafProbabilities[JavaTrieRetrieve[tr, record]];
       If[Length[res] == 0, <|dval -> 0|>,
         res = AssociationThread[res[[All, 2, 2]] -> res[[All, 1, 2]]];
