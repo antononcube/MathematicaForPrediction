@@ -91,7 +91,11 @@ TrieNodeCounts::usage = "TrieNodeCounts[t] gives and association with the total 
 ToTrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
 the specified element names for the conversion."
-	
+
+TrieClassify::usage = "TrieClassify[tr_,record_] classifies a record using a trie. \
+The signature TrieClassify[tr_,record_,prop_] can take properties as the ones given to ClassifierFunction. \
+TrieClassify[tr_,record_] is the same as TrieClassify[tr_,record_,\"Decision\"]."
+
 Begin["`Private`"]
 
 Clear[TrieRootQ]
@@ -560,6 +564,27 @@ ToTrieFromJSONRec[jsonTrie : {_Rule ...}, elementNames : {key_String, value_Stri
       ]
     ];
 
+
+Clear[TrieClassify]
+
+TrieClassify[tr_, record_] := TrieClassify[tr, record, "Decision"];
+
+TrieClassify[tr_, record_, "Decision"] :=
+    First@Keys@TrieClassify[tr, record, "Probabilities"];
+
+TrieClassify[tr_, record_, "Probability" -> class_] :=
+    TrieClassify[tr, record, "Probabilities"][class];
+
+TrieClassify[tr_, record_, "TopProbabilities"] :=
+    Select[TrieClassify[tr, record, "Probabilities"], # > 0 &];
+
+TrieClassify[tr_, record_, "TopProbabilities" -> n_Integer] :=
+    Take[TrieClassify[tr, record, "Probabilities"], UpTo[n]];
+
+TrieClassify[tr_, record_, "Probabilities"] :=
+    ReverseSort[
+      Association[
+        Rule @@@ TrieLeafProbabilities[TrieSubTrie[tr, record]]]];
 
 End[]
 
