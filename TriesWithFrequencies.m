@@ -567,24 +567,30 @@ ToTrieFromJSONRec[jsonTrie : {_Rule ...}, elementNames : {key_String, value_Stri
 
 Clear[TrieClassify]
 
-TrieClassify[tr_, record_] := TrieClassify[tr, record, "Decision"];
+Options[TrieClassify] := {"Default" -> None};
 
-TrieClassify[tr_, record_, "Decision"] :=
-    First@Keys@TrieClassify[tr, record, "Probabilities"];
+TrieClassify[tr_, record_, opts : OptionsPattern[]] :=
+    TrieClassify[tr, record, "Decision", opts];
+
+TrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
+    First@Keys@TrieClassify[tr, record, "Probabilities", opts];
 
 TrieClassify[tr_, record_, "Probability" -> class_] :=
-    TrieClassify[tr, record, "Probabilities"][class];
+    Lookup[TrieClassify[tr, record, "Probabilities"], class, 0];
 
-TrieClassify[tr_, record_, "TopProbabilities"] :=
-    Select[TrieClassify[tr, record, "Probabilities"], # > 0 &];
+TrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
+    Select[TrieClassify[tr, record, "Probabilities", opts], # > 0 &];
 
-TrieClassify[tr_, record_, "TopProbabilities" -> n_Integer] :=
-    Take[TrieClassify[tr, record, "Probabilities"], UpTo[n]];
+TrieClassify[tr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+    Take[TrieClassify[tr, record, "Probabilities", opts], UpTo[n]];
 
-TrieClassify[tr_, record_, "Probabilities"] :=
-    ReverseSort[
-      Association[
-        Rule @@@ TrieLeafProbabilities[TrieSubTrie[tr, record]]]];
+TrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
+    Block[{res, dval = OptionValue[TrieClassify, "Default"]},
+      res = TrieSubTrie[tr, record];
+      If[Length[res] == 0, <|dval -> 0|>,
+        ReverseSort[Association[Rule @@@ TrieLeafProbabilities[res]]]
+      ]
+    ];
 
 End[]
 
