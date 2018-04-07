@@ -702,6 +702,47 @@ ItemRecommender[d___]["Classify"][tagType_String, pvec_SparseArray, nTopNNs_Inte
     ];
 
 (*=========================================================*)
+(* ItemRecommenderClassify                                 *)
+(*=========================================================*)
+
+Clear[ItemRecommenderClassify]
+
+Options[ItemRecommenderClassify] = {"tagType"->Automatic, "nTopNNs"->20, "voting"->False, "dropZeroScoredLabels"->True};
+
+ItemRecommenderClassify[smr_, record_, opts : OptionsPattern[]] :=
+    ItemRecommenderClassify[smr, record, "Decision", opts];
+
+ItemRecommenderClassify[smr_, record_, "Decision", opts : OptionsPattern[]] :=
+    First@Keys@ItemRecommenderClassify[smr, record, "Scores", opts];
+
+ItemRecommenderClassify[smr_, record_, "Score" -> class_] :=
+    Lookup[ItemRecommenderClassify[smr, record, "Scores"], class, 0];
+
+ItemRecommenderClassify[smr_, record_, "TopScores", opts : OptionsPattern[]] :=
+    Select[ItemRecommenderClassify[smr, record, "Scores", opts], # > 0 &];
+
+ItemRecommenderClassify[smr_, record_, "TopScores" -> n_Integer, opts : OptionsPattern[]] :=
+    Take[ItemRecommenderClassify[smr, record, "Scores", opts], UpTo[n]];
+
+ItemRecommenderClassify[smr_ItemRecommender, record_, "Scores", opts:OptionsPattern[] ] :=
+    Block[{clParams, res},
+
+      If[ !AssociationQ[smr["classificationParameters"]],
+        clParams = <||>,
+        clParams = smr["classificationParameters"]
+      ];
+
+      clParams = Join[ clParams, Association[{opts}], Association[Options[ItemRecommenderClassify]] ];
+
+      If[ !MemberQ[smr["tagTypes"], clParams["tagType"] ],
+        clParams = Join[ clParams, <|"tagType"->Last[smr["tagTypes"]] |> ]
+      ];
+
+      smr["Classify"][clParams["tagType"], record, clParams["nTopNNs"], clParams["voting"], clParams["dropZeroScoredLabels"] ]
+    ];
+
+
+(*=========================================================*)
 (* RatingPrediction                                        *)
 (*=========================================================*)
 
