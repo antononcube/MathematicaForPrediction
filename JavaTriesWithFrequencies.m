@@ -197,6 +197,11 @@ JavaTrieForm::usage = "Plots a given Java trie object."
 
 JavaTrieComparisonGrid::usage = "Makes a grid trie plots for a specified list of Java trie expressions."
 
+JavaTrieClassify::usage = "JavaTrieClassify[jTr_,record_] classifies a record using a Java trie. \
+The signature JavaTrieClassify[jTr_,record_,prop_] can take properties as the ones given to ClassifierFunction. \
+JavaTrieClassify[jTr_,record_] is the same as JavaTrieClassify[tr_,record_,\"Decision\"]."
+
+
 Begin["`Private`"]
 
 Needs["JLink`"]
@@ -492,6 +497,34 @@ JavaTrieComparisonGrid[jTrs : {_?JavaObjectQ ..}, opts : OptionsPattern[]] :=
       }, gridOpts, Dividers -> All, FrameStyle -> LightGray]
     ];
 
+
+Clear[JavaTrieClassify]
+
+Options[JavaTrieClassify] := {"Default" -> None};
+
+JavaTrieClassify[tr_, record_, opts : OptionsPattern[]] :=
+    JavaTrieClassify[tr, record, "Decision", opts];
+
+JavaTrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
+    First@Keys@JavaTrieClassify[tr, record, "Probabilities", opts];
+
+JavaTrieClassify[tr_, record_, "Probability" -> class_] :=
+    Lookup[JavaTrieClassify[tr, record, "Probabilities"], class, 0];
+
+JavaTrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
+    Select[JavaTrieClassify[tr, record, "Probabilities", opts], # > 0 &];
+
+JavaTrieClassify[tr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+    Take[JavaTrieClassify[tr, record, "Probabilities", opts], UpTo[n]];
+
+JavaTrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
+    Block[{res, dval = OptionValue[TrieClassify, "Default"]},
+      res = JavaTrieLeafProbabilities[JavaTrieRetrieve[tr, record]];
+      If[Length[res] == 0, <|dval -> 0|>,
+        res = AssociationThread[res[[All, 2, 2]] -> res[[All, 1, 2]]];
+        res = ReverseSort[Association[Rule @@@ res]]
+      ]
+    ];
 
 End[] (* `Private` *)
 
