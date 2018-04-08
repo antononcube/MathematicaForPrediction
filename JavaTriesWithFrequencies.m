@@ -519,7 +519,7 @@ JavaTrieClassify[tr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPa
 
 JavaTrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
     Block[{res, dval = OptionValue[JavaTrieClassify, "Default"]},
-      res = JavaTrieLeafProbabilities[JavaTrieRetrieve[tr, record]];
+      res = JavaTrieLeafProbabilities[JavaTrieRetrieve[tr, record], "Normalized"->True];
       If[Length[res] == 0, <|dval -> 0|>,
         res = AssociationThread[res[[All, 2, 2]] -> res[[All, 1, 2]]];
         res = ReverseSort[Association[Rule @@@ res]]
