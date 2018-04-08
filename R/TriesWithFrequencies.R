@@ -335,10 +335,16 @@ TrieLeafProbabilitiesDFRec <- function( trie, level = 0 ) {
 #' @param trie the trie to find the leaf probabilities for
 #' @param aggregateFunc if one of c(sum, mean, max) it is applied to the vector of probabilities corresponding to the same label;
 #' if NULL no aggregation is done
-TrieLeafProbabilities <- function( trie, aggregateFunc = sum  ) {
+#' @param normalize if TRUE the result is normalized by the sum of elements.
+TrieLeafProbabilities <- function( trie, aggregateFunc = sum, normalize = TRUE  ) {
   if ( is.null(trie) ) { return(NULL) }
   leafValHash <- vector( mode = "numeric", length = 0 )
-  TrieLeafProbabilitiesRec( trie, level = 0, leafValHash = leafValHash, trie$Value )
+  res <- TrieLeafProbabilitiesRec( trie, level = 0, leafValHash = leafValHash, trie$Value )
+  if( normalize ) {
+    res / sum(res)
+  } else {
+    res
+  }
 }
 
 
@@ -407,3 +413,32 @@ TrieToDataTree <- function( trie, topKeyIsNullName = "ALL" ) {
 TrieForm <- function( trie ) {
   print( TrieToDataTree(trie), "Value")
 }
+
+#' @description Classifies a record using a Trie object
+#' @param tr a trie
+#' @param record a list of "words" to be classified
+#' @param outputType can be "Decision" or "Probabilities"
+#' @param default class label to be returned if no classification for the record is found
+TrieClassify <- function( tr, record, outputType = "Decision", default = NA )
+{
+  sTr <- TrieRetrive( tr, record)
+
+  if( is.null(sTr) || is.na(sTr) || length(sTr) == 0 ) {
+    
+    clRes <- setNames( c(0), c(default) )
+    
+  } else {
+    
+    clRes <- TrieLeafProbabilities( sTr, normalize = TRUE )
+    clRes <- rev(sort(clRes))
+  }
+  
+  if( outputType == "Probabilities") {
+    clRes  
+  } else if( outputType == "Decision") {
+    names(clRes)[[1]]
+  } else {
+    clRes
+  }
+}
+
