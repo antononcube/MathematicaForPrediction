@@ -140,9 +140,12 @@ TrieSubTrie[t_, chars_] :=
 
 TrieRetrieve[t_, word_String] := TrieRetrieve[t, Characters[word]];
 TrieRetrieve[t_, chars_] :=
-    Block[{res},
-      res = TrieSubTrie[t, chars];
-      If[ Length[res] == 0, {}, res[[1]] ]
+    Block[{pos},
+      pos = TriePosition[t, chars];
+      Which[
+        Length[pos] == 0, {},
+        True, t[[Sequence @@ pos]]
+      ]
     ];
 
 
