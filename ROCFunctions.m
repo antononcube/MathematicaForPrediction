@@ -191,6 +191,9 @@ The allowed signatures are: \
 \nROCPlot[ xFuncName_String, yFuncName_String, aROCs:{_?ROCAssociationQ..}, opts] \
 \nROCPlot[ xFuncName_String, yFuncName_String, parVals:({_?NumericQ..}|Automatic), aROCs:{_?ROCAssociationQ..}, opts]"
 
+ROCValues::usage = "ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ ] \
+computes ROC associations (for ROCPlot)."
+
 Begin["`Private`"]
 
 Clear[ToROCAssociation]
@@ -311,13 +314,13 @@ ROCPlot[
   xFuncName_String, yFuncName_String,
   parValsArg : (Automatic | {_?NumericQ..}),
   aROCs : {_?ROCAssociationQ..}, opts : OptionsPattern[]] :=
-    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, pja, rocpcf, points, parVals=parValsArg},
+    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, rocpcf, points, parVals=parValsArg},
 
       psize = OptionValue["ROCPointSize"];
       rocc = OptionValue["ROCColor"];
       rocpcf = OptionValue["ROCPointColorFunction"];
       {pt, pc, pj} = TrueQ[OptionValue[#]] & /@ { "ROCPointTooltips", "ROCPointCallouts", "PlotJoined" };
-      pja = TrueQ[OptionValue["PlotJoined"]===Automatic];
+      pj = pj || !pj && TrueQ[OptionValue["PlotJoined"]===Automatic];
 
       {xFunc, yFunc} = ROCFunctions[{xFuncName, yFuncName}];
 
@@ -330,16 +333,22 @@ ROCPlot[
       ];
 
       Graphics[{
-        If[pja, {Lighter[rocc],Line[points]},{}],
+        If[pj, {Lighter[rocc],Line[points]},{}],
+
         PointSize[psize], rocc,
+
+        If[pj, Line[points]],
+
         If[ TrueQ[rocpcf===Automatic] || pj,
           Which[
-            pt && !pj,
+            pt,
             MapThread[Tooltip[Point[#1], #2] &, {points, parVals}],
-            !pt && !pj,
+
+            !pt,
             Point[points],
+
             True,
-            Line[points]
+            Nothing
           ],
           (*ELSE*)
           Which[
@@ -349,21 +358,70 @@ ROCPlot[
             MapThread[{rocpcf[#1,#2,#3],Point[#]}&, {points, parVals, Range[Length[points]]}]
           ]
         ],
+
         Black,
+
         If[ pc,
           MapThread[
             Text[#2, Through[{xFunc,yFunc}[#1]], {-1, 2}] &, {aROCs, parVals}],
           {}
         ]},
+
         AspectRatio -> 1, Frame -> True,
+
         FrameLabel ->
             Map[Style[#<>", "<>ROCFunctions["FunctionInterpretations"][#], Larger, Bold] &, {xFuncName,yFuncName}],
+
         DeleteCases[{opts},
           ( "ROCPointSize" | "ROCColor" | "ROCPointColorFunction" |
             "ROCPointTooltips" | "ROCPointCallouts" | "PlotJoined") -> _ ]
       ]
     ] /; Length[parValsArg] == Length[aROCs] || TrueQ[parValsArg===Automatic];
 
+
+Clear[ROCValues]
+
+ROCValues::nrng = "The range argument is expected to be a list of numbers between 0 and 1."
+
+ROCValues::nlen = "The prediction probabilities Dataset object and the actual labels (the first and second arguments) \
+are expected to have equal lengths."
+
+ROCValues::args = "The arguments are expected to be a predictions probabilities Dataset, \
+a list of actual labels, and threshold range."
+
+    ROCValues[clRes_Dataset, testLabels_List] :=
+    ROCValues[clRes, testLabels, Range[0, 1, 0.05]];
+
+ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] :=
+    Block[{classLabels, predictedLabels, rocRes},
+
+      If[ Length[predictionProbabilities] != Length[actualLabels],
+        Message[ROCValues::nlen];
+        $Failed
+      ];
+
+      If[ ! ( VectorQ[ thRange, NumberQ] && Apply[And, Map[1 >= # >= 0&, thRange] ] ),
+        Message[ROCValues::nrng];
+        $Failed
+      ];
+
+      classLabels = Normal[Keys[predictionProbabilities[1]]];
+
+      Table[
+        predictedLabels =
+            Normal@predictionProbabilities[All,
+              If[#[[1]] >= th, Keys[#][[1]], Keys[#][[2]]] &];
+        rocRes =
+            ToROCAssociation[classLabels, actualLabels, predictedLabels];
+        Join[<|"ROCParameter" -> th|>, rocRes]
+        , {th, thRange}]
+    ];
+
+ROCValues[___] :=
+    Block[{},
+      Message[ROCValues::args]
+      $Failed
+    ];
 
 End[] (* `Private` *)
 
