@@ -73,15 +73,19 @@ TriePosition <- function( trie, word ) {
 #' @description Gives the node corresponding to the last "character" of the "word" in a given trie.
 #' @param trie a trie
 #' @param word a list of characters
-TrieRetrive <- function( trie, word ) {
+TrieRetrieve <- function( trie, word, strict = TRUE ) {
   if ( !is.atomic(word) ) {
     stop("The second argument is not an atomic vector", call. = TRUE)
   } 
   
   pos <- TriePosition( trie, word )
-  if ( is.na(pos) || length(pos) == 0 ) {
-    NULL 
-  } else if ( length(pos) == length(word) ) {
+  if ( is.null(pos) || length(pos) == 0 ) {
+    return(NULL)
+  }
+  
+  pos <- pos[!is.na(pos)]
+  
+  if ( strict && length(pos) == length(word) || !strict) {
     res <- trie
     for( p in pos) {
       res <- res$Children[[p]]
@@ -89,7 +93,7 @@ TrieRetrive <- function( trie, word ) {
     res
   } else {
     NULL
-  }
+  } 
 }
 
 
@@ -289,7 +293,7 @@ TrieRootToLeafPaths <- function( trie ) {
 #' @param trie a trie
 #' @param word a word in the trie 
 TrieCompleteMatch <- function( trie, word ) {
-  res <- TrieRetrive( trie, word )
+  res <- TrieRetrieve( trie, word )
   if ( length(res$Children) == 0 ) { TRUE }
   else {
     ## If the frequencies/probabilities of the children are less than
@@ -353,9 +357,9 @@ TrieLeafProbabilities <- function( trie, aggregateFunc = sum, normalize = TRUE  
 #' @param trie the trie to find the leaf probabilities for
 #' @param level intermediate level of the tree
 TrieLeafProbabilitiesRec <- function( trie, level, leafValHash, prob ) {
-  if ( is.null(trie) || is.na(trie) ) { NULL }
+  if ( is.null(trie) || is.na(trie) || is.null(trie$Key) ) { NULL }
   else if ( is.null(trie$Children) || is.na(trie$Children) || length(trie$Children) == 0 ) {
-    if ( is.na( leafValHash[ trie$Key ] ) ) { 
+    if ( is.null( leafValHash[ trie$Key ] ) || is.na( leafValHash[ trie$Key ] ) ) { 
       leafValHash[[ trie$Key ]] <- prob * trie$Value
     } else { 
       leafValHash[[ trie$Key ]] <- leafValHash[[ trie$Key ]] + prob * trie$Value 
@@ -443,7 +447,7 @@ TrieForm <- function( trie ) {
 #' @param default class label to be returned if no classification for the record is found
 TrieClassify <- function( tr, record, type = "Decision", default = NA )
 {
-  sTr <- TrieRetrive( tr, record)
+  sTr <- TrieRetrieve( tr, record, strict = FALSE )
 
   if( is.null(sTr) || is.na(sTr) || length(sTr) == 0 ) {
     
