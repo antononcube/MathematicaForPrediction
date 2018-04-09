@@ -573,12 +573,12 @@ Clear[TrieClassify]
 Options[TrieClassify] := {"Default" -> None};
 
 TrieClassify[tr_, record_, opts : OptionsPattern[]] :=
-    TrieClassify[tr, record, "Decision", opts];
+    TrieClassify[tr, record, "Decision", opts] /; FreeQ[{opts}, "Probability"|"TopProbabilities"];
 
 TrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
     First@Keys@TrieClassify[tr, record, "Probabilities", opts];
 
-TrieClassify[tr_, record_, "Probability" -> class_] :=
+TrieClassify[tr_, record_, "Probability" -> class_, opts : OptionsPattern[]] :=
     Lookup[TrieClassify[tr, record, "Probabilities"], class, 0];
 
 TrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
@@ -594,6 +594,30 @@ TrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
         res = ReverseSort[Association[Rule @@@ TrieLeafProbabilities[res]]];
         res / Total[res]
       ]
+    ];
+
+TrieClassify[tr_, records:(_Dataset|{_List..}), "Decision", opts : OptionsPattern[]] :=
+    First @* Keys @* TakeLargest[1] /@ TrieClassify[tr, records, "Probabilities", opts];
+
+TrieClassify[tr_, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
+    Map[Lookup[#, class, 0]&, TrieClassify[tr, records, "Probabilities"] ];
+
+TrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
+    Map[ Select[#, # > 0 &]&, TrieClassify[tr, records, "Probabilities", opts] ];
+
+TrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+    Map[TakeLargest[#, UpTo[n]]&, TrieClassify[tr, records, "Probabilities", opts] ];
+
+TrieClassify[tr_, records:(_Dataset|{_List..}), "Probabilities", opts:OptionsPattern[] ] :=
+    Block[{clRes, classLabels, stencil},
+
+      clRes = Map[ TrieClassify[tr, #, "Probabilities", opts] &, Normal@records ];
+
+      classLabels = Union[Flatten[Normal[Keys /@ clRes]]];
+
+      stencil = AssociationThread[classLabels -> 0];
+
+      KeySort[Join[stencil, #]] & /@ clRes
     ];
 
 End[]
