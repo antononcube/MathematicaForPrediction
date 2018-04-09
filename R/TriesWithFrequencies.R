@@ -60,7 +60,8 @@ TriePosition <- function( trie, word ) {
   } else {
     pos <- trie$Hash[[ word[1] ]]
   }
-  if ( is.null(pos) || is.na(pos) ) {
+  # if ( is.null(pos) || is.na(pos) ) {
+  if ( is.null(pos) || length(pos)==0 ) {
     NULL 
   } else if ( length(word) == 1 ) {
     pos
@@ -419,7 +420,7 @@ TrieForm <- function( trie ) {
 #' @param record a list of "words" to be classified
 #' @param outputType can be "Decision" or "Probabilities"
 #' @param default class label to be returned if no classification for the record is found
-TrieClassify <- function( tr, record, outputType = "Decision", default = NA )
+TrieClassify <- function( tr, record, type = "Decision", default = NA )
 {
   sTr <- TrieRetrive( tr, record)
 
@@ -433,12 +434,47 @@ TrieClassify <- function( tr, record, outputType = "Decision", default = NA )
     clRes <- rev(sort(clRes))
   }
   
-  if( outputType == "Probabilities") {
+  if( tolower(type) == "probabilities" || tolower(type) == "raw" ) {
     clRes  
-  } else if( outputType == "Decision") {
+  } else if( tolower(type) == "decision") {
     names(clRes)[[1]]
   } else {
     clRes
   }
 }
 
+#' @description Overloading `predict` to use tries with frequencies
+#' @param tr a trie with class attribute "TrieWithFrequencies"
+#' @param data a charecter vector or a data data frame
+#' @param type type of the output
+#' @param default class label to be returned if no classification for the record is found
+predict.TrieWithFrequencies <- function( tr, data, type = "Decision", default = NA  ) {
+
+  if( is.character(data) ) {
+    
+    TrieClassify( tr, data, type = type, default = default )  
+    
+  } else if ( is.data.frame(data) && tolower(type) == "decision" ) {
+
+    res <- aaply( as.matrix(data), 1, function(x) { TrieClassify(tr, x, type = "Decision", default = default)  })
+    res
+    
+  } else if ( is.data.frame(data) && ( tolower(type) == "probabilities" || tolower(type) == "raw" )) {
+    
+    res <- alply( as.matrix(data), 1, function(x) { TrieClassify(tr, x, type = "raw", default = default)  })
+    
+    labels <- unique(unlist(llply(res,names)))
+    stencil <- setNames(rep(0,length(labels)), labels)
+
+    laply( res, function(x) { stencil[names(x)] <- x; stencil} )
+    
+  } else {
+    
+    warning("Data argument of unknown type.", call. = TRUE)
+    
+    Map( function(x) TrieClassify( tr, x, type = type, default = default ), data )  
+    
+  }
+  
+}
+  
