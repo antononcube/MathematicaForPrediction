@@ -230,6 +230,36 @@ ROCValues <- function( classResMat, testLabels, range = seq(0,1,0.05), .progress
   }, .progress = .progress )
 }
 
+#' @description 
+#' @param rocDF a data frame with columns "Threshold", "FPR", "TPR", and optionally "Model"
+#' @param title title of the plot
+#' @param point.text should the par
+ROCPlot <- function( rocDF, title = NULL, point.text = TRUE ) {
+  pres <- 
+    if( "Model" %in% names(rocDF) ) { 
+      ggplot(data = rocDF ) + geom_line(aes( x = FPR, y = TPR, color = Model ) ) 
+    } else { 
+      ggplot(data = rocDF ) + geom_line(aes( x = FPR, y = TPR) ) 
+    }
+  
+  pres <- pres +
+    xlim(0,1) + ylim(0,1)  +
+    ggtitle( title ) + 
+    xlab("False Positive Rate (FPR)") + ylab("True Positive Rate (TPR)")
+  
+  if( point.text ) {
+    if( "Model" %in% names(rocDF) ) { 
+      pres <- pres + geom_point( aes( x = FPR, y = TPR, color = Model ) )
+    } else {
+      pres <- pres + geom_point( aes( x = FPR, y = TPR) )
+    }
+    pres <- pres + geom_text(aes(label = Threshold, x = FPR, y = TPR), hjust=0.5, vjust=-0.5)
+  }
+  
+  pres
+}
+
+
 #' @description Gives visual representation of the vatiable importance data.
 #' @param varImportanceData a data frame with variable importance calculations
 #' @param nTopVars for how many of the most decisive variables to plot their names
