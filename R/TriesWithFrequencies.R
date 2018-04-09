@@ -378,6 +378,27 @@ TrieLeafProbabilitiesRec <- function( trie, level, leafValHash, prob ) {
   leafValHash
 }
 
+#' @description Gives the counts of the total nodes, internal nodes, and leaves of a trie.
+#' @param tr a trie
+TrieNodeCounts <- function(tr) {
+  
+  TrieNodeCountsRec <- function(tr, nInternal, nLeaves ) {
+     if( is.null(tr$Children) || length(tr$Children) == 0 ) {
+       list( Internal = nInternal, Leaves = nLeaves + 1 )
+     } else {
+       res <- list( Internal = nInternal, Leaves = nLeaves )
+       for ( chTr in tr$Children ) {
+         res <- TrieNodeCountsRec( chTr, res$Internal, res$Leaves )
+       }
+       list( Internal = res$Internal + 1, Leaves = res$Leaves )
+     }
+  }
+  
+  res <- TrieNodeCountsRec(tr, 0, 0)
+  res <- c( Total = res$Internal + res$Leaves, res )
+  setNames( as.numeric(res), names(res) )
+}
+
 
 #' @description Add hash maps to every sub-trie of trie
 #' @param trie a trie
