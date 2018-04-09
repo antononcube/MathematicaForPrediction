@@ -357,9 +357,9 @@ TrieLeafProbabilities <- function( trie, aggregateFunc = sum, normalize = TRUE  
 #' @param trie the trie to find the leaf probabilities for
 #' @param level intermediate level of the tree
 TrieLeafProbabilitiesRec <- function( trie, level, leafValHash, prob ) {
-  if ( is.null(trie) || is.na(trie) || is.null(trie$Key) ) { NULL }
+  if ( is.null(trie) || is.na(trie) ) { NULL }
   else if ( is.null(trie$Children) || is.na(trie$Children) || length(trie$Children) == 0 ) {
-    if ( is.null( leafValHash[ trie$Key ] ) || is.na( leafValHash[ trie$Key ] ) ) { 
+    if (  !is.null( trie$Key ) && ( is.null( leafValHash[ trie$Key ] ) || is.na( leafValHash[ trie$Key ] ) ) ) { 
       leafValHash[[ trie$Key ]] <- prob * trie$Value
     } else { 
       leafValHash[[ trie$Key ]] <- leafValHash[[ trie$Key ]] + prob * trie$Value 
@@ -452,7 +452,7 @@ TrieClassify <- function( tr, record, type = "Decision", default = NA )
   if( is.null(sTr) || is.na(sTr) || length(sTr) == 0 ) {
     
     clRes <- setNames( c(0), c(default) )
-    
+
   } else {
     
     clRes <- TrieLeafProbabilities( sTr, normalize = TRUE )
