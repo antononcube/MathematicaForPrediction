@@ -591,7 +591,8 @@ TrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
     Block[{res, dval = OptionValue[TrieClassify, "Default"]},
       res = TrieRetrieve[tr, record];
       If[Length[res] == 0, <|dval -> 0|>,
-        ReverseSort[Association[Rule @@@ TrieLeafProbabilities[res]]]
+        res = ReverseSort[Association[Rule @@@ TrieLeafProbabilities[res]]];
+        res / Total[res]
       ]
     ];
 
