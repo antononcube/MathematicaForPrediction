@@ -162,7 +162,22 @@
 
 (*
 
-  TODO:
+    # Update March-April 2018
+
+    I added the function ROCValues that corresponds in spirit to the function ROCValues in the file:
+
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/R/VariableImportanceByClassifiers.R .
+
+    In R because we can get from most classifiers matrices with named columns that correspond to the class labels
+    and entries that correspond to the probabilities for those class labels. (The rows correspond to the test records.)
+
+    In Mathematica the build-in classifiers can return lists of Association objects (using the "Probabilities" property.)
+    These lists can easily be turned into Dataset objects that have named columns.
+
+    Hence ROCValues below is based on Dataset objects.
+
+    I also added the Association key "ROCParameter" to the ROC Associations objects. This makes the use ROCPlot
+    easier in many cases.
 
 *)
 
@@ -299,16 +314,42 @@ ROCPlot::apv = "The parameter values are specified as Automatic, but extracting 
 
 Options[ROCPlot] =
     Join[ {"ROCPointSize"-> 0.02, "ROCColor"-> Lighter[Blue], "ROCPointColorFunction" -> Automatic,
-      "ROCPointTooltips"->True, "ROCPointCallouts"->True, "PlotJoined" -> False }, Options[Graphics]];
+           "ROCPointTooltips"->True, "ROCPointCallouts"->True, "ROCCurveColorFunction" -> Automatic,
+           "PlotJoined" -> False }, Options[Graphics]];
 
-ROCPlot[ aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
+ROCSpecQ[arg_] :=
+    MatchQ[ arg, {_?ROCAssociationQ..} | {{_?ROCAssociationQ..}..} | Association[ (_->{_?ROCAssociationQ..})..] ];
+
+ROCPlot[ aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
     ROCPlot[ "FPR", "TPR", Automatic, aROCs, opts];
 
-ROCPlot[ parVals:{_?NumericQ..}, aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
+ROCPlot[ parVals:{_?NumericQ..}, aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
     ROCPlot[ "FPR", "TPR", parVals, aROCs, opts];
 
-ROCPlot[ xFuncName_String, yFuncName_String, aROCs:{_?ROCAssociationQ..}, opts:OptionsPattern[]] :=
+ROCPlot[ xFuncName_String, yFuncName_String, aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
     ROCPlot[ xFuncName, yFuncName, Automatic, aROCs, opts];
+
+ROCPlot[
+  xFuncName_String, yFuncName_String,
+  parValsArg : (Automatic | {_?NumericQ..}),
+  aROCs : {{_?ROCAssociationQ..}..}, opts : OptionsPattern[]] :=
+      ROCPlot[ xFuncName, yFuncName, parValsArg, AssociationThread[ Range[Length[aROCs]], aROCs], opts ];
+
+ROCPlot[
+  xFuncName_String, yFuncName_String,
+  parValsArg : (Automatic | {_?NumericQ..}),
+  aROCs : Association[ (_->{_?ROCAssociationQ..}) .. ], opts : OptionsPattern[]] :=
+      Block[{rocCurveColorFunc, cls, grs},
+
+        rocCurveColorFunc = OptionValue[ROCPlot, "ROCCurveColorFunction"];
+        If[ TrueQ[rocCurveColorFunc === Automatic],
+          rocCurveColorFunc = ColorData["DarkBands", "ColorFunction"];
+        ];
+
+        cls =  rocCurveColorFunc /@ Rescale[Range[Length[aROCs]]];
+        grs = MapThread[ ROCPlot[#2, "PlotJoined" -> True, "ROCColor" -> #3, opts] &, {Keys[aROCs], Values[aROCs], cls}];
+        Legended[Show[grs], SwatchLegend[cls, Keys[aROCs]]]
+      ];
 
 ROCPlot[
   xFuncName_String, yFuncName_String,
@@ -374,7 +415,7 @@ ROCPlot[
 
         DeleteCases[{opts},
           ( "ROCPointSize" | "ROCColor" | "ROCPointColorFunction" |
-            "ROCPointTooltips" | "ROCPointCallouts" | "PlotJoined") -> _ ]
+            "ROCPointTooltips" | "ROCPointCallouts" | "ROCCurveColorFunction" | "PlotJoined") -> _ ]
       ]
     ] /; Length[parValsArg] == Length[aROCs] || TrueQ[parValsArg===Automatic];
 
@@ -409,11 +450,13 @@ ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] 
 
       Table[
         predictedLabels =
-            Normal@predictionProbabilities[All,
-              If[#[[1]] >= th, Keys[#][[1]], Keys[#][[2]]] &];
-        rocRes =
-            ToROCAssociation[classLabels, actualLabels, predictedLabels];
-        Join[<|"ROCParameter" -> th|>, rocRes]
+            Normal @ predictionProbabilities[All, If[#[[1]] >= th, Keys[#][[1]], Keys[#][[2]]] &];
+
+        rocRes = ToROCAssociation[classLabels, actualLabels, predictedLabels];
+        If[ AssociationQ[rocRes],
+          Join[<|"ROCParameter" -> th|>, rocRes],
+          $Failed
+        ]
         , {th, thRange}]
     ];
 
