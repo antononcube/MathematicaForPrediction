@@ -503,13 +503,13 @@ Clear[JavaTrieClassify]
 Options[JavaTrieClassify] := {"Default" -> None};
 
 JavaTrieClassify[tr_, record_, opts : OptionsPattern[]] :=
-    JavaTrieClassify[tr, record, "Decision", opts];
+    JavaTrieClassify[tr, record, "Decision", opts] /; FreeQ[{opts}, "Probability"|"TopProbabilities"];
 
 JavaTrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
     First@Keys@JavaTrieClassify[tr, record, "Probabilities", opts];
 
-JavaTrieClassify[tr_, record_, "Probability" -> class_] :=
-    Lookup[JavaTrieClassify[tr, record, "Probabilities"], class, 0];
+JavaTrieClassify[tr_, record_, "Probability" -> class_, opts : OptionsPattern[]] :=
+    Lookup[JavaTrieClassify[tr, record, "Probabilities", opts], class, 0];
 
 JavaTrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
     Select[JavaTrieClassify[tr, record, "Probabilities", opts], # > 0 &];
@@ -530,7 +530,7 @@ JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "Decision", opts : OptionsPa
     First @* Keys @* TakeLargest[1] /@ JavaTrieClassify[tr, records, "Probabilities", opts];
 
 JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
-    Map[Lookup[#, class, 0]&, JavaTrieClassify[tr, records, "Probabilities"] ];
+    Map[Lookup[#, class, 0]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];
 
 JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
     Map[ Select[#, # > 0 &]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];

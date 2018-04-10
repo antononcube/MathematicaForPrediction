@@ -579,7 +579,7 @@ TrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
     First@Keys@TrieClassify[tr, record, "Probabilities", opts];
 
 TrieClassify[tr_, record_, "Probability" -> class_, opts : OptionsPattern[]] :=
-    Lookup[TrieClassify[tr, record, "Probabilities"], class, 0];
+    Lookup[TrieClassify[tr, record, "Probabilities", opts], class, 0];
 
 TrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
     Select[TrieClassify[tr, record, "Probabilities", opts], # > 0 &];
@@ -600,7 +600,7 @@ TrieClassify[tr_, records:(_Dataset|{_List..}), "Decision", opts : OptionsPatter
     First @* Keys @* TakeLargest[1] /@ TrieClassify[tr, records, "Probabilities", opts];
 
 TrieClassify[tr_, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
-    Map[Lookup[#, class, 0]&, TrieClassify[tr, records, "Probabilities"] ];
+    Map[Lookup[#, class, 0]&, TrieClassify[tr, records, "Probabilities", opts] ];
 
 TrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
     Map[ Select[#, # > 0 &]&, TrieClassify[tr, records, "Probabilities", opts] ];
