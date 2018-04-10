@@ -412,3 +412,41 @@ ToColumnValueIncidenceMatrix <- function( mat, rowNames = TRUE, colNames = TRUE 
    
    resMat
 }
+
+
+##===========================================================
+## Conversions to D3 network specifications
+##===========================================================
+
+SparseMatrixTripletsToD3NetworkSpec <- function( triplets ) {
+  nodes <- unique(as.character(c(triplets[[1]],triplets[[2]])))
+  rules <- setNames( seq(0,length(nodes)-1), nodes)
+  triplets[[1]] <- as.integer( rules[ triplets[[1]] ] )
+  triplets[[2]] <- as.integer( rules[ triplets[[2]] ] )
+  list( Nodes = data.frame(name = nodes, stringsAsFactors = F), Links = setNames( as.data.frame(triplets), c("source","target","value") ) )
+} 
+
+SparseMatrixToD3NetworkSpec <- function( smat, smat2 = NULL ) {
+  if( is.null(smat2) ) {
+    SparseMatrixTripletsToD3NetworkSpec(SparseMatrixToTriplets(smat))
+  } else {
+    SparseMatrixTripletsToD3NetworkSpec( rbind( SparseMatrixToTriplets(smat), SparseMatrixToTriplets(smat2) ) )
+  }
+}
+
+SparseMatrixListToD3NetworkSpec <- function( smats ) {
+  
+  SparseMatrixTripletsToD3NetworkSpec( do.call( rbind, Map( f = SparseMatrixToTriplets, smats ) ) )
+  
+}
+
+SparseMatrixToD3NetworkSpecFirst <- function( smat ) {
+  qMatNodes <- c(rownames(smat),colnames(smat))
+  qMatNodes <- data.frame(name = qMatNodes, stringsAsFactors = F)
+  rownames(smat) <- 0:(nrow(smat)-1)
+  colnames(smat) <- nrow(smat) + (0:(ncol(smat)-1))
+  qMatLinks <- setNames(as.data.frame(SparseMatrixToTriplets(smat)), c("source","target","value"))
+  qMatLinks$source <- as.integer(qMatLinks$source)
+  qMatLinks$target <- as.integer(qMatLinks$target)
+  list( Nodes = qMatNodes, Links = qMatLinks)
+}
