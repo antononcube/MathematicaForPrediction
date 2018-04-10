@@ -710,13 +710,13 @@ Clear[ItemRecommenderClassify]
 Options[ItemRecommenderClassify] = {"tagType"->Automatic, "nTopNNs"->20, "voting"->False, "dropZeroScoredLabels"->True};
 
 ItemRecommenderClassify[smr_, record_, opts : OptionsPattern[]] :=
-    ItemRecommenderClassify[smr, record, "Decision", opts];
+    ItemRecommenderClassify[smr, record, "Decision", opts] /; FreeQ[{opts}, "Score"|"TopScores"|"TopProbabilities"];
 
 ItemRecommenderClassify[smr_, record_, "Decision", opts : OptionsPattern[]] :=
     First@Keys@ItemRecommenderClassify[smr, record, "Scores", opts];
 
-ItemRecommenderClassify[smr_, record_, "Score" -> class_] :=
-    Lookup[ItemRecommenderClassify[smr, record, "Scores"], class, 0];
+ItemRecommenderClassify[smr_, record_, "Score" -> class_, opts : OptionsPattern[]] :=
+    Lookup[ItemRecommenderClassify[smr, record, "Scores", opts], class, 0];
 
 ItemRecommenderClassify[smr_, record_, "TopScores", opts : OptionsPattern[]] :=
     Select[ItemRecommenderClassify[smr, record, "Scores", opts], # > 0 &];
@@ -741,6 +741,29 @@ ItemRecommenderClassify[smr_ItemRecommender, record_, "Scores", opts:OptionsPatt
       smr["Classify"][clParams["tagType"], record, clParams["nTopNNs"], clParams["voting"], clParams["dropZeroScoredLabels"] ]
     ];
 
+
+(* Here we take the perspective that the scores top two items returned as SMR recommendations *)
+(* can be used to form odds of selecting between the two. *)
+Clear[ItemRecommenderScoresToProbabilities]
+ItemRecommenderScoresToProbabilities[aScores_Association] :=
+    Block[{t, p},
+      t = Sort[aScores];
+      If[t[[1]] == 0,
+        ReverseSort@AssociationThread[Keys[t], {0, 1}],
+      (*ELSE*)
+        p = t[Keys[t][[1]]]/Total[t];
+        ReverseSort@AssociationThread[Keys[t], {p, 1 - p}]
+      ]
+    ] /; Length[aScores] == 2;
+
+ItemRecommenderScoresToProbabilities[aScores_Association] :=
+    AssociationThread[Keys[aScores] -> {1}] /; Length[aScores] == 1;
+
+ItemRecommenderClassify[smr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+    Block[{clRes},
+      clRes = ItemRecommenderClassify[smr, record, "TopScores"->2, opts];
+      TakeLargest[ItemRecommenderScoresToProbabilities[clRes], UpTo[n]]
+    ] /; 1 <= n <= 2;
 
 (*=========================================================*)
 (* RatingPrediction                                        *)
