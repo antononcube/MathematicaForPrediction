@@ -732,7 +732,7 @@ ItemRecommenderClassify[smr_ItemRecommender, record_, "Scores", opts:OptionsPatt
         clParams = smr["classificationParameters"]
       ];
 
-      clParams = Join[ clParams, Association[{opts}], Association[Options[ItemRecommenderClassify]] ];
+      clParams = Join[ Association[Options[ItemRecommenderClassify]], clParams, Association[{opts}] ];
 
       If[ !MemberQ[smr["tagTypes"], clParams["tagType"] ],
         clParams = Join[ clParams, <|"tagType"->Last[smr["tagTypes"]] |> ]
@@ -740,7 +740,7 @@ ItemRecommenderClassify[smr_ItemRecommender, record_, "Scores", opts:OptionsPatt
 
       res = smr["Classify"][clParams["tagType"], record, clParams["nTopNNs"], clParams["voting"], clParams["dropZeroScoredLabels"] ];
 
-      If[ TrueQ[clParams["Normalize"]] && Total[res] > 0,
+      If[ TrueQ[clParams["Normalize"]] && TrueQ[Total[res] > 0],
         res / Total[res],
         res
       ]
