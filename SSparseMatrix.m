@@ -162,7 +162,11 @@ RowsCount::usage = "Gives the number of rows of a SSparseMatrix object."
 
 ColumnSums::usage = "Gives the sums of the columns of a SSparseMatrix object."
 
+ColumnSumsAssociation::usage = "Gives an Association of the sums of the columns of a SSparseMatrix object."
+
 RowSums::usage = "Gives the sums of the rows of a SSparseMatrix object."
+
+RowSumsAssociation::usage = "Gives an Association the sums of the rows of a SSparseMatrix object."
 
 ColumnBind::usage = "Binds SSparseMatrix objects column-wise."
 
@@ -387,7 +391,12 @@ MatrixPlot[SSparseMatrix[obj_], args___] ^:=
 (*Sums*)
 
 RowSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"], {2}];
+
+RowSumsAssociation[smat_SSparseMatrix] := AssociationThread[RowNames[smat], RowSums[smat]];
+
 ColumnSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"]];
+
+ColumnSumsAssociation[smat_SSparseMatrix] := AssociationThread[ColumnNames[smat], ColumnSums[smat]];
 
 Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
 
