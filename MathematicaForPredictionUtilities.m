@@ -170,11 +170,25 @@ RecordsSummary::arrdepth = "The first argument is expected to be a full array of
 Clear[RecordsSummary];
 
 RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ]:=
-    Block[{colKeys},
-      colKeys = Normal[ dataRecords[[1]] ];
-      If[ MatchQ[colKeys, _Association],
-        RecordsSummary[ Normal[dataRecords[All, Values]], Keys[colKeys], opts ],
-        RecordsSummary[ Normal[dataRecords], opts ]
+    Block[{row1, colKeys,records},
+
+      row1 = Normal[dataRecords[1]];
+      If[ MatchQ[row1, _Association],
+        colKeys = Keys[row1];
+        ,
+        colKeys = Table["", Length[row1]]
+      ];
+
+      Which[
+        MatchQ[row1, _Association],
+        records = Normal[dataRecords[All,Values]];
+        If[ MatchQ[records, _Association], records = Values[records] ];
+        RecordsSummary[ Normal[records], colKeys, opts ],
+
+        True,
+        records = Normal[dataRecords];
+        If[ MatchQ[records, _Association], records = Values[records] ];
+        RecordsSummary[ records, colKeys, opts ]
       ]
     ];
 
