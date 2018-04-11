@@ -707,7 +707,7 @@ ItemRecommender[d___]["Classify"][tagType_String, pvec_SparseArray, nTopNNs_Inte
 
 Clear[ItemRecommenderClassify]
 
-Options[ItemRecommenderClassify] = {"tagType"->Automatic, "nTopNNs"->20, "voting"->False, "dropZeroScoredLabels"->True};
+Options[ItemRecommenderClassify] = {"tagType"->Automatic, "nTopNNs"->20, "voting"->False, "dropZeroScoredLabels"->True, "Normalize"->True};
 
 ItemRecommenderClassify[smr_, record_, opts : OptionsPattern[]] :=
     ItemRecommenderClassify[smr, record, "Decision", opts] /; FreeQ[{opts}, "Score"|"TopScores"|"TopProbabilities"];
@@ -738,7 +738,12 @@ ItemRecommenderClassify[smr_ItemRecommender, record_, "Scores", opts:OptionsPatt
         clParams = Join[ clParams, <|"tagType"->Last[smr["tagTypes"]] |> ]
       ];
 
-      smr["Classify"][clParams["tagType"], record, clParams["nTopNNs"], clParams["voting"], clParams["dropZeroScoredLabels"] ]
+      res = smr["Classify"][clParams["tagType"], record, clParams["nTopNNs"], clParams["voting"], clParams["dropZeroScoredLabels"] ];
+
+      If[ TrueQ[clParams["Normalize"]] && Total[res] > 0,
+        res / Total[res],
+        res
+      ]
     ];
 
 
