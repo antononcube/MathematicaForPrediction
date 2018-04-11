@@ -82,7 +82,7 @@ Of course, that is to be expected since the term "data science" and the related 
 
 This is of course a long and fruitful topic.
 
-Here -- and during the panel session -- I want to concentrate of what kind of thinking processes generate those misconceptions.
+Here -- and during the panel session -- I want to concentrate on what kind of thinking processes generate those misconceptions.
 (Obviously this is a less laborious task than enumerating and discussing the different concrete misconceptions.)
 
 #### Weak AI
