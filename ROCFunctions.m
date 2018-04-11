@@ -347,7 +347,7 @@ ROCPlot[
         ];
 
         cls =  rocCurveColorFunc /@ Rescale[Range[Length[aROCs]]];
-        grs = MapThread[ ROCPlot[#2, "PlotJoined" -> True, "ROCColor" -> #3, opts] &, {Keys[aROCs], Values[aROCs], cls}];
+        grs = MapThread[ ROCPlot[#2, opts, "PlotJoined" -> True, "ROCColor" -> #3 ] &, {Keys[aROCs], Values[aROCs], cls}];
         Legended[Show[grs], SwatchLegend[cls, Keys[aROCs]]]
       ];
 
