@@ -430,11 +430,11 @@ are expected to have equal lengths."
 ROCValues::args = "The arguments are expected to be a predictions probabilities Dataset, \
 a list of actual labels, and threshold range."
 
-    ROCValues[clRes_Dataset, testLabels_List] :=
+ROCValues[clRes_Dataset, testLabels_List] :=
     ROCValues[clRes, testLabels, Range[0, 1, 0.05]];
 
 ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] :=
-    Block[{classLabels, predictedLabels, rocRes},
+    Block[{classLabels, predictedLabels, rocRes, mainLabel, notMainLabel, modifiedActualLabels},
 
       If[ Length[predictionProbabilities] != Length[actualLabels],
         Message[ROCValues::nlen];
@@ -446,13 +446,18 @@ ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] 
         $Failed
       ];
 
-      classLabels = Normal[Keys[predictionProbabilities[1]]];
+      mainLabel = Normal[Keys[predictionProbabilities[1]]][[1]];
+      notMainLabel = "Not-"<>ToString[mainLabel];
+      modifiedActualLabels = If[ # == mainLabel, #, notMainLabel]& /@ actualLabels;
+
+      (*This is no longer actual: classLabels = Normal[Keys[predictionProbabilities[1]]];*)
+      classLabels = {mainLabel,notMainLabel};
 
       Table[
         predictedLabels =
-            Normal @ predictionProbabilities[All, If[#[[1]] >= th, Keys[#][[1]], Keys[#][[2]]] &];
+            Normal @ predictionProbabilities[All, If[#[[1]] >= th, mainLabel, notMainLabel] &];
 
-        rocRes = ToROCAssociation[classLabels, actualLabels, predictedLabels];
+        rocRes = ToROCAssociation[classLabels, modifiedActualLabels, predictedLabels];
         If[ AssociationQ[rocRes],
           Join[<|"ROCParameter" -> th|>, rocRes],
           $Failed
