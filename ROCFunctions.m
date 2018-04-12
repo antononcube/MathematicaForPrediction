@@ -446,8 +446,8 @@ ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] 
         $Failed
       ];
 
-      mainLabel = Normal[Keys[predictionProbabilities[1]]][[1]];
-      notMainLabel = "Not-"<>ToString[mainLabel];
+      mainLabel = ToString[Normal[Keys[predictionProbabilities[1]]][[1]]];
+      notMainLabel = "Not-"<>mainLabel;
       modifiedActualLabels = If[ # == mainLabel, #, notMainLabel]& /@ actualLabels;
 
       (*This is no longer actual: classLabels = Normal[Keys[predictionProbabilities[1]]];*)
