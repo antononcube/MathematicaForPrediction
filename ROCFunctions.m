@@ -427,14 +427,18 @@ ROCValues::nrng = "The range argument is expected to be a list of numbers betwee
 ROCValues::nlen = "The prediction probabilities Dataset object and the actual labels (the first and second arguments) \
 are expected to have equal lengths."
 
+ROCValues::nlbl = "The value of \"ClassLabel\" is expected to be one of the columns of the first argument."
+
 ROCValues::args = "The arguments are expected to be a predictions probabilities Dataset, \
 a list of actual labels, and threshold range."
 
-ROCValues[clRes_Dataset, testLabels_List] :=
-    ROCValues[clRes, testLabels, Range[0, 1, 0.05]];
+Options[ROCValues] = {"ClassLabel"->Automatic};
 
-ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] :=
-    Block[{classLabels, predictedLabels, rocRes, mainLabel, notMainLabel, modifiedActualLabels},
+ROCValues[clRes_Dataset, testLabels_List, opts:OptionsPattern[]] :=
+    ROCValues[clRes, testLabels, Range[0, 1, 0.05], opts];
+
+ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ, opts:OptionsPattern[]] :=
+    Block[{ focusClassLabel, classLabels, predictedLabels, rocRes, mainLabel, notMainLabel, modifiedActualLabels},
 
       If[ Length[predictionProbabilities] != Length[actualLabels],
         Message[ROCValues::nlen];
@@ -446,7 +450,17 @@ ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ] 
         $Failed
       ];
 
-      mainLabel = ToString[Normal[Keys[predictionProbabilities[1]]][[1]]];
+      focusClassLabel = OptionValue[ROCValues, "ClassLabel"];
+      If[ TrueQ[focusClassLabel===Automatic],
+        focusClassLabel = First @ Normal @ Keys[predictionProbabilities[1]]
+      ];
+
+      If[ !MemberQ[Normal @ Keys[predictionProbabilities[1]], focusClassLabel ],
+        Message[ROCValues::nlbl];
+        $Failed
+      ];
+
+      mainLabel = ToString[focusClassLabel];
       notMainLabel = "Not-"<>mainLabel;
       modifiedActualLabels = If[ # == mainLabel, #, notMainLabel]& /@ actualLabels;
 
