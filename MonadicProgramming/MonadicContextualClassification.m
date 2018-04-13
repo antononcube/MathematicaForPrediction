@@ -451,11 +451,11 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
           Function[{data},
             If[Length[data] == 0, {},
 
-              sMat = ToRSparseMatrix[SparseArray@(Flatten@*List @@@ data),
+              sMat = ToSSparseMatrix[SparseArray@(Flatten@*List @@@ data),
                 "ColumnNames" -> varNames,
                 "RowNames" -> ToString /@ Range[Length[data]]];
 
-              dataLongForm = RSparseMatrixToTriplets[sMat];
+              dataLongForm = SSparseMatrixToTriplets[sMat];
               RecordsSummary[dataLongForm, {"RowID", "Variable", "Value"}, opts]
             ]
           ] /@ ctData;
