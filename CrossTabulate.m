@@ -61,7 +61,7 @@ Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ..."
 CrossTensorateSplit::usage = "Splits the result of CrossTensorate along a variable. The result can be \
 shown with MatrixPlot."
 
-ToNestedAssociations::usage = "Converts the result of CrossTensorate into a nested Association."
+ToNestedAssociations::usage = "Converts a result of CrossTabulate or CrossTensorate into a nested Association. (A trie.)"
 
 CrossTabulate::usage = "Finds the contingency co-occurrence values in a matrix (2D array). The result can be \
 shown with MatrixPlot."
@@ -165,7 +165,14 @@ CrossTensorateSplit[xtens_Association, varName_] :=
             {xtens[varName], # & /@ Transpose[xtens["XTABTensor"], perm]}]
     ];
 
+
 Clear[ToNestedAssociations]
+
+ToNestedAssociations[ct_] :=
+    Block[{},
+      ToNestedAssociations[ <|"XTABTensor"->ct["SparseMatrix"], 1->ct["RowNames"], 2->ct["ColumnNames"]|> ]
+    ] /; AssociationQ[ct] && Length[ Intersection[ Keys[ct], {"SparseMatrix", "RowNames", "ColumnNames"} ] ] == 3;
+
 ToNestedAssociations[ct_] :=
     Block[{dims, vals, i = -2},
       dims = Values[Rest[ct]];
