@@ -884,7 +884,80 @@ SMRMatricesToWideDF <- function( smr, tagTypes = NULL, sep = ", ", .progress = "
                              value.var = "Value", fun.aggregate = function(x) paste(x, collapse = sep ) )
 }
 
+
+##===========================================================
+## Overloading predict
+##===========================================================  
+
+# SMRClassifyByProfileVector <- function( smr, tagType, profileVec, nTopNNs, voting = FALSE, dropZeroScoredLabels = TRUE ) {
   
+predict.SMR <- function( object, data, type = "decision", normalized = TRUE, ... ) {
+
+  if( !is.data.frame(data) ) {
+    stop( "The second argument is expected to be a data frame.", call. = TRUE )
+  }
+  
+  dataMat <- SMRCreate( dataRows = data, tagTypes = object$TagTypes, itemColumnName = object$ItemColumnName )
+  dataMat <- dataMat$M
+  
+  ## There should be a check for this function being loaded.
+  dataMat <- ImposeColumnIDs( colIDs = colnames(object$M), smat = dataMat )
+    
+  dotArgs <- list(...)
+  
+  clParams <- if( "ClassifierParameters" %in% names(object) ) { object["ClassifierParameters"] } else { NULL }
+
+  tagType <- if( "tagType" %in% names(dotArgs) ) { dotArgs[["tagType"]] } 
+  else if( "tagType" %in% names(clParams) ) { clParams[["tagType"]] } 
+  else { object$TagTypes[length(object$TagTypes)] }
+  
+  nTopNNs <- if( "nTopNNs" %in% names(dotArgs) ) { dotArgs[["nTopNNs"]] } 
+  else if( "nTopNNs" %in% names(clParams) ) { clParams[["nTopNNs"]] } 
+  else { 20 }
+  
+  voting <- if( "voting" %in% names(dotArgs) ) { dotArgs[["voting"]] } 
+  else if( "voting" %in% names(clParams) ) { clParams[["voting"]] } 
+  else { FALSE }
+  
+  dropZeroScoredLabels <- if( "dropZeroScoredLabels" %in% names(dotArgs) ) { dotArgs[["dropZeroScoredLabels"]] } 
+  else if( "dropZeroScoredLabels" %in% names(clParams) ) { clParams[["dropZeroScoredLabels"]] } 
+  else { TRUE }
+  
+  if( tolower(type) == "decision" ) { 
+  
+    laply( 1:nrow(data), function(i) {
+
+      pvec <- dataMat[i,,drop=F]
+      
+      recs <- SMRClassifyByProfileVector( smr = object, tagType = tagType, profileVec = pvec, 
+                                         nTopNNs = nTopNNs, voting = voting, 
+                                         dropZeroScoredLabels = dropZeroScoredLabels)
+      
+      if( length(recs) == 0 || is.null(recs)) { NA } else { as.character(recs$Label)[[1]] }
+
+    } )
+      
+  } else if ( tolower(type) %in% c( "raw", "scores" ) ) {
+    
+    res <-
+      ldply( 1:nrow(data), function(i) {
+      
+        pvec <- dataMat[i,,drop=F]
+        
+        recs <- SMRClassifyByProfileVector( smr = object, tagType = tagType, profileVec = pvec, 
+                                            nTopNNs = nTopNNs, voting = voting, 
+                                            dropZeroScoredLabels = dropZeroScoredLabels)
+        
+        if( normalized && sum(recs$Score) > 0 ) { recs$Score <- recs$Score / sum(recs$Score)}
+        
+        cbind( Index = i, recs )
+    } )
+    
+    as.matrix( xtabs( Score ~ Index + Label, res, sparse = T ) )
+  }
+    
+}
+
 #=======================================================================================
 # Object-Oriented Programming (OOP) implementations
 #=======================================================================================
