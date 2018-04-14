@@ -117,7 +117,7 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
       aColumnNames =
           Join[ aColumnNames, AssociationThread[Range[Dimensions[data][[2]]]->Range[Dimensions[data][[2]]]] ];
 
-      formulaLHS = formula[[1]];
+      formulaLHS = Hold[formula][[1,1]];
 
       If[! TrueQ[formulaLHS === Count], formulaLHS = aColumnNames[formulaLHS]];
 
