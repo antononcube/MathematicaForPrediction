@@ -938,7 +938,7 @@ predict.SMR <- function( smr, data, type = "decision", normalized = TRUE, ... ) 
   }
   
   if( is.data.frame(data) ) {
-    dataMat <- SMRCreate( dataRows = data, tagTypes = smr$TagTypes, itemColumnName = smr$ItemColumnName )
+    dataMat <- SMRCreate( dataRows = data, tagTypes = setdiff( colnames(data), smr$ItemColumnName), itemColumnName = smr$ItemColumnName )
     dataMat <- dataMat$M
   }
   
@@ -951,7 +951,7 @@ predict.SMR <- function( smr, data, type = "decision", normalized = TRUE, ... ) 
 
   tagType <- if( "tagType" %in% names(dotArgs) ) { dotArgs[["tagType"]] } 
   else if( "tagType" %in% names(clParams) ) { clParams[["tagType"]] } 
-  else { smr$TagTypes[length(smr$TagTypes)] }
+  else { smr$TagTypes[[length(smr$TagTypes)]] }
   
   nTopNNs <- if( "nTopNNs" %in% names(dotArgs) ) { dotArgs[["nTopNNs"]] } 
   else if( "nTopNNs" %in% names(clParams) ) { clParams[["nTopNNs"]] } 
