@@ -770,6 +770,38 @@ SMRRemoveTagTypes <- function( smr, removeTagTypes ) {
   newSMR
 }
 
+##===========================================================
+## SMR algebra operations
+##===========================================================  
+
+#' @description Makes sure that the rows of a matrix are in 1-to-1 correspondence to an array of row ID's
+#' @param rowIDs an array of row ID's
+#' @param smat a matrix with named rows
+SMRImposeRowIDs <- function( rowIDs, smat ) {
+  
+  missingRows <- setdiff( rowIDs, rownames(smat) )
+  nMissingRows <- length( missingRows )
+  
+  if ( nMissingRows > 0 ) {
+    # Rows are missing in the matrix
+    complMat <- sparseMatrix(i=c(1), j=c(1), x=c(0), dims = c( nMissingRows, ncol(smat) ) )
+    
+    rownames(complMat) <- missingRows
+    colnames(complMat) <- colnames(smat)
+    
+    smat <- rBind( smat, complMat )
+  }
+  # At this point each element of rowIDs should have a corresponding row in the matrix
+  smat[rowIDs,,drop=FALSE]
+}
+
+#' @description Makes sure that the rows of a matrix are in 1-to-1 correspondence to an array of row ID's
+#' @param colIDs an array of col ID's
+#' @param smat a matrix with named columns
+SMRImposeColumnIDs <- function( colIDs, smat ) {
+  
+  t( SMRImposeRowIDs( colIDs, t(smat)) )
+}
 
 #' @description Annex a sub-matrix to the metadata matrix of an SMR object.
 #' @param smr a sparse matrix recommender object
@@ -832,6 +864,10 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
   newSMR
 }
 
+##===========================================================
+## Transformations to data frames
+##===========================================================  
+
 #' @description Makes a data frame of a sparse matrix
 #' @param smr a sparse matrix object
 #' @param tagType tag type 
@@ -889,27 +925,33 @@ SMRMatricesToWideDF <- function( smr, tagTypes = NULL, sep = ", ", .progress = "
 ## Overloading predict
 ##===========================================================  
 
-# SMRClassifyByProfileVector <- function( smr, tagType, profileVec, nTopNNs, voting = FALSE, dropZeroScoredLabels = TRUE ) {
-  
-predict.SMR <- function( object, data, type = "decision", normalized = TRUE, ... ) {
+#' @description Classify a data frame or matrix based on a SMR object.
+#' @param smr a SMR object
+#' @param data a matrix or a data frame
+#' @param type what kind of result to be returned: 'raw' returns a matrix, 'decision' a vector of labels
+#' @param normalized should the results be normalized or not if type = 'raw'
+#' @details The SMR object can have additional parameter tucked-in, see smr['ClassifierParameters'].
+predict.SMR <- function( smr, data, type = "decision", normalized = TRUE, ... ) {
 
-  if( !is.data.frame(data) ) {
-    stop( "The second argument is expected to be a data frame.", call. = TRUE )
+  if( !is.data.frame(data) && !is.matrix(data) ) {
+    stop( "The second argument is expected to be a matrix or a data frame.", call. = TRUE )
   }
   
-  dataMat <- SMRCreate( dataRows = data, tagTypes = object$TagTypes, itemColumnName = object$ItemColumnName )
-  dataMat <- dataMat$M
+  if( is.data.frame(data) ) {
+    dataMat <- SMRCreate( dataRows = data, tagTypes = smr$TagTypes, itemColumnName = smr$ItemColumnName )
+    dataMat <- dataMat$M
+  }
   
-  ## There should be a check for this function being loaded.
-  dataMat <- ImposeColumnIDs( colIDs = colnames(object$M), smat = dataMat )
+  ## There should be a check is dataMat a sparse matrix.
+  dataMat <- SMRImposeColumnIDs( colIDs = colnames(smr$M), smat = dataMat )
     
   dotArgs <- list(...)
   
-  clParams <- if( "ClassifierParameters" %in% names(object) ) { object["ClassifierParameters"] } else { NULL }
+  clParams <- if( "ClassifierParameters" %in% names(smr) ) { smr["ClassifierParameters"] } else { NULL }
 
   tagType <- if( "tagType" %in% names(dotArgs) ) { dotArgs[["tagType"]] } 
   else if( "tagType" %in% names(clParams) ) { clParams[["tagType"]] } 
-  else { object$TagTypes[length(object$TagTypes)] }
+  else { smr$TagTypes[length(smr$TagTypes)] }
   
   nTopNNs <- if( "nTopNNs" %in% names(dotArgs) ) { dotArgs[["nTopNNs"]] } 
   else if( "nTopNNs" %in% names(clParams) ) { clParams[["nTopNNs"]] } 
@@ -929,7 +971,7 @@ predict.SMR <- function( object, data, type = "decision", normalized = TRUE, ...
 
       pvec <- dataMat[i,,drop=F]
       
-      recs <- SMRClassifyByProfileVector( smr = object, tagType = tagType, profileVec = pvec, 
+      recs <- SMRClassifyByProfileVector( smr = smr, tagType = tagType, profileVec = pvec, 
                                          nTopNNs = nTopNNs, voting = voting, 
                                          dropZeroScoredLabels = dropZeroScoredLabels)
       
@@ -944,7 +986,7 @@ predict.SMR <- function( object, data, type = "decision", normalized = TRUE, ...
       
         pvec <- dataMat[i,,drop=F]
         
-        recs <- SMRClassifyByProfileVector( smr = object, tagType = tagType, profileVec = pvec, 
+        recs <- SMRClassifyByProfileVector( smr = smr, tagType = tagType, profileVec = pvec, 
                                             nTopNNs = nTopNNs, voting = voting, 
                                             dropZeroScoredLabels = dropZeroScoredLabels)
         
