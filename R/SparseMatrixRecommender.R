@@ -864,6 +864,61 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
   newSMR
 }
 
+#' @description Row-binds the matrix of a SMR object with a sparse matrix.
+#' @param smr a SMR object
+#' @param smat a sparse matrix
+#' @return Returns a SMR object.
+SMRRowBindMatrix <- function( smr, smat ) {
+  
+  if ( ncol(smr$M01) == ncol(smat) && mean( colnames(smr$M01) == colnames(smat) ) == 1 ) {
+    
+    smr$M01 <- rbind( smr$M01, smat )
+    
+  } else if ( mean( colnames(smat) %in% colnames(smr$M01) ) == 1 ) {
+    ## All of the columns of smat are in smr$M01.
+    smr$M01 <- rbind( smr$M01, SMRImposeColumnIDs( colIDs = colnames(smr$M01), smat ) )
+  
+  } else {
+    stop( "The column names of the specified sparse matrix are not a subset of the column names of the recommender object.", call. = TRUE )
+    return(NULL)
+  }
+  
+  smr$M <- SMRApplyTagTypeWeights( smr = smr, weights = rep(1, length(smr$TagTypes)) )
+  
+  smr
+}
+  
+#' @description Returns a SMR object with a matrix that is obtained by row-binding the matrices of two SMR objects.
+#' @param smr1 a SMR object
+#' @param smr2 a SMR object
+#' @return A new SMR object.
+SMRRowBind <- function( smr1, smr2 ) {
+  
+  if( ncol(smr1$M01) == ncol(smr2$M01) && mean( colnames(smr1$M01) == colnames(smr2$M01) ) == 1 ) {
+    
+    SMRRowBindMatrix( smr1, smr2$M01 )
+    
+  } else if ( length(smr1$TagTypes) == length(smr2$TagTypes) && mean( smr1$TagTypes == smr2$TagTypes ) == 1  ) {
+    
+    smats <-
+      llply( smr1$TagTypes, function(tt) { 
+        smat1 <- SMRSubMatrix( smr = smr1, tagType = tt)
+        smat2 <- SMRSubMatrix( smr = smr2, tagType = tt)
+        colIDs <- unique( c(colnames(smat1), colnames(smat2)) )
+        smat1 <- SMRImposeColumnIDs( colIDs = colIDs, smat = smat1) 
+        smat2 <- SMRImposeColumnIDs( colIDs = colIDs, smat = smat2) 
+        rbind(smat1, smat2)
+      })
+    
+    SMRCreateFromMatrices( matrices = smats, tagTypes = smr1$TagTypes, itemColumnName = smr1$ItemColumnName )
+    
+  } else {
+    stop( "The tag types of the SMR objects to be row-bound are not the same.", call. = TRUE)
+    return(NULL)
+  }
+  
+}
+
 ##===========================================================
 ## Transformations to data frames
 ##===========================================================  
