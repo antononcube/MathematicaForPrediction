@@ -49,7 +49,7 @@ TriePosition::usage = "TriePosition[t_, w :(_String | _List)] gives the position
 TrieRetrieve::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the node corresponding to the last \"character\" of the \"word\" w in the trie t.\
  Strings are converted to lists first."
 
-TrieSubTrie::usage = "TrieRetrieve[t_, w :(_String | _List)] gives the sub-trie corresponding to the last \"character\" of the \"word\" w in the trie t.\
+TrieSubTrie::usage = "TrieSubTrie[t_, w :(_String | _List)] gives the sub-trie corresponding to the last \"character\" of the \"word\" w in the trie t.\
  Strings are converted to lists first."
 
 TrieCreate::usage = "TrieCreate[words:{(_String|_List)..}] creates a trie from a list of strings or a list of lists."
@@ -62,7 +62,7 @@ TrieShrink::usage = "TrieShrink shrinks the leaves and internal nodes into prefi
 
 TrieToRules::usage = "Converts a trie into a list of rules suitable for visualization with GraphPlot and LayeredGraphPlot. To each trie node is added a list of its level and its traversal order."
 
-TrieForm::usage = "Shrinks the trie argument and returns a list of rules for a graph plot of it. In order to eliminate ambiguity each node is with its traversal order."
+TrieForm::usage = "Graph plot of a trie."
 
 TrieNodeProbabilities::usage = "Converts the frequencies at the nodes of a trie into probabilities. The value of the option \"ProbabilityModifier\" is a function that is applied to the computed probabilities."
 
