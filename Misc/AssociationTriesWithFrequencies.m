@@ -58,11 +58,12 @@ ATrieBodyQ::usage = "A predicate is an expression a trie body."
 
 ATrieRuleQ::usage = "A predicate is an expression a trie rule."
 
-ATriePosition::usage = "TriePosition[t_, w_List] gives the position node corresponding to the last \"character\" of the \"word\" w in the trie t."
-
 ATrieRetrieve::usage = "TrieRetrieve[t_, w_List] gives the node corresponding to the last \"character\" of the \"word\" w in the trie t."
 
-ATrieSubTrie::usage = "ATrieSubTrie[t_, w_List] gives the sub-trie corresponding to the last \"character\" of the \"word\" w in the trie t."
+ATrieSubTrie::usage = "TrieSubTrie[t_, w_List] gives the sub-trie corresponding to the last \"character\" of the \"word\" w in the trie t."
+
+ATriePosition::usage = "TriePosition[ tr_, ks_List ] finds a sub-list of the list of keys\
+ ks that corresponds to a sub-trie in the trie tr."
 
 ATrieCreate::usage = "TrieCreate[words:{_List..}] creates a trie from a list of lists."
 
@@ -184,17 +185,14 @@ ATrieCreate[words : {_List ..}] :=
       ]
     ];
 
-
-Clear[ATrieRetrieve]
-ATrieRetrieve[tr_?ATrieQ, word_List] := tr[Sequence @@ word];
-
-
 Clear[ATrieSubTrie, ATrieSubTriePathRec]
 
 ATrieSubTrie[tr_?ATrieQ, word_List] :=
     Block[{path},
       path = ATrieSubTriePathRec[tr, word];
-      <|Last[path] -> ATrieRetrieve[tr, path]|>
+      If[Length[path]==0,{},
+        <|Last[path] -> tr[ Sequence @@ path ]|>
+      ]
     ];
 
 ATrieSubTriePathRec[tr_, {}] := {};
@@ -204,6 +202,23 @@ ATrieSubTriePathRec[tr_, word_List] :=
       {}
     ] /; ATrieBodyQ[tr] || ATrieQ[tr];
 
+
+Clear[ATriePosition]
+ATriePosition[tr_?ATrieQ, word_List] := ATrieSubTriePathRec[tr, word];
+
+Clear[ATrieRetrieve]
+ATrieRetrieve[tr_?ATrieQ, chars_List] :=
+    Block[{p},
+      p = tr[ Sequence @@ chars ];
+      If[ FreeQ[p,_Missing], p,
+      (*ELSE*)
+        p = TriePosition[tr, chars];
+        Which[
+          Length[p] == 0, {},
+          True, tr[ Sequence @@ p ]
+        ]
+      ]
+    ];
 
 
 Clear[ATrieNodeProbabilities, ATrieNodeProbabilitiesRec]
@@ -314,6 +329,59 @@ Clear[ATrieForm]
 ATrieForm[mytrie_?ATrieQ, opts : OptionsPattern[]] :=
     LayeredGraphPlot[ATrieToRules[mytrie],
       VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
+
+
+Clear[ATrieClassify]
+
+Options[ATrieClassify] := {"Default" -> None};
+
+ATrieClassify[tr_, record_, opts : OptionsPattern[]] :=
+    ATrieClassify[tr, record, "Decision", opts] /; FreeQ[{opts}, "Probability"|"TopProbabilities"];
+
+ATrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
+    First@Keys@ATrieClassify[tr, record, "Probabilities", opts];
+
+ATrieClassify[tr_, record_, "Probability" -> class_, opts : OptionsPattern[]] :=
+    Lookup[ATrieClassify[tr, record, "Probabilities", opts], class, 0];
+
+ATrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
+    Select[ATrieClassify[tr, record, "Probabilities", opts], # > 0 &];
+
+ATrieClassify[tr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+    Take[ATrieClassify[tr, record, "Probabilities", opts], UpTo[n]];
+
+ATrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
+    Block[{res, dval = OptionValue[ATrieClassify, "Default"]},
+      res = ATrieSubTrie[tr, record];
+      If[Length[res] == 0, <|dval -> 0|>,
+        res = ReverseSort[Association[Rule @@@ ATrieLeafProbabilities[res]]];
+        res / Total[res]
+      ]
+    ];
+
+ATrieClassify[tr_, records:(_Dataset|{_List..}), "Decision", opts : OptionsPattern[]] :=
+    First @* Keys @* TakeLargest[1] /@ ATrieClassify[tr, records, "Probabilities", opts];
+
+ATrieClassify[tr_, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
+    Map[Lookup[#, class, 0]&, ATrieClassify[tr, records, "Probabilities", opts] ];
+
+ATrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
+    Map[ Select[#, # > 0 &]&, ATrieClassify[tr, records, "Probabilities", opts] ];
+
+ATrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+    Map[TakeLargest[#, UpTo[n]]&, ATrieClassify[tr, records, "Probabilities", opts] ];
+
+ATrieClassify[tr_, records:(_Dataset|{_List..}), "Probabilities", opts:OptionsPattern[] ] :=
+    Block[{clRes, classLabels, stencil},
+
+      clRes = Map[ ATrieClassify[tr, #, "Probabilities", opts] &, Normal@records ];
+
+      classLabels = Union[Flatten[Normal[Keys /@ clRes]]];
+
+      stencil = AssociationThread[classLabels -> 0];
+
+      KeySort[Join[stencil, #]] & /@ clRes
+    ];
 
 End[] (* `Private` *)
 
