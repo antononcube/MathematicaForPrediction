@@ -36,7 +36,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-04-16 *)
 
-(* :Package Version: 0.1 *)
+(* :Package Version: 0.9 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: *)
@@ -102,6 +102,8 @@ ATrieMemberQ::usage = "TrieMemberQ[t, w] checks is the \"word\" w in the trie t.
 ATriePrune::usage = "TriePrune[t,maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
 
 ATrieNodeCounts::usage = "TrieNodeCounts[t] gives and association with the total number of nodes, internal nodes only, and leaves only."
+
+ATrieToJSON::usage = "TrieToJSON[tr] converts a trie to a corresponding JSON expression."
 
 ToATrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
@@ -311,6 +313,37 @@ ATrieNodeCounts[tr_] :=
         Count[tr, <|$TrieValue -> _|>, Infinity]};
       <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]],
         "leaves" -> cs[[2]]|>
+    ];
+
+
+Clear[NodeJoin]
+NodeJoin[n_String] := n;
+NodeJoin[n1_String, n2_String] := n1 <> n2;
+NodeJoin[n1_List, n2_String] := List[n1, n2];
+NodeJoin[n_] := List[n];
+NodeJoin[n1_List, n2_List] := Join[n1, n2];
+NodeJoin[n1_, n2_List] := Prepend[n2, n1];
+NodeJoin[n1_List, n2_] := Append[n1, n2];
+NodeJoin[n1_, n2_] := List[n1, n2];
+
+Clear[ATrieShrink, ATrieShrinkRec]
+ATrieShrink[tr_?ATrieQ] := ATrieShrinkRec[tr];
+ATrieShrinkRec[{}] := {};
+ATrieShrinkRec[tr_?ATrieQ] := ATrieShrinkRec[First[Normal[tr]]];
+ATrieShrinkRec[tr_?ATrieRuleQ] :=
+    Block[{vals = tr[[2]], key = tr[[1]], valKeys },
+      valKeys = Keys @ KeyDrop[vals, $TrieValue];
+
+      Which[
+        Length[ vals ] == 1,
+        tr,
+
+        key =!= $TrieRoot && Length[vals] == 2 && vals[$TrieValue] == vals[First @ valKeys][$TrieValue],
+        ATrieShrinkRec[ <| NodeJoin[ key, First[valKeys] ] -> vals[First @ valKeys] |> ],
+
+        True,
+        <| key -> Join[ <| $TrieValue -> vals[$TrieValue] |>, Association @ Map[ ATrieShrinkRec, Normal @ KeyDrop[vals, $TrieValue] ] ] |>
+      ]
     ];
 
 
