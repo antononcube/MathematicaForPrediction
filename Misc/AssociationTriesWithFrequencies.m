@@ -52,6 +52,10 @@
 
 BeginPackage["AssociationTriesWithFrequencies`"]
 
+$TrieRoot::usage = "Symbol marking the root of a trie."
+
+$TrieValue::usage = "Symbol used as a key for a trie node value."
+
 ATrieQ::usage = "A predicate is an expression a trie."
 
 ATrieBodyQ::usage = "A predicate is an expression a trie body."
@@ -111,7 +115,7 @@ TrieClassify[tr_,record_] is the same as TrieClassify[tr_,record_,\"Decision\"].
 Begin["`Private`"]
 
 Clear[ATrieBodyQ]
-ATrieBodyQ[a_Association] := KeyExistsQ[a, "$Value"];
+ATrieBodyQ[a_Association] := KeyExistsQ[a, $TrieValue];
 ATrieBodyQ[___] := False;
 
 Clear[ATrieQ]
@@ -122,6 +126,10 @@ Clear[ATrieRuleQ]
 ATrieRuleQ[a_Rule] := MatchQ[a, Rule[x_, b_?ATrieBodyQ]];
 ATrieRuleQ[___] := False;
 
+(* This is private context only. *)
+Clear[ATrieWithTrieRootQ]
+ATrieWithTrieRootQ[a_Association] := MatchQ[a, Association[$TrieRoot -> b_?ATrieBodyQ]];
+ATrieWithTrieRootQ[___] := False;
 
 Clear[ATrieMerge]
 ATrieMerge[<||>, <||>] := <||>;
@@ -132,7 +140,7 @@ ATrieMerge[t1_?ATrieQ, t2_?ATrieQ] :=
         ckey = First@Keys[t1];
         <|ckey ->
             Join[Merge[{t1[ckey], t2[ckey]},
-              ATrieMerge], <|"$Value" -> (t1[ckey]["$Value"] + t2[ckey]["$Value"])|>]|>,
+              ATrieMerge], <|$TrieValue -> (t1[ckey][$TrieValue] + t2[ckey][$TrieValue])|>]|>,
 
         True,
         Join[t1, t2]
@@ -143,40 +151,41 @@ ATrieMerge[{t1_Association, <||>}] := t1;
 ATrieMerge[{t1_Association}] := t1;
 ATrieMerge[{t1_Association, t2_Association}] :=
     Block[{},
-      Join[Merge[{KeyDrop[t1, "$Value"], KeyDrop[t2, "$Value"]},
-        ATrieMerge], <|"$Value" -> (t1["$Value"] + t2["$Value"])|>]
+      Join[Merge[{KeyDrop[t1, $TrieValue], KeyDrop[t2, $TrieValue]},
+        ATrieMerge], <|$TrieValue -> (t1[$TrieValue] + t2[$TrieValue])|>]
     ];
 
 
 Clear[ATrieBlank]
-ATrieBlank[] := <|None -> <|"$Value" -> 0|>|>;
+ATrieBlank[] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 
 Clear[ATrieMake, ATrieInsert]
 
 ATrieMake[chars_List] := ATrieMake[chars, 1];
 ATrieMake[chars_List, v_Integer] := ATrieMake[chars, v, v];
 ATrieMake[chars_List, v_Integer, v0_Integer] :=
-    Fold[<|#2 -> <|"$Value" -> v, #1|>|> &, <|Last[chars] -> <|"$Value" -> v0|>|>,
+    Fold[<|#2 -> <|$TrieValue -> v, #1|>|> &, <|Last[chars] -> <|$TrieValue -> v0|>|>,
       Reverse@Most@chars];
 
 ATrieInsert[tr_?ATrieQ, word_List] :=
-    ATrieMerge[tr, <|None -> Join[<|"$Value" -> 1|>, ATrieMake[word, 1]]|>];
+    ATrieMerge[tr, <|$TrieRoot -> Join[<|$TrieValue -> 1|>, ATrieMake[word, 1]]|>];
 
 ATrieInsert[tr_, word_List, value_] :=
     Block[{},
       ATrieMerge[
-        tr, <|None -> Join[<|"$Value" -> 1|>, ATrieMake[word, 0, value]]|>]
+        tr, <|$TrieRoot -> Join[<|$TrieValue -> 1|>, ATrieMake[word, 0, value]]|>]
     ];
 
 
 Clear[ATrieCreate1]
-ATrieCreate1[{}] := <|None -> <|"$Value" -> 0|>|>;
+ATrieCreate1[{}] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 ATrieCreate1[words : {_List ..}] :=
     Fold[ATrieInsert, <|
-      None -> Join[<|"$Value" -> 1|>, ATrieMake[First[words], 1]]|>, Rest@words];
+      $TrieRoot -> Join[<|$TrieValue -> 1|>, ATrieMake[First[words], 1]]|>, Rest@words];
+
 
 Clear[ATrieCreate]
-ATrieCreate[{}] := <|None -> <|"$Value" -> 0|>|>;
+ATrieCreate[{}] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 ATrieCreate[words : {_List ..}] :=
     Block[{},
       If[Length[words] <= 5, ATrieCreate1[words],(*ELSE*)
@@ -187,9 +196,10 @@ ATrieCreate[words : {_List ..}] :=
 
 Clear[ATrieSubTrie, ATrieSubTriePathRec]
 
-ATrieSubTrie[tr_?ATrieQ, word_List] :=
-    Block[{path},
-      path = ATrieSubTriePathRec[tr, word];
+ATrieSubTrie[tr_?ATrieQ, wordArg_List ] :=
+    Block[{path, word=wordArg},
+      If[ATrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
+      path = ATrieSubTriePathRec[tr, word ];
       If[Length[path]==0,{},
         <|Last[path] -> tr[ Sequence @@ path ]|>
       ]
@@ -204,15 +214,20 @@ ATrieSubTriePathRec[tr_, word_List] :=
 
 
 Clear[ATriePosition]
-ATriePosition[tr_?ATrieQ, word_List] := ATrieSubTriePathRec[tr, word];
+ATriePosition[tr_?ATrieQ, word_List] :=
+    If[ATrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}],
+      ATrieSubTriePathRec[tr, Prepend[word, $TrieRoot] ],
+      ATrieSubTriePathRec[tr, word ]
+    ];
 
 Clear[ATrieRetrieve]
-ATrieRetrieve[tr_?ATrieQ, chars_List] :=
-    Block[{p},
-      p = tr[ Sequence @@ chars ];
+ATrieRetrieve[tr_?ATrieQ, wordArg_List] :=
+    Block[{p, word=wordArg},
+      If[ATrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
+      p = tr[ Sequence @@ word ];
       If[ FreeQ[p,_Missing], p,
       (*ELSE*)
-        p = TriePosition[tr, chars];
+        p = TriePosition[tr, wordArg];
         Which[
           Length[p] == 0, {},
           True, tr[ Sequence @@ p ]
@@ -230,7 +245,7 @@ ATrieNodeProbabilities[tr_?ATrieQ, opts : OptionsPattern[]] :=
     Block[{},
       <|First[Keys[tr]] ->
           Join[ATrieNodeProbabilitiesRec[First@Values[tr],
-            opts], <|"$Value" -> 1|>]|>
+            opts], <|$TrieValue -> 1|>]|>
     ];
 
 ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
@@ -240,14 +255,14 @@ ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
         Length[Keys[trb]] == 1, trb,
 
         True,
-        If[trb["$Value"] == 0,
-          sum = Map[#["$Value"] &, Values[KeyDrop[trb, "$Value"]]],
-          sum = trb["$Value"]
+        If[trb[$TrieValue] == 0,
+          sum = Map[#[$TrieValue] &, Values[KeyDrop[trb, $TrieValue]]],
+          sum = trb[$TrieValue]
         ];
-        res = Map[ATrieNodeProbabilitiesRec[#] &, KeyDrop[trb, "$Value"]];
+        res = Map[ATrieNodeProbabilitiesRec[#] &, KeyDrop[trb, $TrieValue]];
         res = Replace[
-          res, <|a___, "$Value" -> x_, b___|> :> <|a, "$Value" -> pm[x/sum], b|>, {1}];
-        Join[res, KeyTake[trb, "$Value"]]
+          res, <|a___, $TrieValue -> x_, b___|> :> <|a, $TrieValue -> pm[x/sum], b|>, {1}];
+        Join[res, KeyTake[trb, $TrieValue]]
       ]
     ];
 
@@ -260,7 +275,7 @@ ATrieLeafProbabilities[trieArg_?ATrieQ] :=
     Block[{res},
       res =
           Which[
-            TrueQ[trieArg[First@Keys@trieArg]["$Value"] == 0],
+            TrueQ[trieArg[First@Keys@trieArg][$TrieValue] == 0],
             ATrieLeafProbabilitiesRec[trieArg],
 
             True,
@@ -278,22 +293,22 @@ ATrieLeafProbabilities[args__] :=
 ATrieLeafProbabilitiesRec[k_, trb_?ATrieBodyQ] :=
     Block[{res, sum},
       Which[
-        Length[Keys[trb]] == 1, k -> trb["$Value"],
+        Length[Keys[trb]] == 1, k -> trb[$TrieValue],
         True,
-        sum = Total@Map[#["$Value"] &, Values[KeyDrop[trb, "$Value"]]];
-        res = KeyValueMap[ATrieLeafProbabilitiesRec, KeyDrop[trb, "$Value"]];
+        sum = Total@Map[#[$TrieValue] &, Values[KeyDrop[trb, $TrieValue]]];
+        res = KeyValueMap[ATrieLeafProbabilitiesRec, KeyDrop[trb, $TrieValue]];
         If[sum < 1,
           res = Append[res, k -> (1 - sum)]
         ];
-        res = Map[#[[1]] -> #[[2]]*trb["$Value"] &, Flatten[res, 1]]]
+        res = Map[#[[1]] -> #[[2]]*trb[$TrieValue] &, Flatten[res, 1]]]
     ];
 
 
 Clear[ATrieNodeCounts]
 ATrieNodeCounts[tr_] :=
     Block[{cs},
-      cs = {Count[tr, <|___, "$Value" -> _, ___|>, Infinity],
-        Count[tr, <|"$Value" -> _|>, Infinity]};
+      cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity],
+        Count[tr, <|$TrieValue -> _|>, Infinity]};
       <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]],
         "leaves" -> cs[[2]]|>
     ];
@@ -305,17 +320,17 @@ ATrieToRules[tree_, level_, order_] :=
     Block[{nodeRules, k, v},
       Which[
         tree === <||>, {},
-        Keys[tree] === {"$Value"}, {},
+        Keys[tree] === {$TrieValue}, {},
         True,
-        k = First[Keys[tree]]; v = tree[k, "$Value"];
+        k = First[Keys[tree]]; v = tree[k, $TrieValue];
         nodeRules =
-            KeyValueMap[{{k, v}, {level, order}} -> {{#1, #2["$Value"]}, {level + 1,
-              ORDER++}} &, KeyDrop[tree[k], "$Value"]];
+            KeyValueMap[{{k, v}, {level, order}} -> {{#1, #2[$TrieValue]}, {level + 1,
+              ORDER++}} &, KeyDrop[tree[k], $TrieValue]];
         Join[nodeRules,
           Flatten[
             MapThread[
               ATrieToRules[<|#1|>, level + 1, #2] &, {Normal@
-                KeyDrop[tree[k], "$Value"], nodeRules[[All, 2, 2, 2]]}], 1]]
+                KeyDrop[tree[k], $TrieValue], nodeRules[[All, 2, 2, 2]]}], 1]]
       ]
     ] /; ATrieQ[tree];
 
@@ -335,22 +350,22 @@ Clear[ATrieClassify]
 
 Options[ATrieClassify] := {"Default" -> None};
 
-ATrieClassify[tr_, record_, opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, record_, opts : OptionsPattern[]] :=
     ATrieClassify[tr, record, "Decision", opts] /; FreeQ[{opts}, "Probability"|"TopProbabilities"];
 
-ATrieClassify[tr_, record_, "Decision", opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, record_, "Decision", opts : OptionsPattern[]] :=
     First@Keys@ATrieClassify[tr, record, "Probabilities", opts];
 
-ATrieClassify[tr_, record_, "Probability" -> class_, opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, record_, "Probability" -> class_, opts : OptionsPattern[]] :=
     Lookup[ATrieClassify[tr, record, "Probabilities", opts], class, 0];
 
-ATrieClassify[tr_, record_, "TopProbabilities", opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, record_, "TopProbabilities", opts : OptionsPattern[]] :=
     Select[ATrieClassify[tr, record, "Probabilities", opts], # > 0 &];
 
-ATrieClassify[tr_, record_, "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, record_, "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
     Take[ATrieClassify[tr, record, "Probabilities", opts], UpTo[n]];
 
-ATrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, record_, "Probabilities", opts : OptionsPattern[]] :=
     Block[{res, dval = OptionValue[ATrieClassify, "Default"]},
       res = ATrieSubTrie[tr, record];
       If[Length[res] == 0, <|dval -> 0|>,
@@ -359,19 +374,19 @@ ATrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
       ]
     ];
 
-ATrieClassify[tr_, records:(_Dataset|{_List..}), "Decision", opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, records:(_Dataset|{_List..}), "Decision", opts : OptionsPattern[]] :=
     First @* Keys @* TakeLargest[1] /@ ATrieClassify[tr, records, "Probabilities", opts];
 
-ATrieClassify[tr_, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
     Map[Lookup[#, class, 0]&, ATrieClassify[tr, records, "Probabilities", opts] ];
 
-ATrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
     Map[ Select[#, # > 0 &]&, ATrieClassify[tr, records, "Probabilities", opts] ];
 
-ATrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
+ATrieClassify[tr_?ATrieQ, records:(_Dataset|{_List..}), "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
     Map[TakeLargest[#, UpTo[n]]&, ATrieClassify[tr, records, "Probabilities", opts] ];
 
-ATrieClassify[tr_, records:(_Dataset|{_List..}), "Probabilities", opts:OptionsPattern[] ] :=
+ATrieClassify[tr_?ATrieQ, records:(_Dataset|{_List..}), "Probabilities", opts:OptionsPattern[] ] :=
     Block[{clRes, classLabels, stencil},
 
       clRes = Map[ ATrieClassify[tr, #, "Probabilities", opts] &, Normal@records ];
