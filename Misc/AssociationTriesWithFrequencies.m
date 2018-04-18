@@ -36,7 +36,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-04-16 *)
 
-(* :Package Version: 0.9 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: *)
@@ -128,6 +128,8 @@ ATrieHasCompleteMatchQ::usage = "TrieHasCompleteMatchQ[ tr_, sw_List ] finds doe
 ATrieContains::usage = "TrieContains[ tr_, sw_List ] finds is the list sw a complete match in the trie tr."
 
 ATrieMemberQ::usage = "Same as TrieContains."
+
+ATrieKeyQ::usage = "TrieKeyQ[tr_, sw_List] finds is the list sw a key in the trie tr."
 
 ATriePrune::usage = "TriePrune[t, maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
 
@@ -315,6 +317,15 @@ ATrieContains[tr_?ATrieQ, wordArg_List ] :=
 
 ATrieMemberQ = ATrieContains;
 
+Clear[ATrieKeyQ]
+ATrieKeyQ[ tr_?ATrieQ, wordArg_List ] :=
+    Block[{pos, word = wordArg},
+      If[ ATrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
+      pos = ATriePosition[tr, word];
+      Length[pos] == Length[word]
+    ];
+
+
 Clear[ATrieNodeProbabilities, ATrieNodeProbabilitiesRec]
 
 Options[ATrieNodeProbabilities] = {"ProbabilityModifier" -> N};
@@ -413,13 +424,20 @@ ATrieShrinkRec[tr_?ATrieRuleQ] :=
 
 (* I am not particularly happy with using FixedPoint. This has to be profiled. *)
 Clear[ATrieRootToLeafPaths]
-ATrieRootToLeafPaths[tr_] :=
+ATrieRootToLeafPaths[tr_?ATrieQ] :=
     Map[List @@@ Most[#[[1]]] &,
       FixedPoint[
         Flatten[Normal[#] /.
             Rule[n_, m_?ATrieBodyQ] :>
-                If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m],
+
+                Which[
+                  Length[m] == 1,
                   KeyMap[Append[n, #] &, m],
+
+                  m[$TrieValue] > ATrieValueSum[m],
+                  Join[ KeyMap[Append[n, # -> m[#][$TrieValue]] &, KeyDrop[m, $TrieValue]], KeyMap[Append[n, #] &, KeyTake[m, $TrieValue]] ],
+
+                  True,
                   KeyMap[Append[n, # -> m[#][$TrieValue]] &, KeyDrop[m, $TrieValue]]], 1] &,
         KeyMap[{# -> First[Values[tr]][$TrieValue]} &, tr]]
     ];
@@ -438,6 +456,18 @@ ATrieRootToLeafPathRules[tr_?ATrieQ] :=
       ]
     ];
 
+Clear[ATrieGetWords]
+ATrieGetWords[ tr_?ATrieQ, word_List ] :=
+    Which[
+        Length[word] == 0,
+        {},
+
+        ATrieKeyQ[tr, word],
+        Map[ Join[Most[word], #]&, ATrieRootToLeafPathRules[ATrieSubTrie[tr,word]][[All,1]] ],
+
+        True,
+        {}
+    ];
 
 Clear[ATrieToRules]
 ATrieToRules[tree_?ATrieQ] := Block[{ORDER = 0}, ATrieToRules[tree, 0, 0]];
