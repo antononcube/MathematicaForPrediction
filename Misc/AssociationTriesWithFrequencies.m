@@ -48,6 +48,25 @@
 
   using Associations.
 
+
+  # Design
+
+  An Association Trie with Frequencies (ATF) has the form:
+
+    <| key1 -> <| $TrieValue->_?NumberQ, ___ |> |>
+
+  Here is a concrete example:
+
+    <|a1 -> <|$TrieValue -> 3, b1 -> <|$TrieValue -> 2, c1 -> <|$TrieValue -> 1|>, c2 -> <|$TrieValue -> 1|>|>, b2 -> <|$TrieValue -> 1|>|>|>
+
+  In most cases the top-most key is $TrieRoot. For example, examine the result of
+
+    ATrieCreate[{{a1, b1, c1}, {a1, b1, c2}, {a1, b2}}]
+
+    (* <|$TrieRoot -> <|$TrieValue -> 3, a1 -> <|b1 -> <|c1 -> <|$TrieValue -> 1|>,
+         c2 -> <|$TrieValue -> 1|>, $TrieValue -> 2|>, b2 -> <|$TrieValue -> 1|>, $TrieValue -> 3|>|>|> *)
+
+
 *)
 
 BeginPackage["AssociationTriesWithFrequencies`"]
@@ -77,17 +96,21 @@ ATrieMerge::usage = "TrieMerge[t1_, t2_] merges two tries."
 
 ATrieShrink::usage = "TrieShrink shrinks the leaves and internal nodes into prefixes."
 
-ATrieToRules::usage = "Converts a trie into a list of rules suitable for visualization with GraphPlot and LayeredGraphPlot. To each trie node is added a list of its level and its traversal order."
+ATrieToRules::usage = "Converts a trie into a list of rules suitable for visualization with GraphPlot and LayeredGraphPlot.\
+ To each trie node is added a list of its level and its traversal order."
 
 ATrieForm::usage = "Graph plot for a trie."
 
-ATrieNodeProbabilities::usage = "Converts the frequencies at the nodes of a trie into probabilities. The value of the option \"ProbabilityModifier\" is a function that is applied to the computed probabilities."
+ATrieNodeProbabilities::usage = "Converts the frequencies at the nodes of a trie into probabilities.\
+ The value of the option \"ProbabilityModifier\" is a function that is applied to the computed probabilities."
 
-ATrieNodeFrequencies::usage = "Converts the probabilities at the nodes of a trie into frequencies. The value of the option \"FrequencyModifier\" is a function that is applied to the computed frequencies."
+ATrieNodeFrequencies::usage = "Converts the probabilities at the nodes of a trie into frequencies.\
+ The value of the option \"FrequencyModifier\" is a function that is applied to the computed frequencies."
 
 ATrieLeafProbabilities::usage = "Gives the probabilities to end up at each of the leaves by paths from the root of the trie."
 
-ATrieLeafProbabilitiesWithPositions::usage = "Gives the probabilities to end up at each of the leaves by paths from the root of the trie. For each leaf its position in the trie is given."
+ATrieLeafProbabilitiesWithPositions::usage = "Gives the probabilities to end up at each of the leaves by paths from the root of the trie.\
+For each leaf its position in the trie is given."
 
 ATriePathFromPosition::usage = "TriePathFromPosition[trie,pos] gives a list of nodes from the root of a trie to the node at a specified position."
 
@@ -95,23 +118,30 @@ ATrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from th
 
 ATrieRootToLeafPathRules::usage = "ATrieRootToLeafPathRules[trie] gives rules for all paths from the root node to the leaf node values."
 
+ATrieGetWords::usage = "TrieGetWords[ tr_, sw_List ] gives a list words in tr that start with sw."
+
 ATrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
-ATrieCompleteMatch::usage = "TrieCompleteMatch[ t, pos ] checks is the position list pos of \"word\" is a complete match in the trie t."
+ATrieHasCompleteMatchQ::usage = "TrieHasCompleteMatchQ[ tr_, sw_List ] finds does a fraction\
+ of the list sw is a complete match in the trie tr."
 
-ATrieMemberQ::usage = "TrieMemberQ[t, w] checks is the \"word\" w in the trie t."
+ATrieContains::usage = "TrieContains[ tr_, sw_List ] finds is the list sw a complete match in the trie tr."
 
-ATriePrune::usage = "TriePrune[t,maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
+ATrieMemberQ::usage = "Same as TrieContains."
+
+ATriePrune::usage = "TriePrune[t, maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
 
 ATrieNodeCounts::usage = "TrieNodeCounts[t] gives and association with the total number of nodes, internal nodes only, and leaves only."
 
-ATrieGetWords::usage = "TrieGetWords[ tr_, sw:{_String..}] gives a list words in tr that start with sw."
+ATrieDepth::usage = "TrieDepth[tr] gives the maximum level of the trie tr."
 
 ATrieToJSON::usage = "TrieToJSON[tr] converts a trie to a corresponding JSON expression."
 
 ToATrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
 the specified element names for the conversion."
+
+ATrieComparisonGrid::usage = "Makes a grid trie plots for a specified list of trie expressions."
 
 ATrieClassify::usage = "TrieClassify[tr_,record_] classifies a record using a trie. \
 The signature TrieClassify[tr_,record_,prop_] can take properties as the ones given to ClassifierFunction. \
@@ -136,6 +166,16 @@ ATrieRuleQ[___] := False;
 Clear[ATrieWithTrieRootQ]
 ATrieWithTrieRootQ[a_Association] := MatchQ[a, Association[$TrieRoot -> b_?ATrieBodyQ]];
 ATrieWithTrieRootQ[___] := False;
+
+Clear[ATrieNodeCounts]
+ATrieNodeCounts[tr_] :=
+    Block[{cs},
+      cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity], Count[tr, <|$TrieValue -> _|>, Infinity]};
+      <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]], "leaves" -> cs[[2]]|>
+    ];
+
+Clear[ATrieDepth]
+ATrieDepth[tr_?ATrieQ] := Depth[tr] - 2;
 
 Clear[ATrieMerge]
 ATrieMerge[<||>, <||>] := <||>;
@@ -242,6 +282,39 @@ ATrieRetrieve[tr_?ATrieQ, wordArg_List] :=
     ];
 
 
+Clear[ATrieHasCompleteMatchQ]
+ATrieHasCompleteMatchQ[tr_?ATrieQ, word_List ] :=
+    Block[{pos, b},
+      pos = ATriePosition[tr, word];
+
+      If[ Length[pos] == 0, Return[False] ];
+
+      b = False;
+      While[ Length[pos] > 0 && !b,
+        b = ATrieValueSum[ tr[ Sequence @@ pos ] ] < tr[ Sequence @@ pos, $TrieValue ];
+        pos = Most[pos];
+      ];
+
+      b
+    ];
+
+Clear[ATrieContains]
+ATrieContains[tr_?ATrieQ, wordArg_List ] :=
+    Block[{pos, word = wordArg},
+
+      If[ ATrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
+
+      pos = ATriePosition[tr, word];
+
+      If[ Length[pos] == Length[word],
+        ATrieValueSum[ tr[ Sequence @@ pos ] ] < tr[ Sequence @@ pos, $TrieValue ],
+        (* ELSE *)
+        False
+      ]
+    ];
+
+ATrieMemberQ = ATrieContains;
+
 Clear[ATrieNodeProbabilities, ATrieNodeProbabilitiesRec]
 
 Options[ATrieNodeProbabilities] = {"ProbabilityModifier" -> N};
@@ -259,7 +332,7 @@ ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
 
         True,
         If[trb[$TrieValue] == 0,
-          sum = Map[#[$TrieValue] &, Values[KeyDrop[trb, $TrieValue]]],
+          sum = ATrieValueSum[trb],
           sum = trb[$TrieValue]
         ];
         res = Map[ATrieNodeProbabilitiesRec[#] &, KeyDrop[trb, $TrieValue]];
@@ -308,16 +381,6 @@ ATrieLeafProbabilitiesRec[k_, trb_?ATrieBodyQ] :=
     ];
 
 
-Clear[ATrieNodeCounts]
-ATrieNodeCounts[tr_] :=
-    Block[{cs},
-      cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity], Count[tr, <|$TrieValue -> _|>, Infinity]};
-      <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]], "leaves" -> cs[[2]]|>
-    ];
-
-Clear[ATrieDepth]
-ATrieDepth[tr_?ATrieQ] := Depth[tr] - 2;
-
 Clear[NodeJoin]
 NodeJoin[n_String] := n;
 NodeJoin[n1_String, n2_String] := n1 <> n2;
@@ -364,13 +427,15 @@ ATrieRootToLeafPaths[tr_] :=
 (* This is implemented because it looks neat, and it can be used for tensor creation. *)
 Clear[ATrieRootToLeafPathRules]
 ATrieRootToLeafPathRules[tr_?ATrieQ] :=
-    FixedPoint[
-      Flatten[Normal[#] /.
-          Rule[n_, m_?ATrieBodyQ] :>
-              If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m],
-                KeyMap[Append[n, #] &, m],
-                KeyMap[Append[n, #] &, KeyDrop[m, $TrieValue]]], 1] &,
-      KeyMap[{#} &, tr]
+    Map[ Most[#[[1]]]->#[[2]] &,
+      FixedPoint[
+        Flatten[Normal[#] /.
+            Rule[n_, m_?ATrieBodyQ] :>
+                If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m],
+                  KeyMap[Append[n, #] &, m],
+                  KeyMap[Append[n, #] &, KeyDrop[m, $TrieValue]]], 1] &,
+        KeyMap[{#} &, tr]
+      ]
     ];
 
 
@@ -384,8 +449,7 @@ ATrieToRules[tree_, level_, order_] :=
         True,
         k = First[Keys[tree]]; v = tree[k, $TrieValue];
         nodeRules =
-            KeyValueMap[{{k, v}, {level, order}} -> {{#1, #2[$TrieValue]}, {level + 1,
-              ORDER++}} &, KeyDrop[tree[k], $TrieValue]];
+            KeyValueMap[{{k, v}, {level, order}} -> {{#1, #2[$TrieValue]}, {level + 1, ORDER++}} &, KeyDrop[tree[k], $TrieValue]];
         Join[nodeRules,
           Flatten[
             MapThread[
@@ -405,6 +469,23 @@ ATrieForm[mytrie_?ATrieQ, opts : OptionsPattern[]] :=
     LayeredGraphPlot[ATrieToRules[mytrie],
       VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
 
+ClearAll[ATrieComparisonGrid]
+SetAttributes[ATrieComparisonGrid, HoldAll]
+Options[ATrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision"->3}];
+ATrieComparisonGrid[trs : {_?ATrieQ ..}, opts : OptionsPattern[]] :=
+    Block[{graphOpts,gridOpts,nfp},
+      graphOpts = Select[{opts}, MemberQ[Options[Graphics][[All, 1]], #[[1]]] &];
+      gridOpts = Select[{opts}, MemberQ[Options[Grid][[All, 1]], #[[1]]] &];
+      nfp = OptionValue["NumberFormPrecision"];
+      Grid[{
+        HoldForm /@ Inactivate[trs],
+        If[ Length[{graphOpts}] == 0,
+          Map[ATrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} &, trs],
+          Map[ATrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} /. (gr_Graphics) :> Append[gr, graphOpts] &, trs],
+          Map[ATrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} &, trs]
+        ]
+      }, gridOpts, Dividers -> All, FrameStyle -> LightGray]
+    ];
 
 Clear[ATrieClassify]
 
