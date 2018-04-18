@@ -93,6 +93,8 @@ ATriePathFromPosition::usage = "TriePathFromPosition[trie,pos] gives a list of n
 
 ATrieRootToLeafPaths::usage = "TrieRootToLeafPaths[trie] gives all paths from the root node to the leaf nodes."
 
+ATrieRootToLeafPathRules::usage = "ATrieRootToLeafPathRules[trie] gives rules for all paths from the root node to the leaf node values."
+
 ATrieRemove::usage = "TrieRemove removes a \"word\" from a trie."
 
 ATrieCompleteMatch::usage = "TrieCompleteMatch[ t, pos ] checks is the position list pos of \"word\" is a complete match in the trie t."
@@ -102,6 +104,8 @@ ATrieMemberQ::usage = "TrieMemberQ[t, w] checks is the \"word\" w in the trie t.
 ATriePrune::usage = "TriePrune[t,maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
 
 ATrieNodeCounts::usage = "TrieNodeCounts[t] gives and association with the total number of nodes, internal nodes only, and leaves only."
+
+ATrieGetWords::usage = "TrieGetWords[ tr_, sw:{_String..}] gives a list words in tr that start with sw."
 
 ATrieToJSON::usage = "TrieToJSON[tr] converts a trie to a corresponding JSON expression."
 
@@ -245,13 +249,10 @@ Options[ATrieNodeProbabilitiesRec] = Options[ATrieNodeProbabilities];
 
 ATrieNodeProbabilities[tr_?ATrieQ, opts : OptionsPattern[]] :=
     Block[{},
-      <|First[Keys[tr]] ->
-          Join[ATrieNodeProbabilitiesRec[First@Values[tr],
-            opts], <|$TrieValue -> 1|>]|>
+      <|First[Keys[tr]] -> Join[ATrieNodeProbabilitiesRec[First@Values[tr], opts], <|$TrieValue -> 1|>]|>
     ];
 
 ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
-
     Block[{sum, res, pm = OptionValue["ProbabilityModifier"]},
       Which[
         Length[Keys[trb]] == 1, trb,
@@ -262,12 +263,13 @@ ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
           sum = trb[$TrieValue]
         ];
         res = Map[ATrieNodeProbabilitiesRec[#] &, KeyDrop[trb, $TrieValue]];
-        res = Replace[
-          res, <|a___, $TrieValue -> x_, b___|> :> <|a, $TrieValue -> pm[x/sum], b|>, {1}];
+        res = Replace[res, <|a___, $TrieValue -> x_, b___|> :> <|a, $TrieValue -> pm[x/sum], b|>, {1}];
         Join[res, KeyTake[trb, $TrieValue]]
       ]
     ];
 
+Clear[ATrieValueSum]
+ATrieValueSum[trb_?ATrieBodyQ] :=  Total[Map[#[$TrieValue] &, KeyDrop[trb, $TrieValue]]];
 
 Clear[ATrieLeafProbabilities, ATrieLeafProbabilitiesRec]
 
@@ -297,7 +299,7 @@ ATrieLeafProbabilitiesRec[k_, trb_?ATrieBodyQ] :=
       Which[
         Length[Keys[trb]] == 1, k -> trb[$TrieValue],
         True,
-        sum = Total@Map[#[$TrieValue] &, Values[KeyDrop[trb, $TrieValue]]];
+        sum = ATrieValueSum[trb];
         res = KeyValueMap[ATrieLeafProbabilitiesRec, KeyDrop[trb, $TrieValue]];
         If[sum < 1,
           res = Append[res, k -> (1 - sum)]
@@ -309,12 +311,12 @@ ATrieLeafProbabilitiesRec[k_, trb_?ATrieBodyQ] :=
 Clear[ATrieNodeCounts]
 ATrieNodeCounts[tr_] :=
     Block[{cs},
-      cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity],
-        Count[tr, <|$TrieValue -> _|>, Infinity]};
-      <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]],
-        "leaves" -> cs[[2]]|>
+      cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity], Count[tr, <|$TrieValue -> _|>, Infinity]};
+      <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]], "leaves" -> cs[[2]]|>
     ];
 
+Clear[ATrieDepth]
+ATrieDepth[tr_?ATrieQ] := Depth[tr] - 2;
 
 Clear[NodeJoin]
 NodeJoin[n_String] := n;
@@ -344,6 +346,31 @@ ATrieShrinkRec[tr_?ATrieRuleQ] :=
         True,
         <| key -> Join[ <| $TrieValue -> vals[$TrieValue] |>, Association @ Map[ ATrieShrinkRec, Normal @ KeyDrop[vals, $TrieValue] ] ] |>
       ]
+    ];
+
+(* I am not particularly happy with using FixedPoint. This has to be profiled. *)
+Clear[ATrieRootToLeafPaths]
+ATrieRootToLeafPaths[tr_] :=
+    Map[List @@@ Most[#[[1]]] &,
+      FixedPoint[
+        Flatten[Normal[#] /.
+            Rule[n_, m_?ATrieBodyQ] :>
+                If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m],
+                  KeyMap[Append[n, #] &, m],
+                  KeyMap[Append[n, # -> m[#][$TrieValue]] &, KeyDrop[m, $TrieValue]]], 1] &,
+        KeyMap[{# -> First[Values[tr]][$TrieValue]} &, tr]]
+    ];
+
+(* This is implemented because it looks neat, and it can be used for tensor creation. *)
+Clear[ATrieRootToLeafPathRules]
+ATrieRootToLeafPathRules[tr_?ATrieQ] :=
+    FixedPoint[
+      Flatten[Normal[#] /.
+          Rule[n_, m_?ATrieBodyQ] :>
+              If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m],
+                KeyMap[Append[n, #] &, m],
+                KeyMap[Append[n, #] &, KeyDrop[m, $TrieValue]]], 1] &,
+      KeyMap[{#} &, tr]
     ];
 
 
