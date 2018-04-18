@@ -472,13 +472,13 @@ ATrieForm[mytrie_?ATrieQ, opts : OptionsPattern[]] :=
 ClearAll[ATrieComparisonGrid]
 SetAttributes[ATrieComparisonGrid, HoldAll]
 Options[ATrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision"->3}];
-ATrieComparisonGrid[trs : {_?ATrieQ ..}, opts : OptionsPattern[]] :=
+ATrieComparisonGrid[trs_List, opts : OptionsPattern[]] :=
     Block[{graphOpts,gridOpts,nfp},
       graphOpts = Select[{opts}, MemberQ[Options[Graphics][[All, 1]], #[[1]]] &];
       gridOpts = Select[{opts}, MemberQ[Options[Grid][[All, 1]], #[[1]]] &];
       nfp = OptionValue["NumberFormPrecision"];
       Grid[{
-        HoldForm /@ Inactivate[trs],
+        First @ Map[HoldForm, Inactivate[Hold[trs]], {2}],
         If[ Length[{graphOpts}] == 0,
           Map[ATrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} &, trs],
           Map[ATrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} /. (gr_Graphics) :> Append[gr, graphOpts] &, trs],
