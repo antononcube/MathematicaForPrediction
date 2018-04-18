@@ -90,6 +90,9 @@ ATriePosition::usage = "TriePosition[ tr_, ks_List ] finds a sub-list of the lis
 
 ATrieCreate::usage = "TrieCreate[words:{_List..}] creates a trie from a list of lists."
 
+ATrieCreateBySplit::usage = "TrieCreateBySplit[ ws:{_String..}, patt:\"\"] creates a trie object\
+ from a list of strings that are split with a given pattern patt."
+
 ATrieInsert::usage = "TrieInsert[t_, w_List] insert a \"word\" to the trie t. TrieInsert[t_, w_List, val_] inserts a key and a corresponding value."
 
 ATrieMerge::usage = "TrieMerge[t1_, t2_] merges two tries."
@@ -241,6 +244,10 @@ ATrieCreate[words : {_List ..}] :=
           ATrieCreate[Take[words, {Floor[Length[words]/2] + 1, Length[words]}]]]
       ]
     ];
+
+Clear[ATrieCreateBySplit]
+ATrieCreateBySplit[words : {_String ..}, patt_: ""] :=
+    ATrieCreate[ Map[StringSplit[#,""]&, words]]
 
 Clear[ATrieSubTrie, ATrieSubTriePathRec]
 
@@ -434,7 +441,7 @@ ATrieRootToLeafPaths[tr_?ATrieQ] :=
                   Length[m] == 1,
                   KeyMap[Append[n, #] &, m],
 
-                  m[$TrieValue] > ATrieValueSum[m],
+                  m[$TrieValue] > ATrieValueSum[m] || ATrieValueSum[m] < 1,
                   Join[ KeyMap[Append[n, # -> m[#][$TrieValue]] &, KeyDrop[m, $TrieValue]], KeyMap[Append[n, #] &, KeyTake[m, $TrieValue]] ],
 
                   True,
@@ -449,7 +456,7 @@ ATrieRootToLeafPathRules[tr_?ATrieQ] :=
       FixedPoint[
         Flatten[Normal[#] /.
             Rule[n_, m_?ATrieBodyQ] :>
-                If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m],
+                If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m] || ATrieValueSum[m] < 1,
                   KeyMap[Append[n, #] &, m],
                   KeyMap[Append[n, #] &, KeyDrop[m, $TrieValue]]], 1] &,
         KeyMap[{#} &, tr]
@@ -498,6 +505,14 @@ Clear[ATrieForm]
 ATrieForm[mytrie_?ATrieQ, opts : OptionsPattern[]] :=
     LayeredGraphPlot[ATrieToRules[mytrie],
       VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
+
+Clear[ATrieToJSON]
+ATrieToJSON[tr_?ATrieQ] := ATrieToJSON[First@Normal@tr];
+ATrieToJSON[tr_?ATrieRuleQ] :=
+    Block[{k = First@tr},
+      {"key" -> k, "value" -> tr[[2]][$TrieValue],
+        "children" -> Map[ATrieToJSON, Normal[KeyDrop[tr[[2]], $TrieValue]]]}
+    ];
 
 ClearAll[ATrieComparisonGrid]
 SetAttributes[ATrieComparisonGrid, HoldAll]
