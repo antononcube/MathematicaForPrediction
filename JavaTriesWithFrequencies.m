@@ -490,9 +490,9 @@ JavaTrieComparisonGrid[jTrs : {_?JavaObjectQ ..}, opts : OptionsPattern[]] :=
       Grid[{
         HoldForm /@ Inactivate[jTrs],
         If[ Length[{graphOpts}] == 0,
-          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]}, jTrs],
+          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} &, jTrs],
           Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} /. (gr_Graphics) :> Append[gr, graphOpts] &, jTrs],
-          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]}, jTrs]
+          Map[JavaTrieForm[#] /. {k_String, v_?NumericQ} :> {k, NumberForm[v,nfp]} &, jTrs]
         ]
       }, gridOpts, Dividers -> All, FrameStyle -> LightGray]
     ];
