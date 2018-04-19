@@ -104,6 +104,8 @@ ATrieToRules::usage = "Converts a trie into a list of rules suitable for visuali
 
 ATrieForm::usage = "Graph plot for a trie."
 
+ATrieValueTotal::usage = "ATrieValueTotal[trb_?ATrieBodyQ] gives the total sum of the values in a trie body."
+
 ATrieNodeProbabilities::usage = "Converts the frequencies at the nodes of a trie into probabilities.\
  The value of the option \"ProbabilityModifier\" is a function that is applied to the computed probabilities."
 
@@ -132,7 +134,7 @@ ATrieContains::usage = "TrieContains[ tr_, sw_List ] finds is the list sw a comp
 
 ATrieMemberQ::usage = "Same as TrieContains."
 
-ATrieKeyQ::usage = "TrieKeyQ[tr_, sw_List] finds is the list sw a key in the trie tr."
+ATrieKeyExistsQ::usage = "TrieKeyExistsQ[tr_, sw_List] finds is the list sw a key in the trie tr."
 
 ATriePrune::usage = "TriePrune[t, maxLvl] prunes the trie to a maximum node level. (The root is level 0.)"
 
@@ -300,7 +302,7 @@ ATrieHasCompleteMatchQ[tr_?ATrieQ, word_List ] :=
 
       b = False;
       While[ Length[pos] > 0 && !b,
-        b = ATrieValueSum[ tr[ Sequence @@ pos ] ] < tr[ Sequence @@ pos, $TrieValue ];
+        b = ATrieValueTotal[ tr[ Sequence @@ pos ] ] < tr[ Sequence @@ pos, $TrieValue ];
         pos = Most[pos];
       ];
 
@@ -316,7 +318,7 @@ ATrieContains[tr_?ATrieQ, wordArg_List ] :=
       pos = ATriePosition[tr, word];
 
       If[ Length[pos] == Length[word],
-        ATrieValueSum[ tr[ Sequence @@ pos ] ] < tr[ Sequence @@ pos, $TrieValue ],
+        ATrieValueTotal[ tr[ Sequence @@ pos ] ] < tr[ Sequence @@ pos, $TrieValue ],
         (* ELSE *)
         False
       ]
@@ -324,8 +326,8 @@ ATrieContains[tr_?ATrieQ, wordArg_List ] :=
 
 ATrieMemberQ = ATrieContains;
 
-Clear[ATrieKeyQ]
-ATrieKeyQ[ tr_?ATrieQ, wordArg_List ] :=
+Clear[ATrieKeyExistsQ]
+ATrieKeyExistsQ[ tr_?ATrieQ, wordArg_List ] :=
     Block[{pos, word = wordArg},
       If[ ATrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
       pos = ATriePosition[tr, word];
@@ -350,7 +352,7 @@ ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
 
         True,
         If[trb[$TrieValue] == 0,
-          sum = ATrieValueSum[trb],
+          sum = ATrieValueTotal[trb],
           sum = trb[$TrieValue]
         ];
         res = Map[ATrieNodeProbabilitiesRec[#] &, KeyDrop[trb, $TrieValue]];
@@ -359,8 +361,8 @@ ATrieNodeProbabilitiesRec[trb_?ATrieBodyQ, opts : OptionsPattern[]] :=
       ]
     ];
 
-Clear[ATrieValueSum]
-ATrieValueSum[trb_?ATrieBodyQ] :=  Total[Map[#[$TrieValue] &, KeyDrop[trb, $TrieValue]]];
+Clear[ATrieValueTotal]
+ATrieValueTotal[trb_?ATrieBodyQ] := Total[Map[#[$TrieValue] &, KeyDrop[trb, $TrieValue]]];
 
 Clear[ATrieLeafProbabilities, ATrieLeafProbabilitiesRec]
 
@@ -390,7 +392,7 @@ ATrieLeafProbabilitiesRec[k_, trb_?ATrieBodyQ] :=
       Which[
         Length[Keys[trb]] == 1, k -> trb[$TrieValue],
         True,
-        sum = ATrieValueSum[trb];
+        sum = ATrieValueTotal[trb];
         res = KeyValueMap[ATrieLeafProbabilitiesRec, KeyDrop[trb, $TrieValue]];
         If[sum < 1,
           res = Append[res, k -> (1 - sum)]
@@ -441,7 +443,7 @@ ATrieRootToLeafPaths[tr_?ATrieQ] :=
                   Length[m] == 1,
                   KeyMap[Append[n, #] &, m],
 
-                  m[$TrieValue] > ATrieValueSum[m] || ATrieValueSum[m] < 1,
+                  m[$TrieValue] > ATrieValueTotal[m] || ATrieValueTotal[m] < 1,
                   Join[ KeyMap[Append[n, # -> m[#][$TrieValue]] &, KeyDrop[m, $TrieValue]], KeyMap[Append[n, #] &, KeyTake[m, $TrieValue]] ],
 
                   True,
@@ -456,7 +458,7 @@ ATrieRootToLeafPathRules[tr_?ATrieQ] :=
       FixedPoint[
         Flatten[Normal[#] /.
             Rule[n_, m_?ATrieBodyQ] :>
-                If[Length[m] == 1 || m[$TrieValue] > ATrieValueSum[m] || ATrieValueSum[m] < 1,
+                If[Length[m] == 1 || m[$TrieValue] > ATrieValueTotal[m] || ATrieValueTotal[m] < 1,
                   KeyMap[Append[n, #] &, m],
                   KeyMap[Append[n, #] &, KeyDrop[m, $TrieValue]]], 1] &,
         KeyMap[{#} &, tr]
@@ -469,11 +471,33 @@ ATrieGetWords[ tr_?ATrieQ, word_List ] :=
         Length[word] == 0,
         {},
 
-        ATrieKeyQ[tr, word],
+        ATrieKeyExistsQ[tr, word],
         Map[ Join[Most[word], #]&, ATrieRootToLeafPathRules[ATrieSubTrie[tr,word]][[All,1]] ],
 
         True,
         {}
+    ];
+
+
+Clear[ATriePrune, ATriePruneRec]
+ATriePrune[trie_?ATrieQ, maxLevel_Integer] :=
+    Block[{},
+      Association[ATriePruneRec[First @ Normal @ trie, maxLevel, 0]]
+    ];
+
+ATriePruneRec[tr_?ATrieRuleQ, maxLevel_Integer, level_Integer] :=
+    Block[{key = tr[[1]]},
+      Which[
+        Length[tr] == 0, {},
+        Length[tr[[2]]] == 1, tr,
+        maxLevel <= level, key->KeyTake[tr[[2]], $TrieValue],
+        True,
+        key ->
+            Join[
+              Association @ KeyValueMap[ ATriePruneRec[#1->#2, maxLevel, level + 1] &, KeyDrop[tr[[2]], $TrieValue] ],
+              KeyTake[tr[[2]], $TrieValue]
+            ]
+      ]
     ];
 
 Clear[ATrieToRules]
