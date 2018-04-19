@@ -144,6 +144,8 @@ ATrieDepth::usage = "TrieDepth[tr] gives the maximum level of the trie tr."
 
 ATrieToJSON::usage = "TrieToJSON[tr] converts a trie to a corresponding JSON expression."
 
+ATrieToListTrie::usage = "TrieToListTrie[tr] converts an Association based trie to a List based trie. (The \"old\" approach.)"
+
 ToATrieFromJSON::usage = "ToTrieFromJSON[jsonTrie:{_Rule...}] converts a JSON import into a Trie object. \
 ToTrieFromJSON[jsonTrie:{_Rule...}, elementNames:{key_String, value_String, children_String}] is going to use \
 the specified element names for the conversion."
@@ -536,6 +538,13 @@ ATrieToJSON[tr_?ATrieRuleQ] :=
     Block[{k = First@tr},
       {"key" -> k, "value" -> tr[[2]][$TrieValue],
         "children" -> Map[ATrieToJSON, Normal[KeyDrop[tr[[2]], $TrieValue]]]}
+    ];
+
+Clear[ATrieToListTrie]
+ATrieToListTrie[tr_?ATrieQ] := ATrieToListTrie[First@Normal@tr] /. $TrieRoot -> {};
+ATrieToListTrie[tr_?ATrieRuleQ] :=
+    Block[{k = First@tr},
+      Join[ {{k, tr[[2]][$TrieValue]}}, Normal @ Map[ATrieToListTrie, Normal[KeyDrop[tr[[2]], $TrieValue]]] ]
     ];
 
 ClearAll[ATrieComparisonGrid]
