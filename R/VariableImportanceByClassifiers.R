@@ -231,13 +231,14 @@ ROCValues <- function( classResMat, testLabels, range = seq(0,1,0.05), .progress
 }
 
 #' @description 
-#' @param rocDF a data frame with columns "Threshold", "FPR", "TPR", and optionally "Model"
+#' @param rocDF a data frame with columns "Threshold", "FPR", "TPR", and optionally a model IDs column
 #' @param title title of the plot
 #' @param point.text should the par
-ROCPlot <- function( rocDF, title = NULL, point.text = TRUE ) {
+#' @param modelColumnName the name of the column that has the model IDs
+ROCPlot <- function( rocDF, title = NULL, point.text = TRUE, modelColumnName = "Model" ) {
   pres <- 
-    if( "Model" %in% names(rocDF) ) { 
-      ggplot(data = rocDF ) + geom_line(aes( x = FPR, y = TPR, color = Model ) ) 
+    if( modelColumnName %in% colnames(rocDF) ) { 
+      ggplot(data = rocDF ) + geom_line(aes_string( x = "FPR", y = "TPR", color = modelColumnName ) ) 
     } else { 
       ggplot(data = rocDF ) + geom_line(aes( x = FPR, y = TPR) ) 
     }
@@ -248,8 +249,8 @@ ROCPlot <- function( rocDF, title = NULL, point.text = TRUE ) {
     xlab("False Positive Rate (FPR)") + ylab("True Positive Rate (TPR)")
   
   if( point.text ) {
-    if( "Model" %in% names(rocDF) ) { 
-      pres <- pres + geom_point( aes( x = FPR, y = TPR, color = Model ) )
+    if( modelColumnName %in% colnames(rocDF) ) { 
+      pres <- pres + geom_point( aes_string( x = "FPR", y = "TPR", color = modelColumnName ) )
     } else {
       pres <- pres + geom_point( aes( x = FPR, y = TPR) )
     }
