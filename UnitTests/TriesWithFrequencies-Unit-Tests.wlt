@@ -174,7 +174,7 @@ VerificationTest[(* 15 *)
 	,
 	Sort @ List[List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["s", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["r", 2.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["r", 2.`], List["s", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["d", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["e", 3.`], List["p", 3.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["e", 3.`], List["p", 3.`], List["e", 2.`], List["r", 2.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["e", 3.`], List["p", 3.`], List["e", 2.`], List["r", 2.`], List["s", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["i", 1.`], List["n", 1.`], List["g", 1.`]]]
 	,
-	TestID->"JavaRootToLeafPaths1"
+	TestID->"ARootToLeafPaths1"
 ]
 
 VerificationTest[(* 16 *)
@@ -234,5 +234,55 @@ VerificationTest[(* 22 *)
   ,
   TestID->"ATrieShrink2"
 ]
+
+
+VerificationTest[(* 23 *)
+  CompoundExpression[Set[words, List["bar", "bars", "balk", "car", "caress", "card", "cardan", "cardigan"]], Set[aTr3, ATrieCreateBySplit[words]], ATrieQ[aTr3]]
+  ,
+  True
+  ,
+  TestID->"TrieCreation3"
+]
+
+VerificationTest[(* 24 *)
+  Map[Function[ATrieContains[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
+  ,
+  List[False, False, True, True, False]
+  ,
+  TestID->"TrieContains1"
+]
+
+VerificationTest[(* 25 *)
+  Map[Function[ATrieHasCompleteMatchQ[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
+  ,
+  List[True, False, True, True, True]
+  ,
+  TestID->"TrieHasCompleteMatchQ"
+]
+
+VerificationTest[(* 26 *)
+  Map[Function[ATrieKeyExistsQ[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
+  ,
+  List[False, True, True, True, True]
+  ,
+  TestID->"TrieKeyExistsQ"
+]
+
+VerificationTest[(* 27 *)
+  Map[Depth, List[aTr, ATriePrune[aTr, 5]]]
+  ,
+  List[13, 8]
+  ,
+  TestID->"ATriePrune1"
+]
+
+VerificationTest[(* 28 *)
+  ATrieToListTrie[aTr]
+  ,
+  List[List[List[], 9], List[List["b", 9], List[List["a", 9], List[List["r", 9], List[List["k", 9], List[List["e", 6], List[List["e", 3], List[List["p", 3], List[List["e", 2], List[List["r", 2], List[List["s", 1]]]]]], List[List["d", 1]], List[List["r", 2], List[List["s", 1]]]], List[List["s", 1]], List[List["i", 1], List[List["n", 1], List[List["g", 1]]]]]]]]]
+  ,
+  TestID->"ATrieToListTrie1"
+]
+
 
 EndTestSection[]
