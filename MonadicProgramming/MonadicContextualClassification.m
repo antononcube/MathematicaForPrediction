@@ -176,6 +176,12 @@ If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ClassifierEnsembles.m"]
 ];
 
+(* Loaded in ClassifierEnsembles.m . *)
+(*If[Length[DownValues[ROCFunctions`ROCPlot]] == 0,
+  Echo["ROCFunctions.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
+];*)
+
 If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
   Echo["VariableImportanceByClassifiers.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
@@ -602,7 +608,8 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
 (************************************************************)
 (* This is done as a separate function because it is important to be able to extract and manipulate that data. *)
 (* Another reason is that there is no easy way of extracting that from the ClassifierMeasurements objects. *)
-(* Here we extract that data as "black box" wise. *)
+(* Here we extract that data in a "black box" manner. *)
+(* Meaning the classifier is repeatedly called over a test set. *)
 (* Note that there is an *Echo* version. This prompts as possible computation optimization. *)
 
 Options[ClConROCData] = { "ROCRange" -> Range[0,1,0.025], "TargetClasses" -> All };
@@ -612,7 +619,7 @@ ClConROCData[___][$ClConFailure] = $ClConFailure;
 (* (Of course) this implementation is very similar to ClConClassifierMeasurements. *)
 (* So, some proper refactoring has to be done. *)
 ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
-    Block[{ rocRange, targetClasses, cl},
+    Block[{ rocRange, targetClasses, cl, res},
 
       rocRange = OptionValue[ ClConROCData, "ROCRange"];
       If[ !( VectorQ[rocRange,NumberQ] && Apply[And, 0 <= # <= 1& /@ rocRange] ),
@@ -646,6 +653,80 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
 
       res = EnsembleClassifierROCData[ cl, ClConToNormalClassifierData[context["testData"]], rocRange, targetClasses];
       ClConUnit[ Association[res], context ]
+
+    ];
+
+
+(************************************************************)
+(* ClConROCPlot                                             *)
+(************************************************************)
+
+Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot] ];
+
+ClConROCPlot[___][$ClConFailure] = $ClConFailure;
+
+ClConROCPlot[opts:OptionsPattern[]][xs_,context_]:=
+    Block[{rocDataOpts, rocPlotOpts},
+
+      rocDataOpts =
+          With[{lhs = Alternatives @@ Options[ClConROCData][[All, 1]]},
+            Cases[{opts}, HoldPattern[Rule[lhs, _]]]
+          ];
+
+      rocPlotOpts =
+          With[{lhs = Alternatives @@ Options[ROCPlot][[All, 1]]},
+            Cases[{opts}, HoldPattern[Rule[lhs, _]]]
+          ];
+
+      Fold[ClConBind,
+        ClCon[xs,context],
+        {
+          ClConROCData[Sequence @@ rocDataOpts],
+
+          (ClCon[ROCPlot[#, Sequence @@ rocPlotOpts, "PlotJoined" -> True, GridLines -> Automatic, ImageSize -> Medium] & /@ #1, #2 ]&),
+
+          ClConEchoFunctionValue["ROC plot(s):", # &]
+        }
+      ]
+
+    ];
+
+(************************************************************)
+(* ClConROCLinePlot                                         *)
+(************************************************************)
+
+Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot] ];
+
+ClConROCListLinePlot[___][$ClConFailure] = $ClConFailure;
+
+ClConROCListLinePlot[rocFuncs:{_String..}, opts:OptionsPattern[]][xs_,context_]:=
+    Block[{rocDataOpts, linePlotOpts},
+
+      rocDataOpts =
+          With[{lhs = Alternatives @@ Options[ClConROCData][[All, 1]]},
+            Cases[{opts}, HoldPattern[Rule[lhs, _]]]
+          ];
+
+      linePlotOpts =
+          With[{lhs = Alternatives @@ Options[ListLinePlot][[All, 1]]},
+            Cases[{opts}, HoldPattern[Rule[lhs, _]]]
+          ];
+
+      Fold[ClConBind,
+        ClCon[xs,context],
+        {
+          ClConROCData[Sequence @@ rocDataOpts],
+
+          ClCon[
+            ListLinePlot[#, Sequence @@ linePlotOpts, PlotTheme -> "Detailed", ImageSize -> Medium] & /@
+              Function[{roc},
+                AssociationThread[rocFuncs,
+                  Map[Transpose[{Through[roc["ROCParameter"]], #}] &,
+                    N[Through[ROCFunctions[rocFuncs][roc]]]]]] /@ #1, #2 ]&,
+
+          ClConEchoFunctionValue["ROC line plot(s):", # &]
+        }
+      ]
 
     ];
 
