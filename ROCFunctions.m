@@ -263,24 +263,33 @@ ROCAssociationQ[ obj_ ] :=
         Length[Intersection[Keys[obj],{"TruePositive","FalsePositive","TrueNegative","FalseNegative"}]] == 4;
 
 TPR[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"])/(rocAssoc["TruePositive"] + rocAssoc["FalseNegative"]);
+TPR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[TPR, rocs];
 
 SPC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TrueNegative"])/(rocAssoc["FalsePositive"] + rocAssoc["TrueNegative"]);
+SPC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[SPC, rocs];
 
 PPV[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"])/(rocAssoc["TruePositive"] + rocAssoc["FalsePositive"]);
+PPV[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[PPV, rocs];
 
 NPV[rocAssoc_?ROCAssociationQ] := (rocAssoc["TrueNegative"])/(rocAssoc["TrueNegative"] + rocAssoc["FalseNegative"]);
+NPV[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[NPV, rocs];
 
 FPR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalsePositive"])/(rocAssoc["FalsePositive"] + rocAssoc["TrueNegative"]);
+FPR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FPR, rocs];
 
 FDR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalsePositive"])/(rocAssoc["FalsePositive"] + rocAssoc["TruePositive"]);
+FDR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FDR, rocs];
 
 FNR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalseNegative"])/(rocAssoc["FalseNegative"] + rocAssoc["TruePositive"]);
+FNR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FNR, rocs];
 
 ACC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"] + rocAssoc["TrueNegative"]) / Total[Values[rocAssoc]];
+ACC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[ACC, rocs];
 
 AUROC[pROCs:{_?ROCAssociationQ..}] :=
     Total[Partition[ Sort@Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}], 2, 1]
         /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)];
+AUROC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[AUROC, rocs];
 
 
 aROCAcronyms =
