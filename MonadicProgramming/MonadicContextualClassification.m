@@ -440,6 +440,7 @@ ClConTakeVariableNames[xs_, context_Association] :=
     Fold[ClConBind, ClConUnit[xs, context], {ClConGetVariableNames, ClConTakeValue}];
 
 
+ClearAll[ClConGetVariableNames];
 ClConGetVariableNames[][$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[][xs_, context_] := ClConGetVariableNames[xs, context];
@@ -466,6 +467,7 @@ ClConGetVariableNames[xs_, context_Association] :=
     ];
 
 
+ClearAll[ClConEchoVariableNames];
 ClConEchoVariableNames[$ClConFailure] := $ClConFailure;
 ClConEchoVariableNames[][$ClConFailure] := $ClConFailure;
 ClConEchoVariableNames[][xs_, context_] := ClConEchoVariableNames[xs, context];
@@ -480,6 +482,7 @@ ClConEchoVariableNames[xs_, context_Association] :=
 (************************************************************)
 (* ClConSummarizeData                                       *)
 (************************************************************)
+ClearAll[ClConSummarizeData, ClConSummarizeDataLongForm];
 
 Options[ClConSummarizeData] = {"Type" -> Automatic};
 
@@ -492,7 +495,7 @@ ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context]
 ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
     ClConSummarizeDataLongForm[DeleteCases[{opts},"Type"->_]][xs, context];
 
-Options[ClConSummarizeDataLongForm] = Options[MathematicaForPredictionUtilities`DataColumnsSummary];
+Options[ClConSummarizeDataLongForm] = Options[DataColumnsSummary];
 
 ClConSummarizeDataLongForm[$ClConFailure] := $ClConFailure;
 
@@ -548,6 +551,7 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 (* ClConMakeClassifier                                      *)
 (************************************************************)
+ClearAll[ClConMethodQ, ClConMethodListQ, ClConResamplingMethodListQ, ClConMethodSpecQ, ClConClassifierQ, ClConMakeClassifier];
 
 ClConMethodQ[x_] := StringQ[x]; (* And check is it known by Classify. *)
 
@@ -624,6 +628,7 @@ ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_,
 (************************************************************)
 (* ClConClassifierMeasurements                              *)
 (************************************************************)
+CleaAll[ClConClassifierMeasurements]
 
 Options[ClConClassifierMeasurements] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
@@ -686,6 +691,8 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
 (* Meaning the classifier is repeatedly called over a test set. *)
 (* Note that there is an *Echo* version. This prompts as possible computation optimization. *)
 
+ClearAll[ClConROCData]
+
 Options[ClConROCData] = { "ROCRange" -> Range[0,1,0.025], "TargetClasses" -> All };
 
 ClConROCData[$ClConFailure] := $ClConFailure;
@@ -740,7 +747,7 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
 (************************************************************)
 (* ClConROCPlot                                             *)
 (************************************************************)
-ClearAll[ClConROCPlot]
+ClearAll[ClConROCPlot];
 
 Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot] ];
 
@@ -796,7 +803,7 @@ ClConROCPlot[___][xs_,context_] := $ClConFailure;
 (************************************************************)
 (* ClConROCLinePlot                                         *)
 (************************************************************)
-ClearAll[ClConROCListLinePlot]
+ClearAll[ClConROCListLinePlot];
 
 Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot] ];
 
@@ -867,10 +874,15 @@ ClConROCListLinePlot[___][xs_,context_] :=
 (************************************************************)
 (* ClConAccuracyByVariableShuffling                         *)
 (************************************************************)
+ClearAll[ClConAccuracyByVariableShuffling];
 
 Options[ClConAccuracyByVariableShuffling] = { "Classes" -> None };
 
+ClConAccuracyByVariableShuffling[$ClConFailure] := $ClConFailure;
 ClConAccuracyByVariableShuffling[___][$ClConFailure] := $ClConFailure;
+
+ClConAccuracyByVariableShuffling[xs_, context_Association] :=
+    ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
 
 ClConAccuracyByVariableShuffling[][xs_, context_] :=
     ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
