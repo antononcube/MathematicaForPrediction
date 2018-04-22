@@ -740,13 +740,18 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
 (************************************************************)
 (* ClConROCPlot                                             *)
 (************************************************************)
+ClearAll[ClConROCPlot]
 
 Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot] ];
 
-ClConROCPlot[___][$ClConFailure] = $ClConFailure;
+ClConROCPlot[___][$ClConFailure] := $ClConFailure;
 
-ClConROCPlot[opts:OptionsPattern[]][xs_,context_]:=
-    Block[{rocDataOpts, rocPlotOpts},
+(*ClConROCPlot[][xs_,context_]:= ClConROCPlot[ "FPR", "TPR"][xs, context];*)
+
+ClConROCPlot[opts:OptionsPattern[]][xs_,context_]:= ClConROCPlot[ "FPR", "TPR", opts][xs, context];
+
+ClConROCPlot[ xFuncName_String, yFuncName_String, opts:OptionsPattern[]][xs_,context_]:=
+    Block[{rocFuncs = rocFuncsArg, rocDataOpts, rocPlotOpts, rocPlotFunc},
 
       rocDataOpts =
           With[{lhs = Alternatives @@ Options[ClConROCData][[All, 1]]},
@@ -758,29 +763,56 @@ ClConROCPlot[opts:OptionsPattern[]][xs_,context_]:=
             Cases[{opts}, HoldPattern[Rule[lhs, _]]]
           ];
 
-      Fold[ClConBind,
-        ClCon[xs,context],
-        {
-          ClConROCData[Sequence @@ rocDataOpts],
+      rocPlotFunc = ROCPlot[ xFuncName, yFuncName, #, Sequence @@ rocPlotOpts, "PlotJoined" -> True, GridLines -> Automatic, ImageSize -> Medium] &;
 
-          (ClCon[ROCPlot[#, Sequence @@ rocPlotOpts, "PlotJoined" -> True, GridLines -> Automatic, ImageSize -> Medium] & /@ #1, #2 ]&),
+      If[ KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0,
 
-          ClConEchoFunctionValue["ROC plot(s):", # &]
-        }
+        Fold[ClConBind,
+          ClCon[xs,context],
+          {
+            (ClCon[ rocPlotFunc /@ #2["rocData"], #2 ]&),
+
+            ClConEchoFunctionValue["ROC plot(s):", # &]
+          }
+        ],
+
+        (* ELSE *)
+        Fold[ClConBind,
+          ClCon[xs,context],
+          {
+            ClConROCData[Sequence @@ rocDataOpts],
+
+            (ClCon[ rocPlotFunc /@ #1, #2 ]&),
+
+            ClConEchoFunctionValue["ROC plot(s):", # &]
+          }
+        ]
       ]
-
     ];
+
+ClConROCPlot[___][xs_,context_] := $ClConFailure;
+
 
 (************************************************************)
 (* ClConROCLinePlot                                         *)
 (************************************************************)
+ClearAll[ClConROCListLinePlot]
 
 Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot] ];
 
-ClConROCListLinePlot[___][$ClConFailure] = $ClConFailure;
+ClConROCListLinePlot[$ClConFailure] := $ClConFailure;
 
-ClConROCListLinePlot[rocFuncs:{_String..}, opts:OptionsPattern[]][xs_,context_]:=
-    Block[{rocDataOpts, linePlotOpts},
+(*ClConROCListLinePlot[___] := $ClConFailure;*)
+
+ClConROCListLinePlot[___][$ClConFailure] := $ClConFailure;
+
+ClConROCListLinePlot[rocFuncs:{_String...}, opts:OptionsPattern[]][xs_,context_]:=
+    Block[{rocDataOpts, linePlotOpts, rocValsFunc, rocPlotFunc },
+
+      If[ Length[rocFuncs] == 0,
+        Echo["The first argument is expected to be a list of strings that are names of ROC functions.", "ClConROCListLinePlot::"];
+        Return[$ClConFailure]
+      ];
 
       rocDataOpts =
           With[{lhs = Alternatives @@ Options[ClConROCData][[All, 1]]},
@@ -792,22 +824,44 @@ ClConROCListLinePlot[rocFuncs:{_String..}, opts:OptionsPattern[]][xs_,context_]:
             Cases[{opts}, HoldPattern[Rule[lhs, _]]]
           ];
 
-      Fold[ClConBind,
-        ClCon[xs,context],
-        {
-          ClConROCData[Sequence @@ rocDataOpts],
+      rocValsFunc =
+          Function[{roc},
+            AssociationThread[rocFuncs,
+              Map[Transpose[{Through[roc["ROCParameter"]], #}] &,
+                N[Through[ROCFunctions[rocFuncs][roc]]]]]];
 
-          ClCon[
-            ListLinePlot[#, Sequence @@ linePlotOpts, PlotTheme -> "Detailed", ImageSize -> Medium] & /@
-              Function[{roc},
-                AssociationThread[rocFuncs,
-                  Map[Transpose[{Through[roc["ROCParameter"]], #}] &,
-                    N[Through[ROCFunctions[rocFuncs][roc]]]]]] /@ #1, #2 ]&,
+      rocPlotFunc = ListLinePlot[#, Sequence @@ linePlotOpts, PlotTheme -> "Detailed", ImageSize -> Medium] &;
 
-          ClConEchoFunctionValue["ROC line plot(s):", # &]
-        }
+      If[ KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0,
+
+        Fold[ClConBind,
+          ClCon[xs,context],
+          {
+            ClCon[ rocPlotFunc /@ rocValsFunc /@ #2["rocData"], #2 ]&,
+
+            ClConEchoFunctionValue["ROC line plot(s):", # &]
+          }
+        ],
+
+        (* ELSE *)
+        Fold[ClConBind,
+          ClCon[xs,context],
+          {
+            ClConROCData[Sequence @@ rocDataOpts],
+
+            ClCon[ rocPlotFunc /@ rocValsFunc /@ #1, #2 ]&,
+
+            ClConEchoFunctionValue["ROC line plot(s):", # &]
+          }
+        ]
       ]
 
+    ];
+
+ClConROCListLinePlot[___][xs_,context_] :=
+    Block[{},
+      Echo["The first argument is expected to be a list of strings that are names of ROC functions.", "ClConROCListLinePlot::"];
+      $ClConFailure
     ];
 
 (************************************************************)
@@ -861,6 +915,14 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+
+(********************************************************************************************************************)
+(* Experimental functions                                                                                           *)
+(********************************************************************************************************************)
+(*
+   Note that at this point the functions below are not exposed to the outside world --
+   there are no '::usage' declarations for them.
+*)
 
 (************************************************************)
 (* ClConToLinearVectorSpaceRepresentation                   *)
