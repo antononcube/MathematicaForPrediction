@@ -365,6 +365,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
       MStateFail[__] := MStateFailureSymbol;
+      MStateFail[][__] := MStateFailureSymbol;
 
       MStateSucceed[][__] := MState[{}];
       MStateSucceed[s_][__] := MState[s];
@@ -422,11 +423,17 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoValue[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoValue[x_, context_Association] := (Echo[x,"value:"]; MState[x, context]);
 
+      MStateEchoValue[][MStateFailureSymbol] := MStateEchoValue[MStateFailureSymbol];
+      MStateEchoValue[][x_, context_Association] := MStateEchoValue[x, context];
+
       MStateEchoFunctionValue[f___][MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoFunctionValue[f___][x_, context_Association] := (EchoFunction[f][x]; MState[x, context]);
 
       MStateEchoContext[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoContext[x_, context_Association] := (Echo[context,"context:"]; MState[x, context]);
+
+      MStateEchoContext[][MStateFailureSymbol] := MStateEchoContext[MStateFailureSymbol];
+      MStateEchoContext[][x_, context_Association] := MStateEchoContext[x, context];
 
       MStateEchoFunctionContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateEchoFunctionContext[f___][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
@@ -434,10 +441,16 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateTakeValue[MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeValue[x_, context_] := x;
 
+      MStateTakeValue[][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTakeValue[][x_, context_] := x;
+
       MStateTakeContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeContext[x_, context_] := context;
 
-      MStatePutContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTakeContext[][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTakeContext[][x_, context_] := context;
+
+      MStatePutContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutContext[newContext_Association][x_, context_Association] := MState[x, newContext];
       If[TrueQ[OptionValue["StringContextNames"]],
         MStatePutContext[newContext_String][x_, context_Association] :=
@@ -455,10 +468,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateAddToContext[varName_String][x_, context_Association] := MState[x, Join[context, <|varName->x|>]];
       MStateAddToContext[][x_Association, context_Association] := MState[{}, Join[context, x]];
 
-      MStateRetrieveFromContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateRetrieveFromContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateRetrieveFromContext[varName_String][x_, context_Association] := MState[context[varName], context];
 
-      MStateDropFromContext[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateDropFromContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateDropFromContext[varNames:(_String|{_String..})][x_, context_Association] := MState[x, KeyDrop[context, varNames]];
 
       MStateOption[f_][MStateFailureSymbol] := MStateFailureSymbol;
