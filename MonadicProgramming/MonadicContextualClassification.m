@@ -131,29 +131,62 @@
      4. Give examples of tracking symbols.
 *)
 
-(*BeginPackage["MonadicContextualClassification`"]*)
+BeginPackage["MonadicContextualClassification`"]
 
-(*ClConSplitData::usage = "ClConSplitData[fr_?NumberQ]";*)
+$ClConFailure::usage = "Failure symbol for the monad ClCon."
 
-(*ClConRecoverData::usage = "ClConRecoverData";*)
+ClConSplitData::usage = "ClConSplitData[fr_?NumberQ] splits the pipeline value into training and test parts. "
 
-(*ClConMakeClassifier::usage = "ClConMakeClassifier[methodSpec_?MethodSpecQ]";*)
+ClConRecoverData::usage = "ClConRecoverData joins split data from context or the current pipeline value into the pipeline value. \
+The Association values of \"trainingData\", \"testData\", \"validationData\" are combined/joined into one."
 
-(*ClConClassifierMeasurements::usage = "ClConClassifierMeasurements[measures : (_String | {_String ..})]";*)
+ClConMakeClassifier::usage = "ClConMakeClassifier[methodSpec_?MethodSpecQ] makes a classifier with the specified method \
+Using Association values of \"trainingData\", \"testData\", \"validationData\". \
+The obtained classifier object is put as the result pipeline value; also in the context under the key \"classifier\". \
+The Association values of \"trainingData\", \"testData\", \"validationData\" are put in the context too, if taken from \
+the current pipeline value. "
 
-(*ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]]";*)
+ClConClassifierMeasurements::usage = "ClConClassifierMeasurements[measures : (_String | {_String ..})] \
+computes the specified measurements for the classifier in the context. (Does not modify the context.)"
 
-(*ClConTakeData::usage = "ClConTakeData";*)
+ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]] computes \
+the variable importance. (Does not modify the context.)"
 
-(*ClConTakeVariableNames::usage = "ClConTakeVariableNames";*)
+ClConTakeData::usage = "Recovers the data and gives it as a non-monadic value."
 
-(*ClConTakeClassifier::usage = "ClConTakeClassifier";*)
+ClConTakeVariableNames::usage = "ClConTakeVariableNames"
 
-(*ClConSummarizeData::usage = "ClConSummarizeData";*)
+ClConTakeClassifier::usage = "Gives the classifier as non-monadic value."
 
-(*ClConSummarizeDataLongForm::usage = "ClConSummarizeDataLongForm";*)
+ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context."
 
-(*Begin["`Private`"]*)
+ClConSummarizeDataLongForm::usage = "Summarizes the data in long form. Does not modify the context."
+
+ClConToNormalClassifierData::usage = "Non-monadic function. Converts data of different forms into record-label rules. \
+I.e. in the form { (rec:{___}->lbl_)..} ."
+
+ClConSetTrainingData::usage = "Sets the training data in the context. Does not change the pipline value."
+
+ClConSetTestData::usage = "Sets the test data in the context. Does not change the pipeline value."
+
+ClConSetValidationData::usage = "Sets the validation data in the context. Does not change the pipeline value."
+
+ClConSetClassifier::usage = "Sets the classifier in the context. Does not change the pipeline value."
+
+ClConTakeVariableNames::usage = "Finds the variable names and returns them as a non-monadic value."
+
+ClConGetVariableNames::usage = "Finds the variable names and puts them as the pipeline value. Does not modify the context."
+
+ClConEchoVariableNames::usage = "Finds and echoes the variable names. Does not modify the context."
+
+ClConROCData::usage = "Computes the ROC data using the classifier and test data in the context. \
+The obtained ROC data is put as the result pipeline value; also in the context under the key \"rocData\"."
+
+ClConROCPlot::usage = "Makes a ROC plot and echoes it. The result pipeline value is the plot."
+
+ClConROCListLinePlot::usage = "Makes ListLinePlot over specified ROC functions and echoes it. The result pipeline value is the plot."
+
+Begin["`Private`"]
 
 
 If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
@@ -197,9 +230,13 @@ If[Length[DownValues[SSparseMatrix`SSparseMatrixToTriplets]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
 ];
 
-
-(*Needs["StateMonadCodeGenerator`"]*)
-(*Needs["VariableImportanceByClassifiers`"]*)
+Needs["MathematicaForPredictionUtilities`"]
+Needs["StateMonadCodeGenerator`"]
+Needs["ClassifierEnsembles`"]
+Needs["ROCFunctions`"]
+Needs["VariableImportanceByClassifiers`"]
+Needs["CrossTabulate`"]
+Needs["SSparseMatrix`"]
 
 (* The definitions are made to have a prefix "ClCon" . *)
 
@@ -209,7 +246,7 @@ If[Length[DownValues[SSparseMatrix`SSparseMatrixToTriplets]] == 0,
 
 (* Generate base functions of ClCon monad (ClassifierWithContext) *)
 
-GenerateStateMonadCode["ClCon","FailureSymbol" -> $ClConFailure]
+GenerateStateMonadCode["MonadicContextualClassification`ClCon", "FailureSymbol" -> $ClConFailure]
 
 (**************************************************************)
 (* Infix operators                                            *)
@@ -227,6 +264,8 @@ ClearAll[ClConToNormalClassifierData]
 Options[ClConToNormalClassifierData] = {"DeleteMissing"->True, "ClassLabelColumn" -> Automatic };
 
 (* Here we use MathematicaForPredictionUtilities`DataRulesForClassifyQ *)
+
+ClConToNormalClassifierData[___] := $ClConFailure;
 
 ClConToNormalClassifierData[ {}, opts:OptionsPattern[] ] := {};
 
@@ -270,13 +309,14 @@ ClConToNormalClassifierData[ data_?ArrayQ, opts:OptionsPattern[] ] :=
 
 
 (**************************************************************)
-(* Monad specific functions                                   *)
+(* Data splitting and recovery functions                      *)
 (**************************************************************)
 
 (* This function does not respect specified label column yet. *)
 Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
 
 ClConSplitData[_][$ClConFailure] := $ClConFailure
+
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t, trainingData, testData},
 
@@ -302,9 +342,18 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
 
 
 ClConRecoverData[$ClConFailure] := $ClConFailure;
+
+ClConRecoverData[][xs_, context_Association] := ClConRecoverData[xs, context];
+
 ClConRecoverData[xs_, context_Association] :=
     Block[{},
       Which[
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"] && KeyExistsQ[xs, "validationData"],
+        ClCon[Join[xs["trainingData"], xs["testData"], xs["validationData"]], context],
+
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"] && KeyExistsQ[context, "validationData"],
+        ClCon[Join[context["trainingData"], context["testData"], context["validationData"]], context],
+
         MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
         ClCon[Join[xs["trainingData"], xs["testData"]], context],
 
@@ -317,6 +366,10 @@ ClConRecoverData[xs_, context_Association] :=
       ]
     ];
 
+
+(**************************************************************)
+(* Setters / getters                                          *)
+(**************************************************************)
 
 ClConSetTrainingData[$ClConFailure] := $ClConFailure;
 ClConSetTrainingData[data_][xs_, context_Association] :=
@@ -338,12 +391,16 @@ ClConSetClassifier[cl_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "classifier" -> cl |> ] ];
 
 
+ClConTakeData[][$ClConFailure] := $ClConFailure;
 ClConTakeData[$ClConFailure] := $ClConFailure;
+ClConTakeData[][xs_, context_] := ClConTakeData[xs, context];
 ClConTakeData[xs_, context_] :=
     Fold[ ClConBind, ClConUnit[xs, context], {ClConRecoverData, ClConTakeValue}];
 
 
+ClConTakeClassifier[][$ClConFailure] := $ClConFailure;
 ClConTakeClassifier[$ClConFailure] := $ClConFailure;
+ClConTakeClassifier[][xs_, context_] := ClConTakeClassifier[xs, context];
 ClConTakeClassifier[xs_, context_Association] := context["classifier"];
 
 
@@ -376,12 +433,16 @@ ClConTakeClassLabelIndex[classLabel_][xs_, context_Association] :=
     ];
 
 
+ClConTakeVariableNames[][$ClConFailure] := $ClConFailure;
 ClConTakeVariableNames[$ClConFailure] := $ClConFailure;
+ClConTakeVariableNames[][xs_, context_] := ClConTakeVariableNames[xs, context];
 ClConTakeVariableNames[xs_, context_Association] :=
     Fold[ClConBind, ClConUnit[xs, context], {ClConGetVariableNames, ClConTakeValue}];
 
 
+ClConGetVariableNames[][$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[$ClConFailure] := $ClConFailure;
+ClConGetVariableNames[][xs_, context_] := ClConGetVariableNames[xs, context];
 ClConGetVariableNames[xs_, context_Association] :=
     Block[{},
       Which[
@@ -406,6 +467,8 @@ ClConGetVariableNames[xs_, context_Association] :=
 
 
 ClConEchoVariableNames[$ClConFailure] := $ClConFailure;
+ClConEchoVariableNames[][$ClConFailure] := $ClConFailure;
+ClConEchoVariableNames[][xs_, context_] := ClConEchoVariableNames[xs, context];
 ClConEchoVariableNames[xs_, context_Association] :=
     Block[{t},
       t = Fold[ ClConBind, ClConUnit[xs,context], {ClConGetVariableNames, ClConTakeValue}];
@@ -420,14 +483,22 @@ ClConEchoVariableNames[xs_, context_Association] :=
 
 Options[ClConSummarizeData] = {"Type" -> Automatic};
 
+ClConSummarizeData[$ClConFailure] := $ClConFailure;
+
 ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
+
+ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context];
 
 ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
     ClConSummarizeDataLongForm[DeleteCases[{opts},"Type"->_]][xs, context];
 
 Options[ClConSummarizeDataLongForm] = Options[MathematicaForPredictionUtilities`DataColumnsSummary];
 
+ClConSummarizeDataLongForm[$ClConFailure] := $ClConFailure;
+
 ClConSummarizeDataLongForm[___][$ClConFailure] := $ClConFailure;
+
+ClConSummarizeDataLongForm[xs_, context_Association] := ClConSummarizeDataLongForm[][xs,context];
 
 ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
     Block[{varNames, ctData, data, sMat, dataLongForm, res},
@@ -439,11 +510,14 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
         MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
         ctData = xs,
 
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
+        ctData = KeyTake[context, {"trainingData", "testData", "validationData"}],
+
         True,
-        ctData = KeyTake[context, {"trainingData", "testData", "validationData"}]
+        ctData = {}
       ];
 
-      If[ And @@ Map[ Length[#]==0 &, ctData],
+      If[ Length[ctData] == 0 || And @@ Map[ Length[#]==0 &, ctData],
         Echo["Cannot find data in the context.", "ClConSummarizeDataLongForm:"];
         $ClConFailure
       ];
@@ -614,7 +688,11 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
 
 Options[ClConROCData] = { "ROCRange" -> Range[0,1,0.025], "TargetClasses" -> All };
 
+ClConROCData[$ClConFailure] := $ClConFailure;
+
 ClConROCData[___][$ClConFailure] = $ClConFailure;
+
+ClConROCData[xs_, context_Association] := ClConROCData[][xs, context];
 
 (* (Of course) this implementation is very similar to ClConClassifierMeasurements. *)
 (* So, some proper refactoring has to be done. *)
@@ -652,7 +730,9 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
       ];
 
       res = EnsembleClassifierROCData[ cl, ClConToNormalClassifierData[context["testData"]], rocRange, targetClasses];
-      ClConUnit[ Association[res], context ]
+      res = Association[res];
+
+      ClConUnit[ res, Join[context, <|"rocData"->res|>] ]
 
     ];
 
@@ -1040,6 +1120,6 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
       ClConUnit[res, context]
     ];
 
-(*End[]  *`Private`*)
+End[]  (*`Private`*)
 
-(*EndPackage[]*)
+EndPackage[]
