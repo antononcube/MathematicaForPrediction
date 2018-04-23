@@ -785,7 +785,7 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
 (************************************************************)
 ClearAll[ClConROCPlot];
 
-Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot] ];
+Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot], {"Echo"->True} ];
 
 ClConROCPlot[___][$ClConFailure] := $ClConFailure;
 
@@ -794,7 +794,9 @@ ClConROCPlot[___][$ClConFailure] := $ClConFailure;
 ClConROCPlot[opts:OptionsPattern[]][xs_,context_]:= ClConROCPlot[ "FPR", "TPR", opts][xs, context];
 
 ClConROCPlot[ xFuncName_String, yFuncName_String, opts:OptionsPattern[]][xs_,context_]:=
-    Block[{rocFuncs = rocFuncsArg, rocDataOpts, rocPlotOpts, rocPlotFunc},
+    Block[{rocFuncs = rocFuncsArg, rocDataOpts, rocPlotOpts, rocPlotFunc, echoQ},
+
+      echoQ = TrueQ[OptionValue[ClConROCPlot, "Echo"]];
 
       rocDataOpts =
           With[{lhs = Alternatives @@ Options[ClConROCData][[All, 1]]},
@@ -808,27 +810,26 @@ ClConROCPlot[ xFuncName_String, yFuncName_String, opts:OptionsPattern[]][xs_,con
 
       rocPlotFunc = ROCPlot[ xFuncName, yFuncName, #, Sequence @@ rocPlotOpts, "PlotJoined" -> True, GridLines -> Automatic, ImageSize -> Medium] &;
 
-      If[ KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0,
+      Which[
+        KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0 && !echoQ,
+        ClConBind[ ClCon[xs,context], (ClCon[ rocPlotFunc /@ #2["rocData"], #2 ]&) ],
 
+        KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0 && echoQ,
         Fold[ClConBind,
           ClCon[xs,context],
-          {
-            (ClCon[ rocPlotFunc /@ #2["rocData"], #2 ]&),
-
-            ClConEchoFunctionValue["ROC plot(s):", # &]
-          }
+          { (ClCon[ rocPlotFunc /@ #2["rocData"], #2 ]&), ClConEchoFunctionValue["ROC plot(s):", # &] }
         ],
 
-        (* ELSE *)
+        !echoQ,
         Fold[ClConBind,
           ClCon[xs,context],
-          {
-            ClConROCData[Sequence @@ rocDataOpts],
+          { ClConROCData[Sequence @@ rocDataOpts], (ClCon[ rocPlotFunc /@ #1, #2 ]&) }
+        ],
 
-            (ClCon[ rocPlotFunc /@ #1, #2 ]&),
-
-            ClConEchoFunctionValue["ROC plot(s):", # &]
-          }
+        True, (* echoQ *)
+        Fold[ClConBind,
+          ClCon[xs,context],
+          { ClConROCData[Sequence @@ rocDataOpts], (ClCon[ rocPlotFunc /@ #1, #2 ]&), ClConEchoFunctionValue["ROC plot(s):", # &] }
         ]
       ]
     ];
@@ -841,7 +842,7 @@ ClConROCPlot[___][xs_,context_] := $ClConFailure;
 (************************************************************)
 ClearAll[ClConROCListLinePlot];
 
-Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot] ];
+Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot], {"Echo"->True} ];
 
 ClConROCListLinePlot[$ClConFailure] := $ClConFailure;
 
@@ -850,12 +851,14 @@ ClConROCListLinePlot[$ClConFailure] := $ClConFailure;
 ClConROCListLinePlot[___][$ClConFailure] := $ClConFailure;
 
 ClConROCListLinePlot[rocFuncs:{_String...}, opts:OptionsPattern[]][xs_,context_]:=
-    Block[{rocDataOpts, linePlotOpts, rocValsFunc, rocPlotFunc },
+    Block[{rocDataOpts, linePlotOpts, rocValsFunc, rocPlotFunc, echoQ },
 
       If[ Length[rocFuncs] == 0,
         Echo["The first argument is expected to be a list of strings that are names of ROC functions.", "ClConROCListLinePlot::"];
         Return[$ClConFailure]
       ];
+
+      echoQ = TrueQ[OptionValue[ClConROCListLinePlot, "Echo"]];
 
       rocDataOpts =
           With[{lhs = Alternatives @@ Options[ClConROCData][[All, 1]]},
@@ -875,27 +878,27 @@ ClConROCListLinePlot[rocFuncs:{_String...}, opts:OptionsPattern[]][xs_,context_]
 
       rocPlotFunc = ListLinePlot[#, Sequence @@ linePlotOpts, PlotTheme -> "Detailed", ImageSize -> Medium] &;
 
-      If[ KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0,
+      Which[
 
+        KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0 && !echoQ,
+        ClConBind[ ClCon[xs,context], ClCon[ rocPlotFunc /@ rocValsFunc /@ #2["rocData"], #2 ]& ],
+
+        KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0 && echoQ,
         Fold[ClConBind,
           ClCon[xs,context],
-          {
-            ClCon[ rocPlotFunc /@ rocValsFunc /@ #2["rocData"], #2 ]&,
-
-            ClConEchoFunctionValue["ROC line plot(s):", # &]
-          }
+          { ClCon[ rocPlotFunc /@ rocValsFunc /@ #2["rocData"], #2 ]&, ClConEchoFunctionValue["ROC line plot(s):", # &] }
         ],
 
-        (* ELSE *)
+        !echoQ,
         Fold[ClConBind,
           ClCon[xs,context],
-          {
-            ClConROCData[Sequence @@ rocDataOpts],
+          { ClConROCData[Sequence @@ rocDataOpts], ClCon[ rocPlotFunc /@ rocValsFunc /@ #1, #2 ]& }
+        ],
 
-            ClCon[ rocPlotFunc /@ rocValsFunc /@ #1, #2 ]&,
-
-            ClConEchoFunctionValue["ROC line plot(s):", # &]
-          }
+        True, (*echoQ*)
+        Fold[ClConBind,
+          ClCon[xs,context],
+          { ClConROCData[Sequence @@ rocDataOpts], ClCon[ rocPlotFunc /@ rocValsFunc /@ #1, #2 ]&, ClConEchoFunctionValue["ROC line plot(s):", # &] }
         ]
       ]
 
