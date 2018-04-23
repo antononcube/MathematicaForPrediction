@@ -158,9 +158,11 @@ ClConTakeVariableNames::usage = "ClConTakeVariableNames"
 
 ClConTakeClassifier::usage = "Gives the classifier as non-monadic value."
 
-ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context."
+ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context. \
+Echoes the result with the default option values."
 
-ClConSummarizeDataLongForm::usage = "Summarizes the data in long form. Does not modify the context."
+ClConSummarizeDataLongForm::usage = "Summarizes the data in long form. Does not modify the context. \
+Does not echo the result."
 
 ClConToNormalClassifierData::usage = "Non-monadic function. Converts data of different forms into record-label rules. \
 I.e. in the form { (rec:{___}->lbl_)..} ."
@@ -503,7 +505,7 @@ GetData[xs_, context_] :=
 
 ClearAll[ClConSummarizeData, ClConSummarizeDataLongForm];
 
-Options[ClConSummarizeData] = {"Type" -> Automatic};
+Options[ClConSummarizeData] = Join[ {"Type" -> Automatic, "Echo"->True }, Options[DataColumnsSummary]];
 
 ClConSummarizeData[$ClConFailure] := $ClConFailure;
 
@@ -512,24 +514,31 @@ ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
 ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context];
 
 ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{ctData=GetData[xs,context], res},
+    Block[{ctData=GetData[xs,context], res, rsOpts},
+
+      rsOpts = DeleteCases[{opts},("Type"->_)|("Echo"->_)];
 
       If[ Length[ctData] == 0 || And @@ Map[ Length[#]==0 &, ctData],
         Echo["Cannot find data in the context.", "ClConSummarizeData:"];
         Return[$ClConFailure]
       ];
 
-      If[ Length[Dimensions[ctData[[1]]]] > 1 && Dimensions[ctData[[1]]][[2]] < 9,
-        (*ctData = ClConToNormalClassifierData /@ ctData;*)
-        (*res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;*)
-        res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;
-        ClConBind[ ClConUnit[ Normal@res, context], ClConEchoValue ],
-        (* ELSE *)
-        ClConSummarizeDataLongForm[DeleteCases[{opts},"Type"->_]][xs, context]
+      If[ TrueQ[OptionValue["Type"] === Automatic] && Length[Dimensions[ctData[[1]]]] > 1 && Dimensions[ctData[[1]]][[2]] < 9 ||
+          TrueQ[OptionValue["Type"] != "LongForm"],
+      (*ctData = ClConToNormalClassifierData /@ ctData;*)
+      (*res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;*)
+        res = RecordsSummary[#, rsOpts, Thread->True]& /@ ctData;
+        If[ TrueQ[OptionValue["Echo"]],
+          ClConBind[ ClConUnit[ Normal@res, context], ClConEchoFunctionValue["summaries:", Identity] ],
+          ClConUnit[ Normal@res, context]
+        ],
+      (* ELSE *)
+        ClConSummarizeDataLongForm[rsOpts][xs, context]
       ]
+
     ];
 
-Options[ClConSummarizeDataLongForm] = Options[DataColumnsSummary];
+Options[ClConSummarizeDataLongForm] = Join[ {"Echo"->True}, Options[DataColumnsSummary]];
 
 ClConSummarizeDataLongForm[$ClConFailure] := $ClConFailure;
 
@@ -538,7 +547,9 @@ ClConSummarizeDataLongForm[___][$ClConFailure] := $ClConFailure;
 ClConSummarizeDataLongForm[xs_, context_Association] := ClConSummarizeDataLongForm[][xs,context];
 
 ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{varNames, ctData, data, sMat, dataLongForm, res},
+    Block[{rsOpts, varNames, ctData, data, sMat, dataLongForm, res},
+
+      rsOpts = DeleteCases[{opts},("Type"->_)|("Echo"->_)];
 
       ctData = GetData[xs, context];
 
@@ -561,11 +572,14 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
                 "RowNames" -> ToString /@ Range[Length[data]]];
 
               dataLongForm = SSparseMatrixToTriplets[sMat];
-              RecordsSummary[dataLongForm, {"RowID", "Variable", "Value"}, opts]
+              RecordsSummary[dataLongForm, {"RowID", "Variable", "Value"}, rsOpts]
             ]
           ] /@ ctData;
 
-      ClConBind[ ClConUnit[ Normal@res, context], ClConEchoValue ]
+      If[ TrueQ[OptionValue["Echo"]],
+        ClConBind[ ClConUnit[ Normal@res, context], ClConEchoFunctionValue["summaries:", Identity] ],
+        ClConUnit[ Normal@res, context]
+      ]
     ];
 
 
