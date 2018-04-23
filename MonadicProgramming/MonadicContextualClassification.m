@@ -482,30 +482,10 @@ ClConEchoVariableNames[xs_, context_Association] :=
 (************************************************************)
 (* ClConSummarizeData                                       *)
 (************************************************************)
-ClearAll[ClConSummarizeData, ClConSummarizeDataLongForm];
 
-Options[ClConSummarizeData] = {"Type" -> Automatic};
-
-ClConSummarizeData[$ClConFailure] := $ClConFailure;
-
-ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
-
-ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context];
-
-ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
-    ClConSummarizeDataLongForm[DeleteCases[{opts},"Type"->_]][xs, context];
-
-Options[ClConSummarizeDataLongForm] = Options[DataColumnsSummary];
-
-ClConSummarizeDataLongForm[$ClConFailure] := $ClConFailure;
-
-ClConSummarizeDataLongForm[___][$ClConFailure] := $ClConFailure;
-
-ClConSummarizeDataLongForm[xs_, context_Association] := ClConSummarizeDataLongForm[][xs,context];
-
-ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{varNames, ctData, data, sMat, dataLongForm, res},
-
+Clear[GetData]
+GetData[xs_, context_] :=
+    Block[{},
       Which[
         Head[xs] === Dataset || DataRulesForClassifyQ[xs],
         ctData = <|Anonymous->xs|>,
@@ -518,11 +498,53 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
 
         True,
         ctData = {}
+      ]
+    ];
+
+ClearAll[ClConSummarizeData, ClConSummarizeDataLongForm];
+
+Options[ClConSummarizeData] = {"Type" -> Automatic};
+
+ClConSummarizeData[$ClConFailure] := $ClConFailure;
+
+ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
+
+ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context];
+
+ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{ctData=GetData[xs,context], res},
+
+      If[ Length[ctData] == 0 || And @@ Map[ Length[#]==0 &, ctData],
+        Echo["Cannot find data in the context.", "ClConSummarizeData:"];
+        Return[$ClConFailure]
       ];
+
+      If[ Length[Dimensions[ctData[[1]]]] > 1 && Dimensions[ctData[[1]]][[2]] < 9,
+        (*ctData = ClConToNormalClassifierData /@ ctData;*)
+        (*res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;*)
+        res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;
+        ClConBind[ ClConUnit[ Normal@res, context], ClConEchoValue ],
+        (* ELSE *)
+        ClConSummarizeDataLongForm[DeleteCases[{opts},"Type"->_]][xs, context]
+      ]
+    ];
+
+Options[ClConSummarizeDataLongForm] = Options[DataColumnsSummary];
+
+ClConSummarizeDataLongForm[$ClConFailure] := $ClConFailure;
+
+ClConSummarizeDataLongForm[___][$ClConFailure] := $ClConFailure;
+
+ClConSummarizeDataLongForm[xs_, context_Association] := ClConSummarizeDataLongForm[][xs,context];
+
+ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{varNames, ctData, data, sMat, dataLongForm, res},
+
+      ctData = GetData[xs, context];
 
       If[ Length[ctData] == 0 || And @@ Map[ Length[#]==0 &, ctData],
         Echo["Cannot find data in the context.", "ClConSummarizeDataLongForm:"];
-        $ClConFailure
+        Return[$ClConFailure]
       ];
 
       varNames = ClConBind[ ClConUnit[xs,context], ClConTakeVariableNames ];
@@ -543,7 +565,7 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
             ]
           ] /@ ctData;
 
-      ClConUnit[ Normal@res, context]
+      ClConBind[ ClConUnit[ Normal@res, context], ClConEchoValue ]
     ];
 
 
