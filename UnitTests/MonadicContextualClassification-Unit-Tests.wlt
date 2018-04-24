@@ -41,6 +41,9 @@
 (* :Keywords: monad, monadic, classification, workflow, State monad, Mathematica, Wolfram Language, unit test *)
 (* :Discussion:
 
+   This file has units tests for the package
+
+     https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m
 
 *)
 
@@ -185,6 +188,123 @@ VerificationTest[(* 9 *)
   TestID->"ROCData-1"
 ]
 
-EndTestSection[]
+
+VerificationTest[(* 10 *)
+  CompoundExpression[
+    SeedRandom[456],
+    Set[resEnsembleDiffMethods,
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[0.7`],
+        ClConMakeClassifier[List["NearestNeighbors", "LogisticRegression", "SupportVectorMachine"]],
+        ClConClassifierMeasurements[List["Accuracy", "Precision", "Recall"]]]
+    ],
+    Greater[DoubleLongRightArrow[resEnsembleDiffMethods, ClConTakeValue]["Accuracy"], 0.75`]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-different-methods-1"
+]
+
+VerificationTest[(* 11 *)
+  CompoundExpression[
+    Set[res,
+      DoubleLongRightArrow[
+        resEnsembleDiffMethods,
+        ClConAccuracyByVariableShuffling,
+        ClConTakeValue]
+    ],
+    And[AssociationQ[res], Equal[Sort[Keys[res]], Sort[Prepend[DeleteCases[Normal[Keys[data[1]]], "label"], None]]]]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-different-methods-2-cont"
+]
+
+VerificationTest[(* 12 *)
+  CompoundExpression[
+    Set[res,
+      DoubleLongRightArrow[
+        resEnsembleDiffMethods,
+        ClConROCData,
+        ClConTakeValue]
+    ],
+    MatchQ[res, Association[Rule[False, List[Repeated[Blank[Association]]]], Rule[True, List[Repeated[Blank[Association]]]]]]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-different-methods-3-cont"
+]
+
+
+VerificationTest[(* 13 *)
+  CompoundExpression[
+    SeedRandom[363],
+    Set[resEnsembleOfOneMethod,
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[0.7`],
+        ClConMakeClassifier[List["NearestNeighbors", 0.9`, 6]], ClConClassifierMeasurements[List["Accuracy", "Precision", "Recall"]]]
+    ],
+    Greater[DoubleLongRightArrow[resEnsembleOfOneMethod, ClConTakeValue]["Accuracy"], 0.7`]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-one-method-1"
+]
+
+VerificationTest[(* 14 *)
+  CompoundExpression[
+    SeedRandom[363],
+    Set[resEnsembleOfOneMethod,
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[0.7`],
+        ClConMakeClassifier[Association[Rule["method", "NearestNeighbors"], Rule["sampleFraction", 0.95`], Rule["nClassifiers", 12], Rule["samplingFunction", RandomChoice]]],
+        ClConClassifierMeasurements[List["Accuracy", "Precision", "Recall"]]]
+    ],
+    Greater[DoubleLongRightArrow[resEnsembleOfOneMethod, ClConTakeValue]["Accuracy"], 0.75`]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-one-method-2"
+]
+
+VerificationTest[(* 15 *)
+  CompoundExpression[
+    Set[res,
+      DoubleLongRightArrow[
+        resEnsembleOfOneMethod,
+        ClConAccuracyByVariableShuffling,
+        ClConTakeValue]
+    ],
+    And[AssociationQ[res], Equal[Sort[Keys[res]], Sort[Prepend[DeleteCases[Normal[Keys[data[1]]], "label"], None]]]]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-one-method-3-cont"
+]
+
+VerificationTest[(* 16 *)
+  CompoundExpression[
+    Set[res,
+      DoubleLongRightArrow[
+        resEnsembleOfOneMethod,
+        ClConROCData,
+        ClConTakeValue]
+    ],
+    MatchQ[res, Association[Rule[False, List[Repeated[Blank[Association]]]], Rule[True, List[Repeated[Blank[Association]]]]]]
+  ]
+  ,
+  True
+  ,
+  TestID->"ClassifierEnsemble-one-method-4-cont"
+]
 
 EndTestSection[]
