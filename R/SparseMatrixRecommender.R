@@ -492,6 +492,11 @@ SMRProfileVector <- function( smr, itemHistory ) {
 #' @param smr a sparse matrix recommendation object
 #' @param itemHistory a data frame with item history with column names c("Rating", "Item")
 SMRProfileDF <- function( smr, itemHistory ) {
+  if( sum( colnames(itemHistory) %in% c("Rating", "Item") ) == 2 ) {
+    itemHistory <- itemHistory[, c("Rating", "Item")]
+  } else if ( sum( colnames(itemHistory) %in% c("Rating", smr$ItemColumnName ) ) == 2) {
+    itemHistory <- itemHistory[, c("Rating", smr$ItemColumnName )]
+  }
   pvec <- SMRProfileVector( smr, itemHistory )
   pvecInds <- which( pvec > 0 )
   pvecScores <- pvec[ pvecInds ]
@@ -593,8 +598,10 @@ SMRTagType <- function( smr, tag ) {
   if ( is.numeric(tag) || is.integer(tag) ) {
     tagInd <- tag
   } else {
-    if ( tag %in% colnames(smr$M) ) {
-      tagInd <- which( colnames(smr$M)==tag )
+    if ( mean( tag %in% colnames(smr$M) ) == 1 ) {
+      ## tagInd <- which( colnames(smr$M) == tag ) does not work when tag is a vector
+      ## tagInd <- which( colnames(smr$M) %in% tag ) this would break the order
+      tagInd <- pmatch( tag, colnames(smr$M) )
     } else if ( tag %in% rownames(smr$M) ) {
       return(smr$ItemColumnName)
     } else {
