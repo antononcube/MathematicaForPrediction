@@ -817,7 +817,7 @@ ClConClassifierMeasurementsByThreshold[measures : (_String | {_String ..}), clas
         KeyExistsQ[context, "classifier"] && TrueQ[ Head[ context["classifier"] ] === ClassifierFunction ],
         aCl = <|ClassifierInformation[context["classifier"], Method] -> context["classifier"] |>;
         ClConBind[
-          ClConUnit[ xs, Join[context, <|"classifier"-> aCl|>]],
+          ClConUnit[ xs, Join[context, <|"classifier"-> aCl|>] ],
           ClConClassifierMeasurements[ measures, Method -> (EnsembleClassifyByThreshold[##, classLabel -> th]&), opts ]
         ],
 

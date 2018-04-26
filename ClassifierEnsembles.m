@@ -323,7 +323,7 @@ EnsembleClassifyByThreshold[cls_Association, record_?VectorQ,
         pmeans = EnsembleClassifierProbabilities[cls, record],
         pmeans = Join[<|label -> 0|>, EnsembleClassifierVotes[cls, record]]
       ];
-      If[pmeans[label] >= threshold, label, First@Keys@TakeLargest[pmeans, 1]]
+      If[pmeans[label] >= threshold, label, First@Keys@TakeLargest[ KeyDrop[pmeans,label], 1]]
     ];
 
 EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
@@ -335,7 +335,7 @@ EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
         pmeans =
             Map[Join[<|label -> 0|>, #] &, EnsembleClassifierVotes[cls, records]]
       ];
-      Map[If[#[label] >= threshold, label, First@Keys@TakeLargest[#, 1]] &, pmeans]
+      Map[If[#[label] >= threshold, label, First@Keys@TakeLargest[KeyDrop[#,label], 1]] &, pmeans]
     ];
 
 EnsembleClassifyByThreshold[___] := (Message[EnsembleClassifyByThreshold::nargs]; $Failed);
