@@ -149,6 +149,11 @@ the current pipeline value. "
 ClConClassifierMeasurements::usage = "ClConClassifierMeasurements[measures : (_String | {_String ..})] \
 computes the specified measurements for the classifier in the context. (Does not modify the context.)"
 
+ClConClassifierMeasurementsByThreshold::usage = "ClConClassifierMeasurementsByThreshold[measures : (_String | {_String ..}), clLbl->th_?NumberQ] \
+computes the specified measurements for the classifier in the context \
+using the threshold th for the specified class label clLbl. \
+(Does not modify the context.)"
+
 ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]] computes \
 the variable importance. (Does not modify the context.)"
 
@@ -733,6 +738,10 @@ CleaAll[ClConClassifierMeasurements]
 
 Options[ClConClassifierMeasurements] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
+ClConClassifierMeasurements[xs_, context_Association] := ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}][xs,context];
+
+ClConClassifierMeasurements[][xs_, context_Association] := ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}][xs,context];
+
 ClConClassifierMeasurements[___][$ClConFailure] := $ClConFailure;
 
 ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:OptionsPattern[]][xs_, context_] :=
@@ -781,6 +790,57 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
         ClCon[Join[AssociationThread[measures -> cm], <|"ROCCurve"->cmROC|>], context]
 
       ]
+    ];
+
+ClConClassifierMeasurements[___][xs_, context_Association] :=
+    Block[{},
+      Echo[ "The first argument is expected to be a list of classifier measures.",
+        "ClConClassifierMeasurements:"
+      ];
+      $ClConFailure
+    ];
+
+(************************************************************)
+(* ClConClassifierMeasurementsByThreshold                   *)
+(************************************************************)
+CleaAll[ClConClassifierMeasurementsByThreshold]
+
+Options[ClConClassifierMeasurementsByThreshold] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
+
+ClConClassifierMeasurementsByThreshold[___][$ClConFailure] := $ClConFailure;
+
+ClConClassifierMeasurementsByThreshold[measures : (_String | {_String ..}), classLabel_ -> th_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{aCl},
+
+      Which[
+
+        KeyExistsQ[context, "classifier"] && TrueQ[ Head[ context["classifier"] ] === ClassifierFunction ],
+        aCl = <|ClassifierInformation[context["classifier"], Method] -> context["classifier"] |>;
+        ClConBind[
+          ClConUnit[ xs, Join[context, <|"classifier"-> aCl|>]],
+          ClConClassifierMeasurements[ measures, Method -> (EnsembleClassifyByThreshold[##, classLabel -> th]&), opts ]
+        ],
+
+        KeyExistsQ[context, "classifier"] && AssociationQ[ context["classifier"] ],
+        ClConBind[
+          ClConUnit[ xs, context ],
+          ClConClassifierMeasurements[ measures, Method -> (EnsembleClassifyByThreshold[##, classLabel -> th]&), opts ]
+        ],
+
+        True,
+        Echo["Make a classifier first.", "ClConClassifierMeasurementsByThreshold:"];
+        $ClConFailure
+      ]
+
+    ];
+
+ClConClassifierMeasurementsByThreshold[___][xs_, context_Association] :=
+    Block[{},
+      Echo[ "The first argument is expected to be a list of classifier measures; " <>
+            "the second argument is expected to be a rule of the form classLabel_ -> th_?NumberQ.",
+        "ClConClassifierMeasurementsByThreshold:"
+      ];
+      $ClConFailure
     ];
 
 (************************************************************)
