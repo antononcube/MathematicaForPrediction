@@ -442,6 +442,11 @@ ClConTakeVariableNames[xs_, context_Association] :=
     Fold[ClConBind, ClConUnit[xs, context], {ClConGetVariableNames, ClConTakeValue}];
 
 
+Clear[DatasetWithColumnNamesQ]
+DatasetWithColumnNamesQ[ds_Dataset] :=
+    FreeQ[ Normal[ds[1, Keys]], _Missing ];
+DatasetWithColumnNamesQ[___] := False;
+
 ClearAll[ClConGetVariableNames];
 ClConGetVariableNames[][$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[$ClConFailure] := $ClConFailure;
@@ -449,20 +454,22 @@ ClConGetVariableNames[][xs_, context_] := ClConGetVariableNames[xs, context];
 ClConGetVariableNames[xs_, context_Association] :=
     Block[{},
       Which[
-        TrueQ[Head[xs] === Dataset],
+        DatasetWithColumnNamesQ[xs],
         ClCon[Normal[xs[1,Keys]], context],
 
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && TrueQ[Head[xs["trainingData"]] == Dataset],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && DatasetWithColumnNamesQ[xs["trainingData"]],
         ClCon[Normal[xs["trainingData"][1,Keys]], context],
 
-        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"] && TrueQ[Head[context["trainingData"]] == Dataset],
+        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"] && DatasetWithColumnNamesQ[context["trainingData"]],
         ClCon[Normal[context["trainingData"][1,Keys]], context],
 
         KeyExistsQ[context, "variableNames"],
         ClCon[context["variableNames"], context],
 
         True,
-        Echo["Cannot find the variable names: (1) there is no context key \"variableNames\", (2) the pipeline value is not a Dataset, and (3) there is no \"trainingData\" key in the context or the corresponding value is not a Dataset.",
+        Echo["Cannot find the variable names: (1) there is no context key \"variableNames\", " <>
+             "(2) the pipeline value is not a Dataset with named columns, and " <>
+             "(3) there is no \"trainingData\" key in the context or the corresponding value is not a Dataset with named columns.",
              "ClConGetVariableNames:"];
         $ClConFailure
       ]
@@ -476,8 +483,11 @@ ClConEchoVariableNames[][xs_, context_] := ClConEchoVariableNames[xs, context];
 ClConEchoVariableNames[xs_, context_Association] :=
     Block[{t},
       t = Fold[ ClConBind, ClConUnit[xs,context], {ClConGetVariableNames, ClConTakeValue}];
-      Echo[t,"variable names:"];
-      ClConUnit[xs, context]
+      If[ TrueQ[ t === $ClConFailure ],
+        $ClConFailure,
+        Echo[t,"variable names:"];
+        ClConUnit[xs, context]
+      ]
     ];
 
 
