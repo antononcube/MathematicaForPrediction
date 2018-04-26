@@ -364,7 +364,7 @@ ROCPlot[
   xFuncName_String, yFuncName_String,
   parValsArg : (Automatic | {_?NumericQ..}),
   aROCs : {_?ROCAssociationQ..}, opts : OptionsPattern[]] :=
-    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, rocpcf, points, parVals=parValsArg},
+    Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, rocpcf, points, parVals=parValsArg, pred},
 
       psize = OptionValue["ROCPointSize"];
       rocc = OptionValue["ROCColor"];
@@ -381,6 +381,10 @@ ROCPlot[
         Message[ROCPlot::apv];
         Return[$Failed]
       ];
+
+      pred = Map[VectorQ[#,NumericQ]&, points ];
+      points = Pick[points, pred];
+      parVals = Pick[parVals, pred];
 
       Graphics[{
         If[pj, {Lighter[rocc],Line[points]},{}],
@@ -413,7 +417,7 @@ ROCPlot[
 
         If[ pc,
           MapThread[
-            Text[#2, Through[{xFunc,yFunc}[#1]], {-1, 2}] &, {aROCs, parVals}],
+            Text[#2, #1, {-1, 2}] &, {points, parVals}],
           {}
         ]},
 
