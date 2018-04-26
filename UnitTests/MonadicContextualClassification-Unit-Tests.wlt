@@ -35,8 +35,8 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-04-23 *)
 
-(* :Package Version: 0.4 *)
-(* :Mathematica Version: *)
+(* :Package Version: 0.7 *)
+(* :Mathematica Version: 11.2 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: monad, monadic, classification, workflow, State monad, Mathematica, Wolfram Language, unit test *)
 (* :Discussion:
@@ -51,7 +51,8 @@ BeginTestSection["MonadicContextualClassification-Unit-Tests"]
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"],
+    Get["~/MathematicaForPrediction/MonadicProgramming/MonadicContextualClassification.m"]
+    (*Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"]*),
     Greater[Length[SubValues[MonadicContextualClassification`ClConSplitData]], 0]
   ]
   ,
@@ -306,5 +307,50 @@ VerificationTest[(* 16 *)
   ,
   TestID->"ClassifierEnsemble-one-method-4-cont"
 ]
+
+VerificationTest[(* 17 *)
+  CompoundExpression[
+    Set[List[n, m], List[10, 12]],
+    DoubleLongRightArrow[
+      ClConUnit[Association[Rule["trainingData", Thread[Rule[RandomReal[1, List[n, m]], RandomChoice[List["a", "b"], n]]]], Rule["testData", List[]]]],
+      ClConAddToContext[],
+      ClConAssignVariableNames[],
+      ClConTakeVariableNames]
+  ]
+  ,
+  Map[ToString, Range[1, m]]
+  ,
+  TestID->"AssignVariableNames-1"
+]
+
+VerificationTest[(* 18 *)
+  CompoundExpression[
+    Set[List[n, m], List[10, 12]],
+    DoubleLongRightArrow[
+      ClConUnit[Association[Rule["trainingData", Thread[Rule[RandomReal[1, List[n, m]], RandomChoice[List["a", "b"], n]]]], Rule["testData", List[]]]],
+      ClConAddToContext[],
+      ClConAssignVariableNames[List["k", "j", "l"]],
+      ClConTakeVariableNames]
+  ]
+  ,
+  Join[List["k", "j", "l"], Map[ToString, Range[4, m]]]
+  ,
+  TestID->"AssignVariableNames-2"
+]
+
+VerificationTest[(* 19 *)
+  CompoundExpression[
+    Set[List[n, m], List[10, 12]],
+    DoubleLongRightArrow[ClConUnit[Association[Rule["trainingData", Dataset[RandomReal[1, List[n, m]]]], Rule["testData", List[]]]],
+      ClConAddToContext[],
+      ClConAssignVariableNames[Automatic],
+      ClConTakeVariableNames]
+  ]
+  ,
+  Map[ToString, Range[1, m]]
+  ,
+  TestID->"AssignVariableNames-3"
+]
+
 
 EndTestSection[]

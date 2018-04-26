@@ -188,6 +188,9 @@ ClConROCPlot::usage = "Makes a ROC plot and echoes it. The result pipeline value
 
 ClConROCListLinePlot::usage = "Makes ListLinePlot over specified ROC functions and echoes it. The result pipeline value is the plot."
 
+ClConAssignVariableNames::usage = "Puts a value for \"variableNames\" in the context in correspondence to \"trainingData\" in the context. \
+If an empty list is given the variable names are automatically derived."
+
 Begin["`Private`"]
 
 
@@ -442,10 +445,15 @@ ClConTakeVariableNames[xs_, context_Association] :=
     Fold[ClConBind, ClConUnit[xs, context], {ClConGetVariableNames, ClConTakeValue}];
 
 
+(**************************************************************)
+(* Dealing with variable names                                *)
+(**************************************************************)
+
 Clear[DatasetWithColumnNamesQ]
 DatasetWithColumnNamesQ[ds_Dataset] :=
     FreeQ[ Normal[ds[1, Keys]], _Missing ];
 DatasetWithColumnNamesQ[___] := False;
+
 
 ClearAll[ClConGetVariableNames];
 ClConGetVariableNames[][$ClConFailure] := $ClConFailure;
@@ -488,6 +496,53 @@ ClConEchoVariableNames[xs_, context_Association] :=
         Echo[t,"variable names:"];
         ClConUnit[xs, context]
       ]
+    ];
+
+ClearAll[ClConAssignVariableNames]
+
+ClConAssignVariableNames[$ClConFailure] := $ClConFailure;
+ClConAssignVariableNames[][$ClConFailure] := $ClConFailure;
+ClConAssignVariableNames[][xs_, context_] := ClConAssignVariableNames[{}][xs, context];
+ClConAssignVariableNames[Automatic][xs_, context_] := ClConAssignVariableNames[{}][xs, context];
+
+ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
+    Block[{varNames = varNamesArg, ncols, dsQ, mlrQ},
+
+      If[ KeyExistsQ[context,"trainingData"],
+
+        dsQ = TrueQ[ Head[context["trainingData"]] === Dataset ];
+        mlrQ = DataRulesForClassifyQ[ context["trainingData"] ];
+
+        ncols =
+            Which[
+              dsQ, Dimensions[context["trainingData"]][[2]],
+              mlrQ, Dimensions[context["trainingData"][[All,1]]][[2]],
+              True, Missing["NA"]
+            ];
+
+        Which[
+
+          NumberQ[ncols] && (dsQ || mlrQ) && Length[varNames] < ncols,
+          varNames = Join[ varNames, Map[ ToString, Table[ i, {i, Length[varNames]+1, ncols}] ] ],
+
+          NumberQ[ncols] && (dsQ || mlrQ) && Length[varNames] >= ncols,
+          varNames = Take[varNames, ncols],
+
+          True,
+          Echo["Unknown training data type or the specified variable names do not correspond to the \"trainingData\" dimensions.", "ClConAssignVariableNames:"]
+        ],
+
+        (*ELSE*)
+        Echo["No training data in the context.", "ClConAssignVariableNames:"]
+      ];
+
+      ClConUnit[xs, Join[context, <|"variableNames"->varNames|>] ]
+    ];
+
+ClConAssignVariableNames[___][xs_, context_Association] :=
+    Block[{},
+      Echo["The first argument is expected to be a list of strings or Automatic.", "ClConAssignVariableNames:"]
+      $ClConFailure
     ];
 
 
