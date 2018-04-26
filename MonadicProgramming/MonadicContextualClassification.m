@@ -659,7 +659,7 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 ClearAll[ClConMethodQ, ClConMethodListQ, ClConResamplingMethodListQ, ClConMethodSpecQ, ClConClassifierQ, ClConMakeClassifier];
 
-ClConMethodQ[x_] := StringQ[x]; (* And check is it known by Classify. *)
+ClConMethodQ[x_] := StringQ[x] || MatchQ[ x, {_String, _Rule..} ]; (* And check is it known by Classify. *)
 
 ClConMethodListQ[x_] := MatchQ[ x, {_?ClConMethodQ..} ];
 

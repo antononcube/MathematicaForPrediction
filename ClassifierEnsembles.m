@@ -201,19 +201,22 @@ EnsembleClassifier[___] := (Message[EnsembleClassify::nargs]; $Failed);
 (* Resampling classifier making                               *)
 (**************************************************************)
 
-Clear[ClassifierDataQ]
+Clear[ClassifierDataQ];
 ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
 
-Clear[ResamplingEnsembleClassifier]
-ResamplingEnsembleClassifier[specs : {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer} | {_String, _?NumberQ, _Integer, RandomSample|RandomChoice}) ..},
+Clear[ClassifierMethodQ];
+ClassifierMethodQ[x_] := StringQ[x] || MatchQ[ x, {_String, _Rule..} ]; (* And check is it known by Classify. *)
+
+Clear[ResamplingEnsembleClassifier];
+ResamplingEnsembleClassifier[specs : {(_?ClassifierMethodQ | {_?ClassifierMethodQ, _?NumberQ} | {_?ClassifierMethodQ, _?NumberQ, _Integer} | {_?ClassifierMethodQ, _?NumberQ, _Integer, RandomSample|RandomChoice}) ..},
   data_?ClassifierDataQ, args___] :=
     Block[{fullSpecs},
       fullSpecs =
           specs /. {
-            m_String :> <| "method"-> m |>,
-            { m_String, f_?NumberQ} :>  <| "method"->m, "sampleFraction"->f|>,
-            { m_String, f_?NumberQ, n_Integer } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n|>,
-            { m_String, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
+            m_?ClassifierMethodQ :> <| "method"-> m |>,
+            { m_?ClassifierMethodQ, f_?NumberQ} :>  <| "method"->m, "sampleFraction"->f|>,
+            { m_?ClassifierMethodQ, f_?NumberQ, n_Integer } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n|>,
+            { m_?ClassifierMethodQ, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
           };
 
       ResamplingEnsembleClassifier[ fullSpecs, data, args ]
@@ -233,7 +236,7 @@ ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ, args
       fullSpecs = Map[ Join[ <| "method"->"LogisticRegression", "sampleFraction"->0.9, "nClassifiers"->1, "samplingFunction"->RandomChoice |>, # ]&, specs];
       res =
           Map[
-            Table[#["method"] <> "[" <> ToString[i] <> "," <> ToString[#["sampleFraction"]] <> "]" ->
+            Table[ToString[#["method"]] <> "[" <> ToString[i] <> "," <> ToString[#["sampleFraction"]] <> "]" ->
                 Classify[#["samplingFunction"][data, Floor[#["sampleFraction"]*Length[data]]], args, Method -> #["method"]], {i, #["nClassifiers"]}] &,
             fullSpecs];
 
