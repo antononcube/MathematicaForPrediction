@@ -131,6 +131,56 @@
      4. Give examples of tracking symbols.
 *)
 
+(**************************************************************)
+(* Importing packages (if needed)                             *)
+(**************************************************************)
+
+If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
+  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
+
+If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
+  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
+];
+
+If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
+  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
+];
+
+If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] == 0,
+  Echo["ClassifierEnsembles.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ClassifierEnsembles.m"]
+];
+
+(* Loaded in ClassifierEnsembles.m . *)
+(*If[Length[DownValues[ROCFunctions`ROCPlot]] == 0,
+  Echo["ROCFunctions.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
+];*)
+
+If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
+  Echo["VariableImportanceByClassifiers.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
+];
+
+If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Echo["CrossTabulate.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
+];
+
+If[Length[DownValues[SSparseMatrix`SSparseMatrixToTriplets]] == 0,
+  Echo["SSparseMatrix.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
+];
+
+
+(**************************************************************)
+(* Package definition                                         *)
+(**************************************************************)
+
 BeginPackage["MonadicContextualClassification`"]
 
 $ClConFailure::usage = "Failure symbol for the monad ClCon."
@@ -198,47 +248,6 @@ If an empty list is given the variable names are automatically derived."
 
 Begin["`Private`"]
 
-
-If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
-  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
-];
-
-If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
-  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
-];
-
-If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
-  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
-];
-
-If[Length[DownValues[ClassifierEnsembles`EnsembleClassifierMeasurements]] == 0,
-  Echo["ClassifierEnsembles.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ClassifierEnsembles.m"]
-];
-
-(* Loaded in ClassifierEnsembles.m . *)
-(*If[Length[DownValues[ROCFunctions`ROCPlot]] == 0,
-  Echo["ROCFunctions.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
-];*)
-
-If[Length[DownValues[VariableImportanceByClassifiers`AccuracyByVariableShuffling]] == 0,
-  Echo["VariableImportanceByClassifiers.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/VariableImportanceByClassifiers.m"]
-];
-
-If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
-  Echo["CrossTabulate.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
-];
-
-If[Length[DownValues[SSparseMatrix`SSparseMatrixToTriplets]] == 0,
-  Echo["SSparseMatrix.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
-];
 
 Needs["MathematicaForPredictionUtilities`"]
 Needs["StateMonadCodeGenerator`"]
