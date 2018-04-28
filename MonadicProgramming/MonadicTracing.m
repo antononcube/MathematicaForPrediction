@@ -201,11 +201,6 @@
 
 *)
 
-(*BeginPackage["MonadicTracing`"]*)
-(** Exported symbols added here with SymbolName::usage *)
-
-(*Begin["`Private`"]*)
-
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
@@ -214,7 +209,26 @@ If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
 (* Generation                                                 *)
 (**************************************************************)
 
-GenerateStateMonadCode["TraceMonad", "StringContextNames" -> False]
+BeginPackage["MonadicTracing`"]
+
+$TraceMonadFailure::usage = "Failure symbol for TraceMonad."
+
+TraceMonadUnit::usage = "Lifting a monad object into TraceMonad."
+
+TraceMonadBind::usage = "The binding function of TraceMonad."
+
+TraceMonadEchoGrid::usage = "Echoes a tabulation of the traced monad functions using Grid."
+
+Grid87::usage = "A modified version of Grid."
+
+Begin["`Private`"]
+
+
+(**************************************************************)
+(* Generation                                                 *)
+(**************************************************************)
+Needs["StateMonadCodeGenerator`"]
+GenerateStateMonadCode["MonadicTracing`TraceMonad", "StringContextNames" -> False]
 
 (**************************************************************)
 (* Infix operators                                            *)
@@ -227,6 +241,9 @@ GenerateStateMonadCode["TraceMonad", "StringContextNames" -> False]
 (**************************************************************)
 (* Monad specific functions                                   *)
 (**************************************************************)
+ClearAll[$TraceMonadFailure]
+
+$TraceMonadFailure = None;
 
 ClearAll[TraceMonadUnit]
 
@@ -241,10 +258,10 @@ TraceMonadUnit[x_] :=
 
 ClearAll[TraceMonadBind]
 
-TraceMonadBind[___] := None;
+TraceMonadBind[___] := $TraceMonadFailure;
 
 TraceMonadBind[TraceMonad[x_, context_], f_] :=
-    Block[{res = f[x, context]}, If[FreeQ[res, None], res, None]] /;
+    Block[{res = f[x, context]}, If[FreeQ[res, $TraceMonadFailure], res, $TraceMonadFailure]] /;
         TrueQ[StringMatchQ[ToString[f], "TraceMonad" ~~ __]];
 
 TraceMonadBind[TraceMonad[x_, context_], com_String] :=
@@ -267,12 +284,17 @@ TraceMonadBind[TraceMonad[x_, context_], f_] :=
     ];
 
 
+ClearAll[Grid87]
+
 Grid87 = Framed@
     Grid[#, Alignment -> Left, Dividers -> All, FrameStyle -> Directive[Dashing[2], GrayLevel[0.87]]] &;
+
 
 ClearAll[TraceMonadEchoGrid]
 
 Options[TraceMonadEchoGrid] = { "ComplexStyling" -> True };
+
+TraceMonadEchoGrid[x_, context_Association] := TraceMonadEchoGrid[][x, context];
 
 TraceMonadEchoGrid[][x_, context_] := TraceMonadEchoGrid[Grid87][x, context];
 
@@ -310,6 +332,6 @@ TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
     ];
 
 
-(*End[] * `Private` *)
+End[] (* `Private` *)
 
-(*EndPackage[]*)
+EndPackage[]
