@@ -207,12 +207,6 @@ using the threshold th for the specified class label clLbl. \
 ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]] computes \
 the variable importance. (Does not modify the context.)"
 
-ClConTakeData::usage = "Recovers the data and gives it as a non-monadic value."
-
-ClConTakeVariableNames::usage = "ClConTakeVariableNames"
-
-ClConTakeClassifier::usage = "Gives the classifier as non-monadic value."
-
 ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context. \
 Echoes the result with the default option values."
 
@@ -222,13 +216,23 @@ Does not echo the result."
 ClConToNormalClassifierData::usage = "Non-monadic function. Converts data of different forms into record-label rules. \
 I.e. in the form { (rec:{___}->lbl_)..} ."
 
-ClConSetTrainingData::usage = "Sets the training data in the context. Does not change the pipline value."
+ClConSetTrainingData::usage = "Sets the training data in the context. Does not change the pipeline value."
 
 ClConSetTestData::usage = "Sets the test data in the context. Does not change the pipeline value."
 
 ClConSetValidationData::usage = "Sets the validation data in the context. Does not change the pipeline value."
 
 ClConSetClassifier::usage = "Sets the classifier in the context. Does not change the pipeline value."
+
+ClConTakeTrainingData::usage = "Takes the training data in the context."
+
+ClConTakeTestData::usage = "Takes the test data in the context."
+
+ClConTakeValidationData::usage = "Takes the validation data in the context."
+
+ClConTakeData::usage = "Recovers the data and gives it as a non-monadic value."
+
+ClConTakeClassifier::usage = "Gives the classifier as non-monadic value."
 
 ClConTakeVariableNames::usage = "Finds the variable names and returns them as a non-monadic value."
 
