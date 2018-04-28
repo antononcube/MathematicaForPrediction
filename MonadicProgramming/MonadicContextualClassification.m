@@ -337,7 +337,11 @@ Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> A
 ClConSplitData[_][$ClConFailure] := $ClConFailure
 
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t, trainingData, testData},
+    ClConSplitData[fr, 0, opts][xs, context];
+
+ClConSplitData[fr_?NumberQ, vfr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t,
+      trainingData, testData, validationData},
 
       labelCol = OptionValue[ClConSplitData,"ClassLabelColumn"];
 
@@ -356,8 +360,22 @@ ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
         {trainingData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
       ];
 
-      ClCon[AssociationThread[{"trainingData", "testData"} -> {trainingData, testData}], context]
-    ] /; 0 < fr <= 1;
+      If[ vfr == 0,
+        t = AssociationThread[{"trainingData", "testData"} -> {trainingData, testData}],
+        (*ELSE*)
+        {trainingData, validationData} = TakeDrop[RandomSample[trainingData], Floor[vfr*Length[trainingData]]];
+        t = AssociationThread[{"trainingData", "testData", "validationData"} -> {trainingData, testData, validationData}]
+      ];
+
+      ClConUnit[ t, Join[context, t] ]
+
+    ] /; 0 < fr <= 1 && 0 <= vfr < 1;
+
+ClConSplitData[___][xs_, context_Association] :=
+    Block[{},
+      Echo[ "One or two arguments are expected, both numbers between 0 and 1.", "ClConSplitData:" ];
+      $ClConFailure
+    ];
 
 
 ClConRecoverData[$ClConFailure] := $ClConFailure;

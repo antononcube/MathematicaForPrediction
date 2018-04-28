@@ -36,7 +36,7 @@
 (* :Date: 2018-04-23 *)
 
 (* :Package Version: 0.7 *)
-(* :Mathematica Version: 11.2 *)
+(* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: monad, monadic, classification, workflow, State monad, Mathematica, Wolfram Language, unit test *)
 (* :Discussion:
@@ -51,8 +51,7 @@ BeginTestSection["MonadicContextualClassification-Unit-Tests"]
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    Get["~/MathematicaForPrediction/MonadicProgramming/MonadicContextualClassification.m"]
-    (*Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"]*),
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"],
     Greater[Length[SubValues[MonadicContextualClassification`ClConSplitData]], 0]
   ]
   ,
@@ -64,7 +63,7 @@ VerificationTest[(* 1 *)
 VerificationTest[(* 2 *)
   CompoundExpression[
     SeedRandom[2343],
-    Set[data, RandomInteger[List[0, 10000], List[400]]],
+    Set[data, RandomInteger[List[0, 1000], List[400]]],
     Set[data, Dataset[Transpose[List[data, Mod[data, 3], Map[Composition[Last, IntegerDigits], data], Map[OddQ, data]]]]],
     Set[data, Dataset[data[All, Function[AssociationThread[List["number", "feature1", "feature2", "label"], Slot[1]]]]]],
     Dimensions[data]
@@ -352,5 +351,18 @@ VerificationTest[(* 19 *)
   TestID->"AssignVariableNames-3"
 ]
 
+VerificationTest[(* 20 *)
+  res =
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[0.7, 0.1],
+        ClConTakeContext
+      ];
+  { First[Total[Map[Dimensions, res]]] == Length[data], Keys[res] == {"trainingData", "testData", "validationData"} }
+  ,
+  {True, True}
+  ,
+  TestID->"SplitData-1"
+]
 
 EndTestSection[]
