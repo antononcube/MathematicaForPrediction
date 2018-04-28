@@ -316,7 +316,7 @@ ClConToNormalClassifierData[ data_?ArrayQ, opts:OptionsPattern[] ] :=
 
       ncols = Dimensions[data][[2]];
 
-      dmVal = TrueQ[ OptionValue[ClConToNormalClassifierData,"DeleteMissing"]];
+      dmVal = TrueQ[ OptionValue[ClConToNormalClassifierData, "DeleteMissing"] ];
 
       labelCol = OptionValue[ClConToNormalClassifierData,"ClassLabelColumn"];
       If[ TrueQ[labelCol === Automatic], labelCol = ncols ];
@@ -334,19 +334,21 @@ ClConToNormalClassifierData[ data_?ArrayQ, opts:OptionsPattern[] ] :=
 (**************************************************************)
 (* Data splitting and recovery functions                      *)
 (**************************************************************)
+ClearAll[ClConSplitData]
 
 (* This function does not respect specified label column yet. *)
 Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
 
-ClConSplitData[_][$ClConFailure] := $ClConFailure
+ClConSplitData[___][$ClConFailure] := $ClConFailure
 
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
     ClConSplitData[fr, 0, opts][xs, context];
 
-ClConSplitData[fr_?NumberQ, vfr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{method=OptionValue[ClConSplitData, Method], labelCol, dataLabels, indGroups, t,
+ClConSplitData[fr_?NumberQ, valFr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{method, labelCol, dataLabels, indGroups, t,
       trainingData, testData, validationData},
 
+      method = OptionValue[ClConSplitData, Method];
       labelCol = OptionValue[ClConSplitData,"ClassLabelColumn"];
 
       Which[
@@ -355,7 +357,7 @@ ClConSplitData[fr_?NumberQ, vfr_?NumberQ, opts:OptionsPattern[]][xs_, context_As
             Transpose[{Range[Length[xs]], Normal[xs[[All, -1]]]}];
         indGroups = Map[#[[All, 1]] &, GroupBy[dataLabels, Last]];
 
-        t = TakeDrop[RandomSample[#], Ceiling[fr*Length[#]]] & /@ indGroups;
+        t = TakeDrop[RandomSample[#], Floor[fr*Length[#]]] & /@ indGroups;
 
         trainingData = xs[[ Join @@ t[[All, 1]], All]];
         testData =  xs[[ Join @@ t[[All, 2]], All]],
@@ -364,16 +366,17 @@ ClConSplitData[fr_?NumberQ, vfr_?NumberQ, opts:OptionsPattern[]][xs_, context_As
         {trainingData, testData} = TakeDrop[RandomSample[xs], Floor[fr*Length[xs]]];
       ];
 
-      If[ vfr == 0,
+      If[ TrueQ[valFr == 0],
         t = AssociationThread[{"trainingData", "testData"} -> {trainingData, testData}],
         (*ELSE*)
-        {trainingData, validationData} = TakeDrop[RandomSample[trainingData], Floor[vfr*Length[trainingData]]];
+        t = Fold[ ClConBind, ClConUnit[trainingData, <||>], { ClConSplitData[1-valFr, opts], ClConTakeValue }];
+        {trainingData, validationData} = { t["trainingData"], t["testData"]};
         t = AssociationThread[{"trainingData", "testData", "validationData"} -> {trainingData, testData, validationData}]
       ];
 
       ClConUnit[ t, Join[context, t] ]
 
-    ] /; 0 < fr <= 1 && 0 <= vfr < 1;
+    ] /; 0 < fr <= 1 && 0 <= valFr < 1;
 
 ClConSplitData[___][xs_, context_Association] :=
     Block[{},
@@ -381,6 +384,8 @@ ClConSplitData[___][xs_, context_Association] :=
       $ClConFailure
     ];
 
+
+ClearAll[ClConRecoverData]
 
 ClConRecoverData[$ClConFailure] := $ClConFailure;
 
