@@ -408,34 +408,49 @@ ClConRecoverData[xs_, context_Association] :=
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClConSetTrainingData[$ClConFailure] := $ClConFailure;
+ClConSetTrainingData[___][$ClConFailure] := $ClConFailure;
+ClConSetTrainingData[xs_, context_Association] := $ClConFailure;
 ClConSetTrainingData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "trainingData" -> data |> ] ];
 
-
-ClConSetTestData[$ClConFailure] := $ClConFailure;
+ClConSetTestData[___][$ClConFailure] := $ClConFailure;
+ClConSetTestData[xs_, context_Association] := $ClConFailure;
 ClConSetTestData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "testData" -> data |> ] ];
 
-
-ClConSetValidationData[$ClConFailure] := $ClConFailure;
+ClConSetValidationData[___][$ClConFailure] := $ClConFailure;
+ClConSetValidationData[xs_, context_Association] := $ClConFailure;
 ClConSetValidationData[data_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "validationData" -> data |> ] ];
 
-
-ClConSetClassifier[$ClConFailure] := $ClConFailure;
+ClConSetClassifier[___][$ClConFailure] := $ClConFailure;
+ClConSetClassifier[xs_, context_Association] := $ClConFailure;
 ClConSetClassifier[cl_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "classifier" -> cl |> ] ];
 
 
-ClConTakeData[][$ClConFailure] := $ClConFailure;
+ClConTakeTrainingData[___][$ClConFailure] := $ClConFailure;
+ClConTakeTrainingData[$ClConFailure] := $ClConFailure;
+ClConTakeTrainingData[][xs_, context_] := ClConTakeTrainingData[xs, context];
+ClConTakeTrainingData[xs_, context_Association] := context["trainingData"];
+
+ClConTakeTestData[___][$ClConFailure] := $ClConFailure;
+ClConTakeTestData[$ClConFailure] := $ClConFailure;
+ClConTakeTestData[][xs_, context_] := ClConTakeTestData[xs, context];
+ClConTakeTestData[xs_, context_Association] := context["testData"];
+
+ClConTakeValidationData[___][$ClConFailure] := $ClConFailure;
+ClConTakeValidationData[$ClConFailure] := $ClConFailure;
+ClConTakeValidationData[][xs_, context_] := ClConTakeValidationData[xs, context];
+ClConTakeValidationData[xs_, context_Association] := context["validationData"];
+
+ClConTakeData[___][$ClConFailure] := $ClConFailure;
 ClConTakeData[$ClConFailure] := $ClConFailure;
 ClConTakeData[][xs_, context_] := ClConTakeData[xs, context];
 ClConTakeData[xs_, context_] :=
     Fold[ ClConBind, ClConUnit[xs, context], {ClConRecoverData, ClConTakeValue}];
 
-
-ClConTakeClassifier[][$ClConFailure] := $ClConFailure;
+ClConTakeClassifier[___][$ClConFailure] := $ClConFailure;
 ClConTakeClassifier[$ClConFailure] := $ClConFailure;
 ClConTakeClassifier[][xs_, context_] := ClConTakeClassifier[xs, context];
 ClConTakeClassifier[xs_, context_Association] := context["classifier"];
