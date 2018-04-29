@@ -44,7 +44,7 @@
 
   Duplicates the functionalities of TriesWithFrequencies.m:
 
-    https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m
+    https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequenciesV9.m
 
   using Associations.
 
