@@ -140,11 +140,6 @@ If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
 ];
 
-If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
-  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
-];
-
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
   Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
@@ -176,6 +171,10 @@ If[Length[DownValues[SSparseMatrix`SSparseMatrixToTriplets]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
 ];
 
+If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
+  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
+];
 
 (**************************************************************)
 (* Package definition                                         *)
@@ -250,6 +249,8 @@ ClConROCListLinePlot::usage = "Makes ListLinePlot over specified ROC functions a
 ClConAssignVariableNames::usage = "Puts a value for \"variableNames\" in the context in correspondence to \"trainingData\" in the context. \
 If an empty list is given the variable names are automatically derived."
 
+ClConOutlierPosition::usage = "Find outlier positions in the data."
+
 Begin["`Private`"]
 
 
@@ -260,6 +261,7 @@ Needs["ROCFunctions`"]
 Needs["VariableImportanceByClassifiers`"]
 Needs["CrossTabulate`"]
 Needs["SSparseMatrix`"]
+Needs["OutlierIdentifiers`"]
 
 (* The definitions are made to have a prefix "ClCon" . *)
 
@@ -558,30 +560,32 @@ ClearAll[ClConAssignVariableNames]
 
 ClConAssignVariableNames[$ClConFailure] := $ClConFailure;
 ClConAssignVariableNames[][$ClConFailure] := $ClConFailure;
+ClConAssignVariableNames[xs_, context_Association] := ClConAssignVariableNames[{}][xs, context];
 ClConAssignVariableNames[][xs_, context_] := ClConAssignVariableNames[{}][xs, context];
 ClConAssignVariableNames[Automatic][xs_, context_] := ClConAssignVariableNames[{}][xs, context];
 
 ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
-    Block[{varNames = varNamesArg, ncols, dsQ, mlrQ},
+    Block[{varNames = varNamesArg, ncols, dsQ, mlrQ, arrQ},
 
       If[ KeyExistsQ[context,"trainingData"],
 
         dsQ = TrueQ[ Head[context["trainingData"]] === Dataset ];
         mlrQ = DataRulesForClassifyQ[ context["trainingData"] ];
+        arrQ = ArrayQ[context["trainingData"]];
 
         ncols =
             Which[
-              dsQ, Dimensions[context["trainingData"]][[2]],
+              dsQ || arrQ, Dimensions[context["trainingData"]][[2]],
               mlrQ, Dimensions[context["trainingData"][[All,1]]][[2]],
               True, Missing["NA"]
             ];
 
         Which[
 
-          NumberQ[ncols] && (dsQ || mlrQ) && Length[varNames] < ncols,
+          NumberQ[ncols] && (dsQ || mlrQ || arrQ) && Length[varNames] < ncols,
           varNames = Join[ varNames, Map[ ToString, Table[ i, {i, Length[varNames]+1, ncols}] ] ],
 
-          NumberQ[ncols] && (dsQ || mlrQ) && Length[varNames] >= ncols,
+          NumberQ[ncols] && (dsQ || mlrQ || arrQ) && Length[varNames] >= ncols,
           varNames = Take[varNames, ncols],
 
           True,
@@ -955,6 +959,11 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
 
     ];
 
+ClConROCData[___][xs_,context_Association] :=
+    Block[{},
+      Echo["No arguments are expected.", "ClConROCData:"];
+      $ClConFailure
+    ];
 
 (************************************************************)
 (* ClConROCPlot                                             *)
@@ -1010,7 +1019,11 @@ ClConROCPlot[ xFuncName_String, yFuncName_String, opts:OptionsPattern[]][xs_,con
       ]
     ];
 
-ClConROCPlot[___][xs_,context_] := $ClConFailure;
+ClConROCPlot[___][xs_,context_] :=
+    Block[{},
+      Echo["No arguments or two string arguments are expected. The arguments are names of ROC functions.", "ClConROCPlot:"];
+      $ClConFailure
+    ];
 
 
 (************************************************************)
@@ -1080,7 +1093,7 @@ ClConROCListLinePlot[rocFuncs:{_String...}, opts:OptionsPattern[]][xs_,context_]
 
     ];
 
-ClConROCListLinePlot[___][xs_,context_] :=
+ClConROCListLinePlot[___][xs_,context_Association] :=
     Block[{},
       Echo["The first argument is expected to be a list of strings that are names of ROC functions.", "ClConROCListLinePlot::"];
       $ClConFailure
@@ -1154,6 +1167,7 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 (* ClConToLinearVectorSpaceRepresentation                   *)
 (************************************************************)
+Clear[ClConToLinearVectorSpaceRepresentation];
 
 ClConToLinearVectorSpaceRepresentation[data:(_?MatrixQ|_Dataset)] :=
     Block[{catData, smats, resMat, res},
@@ -1187,66 +1201,81 @@ ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
 (************************************************************)
 (* ClConOutlierPosition                                     *)
 (************************************************************)
+ClearAll[ClConOutlierPosition, ClConDataOutlierPosition]
 
 Options[ClConOutlierPosition] = {
   "CentralItemFunction" -> Mean,
   DistanceFunction -> EuclideanDistance,
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
   "ClassLabel" -> Automatic,
-  "SimpleConversion" -> True
+  "ConversionFunction" -> None
 };
 
-ClConOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
-    Block[{avgFunc, distFunc, olParams, simpleConversion, smat, avgItem, dists},
+Options[ClConDataOutlierPosition] = Options[ClConOutlierPosition];
 
-      avgFunc = OptionValue[ ClConOutlierPosition, "CentralItemFunction" ];
-      distFunc = OptionValue[ ClConOutlierPosition, DistanceFunction ];
-      olParams = OptionValue[ ClConOutlierPosition, "OutlierIdentifierParameters" ];
-      simpleConversion = TrueQ[OptionValue[ ClConOutlierPosition, "SimpleConversion" ]];
+ClConDataOutlierPosition[ data:(_?MatrixQ|_Dataset), opts:OptionsPattern[] ] :=
+    Block[{avgFunc, distFunc, olParams, conversionFunction, fef, smat, avgItem, dists},
+
+      avgFunc = OptionValue[ ClConDataOutlierPosition, "CentralItemFunction" ];
+      distFunc = OptionValue[ ClConDataOutlierPosition, DistanceFunction ];
+      olParams = OptionValue[ ClConDataOutlierPosition, "OutlierIdentifierParameters" ];
+      conversionFunction = TrueQ[OptionValue[ ClConDataOutlierPosition, "ConversionFunction" ]];
 
       Which[
+        TrueQ[Head[data]===Dataset] && MatrixQ[Normal[data], NumberQ],
+        smat = Normal[data],
+
         TrueQ[Head[data]===Dataset] && MatrixQ[Normal[data[Values]], NumberQ],
         smat = Normal[data[Values]],
 
-        simpleConversion,
+        TrueQ[conversionFunction === None],
         smat = Query[All, Values@*Select[NumberQ]]@ReplaceAll[Normal[data], _Missing -> 0];
         If[VectorQ[smat], smat = Transpose[{smat}] ],
 
-        True,
-        smat = ClConToLinearVectorSpaceRepresentation[data]["SparseMatrix"]
+        True, (* conversionFunction === FeatureExtraction *)
+        (*smat = ClConToLinearVectorSpaceRepresentation[data]["SparseMatrix"]*)
+        fef = FeatureExtraction[data];
+        smat = fef[data]
       ];
 
       avgItem = avgFunc[N@smat];
 
-      dists = Map[distFunc[#, avgItem] &, Identity /@ smat];
+      dists = Map[distFunc[#, avgItem] &, smat];
 
       OutlierPosition[dists, olParams]
     ];
 
 ClConOutlierPosition[___][$ClConFailure] := $ClConFailure;
 
+ClConOutlierPosition[$ClConFailure] := $ClConFailure;
+
+ClConOutlierPosition[xs_, context_Association] := ClConOutlierPosition[][xs, context];
+
 ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{classLabel, classLabelInd},
+    Block[{contextDataQ, pipelineDataQ, classLabel, classLabelInd},
 
       classLabel = OptionValue[ ClConOutlierPosition, "ClassLabel" ];
 
-      classLabelInd = ClConBind[ ClConUnit[xs,context], ClConTakeClassLabelIndex[classLabel]];
+      classLabelInd = First @ Values @ ClConBind[ ClConUnit[xs,context], ClConTakeClassLabelIndex[classLabel]];
+
+      contextDataQ = KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"];
+      pipelineDataQ = MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"];
 
       Which[
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
+        pipelineDataQ,
         ClConUnit[
-          <|"trainingData"->ClConOutlierPosition[xs["trainingData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
-            "testData" -> ClConOutlierPosition[xs["testData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts] |>,
+          <|"trainingData"->ClConDataOutlierPosition[Drop[xs["trainingData"], None, {classLabelInd}], opts],
+            "testData" -> ClConDataOutlierPosition[Drop[xs["testData"], None, {classLabelInd}], opts] |>,
           context],
 
-        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
+        contextDataQ,
         ClConUnit[
-          <|"trainingData"->ClConOutlierPosition[context["trainingData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts],
-            "testData" -> ClConOutlierPosition[context["testData"][All, # & /* KeyDrop[Keys[classLabelInd]]], opts] |>,
+          <|"trainingData"->ClConDataOutlierPosition[Drop[context["trainingData"], None, {classLabelInd}], opts],
+            "testData" -> ClConDataOutlierPosition[Drop[context["testData"], None, {classLabelInd}], opts] |>,
           context],
 
         TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]],
-        ClConUnit[ClConOutlierPosition[xs, opts], context],
+        ClConUnit[ClConDataOutlierPosition[xs, opts], context],
 
         True,
         Echo["Cannot find data.","ClConOutlierPosition:"];
@@ -1258,6 +1287,7 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 (* ClConFindOutliersPerClass                                *)
 (************************************************************)
+ClearAll[ClConFindOutliersPerClass]
 
 Options[ClConFindOutliersPerClass] = {
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
@@ -1267,6 +1297,10 @@ Options[ClConFindOutliersPerClass] = {
 };
 
 ClConFindOutliersPerClass[___][$ClConFailure] := $ClConFailure;
+
+ClConFindOutliersPerClass[$ClConFailure] := $ClConFailure;
+
+ClConFindOutliersPerClass[xs_, context_Association] := ClConFindOutliersPerClass[][xs, context];
 
 ClConFindOutliersPerClass[][xs_, context_Association] :=
     ClConFindOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
@@ -1306,9 +1340,15 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
   4. That dataset is returned as monad pipeline value.
 *)
 
+ClearAll[ClConDropOutliersPerClass]
+
 Options[ClConDropOutliersPerClass] = Options[ClConFindOutliersPerClass];
 
 ClConDropOutliersPerClass[___][$ClConFailure] := $ClConFailure;
+
+ClConDropOutliersPerClass[$ClConFailure] := $ClConFailure;
+
+ClConDropOutliersPerClass[xs_, context_Association] := ClConDropOutliersPerClass[][xs, context];
 
 ClConDropOutliersPerClass[][xs_, context_Association] :=
     ClConDropOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
@@ -1335,6 +1375,7 @@ ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 (************************************************************)
 (* ClConOutliersOperationsProcessing                        *)
 (************************************************************)
+ClearAll[ClConOutliersOperationsProcessing]
 
 Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClass];
 
