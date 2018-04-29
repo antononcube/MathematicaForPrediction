@@ -46,6 +46,10 @@
     "Tries with frequencies Mathematica through Associations package"
     https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/AssociationTriesWithFrequencies.m
 
+    At this point should be used on/with:
+
+    "Tries with frequencies Mathematica"
+    https://github.com/antononcube/MathematicaForPrediction/blob/master/TriesWithFrequencies.m
 *)
 
 BeginTestSection["TriesWithFrequencies-Unit-Tests"]
@@ -53,123 +57,123 @@ BeginTestSection["TriesWithFrequencies-Unit-Tests"]
 
 VerificationTest[(* 1 *)
 	CompoundExpression[
-		ClearAll["ATrie*"],
-    Get["/Users/aantonov/MathematicaForPrediction/Misc/AssociationTriesWithFrequencies.m"],
-		ATrieCreate[{}],
-    Length[DownValues[AssociationTriesWithFrequencies`ATrieCreate]] > 0
+		ClearAll["Trie*"],
+    Get["~/MathematicaForPrediction/TriesWithFrequencies.m"],
+		TrieCreate[{}],
+    Length[DownValues[TriesWithFrequencies`TrieCreate]] > 0
 	]
 	,
 	True
 	,
-	TestID->"ATrieInitialization"
+	TestID->"TrieInitialization"
 ]
 
 
 VerificationTest[(* 3 *)
   CompoundExpression[
     Set[words, List["bark", "barkeeper", "barkeepers", "barkeep", "barks", "barking", "barked", "barker", "barkers"]],
-    Set[aTr, ATrieCreateBySplit[words]],
-    ATrieQ[aTr]
+    Set[aTr, TrieCreateBySplit[words]],
+    TrieQ[aTr]
   ]
   ,
   True
   ,
-  TestID->"ATrieCreation1"
+  TestID->"TrieCreation1"
 ]
 
 VerificationTest[(* 4 *)
   CompoundExpression[
     Set[words2, List["bar", "barring", "car", "care", "caress", "cold", "colder"]],
-    Set[aTr2, ATrieCreateBySplit[words2]],
-    ATrieQ[aTr2]
+    Set[aTr2, TrieCreateBySplit[words2]],
+    TrieQ[aTr2]
   ]
   ,
   True
   ,
-  TestID->"ATrieCreation2"
+  TestID->"TrieCreation2"
 ]
 
 VerificationTest[(* 5 *)
   CompoundExpression[
-    Set[aTr1, ATrieCreate[Map[Characters, words]]],
-    ATrieQ[aTr1]
+    Set[aTr1, TrieCreate[Map[Characters, words]]],
+    TrieQ[aTr1]
   ]
   ,
   True
 ]
 
 VerificationTest[(* 3 *)
-	CompoundExpression[Set[res, ATrieToJSON[ATrieShrink[aTr]]], MatchQ[res, List[ Rule["key", $TrieRoot], Rule["value", 9], Rule["children", BlankNullSequence[]]]]]
+	CompoundExpression[Set[res, TrieToJSON[TrieShrink[aTr]]], MatchQ[res, List[ Rule["key", $TrieRoot], Rule["value", 9], Rule["children", BlankNullSequence[]]]]]
 	,
 	True
 	,
-	TestID->"ATrieToJSON"
+	TestID->"TrieToJSON"
 ]
 
 VerificationTest[(* 7 *)
-	ATrieHasCompleteMatchQ[aTr, Characters[#]] & /@ {"bark", "ba"}
+	TrieHasCompleteMatchQ[aTr, Characters[#]] & /@ {"bark", "ba"}
 	,
 	{True,False}
 	,
-	TestID->"ATrieHasCompleteMatchQ"
+	TestID->"TrieHasCompleteMatchQ"
 ]
 
 VerificationTest[(* 8 *)
-  Sort @ Cases[ATrieToJSON[ATrieShrink[aTr]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
+  Sort @ Cases[TrieToJSON[TrieShrink[aTr]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
 	,
 	Sort @ List[$TrieRoot, "bark", "s", "ing", "e", "r", "s", "d", "ep", "er", "s"]
 	,
-	TestID->"ATrieShrink1"
+	TestID->"TrieShrink1"
 ]
 
 VerificationTest[(* 9 *)
-  Sort @ Cases[ATrieToJSON[ATrieShrink[aTr,"~"]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
+  Sort @ Cases[TrieToJSON[TrieShrink[aTr,"~"]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
 	,
 	Sort @ List[$TrieRoot, "b~a~r~k", "i~n~g", "s", "e", "r", "s", "d", "e~p", "e~r", "s"]
 	,
-	TestID->"ATrieShrink2"
+	TestID->"TrieShrink2"
 ]
 
 VerificationTest[(* 10 *)
-	ATrieContains[aTr, #]& /@  Map[Characters, List["barked", "balm", "barking"]]
+	TrieContains[aTr, #]& /@  Map[Characters, List["barked", "balm", "barking"]]
 	,
 	List[True, False, True]	
 	,
-	TestID->"ATrieContains1"
+	TestID->"TrieContains1"
 ]
 
 VerificationTest[(* 11 *)
-	ATrieHasCompleteMatchQ[aTr, #]& /@ Map[Characters, List["barked", "balm", "barking"]]
+	TrieHasCompleteMatchQ[aTr, #]& /@ Map[Characters, List["barked", "balm", "barking"]]
 	,
 	List[True, False, True]	
 ]
 
 VerificationTest[(* 12 *)
-	Sort @ Apply[StringJoin, ATrieGetWords[aTr2, List["b"]], List[1]]
+	Sort @ Apply[StringJoin, TrieGetWords[aTr2, List["b"]], List[1]]
 	,
 	Sort @ List["bar", "barring"]
 	,
-	TestID->"ATrieGetWords1"
+	TestID->"TrieGetWords1"
 ]
 
 VerificationTest[(* 13 *)
-	Sort @ Apply[StringJoin, ATrieGetWords[aTr2, List["c"]], List[1]]
+	Sort @ Apply[StringJoin, TrieGetWords[aTr2, List["c"]], List[1]]
 	,
 	Sort @ List["car", "care", "caress", "cold", "colder"]
 	,
-	TestID->"ATrieGetWords2"
+	TestID->"TrieGetWords2"
 ]
 
 VerificationTest[(* 14 *)
-	CompoundExpression[Set[aTr3, ATrieMerge[aTr, aTr2]], Union[Apply[StringJoin, ATrieGetWords[aTr3, List["b"]], List[1]], Apply[StringJoin, ATrieGetWords[aTr3, List["c"]], List[1]]]]
+	CompoundExpression[Set[aTr3, TrieMerge[aTr, aTr2]], Union[Apply[StringJoin, TrieGetWords[aTr3, List["b"]], List[1]], Apply[StringJoin, TrieGetWords[aTr3, List["c"]], List[1]]]]
 	,
 	Union[words, words2]	
 	,
-	TestID->"ATrieGetWords"
+	TestID->"TrieGetWords"
 ]
 
 VerificationTest[(* 15 *)
-	t = Sort @ ATrieRootToLeafPaths[aTr];
+	t = Sort @ TrieRootToLeafPaths[aTr];
 	t /. {$TrieRoot->"", v_?NumberQ :> N[v]}
 	,
 	Sort @ List[List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["s", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["r", 2.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["r", 2.`], List["s", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["d", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["e", 3.`], List["p", 3.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["e", 3.`], List["p", 3.`], List["e", 2.`], List["r", 2.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["e", 6.`], List["e", 3.`], List["p", 3.`], List["e", 2.`], List["r", 2.`], List["s", 1.`]], List[List["", 9.`], List["b", 9.`], List["a", 9.`], List["r", 9.`], List["k", 9.`], List["i", 1.`], List["n", 1.`], List["g", 1.`]]]
@@ -178,66 +182,66 @@ VerificationTest[(* 15 *)
 ]
 
 VerificationTest[(* 16 *)
-	Sort @ ATrieGetWords[ATrieShrink[aTr], List["bark"]]
+	Sort @ TrieGetWords[TrieShrink[aTr], List["bark"]]
 	,
 	Sort @ List[List["bark"], List["bark", "s"], List["bark", "ing"], List["bark", "e", "r"], List["bark", "e", "r", "s"], List["bark", "e", "d"], List["bark", "e", "ep"], List["bark", "e", "ep", "er"], List["bark", "e", "ep", "er", "s"]]
 	,
-	TestID->"ATrieShrinkAndGetWords1"
+	TestID->"TrieShrinkAndGetWords1"
 ]
 
 VerificationTest[(* 17 *)
   CompoundExpression[
-  	Set[aTr, ATrieCreateBySplit[words]],
-  	Set[aTr1, ATrieCreate[Map[Characters, words]]],
-  	ATrieEqualQ[aTr, aTr1]
+  	Set[aTr, TrieCreateBySplit[words]],
+  	Set[aTr1, TrieCreate[Map[Characters, words]]],
+  	TrieEqualQ[aTr, aTr1]
 	]
   ,
   True
   ,
-  TestID->"ATrieEqual1"
+  TestID->"TrieEqual1"
 ]
 
 
 VerificationTest[(* 19 *)
-  ATrieHasCompleteMatchQ[aTr2, Characters@#] & /@ {"ba", "bar"}
+  TrieHasCompleteMatchQ[aTr2, Characters@#] & /@ {"ba", "bar"}
   ,
 	{False, True}
   ,
-  TestID->"ATrieHasCompleteMatchQ1"
+  TestID->"TrieHasCompleteMatchQ1"
 ]
 
 VerificationTest[(* 20 *)
-  ATrieGetWords[aTr, {"b", "a", "r", "k"}] ==
-      ATrieGetWords[ATrieNodeProbabilities[aTr], {"b", "a", "r", "k"}]
+  TrieGetWords[aTr, {"b", "a", "r", "k"}] ==
+      TrieGetWords[TrieNodeProbabilities[aTr], {"b", "a", "r", "k"}]
   ,
   True
   ,
-  TestID->"ATrieGetWords1"
+  TestID->"TrieGetWords1"
 ]
 
 VerificationTest[(* 21 *)
-	(ATrieRootToLeafPaths[
-    ATrieSubTrie[aTr, {"b", "a", "r", "k"}]] /. x_?NumberQ :> 0) ==
-			(ATrieRootToLeafPaths[
-        ATrieSubTrie[ATrieNodeProbabilities[aTr], {"b", "a", "r", "k"}]] /. x_?NumberQ :> 0)
+	(TrieRootToLeafPaths[
+    TrieSubTrie[aTr, {"b", "a", "r", "k"}]] /. x_?NumberQ :> 0) ==
+			(TrieRootToLeafPaths[
+        TrieSubTrie[TrieNodeProbabilities[aTr], {"b", "a", "r", "k"}]] /. x_?NumberQ :> 0)
   ,
   True
   ,
-  TestID->"ATrieRootToLeafPaths1"
+  TestID->"TrieRootToLeafPaths1"
 ]
 
 VerificationTest[(* 22 *)
-  Cases[ATrieShrink[aTr], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity] ==
-      Cases[ATrieShrink[ATrieNodeProbabilities[aTr]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
+  Cases[TrieShrink[aTr], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity] ==
+      Cases[TrieShrink[TrieNodeProbabilities[aTr]], RuleDelayed[Rule["key", Pattern[v, Blank[]]], v], Infinity]
   ,
   True
   ,
-  TestID->"ATrieShrink2"
+  TestID->"TrieShrink2"
 ]
 
 
 VerificationTest[(* 23 *)
-  CompoundExpression[Set[words, List["bar", "bars", "balk", "car", "caress", "card", "cardan", "cardigan"]], Set[aTr3, ATrieCreateBySplit[words]], ATrieQ[aTr3]]
+  CompoundExpression[Set[words, List["bar", "bars", "balk", "car", "caress", "card", "cardan", "cardigan"]], Set[aTr3, TrieCreateBySplit[words]], TrieQ[aTr3]]
   ,
   True
   ,
@@ -245,7 +249,7 @@ VerificationTest[(* 23 *)
 ]
 
 VerificationTest[(* 24 *)
-  Map[Function[ATrieContains[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
+  Map[Function[TrieContains[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
   ,
   List[False, False, True, True, False]
   ,
@@ -253,7 +257,7 @@ VerificationTest[(* 24 *)
 ]
 
 VerificationTest[(* 25 *)
-  Map[Function[ATrieHasCompleteMatchQ[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
+  Map[Function[TrieHasCompleteMatchQ[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
   ,
   List[True, False, True, True, True]
   ,
@@ -261,7 +265,7 @@ VerificationTest[(* 25 *)
 ]
 
 VerificationTest[(* 26 *)
-  Map[Function[ATrieKeyExistsQ[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
+  Map[Function[TrieKeyExistsQ[aTr3, Characters[Slot[1]]]], List["balkan", "ba", "bar", "car", "care"]]
   ,
   List[False, True, True, True, True]
   ,
@@ -269,19 +273,19 @@ VerificationTest[(* 26 *)
 ]
 
 VerificationTest[(* 27 *)
-  Map[Depth, List[aTr, ATriePrune[aTr, 5]]]
+  Map[Depth, List[aTr, TriePrune[aTr, 5]]]
   ,
   List[13, 8]
   ,
-  TestID->"ATriePrune1"
+  TestID->"TriePrune1"
 ]
 
 VerificationTest[(* 28 *)
-  ATrieToListTrie[aTr]
+  TrieToListTrie[aTr]
   ,
   List[List[List[], 9], List[List["b", 9], List[List["a", 9], List[List["r", 9], List[List["k", 9], List[List["e", 6], List[List["e", 3], List[List["p", 3], List[List["e", 2], List[List["r", 2], List[List["s", 1]]]]]], List[List["d", 1]], List[List["r", 2], List[List["s", 1]]]], List[List["s", 1]], List[List["i", 1], List[List["n", 1], List[List["g", 1]]]]]]]]]
   ,
-  TestID->"ATrieToListTrie1"
+  TestID->"TrieToListTrie1"
 ]
 
 
