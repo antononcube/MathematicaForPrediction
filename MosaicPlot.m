@@ -1,8 +1,6 @@
-
-
 (*
     Mosaic plot for data visualization implementation in Mathematica
-    Copyright (C) 2014-2016  Anton Antonov
+    Copyright (C) 2014-2018  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,8 +31,14 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* Version 1.0 *)
-(* 
+(* :Title: MosaicPlot *)
+(* :Context: MosaicPlot` *)
+(* :Author: Anton Antonov *)
+(* :Date: 2018-04-29 *) (* Date of the update of the 2014 implementation.*)
+
+(* :Package Version: 1.0 *)
+(* :Mathematica Version: 11.3 *)
+(*
   This package defines the function MosaicPlot that summarizes the
   conditional probabilities of co-occurrence of the categorical values
   in a Dataset object or a list of records of the same length.
@@ -44,7 +48,7 @@
 
   Descriptions of the mosaic plots can be found in books about
   programming and statistics with R. See for example "R in Action" by
-  Robert Kabacoff.  
+  Robert Kabacoff.
   See also the document in "Mosaic plots for data visualization" at
   https://github.com/antononcube/MathematicaForPrediction/tree/master/Documentation .
 
@@ -62,8 +66,8 @@
 
   MosaicPlot takes the following options:
 
-  {"ColumnNames" -> None, "ColumnNamesOffset" -> 0.05, 
-   "ExpandLastColumn" -> False, "FirstAxis" -> "y", "Gap" -> 0.02, 
+  {"ColumnNames" -> None, "ColumnNamesOffset" -> 0.05,
+   "ExpandLastColumn" -> False, "FirstAxis" -> "y", "Gap" -> 0.02,
    "GapFactor" -> 0.5, "LabelRotation" -> {{1, 0}, {0, 1}}, "LabelStyle" -> {},
    "Tooltips" -> True, "ZeroProbability" -> 0.001, ColorRules -> Automatic}
 
@@ -102,7 +106,7 @@
       Text (the fourth argument of Text). The option "LabelStyle"
       takes options and arguments for the function Style.
 
-      MosaicPlot[censusData[[All, {8, 14}]], "LabelRotation" -> {{1, 0}, {1, 1}}, 
+      MosaicPlot[censusData[[All, {8, 14}]], "LabelRotation" -> {{1, 0}, {1, 1}},
         "LabelStyle" -> {Bold, Red, FontFamily -> "Times"}]
 
   (o) "ColumnNames" and "ColumnNamesOffset" -- labels for categorical variables
@@ -142,14 +146,14 @@
       More precisely, the values of the option ColorRules should be a
       list of rules, {i1->c1, i2->c2,...}, matching the form
 
-      {(_Integer->(_RGBColor|_GrayLevel))..}. 
+      {(_Integer->(_RGBColor|_GrayLevel))..}.
 
       The column indices Subscript[i, k] can be negative (-1 meaning the last column).
 
       If coloring for only one column index is specified the value of
       ColorRules can be of the form
 
-      {_Integer->{(_RGBColor|_GrayLevel)..}}. 
+      {_Integer->{(_RGBColor|_GrayLevel)..}}.
 
       The colors are used with Blend in order to color the rectangles
       according to the order of the unique values of the specified
@@ -164,16 +168,16 @@
       different values for the option ColorRules (given as plot
       labels).
 
-      sData = Table[{RandomChoice[{1, 4, 5, 2} -> {"a", "b", "c", "d"}], 
-        RandomChoice[{4, 1, 5} -> {"A", "B", "C"}], 
+      sData = Table[{RandomChoice[{1, 4, 5, 2} -> {"a", "b", "c", "d"}],
+        RandomChoice[{4, 1, 5} -> {"A", "B", "C"}],
         RandomChoice[{1, 2} -> {"1", "2"}]}, {60}];
-      t = MosaicPlot[sData, PlotLabel -> If[TrueQ[# === None], "None", #], 
+      t = MosaicPlot[sData, PlotLabel -> If[TrueQ[# === None], "None", #],
           ColorRules -> ReleaseHold[#], "Gap" -> 0.025, "GapFactor" -> 0.6,
-          ImageSize -> 200] & /@ {{}, None, 
-            Automatic, {_ -> GrayLevel[0.7]}, 
-            HoldForm[{1 -> Green, 2 -> Blue, 3 -> Red}], 
-            HoldForm[{-2 -> Blue, -1 -> Red}], HoldForm[{2 -> Blue}], 
-            HoldForm[{2 -> {Pink, Blue}}], 
+          ImageSize -> 200] & /@ {{}, None,
+            Automatic, {_ -> GrayLevel[0.7]},
+            HoldForm[{1 -> Green, 2 -> Blue, 3 -> Red}],
+            HoldForm[{-2 -> Blue, -1 -> Red}], HoldForm[{2 -> Blue}],
+            HoldForm[{2 -> {Pink, Blue}}],
             HoldForm[{2 -> ColorData[11, "ColorList"]}]};
       Grid[ArrayReshape[t, {3, 3}, ""], Dividers -> All]
 
@@ -191,6 +195,10 @@
 
 *)
 
+(*
+  2018-04-29: Updated the package to use the re-implementation of TriesWithFrequencies.m through Association.
+*)
+
 BeginPackage["MosaicPlot`"]
 
 MosaicPlot::usage = "MosaicPlot[rarr] makes a mosaic plot that summarizes the conditional probabilities of categorical \
@@ -203,39 +211,57 @@ of conditional probabilities from a trie path (suitable to be the second argumen
 
 Begin["`Private`"]
 
+
 If[Length[DownValues[TriesWithFrequencies`TrieMerge]] == 0,
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"]
 ];
 
 Clear[TrieUniqueRecords]
 TrieUniqueRecords[data_?ArrayQ] :=
-    Block[{uniqCVals, zeroRecs},
+    Block[{uniqCVals, zeroRecs, res},
       uniqCVals = Table[Union[data[[All, i]]], {i, Dimensions[data][[2]]}];
       zeroRecs = Flatten[Outer[List, Sequence @@ uniqCVals], Length[uniqCVals] - 1];
-      TriesWithFrequencies`TrieCreate[zeroRecs] /. {h_, p_?NumberQ} :> {h, 0}
+      res = TriesWithFrequencies`TrieCreate[zeroRecs];
+      Replace[res, x_Association :> Join[x, <|TriesWithFrequencies`$TrieValue -> 0|>], Infinity]
     ];
 
 Clear[TrieAddMissingValues]
-TrieAddMissingValues[trie_, data_?ArrayQ] := TriesWithFrequencies`TrieMerge[trie, TrieUniqueRecords[data]];
+TrieAddMissingValues[trie_?TriesWithFrequencies`TrieQ, data_?ArrayQ] :=
+    TriesWithFrequencies`TrieMerge[trie, TrieUniqueRecords[data]];
 
 Clear[TrieSortNodes]
+TrieSortNodes[trie_?TriesWithFrequencies`TrieQ] :=
+    Replace[trie, x_Association :> Sort[x], Infinity];
+
 TrieSortNodes[trie_] :=
     If[Length[trie] == 1, trie,
       Join[{trie[[1]]}, TrieSortNodes /@ SortBy[Rest[trie], #[[1, 1]] &]]
     ];
 
 Clear[TriePruneNumericalLevel]
-TriePruneNumericalLevel[trie_, pruneLevel_Integer] := TriePruneNumericalLevel[trie, pruneLevel, 1];
-TriePruneNumericalLevel[trie_, pruneLevel_Integer, level_Integer] :=
+
+TriePruneNumericalLevel[trie_?TriesWithFrequencies`TrieQ, pruneLevel_Integer] :=
+    Association@TriePruneNumericalLevel[First@Normal@trie, pruneLevel, 1];
+
+TriePruneNumericalLevel[trie_?TriesWithFrequencies`TrieRuleQ, pruneLevel_Integer, level_Integer] :=
     Block[{t},
-      Which[
-        Length[trie] == 1 || pruneLevel < level,
-        trie,
-        pruneLevel == level && VectorQ[Rest[trie][[All, 1, 1]], NumberQ],
-        {{trie[[1, 1]], Total[Rest[trie][[All, 1, 1]]]}},
-        True,
-        t = TriePruneNumericalLevel[#, pruneLevel, level + 1] & /@ Rest[trie];
-        Join[{{trie[[1, 1]], Total[t[[All, 1, 2]]]}}, t]
+      With[{$TV = TriesWithFrequencies`$TrieValue},
+        Which[
+          Length[trie[[2]]] == 1 || pruneLevel < level,
+          trie,
+
+          pruneLevel == level && VectorQ[Keys@KeyDrop[trie[[2]], $TV], NumberQ],
+          trie[[1]] -> <|$TV -> Total @ Keys @ KeyDrop[trie[[2]], $TV]|>,
+
+          True,
+          t =
+              Association@
+                  KeyValueMap[
+                    TriePruneNumericalLevel[#1 -> #2, pruneLevel, level + 1] &,
+                    KeyDrop[trie[[2]], $TV]
+                  ];
+          trie[[1]] -> Join[t, <|$TV -> Total @ Map[#[$TV] &, Values[t]]|>]
+        ]
       ]
     ];
 
@@ -374,7 +400,7 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[] ] :=
 
       If[ TrueQ[columnNames === None || Length[Intersection[ columnNames, dsetColNames]] == 0 ],
         MosaicPlot[ Values@Normal@ dataRecords, Sequence @@ Prepend[ {opts},  "ColumnNames"->dsetColNames] ],
-        (* ELSE *)
+      (* ELSE *)
         dsetColNames = Intersection[ columnNames, dsetColNames];
         MosaicPlot[ Values@Normal@ dataRecords[All, columnNames], Sequence @@ Prepend[ {opts},  "ColumnNames"->dsetColNames] ]
       ]
@@ -478,6 +504,8 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
         trie = TriesWithFrequencies`TrieNodeProbabilities[trie];
         trie = TrieAddMissingValues[trie, dataRecords]
       ];
+
+      trie = TriesWithFrequencies`TrieToListTrie[trie];
 
       (* If the color rules are Automatic we pick the column with the largest number of unique values *)
       If[TrueQ[colorRules === Automatic],

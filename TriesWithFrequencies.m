@@ -30,17 +30,17 @@
 
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
-
-(* :Title: AssociationTriesWithFrequencies *)
-(* :Context: AssociationTriesWithFrequencies` *)
+(* :Title: TriesWithFrequencies *)
+(* :Context: TriesWithFrequencies` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-04-16 *)
 
 (* :Package Version: 1.0 *)
-(* :Mathematica Version: *)
+(* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: *)
 (* :Discussion:
+
 
   Duplicates the functionalities of TriesWithFrequencies.m:
 
