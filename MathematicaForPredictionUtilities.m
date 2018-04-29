@@ -32,6 +32,17 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
+If[Length[DownValues[MosaicPlot`MosaicPlot]] == 0,
+  Echo["MosaicPlot.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
+];
+
+If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Echo["CrossTabulate.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
+];
+
+
 BeginPackage["MathematicaForPredictionUtilities`"]
 
 ClassificationSuccessTableForm::usage = "Turns classification success rate rules into and array and applys TableForm to it."
@@ -75,18 +86,8 @@ DataRulesForClassifyQ::usage = "Checks is the argument is a list of record->labe
 
 Begin["`Private`"]
 
-
-If[Length[DownValues[MosaicPlot`MosaicPlot]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MosaicPlot.m"]
-];
-
-(*Needs["MosaicPlot`"];*)
-
-If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
-];
-
-(*Needs["CrossTabulate`"];*)
+Needs["MosaicPlot`"];
+Needs["CrossTabulate`"];
 
 Clear[KurtosisUpperBound, ExcessKurtosis]
 
