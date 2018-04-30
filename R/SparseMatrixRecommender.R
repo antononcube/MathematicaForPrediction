@@ -520,7 +520,7 @@ SMRProfileDFFromVector <- function( smr, pvec ) {
 }
 
 
-#' @description Return a data frame corresponding to a profile vector
+#' @description Return a vector corresponding to a profile data frame.
 #' @param smr a sparse matrix recommendation object
 #' @param profile a data frame with names c( "Score", "Index", "Tag" )
 #' @param tagType tag type over which the vector is made
