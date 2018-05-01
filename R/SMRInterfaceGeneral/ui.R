@@ -49,15 +49,20 @@ shinyUI(
       ),
       
       column( 6,
-              h4("Search results"),
-              DT::dataTableOutput("view"),
-              
-              h4("Consumed items list"),
-              tabsetPanel(
-                tabPanel( "short", DT::dataTableOutput("itemList") ),
-                tabPanel( "extended", DT::dataTableOutput("itemListData") )
-              )
-              
+              tabsetPanel( 
+                           tabPanel( "Search results", 
+                                     h4("Search results"),
+                                     DT::dataTableOutput("view")
+                                     ),
+                           
+                           tabPanel( "Consumed items list",
+                                     h4("Consumed items list"),
+                                     tabsetPanel(
+                                       tabPanel( "short", DT::dataTableOutput("itemList") ),
+                                       tabPanel( "extended", DT::dataTableOutput("itemListData") ) 
+                                     )
+                           )
+              )              
       ),
       
       column( 3, 
@@ -77,10 +82,15 @@ shinyUI(
               )
       ),
       column( 3,
-              textInput("selectedProfileTags", "Selected tags:", ""),
-              
-              h4("Profile"),
-              DT::dataTableOutput("uprofile")
+              tabsetPanel(
+                tabPanel( "Profile",
+                          textInput("selectedProfileTags", "Selected tags:", ""),
+                          h4("Profile"),
+                          DT::dataTableOutput("uprofile") ),
+                tabPanel( "Detailed proof",
+                          h4("Detailed proof"),
+                          DT::dataTableOutput("uproof") )
+              )
       )
     )
   )

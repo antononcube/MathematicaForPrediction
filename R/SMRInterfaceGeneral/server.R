@@ -66,7 +66,7 @@ if( !exists("itemListIDsSplitPattern") ) {
   itemListIDsSplitPattern <- "\\W"
 }
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
   tagTypeSFactors <- reactive({
 
@@ -193,7 +193,7 @@ shinyServer(function(input, output) {
       res <- merge( x = recommendations(), y = itemData[, itemDataColNames ], by.x = itemSMR$ItemColumnName, by.y = itemDataIDColName, all.x = TRUE )
       ## This is done because merge breaks the order.
       res[ match( resIDs, res[[1]] ), ]
-    }, rownames = FALSE, filter = 'top', options = list(pageLength = 12, autoWidth = FALSE) ) })
+    }, rownames = FALSE, filter = 'top', options = list(pageLength = 12, autoWidth = FALSE), selection = list( mode = 'single', selected = c(1)) ) })
 
   output$recsProofs <-
     DT::renderDataTable({ datatable({
@@ -221,4 +221,13 @@ shinyServer(function(input, output) {
     cbind( res, TagType = laply( res$Index, function(x) SMRTagType( itemSMR, x ) ) )
   }, rownames = FALSE, filter = 'top', options = list(pageLength = 12, autoWidth = FALSE) ) })
 
+  output$uproof <- DT::renderDataTable({ datatable({
+      sRow <- input$recs_rows_selected
+      if( is.null(sRow) ) { NULL 
+      } else { 
+        itemID <- recommendations()[sRow,2]
+        SMRMetadataProofs( smr = itemSMR, toBeLovedItem = c(itemID), profile = userProfile(), normalizeScores = TRUE)
+      }
+  }, rownames = FALSE, filter = 'top', options = list(pageLength = 12, autoWidth = FALSE) ) })
+  
 })
