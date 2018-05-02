@@ -1252,7 +1252,7 @@ ClConOutlierPosition[$ClConFailure] := $ClConFailure;
 ClConOutlierPosition[xs_, context_Association] := ClConOutlierPosition[][xs, context];
 
 ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{contextDataQ, pipelineDataQ, classLabel, classLabelInd},
+    Block[{contextDataQ, pipelineDataQ, classLabel, classLabelInd, asc, newOpts},
 
       classLabel = OptionValue[ ClConOutlierPosition, "ClassLabel" ];
 
@@ -1261,21 +1261,28 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
       contextDataQ = KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"];
       pipelineDataQ = MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"];
 
+      asc = If[contextDataQ, context, xs];
+
+      newOpts = Sequence @@ DeleteCases[{opts}, "ClassLabel"->_];
+
       Which[
-        pipelineDataQ,
+        ( contextDataQ || pipelineDataQ ) && DataRulesForClassifyQ[asc["trainingData"]],
         ClConUnit[
-          <|"trainingData"->ClConDataOutlierPosition[Drop[xs["trainingData"], None, {classLabelInd}], opts],
-            "testData" -> ClConDataOutlierPosition[Drop[xs["testData"], None, {classLabelInd}], opts] |>,
+          <|"trainingData"->ClConDataOutlierPosition[asc["trainingData"][[All,1]], newOpts],
+            "testData" -> ClConDataOutlierPosition[asc["testData"][[All,1]], newOpts] |>,
           context],
 
-        contextDataQ,
+        contextDataQ || pipelineDataQ,
         ClConUnit[
-          <|"trainingData"->ClConDataOutlierPosition[Drop[context["trainingData"], None, {classLabelInd}], opts],
-            "testData" -> ClConDataOutlierPosition[Drop[context["testData"], None, {classLabelInd}], opts] |>,
+          <|"trainingData"->ClConDataOutlierPosition[Drop[asc["trainingData"], None, {classLabelInd}], opts],
+            "testData" -> ClConDataOutlierPosition[Drop[asc["testData"], None, {classLabelInd}], opts] |>,
           context],
 
         TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]],
         ClConUnit[ClConDataOutlierPosition[xs, opts], context],
+
+        DataRulesForClassifyQ[xs],
+        ClConUnit[ClConDataOutlierPosition[xs, newOpts][[All,1]], context],
 
         True,
         Echo["Cannot find data.","ClConOutlierPosition:"];
