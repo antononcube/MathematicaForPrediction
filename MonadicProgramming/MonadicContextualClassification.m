@@ -474,7 +474,15 @@ ClConTakeClassLabelIndex[classLabel_][xs_, context_Association] :=
 
       varNames = ClConBind[ ClConUnit[xs, context], ClConTakeVariableNames ];
 
+      (* Not a good idea this to be here *)
+      (*If[ TrueQ[varNames === $ClConFailure],*)
+        (*Echo["Proceeding with automatic variable names.", "ClConTakeClassLabelIndex:"];*)
+        (*varNames = ClConBind[ ClConUnit[xs, context], { ClConAssignVariableNames, ClConTakeVariableNames} ];*)
+      (*];*)
+
       Which[
+        TrueQ[varNames === $ClConFailure],
+        $ClConFailure,
 
         TrueQ[classLabel===Automatic] && KeyExistsQ[context, "classLabel"] && MemberQ[varNames, context["classLabel"]],
         <| context["classLabel"] -> First@Flatten@Position[varNames, context["classLabel"]] |>,
@@ -1252,11 +1260,9 @@ ClConOutlierPosition[$ClConFailure] := $ClConFailure;
 ClConOutlierPosition[xs_, context_Association] := ClConOutlierPosition[][xs, context];
 
 ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{contextDataQ, pipelineDataQ, classLabel, classLabelInd, asc, newOpts},
+    Block[{contextDataQ, pipelineDataQ, classLabel, classLabelInd, asc, newOpts, t},
 
       classLabel = OptionValue[ ClConOutlierPosition, "ClassLabel" ];
-
-      classLabelInd = First @ Values @ ClConBind[ ClConUnit[xs,context], ClConTakeClassLabelIndex[classLabel]];
 
       contextDataQ = KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"];
       pipelineDataQ = MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"];
@@ -1267,22 +1273,42 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 
       Which[
         ( contextDataQ || pipelineDataQ ) && DataRulesForClassifyQ[asc["trainingData"]],
+        If[ !TrueQ[classLabel === Automatic],
+          Echo["Ignoring the value \"ClassLabel\" given to the option: the data is a list of rules.", "ClConOutlierPosition:"]
+        ];
         ClConUnit[
-          <|"trainingData"->ClConDataOutlierPosition[asc["trainingData"][[All,1]], newOpts],
+          <|"trainingData" -> ClConDataOutlierPosition[asc["trainingData"][[All,1]], newOpts],
             "testData" -> ClConDataOutlierPosition[asc["testData"][[All,1]], newOpts] |>,
           context],
 
         contextDataQ || pipelineDataQ,
+        classLabelInd =
+            If[TrueQ[classLabel === Automatic], -1,
+              First @ Values @ ClConBind[ ClConUnit[xs, context], ClConTakeClassLabelIndex[classLabel]]
+            ];
         ClConUnit[
-          <|"trainingData"->ClConDataOutlierPosition[Drop[asc["trainingData"], None, {classLabelInd}], opts],
+          <|"trainingData" -> ClConDataOutlierPosition[Drop[asc["trainingData"], None, {classLabelInd}], opts],
             "testData" -> ClConDataOutlierPosition[Drop[asc["testData"], None, {classLabelInd}], opts] |>,
           context],
 
-        TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]],
+        DataRulesForClassifyQ[xs],
+        If[ !TrueQ[classLabel === Automatic],
+          Echo["Ignoring the value \"ClassLabel\" given to the option: the data is a list of rules.", "ClConOutlierPosition:"]
+        ];
+        ClConUnit[ClConDataOutlierPosition[xs, newOpts][[All,1]], context],
+
+        TrueQ[ classLabel === None ] && ( TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]] ),
         ClConUnit[ClConDataOutlierPosition[xs, opts], context],
 
-        DataRulesForClassifyQ[xs],
-        ClConUnit[ClConDataOutlierPosition[xs, newOpts][[All,1]], context],
+        TrueQ[ classLabel === Automatic ] && ( TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]] ),
+        ClConUnit[ClConDataOutlierPosition[ Drop[xs, None, {-1}], opts], context],
+
+        TrueQ[Head[xs] === Dataset] || TrueQ[MatrixQ[xs]],
+        t = ClConBind[ ClConUnit[<| "trainingData"->xs |>, context], ClConOutlierPosition ];
+        If[ TrueQ[ t === $ClConFailure ],
+          $ClConFailure,
+          ClConUnit[ ClConBind[ t, ClConTakeTrainingData ], context ]
+        ],
 
         True,
         Echo["Cannot find data.","ClConOutlierPosition:"];
