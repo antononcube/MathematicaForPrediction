@@ -313,7 +313,7 @@ ClConToNormalClassifierData[ data_Association, opts:OptionsPattern[] ] :=
 ClConToNormalClassifierData[ td_Dataset, opts:OptionsPattern[] ] :=
     ClConToNormalClassifierData[ Normal[td[All, Values]], opts];
 
-ClConToNormalClassifierData[ data_?ArrayQ, opts:OptionsPattern[] ] :=
+ClConToNormalClassifierData[ data_?MatrixQ, opts:OptionsPattern[] ] :=
     Block[{dmVal, labelCol, trainingRange, ncols},
 
       ncols = Dimensions[data][[2]];
@@ -571,7 +571,7 @@ ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
 
         dsQ = TrueQ[ Head[context["trainingData"]] === Dataset ];
         mlrQ = DataRulesForClassifyQ[ context["trainingData"] ];
-        arrQ = ArrayQ[context["trainingData"]];
+        arrQ = MatrixQ[context["trainingData"]];
 
         ncols =
             Which[
