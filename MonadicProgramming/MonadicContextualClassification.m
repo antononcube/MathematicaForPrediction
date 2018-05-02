@@ -575,7 +575,7 @@ ClConAssignVariableNames[Automatic][xs_, context_] := ClConAssignVariableNames[{
 ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
     Block[{varNames = varNamesArg, ncols, dsQ, mlrQ, arrQ},
 
-      If[ KeyExistsQ[context,"trainingData"],
+      If[ KeyExistsQ[context, "trainingData"],
 
         dsQ = TrueQ[ Head[context["trainingData"]] === Dataset ];
         mlrQ = DataRulesForClassifyQ[ context["trainingData"] ];
@@ -584,7 +584,7 @@ ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
         ncols =
             Which[
               dsQ || arrQ, Dimensions[context["trainingData"]][[2]],
-              mlrQ, Dimensions[context["trainingData"][[All,1]]][[2]],
+              mlrQ, Dimensions[context["trainingData"][[All,1]]][[2]] + 1,
               True, Missing["NA"]
             ];
 
@@ -597,11 +597,13 @@ ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
           varNames = Take[varNames, ncols],
 
           True,
-          Echo["Unknown training data type or the specified variable names do not correspond to the \"trainingData\" dimensions.", "ClConAssignVariableNames:"]
+          Echo["Unknown training data type or the specified variable names do not correspond to the \"trainingData\" dimensions.", "ClConAssignVariableNames:"];
+          Return[$ClConFailure]
         ],
 
         (*ELSE*)
-        Echo["No training data in the context.", "ClConAssignVariableNames:"]
+        Echo["No training data in the context.", "ClConAssignVariableNames:"];
+        Return[$ClConFailure]
       ];
 
       ClConUnit[xs, Join[context, <|"variableNames"->varNames|>] ]
