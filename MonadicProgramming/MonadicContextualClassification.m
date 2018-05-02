@@ -625,10 +625,10 @@ GetData[xs_, context_] :=
         Head[xs] === Dataset || DataRulesForClassifyQ[xs],
         ctData = <|Anonymous->xs|>,
 
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
-        ctData = xs,
+        MatchQ[xs, _Association] && ( KeyExistsQ[xs, "trainingData"] || KeyExistsQ[xs, "testData"] || KeyExistsQ[xs, "validationData"] ),
+        ctData = KeyTake[xs, {"trainingData", "testData", "validationData"}],
 
-        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
+        KeyExistsQ[context, "trainingData"] || KeyExistsQ[context, "testData"] || KeyExistsQ[context, "validationData"],
         ctData = KeyTake[context, {"trainingData", "testData", "validationData"}],
 
         True,
