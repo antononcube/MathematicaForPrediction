@@ -138,6 +138,10 @@
       2. Add error message for EnsembleClassifierROCData and EnsembleClassifierROCPlots.
 *)
 
+If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
+];
+
 BeginPackage["ClassifierEnsembles`"]
 
 EnsembleClassifier::usage = "Create an ensemble of classifiers over the same data. \
@@ -173,10 +177,6 @@ EnsembleClassifierROCPlots::usage = "EnsembleClassifierROCPlots[ensCF, testData,
 returns an association of classifier ensemble ROC plots."
 
 Begin["`Private`"]
-
-If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
-];
 
 Needs["ROCFunctions`"]
 
