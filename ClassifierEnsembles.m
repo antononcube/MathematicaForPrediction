@@ -139,6 +139,7 @@
 *)
 
 If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
+  Echo["ROCFunctions.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
 ];
 
