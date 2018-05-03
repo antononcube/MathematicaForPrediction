@@ -649,7 +649,7 @@ ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
 ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context];
 
 ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{ctData=GetData[xs,context], res, rsOpts},
+    Block[{ctData=GetData[xs,context], res, rsOpts, dims},
 
       rsOpts = DeleteCases[{opts},("Type"->_)|("Echo"->_)];
 
@@ -658,7 +658,13 @@ ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
         Return[$ClConFailure]
       ];
 
-      If[ TrueQ[OptionValue["Type"] === Automatic] && Length[Dimensions[ctData[[1]]]] > 1 && Dimensions[ctData[[1]]][[2]] < 9 ||
+      dims =
+          If[DataRulesForClassifyQ[ctData[[1]]],
+            Dimensions[ ctData[[1, All, 1]] ],
+            Dimensions[ ctData[[1]] ]
+          ];
+
+      If[ TrueQ[OptionValue["Type"] === Automatic] && Length[dims] > 1 && dims[[2]] < 9 ||
           TrueQ[OptionValue["Type"] != "LongForm"],
       (*ctData = ClConToNormalClassifierData /@ ctData;*)
       (*res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;*)
