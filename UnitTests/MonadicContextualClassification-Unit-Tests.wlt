@@ -317,7 +317,7 @@ VerificationTest[(* 17 *)
       ClConTakeVariableNames]
   ]
   ,
-  Map[ToString, Range[1, m]]
+  Map[ToString, Range[1, m+1]]
   ,
   TestID->"AssignVariableNames-1"
 ]
@@ -332,7 +332,7 @@ VerificationTest[(* 18 *)
       ClConTakeVariableNames]
   ]
   ,
-  Join[List["k", "j", "l"], Map[ToString, Range[4, m]]]
+  Join[List["k", "j", "l"], Map[ToString, Range[4, m+1]]]
   ,
   TestID->"AssignVariableNames-2"
 ]
@@ -363,6 +363,117 @@ VerificationTest[(* 20 *)
   {True, True}
   ,
   TestID->"SplitData-1"
+]
+
+
+VerificationTest[(* 21 *)
+  Equal[
+    Part[data, Span[1, 12]],
+    DoubleLongRightArrow[
+      ClConUnit[Association[Rule["trainingData", Part[data, Span[1, 12]]]]],
+      ClConAddToContext,
+      ClConTakeTrainingData
+    ],
+    DoubleLongRightArrow[
+      ClConUnit[Association[]],
+      ClConSetTrainingData[Part[data, Span[1, 12]]],
+      ClConTakeTrainingData
+    ]
+  ]
+  ,
+  True
+  ,
+  TestID->"Set-and-take-training-data"
+]
+
+VerificationTest[(* 22 *)
+  Equal[
+    Part[data, Span[1, 12]],
+    DoubleLongRightArrow[
+      ClConUnit[Association[Rule["testData", Part[data, Span[1, 12]]]]],
+      ClConAddToContext,
+      ClConTakeTestData
+    ],
+    DoubleLongRightArrow[
+      ClConUnit[Association[]],
+      ClConSetTestData[Part[data, Span[1, 12]]],
+      ClConTakeTestData
+    ]
+  ]
+  ,
+  True
+  ,
+  TestID->"Set-and-take-test-data"
+]
+
+VerificationTest[(* 23 *)
+  Equal[
+    Part[data, Span[1, 12]],
+    DoubleLongRightArrow[
+      ClConUnit[Association[Rule["validationData", Part[data, Span[1, 12]]]]],
+      ClConAddToContext,
+      ClConTakeValidationData
+    ],
+    DoubleLongRightArrow[
+      ClConUnit[Association[]],
+      ClConSetValidationData[Part[data, Span[1, 12]]],
+      ClConTakeValidationData
+    ]
+  ]
+  ,
+  True
+  ,
+  TestID->"Set-and-take-validation-data"
+]
+
+VerificationTest[(* 24 *)
+  CompoundExpression[
+    Set[t, Map[Function[
+      DoubleLongRightArrow[
+        ClConUnit[Association[Rule[Slot[1], Part[data, Span[1, 12]]]]],
+        ClConSummarizeData[Rule["Echo", False]],
+        ClConTakeValue]], List["trainingData", "testData", "validationData"]]
+    ],
+    List[
+      Cases[t, Blank[String], List[3]],
+      MatchQ[t, List[Repeated[List[Rule[Blank[String], List[Repeated[Blank[Column]]]]]]]]
+    ]
+  ]
+  ,
+  List[List["trainingData", "testData", "validationData"], True]
+  ,
+  TestID->"Patial-data-summaries-1"
+]
+
+VerificationTest[(* 25 *)
+  DoubleLongRightArrow[
+    ClConUnit[Association[Rule["trainingData", ClConToNormalClassifierData[Part[data, Span[1, 12]]]]]],
+    ClConAddToContext,
+    ClConAssignVariableNames,
+    ClConTakeVariableNames
+  ]
+  ,
+  List["1", "2", "3", "4"]
+  ,
+  TestID->"Assign-variable-names-1"
+]
+
+VerificationTest[(* 26 *)
+  CompoundExpression[
+    Set[res,
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[1]]
+    ],
+    Equal[
+      Dimensions[DoubleLongRightArrow[res, ClConTakeTrainingData]],
+      Dimensions[data]
+    ]
+  ]
+  ,
+  True
+  ,
+  TestID->"Split-data-100-pct"
 ]
 
 EndTestSection[]
