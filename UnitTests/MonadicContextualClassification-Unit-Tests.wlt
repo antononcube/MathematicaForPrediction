@@ -442,7 +442,7 @@ VerificationTest[(* 24 *)
   ,
   List[List["trainingData", "testData", "validationData"], True]
   ,
-  TestID->"Patial-data-summaries-1"
+  TestID->"Partial-data-summaries-1"
 ]
 
 VerificationTest[(* 25 *)
@@ -474,6 +474,21 @@ VerificationTest[(* 26 *)
   True
   ,
   TestID->"Split-data-100-pct"
+]
+
+VerificationTest[(* 27 *)
+  Head[
+    DoubleLongRightArrow[
+      ClConUnit[],
+      ClConSetTrainingData[Part[data, Span[1, 12]]],
+      ClConMakeClassifier,
+      ClConTakeClassifier
+    ]
+  ]
+  ,
+  ClassifierFunction
+  ,
+  TestID->"MakeClassifier-with-empty-unit-1"
 ]
 
 EndTestSection[]

@@ -751,20 +751,22 @@ Options[ClConMakeClassifier] = Options[Classify];
 
 ClConMakeClassifier[___][$ClConFailure] := $ClConFailure;
 
+ClConMakeClassifier[xs_, context_Association] := ClConMakeClassifier[][xs, context];
+
 ClConMakeClassifier[][xs_, context_] := ClConMakeClassifier["LogisticRegression"][xs, context];
 
 ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_, context_] :=
     Block[{cf, dataAssoc, newContext, methodSpec = methodSpecArg},
 
       Which[
-        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"],
+        MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"],
         dataAssoc = xs; newContext = Join[context, xs],
 
-        KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"],
+        KeyExistsQ[context, "trainingData"],
         dataAssoc = context; newContext = <||>,
 
         True,
-        Echo["Split the data first. (No changes in argument and context were made.)", "ClConMakeClassifier:"];
+        Echo["No training data. (No changes in argument and context were made.)", "ClConMakeClassifier:"];
         Return[ClCon[xs, context]]
       ];
 
