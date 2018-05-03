@@ -216,8 +216,8 @@ ResamplingEnsembleClassifier[specs : {(_?ClassifierMethodQ | {_?ClassifierMethod
           specs /. {
             m_?ClassifierMethodQ :> <| "method"-> m |>,
             { m_?ClassifierMethodQ, f_?NumberQ} :>  <| "method"->m, "sampleFraction"->f|>,
-            { m_?ClassifierMethodQ, f_?NumberQ, n_Integer } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n|>,
-            { m_?ClassifierMethodQ, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "sampleFraction"->f, "nClassifiers"->n, "samplingFunction"->sf|>
+            { m_?ClassifierMethodQ, f_?NumberQ, n_Integer } :>  <| "method"->m, "sampleFraction"->f, "numberOfClassifiers"->n|>,
+            { m_?ClassifierMethodQ, f_?NumberQ, n_Integer, sf:(RandomSample|RandomChoice) } :>  <| "method"->m, "sampleFraction"->f, "numberOfClassifiers"->n, "samplingFunction"->sf|>
           };
 
       ResamplingEnsembleClassifier[ fullSpecs, data, args ]
@@ -228,17 +228,17 @@ ResamplingEnsembleClassifier::wskey = "The given specification key `1` is not on
 ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ, args___ ] :=
     Block[{fullSpecs, res, knownSpecKeys, allSpecKeys},
 
-      knownSpecKeys = {"method", "sampleFraction", "nClassifiers", "samplingFunction"};
+      knownSpecKeys = {"method", "sampleFraction", "numberOfClassifiers", "samplingFunction"};
       allSpecKeys = Union[Flatten[Keys/@specs]];
       If[ Length[Complement[allSpecKeys, knownSpecKeys]] > 0,
         Message[ResamplingEnsembleClassifier::wskey, #, knownSpecKeys ] & /@ Complement[allSpecKeys, knownSpecKeys]
       ];
 
-      fullSpecs = Map[ Join[ <| "method"->"LogisticRegression", "sampleFraction"->0.9, "nClassifiers"->1, "samplingFunction"->RandomChoice |>, # ]&, specs];
+      fullSpecs = Map[ Join[ <| "method"->"LogisticRegression", "sampleFraction"->0.9, "numberOfClassifiers"->1, "samplingFunction"->RandomChoice |>, # ]&, specs];
       res =
           Map[
             Table[ToString[#["method"]] <> "[" <> ToString[i] <> "," <> ToString[#["sampleFraction"]] <> "]" ->
-                Classify[#["samplingFunction"][data, Floor[#["sampleFraction"]*Length[data]]], args, Method -> #["method"]], {i, #["nClassifiers"]}] &,
+                Classify[#["samplingFunction"][data, Floor[#["sampleFraction"]*Length[data]]], args, Method -> #["method"]], {i, #["numberOfClassifiers"]}] &,
             fullSpecs];
 
       Association@Flatten[res, 1]
