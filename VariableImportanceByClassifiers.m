@@ -167,6 +167,8 @@
   Made it work with classifier ensembles.
   Replaced the name of the option "FScoreLabels" with "Classes".
 
+  2018-05-03
+  Replaced "Classes" with "ClassLabels".
 *)
 
 
@@ -184,7 +186,7 @@ Begin["`Private`"]
 
 (*Needs["ClassifierEnsembles`"]*)
 
-AccuracyByVariableShuffling::nfsc = "The option \"FScoreLabels\" is obsolete; use \"Classes\" instead.";
+AccuracyByVariableShuffling::nfsc = "The option \"FScoreLabels\" is obsolete; use \"ClassLabels\" instead.";
 
 Clear[ClassifierQ, ClassifierDataQ, AccuracyByVariableShuffling]
 
@@ -198,7 +200,7 @@ ClassifierDataQ[data_] := MatchQ[ data, { Rule[_List, _] .. } ] && ArrayQ[ data[
 
 AccuracyByVariableShuffling::varnames = "The third argument (variableNames) is expected to be Automatic or a list of strings."
 
-Options[AccuracyByVariableShuffling] = { "FScoreLabels" -> None, "Classes" -> None };
+Options[AccuracyByVariableShuffling] = { "FScoreLabels" -> None, "ClassLabels" -> None };
 
 AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, variableNames_:Automatic, opts:OptionsPattern[] ] :=
     Block[{ baseAccuracy, tmat, shuffledTestSets, accuraciesOfShuffledTestSets, varNames, fscoreLabels, targetClasses },
@@ -208,7 +210,7 @@ AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, var
         Message[AccuracyByVariableShuffling::nfsc];
       ];
 
-      targetClasses = OptionValue["Classes"];
+      targetClasses = OptionValue["ClassLabels"];
       If[ TrueQ[ targetClasses =!= None ] && AtomQ[targetClasses], targetClasses = {targetClasses} ];
 
       If[targetClasses === None && fscoreLabels =!= None, targetClasses = fscoreLabels ];
@@ -246,7 +248,7 @@ AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, var
         baseAccuracy = ClassifierEnsembles`EnsembleClassifierMeasurements[ clFunc, testData, "Accuracy"],
 
         targetClasses =!= None,
-        baseAccuracy = ClassifierEnsembles`EnsembleClassifierMeasurements[ clFunc, testData, "Precision", "Classes"->targetClasses];
+        baseAccuracy = ClassifierEnsembles`EnsembleClassifierMeasurements[ clFunc, testData, "Precision", "ClassLabels"->targetClasses];
         baseAccuracy = baseAccuracy /@ targetClasses;
       ];
 
@@ -275,7 +277,7 @@ AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, var
 
         targetClasses =!= None,
         accuraciesOfShuffledTestSets =
-            ClassifierEnsembles`EnsembleClassifierMeasurements[clFunc, #, "Precision", "Classes"->targetClasses] & /@ shuffledTestSets;
+            ClassifierEnsembles`EnsembleClassifierMeasurements[clFunc, #, "Precision", "ClassLabels"->targetClasses] & /@ shuffledTestSets;
         accuraciesOfShuffledTestSets = Map[ # /@ targetClasses &, accuraciesOfShuffledTestSets];
       ];
 

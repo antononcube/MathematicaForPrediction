@@ -233,6 +233,8 @@ ClConTakeData::usage = "Recovers the data and gives it as a non-monadic value."
 
 ClConTakeClassifier::usage = "Gives the classifier as non-monadic value."
 
+ClConTakeROCData::usage = "Gives the ROC data as non-monadic value."
+
 ClConTakeVariableNames::usage = "Finds the variable names and returns them as a non-monadic value."
 
 ClConGetVariableNames::usage = "Finds the variable names and puts them as the pipeline value. Does not modify the context."
@@ -419,6 +421,8 @@ ClConRecoverData[xs_, context_Association] :=
 (* Setters / getters                                          *)
 (**************************************************************)
 
+ClearAll["ClConSet*","ClConTake*"];
+
 ClConSetTrainingData[___][$ClConFailure] := $ClConFailure;
 ClConSetTrainingData[xs_, context_Association] := $ClConFailure;
 ClConSetTrainingData[data_][xs_, context_Association] :=
@@ -465,6 +469,11 @@ ClConTakeClassifier[___][$ClConFailure] := $ClConFailure;
 ClConTakeClassifier[$ClConFailure] := $ClConFailure;
 ClConTakeClassifier[][xs_, context_] := ClConTakeClassifier[xs, context];
 ClConTakeClassifier[xs_, context_Association] := context["classifier"];
+
+ClConTakeROCData[___][$ClConFailure] := $ClConFailure;
+ClConTakeROCData[$ClConFailure] := $ClConFailure;
+ClConTakeROCData[][xs_, context_] := ClConTakeROCData[xs, context];
+ClConTakeROCData[xs_, context_Association] := context["rocData"];
 
 
 ClConTakeClassLabelIndex[___][$ClConFailure] := $ClConFailure;
@@ -754,6 +763,8 @@ ClConMakeClassifier[___][$ClConFailure] := $ClConFailure;
 ClConMakeClassifier[xs_, context_Association] := ClConMakeClassifier[][xs, context];
 
 ClConMakeClassifier[][xs_, context_] := ClConMakeClassifier["LogisticRegression"][xs, context];
+
+ClConMakeClassifier[opts:OptionsPattern[]][xs_, context_] := ClConMakeClassifier[Automatic,opts][xs, context];
 
 ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_, context_] :=
     Block[{cf, dataAssoc, newContext, methodSpec = methodSpecArg},
@@ -1122,19 +1133,19 @@ ClConROCListLinePlot[___][xs_,context_Association] :=
 (************************************************************)
 ClearAll[ClConAccuracyByVariableShuffling];
 
-Options[ClConAccuracyByVariableShuffling] = { "Classes" -> None };
+Options[ClConAccuracyByVariableShuffling] = { "ClassLabels" -> None };
 
 ClConAccuracyByVariableShuffling[$ClConFailure] := $ClConFailure;
 ClConAccuracyByVariableShuffling[___][$ClConFailure] := $ClConFailure;
 
 ClConAccuracyByVariableShuffling[xs_, context_Association] :=
-    ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
+    ClConAccuracyByVariableShuffling["ClassLabels" -> None][xs, context];
 
 ClConAccuracyByVariableShuffling[][xs_, context_] :=
-    ClConAccuracyByVariableShuffling["Classes" -> None][xs, context];
+    ClConAccuracyByVariableShuffling["ClassLabels" -> None][xs, context];
 
 ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{fsClasses = FilterRules[{opts}, "Classes"]},
+    Block[{fsClasses = FilterRules[{opts}, "ClassLabels"]},
 
       If[Length[fsClasses] == 0 || fsClasses === Automatic, fsClasses = None];
 
