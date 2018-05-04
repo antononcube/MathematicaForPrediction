@@ -324,7 +324,7 @@ ROCPlot::apv = "The parameter values are specified as Automatic, but extracting 
 Options[ROCPlot] =
     Join[ {"ROCPointSize"-> 0.02, "ROCColor"-> Lighter[Blue], "ROCPointColorFunction" -> Automatic,
            "ROCPointTooltips"->True, "ROCPointCallouts"->True, "ROCCurveColorFunction" -> Automatic,
-           "PlotJoined" -> False }, Options[Graphics]];
+           "PlotJoined" -> True }, Options[Graphics]];
 
 ROCSpecQ[arg_] :=
     MatchQ[ arg, {_?ROCAssociationQ..} | {{_?ROCAssociationQ..}..} | Association[ (_->{_?ROCAssociationQ..})..] ];
