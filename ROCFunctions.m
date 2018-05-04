@@ -294,16 +294,25 @@ AUROC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[AUROC, r
 
 aROCAcronyms =
     AssociationThread[
-      {"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "Recall", "Precision", "Accuracy"} ->
-        {"true positive rate", "specificity", "positive predictive value",
-          "negative predictive value", "false positive rate",
-          "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve",
-          "same as TPR", "same as PPV", "same as ACC"}];
+      {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC",
+        "Recall", "Precision", "Accuracy", "Sensitivity"},
+      {"true positive rate", "true negative rate", "specificity", "positive predictive value",
+        "negative predictive value", "false positive rate",
+        "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve",
+        "same as TPR", "same as PPV", "same as ACC", "same as TPR"}
+    ];
 
 aROCFunctions =
-    AssociationThread[
-      {"TPR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "Recall", "Precision", "Accuracy"} ->
-          {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUROC,TPR,PPV,ACC}];
+    Join[
+      AssociationThread[
+        {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC"},
+        {TPR, SPC, SPC, PPV, NPV, FPR, FDR, FNR, ACC, AUROC}],
+      AssociationThread[
+        {"Recall", "Sensitivity", "Precision", "Accuracy", "Specificity",
+          "FalsePositiveRate", "TruePositiveRate", "FalseNegativeRate", "TrueNegativeRate", "FalseDiscoveryRate" },
+        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FPR, SPC, FDR }
+      ]
+    ];
 
 
 Clear[ROCFunctions]
@@ -424,7 +433,7 @@ ROCPlot[
         AspectRatio -> 1, Frame -> True,
 
         FrameLabel ->
-            Map[Style[#<>", "<>ROCFunctions["FunctionInterpretations"][#], Larger, Bold] &, {xFuncName,yFuncName}],
+            Map[Style[StringRiffle[{#, Lookup[ROCFunctions["FunctionInterpretations"], #, Nothing]}, ", "], Larger, Bold] &, {xFuncName,yFuncName}],
 
         DeleteCases[{opts},
           ( "ROCPointSize" | "ROCColor" | "ROCPointColorFunction" |
