@@ -51,7 +51,8 @@ BeginTestSection["MonadicContextualClassification-Unit-Tests"]
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"],
+    (*Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"],*)
+    Get["~/MathematicaForPrediction/MonadicProgramming/MonadicContextualClassification.m"];
     Greater[Length[SubValues[MonadicContextualClassification`ClConSplitData]], 0]
   ]
   ,
@@ -103,7 +104,16 @@ VerificationTest[(* 4 *)
 ]
 
 VerificationTest[(* 5 *)
-  CompoundExpression[Set[res, DoubleLongRightArrow[ClConUnit[data], ClConSplitData[0.4`], ClConAddToContext[], ClConTakeContext[]]], Keys[res]]
+  CompoundExpression[
+    Set[res,
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[0.4`],
+        ClConAddToContext[],
+        ClConTakeContext[]]
+    ],
+    Keys[res]
+  ]
   ,
   List["trainingData", "testData"]
   ,
@@ -264,7 +274,7 @@ VerificationTest[(* 14 *)
       DoubleLongRightArrow[
         ClConUnit[data],
         ClConSplitData[0.7`],
-        ClConMakeClassifier[Association[Rule["method", "NearestNeighbors"], Rule["sampleFraction", 0.95`], Rule["nClassifiers", 12], Rule["samplingFunction", RandomChoice]]],
+        ClConMakeClassifier[Association[Rule["method", "NearestNeighbors"], Rule["sampleFraction", 0.95`], Rule["numberOfClassifiers", 12], Rule["samplingFunction", RandomChoice]]],
         ClConClassifierMeasurements[List["Accuracy", "Precision", "Recall"]]]
     ],
     Greater[DoubleLongRightArrow[resEnsembleOfOneMethod, ClConTakeValue]["Accuracy"], 0.75`]
