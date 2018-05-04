@@ -355,6 +355,11 @@ ClConSplitData[fr_?NumberQ, valFr_?NumberQ, opts:OptionsPattern[]][xs_, context_
       method = OptionValue[ClConSplitData, Method];
       labelCol = OptionValue[ClConSplitData,"ClassLabelColumn"];
 
+      If[ ! ( TrueQ[Head[xs] === Dataset] || DataRulesForClassifyQ[xs] || MatrixQ[xs] ),
+        Echo["No data to split or unknown data form.", "ClConSplitData:" ];
+        Return[$ClConFailure];
+      ];
+
       Which[
         method == "LabelsProportional",
         dataLabels =
