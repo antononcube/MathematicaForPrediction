@@ -421,7 +421,7 @@ ClConRecoverData[xs_, context_Association] :=
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClearAll["ClConSet*","ClConTake*"];
+ClearAll["ClConSet*Data", "ClConTake*Data", ClConTakeClassifier, ClConTakeClassLabelIndex, ClConTakeVariableNames];
 
 ClConSetTrainingData[___][$ClConFailure] := $ClConFailure;
 ClConSetTrainingData[xs_, context_Association] := $ClConFailure;
@@ -848,7 +848,7 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
         Echo["The value of \"classifier\" in the context is not a ClassifierFunction object or an Association of ClassifierFunction objects.", "ClConClassifierMeasurements:"];
         $ClConFailure,
 
-        !KeyExistsQ[context, "testData"],
+        !KeyExistsQ[context, "testData"] || Length[context["testData"]] == 0,
         Echo["Cannot find test data in the context.","ClConClassifierMeasurements:"];
         $ClConFailure,
 
@@ -964,15 +964,15 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
 
         !KeyExistsQ[context, "classifier"],
         Echo["Make a classifier first.", "ClConROCData:"];
-        $ClConFailure,
+        Return[$ClConFailure],
 
         !( MatchQ[ context["classifier"], _ClassifierFunction] || MatchQ[ context["classifier"], Association[(_ -> _ClassifierFunction) ..] ] ),
         Echo["The value of \"classifier\" in the context is not a ClassifierFunction object or an Association of ClassifierFunction objects.", "ClConROCData:"];
-        $ClConFailure,
+        Return[$ClConFailure],
 
-        !KeyExistsQ[context, "testData"],
+        !KeyExistsQ[context, "testData"] || Length[context["testData"]] == 0,
         Echo["Cannot find test data in the context.","ClConROCData:"];
-        $ClConFailure,
+        Return[$ClConFailure],
 
         MatchQ[ context["classifier"], _ClassifierFunction],
         cl = <| ClassifierInformation[context["classifier"],Method] -> context["classifier"] |>,
