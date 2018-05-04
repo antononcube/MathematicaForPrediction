@@ -209,6 +209,8 @@ The allowed signatures are: \
 ROCValues::usage = "ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ ] \
 computes ROC associations (for ROCPlot)."
 
+ToClassifyROCCurvePlot::usage = "Changes the style of ROCPlot plots. (Experimental.)"
+
 Begin["`Private`"]
 
 Clear[ToROCAssociation]
@@ -505,6 +507,14 @@ ROCValues[___] :=
     Block[{},
       Message[ROCValues::args]
       $Failed
+    ];
+
+Clear[ToClassifyROCCurvePlot];
+ToClassifyROCCurvePlot[gr_] :=
+    Block[{cols, pFunc},
+      pFunc[x_, {cedge_RGBColor, cface_RGBColor}] := {EdgeForm[cedge], FaceForm[{cface, Opacity[0.34]}], Polygon[x]};
+      cols = Cases[gr, _RGBColor, Infinity];
+      gr /. {Line[x__] -> pFunc[x, {Darker[Blue], LightBlue}], PointSize[x_] -> PointSize[0.001]}
     ];
 
 End[] (* `Private` *)
