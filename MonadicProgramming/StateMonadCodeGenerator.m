@@ -367,8 +367,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateFail[__] := MStateFailureSymbol;
       MStateFail[][__] := MStateFailureSymbol;
 
+      MStateSucceed[__] := MState[{}];
       MStateSucceed[][__] := MState[{}];
-      MStateSucceed[s_][__] := MState[s];
+      MStateSucceed[s__][__] := MState[s];
 
       MStateUnit[MStateFailureSymbol] := MStateFailureSymbol;
       MStateUnit[___][MStateFailureSymbol] := MStateFailureSymbol;
