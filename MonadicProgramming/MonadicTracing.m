@@ -223,12 +223,14 @@ Grid87::usage = "A modified version of Grid."
 
 Begin["`Private`"]
 
+ClearAll[$TraceMonadFailure]
+(*$TraceMonadFailure = None;*)
 
 (**************************************************************)
 (* Generation                                                 *)
 (**************************************************************)
 Needs["StateMonadCodeGenerator`"]
-GenerateStateMonadCode["MonadicTracing`TraceMonad", "StringContextNames" -> False]
+GenerateStateMonadCode["MonadicTracing`TraceMonad", "StringContextNames" -> False, "FailureSymbol" -> $TraceMonadFailure ];
 
 (**************************************************************)
 (* Infix operators                                            *)
@@ -241,20 +243,16 @@ GenerateStateMonadCode["MonadicTracing`TraceMonad", "StringContextNames" -> Fals
 (**************************************************************)
 (* Monad specific functions                                   *)
 (**************************************************************)
-ClearAll[$TraceMonadFailure]
 
-$TraceMonadFailure = None;
 
 ClearAll[TraceMonadUnit]
 
 SetAttributes[TraceMonadUnit, HoldAll];
 
+TraceMonadUnit[x_] := TraceMonadUnit[x, DoubleLongRightArrow ];
+
 TraceMonadUnit[x_, binder_Symbol] :=
-    TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> binder, "commands" -> {}, "comments" -> {""}|>];
-
-TraceMonadUnit[x_] :=
-    TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> DoubleLongRightArrow, "commands" -> {}, "comments" -> {""}|>];
-
+    TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> binder, "commands" -> {}, "comments" -> {""}, "contextKeys" -> {{}} |>];
 
 ClearAll[TraceMonadBind]
 
@@ -272,14 +270,30 @@ TraceMonadBind[TraceMonad[x_, context_], com_String] :=
 TraceMonadBind[TraceMonad[x_, context_], f_] :=
     Block[{res},
       res = context["binder"][x, f];
-      If[res === None,
+      Which[
+
+        (* Applying a heuristic for the failure symbol of the wrapped monad. *)
+        res === None || Developer`SymbolQ[res] && StringMatchQ[SymbolName[res], "$"~~___~~"Failure"~~___],
         TraceMonadEchoGrid[][x, context];
-        None,
-      (*ELSE*)
+        res, (* This should not be $TraceMonadFailure .*)
+
+        Length[res] >= 2 && AssociationQ[ res[[2]] ],
+        (* Assuming State monad. *)
         TraceMonad[res,
           Join[context,
             <|"commands" -> Append[context["commands"], f],
-              "comments" -> Append[context["comments"], ""]|>]]
+              "comments" -> Append[context["comments"], ""],
+              "contextKeys" -> Append[context["contextKeys"], Keys[res[[2]]] ] |>]
+        ],
+
+        True,
+        TraceMonad[res,
+          Join[context,
+            <|"commands" -> Append[context["commands"], f],
+              "comments" -> Append[context["comments"], ""],
+              "contextKeys" -> Append[context["contextKeys"], {}]|>]
+        ]
+
       ]
     ];
 
@@ -292,19 +306,29 @@ Grid87 = Framed@
 
 ClearAll[TraceMonadEchoGrid]
 
-Options[TraceMonadEchoGrid] = { "ComplexStyling" -> True };
+Options[TraceMonadEchoGrid] = { "ComplexStyling" -> True, "ContextKeys" -> False };
 
 TraceMonadEchoGrid[x_, context_Association] := TraceMonadEchoGrid[][x, context];
 
 TraceMonadEchoGrid[][x_, context_] := TraceMonadEchoGrid[Grid87][x, context];
 
+TraceMonadEchoGrid[opts:OptionsPattern[] ][x_, context_] := TraceMonadEchoGrid[Grid87, opts ][x, context];
+
 TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
-    Block[{grData, delim, cStyleQ = TrueQ[OptionValue[TraceMonadEchoGrid,"ComplexStyling"]]},
+    Block[{grData, delim, cStyleQ, cKeysQ},
 
-      grData =
-          Transpose[{Prepend[HoldForm /@ context["commands"], context["data"]], context["comments"]}];
+      cStyleQ = TrueQ[OptionValue[TraceMonadEchoGrid, "ComplexStyling"]];
+      cKeysQ = TrueQ[OptionValue[TraceMonadEchoGrid, "ContextKeys"]];
 
-      If[ context["binder"] === NonCommutativeMultiply, delim = "**", delim = "\[DoubleLongRightArrow]"];
+      If[ !cKeysQ,
+        grData =
+            Transpose[{Prepend[HoldForm /@ context["commands"], context["data"]], context["comments"]}],
+        (* ELSE *)
+        grData =
+            Transpose[{Prepend[HoldForm /@ context["commands"], context["data"]], context["comments"], context["contextKeys"]}];
+      ];
+
+        If[ context["binder"] === NonCommutativeMultiply, delim = "**", delim = "\[DoubleLongRightArrow]"];
       delim = "\[ThinSpace]" <> delim;
 
       (* Style the code and comments *)
@@ -325,6 +349,11 @@ TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
       grData[[-1, 1]] = Row[Most@grData[[-1, 1, 1]]];
       grData[[All, 2]] =
           Map[Style[#, "CommentStyle" /. Options[$FrontEnd, AutoStyleOptions][[1, 2]]] &, grData[[All, 2]]];
+
+      If[Dimensions[grData][[2]] == 3, (*i.e. cKeysQ *)
+        grData[[All, 3]] =
+            Map[Style[#, "CommentStyle" /. Options[$FrontEnd, AutoStyleOptions][[1, 2]]] &, grData[[All, 3]]];
+      ];
 
       (* Show result *)
       Echo[gridFunc[grData]];
