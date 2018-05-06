@@ -288,6 +288,12 @@ FNR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FNR, rocs]
 ACC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"] + rocAssoc["TrueNegative"]) / Total[Values[rocAssoc]];
 ACC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[ACC, rocs];
 
+FOR[rocAssoc_?ROCAssociationQ] := 1 - NPV[rocAssoc];
+FOR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FOR, rocs];
+
+F1[rocAssoc_?ROCAssociationQ] := 2 * PPV[rocAssoc] * SPC[rocAssoc] / ( PPC[rocAssoc] + SPC[rocAssoc] );
+F1[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[F1, rocs];
+
 AUROC[pROCs:{_?ROCAssociationQ..}] :=
     Total[Partition[ Sort@Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}], 2, 1]
         /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)];
@@ -296,23 +302,24 @@ AUROC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[AUROC, r
 
 aROCAcronyms =
     AssociationThread[
-      {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC",
-        "Recall", "Precision", "Accuracy", "Sensitivity"},
+      {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "FOR",
+        "F1", "Recall", "Precision", "Accuracy", "Sensitivity"},
       {"true positive rate", "true negative rate", "specificity", "positive predictive value",
         "negative predictive value", "false positive rate",
-        "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve",
-        "same as TPR", "same as PPV", "same as ACC", "same as TPR"}
+        "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve", "false omission rate",
+        "F1 score", "same as TPR", "same as PPV", "same as ACC", "same as TPR"}
     ];
 
 aROCFunctions =
     Join[
       AssociationThread[
-        {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC"},
-        {TPR, SPC, SPC, PPV, NPV, FPR, FDR, FNR, ACC, AUROC}],
+        {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "FOR", "F1"},
+        {TPR, SPC, SPC, PPV, NPV, FPR, FDR, FNR, ACC, AUROC, FOR, F1}],
       AssociationThread[
         {"Recall", "Sensitivity", "Precision", "Accuracy", "Specificity",
-          "FalsePositiveRate", "TruePositiveRate", "FalseNegativeRate", "TrueNegativeRate", "FalseDiscoveryRate" },
-        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FPR, SPC, FDR }
+          "FalsePositiveRate", "TruePositiveRate", "FalseNegativeRate", "TrueNegativeRate", "FalseDiscoveryRate",
+          "FalseOmissionRate", "F1Score" },
+        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FNR, SPC, FDR, FOR, F1 }
       ]
     ];
 
