@@ -638,7 +638,7 @@ Clear[GetData]
 GetData[xs_, context_] :=
     Block[{},
       Which[
-        Head[xs] === Dataset || DataRulesForClassifyQ[xs],
+        Head[xs] === Dataset || DataRulesForClassifyQ[xs] || MatrixQ[xs],
         ctData = <|Anonymous->xs|>,
 
         MatchQ[xs, _Association] && ( KeyExistsQ[xs, "trainingData"] || KeyExistsQ[xs, "testData"] || KeyExistsQ[xs, "validationData"] ),
