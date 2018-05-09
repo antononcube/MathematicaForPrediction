@@ -82,7 +82,10 @@ the distribution d."
 GridOfCodeAndComments::usage = "GridOfCodeAndComments[code_String, opts___] tabulates code and comments. \
 The tabulation function is specified with the option \"GridFunction\"."
 
-DataRulesForClassifyQ::usage = "Checks is the argument is a list of record->label rules that can be used by Classify."
+DataRulesForClassifyQ::usage = "Checks is the argument is a list of item->label rules that can be used by Classify."
+
+DataArrayRulesForClassifyQ::usage = "Checks is the argument is a list of record->label rules that can be used by Classify. \
+All records should form an array."
 
 Begin["`Private`"]
 
@@ -124,7 +127,10 @@ ClassificationSuccessGrid[ctRules_] :=
     ];
 
 Clear[DataRulesForClassifyQ]
-DataRulesForClassifyQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+DataRulesForClassifyQ[data_] := MatchQ[data, {Rule[_List, _] ..}];
+
+Clear[DataArrayRulesForClassifyQ]
+DataArrayRulesForClassifyQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
 
 
 Clear[NumericVectorSummary, CategoricalVectorSummary]
