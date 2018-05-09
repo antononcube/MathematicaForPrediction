@@ -202,8 +202,10 @@ EnsembleClassifier[___] := (Message[EnsembleClassify::nargs]; $Failed);
 (* Resampling classifier making                               *)
 (**************************************************************)
 
+
 Clear[ClassifierDataQ];
-ClassifierDataQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
+ClassifierDataQ[data_] :=
+    MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]] || MatchQ[data, {Rule[_?AtomQ, _] ..}];
 
 Clear[ClassifierMethodQ];
 ClassifierMethodQ[x_] := StringQ[x] || MatchQ[ x, {_String, _Rule..} ]; (* And check is it known by Classify. *)
