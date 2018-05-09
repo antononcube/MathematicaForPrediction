@@ -292,7 +292,7 @@ ClearAll[ClConToNormalClassifierData]
 
 Options[ClConToNormalClassifierData] = {"DeleteMissing"->True, "ClassLabelColumn" -> Automatic };
 
-(* Here we use MathematicaForPredictionUtilities`DataRulesForClassifyQ *)
+(* Here we use MathematicaForPredictionUtilities`DataArrayRulesForClassifyQ *)
 
 ClConToNormalClassifierData[___] := $ClConFailure;
 
@@ -599,7 +599,7 @@ ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
       If[ KeyExistsQ[context, "trainingData"],
 
         dsQ = TrueQ[ Head[context["trainingData"]] === Dataset ];
-        mlrQ = DataRulesForClassifyQ[ context["trainingData"] ];
+        mlrQ = DataArrayRulesForClassifyQ[ context["trainingData"] ];
         arrQ = MatrixQ[context["trainingData"]];
 
         ncols =
@@ -670,8 +670,9 @@ ClConSummarizeData[___][$ClConFailure] := $ClConFailure;
 ClConSummarizeData[xs_, context_Association] := ClConSummarizeData[][xs,context];
 
 ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{ctData=GetData[xs,context], res, rsOpts, dims},
+    Block[{ctData=GetData[xs,context], res, rsOpts, dims, type},
 
+      type = OptionValue[ClConSummarizeData, "Type"];
       rsOpts = DeleteCases[{opts},("Type"->_)|("Echo"->_)];
 
       If[ Length[ctData] == 0 || And @@ Map[ Length[#]==0 &, ctData],
@@ -679,14 +680,19 @@ ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
         Return[$ClConFailure]
       ];
 
+      If[ DataRulesForClassifyQ[ctData[[1]]] && ! DataArrayRulesForClassifyQ[ctData[[1]]],
+        (* I.e  {(_?AtomQ->_lbl)..} *)
+        type = "WideForm"; dims = {Length[ctData[[1]]], 1};
+      ];
+
       dims =
-          If[DataRulesForClassifyQ[ctData[[1]]],
+          If[DataArrayRulesForClassifyQ[ctData[[1]]],
             Dimensions[ ctData[[1, All, 1]] ],
             Dimensions[ ctData[[1]] ]
           ];
 
-      If[ TrueQ[OptionValue["Type"] === Automatic] && Length[dims] > 1 && dims[[2]] < 9 ||
-          TrueQ[OptionValue["Type"] != "LongForm"],
+      If[ TrueQ[ type === Automatic] && Length[dims] > 1 && dims[[2]] < 9 ||
+          TrueQ[ type != "LongForm"],
       (*ctData = ClConToNormalClassifierData /@ ctData;*)
       (*res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;*)
         res = RecordsSummary[#, rsOpts, Thread->True]& /@ ctData;
@@ -1190,7 +1196,7 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
             fsClasses],
           context],
 
-        DataRulesForClassifyQ[context["testData"]],
+        DataArrayRulesForClassifyQ[context["testData"]],
         ClCon[
           AccuracyByVariableShuffling[
             context["classifier"],
@@ -1315,7 +1321,7 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
       newOpts = Sequence @@ DeleteCases[{opts}, "ClassLabel"->_];
 
       Which[
-        ( contextDataQ || pipelineDataQ ) && DataRulesForClassifyQ[asc["trainingData"]],
+        ( contextDataQ || pipelineDataQ ) && DataArrayRulesForClassifyQ[asc["trainingData"]],
         If[ !TrueQ[classLabel === Automatic],
           Echo["Ignoring the value \"ClassLabel\" given to the option: the data is a list of rules.", "ClConOutlierPosition:"]
         ];
@@ -1334,7 +1340,7 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
             "testData" -> ClConDataOutlierPosition[Drop[asc["testData"], None, {classLabelInd}], opts] |>,
           context],
 
-        DataRulesForClassifyQ[xs],
+        DataArrayRulesForClassifyQ[xs],
         If[ !TrueQ[classLabel === Automatic],
           Echo["Ignoring the value \"ClassLabel\" given to the option: the data is a list of rules.", "ClConOutlierPosition:"]
         ];
