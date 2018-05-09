@@ -977,7 +977,10 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
       ];
 
       targetClasses = OptionValue[ ClConROCData, "TargetClasses"];
-      targetClasses = Flatten[List[targetClasses]]; (* Assuming that the labels are _?AtomQ . *)
+      If[ ! ( TrueQ[ targetClasses === All ] || TrueQ[ targetClasses === Automatic ] ) && AtomQ[targetClasses],
+        (* Assuming that most likely the labels are _?AtomQ . *)
+        targetClasses = Flatten[List[targetClasses]];
+      ];
 
       Which[
 
