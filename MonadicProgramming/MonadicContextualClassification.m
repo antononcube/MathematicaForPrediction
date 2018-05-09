@@ -223,6 +223,8 @@ ClConSetValidationData::usage = "Sets the validation data in the context. Does n
 
 ClConSetClassifier::usage = "Sets the classifier in the context. Does not change the pipeline value."
 
+ClConSetVariableNames::usage = "Sets the variable names in the context. Does not change the pipeline value."
+
 ClConTakeTrainingData::usage = "Takes the training data in the context."
 
 ClConTakeTestData::usage = "Takes the test data in the context."
@@ -447,6 +449,11 @@ ClConSetClassifier[___][$ClConFailure] := $ClConFailure;
 ClConSetClassifier[xs_, context_Association] := $ClConFailure;
 ClConSetClassifier[cl_][xs_, context_Association] :=
     ClConUnit[xs, Join[ context, <| "classifier" -> cl |> ] ];
+
+ClConSetVariableNames[___][$ClConFailure] := $ClConFailure;
+ClConSetVariableNames[xs_, context_Association] := $ClConFailure;
+ClConSetVariableNames[nms_][xs_, context_Association] :=
+    ClConUnit[xs, Join[ context, <| "variableNames" -> nms |> ] ];
 
 
 ClConTakeTrainingData[___][$ClConFailure] := $ClConFailure;
@@ -943,7 +950,7 @@ ClConClassifierMeasurementsByThreshold[___][xs_, context_Association] :=
 
 ClearAll[ClConROCData]
 
-Options[ClConROCData] = { "ROCRange" -> Range[0,1,0.025], "TargetClasses" -> All };
+Options[ClConROCData] = { "ROCRange" -> Automatic, "TargetClasses" -> All };
 
 ClConROCData[$ClConFailure] := $ClConFailure;
 
@@ -957,7 +964,12 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
     Block[{ rocRange, targetClasses, cl, res},
 
       rocRange = OptionValue[ ClConROCData, "ROCRange"];
-      If[ !( VectorQ[rocRange,NumberQ] && Apply[And, 0 <= # <= 1& /@ rocRange] ),
+      Which[
+
+        TrueQ[ rocRange === Automatic ],
+        rocRange = Range[0,1,0.025],
+
+        !( VectorQ[rocRange,NumberQ] && Apply[And, 0 <= # <= 1& /@ rocRange] ),
         Echo["The value of the option \"ROCRange\" is expected to be a list of numbers between 0 and 1.", "ClConROCData:"];
         Echo["Continuing with \"ROCRange\"-> Range[0,1,0.025].", "ClConROCData:"];
         rocRange = Range[0,1,0.025];
@@ -1293,7 +1305,7 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
       contextDataQ = KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"];
       pipelineDataQ = MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"];
 
-      asc = If[contextDataQ, context, xs];
+      asc = If[pipelineDataQ, xs, context];
 
       newOpts = Sequence @@ DeleteCases[{opts}, "ClassLabel"->_];
 
