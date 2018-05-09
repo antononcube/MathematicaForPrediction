@@ -960,8 +960,9 @@ ClConROCData[xs_, context_Association] := ClConROCData[][xs, context];
 
 (* (Of course) this implementation is very similar to ClConClassifierMeasurements. *)
 (* So, some proper refactoring has to be done. *)
+(* Using Block instead of Module some unexpected execution flow would happen involving res .*)
 ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
-    Block[{ rocRange, targetClasses, cl, res},
+    Module[{ rocRange, targetClasses, cl, res},
 
       rocRange = OptionValue[ ClConROCData, "ROCRange"];
       Which[
@@ -976,6 +977,7 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
       ];
 
       targetClasses = OptionValue[ ClConROCData, "TargetClasses"];
+      targetClasses = Flatten[List[targetClasses]]; (* Assuming that the labels are _?AtomQ . *)
 
       Which[
 
@@ -1039,7 +1041,7 @@ ClConROCPlot[ xFuncName_String, yFuncName_String, opts:OptionsPattern[]][xs_,con
             Cases[{opts}, HoldPattern[Rule[lhs, _]]]
           ];
 
-      rocPlotFunc = ROCPlot[ xFuncName, yFuncName, #, Sequence @@ rocPlotOpts, "PlotJoined" -> True, GridLines -> Automatic, ImageSize -> Medium] &;
+      rocPlotFunc = ROCPlot[ xFuncName, yFuncName, #, Sequence @@ rocPlotOpts, "PlotJoined" -> True, GridLines -> Automatic, ImageSize -> Small] &;
 
       Which[
         KeyExistsQ[context, "rocData"] && Length[rocDataOpts] == 0 && !echoQ,
@@ -1111,7 +1113,7 @@ ClConROCListLinePlot[rocFuncs:{_String...}, opts:OptionsPattern[]][xs_,context_]
               Map[Transpose[{Through[roc["ROCParameter"]], #}] &,
                 N[Through[ROCFunctions[rocFuncs][roc]]]]]];
 
-      rocPlotFunc = ListLinePlot[#, Sequence @@ linePlotOpts, PlotTheme -> "Detailed", ImageSize -> Medium] &;
+      rocPlotFunc = ListLinePlot[#, Sequence @@ linePlotOpts, PlotTheme -> "Detailed", ImageSize -> Small] &;
 
       Which[
 
