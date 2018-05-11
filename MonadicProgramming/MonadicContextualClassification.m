@@ -727,7 +727,14 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
       ];
 
       varNames = ClConBind[ ClConUnit[xs,context], ClConTakeVariableNames ];
-      If[ TrueQ[varNames === $ClConFailure], varNames = ToString/@Range[Dimensions[ctData][[2]]] ];
+      If[ TrueQ[varNames === $ClConFailure],
+        If[ Keys[ctData] === {Anonymous},
+          res = <| "trainingData" -> First @ Values @Map[Take[#,UpTo[3]]&, ctData] |>,
+          res = ctData
+        ];
+        varNames = Fold[ ClConBind, ClConUnit[{}, res], { ClConAssignVariableNames, ClConTakeVariableNames} ]
+      ];
+      If[ TrueQ[varNames === $ClConFailure], Return[$ClConFailure] ];
 
       ctData = ClConToNormalClassifierData /@ ctData;
 
