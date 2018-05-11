@@ -172,9 +172,11 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
           ]}] &, {columnNames, columnTypes, dataColumns}, 1]
     ] /; Length[dataColumns] == Length[columnNamesArg];
 
-RecordsSummary::arrdepth = "The first argument is expected to be a non-empty full array of depth 1 or 2."
+RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2."
 
 Clear[RecordsSummary];
+
+RecordsSummary[{},___] := {};
 
 RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ]:=
     Block[{row1, colKeys,records},
