@@ -528,9 +528,9 @@ GrFramed[text_] :=
       FrameStyle -> RGBColor[0.94, 0.85, 0.36], FrameMargins -> Automatic}];
 
 Clear[TrieForm]
+Options[TrieForm] = Options[LayeredGraphPlot];
 TrieForm[mytrie_?TrieQ, opts : OptionsPattern[]] :=
-    LayeredGraphPlot[TrieToRules[mytrie],
-      VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
+    LayeredGraphPlot[TrieToRules[mytrie], opts, VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &)];
 
 Clear[TrieToJSON]
 TrieToJSON[tr_?TrieQ] := TrieToJSON[First@Normal@tr];
