@@ -97,6 +97,7 @@ TestRunClConPipelines::usage = "Run ClCon pipelines using VerificationTest."
 Begin["`Private`"]
 
 Needs["MonadicContextualClassification`"];
+Needs["ROCFunctions`"];
 
 ClearAll[MakeOddQData, MakeClConRandomPipelines, TestRunClConPipelines];
 
@@ -171,18 +172,18 @@ MakeClConRandomPipelines[{ds_Dataset, mlrData:{_Rule..}}, {n_Integer, n2_Integer
 
       stage4b = {ClConTakeValue};
 
-      allStages = {{1, 1} -> stage1, {1, 5} -> stage2, {1, 1} -> stage3, {1, 1} -> stage4, {1, 1} -> stage5};
+      allStages = {{1, 1} -> stage1, {0, 5} -> stage2, {1, 1} -> stage3, {1, 1} -> stage4, {1, 1} -> stage5};
       allStages2 = {{1, 1} -> stage1, {1, 5} -> stage2, {1, 2} -> stage3a, {1, 1} -> stage4a};
       allStages3 = {{1, 1} -> stage1, {1, 5} -> stage2, {1, 2} -> stage3b, {1, 1} -> stage4b};
 
       pipelines =
-          Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages], {30}];
+          Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages], {n}];
       pipelines =
           Join[pipelines,
-            Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages2], {10}]];
+            Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages2], {n2}]];
       pipelines =
           Join[pipelines,
-            Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages3], {10}]];
+            Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages3], {n3}]];
 
       pipelines
     ];
@@ -190,20 +191,35 @@ MakeClConRandomPipelines[{ds_Dataset, mlrData:{_Rule..}}, {n_Integer, n2_Integer
 Options[TestRunClConPipelines] = {"Echo"->True};
 
 TestRunClConPipelines[ pipelines_, opts:OptionsPattern[] ] :=
-    Block[{echoQ, testRes},
+    Block[{echoQ, testRes, testPatt},
 
       echoQ = TrueQ[OptionValue[TestRunClConPipelines, "Echo"]];
 
       MapIndexed[(
         If[echoQ, Echo[ #2[[1]], Style["pipeline:", Bold, Blue]] ];
 
+        testPatt =
+            Which[
+              MatchQ[ #1[[-2]], _ClConROCData | ClConROCData ],
+              Association[(_ -> {_?ROCAssociationQ ..}) ..],
+
+              MatchQ[ #1[[-2]], _ClConClassifierMeasurements | _ClConClassifierMeasurementsByThreshold],
+              (x_Association /; (Length[Intersection[Keys[x], {"Accuracy", "Precision", "Recall"}]] == 3)),
+
+              MatchQ[ #1[[-2]], _ClConSummarizeData | _ClConSummarizeDataLongForm | ClConSummarizeData | ClConSummarizeDataLongForm],
+              {(_ -> ({_Column ..} | _Rule | {})) ..},
+
+              MatchQ[ #1[[-2]], _ClConAssignVariableNames | ClConAssignVariableNames ],
+              None | _Dataset | _Association | _List,
+
+              True,
+              $ClConFailure
+
+            ];
+
         VerificationTest[
             testRes = Fold[ClConBind, First[#], Rest[#]];
-            MatchQ[testRes,
-              Association[(_ -> {_?ROCAssociationQ ..}) ..] |
-                  (x_Association /; (Length[Intersection[Keys[x], {"Accuracy", "Precision", "Recall"}]] == 3)) |
-                  {(_ -> ({_Column ..} | {})) ..} |
-                  $ClConFailure],
+            MatchQ[testRes, testPatt | $ClConFailure],
 
           True,
 
