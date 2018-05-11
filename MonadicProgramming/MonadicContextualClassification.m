@@ -810,10 +810,10 @@ ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_,
       If[ TrueQ[methodSpec===Automatic], methodSpec = "LogisticRegression" ];
 
       Which[
-        ClConMethodQ[methodSpec] && ( !KeyExistsQ[context, "validationData"] || TrueQ[dataAssoc["validationData"] === Automatic] ),
+        ClConMethodQ[methodSpec] && ( !KeyExistsQ[dataAssoc, "validationData"] || TrueQ[dataAssoc["validationData"] === Automatic] ),
         cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], opts, Method -> methodSpec ],
 
-        ClConMethodQ[methodSpec] && KeyExistsQ[context, "validationData"],
+        ClConMethodQ[methodSpec] && KeyExistsQ[dataAssoc, "validationData"],
         cf = Classify[ClConToNormalClassifierData[dataAssoc@"trainingData"], opts, Method -> methodSpec,
                       ValidationSet -> ClConToNormalClassifierData[dataAssoc@"validationData"] ],
 
