@@ -31,7 +31,7 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: MonadicContextualClassification-Unit-Testss *)
+(* :Title: MonadicContextualClassification-Unit-Tests *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-04-23 *)
 
@@ -51,8 +51,7 @@ BeginTestSection["MonadicContextualClassification-Unit-Tests"]
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    (*Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"],*)
-    Get["~/MathematicaForPrediction/MonadicProgramming/MonadicContextualClassification.m"];
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"],
     Greater[Length[SubValues[MonadicContextualClassification`ClConSplitData]], 0]
   ]
   ,
@@ -126,13 +125,13 @@ VerificationTest[(* 6 *)
     Set[res,
       DoubleLongRightArrow[
         ClConUnit[data],
-        ClConSplitData[0.4`],
+        ClConSplitData[0.7`],
         ClConAddToContext,
-        ClConMakeClassifier["RandomForest"],
+        ClConMakeClassifier["NearestNeighbors"],
         ClConClassifierMeasurements[List["Accuracy", "Precision", "Recall"]],
         ClConTakeValue]
     ],
-    Greater[res["Accuracy"], 0.85`]
+    Greater[res["Accuracy"], 0.65`]
   ]
   ,
   True
@@ -147,11 +146,11 @@ VerificationTest[(* 7 *)
       DoubleLongRightArrow[
         ClConUnit[dataMLRules],
         ClConSplitData[0.7`],
-        ClConMakeClassifier["RandomForest"],
+        ClConMakeClassifier["NearestNeighbors"],
         ClConClassifierMeasurements[List["Accuracy", "Precision", "Recall"]],
         ClConTakeValue]
     ],
-    Greater[res["Accuracy"], 0.85`]
+    Greater[res["Accuracy"], 0.65`]
   ]
   ,
   True
