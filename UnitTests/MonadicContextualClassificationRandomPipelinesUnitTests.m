@@ -1,12 +1,42 @@
-(* Mathematica Package *)
-(* Created by Mathematica Plugin for IntelliJ IDEA *)
+(*
+    Monadic contextual classification random pipelines Mathematica unit tests
+    Copyright (C) 2018  Anton Antonov
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Written by Anton Antonov,
+    antononcube @ gmai l . c om,
+    Windermere, Florida, USA.
+*)
+
+(*
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+
+    Protected by copyright law and international treaties.
+
+    Unauthorized reproduction or distribution subject to severe civil
+    and criminal penalties.
+
+    Mathematica is a registered trademark of Wolfram Research, Inc.
+*)
 
 (* :Title: MonadicContextualClassification-Random-Pipelines-Unit-Tests *)
 (* :Context: MonadicContextualClassification-Random-Pipelines-Unit-Tests` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-05-11 *)
 
-(* :Package Version: 0.1 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: *)
@@ -14,9 +44,40 @@
 
     Generation and execution of ClCon random test pipelines.
 
-    To generated the pipelines use:
+    Here is how to generate pipelines:
+
+        SeedRandom[234];
+        pipelines = MakeClConRandomPipelines[50];
+        Length[pipelines]
 
 
+    Here is how to run generated pipelines as verification tests:
+
+        AbsoluteTiming[
+          res = TestRunClConPipelines[pipelines, "Echo" -> True]
+        ]
+
+
+    Here is how to make test report and examine it:
+
+        rpTRObj = TestReport[res]
+        Column /@ (Normal /@ rpTRObj["TestsFailed"]) // TabView
+
+
+    Note the the verification tests are made to match an expected combined/complicated pattern.
+    That pattern catches output that correspond to:
+
+    1. $ClConFailure,
+    2. measurements results obtained with ClConClassifierMeasurements or ClConClassifierMeasurementsByThreshold,
+    3. ROC data obtained by ClConROCData,
+    4. summaries obtained ClConSummarizeData or ClConSummarizeDataLongForm.
+
+    That list can be derived by observing the stages-before-the-last in MakeClConRandomPipelines.
+
+
+    Anton Antonov,
+    Windermere, Florida, USA,
+    2018-05-11
 
 *)
 
