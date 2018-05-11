@@ -172,7 +172,7 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
           ]}] &, {columnNames, columnTypes, dataColumns}, 1]
     ] /; Length[dataColumns] == Length[columnNamesArg];
 
-RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2."
+RecordsSummary::arrdepth = "The first argument is expected to be a non-empty full array of depth 1 or 2."
 
 Clear[RecordsSummary];
 
@@ -222,7 +222,7 @@ RecordsSummary[dataRecords_?DataRulesForClassifyQ, args___] :=
     ];
 
 RecordsSummary[dataRecords_, args___ ] :=
-    RecordsSummary[ List /@ dataRecords, args ] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 1 );
+    RecordsSummary[ List /@ dataRecords, args ] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 1 && Length[dataRecords] > 0);
 
 RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
 
