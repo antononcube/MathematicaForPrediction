@@ -327,6 +327,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateBind = ToExpression[monadName <> "Bind"],
       MStateFail = ToExpression[monadName <> "Fail"],
       MStateSucceed = ToExpression[monadName <> "Succeed"],
+      MStateEcho = ToExpression[monadName <> "Echo"],
       MStateEchoValue = ToExpression[monadName <> "EchoValue"],
       MStateEchoFunctionValue = ToExpression[monadName <> "EchoFunctionValue"],
       MStateEchoContext = ToExpression[monadName <> "EchoContext"],
@@ -348,7 +349,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]]
     },
 
-      ClearAll[MState, MStateUnit, MStateUnitQ, MStateBind, MStateFail, MStateSucceed,
+      ClearAll[MState, MStateUnit, MStateUnitQ, MStateBind, MStateFail, MStateSucceed, MStateEcho,
         MStateEchoValue, MStateEchoFunctionValue,
         MStateEchoContext, MStateEchoFunctionContext,
         MStatePutContext, MStateModifyContext,
@@ -364,12 +365,13 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
-      MStateFail[__] := MStateFailureSymbol;
-      MStateFail[][__] := MStateFailureSymbol;
+      MStateFail[___] := MStateFailureSymbol;
+      MStateFail[][___] := MStateFailureSymbol;
+      (*MStateFail[echoArgs__][x_, c:(_String|_Association)] := (Echo[echoArgs]; MStateFailureSymbol);*)
 
-      MStateSucceed[__] := MState[{}];
+      MStateSucceed[___] := MState[{}];
       MStateSucceed[][__] := MState[{}];
-      MStateSucceed[s__][__] := MState[s];
+      MStateSucceed[s__][___] := MState[s];
 
       MStateUnit[MStateFailureSymbol] := MStateFailureSymbol;
       MStateUnit[___][MStateFailureSymbol] := MStateFailureSymbol;
@@ -422,6 +424,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             ];
       ];
       MStateBind[___] := MStateFailureSymbol;
+
+      MStateEcho[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateEcho[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateEcho[echoArgs__][x_, context_Association] := (Echo[echoArgs]; MState[x, context]);
+      MStateEcho[x_, context_Association] := (Echo[Short[MState[x, context]]]; MState[x, context]);
+      MStateEcho[][x_, context_Association] := MStateEcho[x, context];
 
       MStateEchoValue[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoValue[x_, context_Association] := (Echo[x,"value:"]; MState[x, context]);
