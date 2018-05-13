@@ -1320,8 +1320,8 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 
       classLabel = OptionValue[ ClConOutlierPosition, "ClassLabel" ];
 
-      contextDataQ = KeyExistsQ[context, "trainingData"] && KeyExistsQ[context, "testData"];
-      pipelineDataQ = MatchQ[xs, _Association] && KeyExistsQ[xs, "trainingData"] && KeyExistsQ[xs, "testData"];
+      contextDataQ = KeyExistsQ[context, "trainingData"] || KeyExistsQ[context, "testData"] || KeyExistsQ[context, "validationData"];
+      pipelineDataQ = MatchQ[xs, _Association] && ( KeyExistsQ[xs, "trainingData"] || KeyExistsQ[xs, "testData"] || KeyExistsQ[xs, "validationData"] );
 
       asc = If[pipelineDataQ, xs, context];
 
@@ -1330,11 +1330,10 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
       Which[
         ( contextDataQ || pipelineDataQ ) && DataArrayRulesForClassifyQ[asc["trainingData"]],
         If[ !TrueQ[classLabel === Automatic],
-          Echo["Ignoring the value \"ClassLabel\" given to the option: the data is a list of rules.", "ClConOutlierPosition:"]
+          Echo["Ignoring the value given to the option \"ClassLabel\": the data is a list of rules.", "ClConOutlierPosition:"]
         ];
         ClConUnit[
-          <|"trainingData" -> ClConDataOutlierPosition[asc["trainingData"][[All,1]], newOpts],
-            "testData" -> ClConDataOutlierPosition[asc["testData"][[All,1]], newOpts] |>,
+          ClConDataOutlierPosition[#[[All,1]], newOpts]& /@ KeyTake[asc, {"trainingData", "testData", "validationData"}],
           context],
 
         contextDataQ || pipelineDataQ,
@@ -1343,13 +1342,12 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
               First @ Values @ ClConBind[ ClConUnit[xs, context], ClConTakeClassLabelIndex[classLabel]]
             ];
         ClConUnit[
-          <|"trainingData" -> ClConDataOutlierPosition[Drop[asc["trainingData"], None, {classLabelInd}], opts],
-            "testData" -> ClConDataOutlierPosition[Drop[asc["testData"], None, {classLabelInd}], opts] |>,
+          ClConDataOutlierPosition[ Drop[#, None, {classLabelInd}], opts]& /@ KeyTake[asc, {"trainingData", "testData", "validationData"}],
           context],
 
         DataArrayRulesForClassifyQ[xs],
         If[ !TrueQ[classLabel === Automatic],
-          Echo["Ignoring the value \"ClassLabel\" given to the option: the data is a list of rules.", "ClConOutlierPosition:"]
+          Echo["Ignoring the value given to the option \"ClassLabel\": the data is a list of rules.", "ClConOutlierPosition:"]
         ];
         ClConUnit[ClConDataOutlierPosition[xs, newOpts][[All,1]], context],
 
