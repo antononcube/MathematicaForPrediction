@@ -136,11 +136,13 @@ MakeGitHubDataObject[user_String, project_String] :=
 (* Data download                                          *)
 (**********************************************************)
 
-GitHubData[{objID_, user_String, project_String}]["GetData"[]] :=
+GitHubData[args__]["GetData"[]] := GitHubData[args]["GetData"[0, 30]];
+
+GitHubData[{objID_, user_String, project_String}]["GetData"[page_Integer, perPage_Integer]] :=
     Block[{obj = GitHubData[{objID, user, project}], url, data},
       If[Length[obj["CommitData"]] == 0,
-        url = StringTemplate["https://api.github.com/repos/`1`/`2`/commits"];
-        data = Import[url[user, project], "JSON"];
+        url = StringTemplate["https://api.github.com/repos/`1`/`2`/commits?page=`3`&per_page=`4`"];
+        data = Import[url[user, project, ToString[page], ToString[perPage]], "JSON"];
         obj["CommitData"] = data;
       ];
       obj["CommitData"]
