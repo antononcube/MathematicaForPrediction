@@ -136,7 +136,7 @@ MakeGitHubDataObject[user_String, project_String] :=
 (* Data download                                          *)
 (**********************************************************)
 
-GitHubData[args__]["GetData"[]] := GitHubData[args]["GetData"[0, 30]];
+GitHubData[args__]["GetData"[]] := GitHubData[args]["GetData"[1, 30]];
 
 GitHubData[{objID_, user_String, project_String}]["GetData"[page_Integer, perPage_Integer]] :=
     Block[{obj = GitHubData[{objID, user, project}], url, data},
