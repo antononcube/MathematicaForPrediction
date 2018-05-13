@@ -318,8 +318,8 @@ aROCFunctions =
       AssociationThread[
         {"Recall", "Sensitivity", "Precision", "Accuracy", "Specificity",
           "FalsePositiveRate", "TruePositiveRate", "FalseNegativeRate", "TrueNegativeRate", "FalseDiscoveryRate",
-          "FalseOmissionRate", "F1Score" },
-        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FNR, SPC, FDR, FOR, F1 }
+          "FalseOmissionRate", "F1Score", "AreaUnderROCCurve" },
+        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FNR, SPC, FDR, FOR, F1, AUROC }
       ]
     ];
 
