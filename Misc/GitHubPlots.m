@@ -215,18 +215,32 @@ Options[GitHubDateListPlot] = Options[DateListPlot];
 GitHubDateListPlot[ user_String, repo_String, opts:OptionsPattern[] ] := GitHubDateListPlot[user, repo, 1, 30, opts];
 
 GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opts:OptionsPattern[] ] :=
-    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize=0.03},
+    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize=0.03, plotTicks, frameTicksValue},
 
       {commitRecs, pathsByInds, datePoints, tickLabels} = CorePlotData[user, repo, page, perPage];
 
+      plotTicks = Table[{i, tickLabels[[i]] }, {i, 1, Length[tickLabels]}];
+
+      frameTicksValue = OptionValue[GitHubDateListPlot, FrameTicks];
+
+      Which[
+        MatchQ[ frameTicksValue, {_, Automatic}],
+        frameTicksValue = { { First[frameTicksValue], plotTicks}, {Automatic, Automatic} },
+
+        MatchQ[ frameTicksValue, {{_, Automatic}, {_, _}}],
+        frameTicksValue = { { frameTicksValue[[1,1]], plotTicks}, frameTicksValue[[2]] },
+
+        TrueQ[ frameTicksValue === Automatic],
+        frameTicksValue = {{Automatic, plotTicks}, {Automatic, Automatic}}
+      ];
+
       gr = DateListPlot[
         MapThread[Tooltip[#1, #2] &, {datePoints, tickLabels}],
+        FrameTicks -> frameTicksValue,
         opts,
         Joined -> False, PlotStyle -> {PointSize[pointSize]},
         PlotRange -> All, AspectRatio -> 2, ImageSize -> {Automatic, 800},
         GridLines -> {None, Automatic},
-        FrameTicks -> {{Automatic,
-          Table[{i, tickLabels[[i]] }, {i, 1, Length[tickLabels]}]}, {Automatic, Automatic}},
         FrameLabel -> {{"commit order", None}, {1, 1} "date"}];
 
       Show[gr,
