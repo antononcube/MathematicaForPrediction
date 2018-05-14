@@ -1204,7 +1204,7 @@ ClConSuggestROCThresholds[n_Integer:1, opts:OptionsPattern[]][xs_, context_] :=
               rocPoints]
           ];
 
-      ClCon[ TakeSmallest[#, UpTo[n]] & /@ rocDists, context]
+      ClCon[ Keys[TakeSmallest[#, UpTo[n]]] & /@ rocDists, context]
     ];
 
 (************************************************************)
