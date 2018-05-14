@@ -250,10 +250,16 @@ ClConROCPlot::usage = "Makes a ROC plot and echoes it. The result pipeline value
 
 ClConROCListLinePlot::usage = "Makes ListLinePlot over specified ROC functions and echoes it. The result pipeline value is the plot."
 
+ClConSuggestROCThresholds::usage = "Suggest thresholds based on ROC data."
+
 ClConAssignVariableNames::usage = "Puts a value for \"variableNames\" in the context in correspondence to \"trainingData\" in the context. \
 If an empty list is given the variable names are automatically derived."
 
 ClConOutlierPosition::usage = "Find outlier positions in the data."
+
+(*ClConFindOutliersPerClassLabel::usage = "Find outlier positions in the data per class label."*)
+
+(*ClConDropOutliersPerClassLabel::usage = "Find and from outliers in the data per class label."*)
 
 Begin["`Private`"]
 
@@ -835,7 +841,7 @@ ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_,
         Echo["Classifier making failure.", "ClConMakeClassifier:"];
         $ClConFailure,
       (* ELSE *)
-        ClCon[cf, Join[context, newContext, <|"classifier" -> cf|>]]
+        ClCon[cf, KeyDrop[ Join[context, newContext, <|"classifier" -> cf|>], "rocData"] ]
       ]
     ];
 
@@ -1163,6 +1169,44 @@ ClConROCListLinePlot[___][xs_,context_Association] :=
       $ClConFailure
     ];
 
+
+(************************************************************)
+(* ClConSuggestROCThresholds                                *)
+(************************************************************)
+ClearAll[ClConSuggestROCThresholds]
+
+Options[ClConSuggestROCThresholds] = Options[ROCData];
+
+ClConSuggestROCThresholds[xs_, context_Association] := ClConSuggestROCThresholds[1][xs, context];
+
+ClConSuggestROCThresholds[][xs_, context_] := ClConSuggestROCThresholds[1][xs, context];
+
+ClConSuggestROCThresholds[n_Integer:1, opts:OptionsPattern[]][xs_, context_] :=
+    Module[{rocData, rocPoints, rocDists},
+
+      Which[
+        KeyExistsQ[context, "rocData"] && Length[{opts}] == 0,
+        rocData = context["rocData"],
+
+        True,
+        rocData = Fold[ ClConBind, ClConUnit[xs, context], { ClConROCData[opts], ClConTakeROCData} ]
+      ];
+
+      rocPoints = Map[Transpose[{ROCFunctions["FPR"][#], ROCFunctions["TPR"][#]}] &, rocData];
+
+      rocDists =
+          Association[
+            KeyValueMap[
+              Function[{k, rps},
+                k ->
+                    Association[
+                      MapThread[#2 -> EuclideanDistance[#1, {0, 1}] &, {N@rps, Through[rocData[k]["ROCParameter"]]}]]],
+              rocPoints]
+          ];
+
+      ClCon[ TakeSmallest[#, UpTo[n]] & /@ rocDists, context]
+    ];
+
 (************************************************************)
 (* ClConAccuracyByVariableShuffling                         *)
 (************************************************************)
@@ -1372,27 +1416,27 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
     ];
 
 (************************************************************)
-(* ClConFindOutliersPerClass                                *)
+(* ClConFindOutliersPerClassLabel                                *)
 (************************************************************)
-ClearAll[ClConFindOutliersPerClass]
+ClearAll[ClConFindOutliersPerClassLabel]
 
-Options[ClConFindOutliersPerClass] = {
+Options[ClConFindOutliersPerClassLabel] = {
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
   "TrainingDataOnly" -> True,
   "ClassLabel" -> Automatic,
-  "SimpleConversion" -> True
+  "ConversionFunction" -> None
 };
 
-ClConFindOutliersPerClass[___][$ClConFailure] := $ClConFailure;
+ClConFindOutliersPerClassLabel[___][$ClConFailure] := $ClConFailure;
 
-ClConFindOutliersPerClass[$ClConFailure] := $ClConFailure;
+ClConFindOutliersPerClassLabel[$ClConFailure] := $ClConFailure;
 
-ClConFindOutliersPerClass[xs_, context_Association] := ClConFindOutliersPerClass[][xs, context];
+ClConFindOutliersPerClassLabel[xs_, context_Association] := ClConFindOutliersPerClassLabel[][xs, context];
 
-ClConFindOutliersPerClass[][xs_, context_Association] :=
-    ClConFindOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
+ClConFindOutliersPerClassLabel[][xs_, context_Association] :=
+    ClConFindOutliersPerClassLabel["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
 
-ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
+ClConFindOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{data, res},
 
       res = Fold[ ClConBind, ClConUnit[xs,context], {ClConOutliersOperationsProcessing[opts][##]&, ClConTakeValue}];
@@ -1402,7 +1446,7 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
       res =
           AssociationThread[
             Normal[Keys[data]],
-            Table[ClConOutlierPosition[data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"] ], {i, Length[data]}]
+            Table[ClConDataOutlierPosition[data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"] ], {i, Length[data]}]
           ];
 
       ClConUnit[res, context]
@@ -1410,7 +1454,7 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 
 
 (************************************************************)
-(* ClConDropOutliersPerClass                                *)
+(* ClConDropOutliersPerClassLabel                                *)
 (************************************************************)
 
 (*
@@ -1427,20 +1471,20 @@ ClConFindOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
   4. That dataset is returned as monad pipeline value.
 *)
 
-ClearAll[ClConDropOutliersPerClass]
+ClearAll[ClConDropOutliersPerClassLabel]
 
-Options[ClConDropOutliersPerClass] = Options[ClConFindOutliersPerClass];
+Options[ClConDropOutliersPerClassLabel] = Options[ClConFindOutliersPerClassLabel];
 
-ClConDropOutliersPerClass[___][$ClConFailure] := $ClConFailure;
+ClConDropOutliersPerClassLabel[___][$ClConFailure] := $ClConFailure;
 
-ClConDropOutliersPerClass[$ClConFailure] := $ClConFailure;
+ClConDropOutliersPerClassLabel[$ClConFailure] := $ClConFailure;
 
-ClConDropOutliersPerClass[xs_, context_Association] := ClConDropOutliersPerClass[][xs, context];
+ClConDropOutliersPerClassLabel[xs_, context_Association] := ClConDropOutliersPerClassLabel[][xs, context];
 
-ClConDropOutliersPerClass[][xs_, context_Association] :=
-    ClConDropOutliersPerClass["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
+ClConDropOutliersPerClassLabel[][xs_, context_Association] :=
+    ClConDropOutliersPerClassLabel["OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters) ][xs, context];
 
-ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
+ClConDropOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{data, res, t},
 
       res = Fold[ ClConBind, ClConUnit[xs,context], {ClConOutliersOperationsProcessing[opts][##]&, ClConTakeValue}];
@@ -1449,7 +1493,7 @@ ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 
       res =
           Table[(
-            t = ClConOutlierPosition[ data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"], "SimpleConversion" -> res["simpleConversion"] ];
+            t = ClConDataOutlierPosition[ data[i], "OutlierIdentifierParameters" -> res["outlierIdentifier"], "ConversionFunction" -> res["conversionFunction"] ];
             data[i][ Complement[ Range[Length[data[i]]], t] ]
           ), {i, Length[data]}];
 
@@ -1464,17 +1508,17 @@ ClConDropOutliersPerClass[opts : OptionsPattern[]][xs_, context_Association] :=
 (************************************************************)
 ClearAll[ClConOutliersOperationsProcessing]
 
-Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClass];
+Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClassLabel];
 
 ClConOutliersOperationsProcessing[___][$ClConFailure] := $ClConFailure;
 
 ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{data, outlierIdentifier, trainingDataOnly, simpleConversion, classLabel, classLabelInd, varNames, res},
+    Block[{data, outlierIdentifier, trainingDataOnly, conversionFunc, classLabel, classLabelInd, varNames, res},
 
       outlierIdentifier = OptionValue[ ClConOutliersOperationsProcessing, "OutlierIdentifierParameters"];
       trainingDataOnly = TrueQ[ OptionValue[ ClConOutliersOperationsProcessing, "TrainingDataOnly" ] ];
       classLabel = OptionValue[ ClConOutliersOperationsProcessing, "ClassLabel" ];
-      simpleConversion = TrueQ[ OptionValue[ClConOutliersOperationsProcessing, "SimpleConversion" ] ];
+      conversionFunc = TrueQ[ OptionValue[ClConOutliersOperationsProcessing, "ConversionFunction" ] ];
 
       If[ trainingDataOnly,
 
@@ -1487,7 +1531,7 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
           data = context["trainingData"],
 
           True,
-          Echo["No training data.", "ClConFindOutliersPerClass::"];
+          Echo["No training data.", "ClConOutliersOperationsProcessing::"];
           $ClConFailure
 
         ],
@@ -1497,8 +1541,7 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
       ];
 
       If[ TrueQ[Head[data] =!= Dataset],
-        Print[data];
-        Echo[ "The obtained data a Dataset object.", "ClConFindOutliersPerClass::"];
+        Echo[ "The obtained data is not a Dataset object.", "ClConOutliersOperationsProcessing::"];
         Return[$ClConFailure]
       ];
 
@@ -1530,7 +1573,7 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
 
       res = <| "data"->data, "varNames"->varNames,
         "trainingDataOnly" -> trainingDataOnly,
-        "simpleConversion" -> simpleConversion,
+        "conversionFunction" -> conversionFunc,
         "classLabel"->classLabel, "classLabelInd"->classLabelInd,
         "outlierIdentifier"->outlierIdentifier |>;
 
