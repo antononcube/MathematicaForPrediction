@@ -219,6 +219,8 @@ TraceMonadBind::usage = "The binding function of TraceMonad."
 
 TraceMonadEchoGrid::usage = "Echoes a tabulation of the traced monad functions using Grid."
 
+TraceMonadTakeGrid::usage = "Gives a tabulation of the traced monad functions using Grid."
+
 Grid87::usage = "A modified version of Grid."
 
 Begin["`Private`"]
@@ -315,10 +317,31 @@ TraceMonadEchoGrid[][x_, context_] := TraceMonadEchoGrid[Grid87][x, context];
 TraceMonadEchoGrid[opts:OptionsPattern[] ][x_, context_] := TraceMonadEchoGrid[Grid87, opts ][x, context];
 
 TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
+    Block[{res},
+
+      res = TraceMonadBind[ TraceMonad[x, context], TraceMonadTakeGrid[gridFunc, opts] ];
+
+      (* Show result *)
+      Echo[res];
+      TraceMonad[x, context]
+    ];
+
+
+ClearAll[TraceMonadTakeGrid];
+
+Options[TraceMonadTakeGrid] = Options[TraceMonadEchoGrid];
+
+TraceMonadTakeGrid[x_, context_Association] := TraceMonadTakeGrid[][x, context];
+
+TraceMonadTakeGrid[][x_, context_] := TraceMonadTakeGrid[Grid87][x, context];
+
+TraceMonadTakeGrid[opts:OptionsPattern[] ][x_, context_] := TraceMonadTakeGrid[Grid87, opts ][x, context];
+
+TraceMonadTakeGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
     Block[{grData, delim, cStyleQ, cKeysQ},
 
-      cStyleQ = TrueQ[OptionValue[TraceMonadEchoGrid, "ComplexStyling"]];
-      cKeysQ = TrueQ[OptionValue[TraceMonadEchoGrid, "ContextKeys"]];
+      cStyleQ = TrueQ[OptionValue[TraceMonadTakeGrid, "ComplexStyling"]];
+      cKeysQ = TrueQ[OptionValue[TraceMonadTakeGrid, "ContextKeys"]];
 
       If[ !cKeysQ,
         grData =
@@ -328,21 +351,21 @@ TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
             Transpose[{Prepend[HoldForm /@ context["commands"], context["data"]], context["comments"], context["contextKeys"]}];
       ];
 
-        If[ context["binder"] === NonCommutativeMultiply, delim = "**", delim = "\[DoubleLongRightArrow]"];
+      If[ context["binder"] === NonCommutativeMultiply, delim = "**", delim = "\[DoubleLongRightArrow]"];
       delim = "\[ThinSpace]" <> delim;
 
       (* Style the code and comments *)
       If[ cStyleQ,
-        (* Using RuleCondition because the pipeline functions are kept in HoldForm. *)
-        (* Note that RuleCondition is undocumented. *)
-        (* The alternative is to use /. (z_String :> With[{eval = "\"" <> z <> "\""}, eval /; True]) *)
+      (* Using RuleCondition because the pipeline functions are kept in HoldForm. *)
+      (* Note that RuleCondition is undocumented. *)
+      (* The alternative is to use /. (z_String :> With[{eval = "\"" <> z <> "\""}, eval /; True]) *)
         grData[[All, 1]] =
             Map[
               Row[{"  ",
                 Style[ # /. (z_String :> RuleCondition[("\"" <> z <> "\"")]), "Input"],
                 Style[delim, "Input"]}] &,
               grData[[All, 1]]],
-        (* ELSE *)
+      (* ELSE *)
         grData[[All, 1]] = Map[Row[{"  ", Style[#, "Input"], Style[delim, "Input"]}] &, grData[[All, 1]]];
       ];
       grData[[1, 1]] = Row[Rest@grData[[1, 1, 1]]];
@@ -356,8 +379,7 @@ TraceMonadEchoGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
       ];
 
       (* Show result *)
-      Echo[gridFunc[grData]];
-      TraceMonad[x, context]
+      gridFunc[grData]
     ];
 
 
