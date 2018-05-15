@@ -71,25 +71,25 @@ Here is are the dimensions of the datasets:
 
     Dataset[Dataset[Map[Prepend[Dimensions[ToExpression[#]], #] &, {"dsTitanic", "dsMushroom", "dsWineQuality"}]][All, AssociationThread[{"name", "rows", "columns"}, #] &]]
 
-    (* Dataset[ <> ] *)
+!["ClCon-datasets-dimensions"](https://imgur.com/vevAWAh.png)
 
 Here is the summary of `dsTitanic`:
 
     ClConUnit[dsTitanic]⟹ClConSummarizeData["MaxTallies" -> 12];
 
-[//]: # (No rules defined for Echo)
+!["ClCon-dsTitanic-summary"](https://imgur.com/FETQehj.png)
 
 Here is the summary of `dsMushroom` in long form:
 
     ClConUnit[dsMushroom]⟹ClConSummarizeDataLongForm["MaxTallies" -> 12];
 
-[//]: # (No rules defined for Echo)
+!["ClCon-dsMushroom-summary"](https://imgur.com/Lhwr3Ht.png)
 
 Here is the summary of `dsWineQuality` in long form:
 
     ClConUnit[dsWineQuality]⟹ClConSummarizeDataLongForm["MaxTallies" -> 12];
 
-[//]: # (No rules defined for Echo)
+!["ClCon-dsWineQuality-summary"](https://imgur.com/FETQehj.png)
 
 ### "Quick" data
 
