@@ -969,7 +969,7 @@ ClConClassifierMeasurementsByThreshold[___][xs_, context_Association] :=
 
 ClearAll[ClConROCData]
 
-Options[ClConROCData] = { "ROCRange" -> Automatic, "TargetClasses" -> All };
+Options[ClConROCData] = { "ROCRange" -> Automatic, "ClassLabels" -> All };
 
 ClConROCData[$ClConFailure] := $ClConFailure;
 
@@ -995,7 +995,7 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
         rocRange = Range[0,1,0.025];
       ];
 
-      targetClasses = OptionValue[ ClConROCData, "TargetClasses"];
+      targetClasses = OptionValue[ ClConROCData, "ClassLabels"];
       If[ ! ( TrueQ[ targetClasses === All ] || TrueQ[ targetClasses === Automatic ] ) && AtomQ[targetClasses],
         (* Assuming that most likely the labels are _?AtomQ . *)
         targetClasses = Flatten[List[targetClasses]];
