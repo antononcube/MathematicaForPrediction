@@ -182,11 +182,11 @@ The monad we consider is designed to speed-up the programming of classification 
 
 We want to be able to construct monad pipelines of the general form:
 
-[//]: # (No rules defined for DisplayFormulaNumbered)
+!["ClCon-generic-monad-formula"](https://imgur.com/oUlLxtm.png)
 
 ClCon is based on the [State monad](https://en.wikipedia.org/wiki/Monad_(functional_programming)#State_monads), [[Wk1](https://en.wikipedia.org/wiki/Monad_(functional_programming)), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], so the monad pipeline form (1) has the following more specific form:
 
-[//]: # (No rules defined for DisplayFormulaNumbered)
+!["ClCon-State-monad-formula"](https://imgur.com/TLX1D6B.png)
 
 This means that some monad operations will not just change the pipeline value but they will also change the pipeline context.
 
@@ -305,6 +305,8 @@ The monad head is `ClCon`. Anything wrapped in `ClCon` can serve as monad's pipe
 
     ClCon[{{1, "a"}, {2, "b"}}, <||>]⟹ClConSummarizeData;
 
+!["ClCon-monad-head-example"](https://imgur.com/tCn9Ee1.png)
+
 ### Lifting data to the monad
 
 The function lifting the data into the monad `ClCon` is `ClConUnit`.
@@ -313,7 +315,11 @@ The lifting to the monad marks the beginning of the monadic pipeline. It can be 
 
     ClConUnit[dsData]⟹ClConSummarizeData;
 
+!["ClCon-lifting-data-example-1"](https://imgur.com/HQoqo34.png)
+
     ClConUnit[]⟹ClConSetTrainingData[dsData]⟹ClConSummarizeData;
+
+!["ClCon-lifting-data-example-2"](https://imgur.com/IIo6Ctk.png)
 
 (See the sub-section "Setters and takers" for more details of setting and taking values in `ClCon` contexts.)
 
@@ -329,6 +335,12 @@ The ClCon monad also has the non-monadic function `ClConToNormalClassifierData` 
 
     Short[ClConToNormalClassifierData[dsData], 3]
 
+    (*
+     {{639, 0, 9} -> "0", {121, 1, 1} -> "1", {309, 0, 9} ->  "0", {648, 0, 8} -> "0", {995, 2, 5} -> "2", {127, 1, 7} -> "1", {908, 2, 8} -> "2", {564, 0, 4} -> "0", {380, 2, 0} -> "2", {860, 2, 0} -> "2",
+     <<80>>,
+     {464, 2, 4} -> "2", {449, 2, 9} -> "2", {522, 0, 2} -> "0", {288, 0, 8} -> "0", {51, 0, 1} -> "0", {108, 0, 8} -> "0", {76, 1, 6} -> "1", {706, 1, 6} -> "1", {765, 0, 5} -> "0", {195, 0, 5} -> "0"}
+    *)
+
 When the data lifted to the monad is a dataset or a matrix it is assumed that the last column has the class labels. WL makes it easy to rearrange columns in such a way the any column of dataset or a matrix to be the last.
 
 ### Data splitting
@@ -339,23 +351,41 @@ Here are the dimensions of the dataset dsData:
 
     Dimensions[dsData]
 
+    (* {100, 4} *)
+
 Here we split the data into $70$% for training and $30$% for testing and then we verify that the corresponding number of rows add to the number of rows of dsData:
 
     val = ClConUnit[dsData]⟹ClConSplitData[0.7]⟹ClConTakeValue;
     Map[Dimensions, val]
     Total[First /@ %]
+    
+    (* 
+     <|"trainingData" -> {69, 4}, "testData" -> {31, 4}|>
+     100 
+    *)
+
 
 Note that if Method is not "LabelsProportional" we get slightly different results.
 
     val = ClConUnit[dsData]⟹ClConSplitData[0.7, Method -> "Random"]⟹ClConTakeValue;
     Map[Dimensions, val]
     Total[First /@ %]
+    
+    (*
+      <|"trainingData" -> {70, 4}, "testData" -> {30, 4}|>
+     100 
+    *)
 
 In the following code we split the data into $70$% for training and $30$% for testing, then the training data is further split into $90$% for training and $10$% for classifier training validation; then we verify that the number of rows add up.
 
     val = ClConUnit[dsData]⟹ClConSplitData[0.7, 0.1]⟹ClConTakeValue;
     Map[Dimensions, val]
     Total[First /@ %]
+
+    (*
+     <|"trainingData" -> {61, 4}, "testData" -> {31, 4}, "validationData" -> {8, 4}|>
+     100
+    *)
 
 ### Classifier training
 
@@ -374,8 +404,10 @@ With the following pipeline we take the Titanic data, split it into 75/25 % part
 Here is information about the obtained classifier:
 
     ClassifierInformation[cf, "TrainingTime"]
+    
+    (* Quantity[3.84008, "Seconds"] *)
 
-If we want to pass parameters to the classifier training we can use the Method option. Here we train a Random Forest classifier with $400$ trees:
+If we want to pass parameters to the classifier training we can use the `Method` option. Here we train a Random Forest classifier with $400$ trees:
 
     cf =
       ClConUnit[dsTitanic]⟹
@@ -384,6 +416,8 @@ If we want to pass parameters to the classifier training we can use the Method o
        ClConTakeClassifier;
 
     ClassifierInformation[cf, "TreeNumber"]
+
+    (* 400 *)
 
 #### Classifier ensemble training
 
@@ -399,9 +433,20 @@ The classifier ensemble is simply an association with keys that are automaticall
 
     ensemble
 
+!["ClCon-ensemble-classifier-example-1"](https://imgur.com/HHwLTTW.png)
+
+
 Here are the training times of the classifiers in the obtained ensemble:
 
     ClassifierInformation[#, "TrainingTime"] & /@ ensemble
+
+    (*
+     <|"LogisticRegression[1,0.9]" -> Quantity[3.47836, "Seconds"], 
+       "LogisticRegression[2,0.9]" -> Quantity[3.47681, "Seconds"], 
+       "LogisticRegression[3,0.9]" -> Quantity[3.4808, "Seconds"], 
+       "NearestNeighbors[1,0.9]" -> Quantity[1.82454, "Seconds"], 
+       "NearestNeighbors[2,0.9]" -> Quantity[1.83804, "Seconds"]|>
+    *)
 
 A more precise specification can be given using associations. The specification
 
@@ -427,6 +472,8 @@ says "make three Logistic Regression classifiers, for each taking $90$% of the t
 
     ensemble2
 
+!["ClCon-ensemble-classifier-example-2"](https://imgur.com/H8xdoFu.png)    
+
 ### Classifier testing
 
 Classifier testing is done with the testing data in the context.
@@ -444,15 +491,26 @@ Here is how we compute selected classifier measures:
      ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall", "FalsePositiveRate"}]⟹
      ClConTakeValue
 
+    (*
+     <|"Accuracy" -> 0.792683, 
+       "Precision" -> <|"died" -> 0.802691, "survived" -> 0.771429|>, 
+       "Recall" -> <|"died" -> 0.881773, "survived" -> 0.648|>, 
+       "FalsePositiveRate" -> <|"died" -> 0.352, "survived" -> 0.118227|>|>
+    *)
+
 (The measures are listed in the function page of [ClassifierMeasurements](http://reference.wolfram.com/language/ref/ClassifierMeasurements.html).)
 
 Here we show the confusion matrix plot:
 
     p⟹ClConClassifierMeasurements["ConfusionMatrixPlot"]⟹ClConEchoValue;
 
+!["ClCon-classifier-testing-ConfusionMatrixPlot-echo"](https://imgur.com/QNXUh5H.png)
+
 Here is how we plot ROC curves by specifying the ROC parameter range and the image size:
 
     p⟹ClConROCPlot["FPR", "TPR", "ROCRange" -> Range[0, 1, 0.1], ImageSize -> 200];
+
+!["ClCon-classifier-testing-ROCPlot-echo"](https://imgur.com/stclBvw.png)
 
 **Remark:** ClCon uses the package [ROCFunctions.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m), [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m)], which implements all functions defined in [[Wk2](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)]. 
 
@@ -460,11 +518,15 @@ Here we plot ROC functions values ($y$-axis) over the ROC parameter ($x$-axis):
 
     p⟹ClConROCListLinePlot[{"ACC", "TPR", "FPR", "SPC"}];
 
+![ClCon-classifier-testing-ROCListLinePlot-echo](https://imgur.com/WNdgi6J.png)
+
 Note of the "ClConROC*Plot" functions automatically echo the plots. The plots are also made to be the pipeline value. Using the option specification "Echo"->False the automatic echoing of plots can be suppressed. With the option "ClassLabels" we can focus on specific class labels.
 
     p⟹
       ClConROCListLinePlot[{"ACC", "TPR", "FPR", "SPC"}, "Echo" -> False, "ClassLabels" -> "survived", ImageSize -> Medium]⟹
       ClConEchoValue;
+
+!["ClCon-classifier-testing-ROCListLinePlot-survived-echo"](https://imgur.com/hZzXsT7.png)      
 
 ### Variable importance finding
 
@@ -474,11 +536,19 @@ Using the pipeline constructed above let us find the most decisive variables usi
      ClConAccuracyByVariableShuffling⟹
      ClConTakeValue
 
+    (*
+     <|None -> 0.792683, "id" -> 0.664634, "passengerClass" -> 0.75, "passengerAge" -> 0.777439, "passengerSex" -> 0.612805|>
+    *)
+
 We deduce that "passengerSex" is the most decisive variable because its corresponding classification success rate is the smallest. (See [[AA3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Importance-of-variables-investigation-guide.md)] for more details.)
 
 Using the option "ClassLabels" we can focus on specific class labels:
 
     p⟹ClConAccuracyByVariableShuffling["ClassLabels" -> "survived"]⟹ClConTakeValue
+ 
+    (*
+     <|None -> {0.771429}, "id" -> {0.595506}, "passengerClass" -> {0.731959}, "passengerAge" -> {0.71028}, "passengerSex" -> {0.414414}|>
+    *)
 
 ### Setters and takers
 
@@ -488,11 +558,18 @@ For example:
 
     p⟹ClConTakeClassifier
 
+    (* ClassifierFunction[__] *) 
+  
     Short[Normal[p⟹ClConTakeTrainingData]]
 
-
+    (*
+      {<|"id" -> 858, "passengerClass" -> "3rd", "passengerAge" -> 30, "passengerSex" -> "male", "passengerSurvival" -> "survived"|>, <<979>> }
+    *)
 
     Short[Normal[p⟹ClConTakeTestData]]
+
+    (* {<|"id" -> 285, "passengerClass" -> "1st", "passengerAge" -> 60, "passengerSex" -> "female", "passengerSurvival" -> "survived"|> , <<327>> } 
+    *)
 
     p⟹ClConTakeVariableNames
    
@@ -506,7 +583,7 @@ If other values are put in the context they can be obtained through the (generic
 
     (* {{0.815836, 0.191562}, {0.396868, 0.284587}} *)
 
-Another generic function is from [AAp1] is `ClConTakeValue` (used many times above.)
+Another generic function from [AAp1] is `ClConTakeValue` (used many times above.)
 
 ## Example use cases
 
