@@ -6,7 +6,7 @@ Anton Antonov
 [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)   
 [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
 [MathematicaVsR at GitHub](https://github.com/antononcube/MathematicaVsR/tree/master/Projects)   
-March-May 2018
+May 2018
 
 ## Introduction
 
@@ -20,13 +20,9 @@ The data for this document is read from WL's repository using the package ["GetM
 
 The monadic programming design is used as a [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). The `ClCon` monad can be also seen as a [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) for the specification and programming of machine learning classification workflows.  
 
-Here is an example of using the ClCon monad over the Titanic data:
+Here is an example of using the `ClCon` monad over the Titanic data:
 
-
-
-
-
-[//]: # (No rules defined for Echo)
+!["ClCon-simple-dsTitanic-pipeline"](https://imgur.com/zwjBynL.png)
 
 The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
 
@@ -43,23 +39,17 @@ The following commands load the packages [[AAp1](https://github.com/antononcube/
     Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Projects/ProgressiveMachineLearning/Mathematica/GetMachineLearningDataset.m"]
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/UnitTests/MonadicContextualClassificationRandomPipelinesUnitTests.m"]
 
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
-
-[//]: # (No rules defined for Echo)
+    (*
+    Importing from GitHub: MathematicaForPredictionUtilities.m
+    Importing from GitHub: MosaicPlot.m
+    Importing from GitHub: CrossTabulate.m
+    Importing from GitHub: StateMonadCodeGenerator.m
+    Importing from GitHub: ClassifierEnsembles.m
+    Importing from GitHub: ROCFunctions.m
+    Importing from GitHub: VariableImportanceByClassifiers.m
+    Importing from GitHub: SSparseMatrix.m
+    Importing from GitHub: OutlierIdentifiers.m
+    *)
 
 ## Data load
 
@@ -71,7 +61,7 @@ The summarization of the data is done through `ClCon`, which in turn uses the fu
 
 ### WL resources data
 
-The following commands produce datasets using the package [[AAp10](https://github.com/antononcube/MathematicaVsR/blob/master/Projects/ProgressiveMachineLearning/Mathematica/GetMachineLearningDataset.m)] (that utilizes ExampleData):
+The following commands produce datasets using the package [[AAp10](https://github.com/antononcube/MathematicaVsR/blob/master/Projects/ProgressiveMachineLearning/Mathematica/GetMachineLearningDataset.m)] (that utilizes `ExampleData`):
 
     dsTitanic = GetMachineLearningDataset["Titanic"];
     dsMushroom = GetMachineLearningDataset["Mushroom"];
@@ -157,26 +147,16 @@ The steps of the main classification workflow addressed in this document follow.
 
 The following diagram shows the steps.
 
-    imgSimpleFlow = 
-      Import["~/Documents/Conceptual diagrams/Classification \
-    workflows/Classification-workflow-horizontal-layout.jpg"];
-    imgSimpleFlow
-    AutoCollapse[]
+[!["Classification-workflow-horizontal-layout"](https://imgur.com/OT5Qkqil.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-horizontal-layout.jpg)
 
 Very often the workflow above is too simple in real situations. Often when making "real world" classifiers we have to experiment with different transformations, different classifier algorithms, and parameters for both transformations and classifiers. Examine the following mind-map that outlines the activities in making competition classifiers.
 
-    imgMM = Import[
-      "~/Documents/Conceptual diagrams/Classification \
-    workflows/Making-competitions-classifiers-mind-map.png"]
-    AutoCollapse[]
+[!["Making-competitions-classifiers-mind-map.png"](https://imgur.com/RTvPsKk.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Making-competitions-classifiers-mind-map.png)
+
 
  In view of the mind-map above we can come up with the following flow-chart that is an elaboration on the main, simple workflow flow-chart.
 
-    imgExtendedFlow = 
-      Import["~/Documents/Conceptual diagrams/Classification \
-    workflows/Classification-workflow-extended.jpg"];
-    imgExtendedFlow
-    AutoCollapse[]
+[!["Classification-workflow-extended.jpg"](https://imgur.com/SB9eP1K.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-extended.jpg)
 
 In order to address:
 
@@ -244,11 +224,8 @@ Let us list the desired properties of the monad.
 
 The `ClCon` components and their interaction are given in the following diagram. (The components correspond to the main workflow given in the previous section.)
 
-    img = Import[
-       "~/Documents/Conceptual diagrams/Classification \
-    workflows/ClCon-components-interaction.jpg"];
-    img
-    AutoCollapse[]
+[!["ClCon-components-interaction.jpg"](https://imgur.com/Iv6e1Byl.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-components-interaction.jpg)
+
 
 In the diagram above the operations are given in rectangles. Data objects are given in round corner rectangles and classifier objects are given in round corner squares.
 
@@ -274,20 +251,21 @@ Obviously, we can put in the context any object through the generic operations o
 
 When using a monad we lift certain data into the "monad space", using monad's operations we navigate computations in that space, and at some point we take results from it. 
 
-With the approach taken in this document the "lifting" into the ClCon monad is done with the function `ClConUnit`. Results from the monad can be obtained with the functions `ClConTakeValue`, `ClConContext`, or with the other `ClCon` functions with the prefix "ClConTake" (see below.)
+With the approach taken in this document the "lifting" into the `ClCon` monad is done with the function `ClConUnit`. Results from the monad can be obtained with the functions `ClConTakeValue`, `ClConContext`, or with the other `ClCon` functions with the prefix "ClConTake" (see below.)
 
 Here is a corresponding diagram of a generic computation with the `ClCon` monad:
 
-    imgPipeline = 
-      Import["~/Documents/Conceptual diagrams/Classification workflows/ClCon-pipeline.jpg"];
-    imgPipeline
-    AutoCollapse[]
+[!["ClCon-pipeline"](https://imgur.com/GtinWpu.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-pipeline.jpg)
 
 **Remark:** It is a good idea to compare the diagram with formulas (1) and (2).
 
 Let us examine a concrete `ClCon` pipeline that corresponds to the diagram above. In the following table each pipeline operation is combined together with a short explanation and the context keys after its execution.
 
+!["ClCon-pipeline-TraceMonad-table"](https://imgur.com/igxc6LC.png)
+
 Here is the output of the pipeline:
+
+!["ClCon-pipeline-TraceMonad-Echo-output"](https://imgur.com/pea8fPo.png)
 
 In the specified pipeline computation the last column of the dataset is assumed to be the one with the class labels. 
 
@@ -307,11 +285,15 @@ An overview of the those functions is given in the tables in next two sub-sectio
 
 The following table gives an overview the interaction of the ClCon monad functions with the pipeline value and context.
 
+!["ClCon-table-of-operations-setters-takers"](https://imgur.com/nLiccok.png)
+
 Several functions that use ROC data have two rows in the table because they calculate the needed ROC data if it is not available in the monad context.
 
 ### State monad functions
 
 Here are the `ClCon` State Monad functions (generated using the prefix "ClCon", [AAp1, AA1]):
+
+!["ClCon-StateMonad-functions-table"](https://imgur.com/4v7CGFD.png)
 
 ## Monad elements
 
@@ -509,15 +491,20 @@ For example:
     Short[Normal[p⟹ClConTakeTrainingData]]
 
 
+
     Short[Normal[p⟹ClConTakeTestData]]
 
     p⟹ClConTakeVariableNames
+   
+    (* {"id", "passengerClass", "passengerAge", "passengerSex", "passengerSurvival"} *)
 
 If other values are put in the context they can be obtained through the (generic) function `ClConTakeContext`, [AAp1]:
 
     p = ClConUnit[RandomReal[1, {2, 2}]]⟹ClConAddToContext["data"];
 
     (p⟹ClConTakeContext)["data"]
+
+    (* {{0.815836, 0.191562}, {0.396868, 0.284587}} *)
 
 Another generic function is from [AAp1] is `ClConTakeValue` (used many times above.)
 
@@ -537,6 +524,8 @@ Here we show an example of using ClCon with the reasonably large dataset of imag
        ClConMakeClassifier["NearestNeighbors"]⟹
        ClConClassifierMeasurements[{"Accuracy", "ConfusionMatrixPlot"}]⟹
        ClConEchoValue;
+
+!["ClCon-MNIST-example-output"](https://imgur.com/2GZE0wJ.png)
 
 Here we plot the ROC curve for a specified digit: 
 
@@ -566,6 +555,8 @@ The pipeline below makes a simple classifier ("LogisticRegression") for the Wine
           ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall", "FalsePositiveRate"}]⟹
           ClConEchoValue &];
 
+!["ClCon-conditional-continuation-example-output"](https://imgur.com/wpakjS6.png)
+
 We can see that the recall with the more complicated is classifier is higher. Also the ROC plots of the second classifier are visibly closer to the ideal one. Still, the recall is not good enough, we have to find a threshold that is better that the default one. (See the next sub-section.)
 
 ### Classification with custom thresholds
@@ -578,6 +569,10 @@ Here we compute classification measures using the threshold $0.3$ for the import
      ClConClassifierMeasurementsByThreshold[{"Accuracy", "Precision", "Recall", "FalsePositiveRate"}, "high" -> 0.3]⟹
      ClConTakeValue
 
+    (* <|"Accuracy" -> 0.782857,  "Precision" -> <|"high" -> 0.498871, "low" -> 0.943734|>, 
+         "Recall" -> <|"high" -> 0.833962, "low" -> 0.76875|>, 
+         "FalsePositiveRate" -> <|"high" -> 0.23125, "low" -> 0.166038|>|> *)
+
 We can see that the recall for "high" is fairly large and the rest of the measures have satisfactory values. (The accuracy did not drop that much, and the false positive rate is not that large.)
 
 Here we compute suggestions for the best thresholds:
@@ -586,6 +581,8 @@ Here we compute suggestions for the best thresholds:
       ClConROCPlot[ImageSize -> 300] (* make ROC plots *)⟹
       ClConSuggestROCThresholds[3] (* find the best 3 thresholds per class label *)⟹
       ClConEchoValue (* echo the result *);
+
+!["ClCon-best-thresholds-example-output"](https://imgur.com/NIkYzVA.png)
 
 The suggestions are the ROC points that closest to the point $\{0,1\}$ (which corresponds to the ideal classifier.)
 
@@ -597,6 +594,11 @@ Here is a way to use threshold suggestions within the monad pipeline:
       (ClConUnit[##]⟹
         ClConClassifierMeasurementsByThreshold[{"Accuracy", "Precision", "Recall"}, "high" -> First[#1["high"]]] &)⟹
       ClConEchoValue;
+
+    (*
+    value: <|high->{0.35},low->{0.65}|>
+    value: <|Accuracy->0.825306,Precision-><|high->0.571831,low->0.928736|>,Recall-><|high->0.766038,low->0.841667|>|> 
+    *)
 
 ## Unit tests
 
@@ -611,6 +613,8 @@ Here we run the unit tests file ["MonadicContextualClassification-Unit-Tests.wlt
     AbsoluteTiming[
      testObject = TestReport["~/MathematicaForPrediction/UnitTests/MonadicContextualClassification-Unit-Tests.wlt"]
     ]
+
+!["ClCon-direct-unit-tests-TestReport-icon"](https://imgur.com/tzbkNyg.png)
 
 The natural language derived test ID's should give a fairly good idea of the functionalities covered in [AAp11].
 
@@ -656,6 +660,8 @@ Here is sample of the generated pipelines:
     ]
     AutoCollapse[]
 
+!["ClCon-random-pipelines-tests-sample-table"](https://imgur.com/t4rCT5r.png)    
+
 Here we run the pipelines as unit tests:
 
     AbsoluteTiming[
@@ -667,6 +673,8 @@ Here we run the pipelines as unit tests:
 From the test report results we see that a dozen tests failed with messages, all of the rest passed.
 
     rpTRObj = TestReport[res]
+
+!["ClCon-random-pipelines-TestReport-icon"](https://imgur.com/rr4vXUX.png)
 
 (The message failures, of course, have to be examined -- some bugs were found in that way. Currently the actual test messages are expected.)
 
@@ -707,9 +715,7 @@ Using the packages [AAp13, AAp15] we can generate `ClCon` pipelines with natural
 The ClCon package, [MonadicContextualClassification.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m),  [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m)], is based on the packages [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), AAp4-AAp9]. It was developed using Mathematica and the [Mathematica plug-in for IntelliJ IDEA](https://github.com/halirutan/Mathematica-IntelliJ-Plugin), by Patrick Scheibe , [[PS1](https://github.com/halirutan/Mathematica-IntelliJ-Plugin)]. The following diagram shows the development workflow.
 
 
-    Import["~/Documents/Conceptual diagrams/Classification \
-    workflows/ClCon-development-cycle.jpg"]
-    AutoCollapse[]
+[!["ClCon-development-cycle"](https://imgur.com/hmMPfCrl.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-development-cycle.jpg)
 
 Some observations and morals follow.
 
