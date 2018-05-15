@@ -32,8 +32,6 @@ As it was mentioned above the monad `ClCon` can be seen as a DSL. Because of thi
 
 The following commands load the packages [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m)--AAp10, AAp12]:
 
-
-
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"]
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicTracing.m"]
     Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Projects/ProgressiveMachineLearning/Mathematica/GetMachineLearningDataset.m"]
@@ -108,20 +106,20 @@ Here is a sample of the data:
 
     RandomSample[dsData, 6]
 
-    (* Dataset[ <> ] *)
+!["ClCon-quick-data-sample"](https://imgur.com/dDhN9NG.png)
 
 Here is a summary of the data:
 
     ClConUnit[dsData]⟹ClConSummarizeData;
 
-[//]: # (No rules defined for Echo)
+!["ClCon-quick-data-summary-ds"](https://imgur.com/e0hzJjE.png)
 
 Here we convert the data into a list of record-label rules (and show the summary):
 
     mlrData = ClConToNormalClassifierData[dsData];
     ClConUnit[mlrData]⟹ClConSummarizeData;
 
-[//]: # (No rules defined for Echo)
+!["ClCon-quick-data-summary-mlr"](https://imgur.com/8AZ4uPi.png)
 
 Finally, we make the array version of the dataset:
 
@@ -781,6 +779,8 @@ Currently with `ClCon` dimension reduction is applied only to data the non-label
       ClConRetrieveFromContext["svdRes"]⟹
       ClConEchoFunctionValue["SVD dimensions:", Dimensions /@ # &]⟹
       ClConSummarizeData;
+
+!["ClCon-dimension-reduction-example-echo"](https://imgur.com/nEwoySa.png)
 
 ### Conversational agent
 
