@@ -820,7 +820,7 @@ Some observations and morals follow.
 
    + In order come be better design and find inconsistencies: write many pipelines and discuss with co-workers.
 
-      + This is obvious. I would like to mention that a somewhat good alternative to discussions is (i) writing this document and related one and (ii) making, running, and examining of the random pipelines tests. 
+      + This is obvious. I would like to mention that a somewhat good alternative to discussions is (i) writing this document and related ones and (ii) making, running, and examining of the random pipelines tests. 
 
 ## References
 
