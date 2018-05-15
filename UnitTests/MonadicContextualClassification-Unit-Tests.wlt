@@ -500,4 +500,24 @@ VerificationTest[(* 27 *)
   TestID->"MakeClassifier-with-empty-unit-1"
 ]
 
+VerificationTest[(* 28 *)
+  p1 =
+      DoubleLongRightArrow[
+        ClConUnit[data],
+        ClConSplitData[0.7],
+        ClConMakeClassifier,
+        ClConROCData
+      ];
+  p2 =
+      DoubleLongRightArrow[
+        p1,
+        ClConMakeClassifier["DecisionTree"]
+      ];
+  MatchQ[ { DoubleLongRightArrow[p1, ClConTakeROCData], DoubleLongRightArrow[p2, ClConTakeROCData] }, { _Association, _Missing} ]
+  ,
+  True
+  ,
+  TestID->"No-rocData-after-second-MakeClassifier-1"
+]
+
 EndTestSection[]
