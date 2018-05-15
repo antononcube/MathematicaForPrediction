@@ -75,7 +75,7 @@ Here is the summary of `dsTitanic`:
 
     ClConUnit[dsTitanic]⟹ClConSummarizeData["MaxTallies" -> 12];
 
-!["ClCon-dsTitanic-summary"](https://imgur.com/FETQehj.png)
+!["ClCon-dsTitanic-summary"](https://imgur.com/mr6q8M9.png)
 
 Here is the summary of `dsMushroom` in long form:
 
