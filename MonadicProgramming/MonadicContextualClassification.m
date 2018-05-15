@@ -261,6 +261,9 @@ ClConOutlierPosition::usage = "Find outlier positions in the data."
 
 (*ClConDropOutliersPerClassLabel::usage = "Find and from outliers in the data per class label."*)
 
+ClConReduceDimension::usage = "Applies dimension reduction with SVD. \
+(If the non-label parts of the training data and test data can be converted numerical matrices.)"
+
 Begin["`Private`"]
 
 
@@ -1263,6 +1266,69 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+(************************************************************)
+(* ClConReduceDimension                                     *)
+(************************************************************)
+
+ClearAll[ClConReduceDimension]
+
+Options[ClConReduceDimension] = { "Echo" -> True };
+
+ClConReduceDimension[$ClConFailure] := $ClConFailure;
+
+ClConReduceDimension[][$ClConFailure] := $ClConFailure;
+
+ClConReduceDimension[k_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    Module[{echoQ},
+
+      echoQ = TrueQ[ OptionValue[ClConReduceDimension, "Echo"] ];
+
+      DoubleLongRightArrow[
+
+        ClConUnit[xs, context],
+
+        ClConModifyContext[Join[#, ClConToNormalClassifierData /@ KeyTake[#, {"trainingData", "testData", "validationData"}]] &],
+
+        ClConWhen[! (KeyExistsQ[#2, "trainingData"] && KeyExistsQ[#2, "testData"]) &,
+          DoubleLongRightArrow[
+            ClConUnit[],
+            ClConEcho["Cannot find training data and test data in the context.", "ClConReduceDimension:"],
+            ClConFail
+          ]&
+        ],
+
+        ClConWhen[! (MatrixQ[#2["trainingData"][[All, 1]], NumberQ] && MatrixQ[#2["testData"][[All, 1]], NumberQ]) &,
+          DoubleLongRightArrow[
+            ClConUnit[],
+            ClConEcho["The non-label parts of the training data and test data are not numerical matrices.", "ClConReduceDimension:"],
+            ClConFail
+          ]&
+        ],
+
+        ClConModifyContext[Join[#, <|"mean" -> Mean[#["trainingData"][[All, 1]]]|>] &],
+
+        ClConModifyContext[Function[{ct}, Join[ct, <|"svdRes" -> SingularValueDecomposition[Map[# - ct["mean"] &, ct["trainingData"][[All, 1]]], k] |>]]],
+
+        ClConModifyContext[Function[{ct}, Join[ct, <|
+          "trainingData" ->
+              Thread[(ct["svdRes"][[1]].ct["svdRes"][[2]]) -> ct["trainingData"][[All, 2]]],
+          "testData" ->
+              Thread[(Map[# - ct["mean"] &, ct["testData"][[All, 1]]].ct["svdRes"][[3]]) -> ct["testData"][[All, 2]]] |>]]],
+
+        ClConWhen[KeyExistsQ[#2, "validationData"] &,
+          ClConModifyContext[
+            Function[{ct}, Join[ct, <|
+              "validationData" -> Thread[(Map[# - ct["mean"] &, ct["validationData"][[All, 1]]].ct["svdRes"][[3]]) -> ct["validationData"][[All, 2]]] |>]]]
+        ],
+
+        ClConWhen[ echoQ &,
+          ClConEchoFunctionContext["Singular values:", ListPlot[Diagonal[#["svdRes"][[2]]],
+          PlotRange -> All, PlotTheme -> "Detailed", Filling -> Axis, PlotStyle -> PointSize[0.02], ImageSize -> Small] &]
+        ]
+      ]
+    ];
+
+ClConReduceDimension[___][__] := $ClConFailure;
 
 (********************************************************************************************************************)
 (* Experimental functions                                                                                           *)
