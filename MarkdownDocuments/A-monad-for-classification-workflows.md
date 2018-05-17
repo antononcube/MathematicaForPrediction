@@ -145,16 +145,16 @@ The steps of the main classification workflow addressed in this document follow.
 
 The following diagram shows the steps.
 
-[!["Classification-workflow-horizontal-layout"](https://imgur.com/OT5Qkqil.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-horizontal-layout.jpg)
+[!["Classification-workflow-horizontal-layout"](https://imgur.com/OT5Qkqih.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-horizontal-layout.jpg)
 
 Very often the workflow above is too simple in real situations. Often when making "real world" classifiers we have to experiment with different transformations, different classifier algorithms, and parameters for both transformations and classifiers. Examine the following mind-map that outlines the activities in making competition classifiers.
 
-[!["Making-competitions-classifiers-mind-map.png"](https://imgur.com/RTvPsKk.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Making-competitions-classifiers-mind-map.png)
+[!["Making-competitions-classifiers-mind-map.png"](https://imgur.com/RTvPsKkh.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Making-competitions-classifiers-mind-map.png)
 
 
  In view of the mind-map above we can come up with the following flow-chart that is an elaboration on the main, simple workflow flow-chart.
 
-[!["Classification-workflow-extended.jpg"](https://imgur.com/SB9eP1K.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-extended.jpg)
+[!["Classification-workflow-extended.jpg"](https://imgur.com/SB9eP1Kh.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-extended.jpg)
 
 In order to address:
 
@@ -222,7 +222,7 @@ Let us list the desired properties of the monad.
 
 The `ClCon` components and their interaction are given in the following diagram. (The components correspond to the main workflow given in the previous section.)
 
-[!["ClCon-components-interaction.jpg"](https://imgur.com/Iv6e1Byl.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-components-interaction.jpg)
+[!["ClCon-components-interaction.jpg"](https://imgur.com/Iv6e1Byh.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-components-interaction.jpg)
 
 
 In the diagram above the operations are given in rectangles. Data objects are given in round corner rectangles and classifier objects are given in round corner squares.
@@ -253,7 +253,7 @@ With the approach taken in this document the "lifting" into the `ClCon` monad is
 
 Here is a corresponding diagram of a generic computation with the `ClCon` monad:
 
-[!["ClCon-pipeline"](https://imgur.com/GtinWpu.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-pipeline.jpg)
+[!["ClCon-pipeline"](https://imgur.com/GtinWpuh.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-pipeline.jpg)
 
 **Remark:** It is a good idea to compare the diagram with formulas (1) and (2).
 
@@ -792,7 +792,7 @@ Using the packages [AAp13, AAp15] we can generate `ClCon` pipelines with natural
 The ClCon package, [MonadicContextualClassification.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m),  [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m)], is based on the packages [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), AAp4-AAp9]. It was developed using Mathematica and the [Mathematica plug-in for IntelliJ IDEA](https://github.com/halirutan/Mathematica-IntelliJ-Plugin), by Patrick Scheibe , [[PS1](https://github.com/halirutan/Mathematica-IntelliJ-Plugin)]. The following diagram shows the development workflow.
 
 
-[!["ClCon-development-cycle"](https://imgur.com/hmMPfCrl.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-development-cycle.jpg)
+[!["ClCon-development-cycle"](https://imgur.com/hmMPfCrh.png)](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/ClCon-development-cycle.jpg)
 
 Some observations and morals follow.
 
