@@ -347,7 +347,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateModule = ToExpression[monadName <> "Module"],
       MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
-      MStateEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]]
+      MStateEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]],
+      MStateSetContext = ToExpression[monadName <> "SetContext"],
+      MStateSetValue = ToExpression[monadName <> "SetValue"]
     },
 
       ClearAll[MState, MStateUnit, MStateUnitQ, MStateBind, MStateFail, MStateSucceed, MStateEcho,
@@ -356,7 +358,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
         MStatePutContext, MStatePutValue, MStateModifyContext,
         MStateAddToContext, MStateRetrieveFromContext,
         MStateOption, MStateWhen, MStateIfElse, MStateIterate,
-        MStateModule, MStateContexts];
+        MStateModule, MStateContexts,
+        MStateSetContext, MStateSetValue
+      ];
 
       (* What are the assumptions for monad's failure symbol? *)
       (*If[ !MemberQ[Attributes[MStateFailureSymbol], System`Protected]], ClearAll[MStateFailureSymbol] ];*)
@@ -473,8 +477,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             ];
       ];
 
+      MStateSetContext = MStatePutContext;
+
       MStatePutValue[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutValue[newValue_][x_, context_] := MState[newValue, context];
+
+      MStateSetValue = MStatePutValue;
 
       MStateModifyContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateModifyContext[f_][x_, context_Association] := MState[x, f[context]];
