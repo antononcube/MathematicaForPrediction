@@ -120,7 +120,10 @@ LMFFindExtrema[points_List, fitOrder_Integer, around_Integer: 5,
       {fn, Map[Pick[extPoints, signs, #] &, {1, -1}]}
     ];
 
-Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/QuantileRegression.m"]
+If[ Length[DownValues[QuantileRegression`QuantileRegression]] == 0,
+  Echo["QuantileRegression.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/QuantileRegression.m"];
+];
 
 Clear[QRFindExtrema]
 Options[QRFindExtrema] = { "NearestWithOutliers" -> False };
