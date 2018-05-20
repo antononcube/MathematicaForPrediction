@@ -329,8 +329,9 @@ ROCFunctions["Methods"] := {"FunctionInterpretations", "FunctionNames", "Functio
 ROCFunctions["Properties"] := ROCFunctions["Methods"];
 ROCFunctions["FunctionNames"] := Keys[aROCAcronyms];
 ROCFunctions["FunctionInterpretations"] := aROCAcronyms;
-ROCFunctions["Functions"] := {TPR,SPC,PPV,NPV,FPR,FDR,FNR,ACC,AUROC};
-ROCFunctions[] := Evaluate[ROCFunctions["Functions"]];
+ROCFunctions["FunctionsAssociation"] := aROCFunctions;
+ROCFunctions["Functions"] := Union[Values[aROCFunctions]];
+ROCFunctions[] := Evaluate[ROCFunctions["FunctionsAssociation"]];
 ROCFunctions[fnames:{_String..}] := aROCFunctions/@fnames;
 ROCFunctions[fname_String] := aROCFunctions[fname];
 
