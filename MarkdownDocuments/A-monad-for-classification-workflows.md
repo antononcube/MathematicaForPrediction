@@ -1,7 +1,5 @@
 # A monad for classification workflows
 
-[//]: # (No rules defined for Chapter)
-
 Anton Antonov   
 [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)   
 [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
@@ -14,7 +12,7 @@ In this document we describe the design and implementation of a (software progra
 
 The goal of the monad design is to make the specification of classification workflows (relatively) easy, straightforward, by following a certain main scenario and specifying variations over that scenario.
 
-The monad is named ClCon and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], the classifier ensembles package ["ClassifierEnsembles.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m), [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m), [AA2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/ROC-for-Classifier-Ensembles-Bootstrapping-Damaging-and-Interpolation.md)], and the package for [Receiver Operating Characteristic (ROC)](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) functions calculation and plotting ["ROCFunctions.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m), [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m), [AA2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/ROC-for-Classifier-Ensembles-Bootstrapping-Damaging-and-Interpolation.md), [Wk2](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)].
+The monad is named `ClCon` and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], the classifier ensembles package ["ClassifierEnsembles.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m), [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/ClassifierEnsembles.m), [AA2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/ROC-for-Classifier-Ensembles-Bootstrapping-Damaging-and-Interpolation.md)], and the package for [Receiver Operating Characteristic (ROC)](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) functions calculation and plotting ["ROCFunctions.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m), [[AAp5](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m), [AA2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/ROC-for-Classifier-Ensembles-Bootstrapping-Damaging-and-Interpolation.md), [Wk2](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)].
 
 The data for this document is read from WL's repository using the package ["GetMachineLearningDataset.m"](https://github.com/antononcube/MathematicaVsR/blob/master/Projects/ProgressiveMachineLearning/Mathematica/GetMachineLearningDataset.m), [[AAp10](https://github.com/antononcube/MathematicaVsR/blob/master/Projects/ProgressiveMachineLearning/Mathematica/GetMachineLearningDataset.m)].
 
@@ -27,6 +25,39 @@ Here is an example of using the `ClCon` monad over the Titanic data:
 The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
 
 As it was mentioned above the monad `ClCon` can be seen as a DSL. Because of this the monad pipelines made with `ClCon` are sometimes called "specifications".
+
+### Contents description
+
+The document has the following structure. 
+
+- The sections "Package load" and "Data load" obtain the needed code and data.   
+(Needed and put upfront from the 
+["Reproducible research"](https://en.wikipedia.org/wiki/Reproducibility#Reproducible_research)
+ point of view.)
+
+- The sections "Design consideration" and "Monad design" provide motivation and design decisions rationale.   
+
+- The sections "ClCon overview" and "Monad elements" provide technical description of the `ClCon` monad
+needed to utilize it.   
+(Using a fair amount of examples.)
+
+- The section "Example use cases" gives several more elaborated examples of `ClCon` that have "real life" flavor.   
+(But still didactic and concise enough.)
+
+- The section "Unit test" describes the tests used in the development of the `ClCon` monad.    
+(The random pipelines unit tests are especially interesting.)
+
+- The section "Future plans" outlines future directions of development.    
+(The most interesting and important one is the 
+["conversational agent"](https://github.com/antononcube/ConversationalAgents/tree/master/Projects/ClassficationWorkflowsAgent) 
+direction.)
+
+- The section "Implementation notes" has (i) a diagram outlining the `ClCon` development process, 
+and (ii) a list of observations and morals.    
+(Some fairly obvious, but deemed fairly significant and hence stated explicitly.)
+
+**Remark:** One can read only the sections "Introduction", "Design consideration", "Monad design", and "ClCon overview".
+That set of sections provide a fairly good, programming language agnostic exposition of the substance and novel ideas of this document. 
 
 ## Package load
 
@@ -135,13 +166,13 @@ The steps of the main classification workflow addressed in this document follow.
 
    3. Split data into training and test parts. 
 
-      1. Optionally, split training data into training and validation parts.
+      - Optionally, split training data into training and validation parts.
 
    4. Make a classifier with the training data.
 
    5. Test the classifier over the test data.
 
-      1. Computation of different measures including ROC.
+      - Computation of different measures including ROC.
 
 The following diagram shows the steps.
 
@@ -190,7 +221,7 @@ This means that some monad operations will not just change the pipeline value bu
 
 In the monad pipelines of `ClCon` we store different objects in the contexts for at least one of the following two reasons.
 
-   1. The object will be needed later on in the pipeline, or
+   1. The object will be needed later on in the pipeline.
 
    2. The object is hard to compute. 
 
