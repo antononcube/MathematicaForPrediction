@@ -87,7 +87,7 @@
         LSAMonStatisticalThesaurus[{"arms", "banking", "economy", "education", "freedom", "tariff", "welfare"}, 6]⟹
         LSAMonRetrieveFromContext["statisticalThesaurus"]⟹
         LSAMonEchoValue⟹
-        LSAMonEchoStatiscalThesaurus[];
+        LSAMonEchoStatisticalThesaurus[];
 
   # References
 
@@ -457,7 +457,7 @@ LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
         LSAMon[xs, context],
 
         True,
-        Echo["No statistical thesurus is computed.", "LSAMonEchoStatiscalThesaurus:"];
+        Echo["No statistical thesurus is computed.", "LSAMonEchoStatisticalThesaurus:"];
         $LSAMonFailure
       ]
     ];
