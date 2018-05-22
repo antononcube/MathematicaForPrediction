@@ -90,10 +90,6 @@
 
 *)
 
-(*BeginPackage["MonadicTextAnalyzer`"]*)
-
-(*Begin["`Private`"]*)
-
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
@@ -115,6 +111,11 @@ If[Length[DownValues[JavaTriesWithFrequencies`JavaTrieCreate]] == 0,
 If[Length[DownValues[Soundex`Soundex]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/Soundex.m"]
 ];
+
+(*BeginPackage["MonadicTextAnalyzer`"]*)
+
+(*Begin["`Private`"]*)
+
 
 (*
 Needs["StateMonadCodeGenerator`"];

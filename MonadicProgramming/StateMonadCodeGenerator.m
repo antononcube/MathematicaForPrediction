@@ -370,7 +370,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
-      MStateFail[___] := MStateFailureSymbol;
+      MStateFail[__] := MStateFailureSymbol;
       MStateFail[][___] := MStateFailureSymbol;
       (*MStateFail[echoArgs__][x_, c:(_String|_Association)] := (Echo[echoArgs]; MStateFailureSymbol);*)
 
