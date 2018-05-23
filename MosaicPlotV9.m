@@ -191,7 +191,12 @@
 
 *)
 
-BeginPackage["MosaicPlot`"]
+
+If[Length[DownValues[TriesWithFrequenciesV9`TrieMerge]] == 0,
+  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequenciesV9.m"]
+];
+
+BeginPackage["MosaicPlotV9`"]
 
 MosaicPlot::usage = "MosaicPlot[rarr] makes a mosaic plot that summarizes the conditional probabilities of categorical \
 values co-occurrence in a list of records of the same length (a full array or dataset). MosaicPlot has options for \
@@ -202,11 +207,6 @@ MosaicPlotTooltipTable::usage = "MosaicPlotTriePathTable[triePath:{{catVal_?Atom
 of conditional probabilities from a trie path (suitable to be the second argument of Tooltip.)"
 
 Begin["`Private`"]
-
-(* This is intentionally inside the Private context in order to have TriesWithFrequenciesV9 "hidden". *)
-If[Length[DownValues[TriesWithFrequenciesV9`TrieMerge]] == 0,
-  Get["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequenciesV9.m"]
-];
 
 Clear[TrieUniqueRecords]
 TrieUniqueRecords[data_?ArrayQ] :=

@@ -41,7 +41,7 @@
      for which the leaf probabilities have to be found.
 *)
 
-BeginPackage["TriesWithFrequencies`"]
+BeginPackage["TriesWithFrequenciesV9`"]
 
 TriePosition::usage = "TriePosition[t_, w :(_String | _List)] gives the position node corresponding to the last \"character\" of the \"word\" w in the trie t.\
  Strings are converted to lists first."
