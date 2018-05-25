@@ -172,6 +172,8 @@ EBNFContextRules::usage = "Context rules for EBNF parser generation."
 ParseEBNF::usage = "ParseEBNF[gr:{_String..}] parses the EBNF grammar gr."
 GenerateParsersFromEBNF::usage = "GenerateParsersFromEBNF[gr:{_String..}] generate parsers the EBNF grammar gr."
 
+GrammarRandomSentences::usage = "GrammarRandomSentences[ gr: _String | _EBNF, n_Integer] generates n random sentences using the grammar gr."
+
 Begin["`Private`"]
 
 Clear["Parse?*"]
@@ -693,6 +695,111 @@ ParseEBNF[code_] := pEBNF[code];
 
 GenerateParsersFromEBNF[code_] := InterpretWithContext[ pEBNF[code], EBNFContextRules ];
 
+
+(************************************************************)
+(* Random sentences                                         *)
+(************************************************************)
+
+(* Random sentences generator from EBNF grammar (rule based) *)
+
+Clear[RGMakeSymbolName, RGNonTerminal, RGTerminal, RGOption, RGRepetition,
+  RGSequence, RGAlternatives, RGRule, EBNF]
+
+Clear[rgNumber, rgString]
+rgNumber := ToString[RandomInteger[{1, 1000}]];
+rgNumberRange[{s_?NumberQ, e_?NumberQ}] := ToString[RandomInteger[{s, e}]];
+rgString :=
+    StringJoin @@
+        RandomSample[CharacterRange["a", "z"], RandomInteger[{3, 10}]];
+
+RGTerminal[parsed_] :=
+    Which[
+      StringMatchQ[parsed, ("'" | "\"") ~~ "_?NumberQ" ~~ ("'" | "\"")], rgNumber,
+      StringMatchQ[
+        parsed, ("'" | "\"") ~~ "Range[" ~~ NumberString ~~ "," ~~ NumberString ~~
+          "]" ~~ ("'" | "\"")],
+      rgNumberRange[
+        Flatten@StringCases[
+          parsed, ("'" | "\"") ~~ "Range[" ~~ (s : NumberString) ~~
+              "," ~~ (e : NumberString) ~~ "]" ~~ ("'" | "\"") :>
+              Map[ToExpression, {s, e}]]],
+      parsed == "\"_String\"" || parsed == "'_String'", rgString,
+      parsed == "\"_LetterString\"" || parsed == "'_LetterString'", rgString,
+      True, If[StringMatchQ[parsed, ("'" | "\"") ~~ ___ ~~ ("'" | "\"")],
+      StringTake[parsed, {2, -2}], parsed]
+    ];
+
+RGNonTerminal[parsed_] := parsed;
+
+RGRepetition[parsed_] := Flatten@Table[parsed, {RandomInteger[{1, 5}]}];
+
+RGOption[parsed_] := If[RandomInteger[{0, 1}] == 0, parsed, ""];
+
+RGSequence[parsed_] :=
+    Which[
+      ! ListQ[parsed], parsed,
+      Length[parsed] == 1, parsed[[1]],
+      True, parsed
+    ];
+
+RGAlternatives[parsed_] :=
+    Which[
+      ! ListQ[parsed], parsed,
+      Length[parsed] == 1, parsed[[1]],
+      True, RandomSample[parsed, 1][[1]]
+    ];
+
+MakeNonTerminalReplacementRules[parsedEBNFRules_] :=
+    Cases[parsedEBNFRules, {s_String,
+      rhs_} :> (EBNFNonTerminal[s] -> rhs), \[Infinity]];
+
+Clear[RGSentence]
+RGSentence[parsedEBNF_EBNF] :=
+
+    Block[{parsedEBNFRules = parsedEBNF[[1]], rrules, rrulesRest, EBNFToRGRules,
+      t},
+      EBNFToRGRules =
+          Thread[{EBNFTerminal, EBNFOption, EBNFRepetition,
+            EBNFSequence} -> {RGTerminal, RGOption, RGRepetition, RGSequence}];
+      rrules =
+          Cases[parsedEBNFRules, {s_String,
+            rhs_} :> (EBNFNonTerminal[s] -> rhs), \[Infinity]];
+      rrulesRest = Rest[rrules];
+      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. rrulesRest;
+      PRINT["1.", rrulesRest[[All, 2]]];
+      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. EBNFToRGRules;
+      PRINT["2.", rrulesRest[[All, 2]]];
+      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] //. rrulesRest;
+      PRINT["3.", rrulesRest];
+      t = Flatten[(First[rrules][[2]] /. rrulesRest) /. EBNFToRGRules //.
+          EBNFAlternatives[s___] :> RGAlternatives[s]];
+      PRINT["t=", t];
+      (*StringTrim[StringReplace[StringJoin@@Riffle[Which[Head[t]\[Equal]",",
+      List@@t,!ListQ[t],{t},True,Flatten[t]]," "],"  "\[Rule]" "]]*)
+
+      t = Flatten[t //. (","[x__] :> {x})];
+      StringTrim[
+        StringReplace[
+          StringJoin[
+            Riffle[t, " "]], (WhitespaceCharacter ~~ WhitespaceCharacter ..) -> " "]]
+    ];
+
+Clear[GrammarRandomSentences]
+GrammarRandomSentences[ebnfGrammar_String, n_Integer] :=
+    Block[{EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
+      EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule, tokens, res},
+      Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
+        EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule];
+      tokens = ParseToEBNFTokens[ebnfGrammar];
+      (*res=ParseJust[pEBNF][tokens];*)
+      res = ParseEBNF[tokens];
+      Table[RGSentence[res[[1, 2]]], {n}]
+    ];
+
+GrammarRandomSentences[parsedEBNFRules_EBNF, n_Integer] :=
+    Block[{},
+      Table[RGSentence[parsedEBNFRules], {n}]
+    ];
 
 End[]
 
