@@ -97,7 +97,8 @@ TrieInsert::usage = "TrieInsert[t_, w_List] insert a \"word\" to the trie t. Tri
 
 TrieMerge::usage = "TrieMerge[t1_, t2_] merges two tries."
 
-TrieShrink::usage = "TrieShrink shrinks the leaves and internal nodes into prefixes."
+TrieShrink::usage = "TrieShrink[tr_?TrieQ] shrinks the leaves and internal nodes of the trie tr into prefixes. \
+TrieShrink[tr_?TrieQ, sep_String] does the shrinking of string nodes with the string separator sep."
 
 TrieToRules::usage = "Converts a trie into a list of rules suitable for visualization with GraphPlot and LayeredGraphPlot.\
  To each trie node is added a list of its level and its traversal order."
@@ -414,9 +415,25 @@ NodeJoin[n1_List, n2_] := Append[n1, n2];
 NodeJoin[n1_, n2_] := List[n1, n2];
 
 Clear[TrieShrink, TrieShrinkRec]
+
+TrieShrink::wargs = "The first argument is expected to be a trie; the second, optional argument is expected to a string.";
+
 TrieShrink[tr_?TrieQ] := TrieShrinkRec[tr];
+
+TrieShrink[tr_?TrieQ, sep_String] :=
+    Block[{res},
+      NodeJoin[n1_String, n2_String] := n1 <> sep <> n2;
+      res = TrieShrinkRec[tr];
+      NodeJoin[n1_String, n2_String] := n1 <> n2;
+      res
+    ];
+
+TrieShrink[___] := Message[TrieShrink::wargs];
+
 TrieShrinkRec[{}] := {};
+
 TrieShrinkRec[tr_?TrieQ] := TrieShrinkRec[First[Normal[tr]]];
+
 TrieShrinkRec[tr_?TrieRuleQ] :=
     Block[{vals = tr[[2]], key = tr[[1]], valKeys },
       valKeys = Keys @ KeyDrop[vals, $TrieValue];
