@@ -705,10 +705,11 @@ GenerateParsersFromEBNF[code_] := InterpretWithContext[ pEBNF[code], EBNFContext
 Clear[RGMakeSymbolName, RGNonTerminal, RGTerminal, RGOption, RGRepetition,
   RGSequence, RGAlternatives, RGRule, EBNF]
 
-Clear[rgNumber, rgString]
+Clear[rgNumber, rgString, rgLetterString]
 rgNumber := ToString[RandomInteger[{1, 1000}]];
 rgNumberRange[{s_?NumberQ, e_?NumberQ}] := ToString[RandomInteger[{s, e}]];
-rgString := StringJoin @@ RandomSample[CharacterRange["a", "z"], RandomInteger[{3, 10}]];
+rgString := StringJoin @@ RandomSample[Join[CharacterRange["0", "9"], CharacterRange["a", "z"]], RandomInteger[{3, 10}]];
+rgLetterString := StringJoin @@ RandomSample[CharacterRange["a", "z"], RandomInteger[{3, 10}]];
 
 RGTerminal[parsed_] :=
     Which[
@@ -719,11 +720,14 @@ RGTerminal[parsed_] :=
       rgNumberRange[Flatten@
           StringCases[parsed, ("'" | "\"") ~~ "Range[" ~~ (s : NumberString) ~~ "," ~~ (e : NumberString) ~~ "]" ~~ ("'" | "\"") :> Map[ToExpression, {s, e}]]],
 
-      parsed == "\"_String\"" || parsed == "'_String'",
+      parsed == "\"_String\"" || parsed == "'_String'" || parsed == "\"_?StringQ\"" || parsed == "'_?StringQ'",
+      rgString,
+
+      parsed == "\"_WordString\"" || parsed == "'_WordString'",
       rgString,
 
       parsed == "\"_LetterString\"" || parsed == "'_LetterString'",
-      rgString,
+      rgLetterString,
 
       True,
       If[StringMatchQ[parsed, ("'" | "\"") ~~ ___ ~~ ("'" | "\"")], StringTake[parsed, {2, -2}], parsed]
