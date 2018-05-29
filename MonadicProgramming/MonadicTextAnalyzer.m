@@ -92,23 +92,28 @@
 
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
+  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"]
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
 
 If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Echo["CrossTabulate.m", "Importing from GitHub:"]
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
 If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
+  Echo["OutlierIdentifiers.m", "Importing from GitHub:"]
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
 
 (* This package is based on a Java jar file and appropriate JLink initilization has to be done. *)
 If[Length[DownValues[JavaTriesWithFrequencies`JavaTrieCreate]] == 0,
+  Echo["JavaTriesWithFrequencies.m", "Importing from GitHub:"]
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/JavaTriesWithFrequencies.m"]
 ];
 
 If[Length[DownValues[Soundex`Soundex]] == 0,
+  Echo["Soundex.m", "Importing from GitHub:"]
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/Soundex.m"]
 ];
 
