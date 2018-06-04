@@ -152,7 +152,7 @@ SMRCreateFromMatrices <- function( matrices, tagTypes, itemColumnName ){
     stop("The same number of matrices and tag types is required.", call.=TRUE)
   }
   
-  m <- do.call(cBind, matrices)
+  m <- do.call(cbind, matrices)
   
   widths <- laply(matrices, function(x){ncol(x)})
   ends <- cumsum(widths)
@@ -511,6 +511,12 @@ SMRProfileDF <- function( smr, itemHistory ) {
 #' @param smr a sparse matrix recommendation object
 #' @param pvec a sparse matrix with one column
 SMRProfileDFFromVector <- function( smr, pvec ) {
+  
+  if( !( ncol(pvec) == 1 && nrow(pvec) == ncol(smr$M) || nrow(pvec) == 1 && ncol(pvec) == ncol(smr$M) ) ) {
+    warning( "It is expected the number of columns/rows of the profile vector to be 1 and its number of rows/columns to be the same as the number of columns of the SMR matrix.",
+             call. = T)
+  }
+  
   pvecInds <- which( pvec > 0 )
   pvecScores <- pvec[ pvecInds ]
   res <- data.frame( Score = pvecScores, Index = pvecInds, stringsAsFactors = FALSE )
@@ -578,7 +584,7 @@ SMRItemData <- function(smr, recs, tagTypes=NULL) {
   } else {
     sm <- smr$M[recs$Index, ]
     sms <- llply( tagTypes, function(tg) sm[,smr$TagTypeRanges[tg, "Begin"]:smr$TagTypeRanges[tg, "End"]] )
-    sm <- do.call(cBind, sms)
+    sm <- do.call(cbind, sms)
   }
   pt <- as.data.frame(summary(sm))
   pt <- pt[ order(pt[,1]), ]
@@ -758,7 +764,7 @@ SMRRemoveTagTypes <- function( smr, removeTagTypes ) {
   newSMR$M01 <-
     Reduce( function( mat, tt )
       if ( is.null(mat) ) { newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] }
-      else { cBind( mat, newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] ) },
+      else { cbind( mat, newSMR$M01[, newSMR$TagTypeRanges[tt,]$Begin : newSMR$TagTypeRanges[tt,]$End ] ) },
       newSMR$TagTypes[pos], NULL )
   newSMR$TagTypeRanges <- newSMR$TagTypeRanges[pos, ]
   newSMR$TagTypes <- newSMR$TagTypes[pos]
@@ -796,7 +802,7 @@ SMRImposeRowIDs <- function( rowIDs, smat ) {
     rownames(complMat) <- missingRows
     colnames(complMat) <- colnames(smat)
     
-    smat <- rBind( smat, complMat )
+    smat <- rbind( smat, complMat )
   }
   # At this point each element of rowIDs should have a corresponding row in the matrix
   smat[rowIDs,,drop=FALSE]
@@ -825,8 +831,8 @@ SMRAnnexSubMatrix <- function( smr, newSubMat, newTagType ) {
   newSMR$TagTypeRanges <- rbind( newSMR$TagTypeRanges, data.frame( Begin = ncol(newSMR$M) + 1, End = ncol(newSMR$M) + ncol(newSubMat) ) )
   rownames(newSMR$TagTypeRanges) <- c( rownames(newSMR$TagTypeRanges)[-nrow(newSMR$TagTypeRanges)], newTagType )
   
-  newSMR$M <- cBind( newSMR$M, newSubMat )
-  newSMR$M01 <- cBind( newSMR$M01, newSubMat )
+  newSMR$M <- cbind( newSMR$M, newSubMat )
+  newSMR$M01 <- cbind( newSMR$M01, newSubMat )
   
   newSMR$TagTypes <- c( newSMR$TagTypes, newTagType )
   
@@ -860,8 +866,8 @@ SMRJoin <- function( smr1, smr2, colnamesPrefix1 = NULL, colnamesPrefix2 = NULL 
   newSMR$TagTypeRanges <- rbind( smr1$TagTypeRanges, ranges )
   rownames(newSMR$TagTypeRanges) <- c( paste( colnamesPrefix1, rownames(smr1$TagTypeRanges), sep=""), paste( colnamesPrefix2, rownames(smr2$TagTypeRanges), sep="") )
   
-  newSMR$M <- cBind( smr1$M, smr2$M )
-  newSMR$M01 <- cBind( smr1$M01, smr2$M01 )
+  newSMR$M <- cbind( smr1$M, smr2$M )
+  newSMR$M01 <- cbind( smr1$M01, smr2$M01 )
   
   newSMR$TagTypes <- c( paste( colnamesPrefix1, smr1$TagTypes, sep=""), paste( colnamesPrefix2, smr2$TagTypes, sep="") )
   
