@@ -185,8 +185,11 @@ TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
             KeyExistsQ[context, "qFuncs"],
             Show[{
               ListPlot[data, opts, PlotStyle -> Lighter[Red], ImageSize->Medium],
-              Plot[Through[context["qFuncs"][x]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]}, PerformanceGoal -> "Speed"]}
-            ],
+              Plot[Evaluate[Through[Values[context["qFuncs"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
+                PerformanceGoal -> "Speed",
+                PlotLegends->Keys[context["qFuncs"]]
+              ]
+            }],
 
             True,
             ListPlot[data, opts, ImageSize->Medium]
