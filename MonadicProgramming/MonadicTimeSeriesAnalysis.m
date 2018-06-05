@@ -78,6 +78,8 @@ $TSAMonFailure::usage = "Failure symbol for the monad TSAMon."
 
 TSAMonGetData::usage = "Get time series path data."
 
+TSAMonTakeData::usage = "Takes \"data\" from the monad."
+
 TSAMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
 
 TSAMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
@@ -87,6 +89,7 @@ TSAMonPlot::usage = "Plots the data points or the data points together with the 
 
 TSAMonRescale::usage = "Rescales the data."
 
+TSAMonCDFApproximation::usage = "Finds CDF approximations for specified points."
 
 Begin["`Private`"]
 
@@ -105,6 +108,18 @@ Needs["OutlierIdentifiers`"]
 (* Generate base functions of LSAMon monad (through StMon.) *)
 
 GenerateStateMonadCode[ "MonadicTimeSeriesAnalysis`TSAMon", "FailureSymbol" -> $TSAMonFailure, "StringContextNames" -> False ]
+
+(**************************************************************)
+(* Setters / getters                                          *)
+(**************************************************************)
+
+ClearAll[TSAMonTakeData]
+TSAMonRescale[$TSAMonFailure] := $TSAMonFailure;
+TSAMonRescale[][$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeData[xs_, context_] := TSAMonTakeData[][xs, context];
+TSAMonTakeData[][xs_, context_] := TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue ];
+TSAMonTakeData[__][___] := $TSAMonFailure;
+
 
 (**************************************************************)
 (* GetData                                                    *)
@@ -136,6 +151,36 @@ TSAMonGetData[xs_, context_] :=
     ];
 
 TSAMonGetData[___][xs_, context_Association] := $TSAMonFailure;
+
+
+(**************************************************************)
+(* Rescale                                                    *)
+(**************************************************************)
+
+ClearAll[TSAMonRescale];
+
+Options[TSAMonRescale] = {Axes->{"x","y"}};
+
+TSAMonRescale[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonRescale[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{data},
+
+      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue];
+
+      If[ data === $TSAMonFailure,
+        $TSAMonFailure,
+        (*ELSE*)
+        data = Transpose[Rescales /@ Transpose[data]];
+        TSAMonUnit[ data, Join[ context, <|"data"->data|>] ]
+      ]
+    ];
+
+
+(**************************************************************)
+(* LeastSquaresFit                                            *)
+(**************************************************************)
+
 
 
 (**************************************************************)
@@ -196,9 +241,48 @@ TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           ];
 
       Echo[res, "Plot:"];
-      TSAMonUnit[res, context]
+      TSAMonUnit[res, Join[ context, <|"data"->data|>] ]
     ];
 
+
+(**************************************************************)
+(* Conditional distribution                                   *)
+(**************************************************************)
+
+Clear[CDFEstimate]
+CDFEstimate[qs_, qFuncs_, t0_] :=
+    Interpolation[Transpose[{Through[qFuncs[t0]], qs}], InterpolationOrder -> 1];
+
+Clear[CDFPDFPlot]
+CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs : {_?NumericQ ..}, opts : OptionsPattern[]] :=
+    Block[{},
+      Plot[
+        {qCDFInt[x], qCDFInt'[x]},
+        {x, qCDFInt["Domain"][[1, 1]], qCDFInt["Domain"][[1, 2]]},
+        opts, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
+    ];
+
+ClearAll[TSAMonCDFApproximation]
+
+TSAMonCDFApproximation[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonCDFApproximation[__][$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonCDFApproximation[t0_?NumberQ][xs_, context_] := TSAMonCDFApproximation[{t0}][xs, context];
+
+TSAMonCDFApproximation[ts:{_?NumberQ..}][xs_, context_] :=
+    Block[{},
+      Which[
+        KeyExistsQ[context, "qFuncs"],
+        TSAMonUnit[ Association[ Map[ #->CDFEstimate[ Keys[context["qFuncs"]], Values[context["qFuncs"]], # ] &, ts] ], context ],
+
+        True,
+        Echo["Cannot find regression quantiles.", "TSAMonCDFApproximation:"];
+        $TSAMonFailure
+      ]
+    ];
+
+TSAMonCDFApproximation[___][___] := $TSAMonFailure;
 
 End[] (* `Private` *)
 
