@@ -211,20 +211,24 @@ ROCValues <- function( classResMat, testLabels, range = seq(0,1,0.05), .progress
     data.frame( Predicted = ifelse( classResMat[,successLabel] >= th, successLabel, nonSuccessLabel ),
     Label = testLabels,
     stringsAsFactors = FALSE) )
-    clSuccessDF <- clSuccessDF / rowSums(clSuccessDF)
+    clSuccessRateDF <- clSuccessDF / rowSums(clSuccessDF)
 
-    if( !( successLabel %in% colnames(clSuccessDF) ) ) {
-      clSuccessDF <- cbind( successLabel = 0, clSuccessDF)
-      colnames( clSuccessDF ) <- c( successLabel, colnames(clSuccessDF)[-1] )
+    if( !( successLabel %in% colnames(clSuccessRateDF) ) ) {
+      clSuccessRateDF <- cbind( successLabel = 0, clSuccessRateDF)
+      colnames( clSuccessRateDF ) <- c( successLabel, colnames(clSuccessRateDF)[-1] )
     }
-    if( !( nonSuccessLabel %in% colnames(clSuccessDF) ) ) {
-      clSuccessDF <- cbind( nonSuccessLabel = 0, clSuccessDF )
-      colnames( clSuccessDF ) <- c( nonSuccessLabel, colnames(clSuccessDF)[-1] )
+    if( !( nonSuccessLabel %in% colnames(clSuccessRateDF) ) ) {
+      clSuccessRateDF <- cbind( nonSuccessLabel = 0, clSuccessRateDF )
+      colnames( clSuccessRateDF ) <- c( nonSuccessLabel, colnames(clSuccessRateDF)[-1] )
     }
 
     data.frame( "Threshold" = th,
-    "TPR" = clSuccessDF[ successLabel, successLabel ],
-    "FPR" = clSuccessDF[ nonSuccessLabel, successLabel ],
+    "TPR" = clSuccessRateDF[ successLabel, successLabel ],
+    "FPR" = clSuccessRateDF[ nonSuccessLabel, successLabel ],
+    "TP"  = clSuccessDF[ successLabel, successLabel ],
+    "TN"  = clSuccessDF[ nonSuccessLabel, nonSuccessLabel ],
+    "FP"  = clSuccessDF[ nonSuccessLabel, successLabel ],
+    "FN"  = clSuccessDF[ successLabel, nonSuccessLabel ],
     stringsAsFactors = FALSE)
 
   }, .progress = .progress )
