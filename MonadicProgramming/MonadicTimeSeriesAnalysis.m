@@ -89,7 +89,11 @@ TSAMonPlot::usage = "Plots the data points or the data points together with the 
 
 TSAMonRescale::usage = "Rescales the data."
 
-TSAMonCDFApproximation::usage = "Finds CDF approximations for specified points."
+TSAMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
+
+TSAMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
+
+TSAMonOutliers::usage = "Find the outliers in the data."
 
 Begin["`Private`"]
 
@@ -250,31 +254,31 @@ TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
 (**************************************************************)
 
 Clear[CDFEstimate]
-CDFEstimate[qs_, qFuncs_, t0_] :=
-    Interpolation[Transpose[{Through[qFuncs[t0]], qs}], InterpolationOrder -> 1];
+CDFEstimate[qFuncs_Association, t0_, intOrder:_Integer:1] :=
+    Interpolation[Transpose[{Through[Values[qFuncs][t0]], Keys[qFuncs]}], InterpolationOrder -> intOrder];
 
 Clear[CDFPDFPlot]
-CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs : {_?NumericQ ..}, opts : OptionsPattern[]] :=
+CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts : OptionsPattern[]] :=
     Block[{},
       Plot[
         {qCDFInt[x], qCDFInt'[x]},
         {x, qCDFInt["Domain"][[1, 1]], qCDFInt["Domain"][[1, 2]]},
-        opts, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
+        opts, GridLines->{None, qs}, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
     ];
 
-ClearAll[TSAMonCDFApproximation]
+ClearAll[TSAMonConditionalCDF]
 
-TSAMonCDFApproximation[$TSAMonFailure] := $TSAMonFailure;
+TSAMonConditionalCDF[$TSAMonFailure] := $TSAMonFailure;
 
-TSAMonCDFApproximation[__][$TSAMonFailure] := $TSAMonFailure;
+TSAMonConditionalCDF[__][$TSAMonFailure] := $TSAMonFailure;
 
-TSAMonCDFApproximation[t0_?NumberQ][xs_, context_] := TSAMonCDFApproximation[{t0}][xs, context];
+TSAMonConditionalCDF[t0_?NumberQ][xs_, context_] := TSAMonConditionalCDF[{t0}][xs, context];
 
-TSAMonCDFApproximation[ts:{_?NumberQ..}][xs_, context_] :=
+TSAMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
         KeyExistsQ[context, "qFuncs"],
-        TSAMonUnit[ Association[ Map[ #->CDFEstimate[ Keys[context["qFuncs"]], Values[context["qFuncs"]], # ] &, ts] ], context ],
+        TSAMonUnit[ Association[ Map[ #->CDFEstimate[ context["qFuncs"], # ] &, ts] ], context ],
 
         True,
         Echo["Cannot find regression quantiles.", "TSAMonCDFApproximation:"];
@@ -282,7 +286,116 @@ TSAMonCDFApproximation[ts:{_?NumberQ..}][xs_, context_] :=
       ]
     ];
 
-TSAMonCDFApproximation[___][___] := $TSAMonFailure;
+TSAMonConditionalCDF[___][___] := $TSAMonFailure;
+
+
+(**************************************************************)
+(* Conditional distributions plot                             *)
+(**************************************************************)
+
+ClearAll[TSAMonConditionalCDFPlot]
+
+Options[TSAMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
+
+TSAMonConditionalCDFPlot[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonConditionalCDFPlot[__][$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonConditionalCDFPlot[xs_, context_Association] := TSAMonConditionalCDFPlot[][xs, context];
+
+TSAMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
+    Block[{funcs, res, plotOpts},
+
+      Which[
+
+        MatchQ[xs, Association[(_?NumericQ -> _InterpolatingFunction) ..]],
+        funcs = xs,
+
+        True,
+        funcs = Fold[ TSAMonBind, TSAMonUnit[xs, context], {TSAMonConditionalCDF, TSAMonTakeValue}]
+      ];
+
+      If[ TrueQ[funcs === $TSAMonFailure], Return[$TSAMonFailure] ];
+
+      plotOpts = Sequence @@ DeleteCases[{opts}, HoldPattern["Echo"->_] ];
+
+      res =
+          Association@
+              KeyValueMap[#1 ->
+                  Plot[#2[x], Prepend[First[#2["Domain"]], x],
+                    Evaluate[plotOpts],
+                    PlotRange -> {All, All}, PlotLegends -> False,
+                    PlotTheme -> "Detailed",
+                    PlotLabel -> Row[{"CDF at x-value:", #1}],
+                    FrameLabel -> {"y-value", "Probability"},
+                    ImageSize -> Small
+                  ] &, funcs];
+
+      If[ TrueQ[OptionValue[TSAMonConditionalCDFPlot, "Echo"]],
+        Echo[ res, If[Length[res]==1, "conditional CDF:", "conditional CDF's:"] ]
+      ];
+
+      TSAMonUnit[res, context]
+    ];
+
+TSAMonConditionalCDFPlot[__][__] := $TSAMonFailure;
+
+
+(**************************************************************)
+(* Outlier finding                                            *)
+(**************************************************************)
+
+
+ClearAll[TSAMonOutliers]
+
+Options[TSAMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
+
+TSAMonOutliers[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonOutliers[__][$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonOutliers[xs_, context_Association] := TSAMonOutliers[][xs, context];
+
+TSAMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{knots, tq, bq, tfunc, bfunc, outliers, data},
+
+      knots = OptionValue[ "Knots" ];
+      Which[
+        TrueQ[knots === Automatic],
+        knots = 12,
+
+        ! ( IntegerQ[knots] || VectorQ[knots, NumericQ]),
+        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "TSAMonOutliers:"];
+        Return[$TSAMonFailure]
+      ];
+
+      tq = OptionValue[ "TopOutliersQuantile" ];
+      bq = OptionValue[ "BottomOutliersQuantile" ];
+      Which[
+        ! ( NumberQ[tq] && 0 < tq < 1 && NumberQ[bq] && 0 < bq < 1  ),
+        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "TSAMonOutliers:"];
+        Return[$TSAMonFailure]
+      ];
+
+      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue];
+
+      If[ TrueQ[data === $TSAMonFailure],
+        Echo["Cannot find data.", "TSAMonOutliers:"];
+        Return[$TSAMonFailure]
+      ];
+
+      tfunc = QuantileRegression[ data, knots, {tq}][[1]];
+      bfunc = QuantileRegression[ data, knots, {bq}][[1]];
+
+      outliers =
+          <| "TopOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&],
+             "BottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>;
+
+      TSAMonUnit[
+        outliers,
+        Join[context, <| "Outliers"->outliers, "OutlierRegressionQuantiles" -> <| tq->tfunc, bq->bfunc |> |> ]
+      ]
+    ];
 
 End[] (* `Private` *)
 
