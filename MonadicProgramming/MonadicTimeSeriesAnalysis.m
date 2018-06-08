@@ -197,6 +197,10 @@ ClearAll[TSAMonQuantileRegression];
 
 Options[TSAMonQuantileRegression] = Options[QuantileRegression];
 
+TSAMonQuantileRegression[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonQuantileRegression[xs_, context_Association] := $TSAMonFailure;
+
 TSAMonQuantileRegression[knots_Integer, opts:OptionsPattern[]][xs_, context_] :=
     TSAMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
@@ -209,12 +213,47 @@ TSAMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]]
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = AssociationThread[qs, qFuncs];
-        TSAMonUnit[qFuncs, Join[context, <|"data"->data, "qFuncs" -> qFuncs|>] ],
+        TSAMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
         (* ELSE *)
         $TSAMonFailure
       ]
     ];
 
+TSAMonQuantileRegression[___][__] := $TSAMonFailure;
+
+
+(**************************************************************)
+(* Quantile regression fit                                    *)
+(**************************************************************)
+
+ClearAll[TSAMonQuantileRegressionFit];
+
+Options[TSAMonQuantileRegressionFit] = Options[QuantileRegressionFit];
+
+TSAMonQuantileRegressionFit[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonQuantileRegressionFit[xs_, context_Association] := $TSAMonFailure;
+
+TSAMonQuantileRegressionFit[funcs_, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+    TSAMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
+
+TSAMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{data, qFuncs},
+
+      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue ];
+
+      qFuncs = QuantileRegressionFit[data, funcs, var, qs, opts];
+
+      If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
+        qFuncs = Map[Function[{expr}, Function[Evaluate[expr /. var -> Slot[1]]]], qFuncs];
+        qFuncs = AssociationThread[qs, qFuncs];
+        TSAMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
+      (* ELSE *)
+        $TSAMonFailure
+      ]
+    ];
+
+TSAMonQuantileRegressionFit[___][__] := $TSAMonFailure;
 
 (**************************************************************)
 (* Plot                                                       *)
@@ -223,6 +262,8 @@ TSAMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]]
 ClearAll[TSAMonPlot];
 
 TSAMonPlot[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonPlot[x_, context_Association] := TSAMonPlot[][x, context];
 
 TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, res},
@@ -233,12 +274,13 @@ TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
 
       res=
           Which[
-            KeyExistsQ[context, "qFuncs"],
+            KeyExistsQ[context, "regressionQuantiles"],
             Show[{
               ListPlot[data, opts, PlotStyle -> Lighter[Red], ImageSize->Medium],
-              Plot[Evaluate[Through[Values[context["qFuncs"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
+              Plot[Evaluate[Through[Values[context["regressionQuantiles"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
+                opts,
                 PerformanceGoal -> "Speed",
-                PlotLegends->Keys[context["qFuncs"]]
+                PlotLegends->Keys[context["regressionQuantiles"]]
               ]
             }],
 
@@ -250,6 +292,7 @@ TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
       TSAMonUnit[res, Join[ context, <|"data"->data|>] ]
     ];
 
+TSAMonPlot[__][__] := $TSAMonFailure;
 
 (**************************************************************)
 (* Conditional distribution                                   *)
@@ -279,8 +322,8 @@ TSAMonConditionalCDF[t0_?NumberQ][xs_, context_] := TSAMonConditionalCDF[{t0}][x
 TSAMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
-        KeyExistsQ[context, "qFuncs"],
-        TSAMonUnit[ Association[ Map[ #->CDFEstimate[ context["qFuncs"], # ] &, ts] ], context ],
+        KeyExistsQ[context, "regressionQuantiles"],
+        TSAMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionQuantiles"], # ] &, ts] ], context ],
 
         True,
         Echo["Cannot find regression quantiles.", "TSAMonCDFApproximation:"];
