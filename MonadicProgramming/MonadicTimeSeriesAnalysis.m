@@ -234,7 +234,25 @@ TSAMonQuantileRegressionFit[$TSAMonFailure] := $TSAMonFailure;
 
 TSAMonQuantileRegressionFit[xs_, context_Association] := $TSAMonFailure;
 
-TSAMonQuantileRegressionFit[funcs_, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+TSAMonQuantileRegressionFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+    TSAMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
+
+TSAMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{var},
+
+      var =
+          With[{globalQ = Context@# === "Global`" &},
+            DeleteDuplicates@Cases[funcs, _Symbol?globalQ, Infinity]
+          ];
+
+      If[ Length[var] == 0,
+        $TSAMonFailure,
+        (*ELSE*)
+        TSAMonQuantileRegressionFit[funcs, First[var], qs, opts][xs, context]
+      ]
+    ];
+
+TSAMonQuantileRegressionFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
     TSAMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
 
 TSAMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
