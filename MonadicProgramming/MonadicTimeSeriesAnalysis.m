@@ -78,7 +78,13 @@ $TSAMonFailure::usage = "Failure symbol for the monad TSAMon."
 
 TSAMonGetData::usage = "Get time series path data."
 
-TSAMonTakeData::usage = "Takes \"data\" from the monad."
+TSAMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context."
+
+TSAMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
+
+TSAMonSetRegressionQuantiles::usage = "Assigns the argument to the key \"regressionQuantiles\" in the monad context."
+
+TSAMonTakeRegressionQuantiles::usage = "Gives the value of the key \"regressionQuantiles\" from the monad context."
 
 TSAMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
 
@@ -119,13 +125,36 @@ GenerateStateMonadCode[ "MonadicTimeSeriesAnalysis`TSAMon", "FailureSymbol" -> $
 (* Setters / getters                                          *)
 (**************************************************************)
 
+ClearAll[TSAMonSetData]
+TSAMonSetData[$TSAMonFailure] := $TSAMonFailure;
+TSAMonSetData[][$TSAMonFailure] := $TSAMonFailure;
+TSAMonSetData[xs_, context_] := $TSAMonFailure;
+TSAMonSetData[data_List][xs_, context_] := TSAMonUnit[ xs, Join[ context, <|"data"->data|> ] ];
+TSAMonSetData[__][___] := $TSAMonFailure;
+
+
 ClearAll[TSAMonTakeData]
-TSAMonRescale[$TSAMonFailure] := $TSAMonFailure;
-TSAMonRescale[][$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeData[$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeData[][$TSAMonFailure] := $TSAMonFailure;
 TSAMonTakeData[xs_, context_] := TSAMonTakeData[][xs, context];
 TSAMonTakeData[][xs_, context_] := TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue ];
 TSAMonTakeData[__][___] := $TSAMonFailure;
 
+
+ClearAll[TSAMonSetRegressionQuantiles]
+TSAMonTakeRegressionQuantiles[$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeRegressionQuantiles[][$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeRegressionQuantiles[xs_, context_] := $TSAMonFailure;
+TSAMonTakeRegressionQuantiles[funcs_Association][xs_, context_] := TSAMonUnit[ xs, Join[ context, <|"regressionQuantiles"->funcs|> ] ];
+TSAMonTakeRegressionQuantiles[__][___] := $TSAMonFailure;
+
+
+ClearAll[TSAMonTakeRegressionQuantiles]
+TSAMonTakeRegressionQuantiles[$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeRegressionQuantiles[][$TSAMonFailure] := $TSAMonFailure;
+TSAMonTakeRegressionQuantiles[xs_, context_] := context["regressionQuantiles"];
+TSAMonTakeRegressionQuantiles[][xs_, context_] := context["regressionQuantiles"];
+TSAMonTakeRegressionQuantiles[__][___] := $TSAMonFailure;
 
 (**************************************************************)
 (* GetData                                                    *)
@@ -272,6 +301,7 @@ TSAMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:Optio
     ];
 
 TSAMonQuantileRegressionFit[___][__] := $TSAMonFailure;
+
 
 (**************************************************************)
 (* Plot                                                       *)
