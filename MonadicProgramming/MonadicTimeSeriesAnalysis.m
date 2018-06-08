@@ -95,6 +95,8 @@ TSAMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
 
 TSAMonOutliers::usage = "Find the outliers in the data."
 
+TSAMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
+
 Begin["`Private`"]
 
 Needs["MathematicaForPredictionUtilities`"]
@@ -345,7 +347,6 @@ TSAMonConditionalCDFPlot[__][__] := $TSAMonFailure;
 (* Outlier finding                                            *)
 (**************************************************************)
 
-
 ClearAll[TSAMonOutliers]
 
 Options[TSAMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
@@ -384,17 +385,69 @@ TSAMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
         Return[$TSAMonFailure]
       ];
 
-      tfunc = QuantileRegression[ data, knots, {tq}][[1]];
-      bfunc = QuantileRegression[ data, knots, {bq}][[1]];
+      {bfunc, tfunc} = QuantileRegression[ data, knots, {bq, tq} ];
 
       outliers =
-          <| "TopOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&],
-             "BottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>;
+          <| "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&],
+             "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>;
 
       TSAMonUnit[
         outliers,
-        Join[context, <| "Outliers"->outliers, "OutlierRegressionQuantiles" -> <| tq->tfunc, bq->bfunc |> |> ]
+        Join[context, <| "outliers"->outliers, "outlierRegressionQuantiles" -> <| tq->tfunc, bq->bfunc |> |> ]
       ]
+    ];
+
+
+(**************************************************************)
+(* Outliers plot                                              *)
+(**************************************************************)
+
+ClearAll[TSAMonOutliersPlot]
+
+Options[TSAMonOutliersPlot] := { "Echo"->True, ListPlot -> {}, Plot -> {} };
+
+TSAMonOutliersPlot[$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonOutliersPlot[__][$TSAMonFailure] := $TSAMonFailure;
+
+TSAMonOutliersPlot[xs_, context_Association] := TSAMonOutliersPlot[][xs, context];
+
+TSAMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{unit, res},
+
+      unit =
+          If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionQuantiles"],
+            TSAMonUnit[ xs, context ],
+          (*ELSE*)
+            TSAMonBind[ TSAMonUnit[ xs, context ], TSAMonOutliers ]
+          ];
+
+      (* This can be improved: right now the regression quantiles are plotted over the outlier points. *)
+      (* Also, there should be an option for not plotting the regression quantiles. *)
+
+      res =
+          Show[{
+
+            ListPlot[Join[{#data}, Values[#outliers]],
+              Evaluate[OptionValue[TSAMonOutliersPlot, ListPlot]],
+              PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
+              ImageSize -> Large, PlotTheme -> "Detailed"
+            ],
+
+            Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionQuantiles], Prepend[MinMax[#data[[All, 1]]], x],
+              Evaluate[OptionValue[TSAMonOutliersPlot, Plot]],
+              PlotStyle -> {Opacity[0.1], GrayLevel[0.9]},
+              PerformanceGoal -> "Speed"
+              (*PlotRange -> {MinMax[#data[[All,1]]], MinMax[#data[[All,2]]]}*)
+            ]
+
+          }] & [ TSAMonBind[ unit, TSAMonTakeContext ] ];
+
+      If[ TrueQ[OptionValue[TSAMonOutliersPlot, "Echo"]],
+        Echo[res, "Outliers plot:"]
+      ];
+
+      TSAMonUnit[ res, TSAMonBind[ unit, TSAMonTakeContext ] ]
     ];
 
 End[] (* `Private` *)
