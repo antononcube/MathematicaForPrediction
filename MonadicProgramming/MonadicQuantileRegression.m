@@ -78,11 +78,13 @@ $QRegMonFailure::usage = "Failure symbol for the monad QRegMon."
 
 QRegMonGetData::usage = "Get time series path data."
 
-QRegMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context."
+QRegMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context. \
+(The rest of the monad context is unchanged.)"
 
 QRegMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
 
-QRegMonSetRegressionQuantiles::usage = "Assigns the argument to the key \"regressionQuantiles\" in the monad context."
+QRegMonSetRegressionQuantiles::usage = "Assigns the argument to the key \"regressionQuantiles\" in the monad context. \
+(The rest of the monad context is unchanged.)"
 
 QRegMonTakeRegressionQuantiles::usage = "Gives the value of the key \"regressionQuantiles\" from the monad context."
 
@@ -102,6 +104,10 @@ QRegMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
 QRegMonOutliers::usage = "Find the outliers in the data."
 
 QRegMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
+
+QRegMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles."
+
+QRegMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid."
 
 Begin["`Private`"]
 
@@ -159,6 +165,18 @@ QRegMonTakeRegressionQuantiles[__][___] := $QRegMonFailure;
 (**************************************************************)
 (* GetData                                                    *)
 (**************************************************************)
+
+Clear[DataToNormalForm]
+
+DataToNormalForm[data_] :=
+    Which[
+      MatrixQ[data, NumericQ] && Dimensions[data][[2]] == 2,
+      data,
+
+      VectorQ[data, NumericQ],
+      Transpose[{ Range[Length[data]], data }]
+    ];
+
 ClearAll[QRegMonGetData];
 
 QRegMonGetData[$QRegMonFailure] := $QRegMonFailure;
@@ -166,17 +184,22 @@ QRegMonGetData[$QRegMonFailure] := $QRegMonFailure;
 QRegMonGetData[][xs_, context_] := QRegMonGetData[xs, context]
 
 QRegMonGetData[xs_, context_] :=
-    Block[{},
+    Block[{data},
 
       Which[
+
+        KeyExistsQ[context, "data"] && MatrixQ[context["data"], NumericQ] && Dimensions[context["data"]][[2]] == 2,
+        QRegMonUnit[ context["data"], context],
+
+        KeyExistsQ[context, "data"] && VectorQ[xs, NumericQ],
+        data = DataToNormalForm[context["data"]];
+        QRegMonUnit[ data, Join[context, <| "data"->data |>] ],
+
         MatrixQ[xs, NumericQ] && Dimensions[xs][[2]] == 2,
         QRegMonUnit[xs, context],
 
         VectorQ[xs, NumericQ],
-        TSMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
-
-        KeyExistsQ[context, "data"] && MatrixQ[context["data"], NumericQ] && Dimensions[context["data"]][[2]] == 2,
-        QRegMonUnit[ context["data"], context],
+        QRegMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
 
         True,
         Echo["Cannot find data.", "GetData:"];
@@ -248,7 +271,18 @@ QRegMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]
       ]
     ];
 
-QRegMonQuantileRegression[___][__] := $QRegMonFailure;
+QRegMonQuantileRegression[___][__] :=
+    Block[{},
+      Echo[
+        StringJoin[
+          "The first argument is expected to be knots specification, (_Integer | {_?NumberQ..}). ",
+          "The second option argument is expected to quantiles specification, {_?NumberQ..}."
+        ]
+        "QRegMonQuantileRegression:"
+      ];
+
+      $QRegMonFailure
+    ];
 
 
 (**************************************************************)
@@ -379,7 +413,11 @@ QRegMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
       ]
     ];
 
-QRegMonConditionalCDF[___][___] := $QRegMonFailure;
+QRegMonConditionalCDF[___][___] :=
+    Block[{},
+      Echo["The first argument is expected to be a number or a list of numbers.", "QRegMonConditionalCDF:"];
+      $QRegMonFailure
+    ];
 
 
 (**************************************************************)
@@ -431,7 +469,11 @@ QRegMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
       QRegMonUnit[res, context]
     ];
 
-QRegMonConditionalCDFPlot[__][__] := $QRegMonFailure;
+QRegMonConditionalCDFPlot[__][__] :=
+    Block[{},
+      Echo["Options are expected as arguments. (Plot options or \"Echo\"->(True|False).)", "QRegMonConditionalCDFPlot:"];
+      $QRegMonFailure
+    ];
 
 
 (**************************************************************)
@@ -488,6 +530,12 @@ QRegMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+QRegMonOutliers[__][__] :=
+    Block[{},
+      Echo[StringJoin[ "Options are expected as arguments:", ToString[Options[QRegMonOutliers]], "."], "QRegMonOutliers:"];
+      $QRegMonFailure
+    ];
+
 
 (**************************************************************)
 (* Outliers plot                                              *)
@@ -540,6 +588,142 @@ QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
 
       QRegMonUnit[ res, QRegMonBind[ unit, QRegMonTakeContext ] ]
     ];
+
+
+(**************************************************************)
+(* Bands sequential representation                            *)
+(**************************************************************)
+
+Clear[FindIntervalFunc]
+FindIntervalFunc[qBoundaries : {_?NumericQ ...}] :=
+    Block[{XXX, t = Partition[Join[{- Infinity}, qBoundaries, {Infinity}], 2, 1]},
+      Function[
+        Evaluate[
+          Piecewise[
+            MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t, Range[1, Length[t]]}]
+          ] /. {XXX -> #}
+        ]
+      ]
+    ];
+
+Clear[FindQRRange]
+FindQRRange[{x_, y_}, funcs_List] :=
+    Block[{qfs, pfunc},
+      qfs = Through[funcs[x]];
+      pfunc = FindIntervalFunc[qfs];
+      pfunc[y]
+    ];
+
+ClearAll[QRegMonBandsSequence]
+
+QRegMonBandsSequence[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonBandsSequence[___][$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonBandsSequence[xs_, context_Association ] := QRegMonBandsSequence[][xs, context];
+
+QRegMonBandsSequence[][xs_, context_] :=
+    Block[{qstates},
+
+      Which[
+
+        !KeyExistsQ[context, "data"],
+        Echo["Cannot find data.", "QRegMonBandsSequence:"];
+        $QRegMonFailure,
+
+        !KeyExistsQ[context, "regressionQuantiles"],
+        Echo["Compute the regression quantiles first.", "QRegMonBandsSequence:"];
+        $QRegMonFailure,
+
+        True,
+        qstates = FindQRRange[ #, Values[context["regressionQuantiles"]] ]& /@ QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+        QRegMonUnit[ qstates, context ]
+      ]
+
+    ];
+
+QRegMonBandsSequence[__][__] :=
+    Block[{},
+      Echo[ "No arguments are expected.", "QRegMonBandsSequence:"];
+      $QRegMonFailure
+    ];
+
+
+(**************************************************************)
+(* Grid sequential representation                             *)
+(**************************************************************)
+
+ClearAll[QRegMonGridSequence]
+
+QRegMonGridSequence[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonGridSequence[___][$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonGridSequence[xs_, context_Association ] := QRegMonGridSequence[][xs, context];
+
+QRegMonGridSequence[][xs_, context_] := QRegMonGridSequence[Automatic][xs, context];
+
+QRegMonGridSequence[Automatic][xs_, context_] :=
+    Block[{data, qvals},
+      Which[
+
+        !KeyExistsQ[context, "data"],
+        Echo["Cannot find data.", "QRegMonGridSequence:"];
+        $QRegMonFailure,
+
+        KeyExistsQ[context, "regressionQuantiles"],
+        data = DataToNormalForm[context["data"]];
+        qvals = Quantile[ data[[All, 2]], Keys[context["regressionQuantiles"]] ];
+        QRegMonGridSequence[ qvals ][xs, Join[context, <|"data"->data|> ]],
+
+        True,
+        Echo["Cannot find quantiles for the values mapping with Automatic grid argument.", "QRegMonGridSequence"];
+        $QRegMonFailure
+      ]
+    ];
+
+QRegMonGridSequence[gridNCells_Integer][xs_, context_] :=
+    Block[{data, rvals},
+      Which[
+
+        gridNCells < 1,
+        Echo["An integer first argument is expected to be positive.", "QRegMonGridSequence"];
+        $QRegMonFailure,
+
+        KeyExistsQ[context, "data"],
+        data = DataToNormalForm[context["data"]];
+        rvals = Rescale[Range[1, gridNCells], {1, gridNCells}, MinMax[data[[All, 2]]]];
+        QRegMonGridSequence[ rvals ][xs, Join[context, <|"data"->data|> ]],
+
+        True,
+        Echo["Cannot find data.", "QRegMonGridSequence"];
+        $QRegMonFailure
+      ]
+    ];
+
+QRegMonGridSequence[grid:{_?NumericQ..}][xs_, context_] :=
+    Block[{stFunc, states},
+
+      Which[
+
+        !KeyExistsQ[context, "data"],
+        Echo["Cannot find data.", "QRegMonGridSequence:"];
+        $QRegMonFailure,
+
+        True,
+        stFunc = FindIntervalFunc[grid];
+        states = stFunc /@ DataToNormalForm[context["data"]][[All,2]];
+        QRegMonUnit[ states, context ]
+      ]
+
+    ];
+
+QRegMonGridSequence[___][__] :=
+    Block[{},
+      Echo[ "The first argument is expected to be Automatic, an integer, or a list of numbers.", "QRegMonGridSequence:"];
+      $QRegMonFailure
+    ];
+
 
 End[] (* `Private` *)
 
