@@ -1,6 +1,6 @@
 (*
-    Monadic latent semantic analysis Mathematica package
-    Copyright (C) 2017  Anton Antonov
+    Monadic Quantile Regression Mathematica package
+    Copyright (C) 2018  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: MonadicTimeSeriesAnalysis *)
-(* :Context: MonadicTimeSeriesAnalysis` *)
+(* :Title: MonadicQuantileRegression *)
+(* :Context: MonadicQuantileRegression` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-06-03 *)
 
@@ -72,36 +72,36 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["MonadicTimeSeriesAnalysis`"]
+BeginPackage["MonadicQuantileRegression`"]
 
-$TSAMonFailure::usage = "Failure symbol for the monad TSAMon."
+$QRegMonFailure::usage = "Failure symbol for the monad QRegMon."
 
-TSAMonGetData::usage = "Get time series path data."
+QRegMonGetData::usage = "Get time series path data."
 
-TSAMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context."
+QRegMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context."
 
-TSAMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
+QRegMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
 
-TSAMonSetRegressionQuantiles::usage = "Assigns the argument to the key \"regressionQuantiles\" in the monad context."
+QRegMonSetRegressionQuantiles::usage = "Assigns the argument to the key \"regressionQuantiles\" in the monad context."
 
-TSAMonTakeRegressionQuantiles::usage = "Gives the value of the key \"regressionQuantiles\" from the monad context."
+QRegMonTakeRegressionQuantiles::usage = "Gives the value of the key \"regressionQuantiles\" from the monad context."
 
-TSAMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
+QRegMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
 
-TSAMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
+QRegMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
 using specified functions to fit."
 
-TSAMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
+QRegMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
 
-TSAMonRescale::usage = "Rescales the data."
+QRegMonRescale::usage = "Rescales the data."
 
-TSAMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
+QRegMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
 
-TSAMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
+QRegMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
 
-TSAMonOutliers::usage = "Find the outliers in the data."
+QRegMonOutliers::usage = "Find the outliers in the data."
 
-TSAMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
+QRegMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
 
 Begin["`Private`"]
 
@@ -119,95 +119,95 @@ Needs["OutlierIdentifiers`"]
 
 (* Generate base functions of LSAMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "MonadicTimeSeriesAnalysis`TSAMon", "FailureSymbol" -> $TSAMonFailure, "StringContextNames" -> False ]
+GenerateStateMonadCode[ "MonadicQuantileRegression`QRegMon", "FailureSymbol" -> $QRegMonFailure, "StringContextNames" -> False ]
 
 (**************************************************************)
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClearAll[TSAMonSetData]
-TSAMonSetData[$TSAMonFailure] := $TSAMonFailure;
-TSAMonSetData[][$TSAMonFailure] := $TSAMonFailure;
-TSAMonSetData[xs_, context_] := $TSAMonFailure;
-TSAMonSetData[data_List][xs_, context_] := TSAMonUnit[ xs, Join[ context, <|"data"->data|> ] ];
-TSAMonSetData[__][___] := $TSAMonFailure;
+ClearAll[QRegMonSetData]
+QRegMonSetData[$QRegMonFailure] := $QRegMonFailure;
+QRegMonSetData[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonSetData[xs_, context_] := $QRegMonFailure;
+QRegMonSetData[data_List][xs_, context_] := QRegMonUnit[ xs, Join[ context, <|"data"->data|> ] ];
+QRegMonSetData[__][___] := $QRegMonFailure;
 
 
-ClearAll[TSAMonTakeData]
-TSAMonTakeData[$TSAMonFailure] := $TSAMonFailure;
-TSAMonTakeData[][$TSAMonFailure] := $TSAMonFailure;
-TSAMonTakeData[xs_, context_] := TSAMonTakeData[][xs, context];
-TSAMonTakeData[][xs_, context_] := TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue ];
-TSAMonTakeData[__][___] := $TSAMonFailure;
+ClearAll[QRegMonTakeData]
+QRegMonTakeData[$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeData[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeData[xs_, context_] := QRegMonTakeData[][xs, context];
+QRegMonTakeData[][xs_, context_] := QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+QRegMonTakeData[__][___] := $QRegMonFailure;
 
 
-ClearAll[TSAMonSetRegressionQuantiles]
-TSAMonTakeRegressionQuantiles[$TSAMonFailure] := $TSAMonFailure;
-TSAMonTakeRegressionQuantiles[][$TSAMonFailure] := $TSAMonFailure;
-TSAMonTakeRegressionQuantiles[xs_, context_] := $TSAMonFailure;
-TSAMonTakeRegressionQuantiles[funcs_Association][xs_, context_] := TSAMonUnit[ xs, Join[ context, <|"regressionQuantiles"->funcs|> ] ];
-TSAMonTakeRegressionQuantiles[__][___] := $TSAMonFailure;
+ClearAll[QRegMonSetRegressionQuantiles]
+QRegMonTakeRegressionQuantiles[$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeRegressionQuantiles[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeRegressionQuantiles[xs_, context_] := $QRegMonFailure;
+QRegMonTakeRegressionQuantiles[funcs_Association][xs_, context_] := QRegMonUnit[ xs, Join[ context, <|"regressionQuantiles"->funcs|> ] ];
+QRegMonTakeRegressionQuantiles[__][___] := $QRegMonFailure;
 
 
-ClearAll[TSAMonTakeRegressionQuantiles]
-TSAMonTakeRegressionQuantiles[$TSAMonFailure] := $TSAMonFailure;
-TSAMonTakeRegressionQuantiles[][$TSAMonFailure] := $TSAMonFailure;
-TSAMonTakeRegressionQuantiles[xs_, context_] := context["regressionQuantiles"];
-TSAMonTakeRegressionQuantiles[][xs_, context_] := context["regressionQuantiles"];
-TSAMonTakeRegressionQuantiles[__][___] := $TSAMonFailure;
+ClearAll[QRegMonTakeRegressionQuantiles]
+QRegMonTakeRegressionQuantiles[$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeRegressionQuantiles[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeRegressionQuantiles[xs_, context_] := context["regressionQuantiles"];
+QRegMonTakeRegressionQuantiles[][xs_, context_] := context["regressionQuantiles"];
+QRegMonTakeRegressionQuantiles[__][___] := $QRegMonFailure;
 
 (**************************************************************)
 (* GetData                                                    *)
 (**************************************************************)
-ClearAll[TSAMonGetData];
+ClearAll[QRegMonGetData];
 
-TSAMonGetData[$TSAMonFailure] := $TSAMonFailure;
+QRegMonGetData[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonGetData[][xs_, context_] := TSAMonGetData[xs, context]
+QRegMonGetData[][xs_, context_] := QRegMonGetData[xs, context]
 
-TSAMonGetData[xs_, context_] :=
+QRegMonGetData[xs_, context_] :=
     Block[{},
 
       Which[
         MatrixQ[xs, NumericQ] && Dimensions[xs][[2]] == 2,
-        TSAMonUnit[xs, context],
+        QRegMonUnit[xs, context],
 
         VectorQ[xs, NumericQ],
         TSMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
 
         KeyExistsQ[context, "data"] && MatrixQ[context["data"], NumericQ] && Dimensions[context["data"]][[2]] == 2,
-        TSAMonUnit[ context["data"], context],
+        QRegMonUnit[ context["data"], context],
 
         True,
         Echo["Cannot find data.", "GetData:"];
-        $TSAMonFailure
+        $QRegMonFailure
       ]
 
     ];
 
-TSAMonGetData[___][xs_, context_Association] := $TSAMonFailure;
+QRegMonGetData[___][xs_, context_Association] := $QRegMonFailure;
 
 
 (**************************************************************)
 (* Rescale                                                    *)
 (**************************************************************)
 
-ClearAll[TSAMonRescale];
+ClearAll[QRegMonRescale];
 
-Options[TSAMonRescale] = {Axes->{"x","y"}};
+Options[QRegMonRescale] = {Axes->{"x","y"}};
 
-TSAMonRescale[$TSAMonFailure] := $TSAMonFailure;
+QRegMonRescale[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonRescale[opts:OptionsPattern[]][xs_, context_] :=
+QRegMonRescale[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data},
 
-      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue];
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
 
-      If[ data === $TSAMonFailure,
-        $TSAMonFailure,
+      If[ data === $QRegMonFailure,
+        $QRegMonFailure,
         (*ELSE*)
         data = Transpose[Rescales /@ Transpose[data]];
-        TSAMonUnit[ data, Join[ context, <|"data"->data|>] ]
+        QRegMonUnit[ data, Join[ context, <|"data"->data|>] ]
       ]
     ];
 
@@ -222,51 +222,51 @@ TSAMonRescale[opts:OptionsPattern[]][xs_, context_] :=
 (* Quantile regression                                        *)
 (**************************************************************)
 
-ClearAll[TSAMonQuantileRegression];
+ClearAll[QRegMonQuantileRegression];
 
-Options[TSAMonQuantileRegression] = Options[QuantileRegression];
+Options[QRegMonQuantileRegression] = Options[QuantileRegression];
 
-TSAMonQuantileRegression[$TSAMonFailure] := $TSAMonFailure;
+QRegMonQuantileRegression[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonQuantileRegression[xs_, context_Association] := $TSAMonFailure;
+QRegMonQuantileRegression[xs_, context_Association] := $QRegMonFailure;
 
-TSAMonQuantileRegression[knots_Integer, opts:OptionsPattern[]][xs_, context_] :=
-    TSAMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
+QRegMonQuantileRegression[knots_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    QRegMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
-TSAMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRegMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
-      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue ];
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
 
       qFuncs = QuantileRegression[data, knots, qs, opts];
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = AssociationThread[qs, qFuncs];
-        TSAMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
+        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
         (* ELSE *)
-        $TSAMonFailure
+        $QRegMonFailure
       ]
     ];
 
-TSAMonQuantileRegression[___][__] := $TSAMonFailure;
+QRegMonQuantileRegression[___][__] := $QRegMonFailure;
 
 
 (**************************************************************)
 (* Quantile regression fit                                    *)
 (**************************************************************)
 
-ClearAll[TSAMonQuantileRegressionFit];
+ClearAll[QRegMonQuantileRegressionFit];
 
-Options[TSAMonQuantileRegressionFit] = Options[QuantileRegressionFit];
+Options[QRegMonQuantileRegressionFit] = Options[QuantileRegressionFit];
 
-TSAMonQuantileRegressionFit[$TSAMonFailure] := $TSAMonFailure;
+QRegMonQuantileRegressionFit[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonQuantileRegressionFit[xs_, context_Association] := $TSAMonFailure;
+QRegMonQuantileRegressionFit[xs_, context_Association] := $QRegMonFailure;
 
-TSAMonQuantileRegressionFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
-    TSAMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
+QRegMonQuantileRegressionFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+    QRegMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
 
-TSAMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRegMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{var},
 
       var =
@@ -275,50 +275,50 @@ TSAMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]]
           ];
 
       If[ Length[var] == 0,
-        $TSAMonFailure,
+        $QRegMonFailure,
         (*ELSE*)
-        TSAMonQuantileRegressionFit[funcs, First[var], qs, opts][xs, context]
+        QRegMonQuantileRegressionFit[funcs, First[var], qs, opts][xs, context]
       ]
     ];
 
-TSAMonQuantileRegressionFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
-    TSAMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
+QRegMonQuantileRegressionFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+    QRegMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
 
-TSAMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRegMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
-      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue ];
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
 
       qFuncs = QuantileRegressionFit[data, funcs, var, qs, opts];
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = Map[Function[{expr}, Function[Evaluate[expr /. var -> Slot[1]]]], qFuncs];
         qFuncs = AssociationThread[qs, qFuncs];
-        TSAMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
+        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
       (* ELSE *)
-        $TSAMonFailure
+        $QRegMonFailure
       ]
     ];
 
-TSAMonQuantileRegressionFit[___][__] := $TSAMonFailure;
+QRegMonQuantileRegressionFit[___][__] := $QRegMonFailure;
 
 
 (**************************************************************)
 (* Plot                                                       *)
 (**************************************************************)
 
-ClearAll[TSAMonPlot];
+ClearAll[QRegMonPlot];
 
-TSAMonPlot[$TSAMonFailure] := $TSAMonFailure;
+QRegMonPlot[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonPlot[x_, context_Association] := TSAMonPlot[][x, context];
+QRegMonPlot[x_, context_Association] := QRegMonPlot[][x, context];
 
-TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
+QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, res},
 
-      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue];
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
 
-      If[data===$TSAMonFailure, Return[$TSAMonFailure]];
+      If[data===$QRegMonFailure, Return[$QRegMonFailure]];
 
       res=
           Which[
@@ -337,10 +337,10 @@ TSAMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           ];
 
       Echo[res, "Plot:"];
-      TSAMonUnit[res, Join[ context, <|"data"->data|>] ]
+      QRegMonUnit[res, Join[ context, <|"data"->data|>] ]
     ];
 
-TSAMonPlot[__][__] := $TSAMonFailure;
+QRegMonPlot[__][__] := $QRegMonFailure;
 
 (**************************************************************)
 (* Conditional distribution                                   *)
@@ -359,44 +359,44 @@ CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts :
         opts, GridLines->{None, qs}, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
     ];
 
-ClearAll[TSAMonConditionalCDF]
+ClearAll[QRegMonConditionalCDF]
 
-TSAMonConditionalCDF[$TSAMonFailure] := $TSAMonFailure;
+QRegMonConditionalCDF[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonConditionalCDF[__][$TSAMonFailure] := $TSAMonFailure;
+QRegMonConditionalCDF[__][$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonConditionalCDF[t0_?NumberQ][xs_, context_] := TSAMonConditionalCDF[{t0}][xs, context];
+QRegMonConditionalCDF[t0_?NumberQ][xs_, context_] := QRegMonConditionalCDF[{t0}][xs, context];
 
-TSAMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
+QRegMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
         KeyExistsQ[context, "regressionQuantiles"],
-        TSAMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionQuantiles"], # ] &, ts] ], context ],
+        QRegMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionQuantiles"], # ] &, ts] ], context ],
 
         True,
-        Echo["Cannot find regression quantiles.", "TSAMonCDFApproximation:"];
-        $TSAMonFailure
+        Echo["Cannot find regression quantiles.", "QRegMonCDFApproximation:"];
+        $QRegMonFailure
       ]
     ];
 
-TSAMonConditionalCDF[___][___] := $TSAMonFailure;
+QRegMonConditionalCDF[___][___] := $QRegMonFailure;
 
 
 (**************************************************************)
 (* Conditional distributions plot                             *)
 (**************************************************************)
 
-ClearAll[TSAMonConditionalCDFPlot]
+ClearAll[QRegMonConditionalCDFPlot]
 
-Options[TSAMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
+Options[QRegMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
 
-TSAMonConditionalCDFPlot[$TSAMonFailure] := $TSAMonFailure;
+QRegMonConditionalCDFPlot[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonConditionalCDFPlot[__][$TSAMonFailure] := $TSAMonFailure;
+QRegMonConditionalCDFPlot[__][$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonConditionalCDFPlot[xs_, context_Association] := TSAMonConditionalCDFPlot[][xs, context];
+QRegMonConditionalCDFPlot[xs_, context_Association] := QRegMonConditionalCDFPlot[][xs, context];
 
-TSAMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
+QRegMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
     Block[{funcs, res, plotOpts},
 
       Which[
@@ -405,10 +405,10 @@ TSAMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
         funcs = xs,
 
         True,
-        funcs = Fold[ TSAMonBind, TSAMonUnit[xs, context], {TSAMonConditionalCDF, TSAMonTakeValue}]
+        funcs = Fold[ QRegMonBind, QRegMonUnit[xs, context], {QRegMonConditionalCDF, QRegMonTakeValue}]
       ];
 
-      If[ TrueQ[funcs === $TSAMonFailure], Return[$TSAMonFailure] ];
+      If[ TrueQ[funcs === $QRegMonFailure], Return[$QRegMonFailure] ];
 
       plotOpts = Sequence @@ DeleteCases[{opts}, HoldPattern["Echo"->_] ];
 
@@ -424,31 +424,31 @@ TSAMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
                     ImageSize -> Small
                   ] &, funcs];
 
-      If[ TrueQ[OptionValue[TSAMonConditionalCDFPlot, "Echo"]],
+      If[ TrueQ[OptionValue[QRegMonConditionalCDFPlot, "Echo"]],
         Echo[ res, If[Length[res]==1, "conditional CDF:", "conditional CDF's:"] ]
       ];
 
-      TSAMonUnit[res, context]
+      QRegMonUnit[res, context]
     ];
 
-TSAMonConditionalCDFPlot[__][__] := $TSAMonFailure;
+QRegMonConditionalCDFPlot[__][__] := $QRegMonFailure;
 
 
 (**************************************************************)
 (* Outlier finding                                            *)
 (**************************************************************)
 
-ClearAll[TSAMonOutliers]
+ClearAll[QRegMonOutliers]
 
-Options[TSAMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
+Options[QRegMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
 
-TSAMonOutliers[$TSAMonFailure] := $TSAMonFailure;
+QRegMonOutliers[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonOutliers[__][$TSAMonFailure] := $TSAMonFailure;
+QRegMonOutliers[__][$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonOutliers[xs_, context_Association] := TSAMonOutliers[][xs, context];
+QRegMonOutliers[xs_, context_Association] := QRegMonOutliers[][xs, context];
 
-TSAMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
+QRegMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
     Block[{knots, tq, bq, tfunc, bfunc, outliers, data},
 
       knots = OptionValue[ "Knots" ];
@@ -457,23 +457,23 @@ TSAMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
         knots = 12,
 
         ! ( IntegerQ[knots] || VectorQ[knots, NumericQ]),
-        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "TSAMonOutliers:"];
-        Return[$TSAMonFailure]
+        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "QRegMonOutliers:"];
+        Return[$QRegMonFailure]
       ];
 
       tq = OptionValue[ "TopOutliersQuantile" ];
       bq = OptionValue[ "BottomOutliersQuantile" ];
       Which[
         ! ( NumberQ[tq] && 0 < tq < 1 && NumberQ[bq] && 0 < bq < 1  ),
-        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "TSAMonOutliers:"];
-        Return[$TSAMonFailure]
+        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "QRegMonOutliers:"];
+        Return[$QRegMonFailure]
       ];
 
-      data = TSAMonBind[ TSAMonGetData[xs, context], TSAMonTakeValue];
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
 
-      If[ TrueQ[data === $TSAMonFailure],
-        Echo["Cannot find data.", "TSAMonOutliers:"];
-        Return[$TSAMonFailure]
+      If[ TrueQ[data === $QRegMonFailure],
+        Echo["Cannot find data.", "QRegMonOutliers:"];
+        Return[$QRegMonFailure]
       ];
 
       {bfunc, tfunc} = QuantileRegression[ data, knots, {bq, tq} ];
@@ -482,7 +482,7 @@ TSAMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
           <| "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&],
              "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>;
 
-      TSAMonUnit[
+      QRegMonUnit[
         outliers,
         Join[context, <| "outliers"->outliers, "outlierRegressionQuantiles" -> <| tq->tfunc, bq->bfunc |> |> ]
       ]
@@ -493,24 +493,24 @@ TSAMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
 (* Outliers plot                                              *)
 (**************************************************************)
 
-ClearAll[TSAMonOutliersPlot]
+ClearAll[QRegMonOutliersPlot]
 
-Options[TSAMonOutliersPlot] := { "Echo"->True, ListPlot -> {}, Plot -> {} };
+Options[QRegMonOutliersPlot] := { "Echo"->True, ListPlot -> {}, Plot -> {} };
 
-TSAMonOutliersPlot[$TSAMonFailure] := $TSAMonFailure;
+QRegMonOutliersPlot[$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonOutliersPlot[__][$TSAMonFailure] := $TSAMonFailure;
+QRegMonOutliersPlot[__][$QRegMonFailure] := $QRegMonFailure;
 
-TSAMonOutliersPlot[xs_, context_Association] := TSAMonOutliersPlot[][xs, context];
+QRegMonOutliersPlot[xs_, context_Association] := QRegMonOutliersPlot[][xs, context];
 
-TSAMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
+QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{unit, res},
 
       unit =
           If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionQuantiles"],
-            TSAMonUnit[ xs, context ],
+            QRegMonUnit[ xs, context ],
           (*ELSE*)
-            TSAMonBind[ TSAMonUnit[ xs, context ], TSAMonOutliers ]
+            QRegMonBind[ QRegMonUnit[ xs, context ], QRegMonOutliers ]
           ];
 
       (* This can be improved: right now the regression quantiles are plotted over the outlier points. *)
@@ -520,25 +520,25 @@ TSAMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
           Show[{
 
             ListPlot[Join[{#data}, Values[#outliers]],
-              Evaluate[OptionValue[TSAMonOutliersPlot, ListPlot]],
+              Evaluate[OptionValue[QRegMonOutliersPlot, ListPlot]],
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
               ImageSize -> Large, PlotTheme -> "Detailed"
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionQuantiles], Prepend[MinMax[#data[[All, 1]]], x],
-              Evaluate[OptionValue[TSAMonOutliersPlot, Plot]],
+              Evaluate[OptionValue[QRegMonOutliersPlot, Plot]],
               PlotStyle -> {Opacity[0.1], GrayLevel[0.9]},
               PerformanceGoal -> "Speed"
               (*PlotRange -> {MinMax[#data[[All,1]]], MinMax[#data[[All,2]]]}*)
             ]
 
-          }] & [ TSAMonBind[ unit, TSAMonTakeContext ] ];
+          }] & [ QRegMonBind[ unit, QRegMonTakeContext ] ];
 
-      If[ TrueQ[OptionValue[TSAMonOutliersPlot, "Echo"]],
+      If[ TrueQ[OptionValue[QRegMonOutliersPlot, "Echo"]],
         Echo[res, "Outliers plot:"]
       ];
 
-      TSAMonUnit[ res, TSAMonBind[ unit, TSAMonTakeContext ] ]
+      QRegMonUnit[ res, QRegMonBind[ unit, QRegMonTakeContext ] ]
     ];
 
 End[] (* `Private` *)
