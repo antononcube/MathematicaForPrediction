@@ -705,14 +705,18 @@ GenerateParsersFromEBNF[code_] := InterpretWithContext[ pEBNF[code], EBNFContext
 Clear[RGMakeSymbolName, RGNonTerminal, RGTerminal, RGOption, RGRepetition,
   RGSequence, RGAlternatives, RGRule, EBNF]
 
-Clear[rgNumber, rgString, rgLetterString]
-rgNumber := ToString[RandomInteger[{1, 1000}]];
+Clear[rgInteger, rgNumber, rgString, rgLetterString]
+rgInteger := ToString[RandomInteger[{0, 1000}]];
+rgNumber := ToString[RandomReal[{0, 1000}]];
 rgNumberRange[{s_?NumberQ, e_?NumberQ}] := ToString[RandomInteger[{s, e}]];
 rgString := StringJoin @@ RandomSample[Join[CharacterRange["0", "9"], CharacterRange["a", "z"]], RandomInteger[{3, 10}]];
 rgLetterString := StringJoin @@ RandomSample[CharacterRange["a", "z"], RandomInteger[{3, 10}]];
 
 RGTerminal[parsed_] :=
     Which[
+      StringMatchQ[parsed, ("'" | "\"") ~~ "_?IntegerQ" ~~ ("'" | "\"")],
+      rgInteger,
+
       StringMatchQ[parsed, ("'" | "\"") ~~ "_?NumberQ" ~~ ("'" | "\"")],
       rgNumber,
 
@@ -776,13 +780,13 @@ RGSentence[parsedEBNF_EBNF] :=
       rrulesRest[[All, 2]] = rrulesRest[[All, 2]] //. rrulesRest;
       PRINT["3.", rrulesRest];
 
-      t = Flatten[(First[rrules][[2]] /. rrulesRest) /. EBNFToRGRules //. EBNFAlternatives[s___] :> RGAlternatives[s]];
+      t = Flatten@List[(First[rrules][[2]] /. rrulesRest) /. EBNFToRGRules //. EBNFAlternatives[s___] :> RGAlternatives[s]];
       PRINT["t=", t];
 
       (*StringTrim[StringReplace[StringJoin@@Riffle[Which[Head[t]\[Equal]",",
       List@@t,!ListQ[t],{t},True,Flatten[t]]," "],"  "\[Rule]" "]]*)
 
-      t = Flatten[t //. (","[x__] :> {x})];
+      t = Flatten@List[t //. (","[x__] :> {x})];
       StringTrim[StringReplace[StringRiffle[t, " "], (WhitespaceCharacter ~~ WhitespaceCharacter ..) -> " "]]
     ];
 
