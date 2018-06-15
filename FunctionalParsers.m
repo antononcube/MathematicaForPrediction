@@ -172,6 +172,8 @@ EBNFContextRules::usage = "Context rules for EBNF parser generation."
 ParseEBNF::usage = "ParseEBNF[gr:{_String..}] parses the EBNF grammar gr."
 GenerateParsersFromEBNF::usage = "GenerateParsersFromEBNF[gr:{_String..}] generate parsers the EBNF grammar gr."
 
+GrammarNormalize::usage = "Remove special character sequences from an EBNF grammar string."
+
 GrammarRandomSentences::usage = "GrammarRandomSentences[ gr: _String | _EBNF, n_Integer] generates n random sentences using the grammar gr."
 
 Begin["`Private`"]
@@ -699,6 +701,10 @@ GenerateParsersFromEBNF[code_] := InterpretWithContext[ pEBNF[code], EBNFContext
 (************************************************************)
 (* Random sentences                                         *)
 (************************************************************)
+
+Clear[GrammarNormalize]
+GrammarNormalize[ebnf_String] := StringReplace[ebnf, {"&>" -> ",", "<&" -> ",", ("<@" ~~ (Except[{">", "<"}] ..) ~~ ";") :> ";"}];
+GrammarNormalize[___] := $Failure;
 
 (* Random sentences generator from EBNF grammar (rule based) *)
 
