@@ -772,21 +772,22 @@ RGSentence[parsedEBNF_EBNF] :=
     Block[{parsedEBNFRules = parsedEBNF[[1]], rrules, rrulesRest, EBNFToRGRules, t},
 
       EBNFToRGRules =
-          Thread[{EBNFTerminal, EBNFOption, EBNFRepetition, EBNFSequence} -> {RGTerminal, RGOption, RGRepetition, RGSequence}];
+          Dispatch[Thread[{EBNFTerminal, EBNFOption, EBNFRepetition, EBNFSequence} -> {RGTerminal, RGOption, RGRepetition, RGSequence}]];
 
       rrules = Cases[parsedEBNFRules, {s_String, rhs_} :> (EBNFNonTerminal[s] -> rhs), Infinity];
 
       rrulesRest = Rest[rrules];
-      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. rrulesRest;
+
+      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. Dispatch[rrulesRest];
       PRINT["1.", rrulesRest[[All, 2]]];
 
       rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. EBNFToRGRules;
       PRINT["2.", rrulesRest[[All, 2]]];
 
-      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] //. rrulesRest;
+      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] //. Dispatch[rrulesRest];
       PRINT["3.", rrulesRest];
 
-      t = Flatten@List[(First[rrules][[2]] /. rrulesRest) /. EBNFToRGRules //. EBNFAlternatives[s___] :> RGAlternatives[s]];
+      t = Flatten@List[(First[rrules][[2]] /. Dispatch[rrulesRest]) /. EBNFToRGRules //. EBNFAlternatives[s___] :> RGAlternatives[s]];
       PRINT["t=", t];
 
       (*StringTrim[StringReplace[StringJoin@@Riffle[Which[Head[t]\[Equal]",",
