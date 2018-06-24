@@ -35,7 +35,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-06-24 *)
 
-(* :Package Version: 0.5 *)
+(* :Package Version: 0.7 *)
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: monad, monadic, quantile regression, workflow, State monad, Mathematica, Wolfram Language, unit test *)
@@ -142,6 +142,7 @@ VerificationTest[(* 7 *)
   TestID->"QuantileRegressionFit-and-Fit-1"
 ]
 
+
 VerificationTest[(* 8 *)
   res =
       DoubleLongRightArrow[
@@ -155,6 +156,84 @@ VerificationTest[(* 8 *)
   Sort @ Prepend[Range[0.2,0.8,0.2], "mean"]
   ,
   TestID->"Fit-and-QuantileRegressionFit-1"
+]
+
+
+VerificationTest[(* 9 *)
+  res =
+      DoubleLongRightArrow[
+        QRegMonUnit[data],
+        QRegMonOutliers,
+        QRegMonTakeValue
+      ];
+  MatrixQ[#, NumberQ] & /@ KeyTake[res, {"topOutliers", "bottomOutliers"}]
+  ,
+  <|"topOutliers" -> True, "bottomOutliers" -> True|>
+  ,
+  TestID->"Outliers-1"
+]
+
+
+VerificationTest[(* 10 *)
+  res =
+      DoubleLongRightArrow[
+        QRegMonUnit[data],
+        QRegMonOutliers["Knots" -> 6, "TopOutliersQuantile" -> 0.98],
+        QRegMonTakeValue
+      ];
+  MatrixQ[#, NumberQ] & /@ KeyTake[res, {"topOutliers", "bottomOutliers"}]
+  ,
+  <|"topOutliers" -> True, "bottomOutliers" -> True|>
+  ,
+  TestID->"Outliers-2"
+]
+
+
+VerificationTest[(* 11 *)
+  VectorQ[
+    DoubleLongRightArrow[
+      QRegMonUnit[data],
+      QRegMonQuantileRegression[12, Range[0.1, 0.9, 0.2]],
+      QRegMonGridSequence,
+      QRegMonTakeValue
+    ],
+    IntegerQ]
+  ,
+  True
+  ,
+  TestID->"GridSequence-1"
+]
+
+
+VerificationTest[(* 11 *)
+  VectorQ[
+    DoubleLongRightArrow[
+      QRegMonUnit[data],
+      QRegMonQuantileRegression[12, Range[0.1, 0.9, 0.2]],
+      QRegMonBandsSequence,
+      QRegMonTakeValue
+    ],
+    IntegerQ]
+  ,
+  True
+  ,
+  TestID->"BandsSequence-1"
+]
+
+
+VerificationTest[(* 12 *)
+  res =
+      DoubleLongRightArrow[
+        QRegMonUnit[data],
+        QRegMonQuantileRegression[6, Range[0.1, 0.9, 0.2]],
+        QRegMonConditionalCDF[0.2],
+        QRegMonTakeValue
+      ];
+  {MatchQ[res, <|0.2 -> _InterpolatingFunction|>], res[0.2]["ValuesOnGrid"] == Range[0.1, 0.9, 0.2] }
+  ,
+  { True, True }
+  ,
+  TestID->"ConditionalCDF-1"
 ]
 
 
