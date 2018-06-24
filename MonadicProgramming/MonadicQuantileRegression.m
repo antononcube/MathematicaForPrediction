@@ -95,6 +95,8 @@ using specified functions to fit."
 
 QRegMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
 
+QRegMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
+
 QRegMonRescale::usage = "Rescales the data."
 
 QRegMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
@@ -375,6 +377,43 @@ QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
     ];
 
 QRegMonPlot[__][__] := $QRegMonFailure;
+
+
+(**************************************************************)
+(* Error plots                                                *)
+(**************************************************************)
+
+ClearAll[QRegMonErrorPlots]
+
+Options[QRegMonErrorPlots] = Prepend[Options[ListPlot], "Echo"->True];
+
+QRegMonErrorPlots[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonErrorPlots[x_, context_Association] := QRegMonErrorPlots[][x, context];
+
+QRegMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{res},
+      res =
+          KeyValueMap[
+            Function[{k, f},
+              k ->
+                  ListPlot[
+                    Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/p[[2]]}], context["data"] ],
+                    DeleteCases[{opts}, HoldPattern["Echo"->_]],
+                    PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium]
+            ],
+            context["regressionQuantiles"]
+          ];
+
+      If[ TrueQ[OptionValue[QRegMonErrorPlots, "Echo"]],
+        Echo[res, "Error plots:"];
+      ];
+
+      QRegMonUnit[res, context]
+    ];
+
+QRegMonErrorPlots[__][__] := $QRegMonFailure;
+
 
 (**************************************************************)
 (* Conditional distribution                                   *)
