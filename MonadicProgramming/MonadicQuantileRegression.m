@@ -83,10 +83,15 @@ QRegMonSetData::usage = "Assigns the argument to the key \"data\" in the monad c
 
 QRegMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
 
-QRegMonSetRegressionQuantiles::usage = "Assigns the argument to the key \"regressionQuantiles\" in the monad context. \
+QRegMonSetRegressionFunctions::usage = "Assigns the argument to the key \"regressionFunctions\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
-QRegMonTakeRegressionQuantiles::usage = "Gives the value of the key \"regressionQuantiles\" from the monad context."
+QRegMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFunctions\" from the monad context."
+
+QRegMonLeastSquaresFit::usage = "Linear regression fit for the data in the pipeline or the context \
+using specified functions to fit."
+
+QRegMonFit::usage = "Same as QRegMonLinearRegressionFit."
 
 QRegMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
 
@@ -149,20 +154,20 @@ QRegMonTakeData[][xs_, context_] := QRegMonBind[ QRegMonGetData[xs, context], QR
 QRegMonTakeData[__][___] := $QRegMonFailure;
 
 
-ClearAll[QRegMonSetRegressionQuantiles]
-QRegMonTakeRegressionQuantiles[$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeRegressionQuantiles[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeRegressionQuantiles[xs_, context_] := $QRegMonFailure;
-QRegMonTakeRegressionQuantiles[funcs_Association][xs_, context_] := QRegMonUnit[ xs, Join[ context, <|"regressionQuantiles"->funcs|> ] ];
-QRegMonTakeRegressionQuantiles[__][___] := $QRegMonFailure;
+ClearAll[QRegMonSetRegressionFunctions]
+QRegMonSetRegressionFunctions[$QRegMonFailure] := $QRegMonFailure;
+QRegMonSetRegressionFunctions[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonSetRegressionFunctions[xs_, context_] := $QRegMonFailure;
+QRegMonSetRegressionFunctions[funcs_Association][xs_, context_] := QRegMonUnit[ xs, Join[ context, <|"regressionFunctions"->funcs|> ] ];
+QRegMonSetRegressionFunctions[__][___] := $QRegMonFailure;
 
 
-ClearAll[QRegMonTakeRegressionQuantiles]
-QRegMonTakeRegressionQuantiles[$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeRegressionQuantiles[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeRegressionQuantiles[xs_, context_] := context["regressionQuantiles"];
-QRegMonTakeRegressionQuantiles[][xs_, context_] := context["regressionQuantiles"];
-QRegMonTakeRegressionQuantiles[__][___] := $QRegMonFailure;
+ClearAll[QRegMonTakeRegressionFunctions]
+QRegMonTakeRegressionFunctions[$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeRegressionFunctions[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeRegressionFunctions[xs_, context_] := context["regressionFunctions"];
+QRegMonTakeRegressionFunctions[][xs_, context_] := context["regressionFunctions"];
+QRegMonTakeRegressionFunctions[__][___] := $QRegMonFailure;
 
 (**************************************************************)
 (* GetData                                                    *)
@@ -241,7 +246,50 @@ QRegMonRescale[opts:OptionsPattern[]][xs_, context_] :=
 (* LeastSquaresFit                                            *)
 (**************************************************************)
 
+ClearAll[QRegMonLeastSquaresFit];
 
+QRegMonLeastSquaresFit[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonLeastSquaresFit[xs_, context_Association] := $QRegMonFailure;
+
+QRegMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{var},
+
+      var =
+          With[{globalQ = Context@# === "Global`" &},
+            DeleteDuplicates@Cases[funcs, _Symbol?globalQ, Infinity]
+          ];
+
+      If[ Length[var] == 0,
+        $QRegMonFailure,
+      (*ELSE*)
+        QRegMonLeastSquaresFit[funcs, First[var], opts][xs, context]
+      ]
+    ];
+
+QRegMonLeastSquaresFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{data, qFunc},
+
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+
+      qFunc = Fit[data, funcs, var];
+
+      qFunc = Function[ Evaluate[ qFunc /. var -> Slot[1] ] ];
+
+      QRegMonUnit[qFunc,
+        Join[context,
+          <|"data"->data,
+            "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], <| "mean" -> qFunc |> ] |>
+        ]
+      ]
+    ];
+
+QRegMonLeastSquaresFit[___][__] := $QRegMonFailure;
+
+
+ClearAll[QRegMonFit];
+
+QRegMonFit = QRegMonLeastSquaresFit;
 
 (**************************************************************)
 (* Quantile regression                                        *)
@@ -267,7 +315,7 @@ QRegMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = AssociationThread[qs, qFuncs];
-        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
+        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
         (* ELSE *)
         $QRegMonFailure
       ]
@@ -330,7 +378,7 @@ QRegMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:Opti
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = Map[Function[{expr}, Function[Evaluate[expr /. var -> Slot[1]]]], qFuncs];
         qFuncs = AssociationThread[qs, qFuncs];
-        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionQuantiles" -> qFuncs|>] ],
+        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
       (* ELSE *)
         $QRegMonFailure
       ]
@@ -358,13 +406,13 @@ QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
 
       res=
           Which[
-            KeyExistsQ[context, "regressionQuantiles"],
+            KeyExistsQ[context, "regressionFunctions"],
             Show[{
               ListPlot[data, opts, PlotStyle -> Lighter[Red], ImageSize->Medium],
-              Plot[Evaluate[Through[Values[context["regressionQuantiles"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
+              Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 opts,
                 PerformanceGoal -> "Speed",
-                PlotLegends->Keys[context["regressionQuantiles"]]
+                PlotLegends->Keys[context["regressionFunctions"]]
               ]
             }],
 
@@ -402,7 +450,7 @@ QRegMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
                     DeleteCases[{opts}, HoldPattern["Echo"->_]],
                     PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium]
             ],
-            context["regressionQuantiles"]
+            context["regressionFunctions"]
           ];
 
       If[ TrueQ[OptionValue[QRegMonErrorPlots, "Echo"]],
@@ -443,8 +491,8 @@ QRegMonConditionalCDF[t0_?NumberQ][xs_, context_] := QRegMonConditionalCDF[{t0}]
 QRegMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
-        KeyExistsQ[context, "regressionQuantiles"],
-        QRegMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionQuantiles"], # ] &, ts] ], context ],
+        KeyExistsQ[context, "regressionFunctions"],
+        QRegMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionFunctions"], # ] &, ts] ], context ],
 
         True,
         Echo["Cannot find regression quantiles.", "QRegMonCDFApproximation:"];
@@ -670,12 +718,12 @@ QRegMonBandsSequence[][xs_, context_] :=
         Echo["Cannot find data.", "QRegMonBandsSequence:"];
         $QRegMonFailure,
 
-        !KeyExistsQ[context, "regressionQuantiles"],
+        !KeyExistsQ[context, "regressionFunctions"],
         Echo["Compute the regression quantiles first.", "QRegMonBandsSequence:"];
         $QRegMonFailure,
 
         True,
-        qstates = FindQRRange[ #, Values[context["regressionQuantiles"]] ]& /@ QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+        qstates = FindQRRange[ #, Values[context["regressionFunctions"]] ]& /@ QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
         QRegMonUnit[ qstates, context ]
       ]
 
@@ -710,9 +758,9 @@ QRegMonGridSequence[Automatic][xs_, context_] :=
         Echo["Cannot find data.", "QRegMonGridSequence:"];
         $QRegMonFailure,
 
-        KeyExistsQ[context, "regressionQuantiles"],
+        KeyExistsQ[context, "regressionFunctions"],
         data = DataToNormalForm[context["data"]];
-        qvals = Quantile[ data[[All, 2]], Keys[context["regressionQuantiles"]] ];
+        qvals = Quantile[ data[[All, 2]], Keys[context["regressionFunctions"]] ];
         QRegMonGridSequence[ qvals ][xs, Join[context, <|"data"->data|> ]],
 
         True,
