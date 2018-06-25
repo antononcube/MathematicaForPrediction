@@ -88,6 +88,12 @@ QRegMonSetRegressionFunctions::usage = "Assigns the argument to the key \"regres
 
 QRegMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFunctions\" from the monad context."
 
+QRegMonEchoDataSummary::usage = "Echoes a summary of the data."
+
+QRegMonDeleteMissing::usage = "Deletes records with missing data."
+
+QRegMonRescale::usage = "Rescales the data."
+
 QRegMonLeastSquaresFit::usage = "Linear regression fit for the data in the pipeline or the context \
 using specified functions to fit."
 
@@ -104,7 +110,6 @@ QRegMonPlot::usage = "Plots the data points or the data points together with the
 
 QRegMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
 
-QRegMonRescale::usage = "Rescales the data."
 
 QRegMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
 
@@ -221,6 +226,48 @@ QRegMonGetData[___][xs_, context_Association] := $QRegMonFailure;
 
 
 (**************************************************************)
+(* DeleteMissing                                             *)
+(**************************************************************)
+
+ClearAll[QRegMonEchoDataSummary];
+
+QRegMonEchoDataSummary[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonEchoDataSummary[xs_, context_] := QRegMonEchoDataSummary[][xs, context];
+
+QRegMonEchoDataSummary[][xs_, context_] :=
+    Fold[ QRegMonBind, QRegMonUnit[xs, context], { QRegMonEchoFunctionValue[RecordsSummary] } ]
+
+QRegMonEchoDataSummary[___][__] := $QRegMonFailure;
+
+
+(**************************************************************)
+(* DeleteMissing                                             *)
+(**************************************************************)
+
+ClearAll[QRegMonDeleteMissing];
+
+QRegMonDeleteMissing[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonDeleteMissing[xs_, context_] := QRegMonDeleteMissing[][xs, context];
+
+QRegMonDeleteMissing[][xs_, context_] :=
+    Block[{data},
+
+      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
+
+      If[ data === $QRegMonFailure,
+        $QRegMonFailure,
+      (*ELSE*)
+        data = DeleteMissing[data, 1, 2];
+        QRegMonUnit[ data, Join[ context, <|"data"->data|>] ]
+      ]
+    ];
+
+QRegMonDeleteMissing[___][__] := $QRegMonFailure;
+
+
+(**************************************************************)
 (* Rescale                                                    *)
 (**************************************************************)
 
@@ -229,6 +276,8 @@ ClearAll[QRegMonRescale];
 Options[QRegMonRescale] = {Axes->{"x","y"}};
 
 QRegMonRescale[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonRescale[xs_, context_] := QRegMonRescale[][xs, context];
 
 QRegMonRescale[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data},
@@ -242,6 +291,8 @@ QRegMonRescale[opts:OptionsPattern[]][xs_, context_] :=
         QRegMonUnit[ data, Join[ context, <|"data"->data|>] ]
       ]
     ];
+
+QRegMonRescale[___][__] := $QRegMonFailure;
 
 
 (**************************************************************)
@@ -442,7 +493,7 @@ QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              ListPlot[data, DeleteCases[{opts}, HoldPattern["Echo"->_]], PlotStyle -> Lighter[Red], ImageSize->Medium],
+              ListPlot[data, DeleteCases[{opts}, HoldPattern["Echo"->_]], PlotStyle -> Lighter[Red], ImageSize->Medium, PlotTheme -> "Scientific"],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 Evaluate[DeleteCases[{opts}, HoldPattern["Echo"->_]]],
                 PerformanceGoal -> "Speed",
@@ -486,7 +537,7 @@ QRegMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
                   ListPlot[
                     Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/p[[2]]}], context["data"] ],
                     DeleteCases[{opts}, HoldPattern["Echo"->_]],
-                    PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium]
+                    PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
             ],
             context["regressionFunctions"]
           ];
@@ -581,7 +632,7 @@ QRegMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
                   Plot[#2[x], Prepend[First[#2["Domain"]], x],
                     Evaluate[plotOpts],
                     PlotRange -> {All, All}, PlotLegends -> False,
-                    PlotTheme -> "Detailed",
+                    PlotTheme -> "Scientific",
                     PlotLabel -> Row[{"CDF at x-value:", #1}],
                     FrameLabel -> {"y-value", "Probability"},
                     ImageSize -> Small
@@ -695,7 +746,7 @@ QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
             ListPlot[Join[{#data}, Values[#outliers]],
               Evaluate[OptionValue[QRegMonOutliersPlot, ListPlot]],
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
-              ImageSize -> Large, PlotTheme -> "Detailed"
+              ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionQuantiles], Prepend[MinMax[#data[[All, 1]]], x],
