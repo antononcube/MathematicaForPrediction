@@ -205,15 +205,21 @@ QRegMonGetData[xs_, context_] :=
         KeyExistsQ[context, "data"] && MatrixQ[context["data"], NumericQ] && Dimensions[context["data"]][[2]] == 2,
         QRegMonUnit[ context["data"], context],
 
-        KeyExistsQ[context, "data"] && VectorQ[xs, NumericQ],
+        KeyExistsQ[context, "data"] && VectorQ[context["data"], NumericQ],
         data = DataToNormalForm[context["data"]];
         QRegMonUnit[ data, Join[context, <| "data"->data |>] ],
+
+        KeyExistsQ[context, "data"] && MatchQ[context["data"], (_TimeSeries | _TemporalData)],
+        QRegMonUnit[ context["data"]["Path"] /. Quantity[x_, u_] :> x, context],
 
         MatrixQ[xs, NumericQ] && Dimensions[xs][[2]] == 2,
         QRegMonUnit[xs, context],
 
         VectorQ[xs, NumericQ],
         QRegMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
+
+        MatchQ[xs, (_TimeSeries | _TemporalData)],
+        QRegMonUnit[ xs["Path"] /. Quantity[x_, u_] :> x, context],
 
         True,
         Echo["Cannot find data.", "GetData:"];
@@ -236,7 +242,7 @@ QRegMonEchoDataSummary[$QRegMonFailure] := $QRegMonFailure;
 QRegMonEchoDataSummary[xs_, context_] := QRegMonEchoDataSummary[][xs, context];
 
 QRegMonEchoDataSummary[][xs_, context_] :=
-    Fold[ QRegMonBind, QRegMonUnit[xs, context], { QRegMonEchoFunctionValue[RecordsSummary] } ]
+    Fold[ QRegMonBind, QRegMonUnit[xs, context], { QRegMonGetData, QRegMonEchoFunctionValue["Data summary:", RecordsSummary] } ]
 
 QRegMonEchoDataSummary[___][__] := $QRegMonFailure;
 
@@ -702,7 +708,7 @@ QRegMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
 
       QRegMonUnit[
         outliers,
-        Join[context, <| "outliers"->outliers, "outlierRegressionQuantiles" -> <| tq->tfunc, bq->bfunc |> |> ]
+        Join[context, <| "outliers"->outliers, "outlierRegressionFunctions" -> <| tq->tfunc, bq->bfunc |> |> ]
       ]
     ];
 
@@ -731,7 +737,7 @@ QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{unit, res},
 
       unit =
-          If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionQuantiles"],
+          If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionFunctions"],
             QRegMonUnit[ xs, context ],
           (*ELSE*)
             QRegMonBind[ QRegMonUnit[ xs, context ], QRegMonOutliers ]
@@ -749,7 +755,7 @@ QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
               ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
 
-            Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionQuantiles], Prepend[MinMax[#data[[All, 1]]], x],
+            Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
               Evaluate[OptionValue[QRegMonOutliersPlot, Plot]],
               PlotStyle -> {Opacity[0.1], GrayLevel[0.9]},
               PerformanceGoal -> "Speed"
