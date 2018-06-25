@@ -425,7 +425,9 @@ QRegMonEvaluate[___][__] := $QRegMonFailure;
 
 ClearAll[QRegMonPlot];
 
-QRegMonPlot[$QRegMonFailure] := $QRegMonFailure;
+Options[QRegMonPlot] = Prepend[Options[ListPlot], "Echo"->True];
+
+QRegMonPlot[QRegMonPlot] := $QRegMonFailure;
 
 QRegMonPlot[x_, context_Association] := QRegMonPlot[][x, context];
 
@@ -440,9 +442,9 @@ QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              ListPlot[data, opts, PlotStyle -> Lighter[Red], ImageSize->Medium],
+              ListPlot[data, DeleteCases[{opts}, HoldPattern["Echo"->_]], PlotStyle -> Lighter[Red], ImageSize->Medium],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
-                opts,
+                Evaluate[DeleteCases[{opts}, HoldPattern["Echo"->_]]],
                 PerformanceGoal -> "Speed",
                 PlotLegends->Keys[context["regressionFunctions"]]
               ]
@@ -452,7 +454,11 @@ QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
             ListPlot[data, opts, ImageSize->Medium]
           ];
 
-      Echo[res, "Plot:"];
+
+      If[ TrueQ[OptionValue[QRegMonPlot, "Echo"]],
+        Echo[res, "Plot:"];
+      ];
+
       QRegMonUnit[res, Join[ context, <|"data"->data|>] ]
     ];
 
