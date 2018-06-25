@@ -258,8 +258,8 @@ VerificationTest[(* 14 *)
       DoubleLongRightArrow[
         QRegMonUnit[data],
         QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
-        QRegMonEvaluate[4],
         QRegMonLeastSquaresFit[{1, x, Exp[-x^2]}],
+        QRegMonEvaluate[4],
         QRegMonTakeValue
       ];
   Sort[Keys[res]]
