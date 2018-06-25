@@ -98,6 +98,8 @@ QRegMonQuantileRegression::usage = "Quantile regression for the data in the pipe
 QRegMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
 using specified functions to fit."
 
+QRegMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers."
+
 QRegMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
 
 QRegMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
@@ -386,6 +388,36 @@ QRegMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:Opti
 
 QRegMonQuantileRegressionFit[___][__] := $QRegMonFailure;
 
+
+(**************************************************************)
+(* Evaluate                                                   *)
+(**************************************************************)
+(* See InterpolationFunction[___]["Evaluate"[{0.2, 0.3, 1}]] *)
+(* Probably can be optimized. *)
+
+ClearAll[QRegMonEvaluate]
+
+QRegMonEvaluate[$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonEvaluate[xs_, context_Association] := $QRegMonFailure;
+
+QRegMonEvaluate[___][$QRegMonFailure] := $QRegMonFailure;
+
+QRegMonEvaluate[n_?AtomQ][x_, context_] :=
+    If[KeyExistsQ[context, "regressionFunctions"],
+      QRegMonUnit[ Map[#[n]&, context["regressionFunctions"] ], context ],
+      (*ELSE*)
+      $QRegMonFailure
+    ];
+
+QRegMonEvaluate[arr_List][x_, context_] :=
+    If[KeyExistsQ[context, "regressionFunctions"],
+      QRegMonUnit[ Map[Function[{qf}, Map[qf, arr, {-1}]], context["regressionFunctions"] ], context ],
+    (*ELSE*)
+      $QRegMonFailure
+    ];
+
+QRegMonEvaluate[___][__] := $QRegMonFailure;
 
 (**************************************************************)
 (* Plot                                                       *)
