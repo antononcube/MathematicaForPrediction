@@ -516,13 +516,13 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateIterate[itFunc : (Nest | NestWhile | FixedPoint), f_, args___][x_, context_Association] :=
           itFunc[MStateBind[#, f] &, MStateUnit[x, context], args];
 
-
       MStateIterate[itFunc : (NestList | NestWhileList | FixedPointList),
                     f_, args___, contextVar : (None | _String) : None][x_, context_Association] :=
           Block[{res},
             res = itFunc[MStateBind[#, f] &, MStateUnit[x, context], args];
             If[contextVar === None,
               MStateUnit[res[[All, 1]], res[[-1, 2]]],
+              (*ELSE*)
               MStateUnit[res[[All, 1]], Join[res[[-1, 2]], <|contextVar -> res|>]]
             ]
           ];
