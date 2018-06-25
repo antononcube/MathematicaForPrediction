@@ -50,7 +50,7 @@
 
       1. ingesting a collection of documents;
 
-      2. creating a term-document matrix (linear vector space representation);
+      2. creating a document-term matrix (linear vector space representation);
 
       3. facilitating term-paragraph matrix creation or other breakdowns;
 
@@ -111,6 +111,10 @@
 (* Importing packages (if needed)                             *)
 (**************************************************************)
 
+If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
+  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
@@ -162,7 +166,8 @@ LSAMonTextCollectionQ::usage = "Gives True if the argument is a text collection.
 
 LSAMonTopicExtraction::usage = "Extract topics."
 
-LSAMonTopicsRepresentation::usage = "Find the topic representation corresponding to list of tags."
+LSAMonTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
+Each monad document is expected to have a tag. One tag might correspond to multiple documents."
 
 LSAMonTopicsTable::usage = "Make a table of topics."
 
@@ -234,7 +239,7 @@ LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
         LSAMon[xs, Join[context, <|"wDocTermMat" -> wDocTermMat|>]],
 
         True,
-        Echo["No document-term matrix is made.", "LSAMonApplyTermWeightFunctions:"];
+        Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
         $LSAMonFailure
       ]
     ];
@@ -370,16 +375,23 @@ ClearAll[LSAMonTopicExtraction]
 Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
 
 LSAMonTopicExtraction[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=
+
+LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=
     Block[{documentsPerTerm, pos, W, H, M1, k, p, m, n, automaticTopicNames },
       Which[
-        KeyExistsQ[context, "wDocTermMat"],
+        KeyExistsQ[context, "docTermMat"] && !KeyExistsQ[context, "wDocTermMat"],
+        Fold[
+          LSAMonBind,
+          LSAMonUnit[xs, context],
+          {LSAMonApplyTermWeightFunctions[], LSAMonTopicExtraction[nMinDocumentsPerTerm, nTopics, nInitializingDocuments, opts] } ],
+
+        KeyExistsQ[context, "wDocTermMat"] && MatrixQ[context["wDocTermMat"]],
         documentsPerTerm = Total /@ Transpose[Clip[context["docTermMat"], {0, 1}]];
         pos = Flatten[Position[documentsPerTerm, s_?NumberQ /; s >= nMinDocumentsPerTerm]];
 
         M1 = context["wDocTermMat"][[All, pos]];
 
-        {k, p} = {nTopics, nInitlizingDocuments};
+        {k, p} = {nTopics, nInitializingDocuments};
         {m, n} = Dimensions[M1];
         M1 = Transpose[M1];
         M1 = Map[# &, M1];
@@ -394,11 +406,11 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizing
 
         W = SparseArray[W];
         H = SparseArray[H];
-        {W, H} = NonNegativeMatrixFactorization`GDCLSGlobal[M1, W, H, opts];
+        {W, H} = GDCLSGlobal[M1, W, H, opts];
 
         automaticTopicNames =
                 Table[
-                    StringJoin[Riffle[NonNegativeMatrixFactorization`BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
+                    StringJoin[Riffle[BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
                   {ind, 1, Dimensions[W][[2]]}];
 
         If[ ! DuplicateFreeQ[automaticTopicNames],
@@ -408,7 +420,7 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitlizing
         LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames"->automaticTopicNames |>]],
 
         True,
-        Echo["No document-term matrix is made.", "LSAMonTopicExtraction:"];
+        Echo["Cannot find a document-term matrix.", "LSAMonTopicExtraction:"];
         $LSAMonFailure
       ]
     ];
@@ -477,7 +489,7 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
 
       res =
           Map[
-            NonNegativeMatrixFactorization`BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
+            BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
             Normal@H[[Flatten@{vectorIndices}]]
           ];
 
