@@ -237,4 +237,54 @@ VerificationTest[(* 12 *)
 ]
 
 
+VerificationTest[(* 13 *)
+  res =
+      DoubleLongRightArrow[
+        QRegMonUnit[data],
+        QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRegMonEvaluate[4],
+        QRegMonTakeValue
+      ];
+  MatchQ[res, <|(_?NumberQ -> _?NumberQ) ..|>]
+  ,
+  True
+  ,
+  TestID->"Evaluate-1"
+]
+
+
+VerificationTest[(* 14 *)
+  res =
+      DoubleLongRightArrow[
+        QRegMonUnit[data],
+        QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRegMonEvaluate[4],
+        QRegMonLeastSquaresFit[{1, x, Exp[-x^2]}],
+        QRegMonTakeValue
+      ];
+  Sort[Keys[res]]
+  ,
+  Sort[Prepend[Range[0.2, 0.8, 0.2],"mean"]]
+  ,
+  TestID->"Evaluate-2"
+]
+
+
+VerificationTest[(* 15 *)
+  points = {3, 4, {1, 2}};
+  res =
+      DoubleLongRightArrow[
+        QRegMonUnit[data],
+        QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRegMonEvaluate[points],
+        QRegMonTakeValue
+      ];
+  MatchQ[res, <|(_?NumberQ -> {_?NumberQ, _?NumberQ, {_?NumberQ, _?NumberQ}}) ..|>]
+  ,
+  True
+  ,
+  TestID->"Evaluate-3"
+]
+
+
 EndTestSection[]
