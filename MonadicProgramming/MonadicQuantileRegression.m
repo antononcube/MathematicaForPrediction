@@ -110,7 +110,6 @@ QRegMonPlot::usage = "Plots the data points or the data points together with the
 
 QRegMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
 
-
 QRegMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
 
 QRegMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
@@ -175,6 +174,15 @@ QRegMonTakeRegressionFunctions[][$QRegMonFailure] := $QRegMonFailure;
 QRegMonTakeRegressionFunctions[xs_, context_] := context["regressionFunctions"];
 QRegMonTakeRegressionFunctions[][xs_, context_] := context["regressionFunctions"];
 QRegMonTakeRegressionFunctions[__][___] := $QRegMonFailure;
+
+
+ClearAll[QRegMonTakeOutliers]
+QRegMonTakeOutliers[$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeOutliers[][$QRegMonFailure] := $QRegMonFailure;
+QRegMonTakeOutliers[xs_, context_] := context["outliers"];
+QRegMonTakeOutliers[][xs_, context_] := context["outliers"];
+QRegMonTakeOutliers[__][___] := $QRegMonFailure;
+
 
 (**************************************************************)
 (* GetData                                                    *)
