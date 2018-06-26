@@ -74,53 +74,53 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
 
 BeginPackage["MonadicQuantileRegression`"]
 
-$QRegMonFailure::usage = "Failure symbol for the monad QRegMon."
+$QRMonFailure::usage = "Failure symbol for the monad QRMon."
 
-QRegMonGetData::usage = "Get time series path data."
+QRMonGetData::usage = "Get time series path data."
 
-QRegMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context. \
+QRMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
-QRegMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
+QRMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
 
-QRegMonSetRegressionFunctions::usage = "Assigns the argument to the key \"regressionFunctions\" in the monad context. \
+QRMonSetRegressionFunctions::usage = "Assigns the argument to the key \"regressionFunctions\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
-QRegMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFunctions\" from the monad context."
+QRMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFunctions\" from the monad context."
 
-QRegMonEchoDataSummary::usage = "Echoes a summary of the data."
+QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
-QRegMonDeleteMissing::usage = "Deletes records with missing data."
+QRMonDeleteMissing::usage = "Deletes records with missing data."
 
-QRegMonRescale::usage = "Rescales the data."
+QRMonRescale::usage = "Rescales the data."
 
-QRegMonLeastSquaresFit::usage = "Linear regression fit for the data in the pipeline or the context \
+QRMonLeastSquaresFit::usage = "Linear regression fit for the data in the pipeline or the context \
 using specified functions to fit."
 
-QRegMonFit::usage = "Same as QRegMonLinearRegressionFit."
+QRMonFit::usage = "Same as QRMonLinearRegressionFit."
 
-QRegMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
+QRMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
 
-QRegMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
+QRMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
 using specified functions to fit."
 
-QRegMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers."
+QRMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers."
 
-QRegMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
+QRMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
 
-QRegMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
+QRMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
 
-QRegMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
+QRMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
 
-QRegMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
+QRMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
 
-QRegMonOutliers::usage = "Find the outliers in the data."
+QRMonOutliers::usage = "Find the outliers in the data."
 
-QRegMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
+QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
 
-QRegMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles."
+QRMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles."
 
-QRegMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid."
+QRMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid."
 
 Begin["`Private`"]
 
@@ -138,50 +138,50 @@ Needs["OutlierIdentifiers`"]
 
 (* Generate base functions of LSAMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "MonadicQuantileRegression`QRegMon", "FailureSymbol" -> $QRegMonFailure, "StringContextNames" -> False ]
+GenerateStateMonadCode[ "MonadicQuantileRegression`QRMon", "FailureSymbol" -> $QRMonFailure, "StringContextNames" -> False ]
 
 (**************************************************************)
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClearAll[QRegMonSetData]
-QRegMonSetData[$QRegMonFailure] := $QRegMonFailure;
-QRegMonSetData[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonSetData[xs_, context_] := $QRegMonFailure;
-QRegMonSetData[data_List][xs_, context_] := QRegMonUnit[ xs, Join[ context, <|"data"->data|> ] ];
-QRegMonSetData[__][___] := $QRegMonFailure;
+ClearAll[QRMonSetData]
+QRMonSetData[$QRMonFailure] := $QRMonFailure;
+QRMonSetData[][$QRMonFailure] := $QRMonFailure;
+QRMonSetData[xs_, context_] := $QRMonFailure;
+QRMonSetData[data_List][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"data"->data|> ] ];
+QRMonSetData[__][___] := $QRMonFailure;
 
 
-ClearAll[QRegMonTakeData]
-QRegMonTakeData[$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeData[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeData[xs_, context_] := QRegMonTakeData[][xs, context];
-QRegMonTakeData[][xs_, context_] := QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
-QRegMonTakeData[__][___] := $QRegMonFailure;
+ClearAll[QRMonTakeData]
+QRMonTakeData[$QRMonFailure] := $QRMonFailure;
+QRMonTakeData[][$QRMonFailure] := $QRMonFailure;
+QRMonTakeData[xs_, context_] := QRMonTakeData[][xs, context];
+QRMonTakeData[][xs_, context_] := QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
+QRMonTakeData[__][___] := $QRMonFailure;
 
 
-ClearAll[QRegMonSetRegressionFunctions]
-QRegMonSetRegressionFunctions[$QRegMonFailure] := $QRegMonFailure;
-QRegMonSetRegressionFunctions[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonSetRegressionFunctions[xs_, context_] := $QRegMonFailure;
-QRegMonSetRegressionFunctions[funcs_Association][xs_, context_] := QRegMonUnit[ xs, Join[ context, <|"regressionFunctions"->funcs|> ] ];
-QRegMonSetRegressionFunctions[__][___] := $QRegMonFailure;
+ClearAll[QRMonSetRegressionFunctions]
+QRMonSetRegressionFunctions[$QRMonFailure] := $QRMonFailure;
+QRMonSetRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
+QRMonSetRegressionFunctions[xs_, context_] := $QRMonFailure;
+QRMonSetRegressionFunctions[funcs_Association][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"regressionFunctions"->funcs|> ] ];
+QRMonSetRegressionFunctions[__][___] := $QRMonFailure;
 
 
-ClearAll[QRegMonTakeRegressionFunctions]
-QRegMonTakeRegressionFunctions[$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeRegressionFunctions[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeRegressionFunctions[xs_, context_] := context["regressionFunctions"];
-QRegMonTakeRegressionFunctions[][xs_, context_] := context["regressionFunctions"];
-QRegMonTakeRegressionFunctions[__][___] := $QRegMonFailure;
+ClearAll[QRMonTakeRegressionFunctions]
+QRMonTakeRegressionFunctions[$QRMonFailure] := $QRMonFailure;
+QRMonTakeRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
+QRMonTakeRegressionFunctions[xs_, context_] := context["regressionFunctions"];
+QRMonTakeRegressionFunctions[][xs_, context_] := context["regressionFunctions"];
+QRMonTakeRegressionFunctions[__][___] := $QRMonFailure;
 
 
-ClearAll[QRegMonTakeOutliers]
-QRegMonTakeOutliers[$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeOutliers[][$QRegMonFailure] := $QRegMonFailure;
-QRegMonTakeOutliers[xs_, context_] := context["outliers"];
-QRegMonTakeOutliers[][xs_, context_] := context["outliers"];
-QRegMonTakeOutliers[__][___] := $QRegMonFailure;
+ClearAll[QRMonTakeOutliers]
+QRMonTakeOutliers[$QRMonFailure] := $QRMonFailure;
+QRMonTakeOutliers[][$QRMonFailure] := $QRMonFailure;
+QRMonTakeOutliers[xs_, context_] := context["outliers"];
+QRMonTakeOutliers[][xs_, context_] := context["outliers"];
+QRMonTakeOutliers[__][___] := $QRMonFailure;
 
 
 (**************************************************************)
@@ -199,127 +199,127 @@ DataToNormalForm[data_] :=
       Transpose[{ Range[Length[data]], data }]
     ];
 
-ClearAll[QRegMonGetData];
+ClearAll[QRMonGetData];
 
-QRegMonGetData[$QRegMonFailure] := $QRegMonFailure;
+QRMonGetData[$QRMonFailure] := $QRMonFailure;
 
-QRegMonGetData[][xs_, context_] := QRegMonGetData[xs, context]
+QRMonGetData[][xs_, context_] := QRMonGetData[xs, context]
 
-QRegMonGetData[xs_, context_] :=
+QRMonGetData[xs_, context_] :=
     Block[{data},
 
       Which[
 
         KeyExistsQ[context, "data"] && MatrixQ[context["data"], NumericQ] && Dimensions[context["data"]][[2]] == 2,
-        QRegMonUnit[ context["data"], context],
+        QRMonUnit[ context["data"], context],
 
         KeyExistsQ[context, "data"] && VectorQ[context["data"], NumericQ],
         data = DataToNormalForm[context["data"]];
-        QRegMonUnit[ data, Join[context, <| "data"->data |>] ],
+        QRMonUnit[ data, Join[context, <| "data"->data |>] ],
 
         KeyExistsQ[context, "data"] && MatchQ[context["data"], (_TimeSeries | _TemporalData)],
-        QRegMonUnit[ context["data"]["Path"] /. Quantity[x_, u_] :> x, context],
+        QRMonUnit[ context["data"]["Path"] /. Quantity[x_, u_] :> x, context],
 
         MatrixQ[xs, NumericQ] && Dimensions[xs][[2]] == 2,
-        QRegMonUnit[xs, context],
+        QRMonUnit[xs, context],
 
         VectorQ[xs, NumericQ],
-        QRegMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
+        QRMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
 
         MatchQ[xs, (_TimeSeries | _TemporalData)],
-        QRegMonUnit[ xs["Path"] /. Quantity[x_, u_] :> x, context],
+        QRMonUnit[ xs["Path"] /. Quantity[x_, u_] :> x, context],
 
         True,
         Echo["Cannot find data.", "GetData:"];
-        $QRegMonFailure
+        $QRMonFailure
       ]
 
     ];
 
-QRegMonGetData[___][xs_, context_Association] := $QRegMonFailure;
+QRMonGetData[___][xs_, context_Association] := $QRMonFailure;
 
 
 (**************************************************************)
 (* DeleteMissing                                             *)
 (**************************************************************)
 
-ClearAll[QRegMonEchoDataSummary];
+ClearAll[QRMonEchoDataSummary];
 
-QRegMonEchoDataSummary[$QRegMonFailure] := $QRegMonFailure;
+QRMonEchoDataSummary[$QRMonFailure] := $QRMonFailure;
 
-QRegMonEchoDataSummary[xs_, context_] := QRegMonEchoDataSummary[][xs, context];
+QRMonEchoDataSummary[xs_, context_] := QRMonEchoDataSummary[][xs, context];
 
-QRegMonEchoDataSummary[][xs_, context_] :=
-    Fold[ QRegMonBind, QRegMonUnit[xs, context], { QRegMonGetData, QRegMonEchoFunctionValue["Data summary:", RecordsSummary] } ]
+QRMonEchoDataSummary[][xs_, context_] :=
+    Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonEchoFunctionValue["Data summary:", RecordsSummary] } ]
 
-QRegMonEchoDataSummary[___][__] := $QRegMonFailure;
+QRMonEchoDataSummary[___][__] := $QRMonFailure;
 
 
 (**************************************************************)
 (* DeleteMissing                                             *)
 (**************************************************************)
 
-ClearAll[QRegMonDeleteMissing];
+ClearAll[QRMonDeleteMissing];
 
-QRegMonDeleteMissing[$QRegMonFailure] := $QRegMonFailure;
+QRMonDeleteMissing[$QRMonFailure] := $QRMonFailure;
 
-QRegMonDeleteMissing[xs_, context_] := QRegMonDeleteMissing[][xs, context];
+QRMonDeleteMissing[xs_, context_] := QRMonDeleteMissing[][xs, context];
 
-QRegMonDeleteMissing[][xs_, context_] :=
+QRMonDeleteMissing[][xs_, context_] :=
     Block[{data},
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[ data === $QRegMonFailure,
-        $QRegMonFailure,
+      If[ data === $QRMonFailure,
+        $QRMonFailure,
       (*ELSE*)
         data = DeleteMissing[data, 1, 2];
-        QRegMonUnit[ data, Join[ context, <|"data"->data|>] ]
+        QRMonUnit[ data, Join[ context, <|"data"->data|>] ]
       ]
     ];
 
-QRegMonDeleteMissing[___][__] := $QRegMonFailure;
+QRMonDeleteMissing[___][__] := $QRMonFailure;
 
 
 (**************************************************************)
 (* Rescale                                                    *)
 (**************************************************************)
 
-ClearAll[QRegMonRescale];
+ClearAll[QRMonRescale];
 
-Options[QRegMonRescale] = {Axes->{"x","y"}};
+Options[QRMonRescale] = {Axes->{"x","y"}};
 
-QRegMonRescale[$QRegMonFailure] := $QRegMonFailure;
+QRMonRescale[$QRMonFailure] := $QRMonFailure;
 
-QRegMonRescale[xs_, context_] := QRegMonRescale[][xs, context];
+QRMonRescale[xs_, context_] := QRMonRescale[][xs, context];
 
-QRegMonRescale[opts:OptionsPattern[]][xs_, context_] :=
+QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data},
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[ data === $QRegMonFailure,
-        $QRegMonFailure,
+      If[ data === $QRMonFailure,
+        $QRMonFailure,
         (*ELSE*)
         data = Transpose[Rescales /@ Transpose[data]];
-        QRegMonUnit[ data, Join[ context, <|"data"->data|>] ]
+        QRMonUnit[ data, Join[ context, <|"data"->data|>] ]
       ]
     ];
 
-QRegMonRescale[___][__] := $QRegMonFailure;
+QRMonRescale[___][__] := $QRMonFailure;
 
 
 (**************************************************************)
 (* LeastSquaresFit                                            *)
 (**************************************************************)
 
-ClearAll[QRegMonLeastSquaresFit];
+ClearAll[QRMonLeastSquaresFit];
 
-QRegMonLeastSquaresFit[$QRegMonFailure] := $QRegMonFailure;
+QRMonLeastSquaresFit[$QRMonFailure] := $QRMonFailure;
 
-QRegMonLeastSquaresFit[xs_, context_Association] := $QRegMonFailure;
+QRMonLeastSquaresFit[xs_, context_Association] := $QRMonFailure;
 
-QRegMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+QRMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
     Block[{var},
 
       var =
@@ -328,22 +328,22 @@ QRegMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
           ];
 
       If[ Length[var] == 0,
-        $QRegMonFailure,
+        $QRMonFailure,
       (*ELSE*)
-        QRegMonLeastSquaresFit[funcs, First[var], opts][xs, context]
+        QRMonLeastSquaresFit[funcs, First[var], opts][xs, context]
       ]
     ];
 
-QRegMonLeastSquaresFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+QRMonLeastSquaresFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFunc},
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
 
       qFunc = Fit[data, funcs, var];
 
       qFunc = Function[ Evaluate[ qFunc /. var -> Slot[1] ] ];
 
-      QRegMonUnit[qFunc,
+      QRMonUnit[qFunc,
         Join[context,
           <|"data"->data,
             "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], <| "mean" -> qFunc |> ] |>
@@ -351,54 +351,54 @@ QRegMonLeastSquaresFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, conte
       ]
     ];
 
-QRegMonLeastSquaresFit[___][__] := $QRegMonFailure;
+QRMonLeastSquaresFit[___][__] := $QRMonFailure;
 
 
-ClearAll[QRegMonFit];
+ClearAll[QRMonFit];
 
-QRegMonFit = QRegMonLeastSquaresFit;
+QRMonFit = QRMonLeastSquaresFit;
 
 (**************************************************************)
 (* Quantile regression                                        *)
 (**************************************************************)
 
-ClearAll[QRegMonQuantileRegression];
+ClearAll[QRMonQuantileRegression];
 
-Options[QRegMonQuantileRegression] = Options[QuantileRegression];
+Options[QRMonQuantileRegression] = Options[QuantileRegression];
 
-QRegMonQuantileRegression[$QRegMonFailure] := $QRegMonFailure;
+QRMonQuantileRegression[$QRMonFailure] := $QRMonFailure;
 
-QRegMonQuantileRegression[xs_, context_Association] := $QRegMonFailure;
+QRMonQuantileRegression[xs_, context_Association] := $QRMonFailure;
 
-QRegMonQuantileRegression[knots_Integer, opts:OptionsPattern[]][xs_, context_] :=
-    QRegMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
+QRMonQuantileRegression[knots_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRegMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
 
       qFuncs = QuantileRegression[data, knots, qs, opts];
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = AssociationThread[qs, qFuncs];
-        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
+        QRMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
         (* ELSE *)
-        $QRegMonFailure
+        $QRMonFailure
       ]
     ];
 
-QRegMonQuantileRegression[___][__] :=
+QRMonQuantileRegression[___][__] :=
     Block[{},
       Echo[
         StringJoin[
           "The first argument is expected to be knots specification, (_Integer | {_?NumberQ..}). ",
           "The second option argument is expected to quantiles specification, {_?NumberQ..}."
         ]
-        "QRegMonQuantileRegression:"
+        "QRMonQuantileRegression:"
       ];
 
-      $QRegMonFailure
+      $QRMonFailure
     ];
 
 
@@ -406,18 +406,18 @@ QRegMonQuantileRegression[___][__] :=
 (* Quantile regression fit                                    *)
 (**************************************************************)
 
-ClearAll[QRegMonQuantileRegressionFit];
+ClearAll[QRMonQuantileRegressionFit];
 
-Options[QRegMonQuantileRegressionFit] = Options[QuantileRegressionFit];
+Options[QRMonQuantileRegressionFit] = Options[QuantileRegressionFit];
 
-QRegMonQuantileRegressionFit[$QRegMonFailure] := $QRegMonFailure;
+QRMonQuantileRegressionFit[$QRMonFailure] := $QRMonFailure;
 
-QRegMonQuantileRegressionFit[xs_, context_Association] := $QRegMonFailure;
+QRMonQuantileRegressionFit[xs_, context_Association] := $QRMonFailure;
 
-QRegMonQuantileRegressionFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
-    QRegMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
+QRMonQuantileRegressionFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRegMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{var},
 
       var =
@@ -426,32 +426,32 @@ QRegMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]
           ];
 
       If[ Length[var] == 0,
-        $QRegMonFailure,
+        $QRMonFailure,
         (*ELSE*)
-        QRegMonQuantileRegressionFit[funcs, First[var], qs, opts][xs, context]
+        QRMonQuantileRegressionFit[funcs, First[var], qs, opts][xs, context]
       ]
     ];
 
-QRegMonQuantileRegressionFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
-    QRegMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
+QRMonQuantileRegressionFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRegMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
 
       qFuncs = QuantileRegressionFit[data, funcs, var, qs, opts];
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
         qFuncs = Map[Function[{expr}, Function[Evaluate[expr /. var -> Slot[1]]]], qFuncs];
         qFuncs = AssociationThread[qs, qFuncs];
-        QRegMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
+        QRMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
       (* ELSE *)
-        $QRegMonFailure
+        $QRMonFailure
       ]
     ];
 
-QRegMonQuantileRegressionFit[___][__] := $QRegMonFailure;
+QRMonQuantileRegressionFit[___][__] := $QRMonFailure;
 
 
 (**************************************************************)
@@ -460,48 +460,48 @@ QRegMonQuantileRegressionFit[___][__] := $QRegMonFailure;
 (* See InterpolationFunction[___]["Evaluate"[{0.2, 0.3, 1}]] *)
 (* Probably can be optimized. *)
 
-ClearAll[QRegMonEvaluate]
+ClearAll[QRMonEvaluate]
 
-QRegMonEvaluate[$QRegMonFailure] := $QRegMonFailure;
+QRMonEvaluate[$QRMonFailure] := $QRMonFailure;
 
-QRegMonEvaluate[xs_, context_Association] := $QRegMonFailure;
+QRMonEvaluate[xs_, context_Association] := $QRMonFailure;
 
-QRegMonEvaluate[___][$QRegMonFailure] := $QRegMonFailure;
+QRMonEvaluate[___][$QRMonFailure] := $QRMonFailure;
 
-QRegMonEvaluate[n_?AtomQ][x_, context_] :=
+QRMonEvaluate[n_?AtomQ][x_, context_] :=
     If[KeyExistsQ[context, "regressionFunctions"],
-      QRegMonUnit[ Map[#[n]&, context["regressionFunctions"] ], context ],
+      QRMonUnit[ Map[#[n]&, context["regressionFunctions"] ], context ],
       (*ELSE*)
-      $QRegMonFailure
+      $QRMonFailure
     ];
 
-QRegMonEvaluate[arr_List][x_, context_] :=
+QRMonEvaluate[arr_List][x_, context_] :=
     If[KeyExistsQ[context, "regressionFunctions"],
-      QRegMonUnit[ Map[Function[{qf}, Map[qf, arr, {-1}]], context["regressionFunctions"] ], context ],
+      QRMonUnit[ Map[Function[{qf}, Map[qf, arr, {-1}]], context["regressionFunctions"] ], context ],
     (*ELSE*)
-      $QRegMonFailure
+      $QRMonFailure
     ];
 
-QRegMonEvaluate[___][__] := $QRegMonFailure;
+QRMonEvaluate[___][__] := $QRMonFailure;
 
 (**************************************************************)
 (* Plot                                                       *)
 (**************************************************************)
 
-ClearAll[QRegMonPlot];
+ClearAll[QRMonPlot];
 
-Options[QRegMonPlot] = Prepend[Options[ListPlot], "Echo"->True];
+Options[QRMonPlot] = Prepend[Options[ListPlot], "Echo"->True];
 
-QRegMonPlot[QRegMonPlot] := $QRegMonFailure;
+QRMonPlot[QRMonPlot] := $QRMonFailure;
 
-QRegMonPlot[x_, context_Association] := QRegMonPlot[][x, context];
+QRMonPlot[x_, context_Association] := QRMonPlot[][x, context];
 
-QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
+QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, res},
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[data===$QRegMonFailure, Return[$QRegMonFailure]];
+      If[data===$QRMonFailure, Return[$QRMonFailure]];
 
       res=
           Which[
@@ -520,29 +520,29 @@ QRegMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           ];
 
 
-      If[ TrueQ[OptionValue[QRegMonPlot, "Echo"]],
+      If[ TrueQ[OptionValue[QRMonPlot, "Echo"]],
         Echo[res, "Plot:"];
       ];
 
-      QRegMonUnit[res, Join[ context, <|"data"->data|>] ]
+      QRMonUnit[res, Join[ context, <|"data"->data|>] ]
     ];
 
-QRegMonPlot[__][__] := $QRegMonFailure;
+QRMonPlot[__][__] := $QRMonFailure;
 
 
 (**************************************************************)
 (* Error plots                                                *)
 (**************************************************************)
 
-ClearAll[QRegMonErrorPlots]
+ClearAll[QRMonErrorPlots]
 
-Options[QRegMonErrorPlots] = Prepend[Options[ListPlot], "Echo"->True];
+Options[QRMonErrorPlots] = Prepend[Options[ListPlot], "Echo"->True];
 
-QRegMonErrorPlots[$QRegMonFailure] := $QRegMonFailure;
+QRMonErrorPlots[$QRMonFailure] := $QRMonFailure;
 
-QRegMonErrorPlots[x_, context_Association] := QRegMonErrorPlots[][x, context];
+QRMonErrorPlots[x_, context_Association] := QRMonErrorPlots[][x, context];
 
-QRegMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
+QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
     Block[{res},
       res =
           KeyValueMap[
@@ -556,14 +556,14 @@ QRegMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
             context["regressionFunctions"]
           ];
 
-      If[ TrueQ[OptionValue[QRegMonErrorPlots, "Echo"]],
+      If[ TrueQ[OptionValue[QRMonErrorPlots, "Echo"]],
         Echo[res, "Error plots:"];
       ];
 
-      QRegMonUnit[res, context]
+      QRMonUnit[res, context]
     ];
 
-QRegMonErrorPlots[__][__] := $QRegMonFailure;
+QRMonErrorPlots[__][__] := $QRMonFailure;
 
 
 (**************************************************************)
@@ -583,30 +583,30 @@ CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts :
         opts, GridLines->{None, qs}, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
     ];
 
-ClearAll[QRegMonConditionalCDF]
+ClearAll[QRMonConditionalCDF]
 
-QRegMonConditionalCDF[$QRegMonFailure] := $QRegMonFailure;
+QRMonConditionalCDF[$QRMonFailure] := $QRMonFailure;
 
-QRegMonConditionalCDF[__][$QRegMonFailure] := $QRegMonFailure;
+QRMonConditionalCDF[__][$QRMonFailure] := $QRMonFailure;
 
-QRegMonConditionalCDF[t0_?NumberQ][xs_, context_] := QRegMonConditionalCDF[{t0}][xs, context];
+QRMonConditionalCDF[t0_?NumberQ][xs_, context_] := QRMonConditionalCDF[{t0}][xs, context];
 
-QRegMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
+QRMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
         KeyExistsQ[context, "regressionFunctions"],
-        QRegMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionFunctions"], # ] &, ts] ], context ],
+        QRMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionFunctions"], # ] &, ts] ], context ],
 
         True,
-        Echo["Cannot find regression quantiles.", "QRegMonCDFApproximation:"];
-        $QRegMonFailure
+        Echo["Cannot find regression quantiles.", "QRMonCDFApproximation:"];
+        $QRMonFailure
       ]
     ];
 
-QRegMonConditionalCDF[___][___] :=
+QRMonConditionalCDF[___][___] :=
     Block[{},
-      Echo["The first argument is expected to be a number or a list of numbers.", "QRegMonConditionalCDF:"];
-      $QRegMonFailure
+      Echo["The first argument is expected to be a number or a list of numbers.", "QRMonConditionalCDF:"];
+      $QRMonFailure
     ];
 
 
@@ -614,17 +614,17 @@ QRegMonConditionalCDF[___][___] :=
 (* Conditional distributions plot                             *)
 (**************************************************************)
 
-ClearAll[QRegMonConditionalCDFPlot]
+ClearAll[QRMonConditionalCDFPlot]
 
-Options[QRegMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
+Options[QRMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
 
-QRegMonConditionalCDFPlot[$QRegMonFailure] := $QRegMonFailure;
+QRMonConditionalCDFPlot[$QRMonFailure] := $QRMonFailure;
 
-QRegMonConditionalCDFPlot[__][$QRegMonFailure] := $QRegMonFailure;
+QRMonConditionalCDFPlot[__][$QRMonFailure] := $QRMonFailure;
 
-QRegMonConditionalCDFPlot[xs_, context_Association] := QRegMonConditionalCDFPlot[][xs, context];
+QRMonConditionalCDFPlot[xs_, context_Association] := QRMonConditionalCDFPlot[][xs, context];
 
-QRegMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
+QRMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
     Block[{funcs, res, plotOpts},
 
       Which[
@@ -633,10 +633,10 @@ QRegMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
         funcs = xs,
 
         True,
-        funcs = Fold[ QRegMonBind, QRegMonUnit[xs, context], {QRegMonConditionalCDF, QRegMonTakeValue}]
+        funcs = Fold[ QRMonBind, QRMonUnit[xs, context], {QRMonConditionalCDF, QRMonTakeValue}]
       ];
 
-      If[ TrueQ[funcs === $QRegMonFailure], Return[$QRegMonFailure] ];
+      If[ TrueQ[funcs === $QRMonFailure], Return[$QRMonFailure] ];
 
       plotOpts = Sequence @@ DeleteCases[{opts}, HoldPattern["Echo"->_] ];
 
@@ -652,17 +652,17 @@ QRegMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
                     ImageSize -> Small
                   ] &, funcs];
 
-      If[ TrueQ[OptionValue[QRegMonConditionalCDFPlot, "Echo"]],
+      If[ TrueQ[OptionValue[QRMonConditionalCDFPlot, "Echo"]],
         Echo[ res, If[Length[res]==1, "conditional CDF:", "conditional CDF's:"] ]
       ];
 
-      QRegMonUnit[res, context]
+      QRMonUnit[res, context]
     ];
 
-QRegMonConditionalCDFPlot[__][__] :=
+QRMonConditionalCDFPlot[__][__] :=
     Block[{},
-      Echo["Options are expected as arguments. (Plot options or \"Echo\"->(True|False).)", "QRegMonConditionalCDFPlot:"];
-      $QRegMonFailure
+      Echo["Options are expected as arguments. (Plot options or \"Echo\"->(True|False).)", "QRMonConditionalCDFPlot:"];
+      $QRMonFailure
     ];
 
 
@@ -670,17 +670,17 @@ QRegMonConditionalCDFPlot[__][__] :=
 (* Outlier finding                                            *)
 (**************************************************************)
 
-ClearAll[QRegMonOutliers]
+ClearAll[QRMonOutliers]
 
-Options[QRegMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
+Options[QRMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
 
-QRegMonOutliers[$QRegMonFailure] := $QRegMonFailure;
+QRMonOutliers[$QRMonFailure] := $QRMonFailure;
 
-QRegMonOutliers[__][$QRegMonFailure] := $QRegMonFailure;
+QRMonOutliers[__][$QRMonFailure] := $QRMonFailure;
 
-QRegMonOutliers[xs_, context_Association] := QRegMonOutliers[][xs, context];
+QRMonOutliers[xs_, context_Association] := QRMonOutliers[][xs, context];
 
-QRegMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
+QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
     Block[{knots, tq, bq, tfunc, bfunc, outliers, data},
 
       knots = OptionValue[ "Knots" ];
@@ -689,23 +689,23 @@ QRegMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
         knots = 12,
 
         ! ( IntegerQ[knots] || VectorQ[knots, NumericQ]),
-        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "QRegMonOutliers:"];
-        Return[$QRegMonFailure]
+        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "QRMonOutliers:"];
+        Return[$QRMonFailure]
       ];
 
       tq = OptionValue[ "TopOutliersQuantile" ];
       bq = OptionValue[ "BottomOutliersQuantile" ];
       Which[
         ! ( NumberQ[tq] && 0 < tq < 1 && NumberQ[bq] && 0 < bq < 1  ),
-        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "QRegMonOutliers:"];
-        Return[$QRegMonFailure]
+        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "QRMonOutliers:"];
+        Return[$QRMonFailure]
       ];
 
-      data = QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue];
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[ TrueQ[data === $QRegMonFailure],
-        Echo["Cannot find data.", "QRegMonOutliers:"];
-        Return[$QRegMonFailure]
+      If[ TrueQ[data === $QRMonFailure],
+        Echo["Cannot find data.", "QRMonOutliers:"];
+        Return[$QRMonFailure]
       ];
 
       {bfunc, tfunc} = QuantileRegression[ data, knots, {bq, tq} ];
@@ -714,16 +714,16 @@ QRegMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
           <| "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&],
              "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>;
 
-      QRegMonUnit[
+      QRMonUnit[
         outliers,
         Join[context, <| "outliers"->outliers, "outlierRegressionFunctions" -> <| tq->tfunc, bq->bfunc |> |> ]
       ]
     ];
 
-QRegMonOutliers[__][__] :=
+QRMonOutliers[__][__] :=
     Block[{},
-      Echo[StringJoin[ "Options are expected as arguments:", ToString[Options[QRegMonOutliers]], "."], "QRegMonOutliers:"];
-      $QRegMonFailure
+      Echo[StringJoin[ "Options are expected as arguments:", ToString[Options[QRMonOutliers]], "."], "QRMonOutliers:"];
+      $QRMonFailure
     ];
 
 
@@ -731,24 +731,24 @@ QRegMonOutliers[__][__] :=
 (* Outliers plot                                              *)
 (**************************************************************)
 
-ClearAll[QRegMonOutliersPlot]
+ClearAll[QRMonOutliersPlot]
 
-Options[QRegMonOutliersPlot] := { "Echo"->True, ListPlot -> {}, Plot -> {} };
+Options[QRMonOutliersPlot] := { "Echo"->True, ListPlot -> {}, Plot -> {} };
 
-QRegMonOutliersPlot[$QRegMonFailure] := $QRegMonFailure;
+QRMonOutliersPlot[$QRMonFailure] := $QRMonFailure;
 
-QRegMonOutliersPlot[__][$QRegMonFailure] := $QRegMonFailure;
+QRMonOutliersPlot[__][$QRMonFailure] := $QRMonFailure;
 
-QRegMonOutliersPlot[xs_, context_Association] := QRegMonOutliersPlot[][xs, context];
+QRMonOutliersPlot[xs_, context_Association] := QRMonOutliersPlot[][xs, context];
 
-QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
+QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{unit, res},
 
       unit =
           If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionFunctions"],
-            QRegMonUnit[ xs, context ],
+            QRMonUnit[ xs, context ],
           (*ELSE*)
-            QRegMonBind[ QRegMonUnit[ xs, context ], QRegMonOutliers ]
+            QRMonBind[ QRMonUnit[ xs, context ], QRMonOutliers ]
           ];
 
       (* This can be improved: right now the regression quantiles are plotted over the outlier points. *)
@@ -758,25 +758,25 @@ QRegMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
           Show[{
 
             ListPlot[Join[{#data}, Values[#outliers]],
-              Evaluate[OptionValue[QRegMonOutliersPlot, ListPlot]],
+              Evaluate[OptionValue[QRMonOutliersPlot, ListPlot]],
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
               ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
-              Evaluate[OptionValue[QRegMonOutliersPlot, Plot]],
+              Evaluate[OptionValue[QRMonOutliersPlot, Plot]],
               PlotStyle -> {Opacity[0.1], GrayLevel[0.9]},
               PerformanceGoal -> "Speed"
               (*PlotRange -> {MinMax[#data[[All,1]]], MinMax[#data[[All,2]]]}*)
             ]
 
-          }] & [ QRegMonBind[ unit, QRegMonTakeContext ] ];
+          }] & [ QRMonBind[ unit, QRMonTakeContext ] ];
 
-      If[ TrueQ[OptionValue[QRegMonOutliersPlot, "Echo"]],
+      If[ TrueQ[OptionValue[QRMonOutliersPlot, "Echo"]],
         Echo[res, "Outliers plot:"]
       ];
 
-      QRegMonUnit[ res, QRegMonBind[ unit, QRegMonTakeContext ] ]
+      QRMonUnit[ res, QRMonBind[ unit, QRMonTakeContext ] ]
     ];
 
 
@@ -804,38 +804,38 @@ FindQRRange[{x_, y_}, funcs_List] :=
       pfunc[y]
     ];
 
-ClearAll[QRegMonBandsSequence]
+ClearAll[QRMonBandsSequence]
 
-QRegMonBandsSequence[$QRegMonFailure] := $QRegMonFailure;
+QRMonBandsSequence[$QRMonFailure] := $QRMonFailure;
 
-QRegMonBandsSequence[___][$QRegMonFailure] := $QRegMonFailure;
+QRMonBandsSequence[___][$QRMonFailure] := $QRMonFailure;
 
-QRegMonBandsSequence[xs_, context_Association ] := QRegMonBandsSequence[][xs, context];
+QRMonBandsSequence[xs_, context_Association ] := QRMonBandsSequence[][xs, context];
 
-QRegMonBandsSequence[][xs_, context_] :=
+QRMonBandsSequence[][xs_, context_] :=
     Block[{qstates},
 
       Which[
 
         !KeyExistsQ[context, "data"],
-        Echo["Cannot find data.", "QRegMonBandsSequence:"];
-        $QRegMonFailure,
+        Echo["Cannot find data.", "QRMonBandsSequence:"];
+        $QRMonFailure,
 
         !KeyExistsQ[context, "regressionFunctions"],
-        Echo["Compute the regression quantiles first.", "QRegMonBandsSequence:"];
-        $QRegMonFailure,
+        Echo["Compute the regression quantiles first.", "QRMonBandsSequence:"];
+        $QRMonFailure,
 
         True,
-        qstates = FindQRRange[ #, Values[context["regressionFunctions"]] ]& /@ QRegMonBind[ QRegMonGetData[xs, context], QRegMonTakeValue ];
-        QRegMonUnit[ qstates, context ]
+        qstates = FindQRRange[ #, Values[context["regressionFunctions"]] ]& /@ QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
+        QRMonUnit[ qstates, context ]
       ]
 
     ];
 
-QRegMonBandsSequence[__][__] :=
+QRMonBandsSequence[__][__] :=
     Block[{},
-      Echo[ "No arguments are expected.", "QRegMonBandsSequence:"];
-      $QRegMonFailure
+      Echo[ "No arguments are expected.", "QRMonBandsSequence:"];
+      $QRMonFailure
     ];
 
 
@@ -843,75 +843,75 @@ QRegMonBandsSequence[__][__] :=
 (* Grid sequential representation                             *)
 (**************************************************************)
 
-ClearAll[QRegMonGridSequence]
+ClearAll[QRMonGridSequence]
 
-QRegMonGridSequence[$QRegMonFailure] := $QRegMonFailure;
+QRMonGridSequence[$QRMonFailure] := $QRMonFailure;
 
-QRegMonGridSequence[___][$QRegMonFailure] := $QRegMonFailure;
+QRMonGridSequence[___][$QRMonFailure] := $QRMonFailure;
 
-QRegMonGridSequence[xs_, context_Association ] := QRegMonGridSequence[][xs, context];
+QRMonGridSequence[xs_, context_Association ] := QRMonGridSequence[][xs, context];
 
-QRegMonGridSequence[][xs_, context_] := QRegMonGridSequence[Automatic][xs, context];
+QRMonGridSequence[][xs_, context_] := QRMonGridSequence[Automatic][xs, context];
 
-QRegMonGridSequence[Automatic][xs_, context_] :=
+QRMonGridSequence[Automatic][xs_, context_] :=
     Block[{data, qvals},
       Which[
 
         !KeyExistsQ[context, "data"],
-        Echo["Cannot find data.", "QRegMonGridSequence:"];
-        $QRegMonFailure,
+        Echo["Cannot find data.", "QRMonGridSequence:"];
+        $QRMonFailure,
 
         KeyExistsQ[context, "regressionFunctions"],
         data = DataToNormalForm[context["data"]];
         qvals = Quantile[ data[[All, 2]], Keys[context["regressionFunctions"]] ];
-        QRegMonGridSequence[ qvals ][xs, Join[context, <|"data"->data|> ]],
+        QRMonGridSequence[ qvals ][xs, Join[context, <|"data"->data|> ]],
 
         True,
-        Echo["Cannot find quantiles for the values mapping with Automatic grid argument.", "QRegMonGridSequence"];
-        $QRegMonFailure
+        Echo["Cannot find quantiles for the values mapping with Automatic grid argument.", "QRMonGridSequence"];
+        $QRMonFailure
       ]
     ];
 
-QRegMonGridSequence[gridNCells_Integer][xs_, context_] :=
+QRMonGridSequence[gridNCells_Integer][xs_, context_] :=
     Block[{data, rvals},
       Which[
 
         gridNCells < 1,
-        Echo["An integer first argument is expected to be positive.", "QRegMonGridSequence"];
-        $QRegMonFailure,
+        Echo["An integer first argument is expected to be positive.", "QRMonGridSequence"];
+        $QRMonFailure,
 
         KeyExistsQ[context, "data"],
         data = DataToNormalForm[context["data"]];
         rvals = Rescale[Range[1, gridNCells], {1, gridNCells}, MinMax[data[[All, 2]]]];
-        QRegMonGridSequence[ rvals ][xs, Join[context, <|"data"->data|> ]],
+        QRMonGridSequence[ rvals ][xs, Join[context, <|"data"->data|> ]],
 
         True,
-        Echo["Cannot find data.", "QRegMonGridSequence"];
-        $QRegMonFailure
+        Echo["Cannot find data.", "QRMonGridSequence"];
+        $QRMonFailure
       ]
     ];
 
-QRegMonGridSequence[grid:{_?NumericQ..}][xs_, context_] :=
+QRMonGridSequence[grid:{_?NumericQ..}][xs_, context_] :=
     Block[{stFunc, states},
 
       Which[
 
         !KeyExistsQ[context, "data"],
-        Echo["Cannot find data.", "QRegMonGridSequence:"];
-        $QRegMonFailure,
+        Echo["Cannot find data.", "QRMonGridSequence:"];
+        $QRMonFailure,
 
         True,
         stFunc = FindIntervalFunc[grid];
         states = stFunc /@ DataToNormalForm[context["data"]][[All,2]];
-        QRegMonUnit[ states, context ]
+        QRMonUnit[ states, context ]
       ]
 
     ];
 
-QRegMonGridSequence[___][__] :=
+QRMonGridSequence[___][__] :=
     Block[{},
-      Echo[ "The first argument is expected to be Automatic, an integer, or a list of numbers.", "QRegMonGridSequence:"];
-      $QRegMonFailure
+      Echo[ "The first argument is expected to be Automatic, an integer, or a list of numbers.", "QRMonGridSequence:"];
+      $QRMonFailure
     ];
 
 

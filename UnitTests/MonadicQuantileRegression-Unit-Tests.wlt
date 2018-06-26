@@ -51,7 +51,7 @@ BeginTestSection["MonadicQuantileRegression-Unit-Tests"]
 VerificationTest[(* 1 *)
   CompoundExpression[
     Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"],
-    Greater[Length[SubValues[MonadicQuantileRegression`QRegMonQuantileRegression]], 0]
+    Greater[Length[SubValues[MonadicQuantileRegression`QRMonQuantileRegression]], 0]
   ]
   ,
   True
@@ -71,9 +71,9 @@ VerificationTest[(* 2 *)
 VerificationTest[(* 3 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
-        QRegMonTakeContext
+        QRMonUnit[data],
+        QRMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
+        QRMonTakeContext
       ];
   Keys[res["regressionFunctions"]]
   ,
@@ -85,9 +85,9 @@ VerificationTest[(* 3 *)
 VerificationTest[(* 4 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[ 12 ],
-        QRegMonTakeContext
+        QRMonUnit[data],
+        QRMonQuantileRegression[ 12 ],
+        QRMonTakeContext
       ];
   Keys[res["regressionFunctions"]]
   ,
@@ -99,10 +99,10 @@ VerificationTest[(* 4 *)
 VerificationTest[(* 5 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
-        QRegMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
-        QRegMonTakeContext
+        QRMonUnit[data],
+        QRMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
+        QRMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
+        QRMonTakeContext
       ];
   Sort @ Keys[res["regressionFunctions"]]
   ,
@@ -114,10 +114,10 @@ VerificationTest[(* 5 *)
 VerificationTest[(* 6 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
-        QRegMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
-        QRegMonTakeContext
+        QRMonUnit[data],
+        QRMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
+        QRMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
+        QRMonTakeContext
       ];
   Sort @ Keys[res["regressionFunctions"]]
   ,
@@ -130,10 +130,10 @@ VerificationTest[(* 6 *)
 VerificationTest[(* 7 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegressionFit[ {1, x, Exp[-x^2]}, Range[0.2,0.8,0.2] ],
-        QRegMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
-        QRegMonTakeContext
+        QRMonUnit[data],
+        QRMonQuantileRegressionFit[ {1, x, Exp[-x^2]}, Range[0.2,0.8,0.2] ],
+        QRMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
+        QRMonTakeContext
       ];
   Sort @ Keys[res["regressionFunctions"]]
   ,
@@ -146,10 +146,10 @@ VerificationTest[(* 7 *)
 VerificationTest[(* 8 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
-        QRegMonQuantileRegressionFit[ {1, x, Exp[-x^2]}, Range[0.2,0.8,0.2] ],
-        QRegMonTakeContext
+        QRMonUnit[data],
+        QRMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
+        QRMonQuantileRegressionFit[ {1, x, Exp[-x^2]}, Range[0.2,0.8,0.2] ],
+        QRMonTakeContext
       ];
   Sort @ Keys[res["regressionFunctions"]]
   ,
@@ -162,9 +162,9 @@ VerificationTest[(* 8 *)
 VerificationTest[(* 9 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonOutliers,
-        QRegMonTakeValue
+        QRMonUnit[data],
+        QRMonOutliers,
+        QRMonTakeValue
       ];
   MatrixQ[#, NumberQ] & /@ KeyTake[res, {"topOutliers", "bottomOutliers"}]
   ,
@@ -177,9 +177,9 @@ VerificationTest[(* 9 *)
 VerificationTest[(* 10 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonOutliers["Knots" -> 6, "TopOutliersQuantile" -> 0.98],
-        QRegMonTakeValue
+        QRMonUnit[data],
+        QRMonOutliers["Knots" -> 6, "TopOutliersQuantile" -> 0.98],
+        QRMonTakeValue
       ];
   MatrixQ[#, NumberQ] & /@ KeyTake[res, {"topOutliers", "bottomOutliers"}]
   ,
@@ -192,10 +192,10 @@ VerificationTest[(* 10 *)
 VerificationTest[(* 11 *)
   VectorQ[
     DoubleLongRightArrow[
-      QRegMonUnit[data],
-      QRegMonQuantileRegression[12, Range[0.1, 0.9, 0.2]],
-      QRegMonGridSequence,
-      QRegMonTakeValue
+      QRMonUnit[data],
+      QRMonQuantileRegression[12, Range[0.1, 0.9, 0.2]],
+      QRMonGridSequence,
+      QRMonTakeValue
     ],
     IntegerQ]
   ,
@@ -208,10 +208,10 @@ VerificationTest[(* 11 *)
 VerificationTest[(* 11 *)
   VectorQ[
     DoubleLongRightArrow[
-      QRegMonUnit[data],
-      QRegMonQuantileRegression[12, Range[0.1, 0.9, 0.2]],
-      QRegMonBandsSequence,
-      QRegMonTakeValue
+      QRMonUnit[data],
+      QRMonQuantileRegression[12, Range[0.1, 0.9, 0.2]],
+      QRMonBandsSequence,
+      QRMonTakeValue
     ],
     IntegerQ]
   ,
@@ -224,10 +224,10 @@ VerificationTest[(* 11 *)
 VerificationTest[(* 12 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[6, Range[0.1, 0.9, 0.2]],
-        QRegMonConditionalCDF[0.2],
-        QRegMonTakeValue
+        QRMonUnit[data],
+        QRMonQuantileRegression[6, Range[0.1, 0.9, 0.2]],
+        QRMonConditionalCDF[0.2],
+        QRMonTakeValue
       ];
   {MatchQ[res, <|0.2 -> _InterpolatingFunction|>], res[0.2]["ValuesOnGrid"] == Range[0.1, 0.9, 0.2] }
   ,
@@ -240,10 +240,10 @@ VerificationTest[(* 12 *)
 VerificationTest[(* 13 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
-        QRegMonEvaluate[4],
-        QRegMonTakeValue
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRMonEvaluate[4],
+        QRMonTakeValue
       ];
   MatchQ[res, <|(_?NumberQ -> _?NumberQ) ..|>]
   ,
@@ -256,11 +256,11 @@ VerificationTest[(* 13 *)
 VerificationTest[(* 14 *)
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
-        QRegMonLeastSquaresFit[{1, x, Exp[-x^2]}],
-        QRegMonEvaluate[4],
-        QRegMonTakeValue
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRMonLeastSquaresFit[{1, x, Exp[-x^2]}],
+        QRMonEvaluate[4],
+        QRMonTakeValue
       ];
   Sort[Keys[res]]
   ,
@@ -274,10 +274,10 @@ VerificationTest[(* 15 *)
   points = {3, 4, {1, 2}};
   res =
       DoubleLongRightArrow[
-        QRegMonUnit[data],
-        QRegMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
-        QRegMonEvaluate[points],
-        QRegMonTakeValue
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRMonEvaluate[points],
+        QRMonTakeValue
       ];
   MatchQ[res, <|(_?NumberQ -> {_?NumberQ, _?NumberQ, {_?NumberQ, _?NumberQ}}) ..|>]
   ,
