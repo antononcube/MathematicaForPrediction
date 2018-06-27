@@ -114,6 +114,8 @@ QRMonEvaluate::usage = "Evaluates the regression functions over a number or a li
 
 QRMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
 
+QRMonDateListPlot::usage = "Plots the data points or the data points together with the found regression curves."
+
 QRMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
 
 QRMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
@@ -528,7 +530,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              listPlotFunc[data, listPlotOpts, PlotStyle -> GrayLevel[0.5], ImageSize->Medium, PlotTheme -> "Scientific"],
+              listPlotFunc[data, listPlotOpts, PlotStyle -> Gray, ImageSize->Medium, PlotTheme -> "Scientific"],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 Evaluate[plotOpts],
                 PerformanceGoal -> "Speed",
@@ -537,7 +539,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
             }],
 
             True,
-            ListPlot[data, opts, ImageSize->Medium, PlotTheme -> "Scientific"]
+            listPlotFunc[data, listPlotOpts, ImageSize->Medium, PlotTheme -> "Scientific"]
           ];
 
 
@@ -549,6 +551,23 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
     ];
 
 QRMonPlot[__][__] := $QRMonFailure;
+
+
+(**************************************************************)
+(* DateListPlot                                               *)
+(**************************************************************)
+
+ClearAll[QRMonDateListPlot];
+
+Options[QRMonDateListPlot] =  Join[ {"Echo"->True}, Options[ListPlot] ];;
+
+QRMonPlot[QRMonDateListPlot] := $QRMonFailure;
+
+QRMonDateListPlot[x_, context_Association] := QRMonPlot["DateListPlot"->True][x, context];
+
+QRMonDateListPlot[opts:OptionsPattern[]][xs_, context_] := QRMonPlot["DateListPlot"->True, opts][x, context];
+
+QRMonDateListPlot[__][__] := $QRMonFailure;
 
 
 (**************************************************************)
