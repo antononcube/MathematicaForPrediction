@@ -101,8 +101,14 @@ QRMonFit::usage = "Same as QRMonLinearRegressionFit."
 
 QRMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
 
+QRMonRegression::usage = "Quantile regression for the data in the pipeline or the context. \
+(Same as QRMonQuantileRegression.)"
+
 QRMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
 using specified functions to fit."
+
+QRMonRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
+using specified functions to fit. (Same as QRMonQuantileRegressionFit.)"
 
 QRMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers."
 
@@ -402,6 +408,10 @@ QRMonQuantileRegression[___][__] :=
     ];
 
 
+ClearAll[QRMonRegression]
+QRMonRegression = QRMonQuantileRegression;
+
+
 (**************************************************************)
 (* Quantile regression fit                                    *)
 (**************************************************************)
@@ -454,6 +464,10 @@ QRMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:Option
 QRMonQuantileRegressionFit[___][__] := $QRMonFailure;
 
 
+ClearAll[QRMonRegressionFit]
+QRMonRegressionFit = QRMonQuantileRegressionFit;
+
+
 (**************************************************************)
 (* Evaluate                                                   *)
 (**************************************************************)
@@ -484,39 +498,46 @@ QRMonEvaluate[arr_List][x_, context_] :=
 
 QRMonEvaluate[___][__] := $QRMonFailure;
 
+
 (**************************************************************)
 (* Plot                                                       *)
 (**************************************************************)
 
 ClearAll[QRMonPlot];
 
-Options[QRMonPlot] = Prepend[Options[ListPlot], "Echo"->True];
+Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
 
 QRMonPlot[QRMonPlot] := $QRMonFailure;
 
 QRMonPlot[x_, context_Association] := QRMonPlot[][x, context];
 
 QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{data, res},
+    Block[{data, res, listPlotFunc = ListPlot, listPlotOpts, plotOpts},
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
 
       If[data===$QRMonFailure, Return[$QRMonFailure]];
 
+      If[ TrueQ[OptionValue[QRMonPlot, "DateListPlot"]], listPlotFunc = DateListPlot ];
+
+      listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
+      plotOpts = Normal @ KeyTake[ {opts}, First /@ Options[Plot]];
+
+
       res=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              ListPlot[data, DeleteCases[{opts}, HoldPattern["Echo"->_]], PlotStyle -> Lighter[Red], ImageSize->Medium, PlotTheme -> "Scientific"],
+              listPlotFunc[data, listPlotOpts, PlotStyle -> GrayLevel[0.5], ImageSize->Medium, PlotTheme -> "Scientific"],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
-                Evaluate[DeleteCases[{opts}, HoldPattern["Echo"->_]]],
+                Evaluate[plotOpts],
                 PerformanceGoal -> "Speed",
                 PlotLegends->Keys[context["regressionFunctions"]]
               ]
             }],
 
             True,
-            ListPlot[data, opts, ImageSize->Medium]
+            ListPlot[data, opts, ImageSize->Medium, PlotTheme -> "Scientific"]
           ];
 
 
@@ -536,21 +557,26 @@ QRMonPlot[__][__] := $QRMonFailure;
 
 ClearAll[QRMonErrorPlots]
 
-Options[QRMonErrorPlots] = Prepend[Options[ListPlot], "Echo"->True];
+Options[QRMonErrorPlots] = Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
 
 QRMonErrorPlots[$QRMonFailure] := $QRMonFailure;
 
 QRMonErrorPlots[x_, context_Association] := QRMonErrorPlots[][x, context];
 
 QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{res},
+    Block[{res, listPlotFunc = ListPlot, listPlotOpts},
+
+      listPlotFunc = If[ TrueQ[OptionValue[QRMonErrorPlots, "DateListPlot"]], DateListPlot, ListPlot ];
+
+      listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
+
       res =
           KeyValueMap[
             Function[{k, f},
               k ->
-                  ListPlot[
+                  listPlotFunc[
                     Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/p[[2]]}], context["data"] ],
-                    DeleteCases[{opts}, HoldPattern["Echo"->_]],
+                    listPlotOpts,
                     PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
             ],
             context["regressionFunctions"]
@@ -733,7 +759,7 @@ QRMonOutliers[__][__] :=
 
 ClearAll[QRMonOutliersPlot]
 
-Options[QRMonOutliersPlot] := { "Echo"->True, ListPlot -> {}, Plot -> {} };
+Options[QRMonOutliersPlot] := { "Echo" -> True, "DateListPlot" -> False, ListPlot -> {Joined->False}, Plot -> {} };
 
 QRMonOutliersPlot[$QRMonFailure] := $QRMonFailure;
 
@@ -742,7 +768,7 @@ QRMonOutliersPlot[__][$QRMonFailure] := $QRMonFailure;
 QRMonOutliersPlot[xs_, context_Association] := QRMonOutliersPlot[][xs, context];
 
 QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{unit, res},
+    Block[{unit, listPlotFunc = ListPlot, listPlotOpts, res},
 
       unit =
           If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionFunctions"],
@@ -751,13 +777,18 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
             QRMonBind[ QRMonUnit[ xs, context ], QRMonOutliers ]
           ];
 
+      listPlotFunc = If[ TrueQ[OptionValue[QRMonOutliersPlot, "DateListPlot"]], DateListPlot, ListPlot ];
+
+      listPlotOpts = Normal @ KeyTake[ OptionValue[QRMonOutliersPlot, ListPlot], First /@ Options[listPlotFunc]];
+
+
       (* This can be improved: right now the regression quantiles are plotted over the outlier points. *)
       (* Also, there should be an option for not plotting the regression quantiles. *)
 
       res =
           Show[{
 
-            ListPlot[Join[{#data}, Values[#outliers]],
+            listPlotFunc[Join[{#data}, Values[#outliers]],
               Evaluate[OptionValue[QRMonOutliersPlot, ListPlot]],
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
               ImageSize -> Medium, PlotTheme -> "Scientific"
