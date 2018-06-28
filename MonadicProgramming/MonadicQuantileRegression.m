@@ -88,6 +88,8 @@ QRMonSetRegressionFunctions::usage = "Assigns the argument to the key \"regressi
 
 QRMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFunctions\" from the monad context."
 
+QRMonTakeOutliers::usage = "Gives the value of the key \"outliers\" from the monad context."
+
 QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
 QRMonDeleteMissing::usage = "Deletes records with missing data."
@@ -761,7 +763,7 @@ QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
 
       QRMonUnit[
         outliers,
-        Join[context, <| "outliers"->outliers, "outlierRegressionFunctions" -> <| tq->tfunc, bq->bfunc |> |> ]
+        Join[context, <| "data"-> data, "outliers"->outliers, "outlierRegressionFunctions" -> <| tq->tfunc, bq->bfunc |> |> ]
       ]
     ];
 
@@ -808,7 +810,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
           Show[{
 
             listPlotFunc[Join[{#data}, Values[#outliers]],
-              Evaluate[OptionValue[QRMonOutliersPlot, ListPlot]],
+              listPlotOpts,
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
               ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
