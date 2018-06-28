@@ -100,6 +100,20 @@ VerificationTest[(* 5 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
+        QRMonQuantileRegression[ {-3, -2, 1, 0, 1, 1.5, 2.5, 3}, Range[0.2,0.8,0.2] ],
+        QRMonTakeContext
+      ];
+  Keys[res["regressionFunctions"]]
+  ,
+  { 0.2, 0.4, 0.6, 0.8 }
+  ,
+  TestID->"QuantileRegression-3"
+]
+
+VerificationTest[(* 6 *)
+  res =
+      DoubleLongRightArrow[
+        QRMonUnit[data],
         QRMonQuantileRegression[ 12, Range[0.2,0.8,0.2] ],
         QRMonLeastSquaresFit[ {1, x, Exp[-x^2]} ],
         QRMonTakeContext
@@ -111,7 +125,7 @@ VerificationTest[(* 5 *)
   TestID->"QuantileRegression-and-Fit-1"
 ]
 
-VerificationTest[(* 6 *)
+VerificationTest[(* 7 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -127,7 +141,7 @@ VerificationTest[(* 6 *)
 ]
 
 
-VerificationTest[(* 7 *)
+VerificationTest[(* 8 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -143,7 +157,7 @@ VerificationTest[(* 7 *)
 ]
 
 
-VerificationTest[(* 8 *)
+VerificationTest[(* 9 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -159,7 +173,7 @@ VerificationTest[(* 8 *)
 ]
 
 
-VerificationTest[(* 9 *)
+VerificationTest[(* 10 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -174,7 +188,7 @@ VerificationTest[(* 9 *)
 ]
 
 
-VerificationTest[(* 10 *)
+VerificationTest[(* 11 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -189,7 +203,7 @@ VerificationTest[(* 10 *)
 ]
 
 
-VerificationTest[(* 11 *)
+VerificationTest[(* 12 *)
   VectorQ[
     DoubleLongRightArrow[
       QRMonUnit[data],
@@ -205,7 +219,7 @@ VerificationTest[(* 11 *)
 ]
 
 
-VerificationTest[(* 11 *)
+VerificationTest[(* 13 *)
   VectorQ[
     DoubleLongRightArrow[
       QRMonUnit[data],
@@ -221,7 +235,7 @@ VerificationTest[(* 11 *)
 ]
 
 
-VerificationTest[(* 12 *)
+VerificationTest[(* 14 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -237,7 +251,7 @@ VerificationTest[(* 12 *)
 ]
 
 
-VerificationTest[(* 13 *)
+VerificationTest[(* 15 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -253,7 +267,7 @@ VerificationTest[(* 13 *)
 ]
 
 
-VerificationTest[(* 14 *)
+VerificationTest[(* 16 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
@@ -270,7 +284,7 @@ VerificationTest[(* 14 *)
 ]
 
 
-VerificationTest[(* 15 *)
+VerificationTest[(* 17 *)
   points = {3, 4, {1, 2}};
   res =
       DoubleLongRightArrow[
