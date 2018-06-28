@@ -390,10 +390,10 @@ QRMonQuantileRegression[$QRMonFailure] := $QRMonFailure;
 
 QRMonQuantileRegression[xs_, context_Association] := $QRMonFailure;
 
-QRMonQuantileRegression[knots_Integer, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), opts:OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRMonQuantileRegression[knots_Integer, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
