@@ -90,6 +90,8 @@ QRMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFu
 
 QRMonTakeOutliers::usage = "Gives the value of the key \"outliers\" from the monad context."
 
+QRMonTakeOutlierRegressionFunctions =  "Gives the value of the key \"outlierRegressionFunctions\" from the monad context."
+
 QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
 QRMonDeleteMissing::usage = "Deletes records with missing data."
@@ -192,6 +194,14 @@ QRMonTakeOutliers[][$QRMonFailure] := $QRMonFailure;
 QRMonTakeOutliers[xs_, context_] := context["outliers"];
 QRMonTakeOutliers[][xs_, context_] := context["outliers"];
 QRMonTakeOutliers[__][___] := $QRMonFailure;
+
+
+ClearAll[QRMonTakeOutlierRegressionFunctions]
+QRMonTakeOutlierRegressionFunctions[$QRMonFailure] := $QRMonFailure;
+QRMonTakeOutlierRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
+QRMonTakeOutlierRegressionFunctions[xs_, context_] := context["outlierRegressionFunctions"];
+QRMonTakeOutlierRegressionFunctions[][xs_, context_] := context["outlierRegressionFunctions"];
+QRMonTakeOutlierRegressionFunctions[__][___] := $QRMonFailure;
 
 
 (**************************************************************)
@@ -743,7 +753,7 @@ QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
       tq = OptionValue[ "TopOutliersQuantile" ];
       bq = OptionValue[ "BottomOutliersQuantile" ];
       Which[
-        ! ( NumberQ[tq] && 0 < tq < 1 && NumberQ[bq] && 0 < bq < 1  ),
+        ! ( NumberQ[tq] && 0 <= tq <= 1 && NumberQ[bq] && 0 <= bq <= 1  ),
         Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "QRMonOutliers:"];
         Return[$QRMonFailure]
       ];
@@ -809,7 +819,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
       res =
           Show[{
 
-            listPlotFunc[Join[{#data}, Values[#outliers]],
+            listPlotFunc[Join[{#data}, Values[#outliers]] /. {}->Nothing,
               listPlotOpts,
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
               ImageSize -> Medium, PlotTheme -> "Scientific"
