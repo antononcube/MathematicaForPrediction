@@ -243,7 +243,7 @@ VerificationTest[(* 14 *)
         QRMonConditionalCDF[0.2],
         QRMonTakeValue
       ];
-  {MatchQ[res, <|0.2 -> _InterpolatingFunction|>], res[0.2]["ValuesOnGrid"] == Range[0.1, 0.9, 0.2] }
+  {MatchQ[res, <|0.2 -> _InterpolatingFunction|>], Sort[res[0.2]["ValuesOnGrid"]] == Range[0.1, 0.9, 0.2] }
   ,
   { True, True }
   ,
