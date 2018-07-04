@@ -14,7 +14,8 @@ The basic idea is to have:
  
  - an **interface section.**
 
-Below is (briefly) described the multi-package dependency, loading, and code generation of the package ["MonadicContextualClassification.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m), \[1\].
+Below is (briefly) described the multi-package dependency, loading, and code generation of the package 
+["MonadicContextualClassification.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m), \[1\].
 
 The goal of the package \[1\] is to provide a Domain Specific Language (DSL) for rapid specification of machine learning classification workflows. 
 
@@ -58,20 +59,25 @@ The goal of the package \[1\] is to provide a Domain Specific Language (DSL) for
 
 ## Testing
 
-The development of the package was done with two unit test files. (One with [hand-written unit tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicContextualClassification-Unit-Tests.wlt), the other with [randomly generated tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicContextualClassificationRandomPipelinesUnitTests.m). The latter is specific to the methodology behind the package functionality.) 
+The development of the package \[1\] was/is done with two unit test files. 
+(One with [hand-written unit tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicContextualClassification-Unit-Tests.wlt), the other with [randomly generated tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicContextualClassificationRandomPipelinesUnitTests.m). The latter is specific to the methodology behind the package functionality.) 
 
-The point is that unit tests are crucial when dealing with this kind of complex package dependencies. (And packages that deal with complex subjects.)
+The point is that unit tests are crucial when dealing with this kind of complex package dependencies. 
+(And packages that deal with complex subjects.)
 
 
 ## Summary diagram
 
 Below is given a diagram that summarizes the development of ["MonadicContextualClassification.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m). For more details see the end sections of the document ["A monad for classification workflows"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-classification-workflows.md).
 
-[![ClCon-development-cycle](https://i.imgur.com/hmMPfCrh.png)](https://i.imgur.com/hmMPfCr.png)
+[![ClCon-development-cycle](https://i.imgur.com/hmMPfCrl.png)](https://i.imgur.com/hmMPfCr.png)
 
 ## Example run 
 
-The following screenshot is of an example run that demonstrates the package import prompts and the utilization of the loaded packages in a classification pipeline. (The packages have functionalities for training classifier ensembles, making ROC plots, and finding importance of variables.)
+The following screenshot is of an example run that demonstrates the package import prompts and the utilization of 
+the loaded packages in a classification pipeline. 
+(The packages have functionalities for training classifier ensembles, making ROC plots, 
+and finding importance of variables.)
 
 [![ClCon-example-run-with-Import](https://imgur.com/X2Nephgh.png)](https://imgur.com/X2Nephg.png)
 
