@@ -36,7 +36,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2017-06-05 *)
 
-(* :Package Version: 0.5 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2017 Anton Antonov *)
 (* :Keywords: *)
@@ -264,8 +264,9 @@ ClConOutlierPosition::usage = "Find outlier positions in the data."
 ClConReduceDimension::usage = "Applies dimension reduction with SVD. \
 (If the non-label parts of the training data and test data can be converted numerical matrices.)"
 
-Begin["`Private`"]
+(*ClConDeleteMissing::usage = "Deletes records with missing data values."*)
 
+Begin["`Private`"]
 
 Needs["MathematicaForPredictionUtilities`"]
 Needs["StateMonadCodeGenerator`"]
@@ -766,6 +767,32 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+
+
+(**************************************************************)
+(* DeleteMissing                                             *)
+(**************************************************************)
+
+ClearAll[ClConDeleteMissing];
+
+ClConDeleteMissing[$ClConFailure] := $ClConFailure;
+
+ClConDeleteMissing[xs_, context_] := ClConDeleteMissing[][xs, context];
+
+ClConDeleteMissing[][xs_, context_] :=
+    Block[{data},
+
+      data = ClConBind[ ClConGetData[xs, context], ClConTakeValue];
+
+      If[ data === $ClConFailure,
+        $ClConFailure,
+      (*ELSE*)
+        data = DeleteMissing[data, 1, 2];
+        ClConUnit[ data, Join[ context, <|"data"->data|>] ]
+      ]
+    ];
+
+ClConDeleteMissing[___][__] := $ClConFailure;
 
 
 (************************************************************)
