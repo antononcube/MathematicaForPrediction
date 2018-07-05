@@ -875,6 +875,14 @@ ClConMakeClassifier[methodSpecArg_?ClConMethodSpecQ, opts:OptionsPattern[]][xs_,
       ]
     ];
 
+ClConMakeClassifier[___][xs_, context_Association] :=
+    Block[{},
+      Echo[ "The first argument is expected to be a classifier ensemble specification.",
+        "ClConMakeClassifier:"
+      ];
+      $ClConFailure
+    ];
+
 
 (************************************************************)
 (* ClConClassifierMeasurements                              *)
