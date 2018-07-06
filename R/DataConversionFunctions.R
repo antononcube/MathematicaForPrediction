@@ -16,8 +16,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ## 
 ## Written by Anton Antonov, 
-## antononcube@gmail.com, 
-## 7320 Colbury Ave, 
+## antononcube@gmail.com,
 ## Windermere, Florida, USA.
 ##
 ##=======================================================================================
@@ -35,6 +34,8 @@ library(plyr)
 library(stringr)
 library(reshape2)
 library(Matrix)
+library(lubridate)
+library(dplyr)
 
 #' @description Partition combined columns
 #' @param dataColumn data vector
@@ -449,4 +450,47 @@ SparseMatrixToD3NetworkSpecFirst <- function( smat ) {
   qMatLinks$source <- as.integer(qMatLinks$source)
   qMatLinks$target <- as.integer(qMatLinks$target)
   list( Nodes = qMatNodes, Links = qMatLinks)
+}
+
+
+##===========================================================
+## Add date tags
+##===========================================================
+
+#' @description Aggregate values for given column names.
+#' @param data a data frame
+#' @param dateColumnName a date column over which the aggregation is done
+AddDateTags <- function( data, dateColumnName ) {
+
+  dateCol <- enquo(dateColumnName)
+
+  qRes <-
+  data %>%
+    dplyr::mutate( DayBoundary = ceiling_date( !!dateCol, "days" ) ) %>%
+    dplyr::mutate( MonthBoundary = ceiling_date( !!dateCol, "months" ) ) %>%
+    dplyr::mutate( YearBoundary = ceiling_date( !!dateCol, "years" ) ) %>%
+    dplyr::mutate( Month = months( !!dateCol ), Weekday = weekdays( !!dateCol ) ) %>%
+    dplyr::mutate( Weekday = factor( Weekday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ) ) ) %>%
+    dplyr::mutate( Month = factor( Month, levels = c( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" )  ) )
+
+  qRes
+}
+
+##===========================================================
+## Summary parititiong
+##===========================================================
+
+#' @description Print the summary of data frame in a series of specified number of columns.
+#' @param data a data frame
+#' @param numberOfColumns number of columns for the partitioning
+SummaryPartitioned <- function( data, numberOfColumns = 3, ...) {
+
+  k <- 1
+
+  while( k <= ncol(data)) {
+    if( k > 1 ) { cat("\n") }
+    k1 <- min( ncol(data), k + numberOfColumns-1 )
+    print( summary( data[, k:k1, drop=F ], ... ) )
+    k <- k + numberOfColumns
+  }
 }
