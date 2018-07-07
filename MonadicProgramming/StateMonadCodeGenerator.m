@@ -315,7 +315,7 @@ AssociationModule[asc_Association, body_] :=
           h_[L : _Symbol | _String, R_] :>
               With[{sy = Quiet@Symbol@ToString@L},
                 Hold[h[sy, R]] /; Depth[sy] === 1]], {(a_ -> b_) :> (a = b), (a_ :> b_) :> (a := b)}, {1}] /.
-                    _[sets__] :> Module[{sets}, body]
+        _[sets__] :> Module[{sets}, body]
 
 ClearAll[GenerateStateMonadCode]
 Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol" -> None, "EchoFailingFunction"->True};
@@ -343,10 +343,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateOption = ToExpression[monadName <> "Option"],
       MStateWhen = ToExpression[monadName <> "When"],
       MStateIfElse = ToExpression[monadName <> "IfElse"],
-      MStateIterate = ToExpression[monadName <> "Iterate"],
       MStateNest = ToExpression[monadName <> "Nest"],
       MStateNestWhile = ToExpression[monadName <> "NestWhile"],
       MStateFold = ToExpression[monadName <> "Fold"],
+      MStateIterate = ToExpression[monadName <> "Iterate"],
       MStateModule = ToExpression[monadName <> "Module"],
       MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
@@ -361,7 +361,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
         MStatePutContext, MStatePutValue, MStateModifyContext,
         MStateAddToContext, MStateRetrieveFromContext,
         MStateOption, MStateWhen, MStateIfElse,
-        MStateIterate, MStateNest, MStateNestWhile, MStateFold,
+        MStateNest, MStateNestWhile, MStateFold, MStateIterate,
         MStateModule, MStateContexts,
         MStateSetContext, MStateSetValue
       ];
@@ -509,11 +509,22 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
 
       MStateIfElse[testFunc_, fYes_, fNo_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateIfElse[testFunc_, fYes_, fNo_][xs_, context_] :=
-          Block[{testRes = testFunc[xs, context]}, If[TrueQ[testRes], fYes[xs, context], fNo[xs, context]]];
+          Block[{testRes = testFunc[xs, context]},
+            If[TrueQ[testRes], fYes[xs, context], fNo[xs, context]]
+          ];
 
       MStateWhen[testFunc_, f_][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateWhen[testFunc_, f_][xs_, context_] := MStateIfElse[testFunc, f, MState][xs, context];
-      
+      MStateWhen[testFunc_, f_][xs_, context_] := MStateIfElse[testFunc, f, MStateUnit][xs, context];
+
+      MStateNest[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateNest[f_, n_Integer][xs_, context_] := Nest[f, MStateUnit[xs, context], n];
+
+      MStateNestWhile[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateNestWhile[f_, args__][xs_, context_] := NestWhile[f, MStateUnit[xs, context], args];
+
+      MStateFold[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateFold[f_, list_][xs_, context_] := Fold[f, MStateUnit[xs, context], list];
+
       (* Iteration functions *)
       MStateIterate[___][___] := MStateFailureSymbol;
 
@@ -521,28 +532,19 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
           itFunc[MStateBind[#, f] &, MStateUnit[x, context], args];
 
       MStateIterate[itFunc : (NestList | NestWhileList | FixedPointList),
-                    f_, args___, contextVar : (None | _String) : None][x_, context_Association] :=
+        f_, args___, contextVar : (None | _String) : None][x_, context_Association] :=
           Block[{res},
             res = itFunc[MStateBind[#, f] &, MStateUnit[x, context], args];
             If[contextVar === None,
               MStateUnit[res[[All, 1]], res[[-1, 2]]],
-              (*ELSE*)
+            (*ELSE*)
               MStateUnit[res[[All, 1]], Join[res[[-1, 2]], <|contextVar -> res|>]]
             ]
           ];
 
       MStateIterate[itFunc : (Fold | FoldList | Composition[__, FoldList]),
-                    f_, args___][x_, context_Association] :=
+        f_, args___][x_, context_Association] :=
           itFunc[f, MStateUnit[x, context], args];
-
-      MStateNest[___][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateNest[f_, n_Integer][xs_, context_] := Nest[f, MStateUnit[x, context], n];
-
-      MStateNestWhile[___][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateNestWhile[f_, args__][xs_, context_] := NestWhile[f, MStateUnit[x, context], args];
-
-      MStateFold[___][MStateFailureSymbol] := MStateFailureSymbol;
-      MStateFold[f_, list_][xs_, context_] := Fold[f, MStateUnit[x, context], list];
 
       Attributes[MStateModule] = HoldAll;
       MStateModule[body___][value_, context_Association] :=
@@ -554,11 +556,11 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       DoubleLongRightArrow[Global`x_, Global`y_, Global`z__] :=
           DoubleLongRightArrow[DoubleLongRightArrow[Global`x, Global`y], Global`z];
 
-      (*Unprotect[NonCommutativeMultiply];*)
-      (*ClearAttributes[NonCommutativeMultiply, Attributes[NonCommutativeMultiply]]*)
-      (*MState /: NonCommutativeMultiply[MState[Global`x_], Global`f_] := MStateBind[MState[Global`x], Global`f];*)
-      (*NonCommutativeMultiply[Global`x_, Global`y_, Global`z__] :=*)
-      (*NonCommutativeMultiply[NonCommutativeMultiply[Global`x, Global`y], Global`z];*)
+    (*Unprotect[NonCommutativeMultiply];*)
+    (*ClearAttributes[NonCommutativeMultiply, Attributes[NonCommutativeMultiply]]*)
+    (*MState /: NonCommutativeMultiply[MState[Global`x_], Global`f_] := MStateBind[MState[Global`x], Global`f];*)
+    (*NonCommutativeMultiply[Global`x_, Global`y_, Global`z__] :=*)
+    (*NonCommutativeMultiply[NonCommutativeMultiply[Global`x, Global`y], Global`z];*)
 
     ];
 
