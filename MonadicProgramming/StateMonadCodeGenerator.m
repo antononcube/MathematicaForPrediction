@@ -344,6 +344,9 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateWhen = ToExpression[monadName <> "When"],
       MStateIfElse = ToExpression[monadName <> "IfElse"],
       MStateIterate = ToExpression[monadName <> "Iterate"],
+      MStateNest = ToExpression[monadName <> "Nest"],
+      MStateNestWhile = ToExpression[monadName <> "NestWhile"],
+      MStateFold = ToExpression[monadName <> "Fold"],
       MStateModule = ToExpression[monadName <> "Module"],
       MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
@@ -357,7 +360,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
         MStateEchoContext, MStateEchoFunctionContext,
         MStatePutContext, MStatePutValue, MStateModifyContext,
         MStateAddToContext, MStateRetrieveFromContext,
-        MStateOption, MStateWhen, MStateIfElse, MStateIterate,
+        MStateOption, MStateWhen, MStateIfElse,
+        MStateIterate, MStateNest, MStateNestWhile, MStateFold,
         MStateModule, MStateContexts,
         MStateSetContext, MStateSetValue
       ];
@@ -530,7 +534,16 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateIterate[itFunc : (Fold | FoldList | Composition[__, FoldList]),
                     f_, args___][x_, context_Association] :=
           itFunc[f, MStateUnit[x, context], args];
-      
+
+      MStateNest[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateNest[f_, n_Integer][xs_, context_] := Nest[f, MStateUnit[x, context], n];
+
+      MStateNestWhile[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateNestWhile[f_, args__][xs_, context_] := NestWhile[f, MStateUnit[x, context], args];
+
+      MStateFold[___][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateFold[f_, list_][xs_, context_] := Fold[f, MStateUnit[x, context], list];
+
       Attributes[MStateModule] = HoldAll;
       MStateModule[body___][value_, context_Association] :=
           MState[AssociationModule[Join[context, <|"$Value" -> value|>], body], context];
