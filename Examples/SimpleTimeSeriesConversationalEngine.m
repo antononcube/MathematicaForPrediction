@@ -1,20 +1,3 @@
-(* ::Package:: *)
-
-(* ::Title:: *)
-(*Simple Time Series Conversational Engine*)
-
-
-(* ::Subsubtitle:: *)
-(*Anton Antonov*)
-(*MathematicaForPrediction blog at WordPress*)
-(*MathematicaForPrediction project at GitHub*)
-(*November 2014*)
-
-
-(* ::Section:: *)
-(*Copyright notice*)
-
-
 (*
     Simple Time Series Conversational Engine Mathematica package
     Copyright (C) 2014  Anton Antonov
@@ -32,16 +15,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
-	Windermere, Florida, USA.
+	  Written by Anton Antonov,
+	  antononcube@gmail.com,
+	  Windermere, Florida, USA.
 *)
 
-
-
-(* ::Section:: *)
-(*Preliminary code*)
 
 
 (* 
