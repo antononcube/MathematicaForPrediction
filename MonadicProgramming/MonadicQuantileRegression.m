@@ -307,22 +307,41 @@ QRMonDeleteMissing[___][__] := $QRMonFailure;
 
 ClearAll[QRMonRescale];
 
-Options[QRMonRescale] = {Axes->{"x","y"}};
+Options[QRMonRescale] = {Axes -> {True, False}};
 
 QRMonRescale[$QRMonFailure] := $QRMonFailure;
 
 QRMonRescale[xs_, context_] := QRMonRescale[][xs, context];
 
 QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{data},
+    Block[{data, axesOpt},
+
+      axesOpt = OptionValue[QRMonRescale, Axes];
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[ data === $QRMonFailure,
-        $QRMonFailure,
-        (*ELSE*)
-        data = Transpose[Rescales /@ Transpose[data]];
-        QRMonUnit[ data, Join[ context, <|"data"->data|>] ]
+      If[data === $QRMonFailure, Return[$QRMonFailure]];
+
+      Which[
+        TrueQ[axesOpt] ||
+            TrueQ[ ToLowerCase[axesOpt] == "both" || ToLowerCase[axesOpt] == "path" || axesOpt === All ] ||
+            TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x","y","time"}]] == 2 ] ||
+            TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x","value","time"}]] == 2 ],
+        data = Transpose[Rescale /@ Transpose[data]];
+        QRMonUnit[ data, Join[ context, <|"data"->data|>] ],
+
+        TrueQ[ axesOpt == {True, False}] ||
+            TrueQ[ axesOpt == "x" || axesOpt == "t"],
+        data = Transpose[{Rescale[data[[All,1]]], data[[All,2]]}];
+        QRMonUnit[ data, Join[ context, <|"data"->data|>] ],
+
+        TrueQ[ axesOpt == {False, True}] ||
+            TrueQ[ axesOpt == "y" || axesOpt == "value"],
+        data = Transpose[{data[[All,1]], Rescale[data[[All,2]]]}];
+        QRMonUnit[ data, Join[ context, <|"data"->data|>] ],
+
+        True,
+        $QRMonFailure
       ]
     ];
 
@@ -338,6 +357,14 @@ ClearAll[QRMonLeastSquaresFit];
 QRMonLeastSquaresFit[$QRMonFailure] := $QRMonFailure;
 
 QRMonLeastSquaresFit[xs_, context_Association] := $QRMonFailure;
+
+QRMonLeastSquaresFit[n_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    Fold[
+      QRMonBind,
+      QRMonUnit[xs, context],
+      {QRMonGetData,
+        QRMonLeastSquaresFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], {-1, 1}]], {i, 0, n}], x, opts][##]&}
+    ];
 
 QRMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
     Block[{var},
@@ -438,8 +465,19 @@ QRMonQuantileRegressionFit[$QRMonFailure] := $QRMonFailure;
 
 QRMonQuantileRegressionFit[xs_, context_Association] := $QRMonFailure;
 
-QRMonQuantileRegressionFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs:(_List|_Integer), opts:OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
+
+QRMonQuantileRegressionFit[funcs_List, q_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegressionFit[funcs, {q}, opts][xs, context];re
+
+QRMonQuantileRegressionFit[n_Integer, args___][xs_, context_] :=
+    Fold[
+      QRMonBind,
+      QRMonUnit[xs, context],
+      {QRMonGetData,
+        QRMonQuantileRegressionFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], {-1, 1}]], {i, 0, n}], x, args][##]&}
+    ];
 
 QRMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{var},
