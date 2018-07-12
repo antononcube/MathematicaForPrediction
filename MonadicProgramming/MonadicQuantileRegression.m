@@ -134,6 +134,12 @@ QRMonBandsSequence::usage = "Maps the time series values into a sequence of band
 
 QRMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid."
 
+QRMonMovingAverage::usage = "Moving average over a specified number of elements or a list of weights."
+
+QRMonMovingMedian::usage = "Moving median over a specified number of elements."
+
+QRMonMovingMap::usage = "Moving map with a specified function using a given window specification."
+
 Begin["`Private`"]
 
 Needs["MathematicaForPredictionUtilities`"]
@@ -1013,6 +1019,75 @@ QRMonGridSequence[___][__] :=
       Echo[ "The first argument is expected to be Automatic, an integer, or a list of numbers.", "QRMonGridSequence:"];
       $QRMonFailure
     ];
+
+
+(**************************************************************)
+(* MovingAverage                                              *)
+(**************************************************************)
+
+ClearAll[QRMonMovingAverage]
+
+QRMonMovingAverage[$QRMonFailure] := $QRMonFailure;
+
+QRMonMovingAverage[___][$QRMonFailure] := $QRMonFailure;
+
+QRMonMovingAverage[xs_, context_Association ] := $QRMonFailure;
+
+QRMonMovingAverage[n : ( _Integer | {_?NumericQ..} ) ][xs_, context_] :=
+    Fold[
+      QRMonBind,
+      QRMonUnit[xs, context],
+      { QRMonGetData, (QRMonUnit[MovingAverage[#1, n], #2] &) }
+    ];
+
+QRMonMovingAverage[___][__] := $QRMonFailure;
+
+
+(**************************************************************)
+(* MovingMedian                                               *)
+(**************************************************************)
+
+ClearAll[QRMonMovingMedian]
+
+QRMonMovingMedian[$QRMonFailure] := $QRMonFailure;
+
+QRMonMovingMedian[___][$QRMonFailure] := $QRMonFailure;
+
+QRMonMovingMedian[xs_, context_Association ] := $QRMonFailure;
+
+QRMonMovingMedian[n : ( _Integer | {_?NumericQ..} ) ][xs_, context_] :=
+    Fold[
+      QRMonBind,
+      QRMonUnit[xs, context],
+      { QRMonGetData, (QRMonUnit[MovingMedian[#1, n], #2] &) }
+    ];
+
+QRMonMovingMedian[___][__] := $QRMonFailure;
+
+
+(**************************************************************)
+(* Moving map                                                 *)
+(**************************************************************)
+
+ClearAll[QRMonMovingMap]
+
+QRMonMovingMap[$QRMonFailure] := $QRMonFailure;
+
+QRMonMovingMap[___][$QRMonFailure] := $QRMonFailure;
+
+QRMonMovingMap[xs_, context_Association ] := $QRMonFailure;
+
+QRMonMovingMap[f_, wspec__ ][xs_, context_] :=
+    Fold[
+      QRMonBind,
+      QRMonUnit[xs, context],
+      { QRMonGetData,
+        (QRMonUnit[MovingMap[f, #1, wspec], #2] &),
+        (QRMonWhen[!(MatrixQ[#] || VectorQ[#])&, QRMonFail])
+      }
+    ];
+
+QRMonMovingMap[___][__] := $QRMonFailure;
 
 
 End[] (* `Private` *)
