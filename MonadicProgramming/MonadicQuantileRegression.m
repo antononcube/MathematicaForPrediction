@@ -365,11 +365,15 @@ QRMonLeastSquaresFit[$QRMonFailure] := $QRMonFailure;
 QRMonLeastSquaresFit[xs_, context_Association] := $QRMonFailure;
 
 QRMonLeastSquaresFit[n_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonLeastSquaresFit[{ n, {-0.95, 0.95} }, opts][xs, context];
+
+(* This signature is not that needed for LeastSquaresFit, it is implemented for symmetry with QuantileRegressionFit . *)
+QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, opts:OptionsPattern[]][xs_, context_] :=
     Fold[
       QRMonBind,
       QRMonUnit[xs, context],
       {QRMonGetData,
-        QRMonLeastSquaresFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], {-1, 1}]], {i, 0, n}], x, opts][##]&}
+        QRMonLeastSquaresFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], r]], {i, 0, n}], x, opts][##]&}
     ];
 
 QRMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
@@ -478,11 +482,14 @@ QRMonQuantileRegressionFit[funcs_List, q_?NumberQ, opts:OptionsPattern[]][xs_, c
     QRMonQuantileRegressionFit[funcs, {q}, opts][xs, context];re
 
 QRMonQuantileRegressionFit[n_Integer, args___][xs_, context_] :=
+    QRMonQuantileRegressionFit[{ n, {-0.95, 0.95} }, args][xs, context];
+
+QRMonQuantileRegressionFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, args___][xs_, context_] :=
     Fold[
       QRMonBind,
       QRMonUnit[xs, context],
       {QRMonGetData,
-        QRMonQuantileRegressionFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], {-1, 1}]], {i, 0, n}], x, args][##]&}
+        QRMonQuantileRegressionFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], r]], {i, 0, n}], x, args][##]&}
     ];
 
 QRMonQuantileRegressionFit[funcs_List, qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
@@ -586,7 +593,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              listPlotFunc[data, listPlotOpts, PlotStyle -> Gray, ImageSize->Medium, PlotTheme -> "Scientific"],
+              listPlotFunc[data, listPlotOpts, PlotStyle -> Gray, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 Evaluate[plotOpts],
                 PerformanceGoal -> "Speed",
@@ -595,7 +602,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
             }],
 
             True,
-            listPlotFunc[data, listPlotOpts, ImageSize->Medium, PlotTheme -> "Scientific"]
+            listPlotFunc[data, listPlotOpts, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"]
           ];
 
 
@@ -866,7 +873,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
             listPlotFunc[Join[{#data}, Values[#outliers]] /. {}->Nothing,
               listPlotOpts,
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
-              ImageSize -> Medium, PlotTheme -> "Scientific"
+              PlotRange->All, ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
