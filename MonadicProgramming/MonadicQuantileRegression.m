@@ -244,7 +244,8 @@ QRMonGetData[xs_, context_] :=
         QRMonUnit[ data, Join[context, <| "data"->data |>] ],
 
         KeyExistsQ[context, "data"] && MatchQ[context["data"], (_TimeSeries | _TemporalData)],
-        QRMonUnit[ context["data"]["Path"] /. Quantity[x_, u_] :> x, context],
+        data = context["data"]["Path"] /. Quantity[x_, u_] :> x;
+        QRMonUnit[ SetPrecision[data, Precision[data]], context],
 
         MatrixQ[xs, NumericQ] && Dimensions[xs][[2]] == 2,
         QRMonUnit[xs, context],
@@ -253,7 +254,8 @@ QRMonGetData[xs_, context_] :=
         QRMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
 
         MatchQ[xs, (_TimeSeries | _TemporalData)],
-        QRMonUnit[ xs["Path"] /. Quantity[x_, u_] :> x, context],
+        data = xs["Path"] /. Quantity[x_, u_] :> x;
+        QRMonUnit[ SetPrecision[data, Precision[data]], context],
 
         True,
         Echo["Cannot find data.", "GetData:"];
