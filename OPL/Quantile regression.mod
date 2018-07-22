@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	Written by Anton Antonov, 
-	antononcube@gmail.com, 
-	7320 Colbury Ave, 
+	antononcube@gmail.com,
 	Windermere, Florida, USA.
 */
 
