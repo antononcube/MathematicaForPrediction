@@ -302,22 +302,7 @@ VerificationTest[(* 17 *)
 
 
 VerificationTest[(* 18 *)
-  res =
-      DoubleLongRightArrow[
-        QRMonUnit[data],
-        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
-        QRMonSimulate[100],
-        QRMonTakeValue
-      ];
-  MatchQ[res, { {_?NumberQ, _?NumberQ} ..} ]
-  ,
-  True
-  ,
-  TestID->"Simulate-1"
-]
-
-
-VerificationTest[(* 19 *)
+  (* This should fail since more than one regression quantile is needed for the simulations. *)
   res =
       Block[{Echo}, Echo =.;
       DoubleLongRightArrow[
@@ -331,8 +316,42 @@ VerificationTest[(* 19 *)
   ,
   True
   ,
+  TestID->"Simulate-1"
+]
+
+
+VerificationTest[(* 19 *)
+  res =
+      DoubleLongRightArrow[
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRMonSimulate[100],
+        QRMonTakeValue
+      ];
+  MatchQ[res, { {_?NumberQ, _?NumberQ} ..} ]
+  ,
+  True
+  ,
   TestID->"Simulate-2"
 ]
+
+
+VerificationTest[(* 20 *)
+  tPoints = RandomReal[MinMax[data[[All,1]]],10];
+  res =
+      DoubleLongRightArrow[
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRMonSimulate[tPoints],
+        QRMonTakeValue
+      ];
+  MatchQ[res, { {_?NumberQ, _?NumberQ} ..} ] && res[[All,1]] == tPoints
+  ,
+  True
+  ,
+  TestID->"Simulate-3"
+]
+
 
 
 EndTestSection[]
