@@ -142,6 +142,8 @@ QRMonMovingMap::usage = "Moving map with a specified function using a given wind
 
 QRMonSimulate::usage = "Simulates a time series using computed regression quantiles."
 
+QRMonFindLocalExtrema::usage = "Finds local extrema."
+
 Begin["`Private`"]
 
 Needs["MathematicaForPredictionUtilities`"]
@@ -270,7 +272,7 @@ QRMonGetData[___][xs_, context_Association] := $QRMonFailure;
 
 
 (**************************************************************)
-(* DeleteMissing                                             *)
+(* Echo data summary                                          *)
 (**************************************************************)
 
 ClearAll[QRMonEchoDataSummary];
@@ -1100,6 +1102,7 @@ QRMonMovingMap[f_, wspec__ ][xs_, context_] :=
 
 QRMonMovingMap[___][__] := $QRMonFailure;
 
+
 (**************************************************************)
 (* Simulate                                                   *)
 (**************************************************************)
@@ -1153,6 +1156,88 @@ QRMonSimulate[___][__] :=
       Echo["The first argument is expected to be an integer or a list of numbers.", "QRMonSimulate:"];
       $QRMonFailure
     ];
+
+
+(**************************************************************)
+(* Local extrema                                              *)
+(**************************************************************)
+
+(*
+   The function QRFindExtrema was originally defined in the package:
+
+     https://github.com/antononcube/MathematicaForPrediction/blob/master/Applications/QuantileRegressionForLocalExtrema.m
+
+   Instead of importing that package I think it is better to define QRMonFindExtrema as a monad function that uses
+   previously computed regression quantiles.
+*)
+
+ClearAll[QRMonFindLocalExtrema]
+
+Options[QRMonFindLocalExtrema] = { "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 50 };
+
+QRMonFindLocalExtrema[$QRMonFailure] = $QRMonFailure;
+
+QRMonFindLocalExtrema[xs_, context_] = QRMonFindLocalExtrema[][xs, context];
+
+QRMonFindLocalExtrema[ opts:OptionsPattern[] ][$QRMonFailure] := $QRMonFailure;
+
+QRMonFindLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
+    Module[{nearestByOutliersQ, numberOfProximityPoints, data, fn, extrema1, extrema2, minima, maxima, x, signs1, signs2, extremaPoints, nfMax, nfMin },
+
+      nearestByOutliersQ = OptionValue[QRMonFindLocalExtrema, "NearestWithOutliers" ];
+      numberOfProximityPoints = OptionValue[QRMonFindLocalExtrema, "NumberOfProximityPoints" ];
+
+      (* Step 1 *)
+      If[ !( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"], "mean"]] > 0 ),
+        Echo["Calculate (top and bottom) regression quantiles first.", "QRMonFindLocalExtrema:"];
+        Return[$QRMonFailure]
+      ];
+
+      fn = KeySort[KeyDrop[context["regressionFunctions"], "mean"]];
+
+      fn = {fn[[1]], fn[[-1]]};
+
+      data = QRMonTakeData[xs,context];
+
+      (* Step 2 *)
+      extrema1 = Reduce[fn[[1]]'[x] == 0, x, Reals];
+      extrema1 = Cases[{ToRules[extrema1]}, _Rule, Infinity ];
+      signs1 = Sign[fn[[1]]''[#] & /@ extrema1[[All, 2]]];
+      extrema2 = Reduce[fn[[-1]]'[x] == 0, x, Reals];
+      extrema2 = Cases[{ToRules[extrema2]}, _Rule, Infinity ];
+      signs2 = Sign[fn[[-1]]''[#] & /@ extrema2[[All, 2]]];
+
+      (* Step 3 *)
+      minima =
+          Map[{#, fn[[1]][#]} &,
+            Pick[extrema1[[All, 2]], # > 0 & /@ signs1]];
+      maxima =
+          Map[{#, fn[[-1]][#]} &,
+            Pick[extrema2[[All, 2]], # < 0 & /@ signs2]];
+
+      If[ nearestByOutliersQ,
+        nfMin = Nearest[ Select[ data, #[[2]] <= fn[[1]][#[[1]]]& ] ];
+        nfMax = Nearest[ Select[ data, #[[2]] >= fn[[-1]][#[[1]]]& ] ];,
+        (* ELSE *)
+        nfMin = Nearest[data];
+        nfMax = nfMin;
+      ];
+
+      extremaPoints = {
+        Map[ First@SortBy[ nfMin[#, numberOfProximityPoints], #[[-1]]& ]&, minima ],
+        Map[ First@SortBy[ nfMax[#, numberOfProximityPoints], -#[[-1]]& ]&, maxima ]
+      };
+
+      QRMonUnit[ AssociationThread[ { "localMinima", "localMaxima" }, extremaPoints ], context]
+    ];
+
+QRMonFindLocalExtrema[___][__] :=
+    Block[{},
+      Echo["No arguments are expected. The options are \"NearestWithOutliers\" -> (True|False), \"NumberOfProximityPoints\" -> _Integer .",
+        "QRMonFindLocalExtrema:"];
+      $QRMonFailure
+    ];
+
 
 End[] (* `Private` *)
 
