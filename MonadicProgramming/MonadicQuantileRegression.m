@@ -140,6 +140,8 @@ QRMonMovingMedian::usage = "Moving median over a specified number of elements."
 
 QRMonMovingMap::usage = "Moving map with a specified function using a given window specification."
 
+QRMonSimulate::usage = "Simulates a time series using computed regression quantiles."
+
 Begin["`Private`"]
 
 Needs["MathematicaForPredictionUtilities`"]
@@ -296,7 +298,7 @@ QRMonDeleteMissing[xs_, context_] := QRMonDeleteMissing[][xs, context];
 QRMonDeleteMissing[][xs_, context_] :=
     Block[{data},
 
-      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
+      data = QRMonTakeData[xs, context];
 
       If[ data === $QRMonFailure,
         $QRMonFailure,
@@ -326,7 +328,7 @@ QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
 
       axesOpt = OptionValue[QRMonRescale, Axes];
 
-      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
+      data = QRMonTakeData[xs, context];
 
       If[data === $QRMonFailure, Return[$QRMonFailure]];
 
@@ -576,12 +578,12 @@ Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPl
 
 QRMonPlot[QRMonPlot] := $QRMonFailure;
 
-QRMonPlot[x_, context_Association] := QRMonPlot[][x, context];
+QRMonPlot[xs_, context_Association] := QRMonPlot[][xs, context];
 
 QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, res, listPlotFunc = ListPlot, listPlotOpts, plotOpts},
 
-      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
+      data = QRMonTakeData[xs, context];
 
       If[data===$QRMonFailure, Return[$QRMonFailure]];
 
@@ -628,9 +630,9 @@ Options[QRMonDateListPlot] =  Join[ {"Echo"->True}, Options[ListPlot] ];;
 
 QRMonPlot[QRMonDateListPlot] := $QRMonFailure;
 
-QRMonDateListPlot[x_, context_Association] := QRMonPlot["DateListPlot"->True][x, context];
+QRMonDateListPlot[xs_, context_Association] := QRMonPlot["DateListPlot"->True][xs, context];
 
-QRMonDateListPlot[opts:OptionsPattern[]][xs_, context_] := QRMonPlot["DateListPlot"->True, opts][x, context];
+QRMonDateListPlot[opts:OptionsPattern[]][xs_, context_] := QRMonPlot["DateListPlot"->True, opts][xs, context];
 
 QRMonDateListPlot[__][__] := $QRMonFailure;
 
@@ -645,7 +647,7 @@ Options[QRMonErrorPlots] = Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPl
 
 QRMonErrorPlots[$QRMonFailure] := $QRMonFailure;
 
-QRMonErrorPlots[x_, context_Association] := QRMonErrorPlots[][x, context];
+QRMonErrorPlots[xs_, context_Association] := QRMonErrorPlots[][xs, context];
 
 QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
     Block[{res, listPlotFunc = ListPlot, listPlotOpts},
@@ -811,7 +813,7 @@ QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
         Return[$QRMonFailure]
       ];
 
-      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue];
+      data = QRMonTakeData[xs, context];
 
       If[ TrueQ[data === $QRMonFailure],
         Echo["Cannot find data.", "QRMonOutliers:"];
@@ -1098,6 +1100,59 @@ QRMonMovingMap[f_, wspec__ ][xs_, context_] :=
 
 QRMonMovingMap[___][__] := $QRMonFailure;
 
+(**************************************************************)
+(* Simulate                                                   *)
+(**************************************************************)
+
+ClearAll[QRMonSimulate]
+
+QRMonSimulate[$QRMonFailure] := $QRMonFailure;
+
+QRMonSimulate[___][$QRMonFailure] := $QRMonFailure;
+
+QRMonSimulate[xs_, context_Association ] := $QRMonFailure;
+
+QRMonSimulate[nTimePoints_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{r, tPoints},
+
+      r = QRMonBind[ QRMonUnit[xs, context], QRMonTakeData ];
+      r = MinMax @ r[[All,1]];
+
+      tPoints = Range[ r[[1]], r[[2]], (r[[2]] - r[[1]])/nTimePoints ];
+
+      QRMonSimulate[tPoints, opts][xs, context]
+    ];
+
+QRMonSimulate[timePoints:{_?NumericQ..}, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{qValues, qs, tValues, enoughQuantiles },
+
+      If[ ! ( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"],"mean"]] > 1),
+        Echo["Compute two or more regression quantiles first.", "QRMonSimulate:"];
+        Return[$QRMonFailure]
+      ];
+
+      qValues =
+          Fold[
+            QRMonBind,
+            QRMonUnit[xs, context],
+            { QRMonEvaluate[timePoints],
+              QRMonTakeValue }];
+
+      qValues = KeySort @ qValues;
+      qs = Keys[qValues];
+      qValues = Transpose[Values[qValues]];
+
+      tValues =
+          Flatten@Map[RandomReal[RandomChoice[#], 1] &, Differences[qs] -> Partition[#, 2, 1] & /@ qValues];
+
+      QRMonUnit[ Transpose[{timePoints, tValues}], context]
+    ];
+
+QRMonSimulate[___][__] :=
+    Block[{},
+      Echo["The first argument is expected to be an integer or a list of numbers.", "QRMonSimulate:"];
+      $QRMonFailure
+    ];
 
 End[] (* `Private` *)
 
