@@ -301,4 +301,38 @@ VerificationTest[(* 17 *)
 ]
 
 
+VerificationTest[(* 18 *)
+  res =
+      DoubleLongRightArrow[
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, Range[0.2, 0.8, 0.2]],
+        QRMonSimulate[100],
+        QRMonTakeValue
+      ];
+  MatchQ[res, { {_?NumberQ, _?NumberQ} ..} ]
+  ,
+  True
+  ,
+  TestID->"Simulate-1"
+]
+
+
+VerificationTest[(* 19 *)
+  res =
+      Block[{Echo}, Echo =.;
+      DoubleLongRightArrow[
+        QRMonUnit[data],
+        QRMonQuantileRegression[12, {0.5}],
+        QRMonSimulate[100],
+        QRMonTakeValue
+      ]
+      ];
+  MatchQ[res, $QRMonFailure ]
+  ,
+  True
+  ,
+  TestID->"Simulate-2"
+]
+
+
 EndTestSection[]
