@@ -436,6 +436,9 @@ QRMonQuantileRegression[xs_, context_Association] := $QRMonFailure;
 QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), opts:OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
+QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), q_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegression[knots, {q}, opts][xs, context];
+
 QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
@@ -628,7 +631,7 @@ QRMonPlot[__][__] := $QRMonFailure;
 
 ClearAll[QRMonDateListPlot];
 
-Options[QRMonDateListPlot] =  Join[ {"Echo"->True}, Options[ListPlot] ];;
+Options[QRMonDateListPlot] = Options[QRMonPlot];
 
 QRMonPlot[QRMonDateListPlot] := $QRMonFailure;
 
@@ -761,13 +764,13 @@ QRMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
                     Evaluate[plotOpts],
                     PlotRange -> {All, All}, PlotLegends -> False,
                     PlotTheme -> "Scientific",
-                    PlotLabel -> Row[{"CDF at x-value:", #1}],
+                    PlotLabel -> Row[{"CDF at x-value:", Spacer[2], #1}],
                     FrameLabel -> {"y-value", "Probability"},
                     ImageSize -> Small
                   ] &, funcs];
 
       If[ TrueQ[OptionValue[QRMonConditionalCDFPlot, "Echo"]],
-        Echo[ res, If[Length[res]==1, "conditional CDF:", "conditional CDF's:"] ]
+        Echo[ res, If[Length[res]==1, "Conditional CDF:", "Conditional CDF's:"] ]
       ];
 
       QRMonUnit[res, context]
