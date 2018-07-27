@@ -120,6 +120,8 @@ QRMonPlot::usage = "Plots the data points or the data points together with the f
 
 QRMonDateListPlot::usage = "Plots the data points or the data points together with the found regression curves."
 
+QRMonErrors::usage = "Relative approximation errors for each regression quantile."
+
 QRMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
 
 QRMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
@@ -335,7 +337,7 @@ QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
       If[data === $QRMonFailure, Return[$QRMonFailure]];
 
       Which[
-        TrueQ[axesOpt] ||
+        TrueQ[axesOpt] || TrueQ[axesOpt == {True, True}] ||
             TrueQ[ ToLowerCase[axesOpt] == "both" || ToLowerCase[axesOpt] == "path" || axesOpt === All ] ||
             TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x","y","time"}]] == 2 ] ||
             TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x","value","time"}]] == 2 ],
@@ -429,6 +431,11 @@ ClearAll[QRMonQuantileRegression];
 
 Options[QRMonQuantileRegression] = Options[QuantileRegression];
 
+Options[QRMonQuantileRegression] =
+    ReplaceAll[
+      Options[QRMonQuantileRegression],
+      HoldPattern[Method->_] -> ( Method -> {LinearProgramming, Method -> "CLP"} ) ];
+
 QRMonQuantileRegression[$QRMonFailure] := $QRMonFailure;
 
 QRMonQuantileRegression[xs_, context_Association] := $QRMonFailure;
@@ -479,6 +486,11 @@ QRMonRegression = QRMonQuantileRegression;
 ClearAll[QRMonQuantileRegressionFit];
 
 Options[QRMonQuantileRegressionFit] = Options[QuantileRegressionFit];
+
+Options[QRMonQuantileRegressionFit] =
+    ReplaceAll[
+      Options[QRMonQuantileRegressionFit],
+      HoldPattern[Method->_] -> ( Method -> {LinearProgramming, Method -> "CLP"} ) ];
 
 QRMonQuantileRegressionFit[$QRMonFailure] := $QRMonFailure;
 
@@ -643,6 +655,34 @@ QRMonDateListPlot[__][__] := $QRMonFailure;
 
 
 (**************************************************************)
+(* Errors                                                     *)
+(**************************************************************)
+
+ClearAll[QRMonErrors]
+
+QRMonErrors[$QRMonFailure] := $QRMonFailure;
+
+QRMonErrors[xs_, context_Association] := QRMonErrors[][xs, context];
+
+QRMonErrors[][xs_, context_] :=
+    Block[{res},
+
+      res =
+          Association @
+              KeyValueMap[
+                Function[{k, f},
+                  k -> Map[ Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/p[[2]]}], context["data"] ]
+                ],
+                context["regressionFunctions"]
+              ];
+
+      QRMonUnit[res, context]
+    ];
+
+QRMonErrors[__][__] := $QRMonFailure;
+
+
+(**************************************************************)
 (* Error plots                                                *)
 (**************************************************************)
 
@@ -661,6 +701,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
 
       listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
 
+      (* The error values can be reused from QRMonErrors, but it seems easier to just computed them here. *)
       res =
           KeyValueMap[
             Function[{k, f},
@@ -712,7 +753,7 @@ QRMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
         KeyExistsQ[context, "regressionFunctions"],
-        QRMonUnit[ Association[ Map[ #->CDFEstimate[ context["regressionFunctions"], # ] &, ts] ], context ],
+        QRMonUnit[ Association[ Map[ #->CDFEstimate[ KeyDrop[context["regressionFunctions"], "mean"], # ] &, ts] ], context ],
 
         True,
         Echo["Cannot find regression quantiles.", "QRMonCDFApproximation:"];
