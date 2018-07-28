@@ -90,7 +90,7 @@ QRMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFu
 
 QRMonTakeOutliers::usage = "Gives the value of the key \"outliers\" from the monad context."
 
-QRMonTakeOutlierRegressionFunctions =  "Gives the value of the key \"outlierRegressionFunctions\" from the monad context."
+QRMonTakeOutlierRegressionFunctions = "Gives the value of the key \"outlierRegressionFunctions\" from the monad context."
 
 QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
@@ -614,7 +614,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              listPlotFunc[data, listPlotOpts, PlotStyle -> Gray, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"],
+              listPlotFunc[data, listPlotOpts, Joined->False, PlotStyle -> Gray, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 Evaluate[plotOpts],
                 PerformanceGoal -> "Speed",
@@ -623,7 +623,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
             }],
 
             True,
-            listPlotFunc[data, listPlotOpts, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"]
+            listPlotFunc[data, listPlotOpts, Joined->False, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"]
           ];
 
 
@@ -709,7 +709,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
                   listPlotFunc[
                     Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/p[[2]]}], context["data"] ],
                     listPlotOpts,
-                    PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
+                    Joined->False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
             ],
             context["regressionFunctions"]
           ];
@@ -825,20 +825,20 @@ QRMonConditionalCDFPlot[__][__] :=
 
 
 (**************************************************************)
-(* Outlier finding                                            *)
+(* Outlier finding (first)                                    *)
 (**************************************************************)
 
-ClearAll[QRMonOutliers]
+ClearAll[QRMonOutliersFirst]
 
-Options[QRMonOutliers] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
+Options[QRMonOutliersFirst] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
 
-QRMonOutliers[$QRMonFailure] := $QRMonFailure;
+QRMonOutliersFirst[$QRMonFailure] := $QRMonFailure;
 
-QRMonOutliers[__][$QRMonFailure] := $QRMonFailure;
+QRMonOutliersFirst[__][$QRMonFailure] := $QRMonFailure;
 
-QRMonOutliers[xs_, context_Association] := QRMonOutliers[][xs, context];
+QRMonOutliersFirst[xs_, context_Association] := QRMonOutliersFirst[][xs, context];
 
-QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
+QRMonOutliersFirst[opts:OptionsPattern[]][xs_, context_] :=
     Block[{knots, tq, bq, tfunc, bfunc, outliers, data},
 
       knots = OptionValue[ "Knots" ];
@@ -847,7 +847,7 @@ QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
         knots = 12,
 
         ! ( IntegerQ[knots] || VectorQ[knots, NumericQ]),
-        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "QRMonOutliers:"];
+        Echo["The value of the options \"Knots\" is expected to be an integer or a list of numbers.", "QRMonOutliersFirst:"];
         Return[$QRMonFailure]
       ];
 
@@ -855,7 +855,53 @@ QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
       bq = OptionValue[ "BottomOutliersQuantile" ];
       Which[
         ! ( NumberQ[tq] && 0 <= tq <= 1 && NumberQ[bq] && 0 <= bq <= 1  ),
-        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "QRMonOutliers:"];
+        Echo["The values of the options \"TopOutliersQuantile\" and \"BottomOutliersQuantile\" are expected to be numbers between 0 and 1.", "QRMonOutliersFirst:"];
+        Return[$QRMonFailure]
+      ];
+
+      data = QRMonTakeData[xs, context];
+
+      If[ TrueQ[data === $QRMonFailure],
+        Echo["Cannot find data.", "QRMonOutliersFirst:"];
+        Return[$QRMonFailure]
+      ];
+
+      {bfunc, tfunc} = QuantileRegression[ data, knots, {bq, tq}, Method -> {LinearProgramming, Method -> "CLP"} ];
+
+      outliers =
+          <| "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&],
+             "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&] |>;
+
+      QRMonUnit[
+        outliers,
+        Join[context, <| "data"-> data, "outliers"->outliers, "outlierRegressionFunctions" -> <| bq->bfunc, tq->tfunc|> |> ]
+      ]
+    ];
+
+QRMonOutliersFirst[__][__] :=
+    Block[{},
+      Echo[StringJoin[ "Options are expected as arguments:", ToString[Options[QRMonOutliersFirst]], "."], "QRMonOutliersFirst:"];
+      $QRMonFailure
+    ];
+
+
+(**************************************************************)
+(* Outlier finding                                            *)
+(**************************************************************)
+
+ClearAll[QRMonOutliers]
+
+QRMonOutliers[$QRMonFailure] := $QRMonFailure;
+
+QRMonOutliers[__][$QRMonFailure] := $QRMonFailure;
+
+QRMonOutliers[xs_, context_Association] := QRMonOutliers[][xs, context];
+
+QRMonOutliers[][xs_, context_] :=
+    Block[{knots, fn, tq, bq, tfunc, bfunc, outliers, data},
+
+      If[ !( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"], "mean"]] > 0 ),
+        Echo["Calculate (top and bottom) regression quantiles first.", "QRMonOutliers:"];
         Return[$QRMonFailure]
       ];
 
@@ -866,24 +912,38 @@ QRMonOutliers[opts:OptionsPattern[]][xs_, context_] :=
         Return[$QRMonFailure]
       ];
 
-      {bfunc, tfunc} = QuantileRegression[ data, knots, {bq, tq} ];
+      fn = KeySort[KeyDrop[context["regressionFunctions"], "mean"]];
+
+      {bq, tq} = Keys[fn][[{1, -1}]];
+
+      {bfunc, tfunc} = Values[fn][[{1, -1}]];
 
       outliers =
-          <| "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&],
-             "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>;
+          Which[
+            Length[fn] == 1 && bq < 0.5,
+            (* One regression quantile found for bottom outliers. *)
+            <| "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&] |>,
+
+            Length[fn] == 1 && tq > 0.5,
+            (* One regression quantile found for top outliers. *)
+            <| "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&] |>,
+
+            True,
+            <| "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&],
+              "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&] |>
+          ];
 
       QRMonUnit[
         outliers,
-        Join[context, <| "data"-> data, "outliers"->outliers, "outlierRegressionFunctions" -> <| tq->tfunc, bq->bfunc |> |> ]
+        Join[context, <| "data"-> data, "outliers"->outliers, "outlierRegressionFunctions" -> <| bq->bfunc, tq->tfunc |> |> ]
       ]
     ];
 
 QRMonOutliers[__][__] :=
     Block[{},
-      Echo[StringJoin[ "Options are expected as arguments:", ToString[Options[QRMonOutliers]], "."], "QRMonOutliers:"];
+      Echo[StringJoin[ "No arguments and options are expected."], "QRMonOutliers:"];
       $QRMonFailure
     ];
-
 
 (**************************************************************)
 (* Outliers plot                                              *)
@@ -923,7 +983,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
             listPlotFunc[Join[{#data}, Values[#outliers]] /. {}->Nothing,
               listPlotOpts,
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
-              PlotRange->All, ImageSize -> Medium, PlotTheme -> "Scientific"
+              Joined->False, PlotRange->All, ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
