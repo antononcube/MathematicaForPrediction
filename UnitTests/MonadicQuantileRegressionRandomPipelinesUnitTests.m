@@ -68,9 +68,9 @@
     That pattern catches output that correspond to:
 
     1. $QRMonFailure,
-    2. ,
-    3. ,
-    4. summaries obtained with RecordsSummary.
+    2. outliers association (with keys "bottomOutliers" and "topOutliers"),
+    3. regression functions association (with keys that are quantile numbers or "mean"),
+    4. data arrays or time series (obtained with MovingAverage, etc.).
 
     That list can be derived by observing the stages-before-the-last in MakeQRMonRandomPipelines.
 
@@ -138,11 +138,11 @@ MakeQRMonRandomPipelines[{distData_?ArrayQ, tsData:(_TimeSeries|_TemporalData)},
         QRMonQuantileRegression[],
         QRMonQuantileRegression[6,RandomReal[{0,1},RandomInteger[{1,6}]]],
         QRMonQuantileRegressionFit[6],
-        QRMonQuantileRegressionFit[{1,x}],
-        QRMonQuantileRegressionFit[{1,x},x],
+        QRMonQuantileRegressionFit[{1, Global`x}],
+        QRMonQuantileRegressionFit[{1, Global`x}, Global`x],
         QRMonLeastSquaresFit[6],
-        QRMonLeastSquaresFit[{1,x}],
-        QRMonLeastSquaresFit[{1,x},x],
+        QRMonLeastSquaresFit[{1, Global`x}],
+        QRMonLeastSquaresFit[{1, Global`x}, Global`x],
         QRMonQuantileRegression[6, Method -> {LinearProgramming, Method -> Automatic}],
         QRMonQunalileRegeression[6, InterpolationOrder->1]
       };
@@ -161,7 +161,7 @@ MakeQRMonRandomPipelines[{distData_?ArrayQ, tsData:(_TimeSeries|_TemporalData)},
       stage3a = {
         QRMonMovingAverage[RandomInteger[{0,10}]],
         QRMonMovingMedian[RandomInteger[{0,10}]],
-        QRMonMovingMap[RandomReal[{0,0.2}]]
+        QRMonMovingMap[Mean, RandomReal[{0,0.2}]]
       };
 
       stage4a = {QRMonTakeValue};
@@ -191,16 +191,16 @@ TestRunQRMonPipelines[ pipelines_, opts:OptionsPattern[] ] :=
         testPatt =
             Which[
               MatchQ[ #1[[1]], QRMon[None, <||>]] && MatchQ[ #1[[-1]], _QRMonTakeRegressionFunctions],
+              $QRMonFailure,
+
+              MatchQ[ #1[[-1]], QRMonTakeOutliers ],
+              _Missing | Association[(_String -> {{_?NumberQ,_?NumberQ} ..}) .. ],
+
+              MatchQ[ #1[[-1]], QRMonTakeRegressionFunctions],
               Association[( (_String|_?NumberQ) -> _) .. ],
 
-              MatchQ[ #1[[-1]], _QRMonTakeOutliers ],
-              Association[(_String -> {{_?NumberQ,_?NumberQ} ..}) .. ],
-
-              MatchQ[ #1[[-1]], _QRMonTakeRegressionFunctions],
-              Association[( (_String|_?NumberQ) -> _) .. ],
-
-              MatchQ[ #1[[-1]], _QRMonTakeValue ],
-              None | _?ArrayQ | _Association,
+              MatchQ[ #1[[-1]], QRMonTakeValue ],
+              None | _?ArrayQ | _TimeSeries | _TemporalData | _Association,
 
               True,
               $QRMonFailure
