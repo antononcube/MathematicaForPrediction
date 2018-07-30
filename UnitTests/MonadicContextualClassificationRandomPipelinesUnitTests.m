@@ -37,9 +37,9 @@
 (* :Date: 2018-05-11 *)
 
 (* :Package Version: 1.0 *)
-(* :Mathematica Version: *)
+(* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
-(* :Keywords: *)
+(* :Keywords: unit test, randomly generated, classification *)
 (* :Discussion:
 
     Generation and execution of ClCon random test pipelines.

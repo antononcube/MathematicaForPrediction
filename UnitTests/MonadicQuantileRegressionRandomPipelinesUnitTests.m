@@ -39,7 +39,7 @@
 (* :Package Version: 1.0 *)
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
-(* :Keywords: *)
+(* :Keywords: unit test, randomly generated, regression *)
 (* :Discussion:
 
     Generation and execution of QRMon random test pipelines.
