@@ -31,15 +31,15 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: MonadicContextualClassification-Random-Pipelines-Unit-Tests *)
-(* :Context: MonadicContextualClassification-Random-Pipelines-Unit-Tests` *)
+(* :Title: MonadicQuantileRegressionRandomPipelinesUnitTests *)
+(* :Context: MonadicQuantileRegressionRandomPipelinesUnitTests` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-07-29 *)
 
 (* :Package Version: 1.0 *)
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
-(* :Keywords: unit test, randomly generated, regression *)
+(* :Keywords: unit test, randomly generated, quantile regression, least squares regression *)
 (* :Discussion:
 
     Generation and execution of QRMon random test pipelines.

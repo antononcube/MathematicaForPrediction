@@ -31,8 +31,8 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: MonadicContextualClassification-Random-Pipelines-Unit-Tests *)
-(* :Context: MonadicContextualClassification-Random-Pipelines-Unit-Tests` *)
+(* :Title: MonadicContextualClassificationRandomPipelinesUnitTests *)
+(* :Context: MonadicContextualClassificationRandomPipelinesUnitTests` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-05-11 *)
 
