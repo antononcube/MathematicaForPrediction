@@ -90,7 +90,11 @@ QRMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFu
 
 QRMonTakeOutliers::usage = "Gives the value of the key \"outliers\" from the monad context."
 
-QRMonTakeOutlierRegressionFunctions = "Gives the value of the key \"outlierRegressionFunctions\" from the monad context."
+QRMonDropData::usage = "Drops from the context the element with key \"data\"."
+
+QRMonDropRegressionFunctions::usage = "Drops from the context the element with key \"regressionFunctions\"."
+
+QRMonDropOutliers::usage = "Drops from the context the element with key \"outliers\"."
 
 QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
@@ -208,12 +212,32 @@ QRMonTakeOutliers[][xs_, context_] := context["outliers"];
 QRMonTakeOutliers[__][___] := $QRMonFailure;
 
 
-ClearAll[QRMonTakeOutlierRegressionFunctions]
-QRMonTakeOutlierRegressionFunctions[$QRMonFailure] := $QRMonFailure;
-QRMonTakeOutlierRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
-QRMonTakeOutlierRegressionFunctions[xs_, context_] := context["outlierRegressionFunctions"];
-QRMonTakeOutlierRegressionFunctions[][xs_, context_] := context["outlierRegressionFunctions"];
-QRMonTakeOutlierRegressionFunctions[__][___] := $QRMonFailure;
+(**************************************************************)
+(* Dropping data                                              *)
+(**************************************************************)
+
+ClearAll[QRMonDropData]
+QRMonDropData[$QRMonFailure] := $QRMonFailure;
+QRMonDropData[][$QRMonFailure] := $QRMonFailure;
+QRMonDropData[xs_, context_] := QRMonDropData[][xs, context];
+QRMonDropData[][xs_, context_] := QRMonDropFromContext["data"][xs, context];
+QRMonDropData[__][___] := $QRMonFailure;
+
+
+ClearAll[QRMonDropRegressionFunctions]
+QRMonDropRegressionFunctions[$QRMonFailure] := $QRMonFailure;
+QRMonDropRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
+QRMonDropRegressionFunctions[xs_, context_] := QRMonDropRegressionFunctions[][xs, context];
+QRMonDropRegressionFunctions[][xs_, context_] := QRMonDropFromContext["regressionFunctions"][xs, context];
+QRMonDropRegressionFunctions[__][___] := $QRMonFailure;
+
+
+ClearAll[QRMonDropOutliers]
+QRMonDropOutliers[$QRMonFailure] := $QRMonFailure;
+QRMonDropOutliers[][$QRMonFailure] := $QRMonFailure;
+QRMonDropOutliers[xs_, context_] := QRMonDropOutliers[][xs, context];
+QRMonDropOutliers[][xs_, context_] := QRMonDropFromContext["outliers"][xs, context];
+QRMonDropOutliers[__][___] := $QRMonFailure;
 
 
 (**************************************************************)
