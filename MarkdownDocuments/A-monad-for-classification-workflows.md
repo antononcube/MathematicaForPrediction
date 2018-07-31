@@ -581,7 +581,7 @@ Using the option "ClassLabels" we can focus on specific class labels:
 
 ### Setters and takers
 
-The values from the monad context can be set or obtained with the corresponding "setters" and "takers" functions as summarized in previous section.
+The values from the monad context can be set or obtained with the corresponding "setter" and "taker" functions as summarized in a previous section.
 
 For example:
 
