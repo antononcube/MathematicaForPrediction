@@ -44,7 +44,7 @@ needed to utilize it.
 - The section "Example use cases" gives several more elaborated examples of `ClCon` that have "real life" flavor.   
 (But still didactic and concise enough.)
 
-- The section "Unit test" describes the tests used in the development of the `ClCon` monad.    
+- The section "Unit tests" describes the tests used in the development of the `ClCon` monad.    
 (The random pipelines unit tests are especially interesting.)
 
 - The section "Future plans" outlines future directions of development.    
