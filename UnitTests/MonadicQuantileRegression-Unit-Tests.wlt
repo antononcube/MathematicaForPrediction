@@ -177,6 +177,7 @@ VerificationTest[(* 10 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
+        QRMonQuantileRegression[12, {0.1,0.9}],
         QRMonOutliers,
         QRMonTakeValue
       ];
@@ -192,12 +193,13 @@ VerificationTest[(* 11 *)
   res =
       DoubleLongRightArrow[
         QRMonUnit[data],
-        QRMonOutliers["Knots" -> 6, "TopOutliersQuantile" -> 0.98],
+        QRMonQuantileRegression[6, 0.9],
+        QRMonOutliers[],
         QRMonTakeValue
       ];
   MatrixQ[#, NumberQ] & /@ KeyTake[res, {"topOutliers", "bottomOutliers"}]
   ,
-  <|"topOutliers" -> True, "bottomOutliers" -> True|>
+  <|"topOutliers" -> True|>
   ,
   TestID->"Outliers-2"
 ]
