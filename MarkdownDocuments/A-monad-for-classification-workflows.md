@@ -755,7 +755,7 @@ Generate pipelines:
 
     (* 300 *)
 
-Here is sample of the generated pipelines:
+Here is a sample of the generated pipelines:
 
     Block[{DoubleLongRightArrow, pipelines = RandomSample[pipelines, 6]}, 
      Clear[DoubleLongRightArrow];
