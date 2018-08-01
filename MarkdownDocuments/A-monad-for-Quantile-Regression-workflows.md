@@ -324,6 +324,8 @@ The monad head is QRMon. Anything wrapped in `QRMon` can serve as monad's pipeli
 
     QRMon[{{1, 223}, {2, 323}}, <||>]⟹QRMonEchoDataSummary;
 
+![The-monad-head-output](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/The-monad-head-output.png)
+
 ### Lifting data to the monad
 
 The function lifting the data into the monad `QRMon` is QRMonUnit.
@@ -332,7 +334,11 @@ The lifting to the monad marks the beginning of the monadic pipeline. It can be 
 
     QRMonUnit[distData]⟹QRMonEchoDataSummary;
 
+![Lifting-data-to-the-monad-output](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/Lifting-data-to-the-monad-output.png)
+
     QRMonUnit[]⟹QRMonSetData[distData]⟹QRMonEchoDataSummary;
+
+![Lifting-data-to-the-monad-output](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/Lifting-data-to-the-monad-output.png)
 
 (See the sub-section "Setters, droppers, and takers" for more details of setting and taking values in `QRMon` contexts.)
 
@@ -361,7 +367,9 @@ This computes quantile regression with B-spline basis over $12$ regularly spaced
 The monad function QRMonQuantileRegression has the same options as QuantileRegression. (The default value for option Method is different, since using "CLP" is generally faster.)
 
     Options[QRMonQuantileRegression]
-
+    
+    (* {InterpolationOrder -> 3, Method -> {LinearProgramming, Method -> "CLP"}} *)
+    
 Let us compute regression using a list of particular knots, specified quantiles, and the method "InteriorPoint" (instead of the Linear Programming library [CLP)](https://projects.coin-or.org/Clp):
 
     p =
@@ -513,10 +521,14 @@ The function QRMonOutliers puts in the context values for the keys "outliers" an
 
     Keys[p⟹QRMonTakeContext]
 
+    (* {"data", "regressionFunctions", "outliers", "outlierRegressionFunctions"} *)
+    
 Here are the corresponding quantiles of the plot above:
 
     Keys[p⟹QRMonTakeOutlierRegressionFunctions]
 
+    (* {0.02, 0.98} *)
+    
 The control of the outliers computation is done though the arguments and options of QRMonQuantileRegression (or the rest of the regression calculation functions.)
 
 If only one regression quantile is found in the context and the corresponding quantile is less than $0.5$ then QRMonOutliers finds only bottom outliers. If only one regression quantile is found in the context and the corresponding quantile is greater than $0.5$ then QRMonOutliers finds only top outliers. 
