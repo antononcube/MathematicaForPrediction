@@ -22,7 +22,7 @@ The data for this document is read from WL's repository or created ad-hoc.
 
 The monadic programming design is used as a [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). The QRegMon monad can be also seen as a [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) for the specification and programming of machine learning classification workflows.  
 
-Here is an example of using the `QRMon` monad over heteroscedastic data::
+Here is an example of using the QRMon monad over heteroscedastic data::
 
 ![QRMon-introduction-monad-pipeline-example-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/QRMon-introduction-monad-pipeline-example-table.png)
 
@@ -30,7 +30,7 @@ Here is an example of using the `QRMon` monad over heteroscedastic data::
 
 The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
 
-As it was mentioned above the monad `QRMon` can be seen as a DSL. Because of this the monad pipelines made with QRMon are sometimes called "specifications".
+As it was mentioned above the monad QRMon can be seen as a DSL. Because of this the monad pipelines made with QRMon are sometimes called "specifications".
 
 **Remark:** With "*regression quantile*" we mean "a curve or function that is computed with Quantile Regression".
 
@@ -56,13 +56,13 @@ The document has the following structure.
 
       + (The most interesting and important one is the ["conversational agent"](https://github.com/antononcube/ConversationalAgents/tree/master/Projects/TimeSeriesWorkflowsAgent) direction.)
 
-   + The section "Implementation notes" just says that `QRMon`'s development process and this document follow the ones of the classifications workflows monad `ClCon`, [[AA6](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/)].
+   + The section "Implementation notes" just says that QRMon's development process and this document follow the ones of the classifications workflows monad `ClCon`, [[AA6](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/)].
 
 **Remark:** One can read only the sections "Introduction", "Design consideration", "Monad design", and "QRMon overview". That set of sections provide a fairly good, programming language agnostic exposition of the substance and novel ideas of this document.
 
 The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
 
-As it was mentioned above the monad `QRMon` can be seen as a DSL. Because of this the monad pipelines made with `QRMon` are sometimes called "specifications".
+As it was mentioned above the monad QRMon can be seen as a DSL. Because of this the monad pipelines made with QRMon are sometimes called "specifications".
 
 **Remark:** With "*regression quantile*" we mean "a curve or function that is computed with Quantile Regression".
 
@@ -76,11 +76,11 @@ The document has the following structure.
 
    + The sections "Design consideration" and "Monad design" provide motivation and design decisions rationale.
 
-   + The sections "QRMon overview" and "Monad elements" provide technical description of the `QRMon` monad needed to utilize it.
+   + The sections "QRMon overview" and "Monad elements" provide technical description of the QRMon monad needed to utilize it.
 
       + (Using a fair amount of examples.)
 
-   + The section "Unit tests" describes the tests used in the development of the `QRMon` monad.
+   + The section "Unit tests" describes the tests used in the development of the QRMon monad.
 
       + (The random pipelines unit tests are especially interesting.)
 
@@ -215,7 +215,7 @@ combining in flexible ways the possible actions that can work on a particular ty
 ## Monad design
 
 The monad we consider is designed to speed-up the programming of quantile regression workflows outlined in the previous section. 
-The monad is named `QRMon` for "**Q**uantile **R**egression **Mon**ad".
+The monad is named QRMon for "**Q**uantile **R**egression **Mon**ad".
 
 We want to be able to construct monad pipelines of the general form:
 
@@ -231,7 +231,7 @@ so the monad pipeline form (1) has the following more specific form:
 
 This means that some monad operations will not just change the pipeline value but they will also change the pipeline context.
 
-In the monad pipelines of `QRMon` we store different objects in the contexts for at least one of the following two reasons.
+In the monad pipelines of QRMon we store different objects in the contexts for at least one of the following two reasons.
 
    1. The object will be needed later on in the pipeline, or
 
@@ -255,9 +255,9 @@ Let us list the desired properties of the monad.
 
    + It is easy to plot different combinations of data, regression functions, outliers, approximation errors, etc.
 
-The `QRMon` components and their interactions are fairly simple.
+The QRMon components and their interactions are fairly simple.
 
-The main `QRMon` operations implicitly put in the context or utilize from the context the following objects: 
+The main QRMon operations implicitly put in the context or utilize from the context the following objects: 
 
    + (time series) data, 
 
@@ -265,7 +265,7 @@ The main `QRMon` operations implicitly put in the context or utilize from the co
 
    + outliers and outlier regression functions.
 
-Note the that the monadic set of types of `QRMon` pipeline values is fairly heterogenous and certain awareness of "the current pipeline value" is assumed when composing `QRMon` pipelines.
+Note the that the monadic set of types of QRMon pipeline values is fairly heterogenous and certain awareness of "the current pipeline value" is assumed when composing QRMon pipelines.
 
 Obviously, we can put in the context any object through the generic operations of the State monad of the package ["StateMonadGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)].
 
@@ -273,20 +273,20 @@ Obviously, we can put in the context any object through the generic operations o
 
 When using a monad we lift certain data into the "monad space", using monad's operations we navigate computations in that space, and at some point we take results from it. 
 
-With the approach taken in this document the "lifting" into the `QRMon` monad is done with the function QRMonUnit. Results from the monad can be obtained with the functions QRMonTakeValue, QRMonContext, or with the other `QRMon` functions with the prefix "QRMonTake" (see below.)
+With the approach taken in this document the "lifting" into the QRMon monad is done with the function QRMonUnit. Results from the monad can be obtained with the functions QRMonTakeValue, QRMonContext, or with the other QRMon functions with the prefix "QRMonTake" (see below.)
 
-Here is a corresponding diagram of a generic computation with the `QRMon` monad:
+Here is a corresponding diagram of a generic computation with the QRMon monad:
 
 ![QRMon-pipeline](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/QRMon-pipeline.jpg)
 
 
 **Remark:** It is a good idea to compare the diagram with formulas (1) and (2).
 
-Let us examine a concrete `QRMon` pipeline that corresponds to the diagram above. In the following table each pipeline operation is combined together with a short explanation and the context keys after its execution.
+Let us examine a concrete QRMon pipeline that corresponds to the diagram above. In the following table each pipeline operation is combined together with a short explanation and the context keys after its execution.
 
 Here is the output of the pipeline:
 
-The `QRMon` functions are separated into four groups:
+The QRMon functions are separated into four groups:
 
    + operations,
 
@@ -296,11 +296,11 @@ The `QRMon` functions are separated into four groups:
 
    + State Monad generic functions.
 
-An overview of the those functions is given in the tables in next two sub-sections. The next section, "Monad elements", gives details and examples for the usage of the `QRMon` operations.
+An overview of the those functions is given in the tables in next two sub-sections. The next section, "Monad elements", gives details and examples for the usage of the QRMon operations.
 
 ### Monad functions interaction with the pipeline value and context
 
-The following table gives an overview the interaction of the `QRMon` monad functions with the pipeline value and context.
+The following table gives an overview the interaction of the QRMon monad functions with the pipeline value and context.
 
 ![QRMon-monad-functions-overview-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/QRMon-monad-functions-overview-table.png)
 
@@ -310,17 +310,17 @@ The following table shows the functions that are function synonyms or short-cuts
 
 ### State monad functions
 
-Here are the `QRMon` State Monad functions (generated using the prefix "QRMon", [AAp1, AA1]):
+Here are the QRMon State Monad functions (generated using the prefix "QRMon", [AAp1, AA1]):
 
 ![QRMon-StMon-functions-overview-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/QRMon-StMon-functions-overview-table.png)
 
 ## Monad elements
 
-In this section we show that `QRMon` has all of the properties listed in the previous section.
+In this section we show that QRMon has all of the properties listed in the previous section.
 
 ### The monad head
 
-The monad head is QRMon. Anything wrapped in `QRMon` can serve as monad's pipeline value. It is better though to use the constructor QRMonUnit. (Which adheres to the definition in [Wk1].)
+The monad head is QRMon. Anything wrapped in QRMon can serve as monad's pipeline value. It is better though to use the constructor QRMonUnit. (Which adheres to the definition in [Wk1].)
 
     QRMon[{{1, 223}, {2, 323}}, <||>]⟹QRMonEchoDataSummary;
 
@@ -328,7 +328,7 @@ The monad head is QRMon. Anything wrapped in `QRMon` can serve as monad's pipeli
 
 ### Lifting data to the monad
 
-The function lifting the data into the monad `QRMon` is QRMonUnit.
+The function lifting the data into the monad QRMon is QRMonUnit.
 
 The lifting to the monad marks the beginning of the monadic pipeline. It can be done with data or without data. Examples follow.
 
@@ -340,7 +340,7 @@ The lifting to the monad marks the beginning of the monadic pipeline. It can be 
 
 ![Lifting-data-to-the-monad-output](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/Lifting-data-to-the-monad-output.png)
 
-(See the sub-section "Setters, droppers, and takers" for more details of setting and taking values in `QRMon` contexts.)
+(See the sub-section "Setters, droppers, and takers" for more details of setting and taking values in QRMon contexts.)
 
 Currently the monad can deal with data in the following forms: 
 
@@ -610,7 +610,7 @@ We might want to:
 
    + compare with regression curves over the original data.
 
-For these reasons `QRMon` has the functions QRMonMovingAverage, QRMonMovingMedian, and QRMonMovingMap that correspond to the built-in functions [MovingAverage](https://reference.wolfram.com/language/ref/MovingAverage.html), [MovingMedian](https://reference.wolfram.com/language/ref/MovingMedian.html), and [MovingMap](https://reference.wolfram.com/language/ref/MovingMap.html).
+For these reasons QRMon has the functions QRMonMovingAverage, QRMonMovingMedian, and QRMonMovingMap that correspond to the built-in functions [MovingAverage](https://reference.wolfram.com/language/ref/MovingAverage.html), [MovingMedian](https://reference.wolfram.com/language/ref/MovingMedian.html), and [MovingMap](https://reference.wolfram.com/language/ref/MovingMap.html).
 
 Here is an example:
 
@@ -653,7 +653,7 @@ The formulation of the problem hints to an (almost) straightforward implementati
 ### Finding local extrema in noisy data
 
 Using regression fitting -- and Quantile Regression in particular -- we can easily construct semi-symbolic algorithms for finding local extrema in noisy time series data; see [[AA5](https://mathematicaforprediction.wordpress.com/2015/09/27/finding-local-extrema-in-noisy-data-using-quantile-regression/)]. 
-The `QRMon` function with such an algorithm is QRMonFindLocalExtrema.
+The QRMon function with such an algorithm is QRMonFindLocalExtrema.
 
 In brief, the algorithm steps are as follows. (For more details see [[AA5](https://mathematicaforprediction.wordpress.com/2015/09/27/finding-local-extrema-in-noisy-data-using-quantile-regression/)].)
 
@@ -719,7 +719,7 @@ Here is an example of the "data dropper" QRMonDropData:
 
 ## Unit tests
 
-The development of `QRMon` was done with two types of unit tests: (i) directly specified tests, [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegression-Unit-Tests.wlt)], and (ii) tests based on randomly generated pipelines, [[AA8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegressionRandomPipelinesUnitTests.m)].
+The development of QRMon was done with two types of unit tests: (i) directly specified tests, [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegression-Unit-Tests.wlt)], and (ii) tests based on randomly generated pipelines, [[AA8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegressionRandomPipelinesUnitTests.m)].
 
 The unit test package should be further extended in order to provide better coverage of the functionalities and illustrate -- and postulate -- pipeline behavior.
 
@@ -747,10 +747,10 @@ The natural language derived test ID's should give a fairly good idea of the fun
 
 ### Random pipelines tests
 
-Since the monad `QRMon` is a DSL it is natural to test it with a large number of randomly generated "sentences" of that DSL. 
-For the `QRMon` DSL the sentences are `QRMon` pipelines. 
+Since the monad QRMon is a DSL it is natural to test it with a large number of randomly generated "sentences" of that DSL. 
+For the QRMon DSL the sentences are QRMon pipelines. 
 The package ["MonadicQuantileRegressionRandomPipelinesUnitTests.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegressionRandomPipelinesUnitTests.m), [[AAp8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegressionRandomPipelinesUnitTests.m)], 
-has functions for generation of `QRMon` random pipelines and running them as verification tests. A short example follows.
+has functions for generation of QRMon random pipelines and running them as verification tests. A short example follows.
 
 Generate pipelines:
 
@@ -800,11 +800,11 @@ A list of possible, additional workflow operations and improvements follows.
 
    + If the time series is represented as a sequence of categorical values, then the time series simulation can use Bayesian probabilities derived from sub-sequences. 
 
-      + `QRMon` already has functions that facilitate that, QRMonGridSequence and QRMonBandsSequence.
+      + QRMon already has functions that facilitate that, QRMonGridSequence and QRMonBandsSequence.
 
 ### Conversational agent
 
-Using the packages [AAp10, AAp11] we can generate `QRMon` pipelines with natural commands. The plan is to develop and document those functionalities further.
+Using the packages [AAp10, AAp11] we can generate QRMon pipelines with natural commands. The plan is to develop and document those functionalities further.
 
 Here is an example of a pipeline constructed with natural language commands:
 
@@ -817,9 +817,9 @@ Here is an example of a pipeline constructed with natural language commands:
 
 ## Implementation notes
 
-The implementation methodology of the `QRMon` monad packages [AAp3, AAp8] followed the methodology created for the ClCon monad package [AAp9, AA6]. Similarly, this document closely follows the structure and exposition of the ClCon monad document ["A monad for classification workflows"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-classification-workflows.md), [AA6].
+The implementation methodology of the QRMon monad packages [AAp3, AAp8] followed the methodology created for the ClCon monad package [AAp9, AA6]. Similarly, this document closely follows the structure and exposition of the ClCon monad document ["A monad for classification workflows"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-classification-workflows.md), [AA6].
 
-A lot of the functionalities and signatures of `QRMon` were designed and programed through considerations of natural language commands specifications given to a specialized conversational agent. (As discussed in the previous section.)
+A lot of the functionalities and signatures of QRMon were designed and programed through considerations of natural language commands specifications given to a specialized conversational agent. (As discussed in the previous section.)
 
 ## References
 
