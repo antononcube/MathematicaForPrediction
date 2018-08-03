@@ -36,8 +36,8 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-06-03 *)
 
-(* :Package Version: 0.1 *)
-(* :Mathematica Version: *)
+(* :Package Version: 1.0 *)
+(* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: *)
 (* :Discussion: *)
@@ -162,7 +162,6 @@ Needs["MathematicaForPredictionUtilities`"]
 Needs["StateMonadCodeGenerator`"]
 Needs["QuantileRegression`"]
 Needs["CrossTabulate`"]
-(*Needs["SSparseMatrix`"]*)
 Needs["OutlierIdentifiers`"]
 
 
