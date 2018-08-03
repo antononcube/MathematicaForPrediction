@@ -1339,7 +1339,7 @@ QRMonLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
 
       (* Step 1 *)
       If[ !( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"], "mean"]] > 0 ),
-        Echo["Calculate (top and bottom) regression quantiles first.", "QRMonFindLocalExtrema:"];
+        Echo["Calculate (top and bottom) regression quantiles first.", "QRMonLocalExtrema:"];
         Return[$QRMonFailure]
       ];
 
@@ -1384,7 +1384,7 @@ QRMonLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
 QRMonLocalExtrema[___][__] :=
     Block[{},
       Echo["No arguments are expected. The options are \"NearestWithOutliers\" -> (True|False), \"NumberOfProximityPoints\" -> _Integer .",
-        "QRMonFindLocalExtrema:"];
+        "QRMonLocalExtrema:"];
       $QRMonFailure
     ];
 
