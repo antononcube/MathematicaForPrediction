@@ -653,7 +653,7 @@ The formulation of the problem hints to an (almost) straightforward implementati
 ### Finding local extrema in noisy data
 
 Using regression fitting -- and Quantile Regression in particular -- we can easily construct semi-symbolic algorithms for finding local extrema in noisy time series data; see [[AA5](https://mathematicaforprediction.wordpress.com/2015/09/27/finding-local-extrema-in-noisy-data-using-quantile-regression/)]. 
-The QRMon function with such an algorithm is QRMonFindLocalExtrema.
+The QRMon function with such an algorithm is QRMonLocalExtrema.
 
 In brief, the algorithm steps are as follows. (For more details see [[AA5](https://mathematicaforprediction.wordpress.com/2015/09/27/finding-local-extrema-in-noisy-data-using-quantile-regression/)].)
 
@@ -663,14 +663,14 @@ In brief, the algorithm steps are as follows. (For more details see [[AA5](https
 
    3. Around each of the fit estimated extrema find the most extreme point in the data by a nearest neighbors search (by using Nearest).
 
-The function QRMonFindLocalExtrema uses the regression quantiles previously found in the monad pipeline (and stored in the context.) The bottom regression quantile is used for finding local minima, the top regression quantile is used for finding the local maxima. 
+The function QRMonLocalExtrema uses the regression quantiles previously found in the monad pipeline (and stored in the context.) The bottom regression quantile is used for finding local minima, the top regression quantile is used for finding the local maxima. 
 
 An example of finding local extrema follows.
 
     QRMonUnit[TimeSeriesWindow[tsData, {{2015, 1, 1}, {2018, 12, 31}}]]⟹
       QRMonQuantileRegression[10, {0.05, 0.95}]⟹
       QRMonDateListPlot[Joined -> False, PlotTheme -> "Scientific"]⟹
-      QRMonFindLocalExtrema["NumberOfProximityPoints" -> 100]⟹
+      QRMonLocalExtrema["NumberOfProximityPoints" -> 100]⟹
       QRMonEchoValue⟹
       QRMonAddToContext⟹
       QRMonEchoFunctionContext[
@@ -683,7 +683,7 @@ An example of finding local extrema follows.
 ![Finding-local-extrema-in-noisy-data-output-1](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Quantile-Regression-workflows/Finding-local-extrema-in-noisy-data-output-1.png)
 
 
-Note that in the pipeline above in order to plot the data and local extrema together some additional steps are needed. The result of QRMonFindLocalExtrema becomes the pipeline value; that pipeline value is displayed with QRMonEchoValue, and stored in the context with QRMonAddToContext. If the pipeline value is an association -- which is the case here -- the monad function QRMonAddToContext joins that association with the context association. In this case this means that we will have key-value elements in the context for "localMinima" and "localMaxima". The date list plot at the end of the pipeline uses values of those context keys (together with the value for "data".)
+Note that in the pipeline above in order to plot the data and local extrema together some additional steps are needed. The result of QRMonLocalExtrema becomes the pipeline value; that pipeline value is displayed with QRMonEchoValue, and stored in the context with QRMonAddToContext. If the pipeline value is an association -- which is the case here -- the monad function QRMonAddToContext joins that association with the context association. In this case this means that we will have key-value elements in the context for "localMinima" and "localMaxima". The date list plot at the end of the pipeline uses values of those context keys (together with the value for "data".)
 
 ### Setters, droppers, and takers
 
