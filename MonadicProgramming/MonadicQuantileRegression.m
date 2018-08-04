@@ -169,7 +169,7 @@ Needs["OutlierIdentifiers`"]
 (* Generation                                                 *)
 (**************************************************************)
 
-(* Generate base functions of LSAMon monad (through StMon.) *)
+(* Generate base functions of QRMon monad (through StMon.) *)
 
 GenerateStateMonadCode[ "MonadicQuantileRegression`QRMon", "FailureSymbol" -> $QRMonFailure, "StringContextNames" -> False ]
 
@@ -760,7 +760,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
           ];
 
       If[ TrueQ[OptionValue[QRMonErrorPlots, "Echo"]],
-        Echo[res, "Error plots:"];
+        Echo[res, "Relative error plots:"];
       ];
 
       QRMonUnit[res, context]
