@@ -87,6 +87,9 @@ ERTMonSetEventRecords::usage = "Assigns the argument to the key \"eventRecords\"
 ERTMonSetItemData::usage = "Assigns the argument to the key \"itemData\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
+ERTMonSetVariableOutlierBoundaries::usage = "Assigns the argument to the key \"variableOutlierBoundaries\" in the monad context. \
+(The rest of the monad context is unchanged.)"
+
 ERTMonTakeComputationSpecifications::usage = "Gives the value of the key \"compSpec\" from the monad context."
 
 ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context."
@@ -96,6 +99,8 @@ ERTMonTakeItemData::usage = "Gives the value of the key \"itemData\" from the mo
 ERTMonTakeItemVariableRecordGroups::usage = "Gives the value of the key \"itemVariableRecordGroups\" from the monad context."
 
 ERTMonTakeTimeSeries::usage = "Gives the value of the key \"timeSeries\" from the monad context."
+
+ERTMonTakeVariableOutlierBoundaries::usage = "Gives the value of the key \"variableOutlierBoundaries\" from the monad context."
 
 ERTMonTakeContingencyMatrices::usage = "Gives the value of the key \"contingencyMatrices\" from the monad context."
 
@@ -108,6 +113,8 @@ ERTMonRecordGroupsToTimeSeries::usage = "Converts the groups of item-variable re
 The time series are restricted to the corresponding variable maximum time given in the specification."
 
 ERTMonTimeSeriesAggregation::usage = "Aggregates the event records time series according to the specification."
+
+ERTMonFindVariableOutlierBoundaries::usage = "Find outlier boundaries for each variable in the item-variable record groups."
 
 ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series."
 
@@ -232,6 +239,22 @@ ERTMonTakeTimeSeries[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeTimeSeries[xs_, context_] := ERTMonTakeTimeSeries[][xs, context];
 ERTMonTakeTimeSeries[][xs_, context_] := context["timeSeries"];
 ERTMonTakeTimeSeries[__][___] := $ERTMonFailure;
+
+
+ClearAll[ERTMonSetVariableOutlierBoundaries]
+ERTMonSetVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetVariableOutlierBoundaries[xs_, context_] := $ERTMonFailure;
+ERTMonSetVariableOutlierBoundaries[data_Association][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"variableOutlierBoundaries"->data|> ] ];
+ERTMonSetVariableOutlierBoundaries[__][___] := $ERTMonFailure;
+
+
+ClearAll[ERTMonTakeVariableOutlierBoundaries]
+ERTMonTakeVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeVariableOutlierBoundaries[xs_, context_] := ERTMonTakeVariableOutlierBoundaries[][xs, context];
+ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := context["variableOutlierBoundaries"];
+ERTMonTakeVariableOutlierBoundaries[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonTakeContingencyMatrices]
@@ -401,9 +424,33 @@ ERTMonTimeSeriesAggregation[___][__] := $ERTMonFailure;
 
 
 (**************************************************************)
-(* Make contingency matrices                                  *)
+(* Find variable outliers                                     *)
 (**************************************************************)
 
+ClearAll[ERTMonFindVariableOutlierBoundaries]
+
+ERTMonFindVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonFindVariableOutlierBoundaries[xs_, context_] := ERTMonFindVariableOutlierBoundaries[][xs, context];
+
+ERTMonFindVariableOutlierBoundaries[][xs_, context_] := ERTMonFindVariableOutlierBoundaries[HampelIdentifierParameters][xs, context];
+
+ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :=
+    Block[{ivRowSpecIDs, outlierBoundaries},
+
+      ivRowSpecIDs = Union[Keys[context["itemVariableRecordGroups"]][[All, 2]]];
+
+      outlierBoundaries = Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["itemVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
+
+      ERTMonUnit[xs, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
+    ];
+
+ERTMonFindVariableOutlierBoundaries[___][__] := $ERTMonFailure;
+
+
+(**************************************************************)
+(* Make contingency matrices                                  *)
+(**************************************************************)
 
 ClearAll[ERTMonMakeContingencyMatrices]
 
