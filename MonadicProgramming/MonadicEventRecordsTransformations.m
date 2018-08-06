@@ -78,6 +78,8 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
 BeginPackage["MonadicEventRecordsTransformations`"];
 (* Exported symbols added here with SymbolName::usage *)
 
+$ERTMonFailure::usage = "Failure symbol for the monad ERTMon."
+
 ERTMonSetComputationSpecifications::usage = "Assigns the argument to the key \"compSpec\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
@@ -273,7 +275,7 @@ ClearAll[ERTMonReadData];
 
 ERTMonReadData[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonReadData[xs_, context_] := $ERTMonFailure
+ERTMonReadData[xs_, context_Association] := $ERTMonFailure
 
 ERTMonReadData[dirName_String][xs_, context_] :=
     ERTMonReadData[
@@ -327,7 +329,7 @@ ClearAll[ERTMonGroupItemVariableRecords]
 
 ERTMonGroupItemVariableRecords[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonGroupItemVariableRecords[xs_, context_] := ERTMonGroupItemVariableRecords[][xs, context];
+ERTMonGroupItemVariableRecords[xs_, context_Association] := ERTMonGroupItemVariableRecords[][xs, context];
 
 ERTMonGroupItemVariableRecords[][xs_, context_] :=
     Block[{ds, dsTSGroups, tsGroups, csVars},
@@ -346,8 +348,11 @@ ERTMonGroupItemVariableRecords[][xs_, context_] :=
       ERTMonUnit[xs, Join[context, <| "itemVariableRecordGroups"->tsGroups |>]]
     ];
 
-ERTMonGroupItemVariableRecords[___][__] := $ERTMonFailure;
-
+ERTMonGroupItemVariableRecords[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "ERTMonGroupItemVariableRecords:"];
+      $ERTMonFailure
+    ];
 
 (**************************************************************)
 (* Item-variable records groups to time series             *)
@@ -357,22 +362,54 @@ ClearAll[ERTMonRecordGroupsToTimeSeries]
 
 ERTMonRecordGroupsToTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonRecordGroupsToTimeSeries[xs_, context_] := ERTMonRecordGroupsToTimeSeries[][xs, context];
+ERTMonRecordGroupsToTimeSeries[xs_, context_Association] := ERTMonRecordGroupsToTimeSeries[][xs, context];
 
-ERTMonRecordGroupsToTimeSeries[][xs_, context_] :=
-    Block[{ts},
+ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
+    Block[{ts, zeroTime=zeroTimeArg},
 
-      (* For each group of item and variable records find the most recent measurement time and
-         make a time series going back from that most recent time. *)
+      Which[
+        MemberQ[{"MinTime", "MinimumTime", "StartTime"}, zeroTime],
+        zeroTime = "MinTime",
+
+        MemberQ[{"MaxTime", "MaximumTime", "EndTime"}, zeroTime],
+        zeroTime = "MaxTime",
+
+        True,
+        Echo["The allowed values for the first argument are \"MinTime\" and \"MaxTime\".", "ERTMonRecordGroupsToTimeSeries:"];
+        Return[$ERTMonFailure]
+      ];
+
+      If[ !KeyExistsQ[context, "itemVariableRecordGroups"],
+        Echo["Cannot find item-variable records groups. (Call ERTMonGroupItemVariableRecords first.)", "ERTMonRecordGroupsToTimeSeries:"];
+        Return[$ERTMonFailure]
+      ];
+
+      (* Assume zeroTime == "MaxTime".
+         Then for each group of item and variable records find the most recent measurement time and
+         make a time series going back from that most recent time.
+      *)
       ts =
           Map[
-            TimeSeries[Transpose[{Through[#["ObservationTimeEpoch"]] - Max[Through[#["ObservationTimeEpoch"]]], Through[#["Value"]]}]] &,
+            TimeSeries[
+              Transpose[{
+                Through[#["ObservationTimeEpoch"]] -
+                    If[ zeroTime == "MinTime",
+                      Min[Through[#["ObservationTimeEpoch"]]],
+                      Max[Through[#["ObservationTimeEpoch"]]]
+                    ],
+                Through[#["Value"]]}
+              ]
+            ] &,
             context["itemVariableRecordGroups"]];
 
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
     ];
 
-ERTMonRecordGroupsToTimeSeries[___][__] := $ERTMonFailure;
+ERTMonRecordGroupsToTimeSeries[___][__] :=
+    Block[{},
+      Echo["One or no arguments are expected. The argument can have the values \"MinTime\" or \"MaxTime\".", "ERTMonRecordGroupsToTimeSeries:"];
+      $ERTMonFailure
+    ];
 
 
 (**************************************************************)
@@ -381,7 +418,7 @@ ERTMonRecordGroupsToTimeSeries[___][__] := $ERTMonFailure;
 
 Clear[AggregateBySpec]
 AggregateBySpec[timeSeries_Association, specRow_Association] :=
-    Block[{ts},
+    Block[{ts, timeWindowSpec},
 
       Which[
         MemberQ[ {"Unit", "Age", "Label"}, specRow["Variable"]],
@@ -391,7 +428,7 @@ AggregateBySpec[timeSeries_Association, specRow_Association] :=
 
         ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
 
-        ts = Map[ TimeSeriesWindow[#, {-specRow["Max history length"], 0} ]&, ts];
+        ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] == 0, {0, specRow["Max history length"]}, {-specRow["Max history length"], 0}] ]&, ts];
 
         ts = Map[ TimeSeriesAggregate[#, specRow["Aggregation time interval"], aAggregationFunctionSpec[specRow["Aggregation function"]] ]&, ts];
 
@@ -407,7 +444,7 @@ ClearAll[ERTMonTimeSeriesAggregation]
 
 ERTMonTimeSeriesAggregation[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonTimeSeriesAggregation[xs_, context_] := ERTMonTimeSeriesAggregation[][xs, context];
+ERTMonTimeSeriesAggregation[xs_, context_Association] := ERTMonTimeSeriesAggregation[][xs, context];
 
 ERTMonTimeSeriesAggregation[][xs_, context_] :=
     Block[{compSpec, ts},
@@ -420,8 +457,11 @@ ERTMonTimeSeriesAggregation[][xs_, context_] :=
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
     ];
 
-ERTMonTimeSeriesAggregation[___][__] := $ERTMonFailure;
-
+ERTMonTimeSeriesAggregation[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "ERTMonTimeSeriesAggregation:"];
+      $ERTMonFailure
+    ];
 
 (**************************************************************)
 (* Find variable outliers                                     *)
@@ -431,7 +471,7 @@ ClearAll[ERTMonFindVariableOutlierBoundaries]
 
 ERTMonFindVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonFindVariableOutlierBoundaries[xs_, context_] := ERTMonFindVariableOutlierBoundaries[][xs, context];
+ERTMonFindVariableOutlierBoundaries[xs_, context_Association] := ERTMonFindVariableOutlierBoundaries[][xs, context];
 
 ERTMonFindVariableOutlierBoundaries[][xs_, context_] := ERTMonFindVariableOutlierBoundaries[HampelIdentifierParameters][xs, context];
 
@@ -445,7 +485,17 @@ ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :
       ERTMonUnit[xs, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
     ];
 
-ERTMonFindVariableOutlierBoundaries[___][__] := $ERTMonFailure;
+ERTMonFindVariableOutlierBoundaries[___][__] :=
+    Block[{},
+      Echo[
+        StringRiffle[
+          {"One or no arguments are expected. The argument is a function that finds lower and upper outlier boundaries for a list of numbers.",
+            "(Here are such function names from the package \"OutlierIdentifiers.m\": " <> ToString[Names["OutlierIdentifiers`*Parameters"]] <> ".)"
+          }," "],
+        "ERTMonFindVariableOutlierBoundaries:"
+      ];
+      $ERTMonFailure
+    ];
 
 
 (**************************************************************)
@@ -456,7 +506,7 @@ ClearAll[ERTMonMakeContingencyMatrices]
 
 ERTMonMakeContingencyMatrices[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonMakeContingencyMatrices[xs_, context_] := ERTMonMakeContingencyMatrices[][xs, context];
+ERTMonMakeContingencyMatrices[xs_, context_Association] := ERTMonMakeContingencyMatrices[][xs, context];
 
 ERTMonMakeContingencyMatrices[][xs_, context_] :=
     Block[{tsRowSpecIDs, tbls, cmats},
