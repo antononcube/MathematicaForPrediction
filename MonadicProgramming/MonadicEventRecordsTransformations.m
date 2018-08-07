@@ -44,7 +44,7 @@
 
     This package implements a monad for the transformation of event records in the following (long) form:
 
-    ItemID, SourceID, Variable, ObservationTimeEpoch, Value
+    EntityID, SourceID, Variable, ObservationTimeEpoch, Value
       2321,       a1,       HR,           1512429528,    78
       2321,       a1,       RR,           1512429628,    12
 
@@ -86,7 +86,7 @@ ERTMonSetComputationSpecifications::usage = "Assigns the argument to the key \"c
 ERTMonSetEventRecords::usage = "Assigns the argument to the key \"eventRecords\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
-ERTMonSetItemData::usage = "Assigns the argument to the key \"itemData\" in the monad context. \
+ERTMonSetEntityData::usage = "Assigns the argument to the key \"entityData\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
 ERTMonSetVariableOutlierBoundaries::usage = "Assigns the argument to the key \"variableOutlierBoundaries\" in the monad context. \
@@ -96,9 +96,9 @@ ERTMonTakeComputationSpecifications::usage = "Gives the value of the key \"compS
 
 ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context."
 
-ERTMonTakeItemData::usage = "Gives the value of the key \"itemData\" from the monad context."
+ERTMonTakeEntityData::usage = "Gives the value of the key \"entityData\" from the monad context."
 
-ERTMonTakeItemVariableRecordGroups::usage = "Gives the value of the key \"itemVariableRecordGroups\" from the monad context."
+ERTMonTakeEntityVariableRecordGroups::usage = "Gives the value of the key \"entityVariableRecordGroups\" from the monad context."
 
 ERTMonTakeTimeSeries::usage = "Gives the value of the key \"timeSeries\" from the monad context."
 
@@ -108,15 +108,15 @@ ERTMonTakeContingencyMatrices::usage = "Gives the value of the key \"contingency
 
 ERTMonReadData::usage = "Reads data from specified files or directory."
 
-ERTMonGroupItemVariableRecords::usage = "Groups item-variable records. \
+ERTMonGroupEntityVariableRecords::usage = "Groups entity-variable records. \
 Only the variables in the specification are used."
 
-ERTMonRecordGroupsToTimeSeries::usage = "Converts the groups of item-variable records into time series. \
+ERTMonRecordGroupsToTimeSeries::usage = "Converts the groups of entity-variable records into time series. \
 The time series are restricted to the corresponding variable maximum time given in the specification."
 
 ERTMonTimeSeriesAggregation::usage = "Aggregates the event records time series according to the specification."
 
-ERTMonFindVariableOutlierBoundaries::usage = "Find outlier boundaries for each variable in the item-variable record groups."
+ERTMonFindVariableOutlierBoundaries::usage = "Find outlier boundaries for each variable in the entity-variable record groups."
 
 ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series."
 
@@ -207,32 +207,32 @@ ERTMonTakeEventRecords[][xs_, context_] :=
 ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonSetItemData]
-ERTMonSetItemData[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetItemData[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetItemData[xs_, context_] := $ERTMonFailure;
-ERTMonSetItemData[data_List][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"itemData"->data|> ] ];
-ERTMonSetItemData[__][___] := $ERTMonFailure;
+ClearAll[ERTMonSetEntityData]
+ERTMonSetEntityData[$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetEntityData[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetEntityData[xs_, context_] := $ERTMonFailure;
+ERTMonSetEntityData[data_List][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"entityData"->data|> ] ];
+ERTMonSetEntityData[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeItemData]
-ERTMonTakeItemData[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeItemData[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeItemData[xs_, context_] := ERTMonTakeItemData[][xs, context];
-ERTMonTakeItemData[][xs_, context_] :=
+ClearAll[ERTMonTakeEntityData]
+ERTMonTakeEntityData[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeEntityData[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeEntityData[xs_, context_] := ERTMonTakeEntityData[][xs, context];
+ERTMonTakeEntityData[][xs_, context_] :=
     Block[{ds},
-      ds = Dataset[context["itemData"]];
-      Dataset[ds[All, AssociationThread[context["itemDataColumnNames"], #] &]]
+      ds = Dataset[context["entityData"]];
+      Dataset[ds[All, AssociationThread[context["entityDataColumnNames"], #] &]]
     ];
-ERTMonTakeItemData[__][___] := $ERTMonFailure;
+ERTMonTakeEntityData[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeItemVariableRecordGroups]
-ERTMonTakeItemVariableRecordGroups[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeItemVariableRecordGroups[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeItemVariableRecordGroups[xs_, context_] := ERTMonTakeItemVariableRecordGroups[][xs, context];
-ERTMonTakeItemVariableRecordGroups[][xs_, context_] := context["itemVariableRecordGroups"];
-ERTMonTakeItemVariableRecordGroups[__][___] := $ERTMonFailure;
+ClearAll[ERTMonTakeEntityVariableRecordGroups]
+ERTMonTakeEntityVariableRecordGroups[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeEntityVariableRecordGroups[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeEntityVariableRecordGroups[xs_, context_] := ERTMonTakeEntityVariableRecordGroups[][xs, context];
+ERTMonTakeEntityVariableRecordGroups[][xs_, context_] := context["entityVariableRecordGroups"];
+ERTMonTakeEntityVariableRecordGroups[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonTakeTimeSeries]
@@ -280,11 +280,11 @@ ERTMonReadData[xs_, context_Association] := $ERTMonFailure
 ERTMonReadData[dirName_String][xs_, context_] :=
     ERTMonReadData[
       <| "eventRecords" -> FileNameJoin[{dirName, "medicalRecordsData.csv"}],
-         "itemData" -> FileNameJoin[{dirName, "patientData.csv"}],
+         "entityData" -> FileNameJoin[{dirName, "patientData.csv"}],
          "dataIngestionSpecifications" -> FileNameJoin[{dirName, "dataIngestionSpecifications.csv"}]|> ][xs, context];
 
 ERTMonReadData[aFileNames_Association][xs_, context_] :=
-    Block[{compSpec, eventRecords, eventRecordsColumnNames, itemData, itemDataColumnNames, itemID},
+    Block[{compSpec, eventRecords, eventRecordsColumnNames, entityData, entityDataColumnNames, entityID},
 
       compSpec = ProcessComputationalSpecification[ aFileNames["dataIngestionSpecifications"] ];
 
@@ -293,27 +293,27 @@ ERTMonReadData[aFileNames_Association][xs_, context_] :=
       eventRecordsColumnNames = First[eventRecords];
       eventRecords = Rest[eventRecords];
 
-      itemData = Import[aFileNames["itemData"], "CSV"];
+      entityData = Import[aFileNames["entityData"], "CSV"];
 
-      itemDataColumnNames = First[itemData];
-      itemData = Rest[itemData];
+      entityDataColumnNames = First[entityData];
+      entityData = Rest[entityData];
 
-      (* Determining the item ID column name. *)
-      itemID = Flatten[StringCases[itemDataColumnNames, __~~("ID"|"Id")]];
+      (* Determining the entity ID column name. *)
+      entityID = Flatten[StringCases[entityDataColumnNames, __~~("ID"|"Id")]];
 
-      If[Length[itemID]==0,
-        Echo["Cannot find name of item ID columns.", "ERTMontReadData:"];
+      If[Length[entityID]==0,
+        Echo["Cannot find name of entity ID columns.", "ERTMontReadData:"];
         Return[$ERTMonFailure]
       ];
 
-      eventRecordsColumnNames = StringReplace[ eventRecordsColumnNames, itemID -> "ItemID" ];
-      itemDataColumnNames = StringReplace[ itemDataColumnNames, itemID -> "ItemID"];
+      eventRecordsColumnNames = StringReplace[ eventRecordsColumnNames, entityID -> "EntityID" ];
+      entityDataColumnNames = StringReplace[ entityDataColumnNames, entityID -> "EntityID"];
 
       ERTMonUnit[
         xs,
         Join[context,
-          <| "eventRecords"->eventRecords, "itemData"->itemData,
-             "eventRecordsColumnNames"->eventRecordsColumnNames, "itemDataColumnNames"->itemDataColumnNames,
+          <| "eventRecords"->eventRecords, "entityData"->entityData,
+             "eventRecordsColumnNames"->eventRecordsColumnNames, "entityDataColumnNames"->entityDataColumnNames,
              "compSpec"->compSpec|>] ]
 
     ];
@@ -322,16 +322,16 @@ ERTMonReadData[___][__] := $ERTMonFailure;
 
 
 (**************************************************************)
-(* Medical records item-variable groups                    *)
+(* Medical records entity-variable groups                    *)
 (**************************************************************)
 
-ClearAll[ERTMonGroupItemVariableRecords]
+ClearAll[ERTMonGroupEntityVariableRecords]
 
-ERTMonGroupItemVariableRecords[$ERTMonFailure] := $ERTMonFailure;
+ERTMonGroupEntityVariableRecords[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonGroupItemVariableRecords[xs_, context_Association] := ERTMonGroupItemVariableRecords[][xs, context];
+ERTMonGroupEntityVariableRecords[xs_, context_Association] := ERTMonGroupEntityVariableRecords[][xs, context];
 
-ERTMonGroupItemVariableRecords[][xs_, context_] :=
+ERTMonGroupEntityVariableRecords[][xs_, context_] :=
     Block[{ds, dsTSGroups, tsGroups, csVars},
 
       csVars = Values[ GetAssociation[context["compSpec"], "Variable"] ];
@@ -342,20 +342,20 @@ ERTMonGroupItemVariableRecords[][xs_, context_] :=
       ds = ds[ Select[ MemberQ[ csVars, #Variable ]& ] ];
 
       dsTSGroups =
-          Query[GroupBy[{#["ItemID"], #["Variable"]} &], All, {"ObservationTimeEpoch", "Value"}] @ ds;
+          Query[GroupBy[{#["EntityID"], #["Variable"]} &], All, {"ObservationTimeEpoch", "Value"}] @ ds;
       tsGroups = Normal@dsTSGroups;
 
-      ERTMonUnit[xs, Join[context, <| "itemVariableRecordGroups"->tsGroups |>]]
+      ERTMonUnit[xs, Join[context, <| "entityVariableRecordGroups"->tsGroups |>]]
     ];
 
-ERTMonGroupItemVariableRecords[___][__] :=
+ERTMonGroupEntityVariableRecords[___][__] :=
     Block[{},
-      Echo["No arguments are expected.", "ERTMonGroupItemVariableRecords:"];
+      Echo["No arguments are expected.", "ERTMonGroupEntityVariableRecords:"];
       $ERTMonFailure
     ];
 
 (**************************************************************)
-(* Item-variable records groups to time series             *)
+(* Entity-variable records groups to time series             *)
 (**************************************************************)
 
 ClearAll[ERTMonRecordGroupsToTimeSeries]
@@ -379,13 +379,13 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
         Return[$ERTMonFailure]
       ];
 
-      If[ !KeyExistsQ[context, "itemVariableRecordGroups"],
-        Echo["Cannot find item-variable records groups. (Call ERTMonGroupItemVariableRecords first.)", "ERTMonRecordGroupsToTimeSeries:"];
+      If[ !KeyExistsQ[context, "entityVariableRecordGroups"],
+        Echo["Cannot find entity-variable records groups. (Call ERTMonGroupEntityVariableRecords first.)", "ERTMonRecordGroupsToTimeSeries:"];
         Return[$ERTMonFailure]
       ];
 
       (* Assume zeroTime == "MaxTime".
-         Then for each group of item and variable records find the most recent measurement time and
+         Then for each group of entity and variable records find the most recent measurement time and
          make a time series going back from that most recent time.
       *)
       ts =
@@ -400,7 +400,7 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
                 Through[#["Value"]]}
               ]
             ] &,
-            context["itemVariableRecordGroups"]];
+            context["entityVariableRecordGroups"]];
 
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
     ];
@@ -478,9 +478,9 @@ ERTMonFindVariableOutlierBoundaries[][xs_, context_] := ERTMonFindVariableOutlie
 ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :=
     Block[{ivRowSpecIDs, outlierBoundaries},
 
-      ivRowSpecIDs = Union[Keys[context["itemVariableRecordGroups"]][[All, 2]]];
+      ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
 
-      outlierBoundaries = Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["itemVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
+      outlierBoundaries = Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
 
       ERTMonUnit[xs, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
     ];
