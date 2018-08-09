@@ -165,7 +165,17 @@ ProcessComputationalSpecification[compSpecArg_?MatrixQ] :=
     ];
 
 
-aAggregationFunctionSpec = <| "Mean"->Mean, "Range"-> (Max[#]-Min[#]&), "Count"->Length, "None"->Identity |>;
+aAggregationFunctionSpec = <| "Mean"->Mean, "Range"-> (Max[#]-Min[#]&), "Count"->Length, "None"->Identity,
+  "OutliersCount"->OutliersCount, "OutliersFraction"->OutliersFraction |>;
+
+ClearAll[OutliersCount]
+OutliersCount[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
+    Length[Select[vec, # < lower || upper < #&]];
+
+ClearAll[OutliersFraction]
+OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
+    Length[Select[vec, # < lower || upper < #&]] / Length[vec];
+
 
 (**************************************************************)
 (* Setters and takers                                         *)
@@ -175,7 +185,7 @@ ClearAll[ERTMonSetComputationSpecifications]
 ERTMonSetComputationSpecifications[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetComputationSpecifications[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetComputationSpecifications[xs_, context_] := $ERTMonFailure;
-ERTMonSetComputationSpecifications[data_List][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"compSpec"->data|> ] ];
+ERTMonSetComputationSpecifications[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"compSpec"->ds|> ] ];
 ERTMonSetComputationSpecifications[__][___] := $ERTMonFailure;
 
 
@@ -417,7 +427,7 @@ ERTMonRecordGroupsToTimeSeries[___][__] :=
 (**************************************************************)
 
 Clear[AggregateBySpec]
-AggregateBySpec[timeSeries_Association, specRow_Association] :=
+AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctionSpec_Association] :=
     Block[{ts, timeWindowSpec},
 
       Which[
@@ -447,12 +457,28 @@ ERTMonTimeSeriesAggregation[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTimeSeriesAggregation[xs_, context_Association] := ERTMonTimeSeriesAggregation[][xs, context];
 
 ERTMonTimeSeriesAggregation[][xs_, context_] :=
-    Block[{compSpec, ts},
+    Block[{compSpec, ts, aAggrFuncs},
 
       compSpec = context["compSpec"];
       ts = context["timeSeries"];
 
-      ts = Join @@ Map[ AggregateBySpec[ts, #]&, Normal[compSpec] ];
+      If[ Length[Intersection[{"OutliersCount", "OutliersFraction"}, Normal[compSpec[Values,"Aggregation function"]]]] > 0 &&
+          !KeyExistsQ[context, "variableOutlierBoundaries"],
+
+        Echo["Calculate outlier boundaries first.", "ERTMonTimeSeriesAggregation"];
+        Return[$ERTMonFailure]
+      ];
+
+      ts =
+          Map[
+            With[{lu = context["variableOutlierBoundaries"][#["Variable"]] },
+              aAggrFuncs = Join[ aAggregationFunctionSpec, <| "OutliersCount" -> (OutliersCount[#, lu]&), "OutliersFraction" -> (OutliersFraction[#, lu]&) |> ];
+              AggregateBySpec[ts, #, aAggrFuncs]
+            ]&,
+            Normal[compSpec]
+          ];
+
+      ts = Join @@ ts;
 
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
     ];
@@ -480,7 +506,9 @@ ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :
 
       ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
 
-      outlierBoundaries = Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
+      outlierBoundaries =
+          Association @
+              Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
 
       ERTMonUnit[xs, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
     ];
@@ -514,11 +542,17 @@ ERTMonMakeContingencyMatrices[][xs_, context_] :=
       tsRowSpecIDs = Union[Keys[context["timeSeries"]][[All, 2]]];
 
       tbls =
-          Map[
-            Function[{rsId},
-              Join @@ KeyValueMap[Flatten /@ Thread[{#1[[1]], #2["Path"]}] &,
-                KeySelect[context["timeSeries"], MatchQ[#, {_, rsId}] &]]
-            ], tsRowSpecIDs];
+          Association @
+              Map[
+                Function[{rsId},
+                  rsId ->
+                      Apply[
+                        Join,
+                        KeyValueMap[
+                          Flatten /@ Thread[{#1[[1]], #2["Path"]}] &,
+                          KeySelect[context["timeSeries"], MatchQ[#, {_, rsId}] &]]]
+                ],
+                tsRowSpecIDs];
 
       cmats = CrossTabulate /@ tbls;
 
