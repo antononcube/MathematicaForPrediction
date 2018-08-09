@@ -374,7 +374,7 @@ ERTMonRecordGroupsToTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 
 ERTMonRecordGroupsToTimeSeries[xs_, context_Association] := ERTMonRecordGroupsToTimeSeries[][xs, context];
 
-ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
+ERTMonRecordGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObject):"MaxTime"][xs_, context_] :=
     Block[{ts, zeroTime=zeroTimeArg},
 
       Which[
@@ -384,8 +384,11 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
         MemberQ[{"MaxTime", "MaximumTime", "EndTime"}, zeroTime],
         zeroTime = "MaxTime",
 
-        True,
-        Echo["The allowed values for the first argument are \"MinTime\" and \"MaxTime\".", "ERTMonRecordGroupsToTimeSeries:"];
+        TrueQ[Head[zeroTime] === DateObject],
+        zeroTime = AbsoluteTime[zeroTime],
+
+        !NumberQ[zeroTime],
+        Echo["The allowed values for the first argument are \"MinTime\", \"MaxTime\", a date object, or a number.", "ERTMonRecordGroupsToTimeSeries:"];
         Return[$ERTMonFailure]
       ];
 
@@ -403,9 +406,15 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
             TimeSeries[
               Transpose[{
                 Through[#["ObservationTimeEpoch"]] -
-                    If[ zeroTime == "MinTime",
+                    Which[
+                      zeroTime == "MinTime",
                       Min[Through[#["ObservationTimeEpoch"]]],
-                      Max[Through[#["ObservationTimeEpoch"]]]
+
+                      zeroTime == "MaxTime",
+                      Max[Through[#["ObservationTimeEpoch"]]],
+
+                      True,
+                      zeroTime
                     ],
                 Through[#["Value"]]}
               ]
@@ -417,7 +426,7 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg_String:"MaxTime"][xs_, context_] :=
 
 ERTMonRecordGroupsToTimeSeries[___][__] :=
     Block[{},
-      Echo["One or no arguments are expected. The argument can have the values \"MinTime\" or \"MaxTime\".", "ERTMonRecordGroupsToTimeSeries:"];
+      Echo["One or no arguments are expected. The allowed values for the first argument are \"MinTime\", \"MaxTime\", a date object, or a number.", "ERTMonRecordGroupsToTimeSeries:"];
       $ERTMonFailure
     ];
 
@@ -465,7 +474,7 @@ ERTMonTimeSeriesAggregation[][xs_, context_] :=
       If[ Length[Intersection[{"OutliersCount", "OutliersFraction"}, Normal[compSpec[Values,"Aggregation function"]]]] > 0 &&
           !KeyExistsQ[context, "variableOutlierBoundaries"],
 
-        Echo["Calculate outlier boundaries first.", "ERTMonTimeSeriesAggregation"];
+        Echo["Calculate outlier boundaries first.", "ERTMonTimeSeriesAggregation:"];
         Return[$ERTMonFailure]
       ];
 
