@@ -183,7 +183,7 @@ OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
 
 ClearAll[ERTMonSetComputationSpecifications]
 ERTMonSetComputationSpecifications[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetComputationSpecifications[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetComputationSpecifications[][___] := $ERTMonFailure;
 ERTMonSetComputationSpecifications[xs_, context_] := $ERTMonFailure;
 ERTMonSetComputationSpecifications[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"compSpec"->ds|> ] ];
 ERTMonSetComputationSpecifications[__][___] := $ERTMonFailure;
@@ -199,10 +199,25 @@ ERTMonTakeComputationSpecifications[__][___] := $ERTMonFailure;
 
 ClearAll[ERTMonSetEventRecords]
 ERTMonSetEventRecords[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetEventRecords[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetEventRecords[xs_, context_] := $ERTMonFailure;
-ERTMonSetEventRecords[data_List][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"eventRecords"->data|> ] ];
-ERTMonSetEventRecords[__][___] := $ERTMonFailure;
+ERTMonSetEventRecords[][___] := $ERTMonFailure;
+ERTMonSetEventRecords[xs_, context_Association] := $ERTMonFailure;
+ERTMonSetEventRecords[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
+    If[ Dimensions[data][[2]] == Length[colNames],
+      ERTMonUnit[ xs, Join[ context, <|"eventRecords"->data, "eventRecordsColumnNames"->colNames|> ] ],
+      (*ELSE*)
+      $ERTMonFailure
+    ];
+ERTMonSetEventRecords[data_Dataset][xs_, context_] :=
+    ERTMonSetEventRecords[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
+ERTMonSetEventRecords[__][___] :=
+    Block[{},
+      Echo[
+        "It is expected to have (i) one argument that is a dataset with named columns," <>
+            " or (ii) two arguments the first being a matrix, the second a list of corresponding column names.",
+        "ERTMonSetEventRecords:"
+      ];
+      $ERTMonFailure
+    ];
 
 
 ClearAll[ERTMonTakeEventRecords]
@@ -219,11 +234,25 @@ ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 ClearAll[ERTMonSetEntityData]
 ERTMonSetEntityData[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetEntityData[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetEntityData[xs_, context_] := $ERTMonFailure;
-ERTMonSetEntityData[data_List][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"entityData"->data|> ] ];
-ERTMonSetEntityData[__][___] := $ERTMonFailure;
-
+ERTMonSetEntityData[][___] := $ERTMonFailure;
+ERTMonSetEntityData[xs_, context_Association] := $ERTMonFailure;
+ERTMonSetEntityData[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
+    If[ Dimensions[data][[2]] == Length[colNames],
+      ERTMonUnit[ xs, Join[ context, <|"entityData"->data, "entityDataColumnNames"->colNames|> ] ],
+      (*ELSE*)
+      $ERTMonFailure
+    ];
+ERTMonSetEntityData[data_Dataset][xs_, context_] :=
+    ERTMonSetEntityData[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
+ERTMonSetEntityData[___][___] :=
+    Block[{},
+      Echo[
+        "It is expected to have (i) one argument that is a dataset with named columns," <>
+            " or (ii) two arguments the first being a matrix, the second a list of corresponding column names.",
+        "ERTMonSetEntityData:"
+      ];
+      $ERTMonFailure
+    ];
 
 ClearAll[ERTMonTakeEntityData]
 ERTMonTakeEntityData[$ERTMonFailure] := $ERTMonFailure;
@@ -255,7 +284,7 @@ ERTMonTakeTimeSeries[__][___] := $ERTMonFailure;
 
 ClearAll[ERTMonSetVariableOutlierBoundaries]
 ERTMonSetVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetVariableOutlierBoundaries[][___] := $ERTMonFailure;
 ERTMonSetVariableOutlierBoundaries[xs_, context_] := $ERTMonFailure;
 ERTMonSetVariableOutlierBoundaries[data_Association][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"variableOutlierBoundaries"->data|> ] ];
 ERTMonSetVariableOutlierBoundaries[__][___] := $ERTMonFailure;
