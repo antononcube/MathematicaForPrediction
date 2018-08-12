@@ -167,6 +167,11 @@ ProcessComputationalSpecification[fname_String] :=
 ProcessComputationalSpecification[compSpecArg_?MatrixQ] :=
     Block[{compSpec = compSpecArg, compSpecColumnNames, rowIDs},
       compSpecColumnNames = First[compSpec];
+      compSpecColumnNames =
+          Map[
+            StringJoin@StringReplace[StringReplace[#, WordBoundary ~~ x_ :> ToUpperCase[x]], " " -> ""] &,
+            compSpecColumnNames
+          ];
       compSpec = Select[Rest[compSpec], Length[#] > 0 &];
       compSpec =
           Dataset[compSpec][All,
@@ -175,7 +180,7 @@ ProcessComputationalSpecification[compSpecArg_?MatrixQ] :=
       rowIDs =
           StringRiffle[{##} /. "NULL" -> Nothing, "."] & @@@
               Normal[Query[All, Values]@
-                  compSpec[All, {"Variable", "Aggregation function"}]];
+                  compSpec[All, {"Variable", "AggregationFunction"}]];
       compSpec = Dataset[AssociationThread[rowIDs -> Normal[compSpec]]];
       compSpec
     ];
@@ -518,15 +523,15 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
         MemberQ[ {"Unit", "Age", "Label"}, specRow["Variable"]],
         <||>,
 
-        NumberQ[specRow["Aggregation time interval"]] && NumberQ[specRow["Max history length"]],
+        NumberQ[specRow["AggregationTimeInterval"]] && NumberQ[specRow["MaxHistoryLength"]],
 
         ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
 
-        ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] == 0, {0, specRow["Max history length"]}, {-specRow["Max history length"], 0}] ]&, ts];
+        ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] == 0, {0, specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
 
-        ts = Map[ TimeSeriesAggregate[#, specRow["Aggregation time interval"], aAggregationFunctionSpec[specRow["Aggregation function"]] ]&, ts];
+        ts = Map[ TimeSeriesAggregate[#, specRow["AggregationTimeInterval"], aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
 
-        ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["Aggregation function"]]}&, ts];
+        ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["AggregationFunction"]]}&, ts];
         ts,
 
         True,
@@ -543,10 +548,20 @@ ERTMonTimeSeriesAggregation[xs_, context_Association] := ERTMonTimeSeriesAggrega
 ERTMonTimeSeriesAggregation[][xs_, context_] :=
     Block[{compSpec, ts, aAggrFuncs},
 
+      If[ !KeyExistsQ[context, "compSpec"],
+        Echo["Cannot find computations specifications.", "ERTMonTimeSeriesAggregation:"];
+        Return[$ERTMonFailure]
+      ];
+
+      If[ !KeyExistsQ[context, "timeSeries"],
+        Echo["Calculate time series first. (With ERTMonRecordGroupsToTimeSeries.)", "ERTMonTimeSeriesAggregation:"];
+        Return[$ERTMonFailure]
+      ];
+
       compSpec = context["compSpec"];
       ts = context["timeSeries"];
 
-      If[ Length[Intersection[{"OutliersCount", "OutliersFraction"}, Normal[compSpec[Values,"Aggregation function"]]]] > 0 &&
+      If[ Length[Intersection[{"OutliersCount", "OutliersFraction"}, Normal[compSpec[Values,"AggregationFunction"]]]] > 0 &&
           !KeyExistsQ[context, "variableOutlierBoundaries"],
 
         Echo["Calculate outlier boundaries first.", "ERTMonTimeSeriesAggregation:"];
