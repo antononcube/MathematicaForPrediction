@@ -48,6 +48,20 @@
       2321,       a1,       HR,        1512429528,    78
       2321,       a1,       RR,        1512429628,    12
 
+
+    TODO:
+    1. [ ] Consider moving the data into Dataset objects with named columns.
+           Currently, say, the event records data is stored in a matrix and a vector of column names.
+
+    2. [ ] Consider the splicing of the sparse matrices. This would mean using the SSparseMatrix.m package.
+
+    3. [ ] Investigate does the computational specification Dataset object has to have named rows.
+
+    4. [ ] Implement data column types check for event records data.
+           Only column names are enforced through ERTMonSetEventRecords.
+
+    5. [ ] Better initialization with ERTMonUnit, using datasets for event records and entity data (and computation specification.)
+
 *)
 
 (**************************************************************)
@@ -208,7 +222,7 @@ ERTMonSetEventRecords[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
         Length[Intersection[colNames, {"EntityID", "LocationID", "Variable", "Value", "ObservationTime"}]] == 5,
       ERTMonUnit[ xs, Join[ context, <|"eventRecords"->data, "eventRecordsColumnNames"->colNames|> ] ],
       (*ELSE*)
-      $ERTMonFailure
+      ERTMonSetEventRecords[""][]
     ];
 ERTMonSetEventRecords[data_Dataset][xs_, context_] :=
     ERTMonSetEventRecords[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
@@ -246,7 +260,7 @@ ERTMonSetEntityData[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
         Length[Intersection[colNames, {"EntityID"}]] == 1,
       ERTMonUnit[ xs, Join[ context, <|"entityData"->data, "entityDataColumnNames"->colNames|> ] ],
       (*ELSE*)
-      $ERTMonFailure
+      ERTMonSetEntityData[""][]
     ];
 ERTMonSetEntityData[data_Dataset][xs_, context_] :=
     ERTMonSetEntityData[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
