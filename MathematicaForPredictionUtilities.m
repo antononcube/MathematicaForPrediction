@@ -226,6 +226,8 @@ RecordsSummary[dataRecords_?DataRulesForClassifyQ, args___] :=
 RecordsSummary[dataRecords_, args___ ] :=
     RecordsSummary[ List /@ dataRecords, args ] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 1 && Length[dataRecords] > 0);
 
+RecordsSummary[a_Association, args___] := Map[ RecordsSummary[#, args]&, a];
+
 RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
 
 
