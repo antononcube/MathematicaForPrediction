@@ -87,6 +87,11 @@ DataRulesForClassifyQ::usage = "Checks is the argument is a list of item->label 
 DataArrayRulesForClassifyQ::usage = "Checks is the argument is a list of record->label rules that can be used by Classify. \
 All records should form an array."
 
+ImportCSVToDataset::usage = "Imports a CSV file and attempts to convert into a Dataset object."
+
+DatasetColumnNumericQ::usage = "DatasetColumnNumericQ[ds] Returns Vector[#,NumericQ]& over the columns of ds \
+after removing missing and NA values."
+
 Begin["`Private`"]
 
 Needs["MosaicPlot`"];
@@ -407,6 +412,35 @@ GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
 
       (* Show result *)
       gridFunc[grData]
+    ];
+
+
+(***********************************************************)
+(* Import CSV files into Dataset objects                   *)
+(***********************************************************)
+
+Clear[ImportCSVToDataset]
+Options[ImportCSVToDataset] = {"RowNames" -> False, "ColumnNames" -> True};
+ImportCSVToDataset[fname_String, opts : OptionsPattern[]] :=
+    Block[{data},
+      data = Import[fname];
+      If[OptionValue["ColumnNames"],
+        data = Dataset[Dataset[Rest[data]][All, AssociationThread[First[data], #] &]],
+        (*ELSE*)
+        data = Dataset[data]
+      ];
+      If[OptionValue["RowNames"],
+        data = Dataset[AssociationThread[Normal[data[All, First]], Normal[data[All, Rest]]]]
+      ];
+      data
+    ];
+
+
+Clear[DatasetColumnNumericQ]
+Options[DatasetColumnNumericQ] = { "NotAvailablePattern" -> "NA|Null|None", IgnoreCase->True};
+DatasetColumnNumericQ[data_Dataset, opts:OptionsPattern[]]:=
+    Block[{naPattern = OptionValue["NotAvailablePattern"], ignoreCase = OptionValue[IgnoreCase]},
+      Transpose[data][All, VectorQ[DeleteCases[DeleteMissing[#], "" | (x_String /; StringContainsQ[x, naPattern, IgnoreCase -> ignoreCase])], NumericQ] &]
     ];
 
 End[]
