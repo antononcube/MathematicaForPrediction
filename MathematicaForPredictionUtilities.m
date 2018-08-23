@@ -435,12 +435,12 @@ ImportCSVToDataset[fname_String, opts : OptionsPattern[]] :=
       data
     ];
 
-
+(* The pattern handling is not general enough: it is only for strings. *)
 Clear[DatasetColumnNumericQ]
-Options[DatasetColumnNumericQ] = { "NotAvailablePattern" -> "NA|Null|None", IgnoreCase->True};
+Options[DatasetColumnNumericQ] = { "NotAvailablePattern" -> ( "" | "NA" | "Null" | "None"), IgnoreCase->True};
 DatasetColumnNumericQ[data_Dataset, opts:OptionsPattern[]]:=
     Block[{naPattern = OptionValue["NotAvailablePattern"], ignoreCase = OptionValue[IgnoreCase]},
-      Transpose[data][All, VectorQ[DeleteCases[DeleteMissing[#], "" | (x_String /; StringContainsQ[x, naPattern, IgnoreCase -> ignoreCase])], NumericQ] &]
+      Transpose[data][All, VectorQ[DeleteCases[DeleteMissing[#], (x_String /; StringMatchQ[x, naPattern, IgnoreCase -> ignoreCase])], NumericQ] &]
     ];
 
 End[]
