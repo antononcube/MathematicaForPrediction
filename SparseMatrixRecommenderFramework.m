@@ -405,6 +405,11 @@ ItemRecommender[d___]["SubSSparseMatrix"][m:("M"|"M01"), tagType_String] :=
 
 ItemRecommender[d___]["UserItemsToLove"][args___] := ItemRecommender[d]["Recommendations"][args];
 
+ItemRecommender[d___]["Recommendations"][ratedInds_Association, nRes_Integer, removeHistoryQ_:True] :=
+    Block[{},
+      ItemRecommender[d]["Recommendations"][Keys[ratedInds], Values[ratedInds], nRes, removeHistoryQ]
+    ];
+
 ItemRecommender[d___]["Recommendations"][inputShowInds:{_Integer...},inputRatings:{_?NumberQ...},nRes_Integer, removeHistoryQ_:True]:=
     Block[{inds,vec,maxScores,smat=ItemRecommender[d]["M"]},
     (*userMatrix=MapThread[#1*#2&,{smat\[LeftDoubleBracket]inputShowInds\[RightDoubleBracket],inputRatings},1];*)
@@ -445,6 +450,29 @@ If[Length[#]>nRes,Take[#,nRes],#]&[SortBy[Select[Transpose[{vec\[LeftDoubleBrack
       If[Length[#]>nRes,Take[#,nRes],#]&[DeleteCases[Transpose[{vec[[inds]],inds}],{0.,_}]]
     ]/;Dimensions[ItemRecommender[d]["M"]][[2]]==Dimensions[profileVec][[1]];
 
+ItemRecommender[d___]["RecommendationsByProfile"][tagsArg:(_Association | _List ), nRes_Integer] :=
+    Block[{profVec},
+      profVec = ItemRecommender[d]["MakeProfileVector"][tagsArg];
+      ItemRecommender[d]["RecommendationsByProfile"][ profVec, nRes ]
+    ];
+
+(*ItemRecommender[d___]["RecommendationsByProfile"][scoredTags_Association, nRes_Integer] :=*)
+    (*Block[{tagInds, t},*)
+
+      (*tagInds = Keys[scoredTags] /. ItemRecommender[d]["tagToColumnIndexRules"];*)
+
+      (*If[ VectorQ[tagInds, NumberQ],*)
+        (*ItemRecommender[d]["RecommendationsByProfile"][tagInds, Values[scoredTags]],*)
+        (*ELSE*)
+        (*Message[ItemRecommender::ntags];*)
+        (*t = Select[ Transpose[{tagInds, Values[scoredTags]}], NumberQ[#[[1]]]];*)
+        (*If[Length[t] > 0,*)
+          (*ItemRecommender[d]["RecommendationsByProfile"][t[[All,1]], t[[All,2]]],*)
+          (*ELSE*)
+          (*{}*)
+        (*]*)
+      (*]*)
+    (*];*)
 
 (* The code is almost identical to the definition above *)
 ItemRecommender[d___]["RecommendationsByProfile"][rowInds:{_Integer..},profileInds:{_Integer...},profileScores:{_?NumberQ...},nRes_Integer]:=
