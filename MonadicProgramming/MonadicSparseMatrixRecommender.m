@@ -1,5 +1,5 @@
 (*
-    Monadic Item-Item Recommender Mathematica package
+    Monadic Sparse Matrix Recommender Mathematica package
     Copyright (C) 2018  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -30,8 +30,8 @@
 
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
-(* :Title: MonadicItemItemRecommender *)
-(* :Context: MonadicItemItemRecommender` *)
+(* :Title: MonadicSparseMatrixRecommender *)
+(* :Context: MonadicSparseMatrixRecommender` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-09-02 *)
 
@@ -58,14 +58,13 @@
 *   The monad commands are given "verb-like" names and appropriate synonyms are considered/added.
 *
 *   It is an interesting question how to create the recommender.
-*   If we allow empty IIR monad structure creation IIRMonUnit[] then we have to be able
+*   If we allow empty IIR monad structure creation SMRMonUnit[] then we have to be able
 *   to ingest matrices and datasets for the creation population of the IIR data structures.
 *
 *
 *   # Implementation consideration
 *
-*   Note that the a Sparse Matrix Recommender for IIR is made at first, but the mapping to
-*   Stream Blending Recommender is planned to be added soon after. See [2].
+*   Note that the Sparse Matrix Recommender can be mapped into the Stream Blending Recommender. See [2].
 *
 *   The easiest way to implement IIR is to reuse the Object-Oriented Programming (OOP) implementation [3].
 *   But OOP implementation [3] was developed before the introduction Association and the implementation of the
@@ -113,55 +112,55 @@ If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["MonadicItemItemRecommender`"];
+BeginPackage["MonadicSparseMatrixRecommender`"];
 
-$IIRMonFailure::usage = "Failure symbol of IIRMon."
+$SMRMonFailure::usage = "Failure symbol of SMRMon."
 
-IIRMonScoredItemsQ::usage = "True if the argument is an association with item names or item indices as keys \
+SMRMonScoredItemsQ::usage = "True if the argument is an association with item names or item indices as keys \
 and numbers as values."
 
-IIRMonScoredTagsQ::usage = "True if the argument is an association with tags or tag indices as keys \
+SMRMonScoredTagsQ::usage = "True if the argument is an association with tags or tag indices as keys \
 and numbers as values."
 
-IIRMonCreateFromMatrices::usage = "Creates the recommender structures from an association of (sparse) matrices."
+SMRMonCreateFromMatrices::usage = "Creates the recommender structures from an association of (sparse) matrices."
 
-IIRMonCreate::usage = "Creates the recommender structures from a transactions Dataset and a specifications Dataset."
+SMRMonCreate::usage = "Creates the recommender structures from a transactions Dataset and a specifications Dataset."
 
-IIRMonRecommend::usage = "Recommends items based on history."
+SMRMonRecommend::usage = "Recommends items based on history."
 
-IIRMonRecommendByHistory::usage = "Recommends items based on history."
+SMRMonRecommendByHistory::usage = "Recommends items based on history."
 
-IIRMonRecommendByProfile::usage = "Recommends items based on profile."
+SMRMonRecommendByProfile::usage = "Recommends items based on profile."
 
-IIRMonToProfileVector::usage = "Makes a profile vector from an argument that is a list of tags or an Association object."
+SMRMonToProfileVector::usage = "Makes a profile vector from an argument that is a list of tags or an Association object."
 
-IIRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument."
+SMRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument."
 
-IIRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object."
+SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object."
 
-IIRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR tag types."
+SMRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR tag types."
 
-IIRMonSetTagWeights::usage = "Sets weights (significance factors) to the IIR tags."
+SMRMonSetTagWeights::usage = "Sets weights (significance factors) to the IIR tags."
 
-IIRMonClassify::usage = "Uses IIR as a classifier for specified label tag-type over a vector or a matrix."
+SMRMonClassify::usage = "Uses IIR as a classifier for specified label tag-type over a vector or a matrix."
 
-IIRMonSetClassificationParameters::usage = "Sets the parameters to be used by IIRMonClassify."
+SMRMonSetClassificationParameters::usage = "Sets the parameters to be used by SMRMonClassify."
 
-IIRMonProveByHistory::usage = "Proof the recommendations using consumption history."
+SMRMonProveByHistory::usage = "Proof the recommendations using consumption history."
 
-IIRMonProveByProfile::usage = "Proof the recommendations using consumption profile."
+SMRMonProveByProfile::usage = "Proof the recommendations using consumption profile."
 
-IIRMonTakeMatrices::usage = "Gives an association with the tag (sparse) matrices."
+SMRMonTakeMatrices::usage = "Gives an association with the tag (sparse) matrices."
 
-IIRMonTakeMatrix::usage = "Gives the recommendation matrix (SSparseMatrix)."
+SMRMonTakeMatrix::usage = "Gives the recommendation matrix (SSparseMatrix)."
 
-IIRMonTakeItemNames::usage = "Gives the item names. (Row names of the recommender matrix.)"
+SMRMonTakeItemNames::usage = "Gives the item names. (Row names of the recommender matrix.)"
 
-IIRMonTakeTags::usage = "Gives the tags. (Column names of the recommender matrix.)"
+SMRMonTakeTags::usage = "Gives the tags. (Column names of the recommender matrix.)"
 
-IIRMonTakeTagTypeWeights::usage = "Takes the tag-type weights."
+SMRMonTakeTagTypeWeights::usage = "Takes the tag-type weights."
 
-IIRMonTakeTagTypes::usage = "Takes the tag-types."
+SMRMonTakeTagTypes::usage = "Takes the tag-types."
 
 Begin["`Private`"];
 
@@ -176,65 +175,65 @@ Needs["SSparseMatrix`"]
 (* Generation                                                 *)
 (**************************************************************)
 
-(* Generate base functions of IIRMon monad (through StMon.) *)
+(* Generate base functions of SMRMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "MonadicItemItemRecommender`IIRMon", "FailureSymbol" -> $IIRMonFailure, "StringContextNames" -> False ]
+GenerateStateMonadCode[ "MonadicSparseMatrixRecommender`SMRMon", "FailureSymbol" -> $SMRMonFailure, "StringContextNames" -> False ]
 
 
 (**************************************************************)
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClearAll[IIRMonSetItemNames]
+ClearAll[SMRMonSetItemNames]
 
-IIRMonSetItemNames[$IIRMonFailure] := $IIRMonFailure;
+SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
 
 (* Here we can/have to have a correctness check. It is one of the advantages to SSparseMatrix. *)
-(*IIRMonSetItemNames[names_][xs_, context_Association] :=*)
-    (*IIRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
+(*SMRMonSetItemNames[names_][xs_, context_Association] :=*)
+    (*SMRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
 
-ClearAll[IIRMonGetTagTypeWeights]
-IIRMonGetTagTypeWeights[$IIRMonFailure] := $IIRMonFailure;
-IIRMonGetTagTypeWeights[][$IIRMonFailure] := $IIRMonFailure;
-IIRMonGetTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
-
-
-ClearAll[IIRMonGetTagTypes]
-IIRMonGetTagTypes[$IIRMonFailure] := $IIRMonFailure;
-IIRMonGetTagTypes[][$IIRMonFailure] := $IIRMonFailure;
-IIRMonGetTagTypes[][xs_, context_Association] := Keys[Lookup[context, "tagTypeWeights"]];
+ClearAll[SMRMonGetTagTypeWeights]
+SMRMonGetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
+SMRMonGetTagTypeWeights[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonGetTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
 
 
-ClearAll[IIRMonTakeMatrix]
-IIRMonTakeMatrix[$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeMatrix[][$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeMatrix[xs_, context_] := IIRMonTakeMatrix[][xs, context];
-IIRMonTakeMatrix[][xs_, context_Association] := Lookup[context, "M", $IIRMonFailure];
-IIRMonTakeMatrix[__][___] := $IIRMonFailure;
+ClearAll[SMRMonGetTagTypes]
+SMRMonGetTagTypes[$SMRMonFailure] := $SMRMonFailure;
+SMRMonGetTagTypes[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonGetTagTypes[][xs_, context_Association] := Keys[Lookup[context, "tagTypeWeights"]];
 
 
-ClearAll[IIRMonTakeMatrices]
-IIRMonTakeMatrices[$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeMatrices[][$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeMatrices[xs_, context_] := IIRMonTakeMatrices[][xs, context];
-IIRMonTakeMatrices[][xs_, context_Association] := Lookup[context, "matrices", $IIRMonFailure];
-IIRMonTakeMatrices[__][___] := $IIRMonFailure;
+ClearAll[SMRMonTakeMatrix]
+SMRMonTakeMatrix[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeMatrix[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeMatrix[xs_, context_] := SMRMonTakeMatrix[][xs, context];
+SMRMonTakeMatrix[][xs_, context_Association] := Lookup[context, "M", $SMRMonFailure];
+SMRMonTakeMatrix[__][___] := $SMRMonFailure;
 
 
-ClearAll[IIRMonTakeItemNames]
-IIRMonTakeItemNames[$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeItemNames[][$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeItemNames[xs_, context_] := IIRMonTakeItemNames[][xs, context];
-IIRMonTakeItemNames[][xs_, context_Association] := Lookup[context, "itemNames", $IIRMonFailure];
-IIRMonTakeItemNames[__][___] := $IIRMonFailure;
+ClearAll[SMRMonTakeMatrices]
+SMRMonTakeMatrices[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeMatrices[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeMatrices[xs_, context_] := SMRMonTakeMatrices[][xs, context];
+SMRMonTakeMatrices[][xs_, context_Association] := Lookup[context, "matrices", $SMRMonFailure];
+SMRMonTakeMatrices[__][___] := $SMRMonFailure;
 
 
-ClearAll[IIRMonTakeTags]
-IIRMonTakeTags[$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeTags[][$IIRMonFailure] := $IIRMonFailure;
-IIRMonTakeTags[xs_, context_] := IIRMonTakeTags[][xs, context];
-IIRMonTakeTags[][xs_, context_Association] := Lookup[context, "tags", $IIRMonFailure];
-IIRMonTakeTags[__][___] := $IIRMonFailure;
+ClearAll[SMRMonTakeItemNames]
+SMRMonTakeItemNames[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeItemNames[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeItemNames[xs_, context_] := SMRMonTakeItemNames[][xs, context];
+SMRMonTakeItemNames[][xs_, context_Association] := Lookup[context, "itemNames", $SMRMonFailure];
+SMRMonTakeItemNames[__][___] := $SMRMonFailure;
+
+
+ClearAll[SMRMonTakeTags]
+SMRMonTakeTags[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeTags[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeTags[xs_, context_] := SMRMonTakeTags[][xs, context];
+SMRMonTakeTags[][xs_, context_Association] := Lookup[context, "tags", $SMRMonFailure];
+SMRMonTakeTags[__][___] := $SMRMonFailure;
 
 
 (**************************************************************)
@@ -255,15 +254,15 @@ ScoredItemIndexesQ[recs_Association, context_Association] :=
 
 ScoredItemIndexesQ[___] := False
 
-ClearAll[IIRMonScoredItemsQ]
+ClearAll[SMRMonScoredItemsQ]
 
-IIRMonScoredItemsQ[$IIRMonFailure] := $IIRMonFailure;
+SMRMonScoredItemsQ[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonScoredItemsQ[xs_, context_Association] := IIRMonScoredItemsQ[xs][xs, context];
+SMRMonScoredItemsQ[xs_, context_Association] := SMRMonScoredItemsQ[xs][xs, context];
 
-IIRMonScoredItemsQ[][xs_, context_Association] := IIRMonScoredItemsQ[xs][xs, context];
+SMRMonScoredItemsQ[][xs_, context_Association] := SMRMonScoredItemsQ[xs][xs, context];
 
-IIRMonScoredItemsQ[recs_Association][xs_, context_Association] :=
+SMRMonScoredItemsQ[recs_Association][xs_, context_Association] :=
     Block[{res},
       res =
           If[ KeyExistsQ[context, "itemNames"],
@@ -275,21 +274,21 @@ IIRMonScoredItemsQ[recs_Association][xs_, context_Association] :=
             (*ELSE*)
             AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
           ];
-      IIRMonUnit[res, context]
+      SMRMonUnit[res, context]
     ];
 
-IIRMonScoredItemsQ[__][___] := $IIRMonFailure;
+SMRMonScoredItemsQ[__][___] := $SMRMonFailure;
 
 
-ClearAll[IIRMonScoredTagsQ]
+ClearAll[SMRMonScoredTagsQ]
 
-IIRMonScoredTagsQ[$IIRMonFailure] := $IIRMonFailure;
+SMRMonScoredTagsQ[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonScoredTagsQ[xs_, context_Association] := IIRMonScoredTagsQ[xs][xs, context];
+SMRMonScoredTagsQ[xs_, context_Association] := SMRMonScoredTagsQ[xs][xs, context];
 
-IIRMonScoredTagsQ[][xs_, context_Association] := IIRMonScoredTagsQ[xs][xs, context];
+SMRMonScoredTagsQ[][xs_, context_Association] := SMRMonScoredTagsQ[xs][xs, context];
 
-IIRMonScoredTagsQ[recs_Association][xs_, context_Association] :=
+SMRMonScoredTagsQ[recs_Association][xs_, context_Association] :=
     Block[{res},
       res =
           If[ KeyExistsQ[context, "tags"],
@@ -301,26 +300,26 @@ IIRMonScoredTagsQ[recs_Association][xs_, context_Association] :=
             (*ELSE*)
             AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
           ];
-      IIRMonUnit[res, context]
+      SMRMonUnit[res, context]
     ];
 
-IIRMonScoredTagsQ[__][___] := $IIRMonFailure;
+SMRMonScoredTagsQ[__][___] := $SMRMonFailure;
 
 
 (**************************************************************)
 (* Creation                                                   *)
 (**************************************************************)
 
-ClearAll[IIRMonCreate]
+ClearAll[SMRMonCreate]
 
-(*IIRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
-(*IIRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
+(*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
+(*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
-IIRMonCreate[$IIRMonFailure] := $IIRMonFailure;
+SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonCreate[xs_, context_Association] := $IIRMonFailure;
+SMRMonCreate[xs_, context_Association] := $SMRMonFailure;
 
-IIRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Association] :=
+SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Association] :=
     Block[{tagTypeNames, rowNames, columnNames, splicedMat},
 
       tagTypeNames = Keys[smats];
@@ -328,8 +327,8 @@ IIRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Associat
       rowNames = RowNames /@ Values[smats];
 
       If[ !(Equal @@ rowNames),
-        Echo["The row names of SSparseMatrix objects are not the same.", "IIRMonCreate:"];
-        Return[$IIRMonFailure]
+        Echo["The row names of SSparseMatrix objects are not the same.", "SMRMonCreate:"];
+        Return[$SMRMonFailure]
       ];
 
       splicedMat = ColumnBind[Values[smats]];
@@ -338,7 +337,7 @@ IIRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Associat
 
       columnNames = ColumnNames[splicedMat];
 
-      IIRMonUnit[
+      SMRMonUnit[
         xs,
         Join[
           context,
@@ -355,7 +354,7 @@ IIRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Associat
     ];
 
 
-IIRMonCreate[ds_Dataset, itemVarName_String ][xs_, context_Association] :=
+SMRMonCreate[ds_Dataset, itemVarName_String ][xs_, context_Association] :=
     Block[{ncol, varNames, smats, idPos, rng},
 
       ncol = Dimensions[ds][[2]];
@@ -364,7 +363,7 @@ IIRMonCreate[ds_Dataset, itemVarName_String ][xs_, context_Association] :=
 
       idPos = Flatten[Position[varNames, itemVarName]];
       If[ Length[idPos]==0,
-        Echo["The specified item variable name is not one of the column names of the dataset.", "IIRMonCreate:"];
+        Echo["The specified item variable name is not one of the column names of the dataset.", "SMRMonCreate:"];
         Return[$Failed]
       ];
       idPos = First[idPos];
@@ -376,62 +375,62 @@ IIRMonCreate[ds_Dataset, itemVarName_String ][xs_, context_Association] :=
 
       smats = AssociationThread[Flatten[List @@ varNames[[rng]] -> smats]];
 
-      IIRMonCreate[smats][xs, context]
+      SMRMonCreate[smats][xs, context]
     ];
 
-IIRMonCreate[___][__] := $IIRMonFailure;
+SMRMonCreate[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
-(* IIRMonRecommend                                            *)
+(* SMRMonRecommend                                            *)
 (**************************************************************)
 
-ClearAll[IIRMonRecommend];
+ClearAll[SMRMonRecommend];
 
-Options[IIRMonRecommend] = {"RemoveHistory"->True, "ItemNames"->True};
+Options[SMRMonRecommend] = {"RemoveHistory"->True, "ItemNames"->True};
 
-IIRMonRecommend[$IIRMonFailure] := $IIRMonFailure;
+SMRMonRecommend[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonRecommend[xs_, context_Association] := $IIRMonFailure;
+SMRMonRecommend[xs_, context_Association] := $SMRMonFailure;
 
-IIRMonRecommend[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{h},
 
       h = KeyMap[ context["itemNames"][#]&, history ];
       h = KeySelect[ h, IntegerQ ];
 
       If[ Length[h] < Length[history],
-        Echo["Some of item names are not known by the recommender.", "IIRMonRecommend:"];
+        Echo["Some of item names are not known by the recommender.", "SMRMonRecommend:"];
       ];
 
       (*If[ Length[h] == 0,*)
-        (*Echo["Obtained empty history.", "IIRMonRecommend:"];*)
+        (*Echo["Obtained empty history.", "SMRMonRecommend:"];*)
         (*Return[<||>]*)
       (*];*)
 
-      IIRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
+      SMRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
     ];
 
-IIRMonRecommend[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    IIRMonRecommend[ Keys[history], Values[history], nRes, opts][xs, context];
+SMRMonRecommend[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ Keys[history], Values[history], nRes, opts][xs, context];
 
-IIRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    IIRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
+SMRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
 
-IIRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
     Block[{inds, vec, maxScores, smat, recs, removeHistoryQ, itemNamesQ, rowNames},
 
       If[Length[itemIndices],
-        Echo["Empty history as an argument.", "IIRMonRecommend:"];
+        Echo["Empty history as an argument.", "SMRMonRecommend:"];
         Return[<||>]
       ];
 
-      removeHistoryQ = TrueQ[OptionValue[IIRMonRecommend, "RemoveHistory"]];
-      itemNamesQ = TrueQ[OptionValue[IIRMonRecommend, "ItemNames"]];
+      removeHistoryQ = TrueQ[OptionValue[SMRMonRecommend, "RemoveHistory"]];
+      itemNamesQ = TrueQ[OptionValue[SMRMonRecommend, "ItemNames"]];
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
-        Return[$IIRMonFailure]
+        Return[$SMRMonFailure]
       ];
 
       smat = SparseArray[context["M"]];
@@ -457,59 +456,59 @@ IIRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
         recs = KeyMap[ rowNames[[#]]&, recs]
       ];
 
-      IIRMonUnit[recs, context]
+      SMRMonUnit[recs, context]
 
     ]/;Length[itemIndices]==Length[itemRatings];
 
 
-IIRMonRecommend[___][__] := $IIRMonFailure;
+SMRMonRecommend[___][__] := $SMRMonFailure;
 
-ClearAll[IIRMonRecommendByHistory ]
-IIRMonRecommendByHistory = IIRMonRecommend;
+ClearAll[SMRMonRecommendByHistory ]
+SMRMonRecommendByHistory = SMRMonRecommend;
 
 
 (**************************************************************)
-(* IIRMonRecommendByProfile                                   *)
+(* SMRMonRecommendByProfile                                   *)
 (**************************************************************)
 
-ClearAll[IIRMonRecommendByProfile]
+ClearAll[SMRMonRecommendByProfile]
 
-IIRMonRecommendByProfile[$IIRMonFailure] := $IIRMonFailure;
+SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonRecommendByProfile[xs_, context_Association] := $IIRMonFailure;
+SMRMonRecommendByProfile[xs_, context_Association] := $SMRMonFailure;
 
-IIRMonRecommendByProfile[nRes_Integer][xs_, context_Association] :=
+SMRMonRecommendByProfile[nRes_Integer][xs_, context_Association] :=
     Block[{},
       (* Without verification. *)
-      IIRMonRecommendByProfile[xs, nRes][xs, context]
+      SMRMonRecommendByProfile[xs, nRes][xs, context]
     ];
 
-IIRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}, nRes_Integer][xs_, context_Association]:=
+SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}, nRes_Integer][xs_, context_Association]:=
     Block[{inds, vec, smat},
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
-        Return[$IIRMonFailure]
+        Return[$SMRMonFailure]
       ];
 
       smat = SparseArray[context["M"]];
 
       vec = SparseArray[Thread[profileInds->profileScores],{Dimensions[smat][[2]]}];
 
-      IIRMonRecommendByProfile[vec, nRes][xs, context]
+      SMRMonRecommendByProfile[vec, nRes][xs, context]
     ]/;Length[profileInds]==Length[profileScores];
 
-IIRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Association]:=
+SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Association]:=
     Block[{inds, vec, smat, recs},
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
-        Return[$IIRMonFailure]
+        Return[$SMRMonFailure]
       ];
 
       If[ ColumnsCount[context["M"]] != Dimensions[profileVec][[1]],
-        Echo["The number of columns of the recommender matrix is different than the length of the profile vector argument.", "IIRMonRecommendByProfile:"];
-        Return[$IIRMonFailure]
+        Echo["The number of columns of the recommender matrix is different than the length of the profile vector argument.", "SMRMonRecommendByProfile:"];
+        Return[$SMRMonFailure]
       ];
 
       smat = SparseArray[context["M"]];
@@ -520,94 +519,94 @@ IIRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Asso
       recs = KeyMap[ First, recs ];
 
       recs = TakeLargest[recs, UpTo[nRes]];
-      IIRMonUnit[recs, context]
+      SMRMonUnit[recs, context]
 
     ];
 
-IIRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer][xs_, context_Association] :=
+SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer][xs_, context_Association] :=
     Block[{p},
 
-      If[ AssociationQ[tagsArg] && !IIRMonScoredTagsQ[tagsArg] ||
-          ListQ[tagsArg] && !IIRMonScoredTagsQ[AssociationThread[tags->1]] ,
-        Echo["The first argument is not an assocation of tags->score elements or a list of tags.", "IIRMonRecommendByProfile:"];
-        Return[$IIRMonFailure]
+      If[ AssociationQ[tagsArg] && !SMRMonScoredTagsQ[tagsArg] ||
+          ListQ[tagsArg] && !SMRMonScoredTagsQ[AssociationThread[tags->1]] ,
+        Echo["The first argument is not an assocation of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
+        Return[$SMRMonFailure]
       ];
 
-      p = IIRMonToProfileVector[tagsArg][xs, context];
-      IIRMonRecommendByProfile[p[[1]], nRes][xs, context]
+      p = SMRMonToProfileVector[tagsArg][xs, context];
+      SMRMonRecommendByProfile[p[[1]], nRes][xs, context]
     ];
 
-IIRMonRecommendByProfile[___][__] := $IIRMonFailure;
+SMRMonRecommendByProfile[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
 (* Convert recommendations to a Dataset                       *)
 (**************************************************************)
 
-ClearAll[IIRMonToItemsDataset]
+ClearAll[SMRMonToItemsDataset]
 
-IIRMonToItemsDataset[$IIRMonFailure] := $IIRMonFailure;
+SMRMonToItemsDataset[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonToItemsDataset[xs_, context_Association] := IIRMonToItemsDataset[xs][xs, context];
+SMRMonToItemsDataset[xs_, context_Association] := SMRMonToItemsDataset[xs][xs, context];
 
-IIRMonToItemsDataset[][xs_, context_Association] := IIRMonToItemsDataset[xs][xs, context];
+SMRMonToItemsDataset[][xs_, context_Association] := SMRMonToItemsDataset[xs][xs, context];
 
-IIRMonToItemsDataset[recs_Association][xs_, context_Association] :=
+SMRMonToItemsDataset[recs_Association][xs_, context_Association] :=
     Block[{res},
 
       If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRMonToItemsDataset:"];
-        Return[$IIRMonFailure]
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonToItemsDataset:"];
+        Return[$SMRMonFailure]
       ];
 
       Which[
         ScoredItemIndexesQ[recs, context],
         res = Dataset[Transpose[{ Values[recs], Keys[recs], RowNames[context["M"]][[Keys[recs]]] }]];
         res = res[All, AssociationThread[{"Score", "Index", "Item"} -> #]&];
-        IIRMonUnit[res, context],
+        SMRMonUnit[res, context],
 
-        Fold[ IIRMonBind, IIRMonUnit[xs, context], {IIRMonScoredItemsQ[recs], IIRMonTakeValue}],
+        Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonScoredItemsQ[recs], SMRMonTakeValue}],
         res = Dataset[Transpose[{ Values[recs], context["itemNames"][#]& /@ Keys[recs], Keys[recs]}]]; Print["here"];
         res = res[All, AssociationThread[{"Score", "Index", "Item"} -> #]&];
-        IIRMonUnit[res, context],
+        SMRMonUnit[res, context],
 
         True,
-        Return[$IIRMonFailure]
+        Return[$SMRMonFailure]
       ]
     ];
 
-IIRMonToItemsDataset[__][___] := $IIRMonFailure;
+SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 
 
 (**************************************************************)
-(* IIRMonProfile                                              *)
+(* SMRMonProfile                                              *)
 (**************************************************************)
 
-(*ClearAll[IIRMonProfile]*)
-(*IIRMonProfile[ ]*)
+(*ClearAll[SMRMonProfile]*)
+(*SMRMonProfile[ ]*)
 
-(*IIRMonRecommendByProfile[___][__] := $IIRMonFailure;*)
+(*SMRMonRecommendByProfile[___][__] := $SMRMonFailure;*)
 
 
 (**************************************************************)
-(* IIRMonToProfileVector                                      *)
+(* SMRMonToProfileVector                                      *)
 (**************************************************************)
 
-ClearAll[IIRMonToProfileVector]
+ClearAll[SMRMonToProfileVector]
 
-IIRMonToProfileVector[$IIRMonFailure] := $IIRMonFailure;
+SMRMonToProfileVector[$SMRMonFailure] := $SMRMonFailure;
 
-IIRMonToProfileVector[xs_, context_Association] := $IIRMonFailure;
+SMRMonToProfileVector[xs_, context_Association] := $SMRMonFailure;
 
-IIRMonToProfileVector[ scoredTags:Association[ (_Integer->_?NumberQ)..] ][xs_, context_Association] :=
+SMRMonToProfileVector[ scoredTags:Association[ (_Integer->_?NumberQ)..] ][xs_, context_Association] :=
     Block[{},
-      IIRMonUnit[ SparseArray[ Normal@scoredTags, ColumnsCount[context["M"]] ], context]
+      SMRMonUnit[ SparseArray[ Normal@scoredTags, ColumnsCount[context["M"]] ], context]
     ];
 
-IIRMonToProfileVector[ scoredTags:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
-    IIRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context]
+SMRMonToProfileVector[ scoredTags:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
+    SMRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context]
 
-IIRMonToProfileVector[___][__] := $IIRMonFailure;
+SMRMonToProfileVector[___][__] := $SMRMonFailure;
 
 
 End[]; (* `Private` *)
