@@ -137,6 +137,8 @@ IIRMonToProfileVector::usage = "Makes a profile vector from an argument that is 
 
 IIRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument."
 
+IIRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object."
+
 IIRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR tag types."
 
 IIRMonSetTagWeights::usage = "Sets weights (significance factors) to the IIR tags."
@@ -145,9 +147,9 @@ IIRMonClassify::usage = "Uses IIR as a classifier for specified label tag-type o
 
 IIRMonSetClassificationParameters::usage = "Sets the parameters to be used by IIRMonClassify."
 
-IIRMonProofByHistory::usage = "Proof the recommendations using consumption history."
+IIRMonProveByHistory::usage = "Proof the recommendations using consumption history."
 
-IIRMonProofByProfile::usage = "Proof the recommendations using consumption profile."
+IIRMonProveByProfile::usage = "Proof the recommendations using consumption profile."
 
 IIRMonTakeMatrices::usage = "Gives an association with the tag (sparse) matrices."
 
@@ -239,36 +241,71 @@ IIRMonTakeTags[__][___] := $IIRMonFailure;
 (* Predicates                                                 *)
 (**************************************************************)
 
+ClearAll[ScoredItemIndexesQ]
+
+ScoredItemIndexesQ[recs_Association, context_Association] :=
+    If[ KeyExistsQ[context, "M"],
+      AssociationQ[recs] &&
+          VectorQ[Values[recs], NumberQ] &&
+          Apply[And, Map[TrueQ[0 < # <= RowsCount[context["M"]]]&, Keys[recs]] ],
+      True,
+      (*ELSE*)
+      AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
+    ];
+
+ScoredItemIndexesQ[___] := False
+
 ClearAll[IIRMonScoredItemsQ]
 
-IIRMonScoredItemsQ[recs_Association] := AssociationQ[recs] && Values[recs, NumberQ];
+IIRMonScoredItemsQ[$IIRMonFailure] := $IIRMonFailure;
+
+IIRMonScoredItemsQ[xs_, context_Association] := IIRMonScoredItemsQ[xs][xs, context];
+
+IIRMonScoredItemsQ[][xs_, context_Association] := IIRMonScoredItemsQ[xs][xs, context];
 
 IIRMonScoredItemsQ[recs_Association][xs_, context_Association] :=
-    If[ KeyExistsQ[context, "itemNames"],
-      AssociationQ[recs] &&
-          Values[recs, NumberQ] &&
-          ( Length[ Intersection[ Keys[recs], Keys[context["itemNames"]] ] ] == Length[recs] ||
-              Length[ Intersection[ Keys[recs], Range[Length@context["itemNames"]] ] ] == Length[recs]
-          ),
-      (*ELSE*)
-      IIRMonScoredItemsQ[recs]
+    Block[{res},
+      res =
+          If[ KeyExistsQ[context, "itemNames"],
+            AssociationQ[recs] &&
+                VectorQ[Values[recs], NumberQ] &&
+                ( Length[ Intersection[ Keys[recs], Keys[context["itemNames"]] ] ] == Length[recs] ||
+                    Length[ Intersection[ Keys[recs], Range[Length@context["itemNames"]] ] ] == Length[recs]
+                ),
+            (*ELSE*)
+            AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
+          ];
+      IIRMonUnit[res, context]
     ];
+
+IIRMonScoredItemsQ[__][___] := $IIRMonFailure;
 
 
 ClearAll[IIRMonScoredTagsQ]
 
-IIRMonScoredTagsQ[recs_Association] := AssociationQ[recs] && Values[recs, NumberQ];
+IIRMonScoredTagsQ[$IIRMonFailure] := $IIRMonFailure;
+
+IIRMonScoredTagsQ[xs_, context_Association] := IIRMonScoredTagsQ[xs][xs, context];
+
+IIRMonScoredTagsQ[][xs_, context_Association] := IIRMonScoredTagsQ[xs][xs, context];
 
 IIRMonScoredTagsQ[recs_Association][xs_, context_Association] :=
-    If[ KeyExistsQ[context, "tags"],
-      AssociationQ[recs] &&
-          Values[recs, NumberQ] &&
-          ( Length[ Intersection[ Keys[recs], Keys[context["tags"]] ] ] == Length[recs] ||
-              Length[ Intersection[ Keys[recs], Range[Length@context["tags"]] ] ] == Length[recs]
-          ),
-      (*ELSE*)
-      IIRMonScoredTagsQ[recs]
+    Block[{res},
+      res =
+          If[ KeyExistsQ[context, "tags"],
+            AssociationQ[recs] &&
+                VectorQ[Values[recs], NumberQ] &&
+                ( Length[ Intersection[ Keys[recs], Keys[context["tags"]] ] ] == Length[recs] ||
+                    Length[ Intersection[ Keys[recs], Range[Length@context["tags"]] ] ] == Length[recs]
+                ),
+            (*ELSE*)
+            AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
+          ];
+      IIRMonUnit[res, context]
     ];
+
+IIRMonScoredTagsQ[__][___] := $IIRMonFailure;
+
 
 (**************************************************************)
 (* Creation                                                   *)
@@ -295,9 +332,9 @@ IIRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Associat
         Return[$IIRMonFailure]
       ];
 
-      rowNames = First[rowNames];
-
       splicedMat = ColumnBind[Values[smats]];
+
+      rowNames = RowNames[splicedMat];
 
       columnNames = ColumnNames[splicedMat];
 
@@ -351,7 +388,7 @@ IIRMonCreate[___][__] := $IIRMonFailure;
 
 ClearAll[IIRMonRecommend];
 
-Options[IIRMonRecommend] = {"RemoveHistory"->True};
+Options[IIRMonRecommend] = {"RemoveHistory"->True, "ItemNames"->True};
 
 IIRMonRecommend[$IIRMonFailure] := $IIRMonFailure;
 
@@ -382,7 +419,7 @@ IIRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]]
     IIRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
 
 IIRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
-    Block[{inds, vec, maxScores, smat, recs, removeHistoryQ},
+    Block[{inds, vec, maxScores, smat, recs, removeHistoryQ, itemNamesQ, rowNames},
 
       If[Length[itemIndices],
         Echo["Empty history as an argument.", "IIRMonRecommend:"];
@@ -390,6 +427,7 @@ IIRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
       ];
 
       removeHistoryQ = TrueQ[OptionValue[IIRMonRecommend, "RemoveHistory"]];
+      itemNamesQ = TrueQ[OptionValue[IIRMonRecommend, "ItemNames"]];
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
@@ -413,6 +451,11 @@ IIRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
       recs = If[ removeHistoryQ, KeySelect[  recs, !MemberQ[itemIndices, #]&] ];
 
       recs = TakeLargest[recs, UpTo[nRes]];
+
+      If[ itemNamesQ,
+        rowNames = RowNames[context["M"]];
+        recs = KeyMap[ rowNames[[#]]&, recs]
+      ];
 
       IIRMonUnit[recs, context]
 
@@ -495,6 +538,45 @@ IIRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer][xs_, cont
     ];
 
 IIRMonRecommendByProfile[___][__] := $IIRMonFailure;
+
+
+(**************************************************************)
+(* Convert recommendations to a Dataset                       *)
+(**************************************************************)
+
+ClearAll[IIRMonToItemsDataset]
+
+IIRMonToItemsDataset[$IIRMonFailure] := $IIRMonFailure;
+
+IIRMonToItemsDataset[xs_, context_Association] := IIRMonToItemsDataset[xs][xs, context];
+
+IIRMonToItemsDataset[][xs_, context_Association] := IIRMonToItemsDataset[xs][xs, context];
+
+IIRMonToItemsDataset[recs_Association][xs_, context_Association] :=
+    Block[{res},
+
+      If[!KeyExistsQ[context, "M"],
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRMonToItemsDataset:"];
+        Return[$IIRMonFailure]
+      ];
+
+      Which[
+        ScoredItemIndexesQ[recs, context],
+        res = Dataset[Transpose[{ Values[recs], Keys[recs], RowNames[context["M"]][[Keys[recs]]] }]];
+        res = res[All, AssociationThread[{"Score", "Index", "Item"} -> #]&];
+        IIRMonUnit[res, context],
+
+        Fold[ IIRMonBind, IIRMonUnit[xs, context], {IIRMonScoredItemsQ[recs], IIRMonTakeValue}],
+        res = Dataset[Transpose[{ Values[recs], context["itemNames"][#]& /@ Keys[recs], Keys[recs]}]]; Print["here"];
+        res = res[All, AssociationThread[{"Score", "Index", "Item"} -> #]&];
+        IIRMonUnit[res, context],
+
+        True,
+        Return[$IIRMonFailure]
+      ]
+    ];
+
+IIRMonToItemsDataset[__][___] := $IIRMonFailure;
 
 
 (**************************************************************)
