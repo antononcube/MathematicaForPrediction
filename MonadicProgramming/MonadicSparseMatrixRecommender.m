@@ -447,11 +447,12 @@ SMRMonApplyLocalWeightFunction[funcName_String][xs_, context_Association] :=
       smats =
           Map[
             ToSSparseMatrix[
-              ApplyLocalWeightFunction[SparseArray[#], "funcName"],
+              ApplyLocalTermFunction[SparseArray[#], funcName],
               "RowNames" -> RowNames[#],
               "ColumnNames" -> ColumnNames[#]
             ]&,
-            context["matrices"] ];
+            context["matrices"]
+          ];
 
       mat = ColumnBind[ smats ];
 
@@ -486,7 +487,7 @@ SMRMonApplyGlobalWeightFunction[funcName_String][xs_, context_Association] :=
       smats =
           Map[
             ToSSparseMatrix[
-              ApplyGlobalWeightFunction[SparseArray[#], "funcName"],
+              ApplyGlobalTermFunction[SparseArray[#], funcName],
               "RowNames" -> RowNames[#],
               "ColumnNames" -> ColumnNames[#]
             ]&,
@@ -521,7 +522,7 @@ SMRMonApplyNormalizationFunction[funcName_String][xs_, context_Association] :=
       smats =
           Map[
             ToSSparseMatrix[
-              ApplyNormalizationFunction[SparseArray[#], "funcName"],
+              ApplyNormalizationFunction[SparseArray[#], funcName],
               "RowNames" -> RowNames[#],
               "ColumnNames" -> ColumnNames[#]
             ]&,
