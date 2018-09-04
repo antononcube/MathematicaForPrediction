@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2017 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -67,15 +67,23 @@ BeginPackage["MonadicNeuralNetworks`"];
 
 $NetMonFailure::usage = "Failure symbol for the monad NetMon."
 
-NetMonSetNet::usage = "Assigns the argument to the key \"net\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+NetMonSetNet::usage = "Assigns the argument to the key \"net\" in the monad context."
 
 NetMonTakeNet::usage = "Gives the value of the key \"net\" from the monad context."
 
-NetMonSetTrainedNet::usage = "Assigns the argument to the key \"trainedNet\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+NetMonSetEncoder::usage = "Assigns the argument to the key \"encoder\" in the monad context."
+
+NetMonTakeEncoder::usage = "Gives the value of the key \"encoder\" from the monad context."
+
+NetMonSetDecoder::usage = "Assigns the argument to the key \"decoder\" in the monad context."
+
+NetMonTakeDecoder::usage = "Gives the value of the key \"decoder\" from the monad context."
+
+NetMonSetTrainedNet::usage = "Assigns the argument to the key \"trainedNet\" in the monad context."
 
 NetMonTakeTrainedNet::usage = "Gives the value of the key \"trainedNet\" from the monad context."
+
+NetMonTakeNetTrainResultsObject::usage = "Gives the value of the key \"netTrainResultsObject\" from the monad context."
 
 NetMonTrain::usage = "Train the network. If no data is given the pipeline value is used."
 
