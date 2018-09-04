@@ -454,9 +454,9 @@ SMRMonApplyLocalWeightFunction[funcName_String][xs_, context_Association] :=
             context["matrices"]
           ];
 
-      mat = ColumnBind[ smats ];
+      mat = ColumnBind[ Values[smats] ];
 
-      SMRMonUnit[xs, Join[ context, <| "M" -> mat, "M01" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "matrices" -> smats, "M" -> mat, "M01" -> mat |> ]]
     ];
 
 SMRMonApplyLocalWeightFunction[___][__] := $SMRMonFailure;
@@ -493,9 +493,9 @@ SMRMonApplyGlobalWeightFunction[funcName_String][xs_, context_Association] :=
             ]&,
             context["matrices"] ];
 
-      mat = ColumnBind[ smats ];
+      mat = ColumnBind[ Values[smats] ];
 
-      SMRMonUnit[xs, Join[ context, <| "M" -> mat, "M01" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "matrices" -> smats, "M" -> mat, "M01" -> mat |> ]]
     ];
 
 SMRMonApplyGlobalWeightFunction[___][__] := $SMRMonFailure;
@@ -528,9 +528,9 @@ SMRMonApplyNormalizationFunction[funcName_String][xs_, context_Association] :=
             ]&,
             context["matrices"] ];
 
-      mat = ColumnBind[ smats ];
+      mat = ColumnBind[ Values[smats] ];
 
-      SMRMonUnit[xs, Join[ context, <| "M" -> mat,  "M01" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "matrices" -> smats, "M" -> mat,  "M01" -> mat |> ]]
     ];
 
 SMRMonApplyNormalizationFunction[___][__] := $SMRMonFailure;
@@ -754,15 +754,15 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, co
       ];
 
       If[ !VectorQ[Normal[ds[All, byColName]], StringQ],
-        Echo["The joining column, \"" <> byColName <> "\", is expected to consist of strings.", "SMRMonJoinAcross:"]
-      ];
+        Echo["The joining column, \"" <> byColName <> "\", is expected to consist of strings.", "SMRMonJoinAcross:"];
 
-      If[ VectorQ[Normal[ds[All, byColName]], IntegerQ],
-        Echo["Proceeding by converting the integers in \"" <> byColName <> "\" into strings.", "SMRMonJoinAcross:"];
-        ds = ds[All, Join[#, <| byColName -> ToString[#[byColName]]|>]& ]
-        ,
-        (*ELSE*)
-        Return[$SMRMonFailure]
+        If[ VectorQ[Normal[ds[All, byColName]], IntegerQ],
+          Echo["Proceeding by converting the integers in \"" <> byColName <> "\" into strings.", "SMRMonJoinAcross:"];
+          ds = ds[All, Join[#, <| byColName -> ToString[#[byColName]]|>]& ]
+          ,
+          (*ELSE*)
+          Return[$SMRMonFailure]
+        ];
       ];
 
       res = JoinAcross[ Normal[dsRecs[All, {"Score", "Item"}]], Normal[ds], Key["Item"]->Key[byColName] ];
