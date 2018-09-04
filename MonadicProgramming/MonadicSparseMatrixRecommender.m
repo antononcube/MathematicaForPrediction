@@ -550,13 +550,8 @@ SMRMonRecommend[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, 
       h = KeySelect[ h, IntegerQ ];
 
       If[ Length[h] < Length[history],
-        Echo["Some of item names are not known by the recommender.", "SMRMonRecommend:"];
+        Echo["Some of the item names are not known by the recommender.", "SMRMonRecommend:"];
       ];
-
-      (*If[ Length[h] == 0,*)
-        (*Echo["Obtained empty history.", "SMRMonRecommend:"];*)
-        (*Return[<||>]*)
-      (*];*)
 
       SMRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
     ];
@@ -579,7 +574,7 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommend, "ItemNames"]];
 
       If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
         Return[$SMRMonFailure]
       ];
 
@@ -637,7 +632,7 @@ SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}
     Block[{inds, vec, smat},
 
       If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
         Return[$SMRMonFailure]
       ];
 
@@ -652,7 +647,7 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Asso
     Block[{inds, vec, smat, recs},
 
       If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "IIRRecommend:"];
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
         Return[$SMRMonFailure]
       ];
 
@@ -716,7 +711,7 @@ SMRMonToItemsDataset[recs_Association][xs_, context_Association] :=
         SMRMonUnit[res, context],
 
         Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonScoredItemsQ[recs], SMRMonTakeValue}],
-        res = Dataset[Transpose[{ Values[recs], context["itemNames"][#]& /@ Keys[recs], Keys[recs]}]]; Print["here"];
+        res = Dataset[Transpose[{ Values[recs], context["itemNames"][#]& /@ Keys[recs], Keys[recs]}]];
         res = res[All, AssociationThread[{"Score", "Index", "Item"} -> #]&];
         SMRMonUnit[res, context],
 
@@ -776,11 +771,11 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, co
 SMRMonJoinAcross[__][___] := $SMRMonFailure;
 
 
-
 (**************************************************************)
 (* SMRMonProfile                                              *)
 (**************************************************************)
 
+(* Essentially repeating SMRMonRecommend but with minor changes. *)
 (*ClearAll[SMRMonProfile]*)
 (*SMRMonProfile[ ]*)
 
