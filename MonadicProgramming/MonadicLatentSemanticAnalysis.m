@@ -225,14 +225,23 @@ LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWor
 ClearAll[LSAMonApplyTermWeightFunctions]
 
 LSAMonApplyTermWeightFunctions[___][$LSAMonFailure] := $LSAMonFailure;
+
 LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_] :=
-    Block[{},
-      Echo["Applying terms weight functions using their string names is not implemented yet.", "LSAMonApplyTermWeightFunctions:"];
-      $LSAMonFailure
+    Block[{wDocTermMat},
+      Which[
+        KeyExistsQ[context, "docTermMat"],
+        wDocTermMat = WeightTerms[context["docTermMat"], globalWeightFunction, localWeightFunction, normalizerFunction];
+        LSAMon[xs, Join[context, <|"wDocTermMat" -> wDocTermMat|>]],
+
+        True,
+        Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
+        $LSAMonFailure
+      ]
     ];
 
 LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
     Block[{wDocTermMat},
+      (* This code is the same as above. But I want to emphasize the string function names specification. *)
       Which[
         KeyExistsQ[context, "docTermMat"],
         wDocTermMat = WeightTerms[context["docTermMat"], args];
