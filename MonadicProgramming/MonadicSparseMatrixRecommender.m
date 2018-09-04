@@ -317,6 +317,24 @@ SMRMonScoredTagsQ[recs_Association][xs_, context_Association] :=
 SMRMonScoredTagsQ[__][___] := $SMRMonFailure;
 
 
+(* Private function. *)
+ClearAll[ScoredItemsQ]
+ScoredItemsQ[recs_Association, context_Association] :=
+    Block[{},
+      Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}]
+    ];
+ScoredItemsQ[___] := (Echo["Wrong signature!", "ScoredItemsQ:"]; False);
+
+
+(* Private function. *)
+ClearAll[ScoredTagsQ]
+ScoredTagsQ[prof_Association, context_Association] :=
+    Block[{},
+      Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredTagsQ[prof], SMRMonTakeValue}]
+    ];
+ScoredTagsQ[___] := (Echo["Wrong signature!", "ScoredTagsQ:"]; False);
+
+
 (**************************************************************)
 (* Creation                                                   *)
 (**************************************************************)
@@ -326,16 +344,16 @@ ClearAll[SMRMonCreate]
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
+Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False};
+
 SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonCreate[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Association] :=
+SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{tagTypeNames, rowNames, columnNames, splicedMat},
 
       tagTypeNames = Keys[smats];
-
-      rowNames = RowNames /@ Values[smats];
 
       If[ !(Equal @@ rowNames),
         Echo["The row names of SSparseMatrix objects are not the same.", "SMRMonCreate:"];
@@ -365,8 +383,10 @@ SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..]][xs_, context_Associat
     ];
 
 
-SMRMonCreate[ds_Dataset, itemVarName_String ][xs_, context_Association] :=
-    Block[{ncol, varNames, smats, idPos, rng},
+SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{ncol, varNames, smats, idPos, rng, addTagTypesToColumnNamesQ},
+
+      addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
 
       ncol = Dimensions[ds][[2]];
 
@@ -381,10 +401,19 @@ SMRMonCreate[ds_Dataset, itemVarName_String ][xs_, context_Association] :=
 
       rng = Complement[Range[ncol], {idPos}];
 
-      smats = ToSSparseMatrix /@
-          Table[CrossTabulate[ds[All, {idPos, i}]], {i, rng}];
+      smats = ToSSparseMatrix /@ Table[CrossTabulate[ds[All, {idPos, i}]], {i, rng}];
 
       smats = AssociationThread[Flatten[List @@ varNames[[rng]] -> smats]];
+
+      If[addTagTypesToColumnNamesQ,
+        smats =
+            Association @
+                KeyValueMap[Function[{k,mat},
+                  k -> ToSSparseMatrix[mat,
+                    "ColumnNames" -> Map[ k <> ":" <> #&, ColumnNames[mat] ],
+                    "RowNames" -> RowNames[mat]
+                  ]], smats]
+      ];
 
       SMRMonCreate[smats][xs, context]
     ];
@@ -647,9 +676,9 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Asso
 SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer][xs_, context_Association] :=
     Block[{p},
 
-      If[ AssociationQ[tagsArg] && !SMRMonScoredTagsQ[tagsArg] ||
-          ListQ[tagsArg] && !SMRMonScoredTagsQ[AssociationThread[tags->1]] ,
-        Echo["The first argument is not an assocation of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
+      If[ AssociationQ[tagsArg] && !ScoredTagsQ[tagsArg, context] ||
+          ListQ[tagsArg] && !ScoredTagsQ[AssociationThread[tagsArg->1], context] ,
+        Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
         Return[$SMRMonFailure]
       ];
 
