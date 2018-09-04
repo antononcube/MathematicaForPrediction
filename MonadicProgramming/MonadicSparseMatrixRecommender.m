@@ -108,6 +108,10 @@ If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
 ];
 
+If[Length[DownValues[DocumentTermMatrixConstruction`WeightTerms]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DocumentTermMatrixConstruction.m"]
+];
+
 (**************************************************************)
 (* Package definition                                         *)
 (**************************************************************)
@@ -126,10 +130,10 @@ SMRMonCreateFromMatrices::usage = "Creates the recommender structures from an as
 
 SMRMonCreate::usage = "Creates the recommender structures from a transactions Dataset and a specifications Dataset."
 
-SMRMonApplyGlobalWeightFunction::usage = "Applies a specified global weight function to the entries \
-of the contingency matrix."
+SMRMonApplyLocalWeightFunction::usage = "Applies a specified local weight function to the entries
+    of the contingency matrix."
 
-SMRMonApplyLocalWeightFunction::usage = "Applies a specified local weight function to the entries \
+SMRMonApplyGlobalWeightFunction::usage = "Applies a specified global weight function to the entries \
 of the contingency matrix."
 
 SMRMonApplyNormalizationFunction::usage = "Applies a specified normalization function to the entries \
@@ -180,6 +184,7 @@ Needs["MathematicaForPredictionUtilities`"]
 Needs["CrossTabulate`"]
 Needs["StateMonadCodeGenerator`"]
 Needs["SSparseMatrix`"]
+Needs["DocumentTermMatrixConstruction`"]
 
 
 (**************************************************************)
@@ -422,6 +427,41 @@ SMRMonCreate[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
+(* SMRMonApplyLocalWeightFunction                            *)
+(**************************************************************)
+
+ClearAll[SMRMonApplyLocalWeightFunction]
+
+SMRMonApplyLocalWeightFunction[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonApplyLocalWeightFunction[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonApplyLocalWeightFunction[funcName_String][xs_, context_Association] :=
+    Block[{mat, smats },
+
+      If[!KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonApplyLocalWeightFunction:"];
+        Return[$SMRMonFailure]
+      ];
+
+      smats =
+          Map[
+            ToSSparseMatrix[
+              ApplyLocalWeightFunction[SparseArray[#], "funcName"],
+              "RowNames" -> RowNames[#],
+              "ColumnNames" -> ColumnNames[#]
+            ]&,
+            context["matrices"] ];
+
+      mat = ColumnBind[ smats ];
+
+      SMRMonUnit[xs, Join[ context, <| "M" -> mat, "M01" -> mat |> ]]
+    ];
+
+SMRMonApplyLocalWeightFunction[___][__] := $SMRMonFailure;
+
+
+(**************************************************************)
 (* SMRMonApplyGlobalWeightFunction                            *)
 (**************************************************************)
 
@@ -432,47 +472,29 @@ SMRMonApplyGlobalWeightFunction[$SMRMonFailure] := $SMRMonFailure;
 SMRMonApplyGlobalWeightFunction[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonApplyGlobalWeightFunction[funcName_String][xs_, context_Association] :=
-    Block[{mat, globalWeights, freqSums},
+    Block[{mat, smats},
 
-      If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonApplyGlobalWeightFunction:"];
+      If[!KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonApplyGlobalWeightFunction:"];
         Return[$SMRMonFailure]
       ];
 
-      Which[
-        funcName == "IDF",
-        mat = SparseArray[context["M"]];
-        mat = Clip[mat,{0,1}];
-        globalWeights = Total[mat, {1}];
-        globalWeights = Log[ Dimensions[mat][[1]] / (1.0 + globalWeights)],
+      (* Quicker, but we have to keep the correspondence between "matrices" and "M" and "M01". *)
+      (*mat = ApplyGlobalWeightFunction[ SparseArray[context["M"]], funcName];*)
+      (*mat = ToSSparseMatrix[ mat, "RowNames" -> RowNames[context["M"]], "ColumnNames" -> ColumnNames[context["M"]] ];*)
 
-        funcName == "GFIDF",
-        mat = SparseArray[context["M"]];
-        freqSums = Total[mat, {1}];
-        mat = Clip[mat,{0,1}];
-        globalWeights = Total[mat, {1}];
-        globalWeights = globalWeights /. 0 -> 1;
-        globalWeights = N[freqSums / globalWeights],
+      smats =
+          Map[
+            ToSSparseMatrix[
+              ApplyGlobalWeightFunction[SparseArray[#], "funcName"],
+              "RowNames" -> RowNames[#],
+              "ColumnNames" -> ColumnNames[#]
+            ]&,
+            context["matrices"] ];
 
-        funcName == "None" || funcName == "Binary",
-        (*globalWeights = ConstantArray[1, ColumnsCount[context["M"]]]*)
-        Return[SMRMonUnit[xs, context]],
+      mat = ColumnBind[ smats ];
 
-        funcName == "ColumnStochastic",
-        mat = context["M"];
-        globalWeights = ColumnSums[mat];
-        globalWeights = globalWeights /. {0 -> 1};
-        globalWeights = 1 / globalWeights,
-
-        True,
-        Echo["Unknown global weight function specification.", "SMRMonApplyGlobalWeightFunction:"];
-        Return[$SMRMonFailure]
-      ];
-
-      mat = ToSSparseMatrix[SparseArray[DiagonalMatrix[globalWeights]], "ColumnNames"->ColumnNames[context["M"]]];
-      mat = context["M"] . mat;
-
-      SMRMonUnit[xs, Join[ context, <| "M" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "M" -> mat, "M01" -> mat |> ]]
     ];
 
 SMRMonApplyGlobalWeightFunction[___][__] := $SMRMonFailure;
@@ -489,43 +511,25 @@ SMRMonApplyNormalizationFunction[$SMRMonFailure] := $SMRMonFailure;
 SMRMonApplyNormalizationFunction[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonApplyNormalizationFunction[funcName_String][xs_, context_Association] :=
-    Block[{mat, normWeights},
+    Block[{mat, smats},
 
-      If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonApplyNormalizationFunction:"];
+      If[!KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonApplyNormalizationFunction:"];
         Return[$SMRMonFailure]
       ];
 
-      Which[
-        funcName == "None",
-        Return[SMRMonUnit[xs, context]],
+      smats =
+          Map[
+            ToSSparseMatrix[
+              ApplyNormalizationFunction[SparseArray[#], "funcName"],
+              "RowNames" -> RowNames[#],
+              "ColumnNames" -> ColumnNames[#]
+            ]&,
+            context["matrices"] ];
 
-        funcName == "Cosine",
-        mat = SparseArray[context["M"]];
-        normWeights = Sqrt[Total[mat * mat, {2}]];
-        normWeights = normWeights /. 0 -> 1;
-        normWeights = 1 / normWeights,
+      mat = ColumnBind[ smats ];
 
-        funcName == "RowStochastic",
-        mat = context["M"];
-        normWeights = RowSums[mat];
-        normWeights = normWeights /. {0 -> 1};
-        normWeights = 1 / normWeights,
-
-        funcName == "Max",
-        mat = SparseArray[context["M"]];
-        normWeights = Map[Max, mat];
-        normWeights = normWeights /. {0 -> 1};
-        normWeights = 1 / normWeights,
-
-        True,
-        Echo["Unknown normalizing function specification.", "SMRMonApplyNormalizationFunction:"];
-      ];
-
-      mat = ToSSparseMatrix[ SparseArray[DiagonalMatrix[normWeights]], "RowNames"->RowNames[context["M"]] ];
-      mat = mat. context["M"];
-
-      SMRMonUnit[xs, Join[ context, <| "M" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "M" -> mat,  "M01" -> mat |> ]]
     ];
 
 SMRMonApplyNormalizationFunction[___][__] := $SMRMonFailure;
