@@ -113,16 +113,12 @@ SMRApplyTermWeightFunctions <- function( docTermMat, globalWeightFunction = NULL
     
     globalWeights <- rep(1, ncol(mat) )
     
-  } else if ( globalWeightFunction == "ColumnStochastic" ) {
+  } else if ( globalWeightFunction == "ColumnStochastic" || globalWeightFunction == "Sum" ) {
     
     globalWeights <- colSums(mat)
     globalWeights[ globalWeights == 0 ] <- 1
     globalWeights <- 1 / globalWeights
-    
-  } else if ( globalWeightFunction == "Sum" ) {
-    
-    globalWeights <- colSums(mat)
-    
+
   } else if ( globalWeightFunction == "Entropy" ) {
     
     gfs <- colSums(mat)
