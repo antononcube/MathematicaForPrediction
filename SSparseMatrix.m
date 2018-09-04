@@ -259,7 +259,8 @@ ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
         Return[$Failed]
       ];
       If[dnames === {None, None}, dnames = None];
-      If[ MatchQ[dnames, {_String, None}] || MatchQ[dnames, {None, _String}], dnames = dnames /. None->"" ];
+      If[ MatchQ[dnames, {_String, None}], dnames = {dnames[[1]], "2"} ];
+      If[ MatchQ[dnames, {None, _String}], dnames = {"1", dnames[[2]]} ];
       If[! (dnames === None || (MatchQ[dnames, {_String ..}] && Length[dnames] == 2)),
         Message[SSparseMatrix::dnset, dnames]; Return[$Failed]
       ];
@@ -271,7 +272,11 @@ ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
               If[cnames === None, None,
                 AssociationThread[cnames, Range[Dimensions[sarr][[2]]]]],
           "DimensionNames" ->
-              If[dnames === None, None, AssociationThread[dnames, {1, 2}]]|>]
+              If[dnames === None,
+                AssociationThread[{"1", "2"}, {1, 2}],
+                AssociationThread[dnames, {1, 2}]
+              ]
+      |>]
     ];
 
 ToSSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
@@ -417,14 +422,14 @@ Dot[SSparseMatrix[obj_], x_] ^:=
     Block[{res},
       res = Dot[SSparseMatrix[obj][[1]]["SparseMatrix"], x];
       ToSSparseMatrix[res, "RowNames" -> RowNames[SSparseMatrix[obj]],
-        "DimensionNames" -> {DimensionNames[SSparseMatrix[obj]][[1]], ""}]
+        "DimensionNames" -> {DimensionNames[SSparseMatrix[obj]][[1]], "2"}]
     ];
 
 Dot[x_, SSparseMatrix[obj_]] ^:=
     Block[{res},
       res = Dot[x, SSparseMatrix[obj][[1]]["SparseMatrix"]];
       ToSSparseMatrix[res, "ColumnNames" -> ColumnNames[SSparseMatrix[obj]],
-        "DimensionNames" -> {"", DimensionNames[SSparseMatrix[obj]][[2]]}]
+        "DimensionNames" -> {"1", DimensionNames[SSparseMatrix[obj]][[2]]}]
     ];
 
 (* Arithmetic operators *)
