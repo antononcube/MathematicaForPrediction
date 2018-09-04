@@ -171,6 +171,11 @@ Each monad document is expected to have a tag. One tag might correspond to multi
 
 LSAMonTopicsTable::usage = "Make a table of topics."
 
+LSAMonTakeTexts::usage = "Gives the value of the key \"texts\" from the monad context."
+
+LSAMonTakeMatrix::usage = "Gives SSparseMatrix object of the value of the key \"docTermMat\" from the monad context."
+
+LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of the key \"wDocTermMat\" from the monad context."
 
 Begin["`Private`"]
 
@@ -179,7 +184,7 @@ Needs["StateMonadCodeGenerator`"]
 Needs["DocumentTermMatrixConstruction`"]
 Needs["NonNegativeMatrixFactorization`"]
 Needs["CrossTabulate`"]
-(*Needs["SSparseMatrix`"]*)
+Needs["SSparseMatrix`"]
 Needs["OutlierIdentifiers`"]
 
 
@@ -190,6 +195,51 @@ Needs["OutlierIdentifiers`"]
 (* Generate base functions of LSAMon monad (through StMon.) *)
 
 GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" -> $LSAMonFailure, "StringContextNames" -> False ]
+
+
+(**************************************************************)
+(* Setters and takers                                         *)
+(**************************************************************)
+
+ClearAll[LSAMonTakeTexts]
+LSAMonTakeTexts[$SMRMonFailure] := $LSAMonFailure;
+LSAMonTakeTexts[][$SMRMonFailure] := $LSAMonFailure;
+LSAMonTakeTexts[xs_, context_] := LSAMonTakeTexts[][xs, context];
+LSAMonTakeTexts[][xs_, context_Association] := Lookup[context, "texts"];
+LSAMonTakeTexts[__][___] := $LSAMonFailure;
+
+
+ClearAll[LSAMonTakeMatrix]
+LSAMonTakeMatrix[$SMRMonFailure] := $LSAMonFailure;
+LSAMonTakeMatrix[][$SMRMonFailure] := $LSAMonFailure;
+LSAMonTakeMatrix[xs_, context_] := LSAMonTakeMatrix[][xs, context];
+LSAMonTakeMatrix[][xs_, context_Association] :=
+    Block[{mat},
+      If[ !KeyExistsQ["docTermMat"], Return[$LSAMonFailure] ];
+      ToSSparseMatrix[
+        context["docTermMat"],
+        "RowNames"-> Map[ToString, Range[ Dimensions[context["docTermMat"]][[1]] ]],
+        "ColumnNames" -> context["terms"]
+      ]
+    ];
+LSAMonTakeMatrix[__][___] := $LSAMonFailure;
+
+
+ClearAll[LSAMonTakeWeightedMatrix]
+LSAMonTakeWeightedMatrix[$SMRMonFailure] := $LSAMonFailure;
+LSAMonTakeWeightedMatrix[][$SMRMonFailure] := $LSAMonFailure;
+LSAMonTakeWeightedMatrix[xs_, context_] := LSAMonTakeWeightedMatrix[][xs, context];
+LSAMonTakeWeightedMatrix[][xs_, context_Association] :=
+    Block[{mat},
+      If[ !KeyExistsQ["wDocTermMaa"], Return[$LSAMonFailure] ];
+      ToSSparseMatrix[
+        context["wDocTermMat"],
+        "RowNames"-> Map[ToString, Range[ Dimensions[context["wDocTermMat"]][[1]] ]],
+        "ColumnNames" -> context["terms"]
+      ]
+    ];
+LSAMonTakeWeightedMatrix[__][___] := $LSAMonFailure;
+
 
 
 (**************************************************************)
