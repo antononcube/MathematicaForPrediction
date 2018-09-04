@@ -138,6 +138,8 @@ SMRMonFromProfileVector::usage = "Makes a profile association from a profile vec
 
 SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object."
 
+SMRMonJoinAcross::usage = "Joins the a recommendations association or Dataset object with a given Dataset object."
+
 SMRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR tag types."
 
 SMRMonSetTagWeights::usage = "Sets weights (significance factors) to the IIR tags."
@@ -576,6 +578,43 @@ SMRMonToItemsDataset[recs_Association][xs_, context_Association] :=
     ];
 
 SMRMonToItemsDataset[__][___] := $SMRMonFailure;
+
+
+(**************************************************************)
+(* Join recommendations with a Dataset                       *)
+(**************************************************************)
+
+ClearAll[SMRMonJoinAcross]
+
+Options[SMRMonJoinAcross] = {"DropJoiningColumnName"->True};
+
+SMRMonJoinAcross[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonJoinAcross[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonJoinAcross[ds_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{dsRecs, res, dropQ},
+
+      dropQ = TrueQ[OptionValue[SMRMonJoinAcross, "DropJoiningColumnName"]];
+
+      dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
+
+      If[ TrueQ[dsRecs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      res = JoinAcross[ Normal[dsRecs[All, {"Score", "Item"}]], Normal[ds], Key["Item"]->Key[byColName] ];
+      res = Dataset[res][SortBy[-#Score &]];
+
+      If[ dropQ, res = res[All, KeyDrop[#,byColName]&] ];
+
+      SMRMonUnit[res, context]
+    ];
+
+SMRMonJoinAcross[__][___] := $SMRMonFailure;
+
 
 
 (**************************************************************)
