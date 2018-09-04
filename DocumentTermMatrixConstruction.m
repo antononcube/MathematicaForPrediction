@@ -57,6 +57,15 @@ the entries of docTermMat according to the functions for global weight, local we
 
 GlobalTermWeight::usage = "GlobalTermWeight implements the global weight over a vector."
 
+ApplyGlobalTermFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies the global term weight \
+function fname to the elements of mat."
+
+ApplyLocalTermFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies the local term weight \
+function fname to the elements of mat."
+
+ApplyNormalizationFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies term normalization \
+function fname to the elements of mat."
+
 Begin["`Private`"]
 
 Clear[ToBagOfWords]
@@ -125,9 +134,153 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWe
       {WeightTerms[mat, globalWeightFunc, localWeightFunc, normalizerFunc], terms}
     ];
 
+
+(**********************************************************)
+(* Application of named term weight functions             *)
+(**********************************************************)
+
 Clear[WeightTerms]
-WeightTerms[docTermMat_?MatrixQ] :=
-    WeightTerms[docTermMat, GlobalTermWeight["IDF", #1, #2] &, # &, If[Norm[#] == 0, #, #/Norm[#]] &];
+WeightTerms[docTermMat_?MatrixQ] := WeightTerms[docTermMat, "IDF", "None", "Cosine" ];
+
+WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String, normalizerFunc_String ] :=
+    Block[{mat},
+
+      mat = ApplyLocalTermFunction[docTermMat, localWeightFunc];
+      mat = ApplyGlobalTermFunction[mat, globalWeightFunc];
+      mat = ApplyGlobalTermFunction[mat, normalizerFunc];
+
+      mat
+    ];
+
+(* We can use monadic implementation in this way:
+*
+*  LSIMonUnit[mat] ==>
+*   LSIMonApplyLocalTermFunction["Frequency"] ==>
+*   LSIMonApplyGlobalTermFunction["IDF"] ==>
+*   LSIMonApplyNormalizationFunction["Cosine"]
+*
+*  This done at some point for the SMRMon monad.
+*  It is beneficial though to have a non-monadic implementations in this older, basic (fundamental) package.
+*  They can be used in the monad packages. (Like LSIMon and QRMon.)
+*
+* *)
+
+ApplyLocalTermFunction::unfunc = "Unknown local weight function specification. Returning the matrix unmodified.";
+ApplyGlobalTermFunction::unfunc = "Unknown global weight function specification. Returning the matrix unmodified.";
+ApplyNormalizationFunction::unfunc = "Unknown normalization function specification. Returning the matrix unmodified.";
+
+Clear[ApplyLocalTermFunction]
+ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
+    Block[{mat, arules},
+
+      Which[
+        funcName == "TermFrequency" || funcName == "None",
+        Return[docTermMat],
+
+        funcName == "Binary",
+        (*This assumes that the non-zero elements of docTermMat are greater than zero.*)
+        (*mat = Clip[docTermMat,{0,1}]*)
+        arules = Most[ArrayRules[SparseArray[docTermMat]]];
+        arules[[All,2]] = 1;
+        mat = SparseArray[arules, Dimensions[docTermMat]],
+
+        funcName == "Log" || funcName == "Logarithmic",
+        arules = Most[ArrayRules[SparseArray[docTermMat]]];
+        arules[[All,2]] = Log[ arules[[All,2]] + 1 ];
+        mat = SparseArray[arules, Dimensions[docTermMat]],
+
+        True,
+        Message[ApplyLocalTermFunction::unfunc];
+        Return[docTermMat]
+      ];
+
+      mat
+    ];
+
+Clear[ApplyGlobalTermFunction]
+ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
+    Block[{mat, globalWeights, freqSums},
+
+      Which[
+        funcName == "IDF",
+        mat = SparseArray[docTermMat];
+        mat = Clip[mat,{0,1}];
+        globalWeights = Total[mat, {1}];
+        globalWeights = Log[ Dimensions[mat][[1]] / (1.0 + globalWeights)],
+
+        funcName == "GFIDF",
+        mat = SparseArray[docTermMat];
+        freqSums = Total[mat, {1}];
+        mat = Clip[mat,{0,1}];
+        globalWeights = Total[mat, {1}];
+        globalWeights = globalWeights /. 0 -> 1;
+        globalWeights = N[freqSums / globalWeights],
+
+        funcName == "None"
+        Return[docTermMat],
+
+        funcName == "Binary",
+        globalWeights = ConstantArray[1, Dimensions[docTermMat][[2]]],
+
+        funcName == "ColumnStochastic" || funcName = "Sum",
+        mat = SparseArray[docTermMat];
+        globalWeights = Total[mat, {1}];
+        globalWeights = globalWeights /. {0 -> 1};
+        globalWeights = 1 / globalWeights,
+
+        True,
+        Message[ApplyLocalTermFunction::unfunc];
+        Return[docTermMat]
+      ];
+
+      mat = SparseArray[DiagonalMatrix[globalWeights]];
+      mat = SparseArray[docTermMat] . mat;
+
+      mat
+    ];
+
+
+ClearAll[ApplyNormalizationFunction]
+ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
+    Block[{mat, normWeights},
+
+      Which[
+        funcName == "None",
+        Return[docTermMat],
+
+        funcName == "Cosine",
+        mat = SparseArray[context["M"]];
+        normWeights = Sqrt[Total[mat * mat, {2}]];
+        normWeights = normWeights /. 0 -> 1;
+        normWeights = 1 / normWeights,
+
+        funcName == "RowStochastic",
+        mat = docTermMat;
+        normWeights = Total[mat, {2}];
+        normWeights = normWeights /. {0 -> 1};
+        normWeights = 1 / normWeights,
+
+        funcName == "Max",
+        mat = docTermMat;
+        normWeights = Map[Max, mat];
+        normWeights = normWeights /. {0 -> 1};
+        normWeights = 1 / normWeights,
+
+        True,
+        Message[ApplyNormalizationFunction::unfunc];
+        Return[docTermMat]
+      ];
+
+      mat = SparseArray[DiagonalMatrix[normWeights]];
+      mat = mat . SparseArray[docTermMat];
+
+      mat
+    ];
+
+(**********************************************************)
+(* Older slower code                                      *)
+(**********************************************************)
+
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] :=
     Block[{mat, nDocuments, n, m, globalWeights, diagMat},
