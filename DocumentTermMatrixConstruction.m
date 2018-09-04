@@ -135,22 +135,9 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWe
     ];
 
 
-(**********************************************************)
-(* Application of named term weight functions             *)
-(**********************************************************)
-
-Clear[WeightTerms]
-WeightTerms[docTermMat_?MatrixQ] := WeightTerms[docTermMat, "IDF", "None", "Cosine" ];
-
-WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String, normalizerFunc_String ] :=
-    Block[{mat},
-
-      mat = ApplyLocalTermFunction[docTermMat, localWeightFunc];
-      mat = ApplyGlobalTermFunction[mat, globalWeightFunc];
-      mat = ApplyGlobalTermFunction[mat, normalizerFunc];
-
-      mat
-    ];
+(***********************************************************)
+(* Application of named term weight functions              *)
+(***********************************************************)
 
 (* We can use monadic implementation in this way:
 *
@@ -164,6 +151,19 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String
 *  They can be used in the monad packages. (Like LSIMon and QRMon.)
 *
 * *)
+
+Clear[WeightTerms]
+WeightTerms[docTermMat_?MatrixQ] := WeightTerms[docTermMat, "IDF", "None", "Cosine" ];
+
+WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String, normalizerFunc_String ] :=
+    Block[{mat},
+
+      mat = ApplyLocalTermFunction[docTermMat, localWeightFunc];
+      mat = ApplyGlobalTermFunction[mat, globalWeightFunc];
+      mat = ApplyNormalizationFunction[mat, normalizerFunc];
+
+      mat
+    ];
 
 ApplyLocalTermFunction::unfunc = "Unknown local weight function specification. Returning the matrix unmodified.";
 ApplyGlobalTermFunction::unfunc = "Unknown global weight function specification. Returning the matrix unmodified.";
@@ -249,7 +249,7 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
         Return[docTermMat],
 
         funcName == "Cosine",
-        mat = SparseArray[context["M"]];
+        mat = SparseArray[docTermMat];
         normWeights = Sqrt[Total[mat * mat, {2}]];
         normWeights = normWeights /. 0 -> 1;
         normWeights = 1 / normWeights,
@@ -277,10 +277,10 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
       mat
     ];
 
-(**********************************************************)
-(* Older slower code                                      *)
-(**********************************************************)
 
+(***********************************************************)
+(* Older, slower code for weight term function application *)
+(***********************************************************)
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] :=
     Block[{mat, nDocuments, n, m, globalWeights, diagMat},
