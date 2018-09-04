@@ -742,14 +742,26 @@ SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonJoinAcross[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonJoinAcross[ds_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{dsRecs, res, dropQ},
+SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{ds = dsArg, dsRecs, res, dropQ},
 
       dropQ = TrueQ[OptionValue[SMRMonJoinAcross, "DropJoiningColumnName"]];
 
       dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
 
       If[ TrueQ[dsRecs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      If[ !VectorQ[Normal[ds[All, byColName]], StringQ],
+        Echo["The joining column, \"" <> byColName <> "\", is expected to consist of strings.", "SMRMonJoinAcross:"]
+      ];
+
+      If[ VectorQ[Normal[ds[All, byColName]], IntegerQ],
+        Echo["Proceeding by converting the integers in \"" <> byColName <> "\" into strings.", "SMRMonJoinAcross:"];
+        ds = ds[All, Join[#, <| byColName -> ToString[#[byColName]]|>]& ]
+        ,
+        (*ELSE*)
         Return[$SMRMonFailure]
       ];
 
