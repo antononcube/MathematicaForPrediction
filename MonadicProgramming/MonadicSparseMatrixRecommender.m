@@ -126,8 +126,6 @@ and numbers as values."
 SMRMonScoredTagsQ::usage = "True if the argument is an association with tags or tag indices as keys \
 and numbers as values."
 
-SMRMonCreateFromMatrices::usage = "Creates the recommender structures from an association of (sparse) matrices."
-
 SMRMonCreate::usage = "Creates the recommender structures from a transactions Dataset and a specifications Dataset."
 
 SMRMonApplyLocalWeightFunction::usage = "Applies a specified local weight function to the entries
@@ -211,14 +209,16 @@ SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
 ClearAll[SMRMonGetTagTypeWeights]
 SMRMonGetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 SMRMonGetTagTypeWeights[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonGetTagTypeWeights[xs_, context_] := SMRMonGetTagTypeWeights[][xs, context];
 SMRMonGetTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
-
+SMRMonGetTagTypeWeights[__][___] := $SMRMonFailure;
 
 ClearAll[SMRMonGetTagTypes]
 SMRMonGetTagTypes[$SMRMonFailure] := $SMRMonFailure;
 SMRMonGetTagTypes[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonGetTagTypes[][xs_, context_Association] := Keys[Lookup[context, "tagTypeWeights"]];
-
+SMRMonGetTagTypes[xs_, context_] := SMRMonGetTagTypes[][xs, context];
+SMRMonGetTagTypes[][xs_, context_Association] := Keys[Lookup[context, "tagTypes"]];
+SMRMonGetTagTypes[__][___] := $SMRMonFailure;
 
 ClearAll[SMRMonTakeMatrix]
 SMRMonTakeMatrix[$SMRMonFailure] := $SMRMonFailure;
