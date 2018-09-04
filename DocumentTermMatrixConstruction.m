@@ -212,7 +212,7 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
         freqSums = Total[mat, {1}];
         mat = Clip[mat,{0,1}];
         globalWeights = Total[mat, {1}];
-        globalWeights = globalWeights /. 0 -> 1;
+        globalWeights = globalWeights /. { 0. -> 1. };
         globalWeights = N[freqSums / globalWeights],
 
         funcName == "None",
@@ -223,9 +223,9 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
 
         funcName == "ColumnStochastic" || funcName = "Sum",
         mat = SparseArray[docTermMat];
-        globalWeights = Total[mat, {1}];
-        globalWeights = globalWeights /. {0 -> 1};
-        globalWeights = 1 / globalWeights,
+        globalWeights = N[Total[mat, {1}]];
+        globalWeights = globalWeights /. { 0. -> 1. };
+        globalWeights = 1. / globalWeights,
 
         True,
         Message[ApplyLocalTermFunction::unfunc];
@@ -249,21 +249,21 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
 
         funcName == "Cosine",
         mat = SparseArray[docTermMat];
-        normWeights = Sqrt[Total[mat * mat, {2}]];
-        normWeights = normWeights /. 0 -> 1;
-        normWeights = 1 / normWeights,
+        normWeights = N[Sqrt[Total[mat * mat, {2}]]];
+        normWeights = normWeights /. { 0. -> 1. };
+        normWeights = 1. / normWeights,
 
         funcName == "RowStochastic",
         mat = docTermMat;
-        normWeights = Total[mat, {2}];
-        normWeights = normWeights /. {0 -> 1};
-        normWeights = 1 / normWeights,
+        normWeights = N[Total[mat, {2}]];
+        normWeights = normWeights /. { 0. -> 1. };
+        normWeights = 1. / normWeights,
 
         funcName == "Max",
         mat = docTermMat;
-        normWeights = Map[Max, mat];
-        normWeights = normWeights /. {0 -> 1};
-        normWeights = 1 / normWeights,
+        normWeights = N[Map[Max, mat]];
+        normWeights = normWeights /. { 0. -> 1. };
+        normWeights = 1. / normWeights,
 
         True,
         Message[ApplyNormalizationFunction::unfunc];
