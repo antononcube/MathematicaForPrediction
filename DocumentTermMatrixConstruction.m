@@ -171,30 +171,29 @@ ApplyNormalizationFunction::unfunc = "Unknown normalization function specificati
 
 Clear[ApplyLocalTermFunction]
 ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
-    Block[{mat, arules},
+    Block[{arules},
 
       Which[
         funcName == "TermFrequency" || funcName == "None",
-        Return[docTermMat],
+        docTermMat,
 
         funcName == "Binary",
         (*This assumes that the non-zero elements of docTermMat are greater than zero.*)
         (*mat = Clip[docTermMat,{0,1}]*)
         arules = Most[ArrayRules[SparseArray[docTermMat]]];
         arules[[All,2]] = 1;
-        mat = SparseArray[arules, Dimensions[docTermMat]],
+        SparseArray[arules, Dimensions[docTermMat]],
 
         funcName == "Log" || funcName == "Logarithmic",
         arules = Most[ArrayRules[SparseArray[docTermMat]]];
         arules[[All,2]] = Log[ arules[[All,2]] + 1 ];
-        mat = SparseArray[arules, Dimensions[docTermMat]],
+        SparseArray[arules, Dimensions[docTermMat]],
 
         True,
         Message[ApplyLocalTermFunction::unfunc];
-        Return[docTermMat]
-      ];
+        docTermMat
+      ]
 
-      mat
     ];
 
 Clear[ApplyGlobalTermFunction]
@@ -216,7 +215,7 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
         globalWeights = globalWeights /. 0 -> 1;
         globalWeights = N[freqSums / globalWeights],
 
-        funcName == "None"
+        funcName == "None",
         Return[docTermMat],
 
         funcName == "Binary",
