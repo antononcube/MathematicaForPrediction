@@ -62,7 +62,7 @@
 *   to ingest matrices and datasets for the creation population of the IIR data structures.
 *
 *
-*   # Implementation consideration
+*   # Implementation considerations
 *
 *   Note that the Sparse Matrix Recommender can be mapped into the Stream Blending Recommender. See [2].
 *
@@ -87,7 +87,17 @@
 *
 *   [6] Anton Antonov, Cross tabulation implementation in Mathematica, (2017), MathematicaForPrediction at GitHub.
 *
+* *)
+
+(*
+*   # TODOs
 *
+*   1. [X] [A] Implement tag-types re-weighting.
+*   2. [ ] [B] Implement tags re-weighting.
+*   3. [ ] [B] Implement term weight functions application through association of tag-types.
+*   4. [ ] [A] Implement creation from long form dataset, and
+*   5. [ ] [A] do corresponding refactoring.
+*   6. [ ] [B] Refactor the codes of the term weight functions ("SMRMonApply*Function",).
 *
 * *)
 
@@ -866,6 +876,41 @@ SMRMonToProfileVector[ scoredTags:Association[ (_String->_?NumberQ)..] ][xs_, co
     SMRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context]
 
 SMRMonToProfileVector[___][__] := $SMRMonFailure;
+
+
+(**************************************************************)
+(* SMRMonSetTagTypeWeights                                    *)
+(**************************************************************)
+
+ClearAll[SMRMonSetTagTypeWeights]
+
+SMRMonSetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonSetTagTypeWeights[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
+    Block[{ scoredTagTypes = scoredTagTypesArg, smats, mat},
+
+      If[!KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonSetTagTypeWeights:"];
+        Return[$SMRMonFailure]
+      ];
+
+      scoredTagTypes = Join[ AssociationThread[ Keys[context["matrices"]]->1 ], scoredTagTypes ];
+
+      smats = Association[KeyValueMap[ #1 -> scoredTagTypes[#1] * #2 &, context["matrices"]]];
+
+      mat = ColumnBind[ Values[smats] ];
+
+      SMRMonUnit[xs, Join[ context, <| "M" -> mat |> ]]
+
+    ];
+
+SMRMonSetTagTypeWeights[___][__] :=
+    Block[{},
+      Echo["The first argument is expected to be an Association of scored tag-types.", "SMRMonSetTagTypeWeights:"];
+      $SMRMonFailure
+    ];
 
 
 End[]; (* `Private` *)
