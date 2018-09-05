@@ -353,7 +353,22 @@ Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False};
 
 SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
-SMRMonCreate[xs_, context_Association] := $SMRMonFailure;
+SMRMonCreate[xs_, context_Association] := SMRMonCreate[][xs, context];
+
+SMRMonCreate[ opts:OptionsPattern[] ][xs_, context_Association] :=
+    Which[
+      MatchQ[xs, _SSparseMatrix] || MatchQ[xs, Association[ (_->_SSparseMatrix) ..] ],
+      SMRMonCreate[ xs, opts ][xs, context],
+
+      AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ["idColumnName"],
+      SMRMonCreate[ xs["data"], xs["idColumnName"], opts ][xs, context],
+
+      True,
+      SMRMonCreate["Fail"][xs, context]
+    ];
+
+SMRMonCreate[ smat_SSparseMatrix, opts:OptionsPattern[] ][xs_, context_Association]:=
+    SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
 
 SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{tagTypeNames, rowNames, columnNames, splicedMat},
@@ -423,7 +438,15 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context
       SMRMonCreate[smats][xs, context]
     ];
 
-SMRMonCreate[___][__] := $SMRMonFailure;
+SMRMonCreate[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be a Dataset or an Association of SSparseMatrix objects. " <>
+            "If the first argument is a Dataset the optional second argument is expected to be a column name in that Dataset. " <>
+            "If no arguments are given the pipeline value is used.",
+        "SMRMonCreate:"];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
