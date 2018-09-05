@@ -38,8 +38,8 @@
    each column corresponds to a (stemmed) word. *)
 (*
 TODO:
-   (1) better description of the functions,
-   (2) remove or change the profiling statements with PRINT and AbsoluteTiming.
+   (1) [ ] better description of the functions,
+   (2) [X] remove or change the profiling statements with PRINT and AbsoluteTiming.
 *)
 
 BeginPackage["DocumentTermMatrixConstruction`"]
@@ -244,7 +244,7 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
 
       globalWeights = GlobalTermFunctionWeights[docTermMat, funcName];
 
-      SparseArray[docTermMat] . DiagonalMatrix[SparseArray[globalWeights]];
+      SparseArray[docTermMat] . DiagonalMatrix[SparseArray[globalWeights]]
     ];
 
 
