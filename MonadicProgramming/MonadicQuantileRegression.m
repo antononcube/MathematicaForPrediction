@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2017 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -39,8 +39,57 @@
 (* :Package Version: 1.0 *)
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
-(* :Keywords: *)
-(* :Discussion: *)
+(* :Keywords: quantile regression, monad, workflow *)
+(* :Discussion:
+
+   # In brief
+
+   This package provides a software monad implementation for Quantile regression workflows.
+   The functionalities of the package are described in [1,2].
+
+
+   # Usage example
+
+       sqPoints = Table[{x, Sqrt[x]}, {x, 1/2, 8, 0.1}];
+       ListPlot[sqPoints]
+
+       Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
+
+       p =
+         QRMonUnit[sqPoints]\[DoubleLongRightArrow]
+          QRMonQuantileRegressionFit[20, 0.5]\[DoubleLongRightArrow]
+          QRMonPlot[]\[DoubleLongRightArrow]
+          QRMonErrorPlots\[DoubleLongRightArrow]
+          QRMonErrors\[DoubleLongRightArrow]QRMonEchoFunctionValue["Relative errors summary:", RecordsSummary /@ # &];
+
+       qFunc = (p\[DoubleLongRightArrow]QRMonTakeRegressionFunctions)[0.5];
+
+       Simplify[qFunc[x]]
+
+       (* 27.05 - 245.125 x + 1011.11 x^2 - 2479.16 x^3 + 4080.66 x^4 - 4812.07 x^5 +
+         4233.13 x^6 - 2853.77 x^7 + 1501.85 x^8 - 624.791 x^9 + 207.112 x^10 -
+         54.9287 x^11 + 11.6595 x^12 - 1.97386 x^13 + 0.264376 x^14 -
+         0.0276295 x^15 + 0.00220351 x^16 - 0.000129425 x^17 + 5.27363*10^-6 x^18 -
+         1.3307*10^-7 x^19 + 1.56554*10^-9 x^20 *)
+
+   Instead of doing the fit with Chebyshev polynomials basis through QRMonQuantileRegressionFit one can use
+   a B-spline basis with QRMonQuantileRegression; see [1,2] for details.
+
+
+   # References
+
+   [1] Anton Antonov, "A monad for Quantile Regression workflows", (2018), MathematicaForPrediction at WordPress.
+       URL: https://mathematicaforprediction.wordpress.com/2018/08/01/a-monad-for-quantile-regression-workflows/ .
+
+   [2] Anton Antonov, "A monad for Quantile Regression workflows", (2018), MathematicaForPrediction at GitHub.
+       URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-Quantile-Regression-workflows.md .
+
+
+   Anton Antonov
+   June-July 2018
+   Windermere, Florida, USA
+
+*)
 
 (**************************************************************)
 (* Importing packages (if needed)                             *)
