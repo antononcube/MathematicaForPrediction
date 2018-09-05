@@ -156,10 +156,11 @@ Clear[WeightTerms]
 WeightTerms[docTermMat_?MatrixQ] := WeightTerms[docTermMat, "IDF", "None", "Cosine" ];
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String, normalizerFunc_String ] :=
-    Block[{mat},
+    Block[{mat, globalWeights},
 
       mat = ApplyLocalTermFunction[docTermMat, localWeightFunc];
-      mat = ApplyGlobalTermFunction[mat, globalWeightFunc];
+      globalWeights = GlobalTermFunctionWeights[docTermMat, globalWeightFunc];
+      mat = mat . DiagonalMatrix[SparseArray[globalWeights]];
       mat = ApplyNormalizationFunction[mat, normalizerFunc];
 
       mat
@@ -196,8 +197,9 @@ ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
 
     ];
 
-Clear[ApplyGlobalTermFunction]
-ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
+
+Clear[GlobalTermFunctionWeights]
+GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{mat, globalWeights, freqSums},
 
       Which[
@@ -216,7 +218,7 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
         globalWeights = N[freqSums / globalWeights],
 
         funcName == "None",
-        Return[docTermMat],
+        globalWeights = ConstantArray[1, Dimensions[docTermMat][[1]] ],
 
         funcName == "Binary",
         globalWeights = ConstantArray[1, Dimensions[docTermMat][[2]]],
@@ -228,14 +230,21 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
         globalWeights = 1. / globalWeights,
 
         True,
-        Message[ApplyLocalTermFunction::unfunc];
-        Return[docTermMat]
+        Message[ApplyGlobalTermFunction::unfunc];
+        globalWeights = ConstantArray[1, Dimensions[docTermMat][[1]] ]
       ];
 
-      mat = SparseArray[DiagonalMatrix[globalWeights]];
-      mat = SparseArray[docTermMat] . mat;
+      globalWeights
+    ];
 
-      mat
+
+Clear[ApplyGlobalTermFunction]
+ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
+    Block[{globalWeights},
+
+      globalWeights = GlobalTermFunctionWeights[docTermMat, funcName];
+
+      SparseArray[docTermMat] . DiagonalMatrix[SparseArray[globalWeights]];
     ];
 
 
@@ -270,7 +279,7 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
         Return[docTermMat]
       ];
 
-      mat = SparseArray[DiagonalMatrix[normWeights]];
+      mat = DiagonalMatrix[SparseArray[normWeights]];
       mat = mat . SparseArray[docTermMat];
 
       mat
