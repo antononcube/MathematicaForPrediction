@@ -137,6 +137,8 @@ of the contingency matrix."
 SMRMonApplyNormalizationFunction::usage = "Applies a specified normalization function to the entries \
 of the contingency matrix."
 
+SMRMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries of the recommender matrix."
+
 SMRMonRecommend::usage = "Recommends items based on history."
 
 SMRMonRecommendByHistory::usage = "Recommends items based on history."
@@ -450,7 +452,7 @@ SMRMonCreate[___][__] :=
 
 
 (**************************************************************)
-(* SMRMonApplyLocalWeightFunction                            *)
+(* SMRMonApplyLocalWeightFunction                             *)
 (**************************************************************)
 
 ClearAll[SMRMonApplyLocalWeightFunction]
@@ -525,7 +527,7 @@ SMRMonApplyGlobalWeightFunction[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
-(* SMRMonApplyNormalizationFunction                            *)
+(* SMRMonApplyNormalizationFunction                           *)
 (**************************************************************)
 
 ClearAll[SMRMonApplyNormalizationFunction]
@@ -553,10 +555,45 @@ SMRMonApplyNormalizationFunction[funcName_String][xs_, context_Association] :=
 
       mat = ColumnBind[ Values[smats] ];
 
-      SMRMonUnit[xs, Join[ context, <| "matrices" -> smats, "M" -> mat,  "M01" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "matrices" -> smats, "M" -> mat, "M01" -> mat |> ]]
     ];
 
 SMRMonApplyNormalizationFunction[___][__] := $SMRMonFailure;
+
+
+(**************************************************************)
+(* SMRMonApplyNormalizationFunction                           *)
+(**************************************************************)
+
+ClearAll[SMRMonApplyTermWeightFunctions]
+
+SMRMonApplyTermWeightFunctions[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonApplyTermWeightFunctions[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_Association] :=
+    Block[{mat, smats},
+
+      If[!KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonApplyNormalizationFunction:"];
+        Return[$SMRMonFailure]
+      ];
+
+      smats =
+          Map[
+            ToSSparseMatrix[
+              WeightTerms[SparseArray[#], globalWeightFunction, localWeightFunction, normalizerFunction],
+              "RowNames" -> RowNames[#],
+              "ColumnNames" -> ColumnNames[#]
+            ]&,
+            context["matrices"] ];
+
+      mat = ColumnBind[ Values[smats] ];
+
+      SMRMonUnit[xs, Join[ context, <| "matrices" -> smats, "M" -> mat, "M01" -> mat |> ]]
+    ];
+
+SMRMonApplyTermWeightFunctions[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
