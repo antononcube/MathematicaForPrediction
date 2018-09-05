@@ -132,6 +132,10 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
+If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
+];
+
 If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
