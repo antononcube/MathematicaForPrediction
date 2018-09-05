@@ -93,7 +93,7 @@
 *   # TODOs
 *
 *   1. [X] [A] Implement tag-types re-weighting.
-*   2. [ ] [B] Implement tags re-weighting.
+*   2. [X] [A] Implement tags re-weighting.
 *   3. [ ] [B] Implement term weight functions application through association of tag-types.
 *   4. [ ] [A] Implement creation from long form dataset, and
 *   5. [ ] [A] do corresponding refactoring.
@@ -909,6 +909,41 @@ SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)..] 
 SMRMonSetTagTypeWeights[___][__] :=
     Block[{},
       Echo["The first argument is expected to be an Association of scored tag-types.", "SMRMonSetTagTypeWeights:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonSetTagWeights                                        *)
+(**************************************************************)
+
+ClearAll[SMRMonSetTagWeights]
+
+SMRMonSetTagWeights[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonSetTagWeights[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonSetTagWeights[ scoredTagsArg:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
+    Block[{ scoredTags = scoredTagsArg, mat},
+
+      If[!KeyExistsQ[context, "M"],
+        Echo["Cannot find the recommendation matrix. (The context key \"matrix\".)", "SMRMonSetTagWeights:"];
+        Return[$SMRMonFailure]
+      ];
+
+      scoredTags = Join[ AssociationThread[ ColumnNames[context["M"]]->1 ], scoredTags ];
+
+      mat = DiagonalMatrix[ SparseArray[ scoredTags[#]& /@ ColumnNames[context["M"]] ] ];
+
+      mat = context["M"] . mat;
+
+      SMRMonUnit[xs, Join[ context, <| "M" -> mat |> ]]
+
+    ];
+
+SMRMonSetTagWeights[___][__] :=
+    Block[{},
+      Echo["The first argument is expected to be an Association of scored tags.", "SMRMonSetTagWeights:"];
       $SMRMonFailure
     ];
 
