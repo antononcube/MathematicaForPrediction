@@ -1,7 +1,7 @@
 
 (*
     Cross tabulation implementation in Mathematica
-    Copyright (C) 2014-2016  Anton Antonov
+    Copyright (C) 2017  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -46,9 +46,37 @@
 
     # Motivation
 
-    # Usage examples
+    In statistics contingency tables are matrices used to show the co-occurrence of variable values
+    of multi-dimensional data. They are fundamental in many types of research.
+    This Mathematica package has several functions for the construction of contingency tables.
+
+    For extensive examples and explanations see [1].
+
+    # Usage example
+
+        titanicData = Flatten@*List @@@ ExampleData[{"MachineLearning", "Titanic"}, "Data"];
+        titanicData = DeleteCases[titanicData, {___, _Missing, ___}];
+
+        titanicColumnNames = Flatten@*List @@ ExampleData[{"MachineLearning", "Titanic"}, "VariableDescriptions"];
+        aTitanicColumnNames = AssociationThread[titanicColumnNames -> Range[Length[titanicColumnNames]]];
+
+        ctCounts = CrossTabulate[titanicData[[All, aTitanicColumnNames /@ {"passenger class", "passenger survival"}]]];
+        MatrixForm[#1, TableHeadings -> {#2, #3}] & @@ ctCounts
+
+        ctTotalAge = CrossTabulate[titanicData[[All, aTitanicColumnNames /@ {"passenger class", "passenger survival", "passenger age"}]]];
+        MatrixForm[#1, TableHeadings -> {#2, #3}] & @@ ctTotalAge
+
+        MatrixForm[ctTotalAge[[1]]/Normal[ctCounts[[1]]], TableHeadings -> Values[Rest[ctTotalAge]]]
 
 
+    # References
+
+    [1] Anton Antonov, "Contingency tables creation examples", MathematicaForPrediction at WordPress.
+        URL: https://mathematicaforprediction.wordpress.com/2016/10/04/contingency-tables-creation-examples/ .
+
+    Anton Antonov
+    October 2017
+    Windermere, FL, USA
 
 *)
 
