@@ -158,7 +158,7 @@ ToLongForm[ds_Dataset, idColumns_List, valueColumns_List] :=
 
 (* This an "internal" function. It is assumed that all records have the same keys. *)
 (* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
-RecordsToLongForm[records_: Association[(_ -> _Association) ..]] :=
+RecordsToLongForm[records: Association[(_ -> _Association) ..]] :=
     Block[{res},
       res =
           KeyValueMap[
@@ -174,47 +174,47 @@ RecordsToLongForm[records_: Association[(_ -> _Association) ..]] :=
 (* ToWideForm                                              *)
 (***********************************************************)
 
+(* Essentially a contingency dataset making. *)
+
 Clear[ToWideForm];
 
-ToWideForm[ ds_Dataset, variableColumn_Integer, valueColumn_Integer ] :=
+Options[ToWideForm] = {"AggregationFunction"->Total};
+
+ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_Integer, opts:OptionsPattern[] ] :=
     Block[{records = Normal[ds]},
 
       records =
           Which[
+            TrueQ[idColumn == 0] && MatchQ[records, Association[(_ -> _Association) ..]],
+            KeyValueMap[ <| "RowID" -> #1, Values[#2][[variableColumn]] -> Values[#2][[valueColumn]] |> &, records],
 
-            MatchQ[records, Association[(_ -> _Association) ..]],
-            Association@
-                Map[KeyTake[#, Keys[#][[idColumns]]] ->
-                    KeyTake[#, Keys[#][[valueColumns]]] &, Values[records]],
+            ! TrueQ[idColumn == 0] && MatchQ[records, Association[(_ -> _Association) ..]],
+            Map[ <| Keys[#][[idColumn]] -> Values[#][[idColumn]] , Values[#][[variableColumn]] -> Values[#][[valueColumn]] |> &, Values[records]],
 
             MatchQ[records, List[(_Association) ..]],
-            Association@
-                Map[KeyTake[#, Keys[#][[idColumns]]] ->
-                    KeyTake[#, Keys[#][[valueColumns]]] &, records],
+            Map[ <| Keys[#][[idColumn]] -> Values[#][[idColumn]] , Values[#][[variableColumn]] -> Values[#][[valueColumn]] |> &, records],
 
             MatchQ[records, List[(_List) ..]],
-            Association@
-                Map[AssociationThread[ToString/@idColumns, #[[idColumns]]] ->
-                    AssociationThread[ToString/@valueColumns, #[[valueColumns]]] &,
-                  records],
+            Map[ <| idColumn -> #[[idColumn]], #[[variableColumn]] -> #[[valueColumn]] |> &, records],
 
             True,
             Return[$Failed]
           ];
 
-      RecordsToWideForm[records]
-    ]/; ( 1 <= variableColumn <= Dimensions[ds][[2]] ) &&
-        ( 1 <= valueColumn <= Dimensions[ds][[2]] );
+      RecordsToWideForm[records, OptionValue[ToWideForm, "AggregationFunction"] ]
 
-RecordsToWideForm[records_: Association[(_ -> _Association) ..]] :=
+    ]/; ( idColumn == 0 || 1 <= idColumn <= Dimensions[ds][[2]] ) &&
+        ( 1 <= variableColumn <= Dimensions[ds][[2]] ) &&
+        ( 1 <= valueColumn <= Dimensions[ds][[2]] ) &&
+        ( Length[Union[{idColumn, variableColumn, valueColumn}]] == 3);
+
+
+RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] :=
     Block[{res},
-      res =
-          KeyValueMap[
-            Function[{k, rec}, Map[Join[k, <|"Variable" -> #, "Value" -> rec[#]|>] &, Keys[rec]]],
-            records
-          ];
+      res = GroupBy[records, {Keys[#][[1]] -> #[[1]], Keys[#][[2]]} &, aggrFunc@Map[Function[{r}, r[Keys[r][[2]]]], #] &];
+      res = KeyValueMap[<|#1[[1]], #1[[2]] -> #2|> &, res];
 
-      Dataset[Flatten[res]]
+      Dataset[GroupBy[res, #[[1]] &, Join[Association[#]] &]]
     ];
 
 
