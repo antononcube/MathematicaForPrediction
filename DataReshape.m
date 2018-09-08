@@ -156,6 +156,34 @@ ToLongForm[ds_Dataset, idColumns_List, valueColumns_List] :=
       ToLongForm[ds, Flatten[Position[keys,#]& /@ idColumns], Flatten[Position[keys,#]& /@ valueColumns] ]
     ];
 
+ToLongForm[ds_Dataset, "RowID", valueColumns_List] :=
+    Block[{keys},
+      keys = Normal[ds[1]];
+
+      If[!AssociationQ[keys],
+        Message[ToLongForm::nocolkeys];
+        Return[$Failed]
+      ];
+
+      keys = Keys[keys];
+
+      If[ ! Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ],
+        Message[ToLongForm::colkeys];
+        Return[$Failed]
+      ];
+
+      ToLongForm[ds, 0, Flatten[Position[keys,#]& /@ valueColumns] ]
+    ];
+
+ToLongForm::args = "The first argument is expected to be a dataset; \
+the rest of the arguments are expected to be columns specifications."
+
+ToLongForm[___] :=
+    Block[{},
+      Message[ToLongForm::args];
+      $Failed
+    ];
+
 (* This an "internal" function. It is assumed that all records have the same keys. *)
 (* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
 RecordsToLongForm[records: Association[(_ -> _Association) ..]] :=
@@ -207,6 +235,58 @@ ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_In
         ( 1 <= variableColumn <= Dimensions[ds][[2]] ) &&
         ( 1 <= valueColumn <= Dimensions[ds][[2]] ) &&
         ( Length[Union[{idColumn, variableColumn, valueColumn}]] == 3);
+
+
+ToWideForm::nocolkeys = "If the second and third arguments are not column indices the dataset should have named columns.";
+
+ToWideForm::colkeys = "If the second, third, and fourth arguments are not column indices then they are expected to be columns names of the dataset.";
+
+ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts:OptionsPattern[] ] :=
+    Block[{keys},
+      keys = Normal[ds[1]];
+
+      If[!AssociationQ[keys],
+        Message[ToWideForm::nocolkeys];
+        Return[$Failed]
+      ];
+
+      keys = Keys[keys];
+
+      If[ ! Apply[And, Map[ MemberQ[keys, #]&, {idColumn, variableColumn, valueColumn} ] ],
+        Message[ToWideForm::colkeys];
+        Return[$Failed]
+      ];
+
+      ToWideForm[ds, Sequence @@ Flatten[Position[keys,#]& /@ {idColumn, variableColumn, valueColumn}] ]
+    ];
+
+ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts:OptionsPattern[] ] :=
+    Block[{keys},
+      keys = Normal[ds[1]];
+
+      If[!AssociationQ[keys],
+        Message[ToWideForm::nocolkeys];
+        Return[$Failed]
+      ];
+
+      keys = Keys[keys];
+
+      If[ ! Apply[And, Map[ MemberQ[keys, #]&, {variableColumn, valueColumn} ] ],
+        Message[ToWideForm::colkeys];
+        Return[$Failed]
+      ];
+
+      ToWideForm[ds, 0, Sequence @@ Flatten[Position[keys,#]& /@ { variableColumn, valueColumn}] ]
+    ];
+
+ToWideForm::args = "The first argument is expected to be a dataset; \
+the rest of the arguments are expected to be columns specifications."
+
+ToWideForm[___] :=
+    Block[{},
+      Message[ToWideForm::args];
+      $Failed
+    ];
 
 
 RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] :=
