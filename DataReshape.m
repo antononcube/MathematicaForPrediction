@@ -73,7 +73,7 @@ ToLongForm::usage = "ToLongForm[ds_Dataset, idColumns_, valueColumns_] \
 converts the dataset ds into long form. The resulting dataset is has the columns idColumns and \
 the columns \"Variable\" and \"Value\" derived from valueColumns."
 
-ToWideForm::usage = "ToWideForm[ds_Dataset, variableColumn_, valueColumns_] \
+ToWideForm::usage = "ToWideForm[ds_Dataset, idColumns_, variableColumn_, valueColumns_] \
 converts the dataset ds into wide form. The resulting dataset has columns that are unique values of variableColumn and \
 with values that are the corresponding values of valueColumn."
 
@@ -257,7 +257,7 @@ ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts:OptionsPat
         Return[$Failed]
       ];
 
-      ToWideForm[ds, Sequence @@ Flatten[Position[keys,#]& /@ {idColumn, variableColumn, valueColumn}] ]
+      ToWideForm[ds, Sequence @@ Flatten[Position[keys,#]& /@ {idColumn, variableColumn, valueColumn}], opts ]
     ];
 
 ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts:OptionsPattern[] ] :=
@@ -276,7 +276,7 @@ ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts:OptionsPatte
         Return[$Failed]
       ];
 
-      ToWideForm[ds, 0, Sequence @@ Flatten[Position[keys,#]& /@ { variableColumn, valueColumn}] ]
+      ToWideForm[ds, 0, Sequence @@ Flatten[Position[keys,#]& /@ { variableColumn, valueColumn}], opts ]
     ];
 
 ToWideForm::args = "The first argument is expected to be a dataset; \
