@@ -372,7 +372,7 @@ SMRMonCreate[ opts:OptionsPattern[] ][xs_, context_Association] :=
       MatchQ[xs, _SSparseMatrix] || MatchQ[xs, Association[ (_->_SSparseMatrix) ..] ],
       SMRMonCreate[ xs, opts ][xs, context],
 
-      AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ["idColumnName"],
+      AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ[xs, "idColumnName"],
       SMRMonCreate[ xs["data"], xs["idColumnName"], opts ][xs, context],
 
       True,
@@ -667,7 +667,7 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
 
       recs = KeyMap[ First, recs ];
 
-      recs = If[ removeHistoryQ, KeySelect[  recs, !MemberQ[itemIndices, #]&] ];
+      recs = If[ removeHistoryQ, KeySelect[ recs, !MemberQ[itemIndices, #]&], recs ];
 
       recs = TakeLargest[recs, UpTo[nRes]];
 
@@ -888,7 +888,13 @@ SMRMonSetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonSetTagTypeWeights[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
+SMRMonSetTagTypeWeights[ defaultValue_?NumberQ ][xs_, context_Association] :=
+    SMRMonSetTagTypeWeights[ <||>, defaultValue][xs, context];
+
+SMRMonSetTagTypeWeights[ scoredTagTypes_Association ][xs_, context_Association] :=
+    SMRMonSetTagTypeWeights[ scoredTagTypes, 1][xs, context];
+
+SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
     Block[{ scoredTagTypes = scoredTagTypesArg, smats, mat},
 
       If[!KeyExistsQ[context, "matrices"],
@@ -896,7 +902,7 @@ SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)..] 
         Return[$SMRMonFailure]
       ];
 
-      scoredTagTypes = Join[ AssociationThread[ Keys[context["matrices"]]->1 ], scoredTagTypes ];
+      scoredTagTypes = Join[ AssociationThread[ Keys[context["matrices"]] -> defaultValue ], scoredTagTypes ];
 
       smats = Association[KeyValueMap[ #1 -> scoredTagTypes[#1] * #2 &, context["matrices"]]];
 
@@ -908,7 +914,10 @@ SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)..] 
 
 SMRMonSetTagTypeWeights[___][__] :=
     Block[{},
-      Echo["The first argument is expected to be an Association of scored tag-types.", "SMRMonSetTagTypeWeights:"];
+      Echo[
+        "The first argument is expected to be an Association of scored tag-types. " <>
+            "The second, optional argument is expected to be a number.",
+        "SMRMonSetTagTypeWeights:"];
       $SMRMonFailure
     ];
 
@@ -923,7 +932,13 @@ SMRMonSetTagWeights[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonSetTagWeights[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonSetTagWeights[ scoredTagsArg:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
+SMRMonSetTagWeights[ defaultValue_?NumberQ ][xs_, context_Association] :=
+    SMRMonSetTagWeights[ <||>, defaultValue][xs, context];
+
+SMRMonSetTagWeights[ scoredTags_Association ][xs_, context_Association] :=
+    SMRMonSetTagWeights[ scoredTags, 1][xs, context];
+
+SMRMonSetTagWeights[ scoredTagsArg:Association[ (_String->_?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
     Block[{ scoredTags = scoredTagsArg, mat},
 
       If[!KeyExistsQ[context, "M"],
@@ -931,7 +946,7 @@ SMRMonSetTagWeights[ scoredTagsArg:Association[ (_String->_?NumberQ)..] ][xs_, c
         Return[$SMRMonFailure]
       ];
 
-      scoredTags = Join[ AssociationThread[ ColumnNames[context["M"]]->1 ], scoredTags ];
+      scoredTags = Join[ AssociationThread[ ColumnNames[context["M"]] -> defaultValue ], scoredTags ];
 
       mat = DiagonalMatrix[ SparseArray[ scoredTags[#]& /@ ColumnNames[context["M"]] ] ];
 
@@ -943,7 +958,10 @@ SMRMonSetTagWeights[ scoredTagsArg:Association[ (_String->_?NumberQ)..] ][xs_, c
 
 SMRMonSetTagWeights[___][__] :=
     Block[{},
-      Echo["The first argument is expected to be an Association of scored tags.", "SMRMonSetTagWeights:"];
+      Echo[
+        "The first argument is expected to be an Association of scored tags." <>
+            "The second, optional argument is expected to be a number.",
+        "SMRMonSetTagWeights:"];
       $SMRMonFailure
     ];
 
