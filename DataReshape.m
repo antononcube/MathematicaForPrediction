@@ -290,11 +290,15 @@ ToWideForm[___] :=
 
 
 RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] :=
-    Block[{res},
+    Block[{res, colNames},
       res = GroupBy[records, {Keys[#][[1]] -> #[[1]], Keys[#][[2]]} &, aggrFunc@Map[Function[{r}, r[Keys[r][[2]]]], #] &];
       res = KeyValueMap[<|#1[[1]], #1[[2]] -> #2|> &, res];
 
-      Dataset[GroupBy[res, #[[1]] &, Join[Association[#]] &]]
+      res = Dataset[GroupBy[res, #[[1]] &, Join[Association[#]] &]];
+
+      colNames = Union[Flatten[Values[Normal[res[All, Keys]]]]];
+
+      res[All, Join[AssociationThread[colNames -> Missing[]], #]& ]
     ];
 
 
