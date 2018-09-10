@@ -144,11 +144,17 @@ MakeSSparseMatrix::usage = "Makes a sparse matrix with named rows and columns."
 
 ToSSparseMatrix::usage = "Converts several types of objects into SSparseMatrix objects. (SparseArray, Dataset, CrossTable results.)"
 
-ColumnNames::usage = "Gives the column names of a SSparseMatrix object."
-
 RowNames::usage = "Gives the row names of a SSparseMatrix object."
 
+ColumnNames::usage = "Gives the column names of a SSparseMatrix object."
+
 DimensionNames::usage = "Gives the dimension names of a SSparseMatrix object."
+
+RowNamesAssociation::usage = "Gives the row names association of a SSparseMatrix object."
+
+ColumnNamesAssociation::usage = "Gives the column names association of a SSparseMatrix object."
+
+DimensionNamesAssociation::usage = "Gives the dimension names association of a SSparseMatrix object."
 
 SetColumnNames::usage = "Sets column names of a SSparseMatrix object."
 
@@ -362,6 +368,16 @@ ColumnNames[SSparseMatrix[obj_]] :=
 
 DimensionNames[SSparseMatrix[obj_]] :=
     If[obj["DimensionNames"] === None, {None, None}, Keys[obj["DimensionNames"]]];
+
+RowNamesAssociation[SSparseMatrix[obj_]] :=
+    If[obj["RowNames"] === None, None, obj["RowNames"]];
+
+ColumnNamesAssociation[SSparseMatrix[obj_]] :=
+    If[obj["ColumnNames"] === None, None, obj["ColumnNames"]];
+
+DimensionNamesAssociation[SSparseMatrix[obj_]] :=
+    If[obj["DimensionNames"] === None, {None, None}, obj["DimensionNames"]];
+
 
 ArrayRules[SSparseMatrix[obj_]] ^:=
     ArrayRules[obj["SparseMatrix"]];
