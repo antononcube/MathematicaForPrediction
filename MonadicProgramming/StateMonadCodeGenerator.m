@@ -497,6 +497,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateAddToContext[varName_String][x_, context_Association] := MState[x, Join[context, <|varName->x|>]];
       MStateAddToContext[][x_Association, context_Association] := MState[{}, Join[context, x]];
       MStateAddToContext[x_Association, context_Association] := MState[{}, Join[context, x]];
+      MStateAddToContext[arg_Association][x_, context_Association] := MState[x, Join[context, arg]];
 
       MStateRetrieveFromContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateRetrieveFromContext[varName_String][x_, context_Association] := MState[context[varName], context];
