@@ -610,6 +610,28 @@ SMRMonApplyTermWeightFunctions[___][__] := $SMRMonFailure;
 (* SMRMonRecommend                                            *)
 (**************************************************************)
 
+Clear[GetFilterIDs]
+
+GetFilterIDs[context_Association, callerFunctionName_String] :=
+    Block[{},
+      Which[
+        !KeyExistsQ[context, "filter"],
+        Echo["There is no key \"filter\" in the context.", callerFunctionName<>":"];
+        All,
+
+        AssociationQ[context["filter"]] && ScoredItemsQ[context["filter"], context],
+        Keys[context["filter"]],
+
+        ListQ[context["filter"]] && ScoredItemsQ[AssociationThread[context["filter"],1], context],
+        context["filter"],
+
+        True,
+        Echo["The value for the key \"filter\" in the context is expected to a list of items or an association of scored items.",
+          callerFunctionName<>":"];
+        All
+      ]
+    ]
+
 ClearAll[SMRMonRecommend];
 
 Options[SMRMonRecommend] = {"RemoveHistory"->True, "ItemNames"->True};
@@ -638,7 +660,7 @@ SMRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]]
     SMRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
 
 SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
-    Block[{inds, vec, maxScores, smat, recs, removeHistoryQ, itemNamesQ, rowNames},
+    Block[{vec, filterIDs=All, filterInds, smat, fmat, recs, removeHistoryQ, itemNamesQ, rowNames},
 
       If[Length[itemIndices],
         Echo["Empty history as an argument.", "SMRMonRecommend:"];
@@ -661,6 +683,14 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
       (*2*)
       vec = smat.(vec.smat);
 
+      If[ KeyExistsQ[context, "filter"],
+        filterIDs = GetFilterIDs[context, "SMRMonRecommend"];
+        rowNames = RowNamesAssociation[context["M"]];
+        filterInds = Join[itemIndices, rowNames[#]& /@ filterIDs ];
+        fmat = DiagonalMatrix[ SparseArray[Thread[filterInds -> 1.], RowsCount[context["M"]]] ];
+        vec = fmat . vec ;
+      ];
+
       (*3 and 4 and 5*)
 
       recs = Association[ Most[ArrayRules[vec]] ];
@@ -671,8 +701,8 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
 
       recs = TakeLargest[recs, UpTo[nRes]];
 
-      If[ itemNamesQ,
-        rowNames = RowNames[context["M"]];
+      If[itemNamesQ,
+        rowNames = RowNames[ context["M"] ];
         recs = KeyMap[ rowNames[[#]]&, recs]
       ];
 
@@ -719,7 +749,7 @@ SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}
     ]/;Length[profileInds]==Length[profileScores];
 
 SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Association]:=
-    Block[{inds, vec, smat, recs},
+    Block[{inds, vec, smat, recs, filterIDs, filterInds, rowNames, fmat},
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
@@ -733,7 +763,16 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Asso
 
       smat = SparseArray[context["M"]];
 
-      vec = smat.profileVec;
+      vec = smat . profileVec ;
+
+      If[ KeyExistsQ[context, "filter"],
+        filterIDs = GetFilterIDs[context, "SMRMonRecommend"];
+        rowNames = RowNamesAssociation[context["M"]];
+        filterInds = rowNames[#]& /@ filterIDs;
+        fmat = DiagonalMatrix[ SparseArray[Thread[filterInds -> 1.], RowsCount[context["M"]]] ];
+        vec = fmat . vec ;
+      ];
+
       recs = Association[ Most[ArrayRules[vec]] ];
 
       recs = KeyMap[ First, recs ];
