@@ -766,11 +766,13 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Asso
       vec = smat . profileVec ;
 
       If[ KeyExistsQ[context, "filter"],
-        filterIDs = GetFilterIDs[context, "SMRMonRecommend"];
+        filterIDs = GetFilterIDs[context, "SMRMonRecommendByProfile"];
         rowNames = RowNamesAssociation[context["M"]];
         filterInds = rowNames[#]& /@ filterIDs;
-        fmat = DiagonalMatrix[ SparseArray[Thread[filterInds -> 1.], RowsCount[context["M"]]] ];
-        vec = fmat . vec ;
+        If[ Length[filterInds] > 0,
+          fmat = DiagonalMatrix[ SparseArray[Thread[filterInds -> 1.], RowsCount[context["M"]]] ];
+          vec = fmat . vec ;
+        ];
       ];
 
       recs = Association[ Most[ArrayRules[vec]] ];
