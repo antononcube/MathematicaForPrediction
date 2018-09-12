@@ -358,6 +358,8 @@ ScoredTagsQ[___] := (Echo["Wrong signature!", "ScoredTagsQ:"]; False);
 
 ClearAll[SMRMonCreate]
 
+(*SyntaxInformation[SMRMonCreate] = {"ArgumentsPattern" -> {_., _., OptionsPattern[]}};*)
+
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
@@ -447,7 +449,7 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context
                   ]], smats]
       ];
 
-      SMRMonCreate[smats][xs, context]
+      SMRMonCreate[smats][xs, Join[context, <|"data"->ds|>]]
     ];
 
 SMRMonCreate[___][__] :=
@@ -723,17 +725,19 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 
 ClearAll[SMRMonRecommendByProfile]
 
+Options[SMRMonRecommendByProfile] = {"ItemNames"->True, "Normalize"->True, "IgnoreUnknownTags"->False};
+
 SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommendByProfile[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommendByProfile[nRes_Integer][xs_, context_Association] :=
+SMRMonRecommendByProfile[nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{},
       (* Without verification. *)
-      SMRMonRecommendByProfile[xs, nRes][xs, context]
+      SMRMonRecommendByProfile[xs, nRes, opts][xs, context]
     ];
 
-SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}, nRes_Integer][xs_, context_Association]:=
+SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
     Block[{inds, vec, smat},
 
       If[!KeyExistsQ[context, "M"],
@@ -745,14 +749,17 @@ SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}
 
       vec = SparseArray[Thread[profileInds->profileScores],{Dimensions[smat][[2]]}];
 
-      SMRMonRecommendByProfile[vec, nRes][xs, context]
+      SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
     ]/;Length[profileInds]==Length[profileScores];
 
-SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Association]:=
-    Block[{inds, vec, smat, recs, filterIDs, filterInds, rowNames, fmat},
+SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+    Block[{itemNamesQ, normalizeQ, inds, vec, smat, recs, filterIDs, filterInds, rowNames, fmat},
+
+      itemNamesQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "ItemNames"]];
+      normalizeQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "Normalize"]];
 
       If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommendByProfile:"];
         Return[$SMRMonFailure]
       ];
 
@@ -780,20 +787,35 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer][xs_, context_Asso
       recs = KeyMap[ First, recs ];
 
       recs = TakeLargest[recs, UpTo[nRes]];
+
+      If[itemNamesQ,
+        rowNames = RowNames[ context["M"] ];
+        recs = KeyMap[ rowNames[[#]]&, recs]
+      ];
+
+      If[normalizeQ && Max[recs]>0,
+        recs = recs/Max[recs];
+      ];
+
       SMRMonUnit[recs, context]
 
     ];
 
-SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer][xs_, context_Association] :=
-    Block[{p},
+SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{tags = tagsArg, p},
 
-      If[ AssociationQ[tagsArg] && !ScoredTagsQ[tagsArg, context] ||
-          ListQ[tagsArg] && !ScoredTagsQ[AssociationThread[tagsArg->1], context] ,
+      If[ TrueQ[OptionValue[SMRMonRecommendByProfile, "IgnoreUnknownTags"]],
+        If[ ListQ[tags], tags =  AssociationThread[tags->1] ];
+        tags = KeyTake[tags, ColumnNames[context["M"]]];
+      ];
+
+      If[ AssociationQ[tags] && !ScoredTagsQ[tags, context] ||
+          ListQ[tags] && !ScoredTagsQ[AssociationThread[tags->1], context] ,
         Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
         Return[$SMRMonFailure]
       ];
 
-      p = SMRMonToProfileVector[tagsArg][xs, context];
+      p = SMRMonToProfileVector[tags][xs, context];
       SMRMonRecommendByProfile[p[[1]], nRes][xs, context]
     ];
 
