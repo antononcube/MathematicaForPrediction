@@ -566,12 +566,20 @@ There are three solutions (1) using array rules, (2) using matrix padding, Array
 
 (*Options[RowBind] = {"IgnoreColumnNames" -> False};*)
 
+RowBind::ncols = "The column names of the two SSparseMatrix objects are expected to be the same.";
+
 RowBind[r1_SSparseMatrix, r2_SSparseMatrix, rm__] := RowBind[ RowBind[r1, r2], rm];
 
 RowBind[rm:{_SSparseMatrix..}] := Fold[RowBind, First[rm], Rest[rm]];
 
 RowBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
     Block[{sarr, joinedRowAssoc, resRowNames},
+
+      If[Sort[ColumnNames[r1]] != Sort[ColumnNames[r2]],
+        Message[RowBind::ncols];
+        Return[$Failed];
+      ];
+
       sarr = Join[ SparseArray[r1], SparseArray[r2] ];
       (* Special handling of duplication of row names in the result. *)
 
