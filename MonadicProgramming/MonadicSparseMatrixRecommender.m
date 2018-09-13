@@ -161,7 +161,11 @@ SMRMonFromProfileVector::usage = "Makes a profile association from a profile vec
 
 SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object."
 
-SMRMonJoinAcross::usage = "Joins the a recommendations association or Dataset object with a given Dataset object."
+SMRMonJoinAcross::usage = "Joins a recommendations association with a given Dataset object."
+
+SMRMonJoin::usage = "Joins the recommender with another recommender. (By row-binding the corresponding tag-type sub-matrices.)"
+
+SMRMonRowBind::usage = "Synonym of SMRMonJoin."
 
 SMRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR tag types."
 
@@ -186,6 +190,8 @@ SMRMonTakeTags::usage = "Gives the tags. (Column names of the recommender matrix
 SMRMonTakeTagTypeWeights::usage = "Takes the tag-type weights."
 
 SMRMonTakeTagTypes::usage = "Takes the tag-types."
+
+SMRMonTakeMatrixDataset::usage = "Take the Dataset object corresponding to the recommendation matrix."
 
 Begin["`Private`"];
 
@@ -262,6 +268,28 @@ SMRMonTakeTags[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeTags[xs_, context_] := SMRMonTakeTags[][xs, context];
 SMRMonTakeTags[][xs_, context_Association] := Lookup[context, "tags", $SMRMonFailure];
 SMRMonTakeTags[__][___] := $SMRMonFailure;
+
+
+ClearAll[SMRMonTakeMatrixDataset]
+SMRMonTakeMatrixDataset[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeMatrixDataset[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeMatrixDataset[xs_, context_] := SMRMonTakeMatrixDataset[][xs, context];
+SMRMonTakeMatrixDataset[][xs_, context_Association] :=
+    Block[{smats},
+      smats = SMRMonTakeMatrices[][xs, context];
+      If[ TrueQ[smats === $SMRMonFailure],
+        $SMRMonFailure,
+        (*ELSE*)
+        smats =
+            Map[
+              Dataset[SSparseMatrixToTriplets[#]][All, AssociationThread[{"Item", "Tag", "Weight"}->#]&]&,
+              smats
+            ];
+        smats = KeyValueMap[ Function[{k,v}, v[All, Join[#, <|"TagType"->k|>]&]], smats];
+        (Join@@smats)[All, {"Item", "TagType", "Tag", "Weight"}]
+      ]
+    ];
+SMRMonTakeMatrixDataset[__][___] := $SMRMonFailure;
 
 
 (**************************************************************)
@@ -1027,6 +1055,55 @@ SMRMonSetTagWeights[___][__] :=
         "SMRMonSetTagWeights:"];
       $SMRMonFailure
     ];
+
+
+(**************************************************************)
+(* SMR Join                                                   *)
+(**************************************************************)
+
+ClearAll[SMRMonJoin]
+
+SMRMonJoin[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonJoin[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonJoin[smr2_SMRMon][xs_, context_Association] :=
+    Block[{smats1, smats2, resSMmats, cnames},
+
+      smats1 = context["matrices"];
+
+      smats2 = SMRMonBind[ smr2, SMRMonTakeMatrices ];
+
+      Which[
+
+        Keys[smats1] == Keys[smats2],
+
+        (* Row bind each pair. *)
+        resSMmats =
+            MapThread[
+              ( cnames = Union[Join[ColumnNames[#1], ColumnNames[#2]]];
+              RowBind[ ImposeColumnNames[#1, cnames], ImposeColumnNames[#2, cnames] ])&,
+              {smats1, smats2}];
+
+
+        SMRMonCreate[resSMmats][xs,context],
+
+        True,
+        Echo["The tag types of the SMRMon objects to be joined(row-bound) are not the same.", "SMRMonJoin:"];
+        $SMRMonFailure
+      ]
+
+    ];
+
+SMRMonJoin[___][__] :=
+    Block[{},
+      Echo[ "The first argument is expected to be a SMRMon object.", "SMRMonJoin:"];
+      $SMRMonFailure
+    ];
+
+
+ClearAll[SMRMonRowBind]
+SMRMonRowBind = SMRMonJoin;
 
 
 End[]; (* `Private` *)
