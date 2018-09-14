@@ -138,8 +138,8 @@ and numbers as values."
 
 SMRMonCreate::usage = "Creates the recommender structures from a transactions Dataset and a specifications Dataset."
 
-SMRMonApplyLocalWeightFunction::usage = "Applies a specified local weight function to the entries
-    of the contingency matrix."
+SMRMonApplyLocalWeightFunction::usage = "Applies a specified local weight function to the entries \
+of the contingency matrix."
 
 SMRMonApplyGlobalWeightFunction::usage = "Applies a specified global weight function to the entries \
 of the contingency matrix."
@@ -384,6 +384,32 @@ ScoredTagsQ[___] := (Echo["Wrong signature!", "ScoredTagsQ:"]; False);
 (* Creation                                                   *)
 (**************************************************************)
 
+(* This can be a function MathematicaForPredictionUtilities.m . *)
+Clear[NumericalColumns]
+NumericalColumns[ds_Dataset] :=
+    Block[{aNumColsQ},
+      aNumColsQ =
+          Normal@ds[
+            Transpose /*
+                Query[All, VectorQ[DeleteMissing[#], NumericQ] &]];
+
+      Keys[Pick[aNumColsQ, Values[aNumColsQ]]]
+    ];
+
+(*
+I am trying to avoid the package DateReshape.m here. Using ToLongForm from that package we can do:
+ToSSparseMatrix@
+ CrossTabulate[ToLongForm[ds[All, {idColumnName, varColumnName}], {idColumnName}, {varColumnName}]]
+*)
+Clear[NumericalColumnToSSparseMatrix]
+NumericalColumnToSSparseMatrix[ds_Dataset, idColumnName_, varColumnName_] :=
+    Block[{},
+      ToSSparseMatrix[
+        SparseArray[List /@ Normal[ds[All, varColumnName]]],
+        "RowNames" -> Normal[ds[All, idColumnName]],
+        "ColumnNames" -> {varColumnName}]
+    ];
+
 ClearAll[SMRMonCreate]
 
 (*SyntaxInformation[SMRMonCreate] = {"ArgumentsPattern" -> {_., _., OptionsPattern[]}};*)
@@ -391,7 +417,7 @@ ClearAll[SMRMonCreate]
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
-Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False};
+Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False, "NumericalColumnsAsCategorical"->False};
 
 SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
@@ -444,28 +470,42 @@ SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]
       ]
     ];
 
-
 SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{ncol, varNames, smats, idPos, rng, addTagTypesToColumnNamesQ},
+    Block[{ncol, tagTypeNames, smats, idPos, idName, numCols, addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ},
 
       addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
+      numericalColumnsAsCategoricalQ = TrueQ[OptionValue[SMRMonCreate, "NumericalColumnsAsCategorical"]];
 
       ncol = Dimensions[ds][[2]];
 
-      varNames = Normal[Keys[ds[1]]];
+      tagTypeNames = Normal[Keys[ds[1]]];
 
-      idPos = Flatten[Position[varNames, itemVarName]];
+      idPos = Flatten[Position[tagTypeNames, itemVarName]];
       If[ Length[idPos]==0,
         Echo["The specified item variable name is not one of the column names of the dataset.", "SMRMonCreate:"];
         Return[$Failed]
       ];
       idPos = First[idPos];
+      idName = tagTypeNames[[idPos]];
 
-      rng = Complement[Range[ncol], {idPos}];
+      If[ numericalColumnsAsCategoricalQ,
+        (* This is intentionally separated from the 'else' code in order to avoid the redundant call to NumericalColumns. *)
+        smats = Table[ v -> ToSSparseMatrix[ CrossTabulate[ds[All, {idName, v}]]], {v, Complement[ tagTypeNames, {idName} ]}],
 
-      smats = ToSSparseMatrix /@ Table[CrossTabulate[ds[All, {idPos, i}]], {i, rng}];
+        (*ELSE*)
 
-      smats = AssociationThread[Flatten[List @@ varNames[[rng]] -> smats]];
+        numCols = NumericalColumns[ds];
+
+        smats =
+            Table[
+              If[ MemberQ[numCols, v],
+                v -> NumericalColumnToSSparseMatrix[ds, idName, v],
+                (*ELSE*)
+                v -> ToSSparseMatrix[ CrossTabulate[ds[All, {idName, v}]] ]
+              ], {v, Complement[ tagTypeNames, {idName} ]}];
+      ];
+
+      smats = Association[smats];
 
       If[addTagTypesToColumnNamesQ,
         smats =
