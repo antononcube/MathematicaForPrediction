@@ -402,12 +402,13 @@ ToSSparseMatrix@
  CrossTabulate[ToLongForm[ds[All, {idColumnName, varColumnName}], {idColumnName}, {varColumnName}]]
 *)
 Clear[NumericalColumnToSSparseMatrix]
-NumericalColumnToSSparseMatrix[ds_Dataset, idColumnName_, varColumnName_] :=
-    Block[{},
-      ToSSparseMatrix[
-        SparseArray[List /@ Normal[ds[All, varColumnName]]],
-        "RowNames" -> Normal[ds[All, idColumnName]],
-        "ColumnNames" -> {varColumnName}]
+NumericalColumnToSSparseMatrix[dsArg_Dataset, idColumnName_, varColumnName_] :=
+    Block[{ds=dsArg},
+
+      ds = dsArg[All, {idColumnName, varColumnName}][All, Join[#, <|"Variable"->varColumnName|>]&];
+      ds = Query[ReplaceAll[Missing[] -> 0], All][ds];
+
+      ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}] ]
     ];
 
 ClearAll[SMRMonCreate]
