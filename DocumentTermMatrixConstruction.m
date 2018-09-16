@@ -223,7 +223,7 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
         funcName == "Binary",
         globalWeights = ConstantArray[1, Dimensions[docTermMat][[2]]],
 
-        funcName == "ColumnStochastic" || funcName = "Sum",
+        funcName == "ColumnStochastic" || funcName ==  "ColumnSum" || funcName == "Sum",
         mat = SparseArray[docTermMat];
         globalWeights = N[Total[mat, {1}]];
         globalWeights = globalWeights /. { 0. -> 1. };
@@ -262,7 +262,7 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
         normWeights = normWeights /. { 0. -> 1. };
         normWeights = 1. / normWeights,
 
-        funcName == "RowStochastic",
+        funcName == "RowStochastic" || funcName == "RowSum",
         mat = docTermMat;
         normWeights = N[Total[mat, {2}]];
         normWeights = normWeights /. { 0. -> 1. };
