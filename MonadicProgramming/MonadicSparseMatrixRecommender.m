@@ -424,6 +424,8 @@ SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonCreate[xs_, context_Association] := SMRMonCreate[][xs, context];
 
+SMRMonCreate[][xs_, context_Association] := SMRMonCreate[Options[SMRMonCreate]][xs, context];
+
 SMRMonCreate[ opts:OptionsPattern[] ][xs_, context_Association] :=
     Which[
       MatchQ[xs, _SSparseMatrix] || MatchQ[xs, Association[ (_->_SSparseMatrix) ..] ],
@@ -431,6 +433,9 @@ SMRMonCreate[ opts:OptionsPattern[] ][xs_, context_Association] :=
 
       AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ[xs, "idColumnName"],
       SMRMonCreate[ xs["data"], xs["idColumnName"], opts ][xs, context],
+
+      AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ[xs, "itemColumnName"],
+      SMRMonCreate[ xs["data"], xs["itemColumnName"], opts ][xs, context],
 
       True,
       SMRMonCreate["Fail"][xs, context]
@@ -782,7 +787,15 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
     ]/;Length[itemIndices]==Length[itemRatings];
 
 
-SMRMonRecommend[___][__] := $SMRMonFailure;
+SMRMonRecommend[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be an association of scored items. " <>
+            "The second argument is expected to be a positive integer. " <>
+            "The items are recommendation matrix row indices or row names. The scores are positive numbers.",
+        "SMRMonRecommend:"]
+      $SMRMonFailure
+    ];
 
 ClearAll[SMRMonRecommendByHistory ]
 SMRMonRecommendByHistory = SMRMonRecommend;
@@ -888,7 +901,15 @@ SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer, opts:Opti
       SMRMonRecommendByProfile[p[[1]], nRes][xs, context]
     ];
 
-SMRMonRecommendByProfile[___][__] := $SMRMonFailure;
+SMRMonRecommendByProfile[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be an association of scored tags. " <>
+            "The second argument is expected to be a positive integer. " <>
+            "The tags are recommendation matrix column names. The scores are positive numbers.",
+        "SMRMonRecommendByProfile:"]
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
