@@ -418,7 +418,7 @@ ClearAll[SMRMonCreate]
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
-Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False, "NumericalColumnsAsCategorical"->False};
+Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False, "TagValueSeparator"->".", "NumericalColumnsAsCategorical"->False };
 
 SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
@@ -477,10 +477,11 @@ SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]
     ];
 
 SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{ncol, tagTypeNames, smats, idPos, idName, numCols, addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ},
+    Block[{ncol, tagTypeNames, smats, idPos, idName, numCols, addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ, tagValueSeparator},
 
       addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
       numericalColumnsAsCategoricalQ = TrueQ[OptionValue[SMRMonCreate, "NumericalColumnsAsCategorical"]];
+      tagValueSeparator = ToString[OptionValue[SMRMonCreate, "TagValueSeparator"]];
 
       ncol = Dimensions[ds][[2]];
 
@@ -514,11 +515,12 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context
       smats = Association[smats];
 
       If[addTagTypesToColumnNamesQ,
+
         smats =
             Association @
                 KeyValueMap[Function[{k,mat},
                   k -> ToSSparseMatrix[mat,
-                    "ColumnNames" -> Map[ k <> ":" <> #&, ColumnNames[mat] ],
+                    "ColumnNames" -> Map[ k <> tagValueSeparator <> #&, ColumnNames[mat] ],
                     "RowNames" -> RowNames[mat]
                   ]], smats]
       ];
