@@ -100,7 +100,7 @@ ERTMonSetComputationSpecifications::usage = "Assigns the argument to the key \"c
 ERTMonSetEventRecords::usage = "Assigns the argument to the key \"eventRecords\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
-ERTMonSetEntityData::usage = "Assigns the argument to the key \"entityData\" in the monad context. \
+ERTMonSetEntityAttributes::usage = "Assigns the argument to the key \"entityData\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
 ERTMonSetVariableOutlierBoundaries::usage = "Assigns the argument to the key \"variableOutlierBoundaries\" in the monad context. \
@@ -110,7 +110,7 @@ ERTMonTakeComputationSpecifications::usage = "Gives the value of the key \"compS
 
 ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context."
 
-ERTMonTakeEntityData::usage = "Gives the value of the key \"entityData\" from the monad context."
+ERTMonTakeEntityAttributes::usage = "Gives the value of the key \"entityData\" from the monad context."
 
 ERTMonTakeEntityVariableRecordGroups::usage = "Gives the value of the key \"entityVariableRecordGroups\" from the monad context."
 
@@ -256,20 +256,20 @@ ERTMonTakeEventRecords[][xs_, context_] :=
 ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonSetEntityData]
-ERTMonSetEntityData[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetEntityData[][___] := $ERTMonFailure;
-ERTMonSetEntityData[xs_, context_Association] := $ERTMonFailure;
-ERTMonSetEntityData[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
+ClearAll[ERTMonSetEntityAttributes]
+ERTMonSetEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetEntityAttributes[][___] := $ERTMonFailure;
+ERTMonSetEntityAttributes[xs_, context_Association] := $ERTMonFailure;
+ERTMonSetEntityAttributes[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
     If[ Dimensions[data][[2]] == Length[colNames] &&
         Length[Intersection[colNames, {"EntityID"}]] == 1,
-      ERTMonUnit[ xs, Join[ context, <|"entityData"->data, "entityDataColumnNames"->colNames|> ] ],
+      ERTMonUnit[ xs, Join[ context, <|"entityAttributes"->data, "entityAttributesColumnNames"->colNames|> ] ],
       (*ELSE*)
-      ERTMonSetEntityData[""][]
+      ERTMonSetEntityAttributes[""][]
     ];
-ERTMonSetEntityData[data_Dataset][xs_, context_] :=
-    ERTMonSetEntityData[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
-ERTMonSetEntityData[___][___] :=
+ERTMonSetEntityAttributes[data_Dataset][xs_, context_] :=
+    ERTMonSetEntityAttributes[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
+ERTMonSetEntityAttributes[___][___] :=
     Block[{},
       Echo[
         "It is expected to have (i) one argument that is a dataset with named columns," <>
@@ -280,16 +280,16 @@ ERTMonSetEntityData[___][___] :=
       $ERTMonFailure
     ];
 
-ClearAll[ERTMonTakeEntityData]
-ERTMonTakeEntityData[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEntityData[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEntityData[xs_, context_] := ERTMonTakeEntityData[][xs, context];
-ERTMonTakeEntityData[][xs_, context_] :=
+ClearAll[ERTMonTakeEntityAttributes]
+ERTMonTakeEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeEntityAttributes[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeEntityAttributes[xs_, context_] := ERTMonTakeEntityAttributes[][xs, context];
+ERTMonTakeEntityAttributes[][xs_, context_] :=
     Block[{ds},
-      ds = Dataset[context["entityData"]];
-      Dataset[ds[All, AssociationThread[context["entityDataColumnNames"], #] &]]
+      ds = Dataset[context["entityAttributes"]];
+      Dataset[ds[All, AssociationThread[context["entityAttributesColumnNames"], #] &]]
     ];
-ERTMonTakeEntityData[__][___] := $ERTMonFailure;
+ERTMonTakeEntityAttributes[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonTakeEntityVariableRecordGroups]
@@ -338,48 +338,94 @@ ERTMonTakeContingencyMatrices[__][___] := $ERTMonFailure;
 
 ClearAll[ERTMonReadData];
 
+Options[ERTMonReadData] = {"UseHeuristics"->False};
+
 ERTMonReadData[$ERTMonFailure] := $ERTMonFailure;
 
 ERTMonReadData[xs_, context_Association] := $ERTMonFailure
 
-ERTMonReadData[dirName_String][xs_, context_] :=
-    ERTMonReadData[
-      <| "eventRecords" -> FileNameJoin[{dirName, "medicalRecordsData.csv"}],
-         "entityData" -> FileNameJoin[{dirName, "patientData.csv"}],
-         "dataIngestionSpecifications" -> FileNameJoin[{dirName, "dataIngestionSpecifications.csv"}]|> ][xs, context];
+ERTMonReadData[dirName_String, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{},
+      If[ TrueQ[ OptionValue[ERTMonReadData, "UseHeuristics"] ],
+        ERTMonReadData[
+          <| "eventRecords" -> FileNameJoin[{dirName, "eventRecords.csv"}],
+             "entityAttributes" -> FileNameJoin[{dirName, "entityAttributes.csv"}],
+             "dataIngestionSpecifications" -> FileNameJoin[{dirName, "dataIngestionSpecifications.csv"}]|> ][xs, context],
+        (*ELSE*)
+        ERTMonReadData[][xs,context]
+      ]
+    ];
 
-ERTMonReadData[aFileNames_Association][xs_, context_] :=
-    Block[{compSpec, eventRecords, eventRecordsColumnNames, entityData, entityDataColumnNames, entityID, locationID},
+ERTMonReadData[aFileNames_Association, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{compSpec,
+      eventRecords, eventRecordsColumnNames,
+      entityAttributes, entityAttributesColumnNames,
+      entityID, locationID, expectedColNames,
+      useHeuristicsQ
+    },
+
+      useHeuristicsQ = TrueQ[ OptionValue[ERTMonReadData, "UseHeuristics"] ];
 
       compSpec = ProcessComputationalSpecification[ aFileNames["dataIngestionSpecifications"] ];
 
       eventRecords = Import[aFileNames["eventRecords"], "CSV"];
+      If[ eventRecords === $Failed,
+        Return[$ERTMonFailure]
+      ];
 
       eventRecordsColumnNames = First[eventRecords];
       eventRecords = Rest[eventRecords];
 
-      entityData = Import[aFileNames["entityData"], "CSV"];
-
-      entityDataColumnNames = First[entityData];
-      entityData = Rest[entityData];
-
-      (* Determining the entity ID and location ID column names by heuristics. *)
-      entityID = Flatten[StringCases[entityDataColumnNames, ("PatientID"|"ItemID"|"Entity"), IgnoreCase->True]];
-      locationID = Flatten[StringCases[entityDataColumnNames, ("UnitID"|"Unit"|"Location"), IgnoreCase->True]];
-
-      If[Length[entityID]==0,
-        Echo["Cannot find name of entity ID columns.", "ERTMontReadData:"];
+      entityAttributes = Import[aFileNames["entityAttributes"], "CSV"];
+      If[ entityAttributes === $Failed,
         Return[$ERTMonFailure]
       ];
 
-      eventRecordsColumnNames = StringReplace[ eventRecordsColumnNames, {entityID -> "EntityID", locationID -> "LocationID"}];
-      entityDataColumnNames = StringReplace[ entityDataColumnNames, {entityID -> "EntityID", locationID -> "LocationID"}];
+      entityAttributesColumnNames = First[entityAttributes];
+      entityAttributes = Rest[entityAttributes];
+
+      If[ useHeuristicsQ,
+
+        (* Determining the entity ID and location ID column names by heuristics. *)
+        entityID = Flatten[StringCases[eventRecordsColumnNames, ("PatientID"|"ItemID"|"Entity"|"EntityID"), IgnoreCase->True]];
+        locationID = Flatten[StringCases[eventRecordsColumnNames, ("LocationID"|"Location"), IgnoreCase->True]];
+
+        If[Length[entityID]==0,
+          Echo["Cannot find name of entity ID columns.", "ERTMontReadData:"];
+          Return[$ERTMonFailure]
+        ];
+
+        eventRecordsColumnNames = StringReplace[ eventRecordsColumnNames, {entityID -> "EntityID", locationID -> "LocationID"}];
+        entityAttributesColumnNames = StringReplace[ entityAttributesColumnNames, {entityID -> "EntityID", locationID -> "LocationID"}];
+      ];
+
+      expectedColNames = {"EntityID", "LocationID", "ObservationTime", "Variable", "Value"};
+      If[ Length[Intersection[expectedColNames, eventRecordsColumnNames]] != Length[expectedColNames],
+        Echo[
+          "The event records data is expected to have the column names: " <>
+              ToString[expectedColNames],
+          "ERTMontReadData:"
+        ];
+        Return[$ERTMonFailure]
+      ];
+
+      expectedColNames = {"EntityID", "Attribute", "Value"};
+      If[ Length[Intersection[expectedColNames, entityAttributesColumnNames]] != Length[expectedColNames],
+        Echo[
+          "The entity attributes data is expected to have the column names: " <>
+              ToString[expectedColNames],
+          "ERTMontReadData:"
+        ];
+        Return[$ERTMonFailure]
+      ];
 
       ERTMonUnit[
         xs,
         Join[context,
-          <| "eventRecords"->eventRecords, "entityData"->entityData,
-             "eventRecordsColumnNames"->eventRecordsColumnNames, "entityDataColumnNames"->entityDataColumnNames,
+          <| "eventRecords"->eventRecords, 
+             "entityAttributes"->entityAttributes,
+             "eventRecordsColumnNames"->eventRecordsColumnNames, 
+             "entityAttributesColumnNames"->entityAttributesColumnNames,
              "compSpec"->compSpec|>] ]
 
     ];
@@ -403,9 +449,9 @@ ERTMonEchoDataSummary[][xs_, context_] :=
       Association @
           MapThread[
             #1 -> RecordsSummary[#2,#3]&,
-            { {"eventRecords", "entityData"},
-              Values @ KeyTake[#, {"eventRecords", "entityData"}],
-              Values @ KeyTake[#, {"eventRecordsColumnNames", "entityDataColumnNames"}]
+            { {"eventRecords", "entityAttributes"},
+              Values @ KeyTake[#, {"eventRecords", "entityAttributes"}],
+              Values @ KeyTake[#, {"eventRecordsColumnNames", "entityAttributesColumnNames"}]
             }]&][xs, context];
 
 ERTMonEchoDataSummary[___][__] := $ERTMonFailure;
