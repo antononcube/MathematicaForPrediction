@@ -94,7 +94,7 @@ BeginPackage["MonadicEventRecordsTransformations`"];
 
 $ERTMonFailure::usage = "Failure symbol for the monad ERTMon."
 
-ERTMonSetComputationSpecifications::usage = "Assigns the argument to the key \"compSpec\" in the monad context. \
+ERTMonSetComputationSpecification::usage = "Assigns the argument to the key \"compSpec\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
 ERTMonSetEventRecords::usage = "Assigns the argument to the key \"eventRecords\" in the monad context. \
@@ -230,7 +230,7 @@ Clear[EmptyComputationSpecificationRow]
 EmptyComputationSpecificationRow[] =
     Association[{"Variable" -> Missing[], "Explanation" -> "",
       "Type" -> Missing[], "ConvertType" -> "NULL",
-      "AggregationTimeInterval" -> 60, "AggregationFunction" -> Mean,
+      "AggregationTimeInterval" -> 60, "AggregationFunction" -> "Mean",
       "MaxHistoryLength" -> 3600, "Normalization" -> "NULL",
       "MovingAverageWindow" -> "NULL", "CriticalLabel" -> "NULL"}];
 
@@ -239,12 +239,12 @@ EmptyComputationSpecificationRow[] =
 (* Setters and takers                                         *)
 (**************************************************************)
 
-ClearAll[ERTMonSetComputationSpecifications]
-ERTMonSetComputationSpecifications[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetComputationSpecifications[][___] := $ERTMonFailure;
-ERTMonSetComputationSpecifications[xs_, context_] := $ERTMonFailure;
-ERTMonSetComputationSpecifications[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"compSpec"->ds|> ] ];
-ERTMonSetComputationSpecifications[__][___] := $ERTMonFailure;
+ClearAll[ERTMonSetComputationSpecification]
+ERTMonSetComputationSpecification[$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetComputationSpecification[][___] := $ERTMonFailure;
+ERTMonSetComputationSpecification[xs_, context_] := $ERTMonFailure;
+ERTMonSetComputationSpecification[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"compSpec"->ds|> ] ];
+ERTMonSetComputationSpecification[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonTakeComputationSpecification]
