@@ -70,7 +70,7 @@
 BeginPackage["DataReshape`"];
 
 ToLongForm::usage = "ToLongForm[ds_Dataset, idColumns_, valueColumns_] \
-converts the dataset ds into long form. The resulting dataset is has the columns idColumns and \
+converts the dataset ds into long form. The resulting dataset has the columns idColumns and \
 the columns \"Variable\" and \"Value\" derived from valueColumns."
 
 ToWideForm::usage = "ToWideForm[ds_Dataset, idColumns_, variableColumn_, valueColumns_] \
@@ -81,20 +81,31 @@ with values that are the corresponding values of valueColumn."
 Begin["`Private`"];
 
 (***********************************************************)
+(* Utilities                                               *)
+(***********************************************************)
+
+Clear[ColumnSpecQ]
+
+ColumnSpecQ[x_] := IntegerQ[x] || StringQ[x] || MatchQ[x, Key[__]];
+
+
+(***********************************************************)
 (* ToLongForm                                              *)
 (***********************************************************)
 
 Clear[ToLongForm]
 
-ToLongForm[ds_Dataset, idColumn_Integer, valueColumn_Integer] := ToLongForm[ds, {idColumn}, {valueColumn}];
+ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumn_?ColumnSpecQ] := ToLongForm[ds, {idColumn}, {valueColumn}];
 
-ToLongForm[ds_Dataset, idColumn_Integer, valueColumns : {_Integer ..}] := ToLongForm[ds, {idColumn}, valueColumns];
+ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumns : {_?ColumnSpecQ ..}] := ToLongForm[ds, {idColumn}, valueColumns];
 
-ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumn_Integer] := ToLongForm[ds, idColumns, {valueColumn}];
+ToLongForm[ds_Dataset, idColumns : {_?ColumnSpecQ ..}, valueColumn_?ColumnSpecQ] := ToLongForm[ds, idColumns, {valueColumn}];
 
-ToLongForm[ds_Dataset, valueColumn_Integer] := ToLongForm[ds, {0}, {valueColumn}];
+ToLongForm[ds_Dataset] := ToLongForm[ ds, {0}, Range[ Length[ ds[1] ] ] ] ;
 
-ToLongForm[ds_Dataset, valueColumns : {_Integer ..}] := ToLongForm[ds, {0}, valueColumns];
+(*ToLongForm[ds_Dataset, valueColumn_Integer] := ToLongForm[ds, {0}, {valueColumn}];*)
+
+(*ToLongForm[ds_Dataset, valueColumns : {_Integer ..}] := ToLongForm[ds, {0}, valueColumns];*)
 
 ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}] :=
     Block[{records = Normal[ds]},
@@ -109,6 +120,10 @@ ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}] 
             Association@
                 Map[KeyTake[#, Keys[#][[idColumns]]] ->
                     KeyTake[#, Keys[#][[valueColumns]]] &, Values[records]],
+
+            TrueQ[idColumns == {0}] && MatchQ[records, List[_Association ..]],
+            Association@
+                MapIndexed[<|"RowKey" -> #2[[1]]|> -> KeyTake[#1, Keys[#1][[valueColumns]]] &, records],
 
             MatchQ[records, List[(_Association) ..]],
             Association@
