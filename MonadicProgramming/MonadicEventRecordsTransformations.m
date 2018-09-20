@@ -106,7 +106,7 @@ ERTMonSetEntityAttributes::usage = "Assigns the argument to the key \"entityData
 ERTMonSetVariableOutlierBoundaries::usage = "Assigns the argument to the key \"variableOutlierBoundaries\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
-ERTMonTakeComputationSpecifications::usage = "Gives the value of the key \"compSpec\" from the monad context."
+ERTMonTakeComputationSpecification::usage = "Gives the value of the key \"compSpec\" from the monad context."
 
 ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context."
 
@@ -136,6 +136,14 @@ ERTMonFindVariableOutlierBoundaries::usage = "Find outlier boundaries for each v
 
 ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series."
 
+ERTMonProcessComputationSpecification::usage = "Process computations specifications. \
+The argument can be a file name string, a matrix, or a dataset."
+
+ProcessComputationSpecification::usage = "Process computations specifications. \
+The argument can be a file name string, a matrix, or a dataset."
+
+EmptyComputationSpecificationRow::usage = "Gives empty computation specification row."
+
 Begin["`Private`"];
 
 Needs["MathematicaForPredictionUtilities`"]
@@ -160,11 +168,22 @@ GenerateStateMonadCode[ "MonadicEventRecordsTransformations`ERTMon", "FailureSym
 Clear[GetAssociation]
 GetAssociation[compSpec_Dataset, colName_] := Normal[compSpec[All, colName]];
 
-Clear[ProcessComputationalSpecification]
-ProcessComputationalSpecification[fname_String] :=
-    ProcessComputationalSpecification[DeleteCases[Import[fname, "CSV"], {}]];
+Clear[ProcessComputationSpecification]
+ProcessComputationSpecification[fname_String] :=
+    ProcessComputationSpecification[DeleteCases[Import[fname, "CSV"], {}]];
 
-ProcessComputationalSpecification[compSpecArg_?MatrixQ] :=
+ProcessComputationSpecification[ds_Dataset] :=
+    Block[{mat},
+      If[ AssociationQ[Normal[ds[1]]],
+        mat = Normal[ds[All,Values]];
+        If[ AssociationQ[mat], mat = Values[mat] ];
+        ProcessComputationSpecification[ Prepend[ mat, Keys[Normal[ds[1]]] ] ],
+        (*ELSE*)
+        $ERTMonFailure
+      ]
+    ];
+
+ProcessComputationSpecification[compSpecArg_?MatrixQ] :=
     Block[{compSpec = compSpecArg, compSpecColumnNames, rowIDs},
       compSpecColumnNames = First[compSpec];
       compSpecColumnNames =
@@ -199,6 +218,24 @@ OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
 
 
 (**************************************************************)
+(* Empty computation specification                            *)
+(**************************************************************)
+
+compSpecRowKeys = {"Variable", "Explanation", "Type", "ConvertType",
+  "AggregationTimeInterval", "AggregationFunction",
+  "MaxHistoryLength", "Normalization", "MovingAverageWindow",
+  "CriticalConditionLabel"};
+
+Clear[EmptyComputationSpecificationRow]
+EmptyComputationSpecificationRow[] =
+    Association[{"Variable" -> Missing[], "Explanation" -> "",
+      "Type" -> Missing[], "ConvertType" -> "NULL",
+      "AggregationTimeInterval" -> 60, "AggregationFunction" -> Mean,
+      "MaxHistoryLength" -> 3600, "Normalization" -> "NULL",
+      "MovingAverageWindow" -> "NULL", "CriticalLabel" -> "NULL"}];
+
+
+(**************************************************************)
 (* Setters and takers                                         *)
 (**************************************************************)
 
@@ -210,12 +247,12 @@ ERTMonSetComputationSpecifications[ds_Dataset][xs_, context_] := ERTMonUnit[ xs,
 ERTMonSetComputationSpecifications[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeComputationSpecifications]
-ERTMonTakeComputationSpecifications[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeComputationSpecifications[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeComputationSpecifications[xs_, context_] := ERTMonTakeComputationSpecifications[][xs, context];
-ERTMonTakeComputationSpecifications[][xs_, context_] := context["compSpec"];
-ERTMonTakeComputationSpecifications[__][___] := $ERTMonFailure;
+ClearAll[ERTMonTakeComputationSpecification]
+ERTMonTakeComputationSpecification[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeComputationSpecification[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeComputationSpecification[xs_, context_] := ERTMonTakeComputationSpecification[][xs, context];
+ERTMonTakeComputationSpecification[][xs_, context_] := context["compSpec"];
+ERTMonTakeComputationSpecification[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonSetEventRecords]
@@ -366,7 +403,7 @@ ERTMonReadData[aFileNames_Association, opts:OptionsPattern[]][xs_, context_] :=
 
       useHeuristicsQ = TrueQ[ OptionValue[ERTMonReadData, "UseHeuristics"] ];
 
-      compSpec = ProcessComputationalSpecification[ aFileNames["dataIngestionSpecifications"] ];
+      compSpec = ProcessComputationSpecification[ aFileNames["dataIngestionSpecifications"] ];
 
       eventRecords = Import[aFileNames["eventRecords"], "CSV"];
       If[ eventRecords === $Failed,
@@ -431,6 +468,27 @@ ERTMonReadData[aFileNames_Association, opts:OptionsPattern[]][xs_, context_] :=
     ];
 
 ERTMonReadData[___][__] := $ERTMonFailure;
+
+
+(**************************************************************)
+(* ProcessComputationalSpecification                         *)
+(**************************************************************)
+
+ClearAll[ERTMonProcessComputationSpecification]
+
+ERTMonProcessComputationSpecification[ arg:(_String|_?MatrixQ|_Dataset) ][xs_, context_Association] :=
+    Block[{res},
+
+      res = ProcessComputationSpecification[arg];
+
+      If[ TrueQ[Head[res] === Dataset],
+        ERTMonUnit[ res, context ],
+        (*ELSE*)
+        $ERTMonFailure
+      ]
+    ];
+
+ERTMonProcessComputationSpecification[___][__] := $ERTMonFailure;
 
 
 (**************************************************************)
