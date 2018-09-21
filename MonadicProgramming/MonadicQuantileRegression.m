@@ -1172,14 +1172,16 @@ QRMonGridSequence[][xs_, context_] := QRMonGridSequence[Automatic][xs, context];
 
 QRMonGridSequence[Automatic][xs_, context_] :=
     Block[{data, qvals},
+
+      data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
+
       Which[
 
-        !KeyExistsQ[context, "data"],
+        TrueQ[data === $QRMonFailure],
         Echo["Cannot find data.", "QRMonGridSequence:"];
         $QRMonFailure,
 
         KeyExistsQ[context, "regressionFunctions"],
-        data = DataToNormalForm[context["data"]];
         qvals = Quantile[ data[[All, 2]], Keys[context["regressionFunctions"]] ];
         QRMonGridSequence[ qvals ][xs, Join[context, <|"data"->data|> ]],
 
@@ -1191,14 +1193,16 @@ QRMonGridSequence[Automatic][xs_, context_] :=
 
 QRMonGridSequence[gridNCells_Integer][xs_, context_] :=
     Block[{data, rvals},
+
+      data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
+
       Which[
 
         gridNCells < 1,
         Echo["An integer first argument is expected to be positive.", "QRMonGridSequence"];
         $QRMonFailure,
 
-        KeyExistsQ[context, "data"],
-        data = DataToNormalForm[context["data"]];
+        ! TrueQ[data === $QRMonFailure],
         rvals = Rescale[Range[1, gridNCells], {1, gridNCells}, MinMax[data[[All, 2]]]];
         QRMonGridSequence[ rvals ][xs, Join[context, <|"data"->data|> ]],
 
@@ -1209,17 +1213,19 @@ QRMonGridSequence[gridNCells_Integer][xs_, context_] :=
     ];
 
 QRMonGridSequence[grid:{_?NumericQ..}][xs_, context_] :=
-    Block[{stFunc, states},
+    Block[{stFunc, states, data},
+
+      data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
 
       Which[
 
-        !KeyExistsQ[context, "data"],
+        TrueQ[data === $QRMonFailure],
         Echo["Cannot find data.", "QRMonGridSequence:"];
         $QRMonFailure,
 
         True,
         stFunc = FindIntervalFunc[grid];
-        states = stFunc /@ DataToNormalForm[context["data"]][[All,2]];
+        states = stFunc /@ data[[All,2]];
         QRMonUnit[ states, context ]
       ]
 
