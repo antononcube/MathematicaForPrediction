@@ -116,7 +116,7 @@ WeatherEventRecords[
           eventRecords[All, AssociationThread[{"EntityID", "Variable", "ObservationTime", "Value"} -> #] &];
 
       eventRecords =
-          eventRecords[All, Join[#, <|"LocationID" -> #EntityID|>] &];
+          eventRecords[All, Join[#, <|"LocationID" -> aWStations[#EntityID][[1]]|>] &];
 
       eventRecords =
           eventRecords[All, {"EntityID", "LocationID", "ObservationTime", "Variable", "Value"}];
