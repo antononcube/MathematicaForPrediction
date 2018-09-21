@@ -641,7 +641,7 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
 
         ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] >= 0, {#["FirstTime"], #["FirstTime"] + specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
 
-        ts = Map[ TimeSeriesAggregate[#, specRow["AggregationTimeInterval"], aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
+        ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationTimeInterval"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
 
         ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["AggregationFunction"]]}&, ts];
         ts,
