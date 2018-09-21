@@ -130,7 +130,9 @@ Only the variables in the specification are used."
 ERTMonRecordGroupsToTimeSeries::usage = "Converts the groups of entity-variable records into time series. \
 The time series are restricted to the corresponding variable maximum time given in the specification."
 
-ERTMonTimeSeriesAggregation::usage = "Aggregates the event records time series according to the specification."
+ERTMonAggregateTimeSeries::usage = "Aggregates the event records time series according to the specification."
+
+ERTMonFindVariableDistributions::usage = "Find the distribution of each variable in the entity-variable record groups."
 
 ERTMonFindVariableOutlierBoundaries::usage = "Find outlier boundaries for each variable in the entity-variable record groups."
 
@@ -562,6 +564,9 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObject):"MaxT
     Block[{ts, zeroTime=zeroTimeArg},
 
       Which[
+        MemberQ[{"None", None}, zeroTime],
+        zeroTime = "None",
+
         MemberQ[{"MinTime", "MinimumTime", "StartTime"}, zeroTime],
         zeroTime = "MinTime",
 
@@ -591,6 +596,9 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObject):"MaxT
               Transpose[{
                 Through[#["ObservationTime"]] -
                     Which[
+                      zeroTime == "None",
+                      0,
+
                       zeroTime == "MinTime",
                       Min[Through[#["ObservationTime"]]],
 
@@ -631,7 +639,7 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
 
         ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
 
-        ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] == 0, {0, specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
+        ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] >= 0, {#["FirstTime"], #["FirstTime"] + specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
 
         ts = Map[ TimeSeriesAggregate[#, specRow["AggregationTimeInterval"], aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
 
@@ -643,13 +651,13 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
       ]
     ];
 
-ClearAll[ERTMonTimeSeriesAggregation]
+ClearAll[ERTMonAggregateTimeSeries]
 
-ERTMonTimeSeriesAggregation[$ERTMonFailure] := $ERTMonFailure;
+ERTMonAggregateTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonTimeSeriesAggregation[xs_, context_Association] := ERTMonTimeSeriesAggregation[][xs, context];
+ERTMonAggregateTimeSeries[xs_, context_Association] := ERTMonAggregateTimeSeries[][xs, context];
 
-ERTMonTimeSeriesAggregation[][xs_, context_] :=
+ERTMonAggregateTimeSeries[][xs_, context_] :=
     Block[{compSpec, ts, aAggrFuncs},
 
       If[ !KeyExistsQ[context, "compSpec"],
@@ -686,11 +694,49 @@ ERTMonTimeSeriesAggregation[][xs_, context_] :=
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
     ];
 
-ERTMonTimeSeriesAggregation[___][__] :=
+ERTMonAggregateTimeSeries[___][__] :=
     Block[{},
       Echo["No arguments are expected.", "ERTMonTimeSeriesAggregation:"];
       $ERTMonFailure
     ];
+
+
+(**************************************************************)
+(* Find variable distributions                                *)
+(**************************************************************)
+
+ClearAll[ERTMonFindVariableDistributions]
+
+ERTMonFindVariableDistributions[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonFindVariableDistributions[xs_, context_Association] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+
+ERTMonFindVariableDistributions[][xs_, context_] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+
+ERTMonFindVariableDistributions[distFunc_][xs_, context_] :=
+    Block[{ivRowSpecIDs, distributions},
+
+      ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
+
+      distributions =
+          Association @
+              Map[ # -> distFunc[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
+
+      ERTMonUnit[distributions, Join[context, <| "variableDistributions"->distributions |>]]
+    ];
+
+ERTMonFindVariableDistributions[___][__] :=
+    Block[{},
+      Echo[
+        StringRiffle[
+          {"One or no arguments are expected. The argument is a function that finds the distribution of a list of numbers.",
+            "(Here are such built-in function names : Histogram (default), EmpiricalDistribution, SmoothKernelDistribution, etc.)"
+          }," "],
+        "ERTMonFindVariableDistributions:"
+      ];
+      $ERTMonFailure
+    ];
+
 
 (**************************************************************)
 (* Find variable outliers                                     *)
@@ -713,7 +759,7 @@ ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :
           Association @
               Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
 
-      ERTMonUnit[xs, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
+      ERTMonUnit[outlierBoundaries, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
     ];
 
 ERTMonFindVariableOutlierBoundaries[___][__] :=
@@ -762,7 +808,7 @@ ERTMonMakeContingencyMatrices[][xs_, context_] :=
       ERTMonUnit[xs, Join[context, <| "contingencyMatrices"->cmats |>]]
     ];
 
-ERTMonTimeSeriesAggregation[___][__] := $ERTMonFailure;
+ERTMonAggregateTimeSeries[___][__] := $ERTMonFailure;
 
 
 End[]; (* `Private` *)
