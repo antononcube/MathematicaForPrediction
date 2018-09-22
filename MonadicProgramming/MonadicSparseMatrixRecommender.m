@@ -998,7 +998,26 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, co
       SMRMonUnit[res, context]
     ];
 
-SMRMonJoinAcross[__][___] := $SMRMonFailure;
+SMRMonJoinAcross[asc_Association, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{dsRecs},
+
+      dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
+
+      If[ TrueQ[dsRecs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonUnit[ dsRecs[ All, Join[ #, <| "Value" -> asc[#Item] |>]& ], context ]
+    ];
+
+SMRMonJoinAcross[__][___] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be an Association or a Dataset. " <>
+            "If the first argument is a Dataset then the second argument is expected to be a column name to do the joining with.",
+        "SMRMonJoinAcross:"];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
