@@ -1111,17 +1111,22 @@ QRMonOutliersPlot[___][__] := $QRMonFailure;
 
 Clear[QRMonSeparate]
 
-Options[QRMonSeparate] = { "Fractions"->False };
+Options[QRMonSeparate] = { "Cumulative"->True, "Fractions"->False };
 
 QRMonSeparate[$QRMonFailure] := $QRMonFailure;
 
 QRMonSeparate[__][$QRMonFailure] := $QRMonFailure;
 
-QRMonSeparate[xs_, context_Association] := QRMonSeparate[xs][xs, context];
+QRMonSeparate[xs_, context_Association] := QRMonSeparate[][xs, context];
+
+QRMonSeparate[][xs_, context_Association] := QRMonSeparate[xs][xs, context];
+
+QRMonSeparate[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparate[xs,opts][xs, context];
 
 QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
-    Block[{data, pointGroups, fractionsQ},
+    Block[{data, indGroups, pointGroups, cumulativeQ, fractionsQ},
 
+      cumulativeQ = TrueQ[ OptionValue[ QRMonSeparate, "Cumulative" ] ];
       fractionsQ = TrueQ[ OptionValue[ QRMonSeparate, "Fractions" ] ];
 
       data = Fold[ QRMonBind, QRMonUnit[dataArg], {QRMonGetData, QRMonTakeValue}];
@@ -1135,7 +1140,38 @@ QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
         Return[$QRMonFailure]
       ];
 
-      pointGroups = Association @ KeyValueMap[ Function[{k,f}, k -> Select[ data, #[[2]] <= f[#[[1]]] & ] ], context["regressionFunctions"] ];
+      (* This has to be optimized. Currently is O[ Length[data] * Length[regressionFunctions] ] . Can be at least halved. *)
+      If[ cumulativeQ,
+
+        pointGroups =
+            Association @
+                 KeyValueMap[
+                   Function[{k,f}, k -> Select[ data, #[[2]] <= f[#[[1]]] & ] ],
+                   context["regressionFunctions"]
+                 ],
+
+        (*ELSE*)
+        (* Find the indices corresponding to data points under each regression function. *)
+        indGroups =
+            Association @
+                KeyValueMap[
+                  Function[{k,f}, k -> Select[ Range[Length[data]], data[[#,2]] <= f[data[[#,1]]] & ] ],
+                  KeyDrop[ context["regressionFunctions"], "mean" ]
+                ];
+
+        (* Find complements of the indices that belong to pairs of consecutive quantiles. *)
+        indGroups =
+            Join[
+              KeyTake[ indGroups, First[Sort[Keys[indGroups]]] ],
+              Association @
+                  Map[
+                    Function[{k}, k[[2]] -> Complement[ indGroups[k[[2]]], indGroups[k[[1]]] ] ],
+                    Partition[ Sort[Keys[indGroups]], 2, 1]
+                  ]
+            ];
+
+        pointGroups = Map[ data[[#]]&, indGroups]
+      ];
 
       If[ fractionsQ,
         pointGroups = Map[ Length[#] / Length[data] &, pointGroups ];
@@ -1149,13 +1185,25 @@ QRMonSeparate[___][__] := $QRMonFailure;
 
 Clear[QRMonSeparateToFractions]
 
+Options[QRMonSeparateToFractions] = {"Cumulative"->False};
+
 QRMonSeparateToFractions[$QRMonFailure] := $QRMonFailure;
 
 QRMonSeparateToFractions[__][$QRMonFailure] := $QRMonFailure;
 
-QRMonSeparateToFractions[xs_, context_Association] := QRMonSeparateToFractions[xs][xs, context];
+QRMonSeparateToFractions[xs_, context_Association] := QRMonSeparateToFractions[][xs, context];
 
-QRMonSeparateToFractions[dataArg_][xs_, context_] := QRMonSeparate[ dataArg, "Fractions"->True ][xs, context];
+QRMonSeparateToFractions[][xs_, context_Association] := QRMonSeparateToFractions[xs][xs, context];
+
+QRMonSeparateToFractions[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparateToFractions[xs, opts][xs, context];
+
+QRMonSeparateToFractions[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{cumulativeQ},
+
+      cumulativeQ = TrueQ[ OptionValue[ QRMonSeparateToFractions, "Cumulative" ] ];
+
+      QRMonSeparate[ dataArg, "Fractions"->True, "Cumulative" -> cumulativeQ ][xs, context]
+    ]
 
 QRMonSeparateToFractions[___][__] := $QRMonFailure;
 
