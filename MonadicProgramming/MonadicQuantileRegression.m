@@ -189,6 +189,11 @@ QRMonOutliers::usage = "Find the outliers in the data."
 
 QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
 
+QRMonSeparate::usage = "Separate the argument by the regression functions in the context."
+
+QRMonSeparateToFractions::usage = "Separate the argument by the regression functions in the context \
+and find the corresponding fractions."
+
 QRMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles."
 
 QRMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid."
@@ -1095,6 +1100,64 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
 
       QRMonUnit[ res, QRMonBind[ unit, QRMonTakeContext ] ]
     ];
+
+
+QRMonOutliersPlot[___][__] := $QRMonFailure;
+
+
+(**************************************************************)
+(* Separate points by regression quantiles                    *)
+(**************************************************************)
+
+Clear[QRMonSeparate]
+
+Options[QRMonSeparate] = { "Fractions"->False };
+
+QRMonSeparate[$QRMonFailure] := $QRMonFailure;
+
+QRMonSeparate[__][$QRMonFailure] := $QRMonFailure;
+
+QRMonSeparate[xs_, context_Association] := QRMonSeparate[xs][xs, context];
+
+QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{data, pointGroups, fractionsQ},
+
+      fractionsQ = TrueQ[ OptionValue[ QRMonSeparate, "Fractions" ] ];
+
+      data = Fold[ QRMonBind, QRMonUnit[dataArg], {QRMonGetData, QRMonTakeValue}];
+
+      If[ TrueQ[data === $QRMonFailure ],
+        Return[$QRMonFailure]
+      ];
+
+      If[ !KeyExistsQ[context, "regressionFunctions"],
+        Echo["Cannot find regression functions.", "QRMonSeparate:"];
+        Return[$QRMonFailure]
+      ];
+
+      pointGroups = Association @ KeyValueMap[ Function[{k,f}, k -> Select[ data, #[[2]] <= f[#[[1]]] & ] ], context["regressionFunctions"] ];
+
+      If[ fractionsQ,
+        pointGroups = Map[ Length[#] / Length[data] &, pointGroups ];
+      ];
+
+      QRMonUnit[ pointGroups, context ]
+    ];
+
+QRMonSeparate[___][__] := $QRMonFailure;
+
+
+Clear[QRMonSeparateToFractions]
+
+QRMonSeparateToFractions[$QRMonFailure] := $QRMonFailure;
+
+QRMonSeparateToFractions[__][$QRMonFailure] := $QRMonFailure;
+
+QRMonSeparateToFractions[xs_, context_Association] := QRMonSeparateToFractions[xs][xs, context];
+
+QRMonSeparateToFractions[dataArg_][xs_, context_] := QRMonSeparate[ dataArg, "Fractions"->True ][xs, context];
+
+QRMonSeparateToFractions[___][__] := $QRMonFailure;
 
 
 (**************************************************************)
