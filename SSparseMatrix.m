@@ -140,6 +140,8 @@ BeginPackage["SSparseMatrix`"]
 
 SSparseMatrix::usage = "Head of a sparse matrix with named rows and columns."
 
+SSparseMatrixQ::usage = "Predicate is the argument a SSparseMatrix object."
+
 MakeSSparseMatrix::usage = "Makes a sparse matrix with named rows and columns."
 
 ToSSparseMatrix::usage = "Converts several types of objects into SSparseMatrix objects. (SparseArray, Dataset, CrossTable results.)"
