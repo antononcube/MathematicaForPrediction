@@ -155,6 +155,9 @@ SMRMonRecommendByHistory::usage = "Recommends items based on history."
 
 SMRMonRecommendByProfile::usage = "Recommends items based on profile."
 
+SMRMonRecommendByCorrelation::usage = "Recommends items based on a correlation matrix. \
+(The context value for the key \"timeSeriesMatrix\" should have the same dimensions and row names as the recommendation matrix.)"
+
 SMRMonToProfileVector::usage = "Makes a profile vector from an argument that is a list of tags or an Association object."
 
 SMRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument."
@@ -912,6 +915,62 @@ SMRMonRecommendByProfile[___][__] :=
         "SMRMonRecommendByProfile:"]
       $SMRMonFailure
     ];
+
+
+(**************************************************************)
+(* SMRMonRecommendByCorrelation                               *)
+(**************************************************************)
+
+ClearAll[SMRMonRecommendByCorrelation]
+
+Options[SMRMonRecommendByCorrelation] = { Method-> Correlation, "SMRNumberOfRecommendations"-> 200 };
+
+SMRMonRecommendByCorrelation[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts:OptionsPattern[] ][xs_, context_Association] :=
+    Block[{recs, corRecs, smrNRecs, methodFunc, corMat},
+
+      methodFunc = OptionValue[ SMRMonRecommendByCorrelation, Method ];
+
+      smrNRecs = OptionValue[ SMRMonRecommendByCorrelation, "SMRNumberOfRecommendations"];
+      If[ ! TrueQ[ IntegerQ[smrNRecs] && smrNRecs > 0 ],
+        Echo["Positive integer is expected as a value of the option \"SMRNumberOfRecommendations\".", "SMRMonRecommendByCorrelation:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ !KeyExistsQ[context, "timeSeriesMatrix"],
+        Echo["Cannot find a time series matrix, context key \"timeSeriesMatrix\".", "SMRMonRecommendByCorrelation:"];
+        Return[$SMRMonFailure]
+      ];
+
+      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommendByProfile[ searchVector, smrNRecs ], SMRMonTakeValue }];
+
+      If[ TrueQ[recs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      If[
+        ! TrueQ[
+          SSparseMatrixQ[context["timeSeriesMatrix"]] &&
+              RowNames[context["timeSeriesMatrix"]] == RowNames[context["M"]] &&
+              ColumnsCount[context["timeSeriesMatrix"]] == ColumnsCount[context["M"]] ],
+        Echo["The value of \"timeSeriesMatrix\" is not a SSparseMatrix object that has the same dimensions and row names as the recommendation matrix."];
+        Return[$SMRMonFailure]
+      ];
+
+      corMat = context["timeSeriesMatrix"][[Keys[recs], All]];
+
+      (* TO DO: methodFunc is expected to be one of {Correlation, SpearmanRho, KendallTau, Dot} *)
+      corRecs = Flatten @ methodFunc[ Transpose[SparseArray[corMat]], Transpose[{searchVector}] ];
+
+      corRecs = AssociationThread[ RowNames[corMat], corRecs];
+
+      corRecs = TakeLargest[corRecs, UpTo[nRes]];
+
+      SMRMonUnit[corRecs, context]
+    ];
+
+SMRMonRecommendByCorrelation[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
