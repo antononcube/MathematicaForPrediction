@@ -1,5 +1,35 @@
-(* Mathematica Package *)
-(* Created by Mathematica Plugin for IntelliJ IDEA, see http://wlplugin.halirutan.de/ *)
+(*
+    Weather event records data Mathematica package
+    Copyright (C) 2018  Anton Antonov
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
+*)
+
+(*
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+
+    Protected by copyright law and international treaties.
+
+    Unauthorized reproduction or distribution subject to severe civil
+    and criminal penalties.
+
+    Mathematica is a registered trademark of Wolfram Research, Inc.
+*)
 
 (* :Title: WeatherEventRecords *)
 (* :Context: WeatherEventRecords` *)
@@ -16,10 +46,10 @@
     # In brief
 
     This package provides a function that extracts weather data using specifications for:
-    cities, date range, weather data properties/vaurables, and number of stations.
+    cities, date range, weather data variables, and number of stations.
 
     The main inspiration to make this package is need for example data in order to document
-    the ERTMon package [1].
+    the ERTMon package [1]; see [2].
 
 
     # Usage example
@@ -38,6 +68,9 @@
 
     [1] Anton Antonov, Monadic Event Records Transformations Mathematica package, (2018), MathematicaForPrediction at GitHub.
         URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicEventRecordsTransformations.m .
+
+    [2] Anton Antonov, Parametrized event records data transformations, (2018), MathematicaForPrediction at GitHub.
+        URL: https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Parametrized-event-records-data-transformations.md
 
 
     Anton Antonov
