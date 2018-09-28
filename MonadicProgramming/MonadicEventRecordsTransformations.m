@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2017 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -53,7 +53,7 @@
     1. [ ] Consider moving the data into Dataset objects with named columns.
            Currently, say, the event records data is stored in a matrix and a vector of column names.
 
-    2. [ ] Consider the splicing of the sparse matrices. This would mean using the SSparseMatrix.m package.
+    2. [X] Consider the splicing of the sparse matrices. This would mean using the SSparseMatrix.m package.
 
     3. [ ] Investigate does the computational specification Dataset object has to have named rows.
 
