@@ -81,6 +81,10 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
+If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
+];
+
 If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
@@ -151,6 +155,7 @@ Begin["`Private`"];
 Needs["MathematicaForPredictionUtilities`"]
 Needs["StateMonadCodeGenerator`"]
 Needs["CrossTabulate`"]
+Needs["SSparseMatrix`"]
 Needs["OutlierIdentifiers`"]
 
 
@@ -359,7 +364,7 @@ ClearAll[ERTMonTakeVariableOutlierBoundaries]
 ERTMonTakeVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeVariableOutlierBoundaries[xs_, context_] := ERTMonTakeVariableOutlierBoundaries[][xs, context];
-ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := context["variableOutlierBoundaries"];
+ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := Lookup[ context, "variableOutlierBoundaries", $ERTMonFailure ];
 ERTMonTakeVariableOutlierBoundaries[__][___] := $ERTMonFailure;
 
 
@@ -367,7 +372,7 @@ ClearAll[ERTMonTakeContingencyMatrices]
 ERTMonTakeContingencyMatrices[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrices[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrices[xs_, context_] := ERTMonTakeContingencyMatrices[][xs, context];
-ERTMonTakeContingencyMatrices[][xs_, context_] := context["contingencyMatrices"];
+ERTMonTakeContingencyMatrices[][xs_, context_] := Lookup[ context, "contingencyMatrices", $ERTMonFailure ];
 ERTMonTakeContingencyMatrices[__][___] := $ERTMonFailure;
 
 
@@ -781,12 +786,18 @@ ERTMonFindVariableOutlierBoundaries[___][__] :=
 
 ClearAll[ERTMonMakeContingencyMatrices]
 
+Options[ERTMonMakeContingencyMatrices] = { "SameRowNames" -> True };
+
 ERTMonMakeContingencyMatrices[$ERTMonFailure] := $ERTMonFailure;
 
 ERTMonMakeContingencyMatrices[xs_, context_Association] := ERTMonMakeContingencyMatrices[][xs, context];
 
-ERTMonMakeContingencyMatrices[][xs_, context_] :=
-    Block[{tsRowSpecIDs, tbls, cmats},
+ERTMonMakeContingencyMatrices[][xs_, context_] := ERTMonMakeContingencyMatrices[ "SameRowNames" -> True ][xs, context];
+
+ERTMonMakeContingencyMatrices[ opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{tsRowSpecIDs, tbls, cmats, sameRowNamesQ, allRowNames},
+
+      sameRowNamesQ = TrueQ[ OptionValue[ ERTMonMakeContingencyMatrices, "SameRowNames" ] ];
 
       tsRowSpecIDs = Union[Keys[context["timeSeries"]][[All, 2]]];
 
@@ -805,10 +816,25 @@ ERTMonMakeContingencyMatrices[][xs_, context_] :=
 
       cmats = CrossTabulate /@ tbls;
 
-      ERTMonUnit[xs, Join[context, <| "contingencyMatrices"->cmats |>]]
+      cmats = ToSSparseMatrix /@ cmats;
+
+      If[ sameRowNamesQ,
+        allRowNames = Union[ Flatten[ RowNames /@ Values[cmats ] ] ];
+        cmats = ImposeRowNames[ #, allRowNames ]& /@ cmats;
+      ];
+
+      ERTMonUnit[cmats, Join[context, <| "contingencyMatrices"->cmats |>]]
     ];
 
-ERTMonAggregateTimeSeries[___][__] := $ERTMonFailure;
+ERTMonMakeContingencyMatrices[___][__] :=
+    Block[{},
+      Echo[
+        "No arguments are expected. " <>
+          "The option(s) " <> ToString[Options[ERTMonMakeContingencyMatrices]] <> " can be given.",
+        "ERTMonMakeContingencyMatrices:"
+      ];
+      $ERTMonFailure
+    ];
 
 
 End[]; (* `Private` *)
