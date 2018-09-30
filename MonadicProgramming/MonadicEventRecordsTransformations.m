@@ -50,8 +50,9 @@
 
 
     TODO:
-    1. [ ] Consider moving the data into Dataset objects with named columns.
-           Currently, say, the event records data is stored in a matrix and a vector of column names.
+    1. [X] Consider moving the data into Dataset objects with named columns.
+           Initially the event records data is stored in a matrix and a vector of column names.
+           They were moved to datasets on 2018-09-30.
 
     2. [X] Consider the splicing of the sparse matrices. This would mean using the SSparseMatrix.m package.
 
@@ -136,9 +137,14 @@ The time series are restricted to the corresponding variable maximum time given 
 
 ERTMonAggregateTimeSeries::usage = "Aggregates the event records time series according to the specification."
 
-ERTMonFindVariableDistributions::usage = "Find the distribution of each variable in the entity-variable record groups."
+ERTMonNormalize::usage = "Normalizes the time series according to the computation specification."
 
-ERTMonFindVariableOutlierBoundaries::usage = "Find outlier boundaries for each variable in the entity-variable record groups."
+ERTMonFindVariableDistributions::usage = "Finds the distribution of each variable in the entity-variable record groups."
+
+ERTMonFindVariableOutlierBoundaries::usage = "Finds outlier boundaries for each variable in the entity-variable record groups."
+
+ERTMonFindNormalizationValue::usage = "Finds the normalization value for specified entity ID, variable, scope, normalization function. \
+If the option \"Reuse\" is given True the normalization value is taken from the context, key \"normalizationValues\"."
 
 ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series."
 
@@ -212,7 +218,10 @@ ProcessComputationSpecification[compSpecArg_?MatrixQ] :=
     ];
 
 
-aAggregationFunctionSpec = <| "Mean"->Mean, "Range"-> (Max[#]-Min[#]&), "Count"->Length, "None"->Identity,
+aAggregationFunctionSpec = <|
+  "Max"->Max, "Mean"->Mean, "Range"-> (Max[#]-Min[#]&),
+  "StandardDeviation"->StandardDeviation, "InterquartileRange"->InterquartileRange,
+  "Count"->Length, "None"->Identity,
   "OutliersCount"->OutliersCount, "OutliersFraction"->OutliersFraction |>;
 
 ClearAll[OutliersCount]
@@ -228,18 +237,15 @@ OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
 (* Empty computation specification                            *)
 (**************************************************************)
 
-compSpecRowKeys = {"Variable", "Explanation", "Type", "ConvertType",
-  "AggregationTimeInterval", "AggregationFunction",
-  "MaxHistoryLength", "Normalization", "MovingAverageWindow",
-  "CriticalConditionLabel"};
+compSpecRowKeys = {"Variable", "Explanation",
+  "MaxHistoryLength", "AggregationTimeInterval", "AggregationFunction",
+  "NormalizationScope", "NormalizationFunction"};
 
 Clear[EmptyComputationSpecificationRow]
 EmptyComputationSpecificationRow[] =
     Association[{"Variable" -> Missing[], "Explanation" -> "",
-      "Type" -> Missing[], "ConvertType" -> "NULL",
-      "AggregationTimeInterval" -> 60, "AggregationFunction" -> "Mean",
-      "MaxHistoryLength" -> 3600, "Normalization" -> "NULL",
-      "MovingAverageWindow" -> "NULL", "CriticalLabel" -> "NULL"}];
+      "MaxHistoryLength" -> 3600, "AggregationTimeInterval" -> 60, "AggregationFunction" -> "Mean",
+      "NormalizationScope" -> "Entity", "NormalizationFunction" -> "None"}];
 
 
 (**************************************************************)
@@ -267,11 +273,15 @@ ERTMonSetEventRecords[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetEventRecords[][___] := $ERTMonFailure;
 ERTMonSetEventRecords[xs_, context_Association] := $ERTMonFailure;
 ERTMonSetEventRecords[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
-    If[ Dimensions[data][[2]] == Length[colNames] &&
-        Length[Intersection[colNames, {"EntityID", "LocationID", "Variable", "Value", "ObservationTime"}]] == 5,
-      ERTMonUnit[ xs, Join[ context, <|"eventRecords"->data, "eventRecordsColumnNames"->colNames|> ] ],
-      (*ELSE*)
-      ERTMonSetEventRecords[""][]
+    Block[{ds},
+      If[ Dimensions[data][[2]] == Length[colNames] &&
+          Length[Intersection[colNames, {"EntityID", "LocationID", "ObservationTime", "Variable", "Value"}]] == 5,
+        ds = Dataset[data];
+        ds = Dataset[ds[All, AssociationThread[{"EntityID", "LocationID", "ObservationTime", "Variable", "Value"}, #] &]];
+        ERTMonUnit[ xs, Join[ context, <|"eventRecords"->ds|> ] ],
+        (*ELSE*)
+        ERTMonSetEventRecords[""][]
+      ]
     ];
 ERTMonSetEventRecords[data_Dataset][xs_, context_] :=
     ERTMonSetEventRecords[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
@@ -292,11 +302,7 @@ ClearAll[ERTMonTakeEventRecords]
 ERTMonTakeEventRecords[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEventRecords[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEventRecords[xs_, context_] := ERTMonTakeEventRecords[][xs, context];
-ERTMonTakeEventRecords[][xs_, context_] :=
-    Block[{ds},
-      ds = Dataset[context["eventRecords"]];
-      Dataset[ds[All, AssociationThread[context["eventRecordsColumnNames"], #] &]]
-    ];
+ERTMonTakeEventRecords[][xs_, context_] := context["eventRecords"];
 ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 
@@ -305,11 +311,15 @@ ERTMonSetEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetEntityAttributes[][___] := $ERTMonFailure;
 ERTMonSetEntityAttributes[xs_, context_Association] := $ERTMonFailure;
 ERTMonSetEntityAttributes[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
-    If[ Dimensions[data][[2]] == Length[colNames] &&
-        Length[Intersection[colNames, {"EntityID"}]] == 1,
-      ERTMonUnit[ xs, Join[ context, <|"entityAttributes"->data, "entityAttributesColumnNames"->colNames|> ] ],
-      (*ELSE*)
-      ERTMonSetEntityAttributes[""][]
+    Block[{ds},
+      If[ Dimensions[data][[2]] == Length[colNames] &&
+          Length[Intersection[colNames, {"EntityID", "Attribute", "Value"}]] == 3,
+        ds = Dataset[data];
+        ds = Dataset[ds[All, AssociationThread[{"EntityID", "Attribute", "Value"}, #] &]];
+        ERTMonUnit[ xs, Join[ context, <|"entityAttributes"->ds|> ] ],
+        (*ELSE*)
+        ERTMonSetEntityAttributes[""][]
+      ]
     ];
 ERTMonSetEntityAttributes[data_Dataset][xs_, context_] :=
     ERTMonSetEntityAttributes[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
@@ -318,8 +328,8 @@ ERTMonSetEntityAttributes[___][___] :=
       Echo[
         "It is expected to have (i) one argument that is a dataset with named columns," <>
             " or (ii) two arguments the first being a matrix, the second a list of corresponding column names." <>
-                "The column names are expected to include the name \"EntityID\".",
-        "ERTMonSetEntityData:"
+                "The column names are expected to be { \"EntityID\", \"Attribute\", \"Value\"}.",
+        "ERTMonSetEntityAttributes:"
       ];
       $ERTMonFailure
     ];
@@ -328,11 +338,7 @@ ClearAll[ERTMonTakeEntityAttributes]
 ERTMonTakeEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityAttributes[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityAttributes[xs_, context_] := ERTMonTakeEntityAttributes[][xs, context];
-ERTMonTakeEntityAttributes[][xs_, context_] :=
-    Block[{ds},
-      ds = Dataset[context["entityAttributes"]];
-      Dataset[ds[All, AssociationThread[context["entityAttributesColumnNames"], #] &]]
-    ];
+ERTMonTakeEntityAttributes[][xs_, context_] := context["entityAttributes"];
 ERTMonTakeEntityAttributes[__][___] := $ERTMonFailure;
 
 
@@ -435,7 +441,7 @@ ERTMonReadData[aFileNames_Association, opts:OptionsPattern[]][xs_, context_] :=
         locationID = Flatten[StringCases[eventRecordsColumnNames, ("LocationID"|"Location"), IgnoreCase->True]];
 
         If[Length[entityID]==0,
-          Echo["Cannot find name of entity ID columns.", "ERTMontReadData:"];
+          Echo["Cannot find name of entity ID columns.", "ERTMonReadData:"];
           Return[$ERTMonFailure]
         ];
 
@@ -448,7 +454,7 @@ ERTMonReadData[aFileNames_Association, opts:OptionsPattern[]][xs_, context_] :=
         Echo[
           "The event records data is expected to have the column names: " <>
               ToString[expectedColNames],
-          "ERTMontReadData:"
+          "ERTMonReadData:"
         ];
         Return[$ERTMonFailure]
       ];
@@ -458,19 +464,20 @@ ERTMonReadData[aFileNames_Association, opts:OptionsPattern[]][xs_, context_] :=
         Echo[
           "The entity attributes data is expected to have the column names: " <>
               ToString[expectedColNames],
-          "ERTMontReadData:"
+          "ERTMonReadData:"
         ];
         Return[$ERTMonFailure]
       ];
 
-      ERTMonUnit[
-        xs,
-        Join[context,
-          <| "eventRecords"->eventRecords, 
-             "entityAttributes"->entityAttributes,
-             "eventRecordsColumnNames"->eventRecordsColumnNames, 
-             "entityAttributesColumnNames"->entityAttributesColumnNames,
-             "compSpec"->compSpec|>] ]
+      Fold[
+        ERTMonBind,
+        ERTMonUnit[xs, context],
+        {
+          ERTMonSetComputationSpecification[compSpec],
+          ERTMonSetEventRecords[eventRecords, eventRecordsColumnNames],
+          ERTMonSetEntityAttributes[entityAttributes, entityAttributesColumnNames]
+        }
+      ]
 
     ];
 
@@ -511,19 +518,92 @@ ERTMonEchoDataSummary[xs_, context_] := ERTMonEchoDataSummary[][xs, context];
 ERTMonEchoDataSummary[][xs_, context_] :=
     ERTMonEchoFunctionContext[
       "Data summary:",
-      Association @
-          MapThread[
-            #1 -> RecordsSummary[#2,#3]&,
-            { {"eventRecords", "entityAttributes"},
-              Values @ KeyTake[#, {"eventRecords", "entityAttributes"}],
-              Values @ KeyTake[#, {"eventRecordsColumnNames", "entityAttributesColumnNames"}]
-            }]&][xs, context];
+      Association[
+        Map[
+          # -> RecordsSummary[context[#]]&,
+          {"eventRecords", "entityAttributes"}]
+      ]&
+    ][xs, context];
 
 ERTMonEchoDataSummary[___][__] := $ERTMonFailure;
 
 
 (**************************************************************)
-(* Medical records entity-variable groups                     *)
+(* Find variable distributions                                *)
+(**************************************************************)
+
+ClearAll[ERTMonFindVariableDistributions]
+
+ERTMonFindVariableDistributions[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonFindVariableDistributions[xs_, context_Association] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+
+ERTMonFindVariableDistributions[][xs_, context_] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+
+ERTMonFindVariableDistributions[distFunc_][xs_, context_] :=
+    Block[{ivRowSpecIDs, distributions},
+
+      ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
+
+      distributions =
+          Association @
+              Map[ # -> distFunc[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
+
+      ERTMonUnit[distributions, Join[context, <| "variableDistributions"->distributions |>]]
+    ];
+
+ERTMonFindVariableDistributions[___][__] :=
+    Block[{},
+      Echo[
+        StringRiffle[
+          {"One or no arguments are expected. The argument is a function that finds the distribution of a list of numbers.",
+            "(Here are such built-in function names : Histogram (default), EmpiricalDistribution, SmoothKernelDistribution, etc.)"
+          }," "],
+        "ERTMonFindVariableDistributions:"
+      ];
+      $ERTMonFailure
+    ];
+
+
+(**************************************************************)
+(* Find variable outliers                                     *)
+(**************************************************************)
+
+ClearAll[ERTMonFindVariableOutlierBoundaries]
+
+ERTMonFindVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonFindVariableOutlierBoundaries[xs_, context_Association] := ERTMonFindVariableOutlierBoundaries[][xs, context];
+
+ERTMonFindVariableOutlierBoundaries[][xs_, context_] := ERTMonFindVariableOutlierBoundaries[HampelIdentifierParameters][xs, context];
+
+ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :=
+    Block[{ivRowSpecIDs, outlierBoundaries},
+
+      ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
+
+      outlierBoundaries =
+          Association @
+              Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
+
+      ERTMonUnit[outlierBoundaries, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
+    ];
+
+ERTMonFindVariableOutlierBoundaries[___][__] :=
+    Block[{},
+      Echo[
+        StringRiffle[
+          {"One or no arguments are expected. The argument is a function that finds lower and upper outlier boundaries for a list of numbers.",
+            "(Here are such function names from the package \"OutlierIdentifiers.m\": " <> ToString[Names["OutlierIdentifiers`*Parameters"]] <> ".)"
+          }," "],
+        "ERTMonFindVariableOutlierBoundaries:"
+      ];
+      $ERTMonFailure
+    ];
+
+
+(**************************************************************)
+(* Event records entity-variable groups                     *)
 (**************************************************************)
 
 ClearAll[ERTMonGroupEntityVariableRecords]
@@ -537,8 +617,7 @@ ERTMonGroupEntityVariableRecords[][xs_, context_] :=
 
       csVars = Values[ GetAssociation[context["compSpec"], "Variable"] ];
 
-      ds = Dataset[ context["eventRecords"] ];
-      ds = Dataset[ ds[All, AssociationThread[ context["eventRecordsColumnNames"], #] &] ];
+      ds = context["eventRecords"];
 
       ds = ds[ Select[ MemberQ[ csVars, #Variable ]& ] ];
 
@@ -554,6 +633,7 @@ ERTMonGroupEntityVariableRecords[___][__] :=
       Echo["No arguments are expected.", "ERTMonGroupEntityVariableRecords:"];
       $ERTMonFailure
     ];
+
 
 (**************************************************************)
 (* Entity-variable records groups to time series             *)
@@ -637,7 +717,7 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
     Block[{ts, timeWindowSpec},
 
       Which[
-        MemberQ[ {"Unit", "Age", "Label"}, specRow["Variable"]],
+        MemberQ[ {"LocationID", "Label"}, specRow["Variable"]],
         <||>,
 
         NumberQ[specRow["AggregationTimeInterval"]] && NumberQ[specRow["MaxHistoryLength"]],
@@ -676,7 +756,7 @@ ERTMonAggregateTimeSeries[][xs_, context_] :=
       ];
 
       compSpec = context["compSpec"];
-      ts = context["timeSeries"];
+      ts = context["timeSeries"]; (* we can simply pass the context to AggregateBySpec instead of copy of "timeSeries". *)
 
       If[ Length[Intersection[{"OutliersCount", "OutliersFraction"}, Normal[compSpec[Values,"AggregationFunction"]]]] > 0 &&
           !KeyExistsQ[context, "variableOutlierBoundaries"],
@@ -707,75 +787,164 @@ ERTMonAggregateTimeSeries[___][__] :=
 
 
 (**************************************************************)
-(* Find variable distributions                                *)
+(* Normalize by specification                                 *)
 (**************************************************************)
 
-ClearAll[ERTMonFindVariableDistributions]
+(* Exposed as a package function for testing purposes. *)
+ClearAll[ERTMonFindNormalizationValue]
 
-ERTMonFindVariableDistributions[$ERTMonFailure] := $ERTMonFailure;
+Options[ERTMonFindNormalizationValue] = { "Reuse"->False };
 
-ERTMonFindVariableDistributions[xs_, context_Association] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+ERTMonFindNormalizationValue[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonFindVariableDistributions[][xs_, context_] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+ERTMonFindNormalizationValue[
+  entityID_String, variable_String, scope_String, normalizationFunction_String,
+  opts:OptionsPattern[] ][xs_, context_Association] :=
 
-ERTMonFindVariableDistributions[distFunc_][xs_, context_] :=
-    Block[{ivRowSpecIDs, distributions},
+    Block[{reuseQ, allAttributes, normFunc, normValue, qTS, qEntityIDs, aEntityAttrValues, aNVs},
 
-      ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
+      reuseQ = TrueQ[ OptionValue[ ERTMonFindNormalizationValue, "Reuse"] ];
 
-      distributions =
-          Association @
-              Map[ # -> distFunc[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
-
-      ERTMonUnit[distributions, Join[context, <| "variableDistributions"->distributions |>]]
-    ];
-
-ERTMonFindVariableDistributions[___][__] :=
-    Block[{},
-      Echo[
-        StringRiffle[
-          {"One or no arguments are expected. The argument is a function that finds the distribution of a list of numbers.",
-            "(Here are such built-in function names : Histogram (default), EmpiricalDistribution, SmoothKernelDistribution, etc.)"
-          }," "],
-        "ERTMonFindVariableDistributions:"
+      If[ !KeyExistsQ[context, "entityAttributes"],
+        Echo["Cannot find entity attributes, context key \"entityAttributes\".", "ERTMonFindNormalizationValue:"];
+        Return[$ERTMonFailure]
       ];
-      $ERTMonFailure
-    ];
 
+      (* context["entityAttributes"] is a Dataset *)
+      allAttributes = Union[Normal[context["entityAttributes"][All, "Attribute"]]];
 
-(**************************************************************)
-(* Find variable outliers                                     *)
-(**************************************************************)
+      aEntityAttrValues = context["entityAttributes"][Select[#EntityID == entityID&]];
+      aEntityAttrValues = AssociationThread[ Normal[aEntityAttrValues[All,"Attribute"]], Normal[aEntityAttrValues[All,"Value"]] ];
 
-ClearAll[ERTMonFindVariableOutlierBoundaries]
-
-ERTMonFindVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
-
-ERTMonFindVariableOutlierBoundaries[xs_, context_Association] := ERTMonFindVariableOutlierBoundaries[][xs, context];
-
-ERTMonFindVariableOutlierBoundaries[][xs_, context_] := ERTMonFindVariableOutlierBoundaries[HampelIdentifierParameters][xs, context];
-
-ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :=
-    Block[{ivRowSpecIDs, outlierBoundaries},
-
-      ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
-
-      outlierBoundaries =
-          Association @
-              Map[ # -> outlierParametersFunction[Map[#["Value"] &, Flatten[Values[KeySelect[context["entityVariableRecordGroups"], MatchQ[{_, #}]]]]]]&, ivRowSpecIDs];
-
-      ERTMonUnit[outlierBoundaries, Join[context, <| "variableOutlierBoundaries"->outlierBoundaries |>]]
-    ];
-
-ERTMonFindVariableOutlierBoundaries[___][__] :=
-    Block[{},
-      Echo[
-        StringRiffle[
-          {"One or no arguments are expected. The argument is a function that finds lower and upper outlier boundaries for a list of numbers.",
-            "(Here are such function names from the package \"OutlierIdentifiers.m\": " <> ToString[Names["OutlierIdentifiers`*Parameters"]] <> ".)"
-          }," "],
-        "ERTMonFindVariableOutlierBoundaries:"
+      If[ !KeyExistsQ[aAggregationFunctionSpec, normalizationFunction],
+        Echo["Unknown normalization function specification: \"" <> normalizationFunction <> "\".", "ERTMonFindNormalizationValue:"];
+        Return[$ERTMonFailure]
       ];
+
+      If[ MemberQ[ {"none", "null", "1"}, ToLowerCase[normalizationFunction] ],
+        Return[ ERTMonUnit[1,context] ],
+        normFunc = aAggregationFunctionSpec[normalizationFunction]
+      ];
+
+      aNVs = Lookup[ context, "normalizationValues", <||>];
+
+      (* The time series are aggregated and restricted to the maximum length. *)
+
+      (*Print[KeyExistsQ[aNVs, {variable, scope, aEntityAttrValues[scope]}]];*)
+
+      Which[
+
+        reuseQ && scope == "Variable" && !KeyExistsQ[ aNVs, {variable, scope} ],
+        Echo[Row[{"Cannot find reusable value for key: ", {variable, scope}}], "ERTMonFindNormalizationValue:" ];
+        Return[$ERTMonFailure],
+
+        reuseQ && scope == "Variable",
+        normValue = aNVs[{variable, scope}],
+
+        reuseQ && MemberQ[ allAttributes, scope ] && !KeyExistsQ[ aNVs, {variable, scope, aEntityAttrValues[scope]} ],
+        Echo[Row[{"Cannot find reusable value for key: ", {variable, scope, aEntityAttrValues[scope]}}], "ERTMonFindNormalizationValue:" ];
+        Return[$ERTMonFailure],
+
+        reuseQ && MemberQ[ allAttributes, scope ],
+        normValue = aNVs[{variable, scope, aEntityAttrValues[scope]}],
+
+        MemberQ[ {"Entity", "EntityID"}, scope],
+        qTS = KeySelect[ context["timeSeries"], # == {entityID, variable} &];
+        normValue = normFunc[ Flatten[ Map[ #["Values"]&, Values[qTS] ] ] ],
+
+        scope == "Variable" && KeyExistsQ[aNVs, {variable, scope}],
+        normValue = aNVs[{variable, scope}],
+
+        scope == "Variable",
+        qTS = KeySelect[ context["timeSeries"], #[[2]] == variable &];
+        normValue = normFunc[ Flatten[ Map[ #["Values"]&, Values[qTS] ] ] ];
+        aNVs = Join[ aNVs, <| {variable, scope} -> normValue |>],
+
+        MemberQ[ allAttributes, scope] && KeyExistsQ[ aNVs, {variable, scope, aEntityAttrValues[scope]}],
+        normValue = aNVs[{variable, scope, aEntityAttrValues[scope]}],
+
+        MemberQ[ allAttributes, scope],
+        qEntityIDs = Union[Normal[context["entityAttributes"][ Select[#Attribute == scope && #Value == aEntityAttrValues[scope]&], "EntityID" ]]];
+        qTS = KeySelect[ context["timeSeries"], MemberQ[ qEntityIDs, #[[1]] ] && variable == #[[2]] & ];
+        normValue = normFunc[ Flatten[ Map[ #["Values"]&, Values[qTS] ] ] ];
+        aNVs = Join[ aNVs, <| {variable, scope, aEntityAttrValues[scope]} -> normValue |>],
+
+        True,
+        Echo["Unknown specification.", "ERTMonFindNormalizationValue:"];
+        Return[$ERTMonFailure]
+      ];
+
+
+      ERTMonUnit[ normValue, Join[ context, <| "normalizationValues" -> aNVs |>] ]
+    ];
+
+
+ERTMonFindNormalizationValue[___][__] := $ERTMonFailure;
+
+
+(**************************************************************)
+(* Normalize by specification                                 *)
+(**************************************************************)
+
+ClearAll[ERTMonNormalize]
+
+Options[ERTMonNormalize] = { "Reuse" -> False };
+
+ERTMonNormalize[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonNormalize[xs_, context_Association] := ERTMonNormalize["Reuse" -> False][xs, context];
+
+ERTMonNormalize[][xs_, context_Association] := ERTMonNormalize["Reuse" -> False][xs, context];
+
+ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{compSpec, ts, aNVs, normValues, reuseQ},
+
+      reuseQ = TrueQ[ OptionValue[ ERTMonNormalize, "Reuse"] ];
+
+      If[ !KeyExistsQ[context, "compSpec"],
+        Echo["Cannot find computations specifications.", "ERTMonNormalize:"];
+        Return[$ERTMonFailure]
+      ];
+
+      If[ !KeyExistsQ[context, "timeSeries"],
+        Echo["Calculate time series first. (With ERTMonRecordGroupsToTimeSeries.)", "ERTMonNormalize:"];
+        Return[$ERTMonFailure]
+      ];
+
+      If[ reuseQ && !KeyExistsQ[context, "normalizationFunctions"],
+        Echo[
+          "Normalization functions have to be in the context (key \"normalizationFunctions\") when \"Reuse\"->True is given.",
+          "ERTMonNormalize:"];
+        Return[$ERTMonFailure]
+      ];
+
+      compSpec = context["compSpec"];
+      ts = context["timeSeries"];
+
+      If[ reuseQ,
+        aNVs = Lookup[ context, "normalizationValues", <||>],
+        aNVs = <||>
+      ];
+
+     normValues =
+         Map[
+           Fold[
+             ERTMonBind,
+             ERTMonUnit[xs, Join[ context, <| "normalizationValues"->aNVs |> ]],
+             {
+               ERTMonFindNormalizationValue[#[[1]], #[[2]], compSpec[#[[2]], "NormalizationScope"], compSpec[#[[2]], "NormalizationFunction"]],
+               ERTMonTakeValue }
+           ]&,
+           Keys[ts]];
+
+      ts = Association[ MapThread[ #1 -> ( #2 / #3)&, { Keys[ts], Values[ts], normValues} ] ];
+
+      ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
+    ];
+
+ERTMonNormalize[___][__] :=
+    Block[{},
+      Echo["No arguments are expected. The option \"Reuse\" -> (False|True) can be given.", "ERTMonNormalize:"];
       $ERTMonFailure
     ];
 
