@@ -793,7 +793,7 @@ ERTMonAggregateTimeSeries[___][__] :=
 (* Exposed as a package function for testing purposes. *)
 ClearAll[ERTMonFindNormalizationValue]
 
-Options[ERTMonFindNormalizationValue] = { "Reuse"->False };
+Options[ERTMonFindNormalizationValue] = { "Reuse"->False, "Append"->False };
 
 ERTMonFindNormalizationValue[$ERTMonFailure] := $ERTMonFailure;
 
@@ -801,9 +801,10 @@ ERTMonFindNormalizationValue[
   entityID_String, variable_String, scope_String, normalizationFunction_String,
   opts:OptionsPattern[] ][xs_, context_Association] :=
 
-    Block[{reuseQ, allAttributes, normFunc, normValue, qTS, qEntityIDs, aEntityAttrValues, aNVs},
+    Block[{reuseQ, appendQ, allAttributes, normFunc, normValue, qTS, qEntityIDs, aEntityAttrValues, aNVs},
 
       reuseQ = TrueQ[ OptionValue[ ERTMonFindNormalizationValue, "Reuse"] ];
+      appendQ = TrueQ[ OptionValue[ ERTMonFindNormalizationValue, "Append"] ];
 
       If[ !KeyExistsQ[context, "entityAttributes"],
         Echo["Cannot find entity attributes, context key \"entityAttributes\".", "ERTMonFindNormalizationValue:"];
@@ -814,7 +815,9 @@ ERTMonFindNormalizationValue[
       allAttributes = Union[Normal[context["entityAttributes"][All, "Attribute"]]];
 
       aEntityAttrValues = context["entityAttributes"][Select[#EntityID == entityID&]];
-      aEntityAttrValues = AssociationThread[ Normal[aEntityAttrValues[All,"Attribute"]], Normal[aEntityAttrValues[All,"Value"]] ];
+      If[ Length[aEntityAttrValues] > 0,
+        aEntityAttrValues = AssociationThread[ Normal[aEntityAttrValues[All,"Attribute"]], Normal[aEntityAttrValues[All,"Value"]] ]
+      ];
 
       If[ !KeyExistsQ[aAggregationFunctionSpec, normalizationFunction],
         Echo["Unknown normalization function specification: \"" <> normalizationFunction <> "\".", "ERTMonFindNormalizationValue:"];
@@ -822,7 +825,7 @@ ERTMonFindNormalizationValue[
       ];
 
       If[ MemberQ[ {"none", "null", "1"}, ToLowerCase[normalizationFunction] ],
-        Return[ ERTMonUnit[1,context] ],
+        normFunc = Identity,
         normFunc = aAggregationFunctionSpec[normalizationFunction]
       ];
 
@@ -833,6 +836,9 @@ ERTMonFindNormalizationValue[
       (*Print[KeyExistsQ[aNVs, {variable, scope, aEntityAttrValues[scope]}]];*)
 
       Which[
+
+        TrueQ[normFunc === Identity],
+        normValue = 1,
 
         reuseQ && scope == "Variable" && !KeyExistsQ[ aNVs, {variable, scope} ],
         Echo[Row[{"Cannot find reusable value for key: ", {variable, scope}}], "ERTMonFindNormalizationValue:" ];
@@ -848,11 +854,11 @@ ERTMonFindNormalizationValue[
         reuseQ && MemberQ[ allAttributes, scope ],
         normValue = aNVs[{variable, scope, aEntityAttrValues[scope]}],
 
-        MemberQ[ {"Entity", "EntityID"}, scope],
+        MemberQ[ {"Entity", "EntityID"}, scope ],
         qTS = KeySelect[ context["timeSeries"], # == {entityID, variable} &];
         normValue = normFunc[ Flatten[ Map[ #["Values"]&, Values[qTS] ] ] ],
 
-        scope == "Variable" && KeyExistsQ[aNVs, {variable, scope}],
+        scope == "Variable" && KeyExistsQ[ aNVs, {variable, scope} ],
         normValue = aNVs[{variable, scope}],
 
         scope == "Variable",
@@ -860,10 +866,10 @@ ERTMonFindNormalizationValue[
         normValue = normFunc[ Flatten[ Map[ #["Values"]&, Values[qTS] ] ] ];
         aNVs = Join[ aNVs, <| {variable, scope} -> normValue |>],
 
-        MemberQ[ allAttributes, scope] && KeyExistsQ[ aNVs, {variable, scope, aEntityAttrValues[scope]}],
+        MemberQ[ allAttributes, scope ] && KeyExistsQ[ aNVs, {variable, scope, aEntityAttrValues[scope]} ],
         normValue = aNVs[{variable, scope, aEntityAttrValues[scope]}],
 
-        MemberQ[ allAttributes, scope],
+        MemberQ[ allAttributes, scope ],
         qEntityIDs = Union[Normal[context["entityAttributes"][ Select[#Attribute == scope && #Value == aEntityAttrValues[scope]&], "EntityID" ]]];
         qTS = KeySelect[ context["timeSeries"], MemberQ[ qEntityIDs, #[[1]] ] && variable == #[[2]] & ];
         normValue = normFunc[ Flatten[ Map[ #["Values"]&, Values[qTS] ] ] ];
@@ -874,8 +880,11 @@ ERTMonFindNormalizationValue[
         Return[$ERTMonFailure]
       ];
 
-
-      ERTMonUnit[ normValue, Join[ context, <| "normalizationValues" -> aNVs |>] ]
+      If[ appendQ && ListQ[xs],
+        ERTMonUnit[ Append[xs, normValue], Join[ context, <| "normalizationValues" -> aNVs |>] ],
+        (*ELSE*)
+        ERTMonUnit[ normValue, Join[ context, <| "normalizationValues" -> aNVs |>] ]
+      ]
     ];
 
 
@@ -897,7 +906,7 @@ ERTMonNormalize[xs_, context_Association] := ERTMonNormalize["Reuse" -> False][x
 ERTMonNormalize[][xs_, context_Association] := ERTMonNormalize["Reuse" -> False][xs, context];
 
 ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{compSpec, ts, aNVs, normValues, reuseQ},
+    Block[{reuseQ, compSpec, ts, aNVs, normValues, obj},
 
       reuseQ = TrueQ[ OptionValue[ ERTMonNormalize, "Reuse"] ];
 
@@ -926,20 +935,22 @@ ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
         aNVs = <||>
       ];
 
-     normValues =
-         Map[
-           Fold[
-             ERTMonBind,
-             ERTMonUnit[xs, Join[ context, <| "normalizationValues"->aNVs |> ]],
-             {
-               ERTMonFindNormalizationValue[#[[1]], #[[2]], compSpec[#[[2]], "NormalizationScope"], compSpec[#[[2]], "NormalizationFunction"]],
-               ERTMonTakeValue }
+     obj =
+         Fold[
+           ERTMonBind[
+             #1,
+             ERTMonFindNormalizationValue[#2[[1]], #2[[2]], compSpec[#2[[2]], "NormalizationScope"], compSpec[#2[[2]], "NormalizationFunction"], "Reuse"->reuseQ, "Append"->True]
            ]&,
-           Keys[ts]];
+           ERTMonUnit[{}, Join[ context, <| "normalizationValues"->aNVs |> ]],
+           Keys[ts]
+         ];
+
+      aNVs = ERTMonBind[obj,ERTMonTakeContext]["normalizationValues"];
+      normValues = ERTMonBind[obj,ERTMonTakeValue];
 
       ts = Association[ MapThread[ #1 -> ( #2 / #3)&, { Keys[ts], Values[ts], normValues} ] ];
 
-      ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
+      ERTMonUnit[xs, Join[context, <| "timeSeries"->ts, "normalizationValues"->aNVs |>]]
     ];
 
 ERTMonNormalize[___][__] :=
