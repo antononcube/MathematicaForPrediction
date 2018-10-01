@@ -111,6 +111,9 @@ ERTMonSetEntityAttributes::usage = "Assigns the argument to the key \"entityData
 ERTMonSetVariableOutlierBoundaries::usage = "Assigns the argument to the key \"variableOutlierBoundaries\" in the monad context. \
 (The rest of the monad context is unchanged.)"
 
+ERTMonSetNormalizationValues::usage = "Assigns the argument to the key \"normalizationValues\" in the monad context. \
+(The rest of the monad context is unchanged.)"
+
 ERTMonTakeComputationSpecification::usage = "Gives the value of the key \"compSpec\" from the monad context."
 
 ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context."
@@ -122,6 +125,8 @@ ERTMonTakeEntityVariableRecordGroups::usage = "Gives the value of the key \"enti
 ERTMonTakeTimeSeries::usage = "Gives the value of the key \"timeSeries\" from the monad context."
 
 ERTMonTakeVariableOutlierBoundaries::usage = "Gives the value of the key \"variableOutlierBoundaries\" from the monad context."
+
+ERTMonTakeNormalizationValues::usage = "Gives the value of the key \"normalizationValues\" from the monad context."
 
 ERTMonTakeContingencyMatrices::usage = "Gives the value of the key \"contingencyMatrices\" from the monad context."
 
@@ -302,7 +307,7 @@ ClearAll[ERTMonTakeEventRecords]
 ERTMonTakeEventRecords[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEventRecords[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEventRecords[xs_, context_] := ERTMonTakeEventRecords[][xs, context];
-ERTMonTakeEventRecords[][xs_, context_] := context["eventRecords"];
+ERTMonTakeEventRecords[][xs_, context_] := Lookup[ context, "eventRecords", $ERTMonFailure ];
 ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 
@@ -338,7 +343,7 @@ ClearAll[ERTMonTakeEntityAttributes]
 ERTMonTakeEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityAttributes[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityAttributes[xs_, context_] := ERTMonTakeEntityAttributes[][xs, context];
-ERTMonTakeEntityAttributes[][xs_, context_] := context["entityAttributes"];
+ERTMonTakeEntityAttributes[][xs_, context_] := Lookup[ context, "entityAttributes", $ERTMonFailure ];
 ERTMonTakeEntityAttributes[__][___] := $ERTMonFailure;
 
 
@@ -346,7 +351,7 @@ ClearAll[ERTMonTakeEntityVariableRecordGroups]
 ERTMonTakeEntityVariableRecordGroups[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityVariableRecordGroups[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityVariableRecordGroups[xs_, context_] := ERTMonTakeEntityVariableRecordGroups[][xs, context];
-ERTMonTakeEntityVariableRecordGroups[][xs_, context_] := context["entityVariableRecordGroups"];
+ERTMonTakeEntityVariableRecordGroups[][xs_, context_] := Lookup[ context, "entityVariableRecordGroups", $ERTMonFailure ];
 ERTMonTakeEntityVariableRecordGroups[__][___] := $ERTMonFailure;
 
 
@@ -372,6 +377,20 @@ ERTMonTakeVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeVariableOutlierBoundaries[xs_, context_] := ERTMonTakeVariableOutlierBoundaries[][xs, context];
 ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := Lookup[ context, "variableOutlierBoundaries", $ERTMonFailure ];
 ERTMonTakeVariableOutlierBoundaries[__][___] := $ERTMonFailure;
+
+ClearAll[ERTMonSetNormalizationValues]
+ERTMonSetNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
+ERTMonSetNormalizationValues[][___] := $ERTMonFailure;
+ERTMonSetNormalizationValues[xs_, context_Association] := $ERTMonFailure;
+ERTMonSetNormalizationValues[arg_Association][xs_, context_Association] := ERTMonUnit[ xs, Join[context, <|"normalizationValues"->arg|>] ];
+ERTMonSetNormalizationValues[__][___] := $ERTMonFailure;
+
+ClearAll[ERTMonTakeNormalizationValues]
+ERTMonTakeNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeNormalizationValues[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeNormalizationValues[xs_, context_] := ERTMonTakeNormalizationValues[][xs, context];
+ERTMonTakeNormalizationValues[][xs_, context_] := Lookup[ context, "normalizationValues", $ERTMonFailure ];
+ERTMonTakeNormalizationValues[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonTakeContingencyMatrices]
@@ -920,9 +939,9 @@ ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
         Return[$ERTMonFailure]
       ];
 
-      If[ reuseQ && !KeyExistsQ[context, "normalizationFunctions"],
+      If[ reuseQ && !KeyExistsQ[context, "normalizationValues"],
         Echo[
-          "Normalization functions have to be in the context (key \"normalizationFunctions\") when \"Reuse\"->True is given.",
+          "Normalization values have to be in the context (key \"normalizationValues\") when \"Reuse\"->True is given.",
           "ERTMonNormalize:"];
         Return[$ERTMonFailure]
       ];
