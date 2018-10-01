@@ -378,6 +378,7 @@ ERTMonTakeVariableOutlierBoundaries[xs_, context_] := ERTMonTakeVariableOutlierB
 ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := Lookup[ context, "variableOutlierBoundaries", $ERTMonFailure ];
 ERTMonTakeVariableOutlierBoundaries[__][___] := $ERTMonFailure;
 
+
 ClearAll[ERTMonSetNormalizationValues]
 ERTMonSetNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetNormalizationValues[][___] := $ERTMonFailure;
@@ -906,7 +907,6 @@ ERTMonFindNormalizationValue[
       ]
     ];
 
-
 ERTMonFindNormalizationValue[___][__] := $ERTMonFailure;
 
 
@@ -967,7 +967,7 @@ ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
       aNVs = ERTMonBind[obj,ERTMonTakeContext]["normalizationValues"];
       normValues = ERTMonBind[obj,ERTMonTakeValue];
 
-      ts = Association[ MapThread[ #1 -> ( #2 / #3)&, { Keys[ts], Values[ts], normValues} ] ];
+      ts = Association[ MapThread[ #1 -> If[ #3 == 0, #2, #2 / Abs[#3] ]&, { Keys[ts], Values[ts], normValues} ] ];
 
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts, "normalizationValues"->aNVs |>]]
     ];
