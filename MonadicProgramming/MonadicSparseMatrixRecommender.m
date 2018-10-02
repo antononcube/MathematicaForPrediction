@@ -174,6 +174,8 @@ SMRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR
 
 SMRMonSetTagWeights::usage = "Sets weights (significance factors) to the IIR tags."
 
+SMRMonSetTimeSeriesMatrix::usage = "Sets a time series matrix to be used with SMRMonRecommendByCorrelation."
+
 SMRMonClassify::usage = "Uses IIR as a classifier for specified label tag-type over a vector or a matrix."
 
 SMRMonSetClassificationParameters::usage = "Sets the parameters to be used by SMRMonClassify."
@@ -293,6 +295,14 @@ SMRMonTakeMatrixDataset[][xs_, context_Association] :=
       ]
     ];
 SMRMonTakeMatrixDataset[__][___] := $SMRMonFailure;
+
+
+ClearAll[SMRMonSetTimeSeriesMatrix]
+SMRMonSetTimeSeriesMatrix[$SMRMonFailure] := $SMRMonFailure;
+SMRMonSetTimeSeriesMatrix[][___] := $SMRMonFailure;
+SMRMonSetTimeSeriesMatrix[xs_, context_] := $SMRMonFailure;
+SMRMonSetTimeSeriesMatrix[smat_?SSparseMatrixQ][xs_, context_] := SMRMonUnit[ xs, Join[ context, <|"timeSeriesMatrix"->smat|> ] ];
+SMRMonSetTimeSeriesMatrix[__][___] := $SMRMonFailure;
 
 
 (**************************************************************)
