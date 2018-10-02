@@ -130,6 +130,8 @@ ERTMonTakeNormalizationValues::usage = "Gives the value of the key \"normalizati
 
 ERTMonTakeContingencyMatrices::usage = "Gives the value of the key \"contingencyMatrices\" from the monad context."
 
+ERTMonTakeContingencyMatrix::usage = "Gives the contingency matrix corresponding to transformed event records."
+
 ERTMonReadData::usage = "Reads data from specified files or directory."
 
 ERTMonEchoDataSummary::usage = "Echoes a summary of the data."
@@ -402,6 +404,22 @@ ERTMonTakeContingencyMatrices[][xs_, context_] := Lookup[ context, "contingencyM
 ERTMonTakeContingencyMatrices[__][___] := $ERTMonFailure;
 
 
+ClearAll[ERTMonTakeContingencyMatrix]
+ERTMonTakeContingencyMatrix[$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeContingencyMatrix[][$ERTMonFailure] := $ERTMonFailure;
+ERTMonTakeContingencyMatrix[xs_, context_] := ERTMonTakeContingencyMatrix[][xs, context];
+ERTMonTakeContingencyMatrix[][xs_, context_] :=
+    Block[{smats},
+      smats = Lookup[ context, "contingencyMatrices", $ERTMonFailure ];
+      If[ TrueQ[ smats === $ERTMonFailure ],
+        $ERTMonFailure,
+        (*ELSE*)
+        ColumnBind[Values[smats]]
+      ]
+    ];
+ERTMonTakeContingencyMatrix[__][___] := $ERTMonFailure;
+
+
 (**************************************************************)
 (* Ingestion of data                                          *)
 (**************************************************************)
@@ -556,9 +574,9 @@ ClearAll[ERTMonFindVariableDistributions]
 
 ERTMonFindVariableDistributions[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonFindVariableDistributions[xs_, context_Association] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+ERTMonFindVariableDistributions[xs_, context_Association] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Small]&][xs, context];
 
-ERTMonFindVariableDistributions[][xs_, context_] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Medium]&][xs, context];
+ERTMonFindVariableDistributions[][xs_, context_] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Small]&][xs, context];
 
 ERTMonFindVariableDistributions[distFunc_][xs_, context_] :=
     Block[{ivRowSpecIDs, distributions},
