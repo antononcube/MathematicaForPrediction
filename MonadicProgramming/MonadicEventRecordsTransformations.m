@@ -149,6 +149,9 @@ ERTMonAggregateTimeSeries::usage = "Aggregates the event records time series acc
 
 ERTMonNormalize::usage = "Normalizes the time series according to the computation specification."
 
+ERTMonApplyTimeSeriesFunction::usage = "Applies a specified function to the time series in the context. \
+(The result is given as a pipeline values, the value of \"timeSeries\" is not changed.)"
+
 ERTMonComputeVariableStatistic::usage = "Computes a statistics for each variable in the entity-variable record groups."
 
 ERTMonFindVariableOutlierBoundaries::usage = "Finds outlier boundaries for each variable in the entity-variable record groups."
@@ -248,13 +251,13 @@ OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
 (**************************************************************)
 
 compSpecRowKeys = {"Variable", "Explanation",
-  "MaxHistoryLength", "AggregationTimeInterval", "AggregationFunction",
+  "MaxHistoryLength", "AggregationIntervalLength", "AggregationFunction",
   "NormalizationScope", "NormalizationFunction"};
 
 Clear[EmptyComputationSpecificationRow]
 EmptyComputationSpecificationRow[] =
     Association[{"Variable" -> Missing[], "Explanation" -> "",
-      "MaxHistoryLength" -> 3600, "AggregationTimeInterval" -> 60, "AggregationFunction" -> "Mean",
+      "MaxHistoryLength" -> 3600, "AggregationIntervalLength" -> 60, "AggregationFunction" -> "Mean",
       "NormalizationScope" -> "Entity", "NormalizationFunction" -> "None"}];
 
 
@@ -754,7 +757,7 @@ ERTMonEntityVariableGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObjec
             ] &,
             context["entityVariableRecordGroups"]];
 
-      ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
+      ERTMonUnit[ts, Join[context, <| "timeSeries"->ts |>]]
     ];
 
 ERTMonEntityVariableGroupsToTimeSeries[___][__] :=
@@ -787,9 +790,9 @@ ERTMonApplyTimeSeriesFunction[func_][xs_, context_] :=
         Return[$ERTMonFailure]
       ];
 
-      ts = Map[func, context["timeSeries"] ];ERTMonApplyTimeSeriesFunction
+      ts = Map[func, context["timeSeries"] ];
 
-      ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
+      ERTMonUnit[ts, context]
     ];
 
 ERTMonApplyTimeSeriesFunction[___][__] :=
@@ -811,13 +814,13 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
         MemberQ[ {"LocationID", "Label"}, specRow["Variable"]],
         <||>,
 
-        NumberQ[specRow["AggregationTimeInterval"]] && NumberQ[specRow["MaxHistoryLength"]],
+        NumberQ[specRow["AggregationIntervalLength"]] && NumberQ[specRow["MaxHistoryLength"]],
 
         ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
 
         ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] >= 0, {#["FirstTime"], #["FirstTime"] + specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
 
-        ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationTimeInterval"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
+        ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationIntervalLength"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
 
         ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["AggregationFunction"]]}&, ts];
         ts,
@@ -917,6 +920,7 @@ ERTMonFindNormalizationValue[
 
       If[ MemberQ[ {"none", "null", "1"}, ToLowerCase[normalizationFunction] ],
         normFunc = Identity,
+        (*ELSE*)
         normFunc = aAggregationFunctionSpec[normalizationFunction]
       ];
 
@@ -978,7 +982,11 @@ ERTMonFindNormalizationValue[
       ]
     ];
 
-ERTMonFindNormalizationValue[___][__] := $ERTMonFailure;
+ERTMonFindNormalizationValue[args___][__] :=
+    Block[{},
+      Echo["Four string arguments and options are expected.", "ERTMonFindNormalizationValue:"];
+      $ERTMonFailure
+    ];
 
 
 (**************************************************************)
@@ -1037,6 +1045,10 @@ ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
 
       aNVs = ERTMonBind[obj,ERTMonTakeContext]["normalizationValues"];
       normValues = ERTMonBind[obj,ERTMonTakeValue];
+
+      If[ !FreeQ[normValues, $ERTMonFailure],
+        Return[$ERTMonFailure]
+      ];
 
       ts = Association[ MapThread[ #1 -> If[ #3 == 0, #2, #2 / Abs[#3] ]&, { Keys[ts], Values[ts], normValues} ] ];
 
