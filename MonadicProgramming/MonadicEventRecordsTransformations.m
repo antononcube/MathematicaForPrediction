@@ -139,14 +139,17 @@ ERTMonEchoDataSummary::usage = "Echoes a summary of the data."
 ERTMonGroupEntityVariableRecords::usage = "Groups entity-variable records. \
 Only the variables in the specification are used."
 
-ERTMonRecordGroupsToTimeSeries::usage = "Converts the groups of entity-variable records into time series. \
-The time series are restricted to the corresponding variable maximum time given in the specification."
+ERTMonEntityVariableGroupsToTimeSeries::usage = "Converts the groups of entity-variable records into time series \
+and aligns them according to the argument (a time point.) \
+The derived time series are stored in the context under the key \"timeSeries\"."
+
+ERTMonToTimeSeries::usage = "Same as ERTMonEntityVariableGroupsToTimeSeries."
 
 ERTMonAggregateTimeSeries::usage = "Aggregates the event records time series according to the specification."
 
 ERTMonNormalize::usage = "Normalizes the time series according to the computation specification."
 
-ERTMonFindVariableDistributions::usage = "Finds the distribution of each variable in the entity-variable record groups."
+ERTMonComputeVariableStatistic::usage = "Computes a statistics for each variable in the entity-variable record groups."
 
 ERTMonFindVariableOutlierBoundaries::usage = "Finds outlier boundaries for each variable in the entity-variable record groups."
 
@@ -263,7 +266,7 @@ ClearAll[ERTMonSetComputationSpecification]
 ERTMonSetComputationSpecification[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetComputationSpecification[][___] := $ERTMonFailure;
 ERTMonSetComputationSpecification[xs_, context_] := $ERTMonFailure;
-ERTMonSetComputationSpecification[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"compSpec"->ds|> ] ];
+ERTMonSetComputationSpecification[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"computationSpecification"->ds|> ] ];
 ERTMonSetComputationSpecification[__][___] := $ERTMonFailure;
 
 
@@ -271,7 +274,7 @@ ClearAll[ERTMonTakeComputationSpecification]
 ERTMonTakeComputationSpecification[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeComputationSpecification[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeComputationSpecification[xs_, context_] := ERTMonTakeComputationSpecification[][xs, context];
-ERTMonTakeComputationSpecification[][xs_, context_] := context["compSpec"];
+ERTMonTakeComputationSpecification[][xs_, context_] := context["computationSpecification"];
 ERTMonTakeComputationSpecification[__][___] := $ERTMonFailure;
 
 
@@ -570,16 +573,21 @@ ERTMonEchoDataSummary[___][__] := $ERTMonFailure;
 (* Find variable distributions                                *)
 (**************************************************************)
 
-ClearAll[ERTMonFindVariableDistributions]
+ClearAll[ERTMonComputeVariableStatistic]
 
-ERTMonFindVariableDistributions[$ERTMonFailure] := $ERTMonFailure;
+ERTMonComputeVariableStatistic[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonFindVariableDistributions[xs_, context_Association] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Small]&][xs, context];
+ERTMonComputeVariableStatistic[xs_, context_Association] := ERTMonComputeVariableStatistic[Histogram[#, PlotRange -> All, ImageSize -> Small]&][xs, context];
 
-ERTMonFindVariableDistributions[][xs_, context_] := ERTMonFindVariableDistributions[Histogram[#, PlotRange -> All, ImageSize -> Small]&][xs, context];
+ERTMonComputeVariableStatistic[][xs_, context_] := ERTMonComputeVariableStatistic[Histogram[#, PlotRange -> All, ImageSize -> Small]&][xs, context];
 
-ERTMonFindVariableDistributions[distFunc_][xs_, context_] :=
+ERTMonComputeVariableStatistic[distFunc_][xs_, context_] :=
     Block[{ivRowSpecIDs, distributions},
+
+      If[ !KeyExistsQ[context, "entityVariableRecordGroups"],
+        Echo["Cannot find entity-variable records groups. (Call ERTMonGroupEntityVariableRecords first.)", "ERTMonComputeVariableStatistic:"];
+        Return[$ERTMonFailure]
+      ];
 
       ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
 
@@ -590,14 +598,14 @@ ERTMonFindVariableDistributions[distFunc_][xs_, context_] :=
       ERTMonUnit[distributions, Join[context, <| "variableDistributions"->distributions |>]]
     ];
 
-ERTMonFindVariableDistributions[___][__] :=
+ERTMonComputeVariableStatistic[___][__] :=
     Block[{},
       Echo[
         StringRiffle[
           {"One or no arguments are expected. The argument is a function that finds the distribution of a list of numbers.",
             "(Here are such built-in function names : Histogram (default), EmpiricalDistribution, SmoothKernelDistribution, etc.)"
           }," "],
-        "ERTMonFindVariableDistributions:"
+        "ERTMonComputeVariableStatistic:"
       ];
       $ERTMonFailure
     ];
@@ -617,6 +625,11 @@ ERTMonFindVariableOutlierBoundaries[][xs_, context_] := ERTMonFindVariableOutlie
 
 ERTMonFindVariableOutlierBoundaries[outlierParametersFunction_][xs_, context_] :=
     Block[{ivRowSpecIDs, outlierBoundaries},
+
+      If[ !KeyExistsQ[context, "entityVariableRecordGroups"],
+        Echo["Cannot find entity-variable records groups. (Call ERTMonGroupEntityVariableRecords first.)", "ERTMonFindVariableOutlierBoundaries:"];
+        Return[$ERTMonFailure]
+      ];
 
       ivRowSpecIDs = Union[Keys[context["entityVariableRecordGroups"]][[All, 2]]];
 
@@ -653,7 +666,12 @@ ERTMonGroupEntityVariableRecords[xs_, context_Association] := ERTMonGroupEntityV
 ERTMonGroupEntityVariableRecords[][xs_, context_] :=
     Block[{ds, dsTSGroups, tsGroups, csVars},
 
-      csVars = Values[ GetAssociation[context["compSpec"], "Variable"] ];
+      If[!KeyExistsQ[context, "computationSpecification"],
+        Echo["Cannot find computation specification. (Context key \"computationSpecification\".)", "ERTMonGroupEntityVariableRecords:"];
+        Return[$ERTMonFailure]
+      ];
+
+      csVars = Values[ GetAssociation[context["computationSpecification"], "Variable"] ];
 
       ds = context["eventRecords"];
 
@@ -677,13 +695,13 @@ ERTMonGroupEntityVariableRecords[___][__] :=
 (* Entity-variable records groups to time series             *)
 (**************************************************************)
 
-ClearAll[ERTMonRecordGroupsToTimeSeries]
+ClearAll[ERTMonEntityVariableGroupsToTimeSeries]
 
-ERTMonRecordGroupsToTimeSeries[$ERTMonFailure] := $ERTMonFailure;
+ERTMonEntityVariableGroupsToTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonRecordGroupsToTimeSeries[xs_, context_Association] := ERTMonRecordGroupsToTimeSeries[][xs, context];
+ERTMonEntityVariableGroupsToTimeSeries[xs_, context_Association] := ERTMonEntityVariableGroupsToTimeSeries[][xs, context];
 
-ERTMonRecordGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObject):"MaxTime"][xs_, context_] :=
+ERTMonEntityVariableGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObject):"MaxTime"][xs_, context_] :=
     Block[{ts, zeroTime=zeroTimeArg},
 
       Which[
@@ -739,9 +757,44 @@ ERTMonRecordGroupsToTimeSeries[zeroTimeArg:(_String|_?NumberQ|_DateObject):"MaxT
       ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
     ];
 
-ERTMonRecordGroupsToTimeSeries[___][__] :=
+ERTMonEntityVariableGroupsToTimeSeries[___][__] :=
     Block[{},
       Echo["One or no arguments are expected. The allowed values for the first argument are \"MinTime\", \"MaxTime\", a date object, or a number.", "ERTMonRecordGroupsToTimeSeries:"];
+      $ERTMonFailure
+    ];
+
+
+ClearAll[ERTMonToTimeSeries]
+
+ERTMonToTimeSeries = ERTMonEntityVariableGroupsToTimeSeries;
+
+
+(**************************************************************)
+(* Apply time series function                                 *)
+(**************************************************************)
+
+ClearAll[ERTMonApplyTimeSeriesFunction]
+
+ERTMonApplyTimeSeriesFunction[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonApplyTimeSeriesFunction[xs_, context_Association] := $ERTMonFailure;
+
+ERTMonApplyTimeSeriesFunction[func_][xs_, context_] :=
+    Block[{ts},
+
+      If[ !KeyExistsQ[context, "timeSeries"],
+        Echo["Calculate time series first. (With ERTMonRecordGroupsToTimeSeries.)", ":"];
+        Return[$ERTMonFailure]
+      ];
+
+      ts = Map[func, context["timeSeries"] ];ERTMonApplyTimeSeriesFunction
+
+      ERTMonUnit[xs, Join[context, <| "timeSeries"->ts |>]]
+    ];
+
+ERTMonApplyTimeSeriesFunction[___][__] :=
+    Block[{},
+      Echo["A function that can be applied to time series is expected as an argument.", "ERTMonApplyTimeSeriesFunction:"];
       $ERTMonFailure
     ];
 
@@ -783,7 +836,7 @@ ERTMonAggregateTimeSeries[xs_, context_Association] := ERTMonAggregateTimeSeries
 ERTMonAggregateTimeSeries[][xs_, context_] :=
     Block[{compSpec, ts, aAggrFuncs},
 
-      If[ !KeyExistsQ[context, "compSpec"],
+      If[ !KeyExistsQ[context, "computationSpecification"],
         Echo["Cannot find computations specifications.", "ERTMonTimeSeriesAggregation:"];
         Return[$ERTMonFailure]
       ];
@@ -793,7 +846,7 @@ ERTMonAggregateTimeSeries[][xs_, context_] :=
         Return[$ERTMonFailure]
       ];
 
-      compSpec = context["compSpec"];
+      compSpec = context["computationSpecification"];
       ts = context["timeSeries"]; (* we can simply pass the context to AggregateBySpec instead of copy of "timeSeries". *)
 
       If[ Length[Intersection[{"OutliersCount", "OutliersFraction"}, Normal[compSpec[Values,"AggregationFunction"]]]] > 0 &&
@@ -947,7 +1000,7 @@ ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
 
       reuseQ = TrueQ[ OptionValue[ ERTMonNormalize, "Reuse"] ];
 
-      If[ !KeyExistsQ[context, "compSpec"],
+      If[ !KeyExistsQ[context, "computationSpecification"],
         Echo["Cannot find computations specifications.", "ERTMonNormalize:"];
         Return[$ERTMonFailure]
       ];
@@ -964,7 +1017,7 @@ ERTMonNormalize[opts:OptionsPattern[]][xs_, context_] :=
         Return[$ERTMonFailure]
       ];
 
-      compSpec = context["compSpec"];
+      compSpec = context["computationSpecification"];
       ts = context["timeSeries"];
 
       If[ reuseQ,
