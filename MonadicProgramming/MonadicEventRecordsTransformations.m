@@ -161,6 +161,8 @@ If the option \"Reuse\" is given True the normalization value is taken from the 
 
 ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series."
 
+ERTMonMakeContingencyMatrix::usage = "Column bind the contingency matrices created with ERTMonMakeContingencyMatrices."
+
 ERTMonProcessComputationSpecification::usage = "Process computations specifications. \
 The argument can be a file name string, a matrix, or a dataset."
 
@@ -414,15 +416,8 @@ ClearAll[ERTMonTakeContingencyMatrix]
 ERTMonTakeContingencyMatrix[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrix[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrix[xs_, context_] := ERTMonTakeContingencyMatrix[][xs, context];
-ERTMonTakeContingencyMatrix[][xs_, context_] :=
-    Block[{smats},
-      smats = Lookup[ context, "contingencyMatrices", $ERTMonFailure ];
-      If[ TrueQ[ smats === $ERTMonFailure ],
-        $ERTMonFailure,
-        (*ELSE*)
-        ColumnBind[Values[smats]]
-      ]
-    ];
+ERTMonTakeContingencyMatrix[][xs_, context_] := Fold[ ERTMonBind, ERTMon[xs, context], { ERTMonMakeContingencyMatrix, ERTMonTakeValue} ];
+ERTMonTakeContingencyMatrix[opts:OptionsPattern[]][xs_, context_] := Fold[ ERTMonBind, ERTMon[xs, context], { ERTMonMakeContingencyMatrix[opts], ERTMonTakeValue} ];
 ERTMonTakeContingencyMatrix[__][___] := $ERTMonFailure;
 
 
@@ -1114,6 +1109,76 @@ ERTMonMakeContingencyMatrices[___][__] :=
         "No arguments are expected. " <>
           "The option(s) " <> ToString[Options[ERTMonMakeContingencyMatrices]] <> " can be given.",
         "ERTMonMakeContingencyMatrices:"
+      ];
+      $ERTMonFailure
+    ];
+
+
+(**************************************************************)
+(* Make contingency matrix                                    *)
+(**************************************************************)
+
+ClearAll[ERTMonMakeContingencyMatrix]
+
+Options[ERTMonMakeContingencyMatrix] = { "ColumnNamesPrefixes" -> Automatic };
+
+ERTMonMakeContingencyMatrix[$ERTMonFailure] := $ERTMonFailure;
+
+ERTMonMakeContingencyMatrix[xs_, context_Association] := ERTMonMakeContingencyMatrix[][xs, context];
+
+ERTMonMakeContingencyMatrix[][xs_, context_] := ERTMonMakeContingencyMatrix[ "ColumnNamesPrefixes" -> Automatic ][xs, context];
+
+ERTMonMakeContingencyMatrix[ opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{cnPrefixes, smats, res},
+
+      cnPrefixes = OptionValue[ ERTMonMakeContingencyMatrix, "ColumnNamesPrefixes" ];
+
+      smats = Lookup[ context, "contingencyMatrices", $ERTMonFailure ];
+
+      If[ TrueQ[ smats === $ERTMonFailure ],
+        Echo["Make the contingency matrices first.", "ERTMonMakeContingencyMatrix:"];
+        Return[$ERTMonFailure]
+      ];
+
+      Which[
+        TrueQ[cnPrefixes === None],
+        res = ColumnBind[ Values[smats] ],
+
+        TrueQ[cnPrefixes === Automatic],
+        res = ColumnBind[
+          KeyValueMap[
+            Function[{k,m},
+              SetColumnNames[ m, Table[k <> "." <> ToString[i], {i, ColumnsCount[m]}] ]
+            ],
+            smats ]
+        ],
+
+        VectorQ[cnPrefixes, StringQ] && Length[cnPrefixes] == Length[smats],
+        res = ColumnBind[
+          MapThread[
+            Function[{p,m},
+              SetColumnNames[ m, Map[p <> "." <> # &, ColumnNames[m]] ]
+            ],
+            { cnPrefixes, Values[smats] } ]
+        ],
+
+        True,
+        Echo[
+          "Incorrect value for the option \"ColumnNamesPrefixes\". " <>
+            "Expected values are: None, Automatic, or a string vector with length that equals the number of variable-aggregation pairs.",
+          "ERTMonMakeContingencyMatrix:"];
+        Return[$ERTMonFailure]
+      ];
+
+      ERTMon[res, context]
+    ];
+
+ERTMonMakeContingencyMatrix[___][__] :=
+    Block[{},
+      Echo[
+        "No arguments are expected. " <>
+            "The option(s) " <> ToString[Options[ERTMonMakeContingencyMatrix]] <> " can be given.",
+        "ERTMonMakeContingencyMatrix:"
       ];
       $ERTMonFailure
     ];
