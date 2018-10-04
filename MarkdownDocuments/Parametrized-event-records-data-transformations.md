@@ -12,7 +12,7 @@ August-October 2018
 
 In this document we describe transformations of events records data in order to make that data more amenable for the application of Machine Learning (ML) algorithms.
 
-Consider the following **problem formulation** that is done with the next five bullet points.
+Consider the following **problem formulation** (done with the next five bullet points.)
 
    + From data representing a (most likely very) diverse set of events we want to derive contingency matrices corresponding to each of the variables in that data. 
 
@@ -27,7 +27,8 @@ Consider the following **problem formulation** that is done with the next five b
 The phrase "event records data" is used instead of "time series" in order to emphasize that (i) some variables have categorical values, and (ii) the data can be given in some general database form, like transactions long-form.
 
 The required transformations of the event records in the problem formulation above are done through the monad `ERTMon`, 
-[[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicEventRecordsTransformations.m)]. (The name ERTMon comes from "**E**vent **R**ecords **T**ransformations **Mon**ad".) 
+\[[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicEventRecordsTransformations.m)\]. 
+(The name "ERTMon" comes from "**E**vent **R**ecords **T**ransformations **Mon**ad".) 
 
 The monad code generation and utilization is explained in \[[AA1](https://mathematicaforprediction.wordpress.com/2017/06/23/monad-code-generation-and-extension/)\] 
 and implemented with 
@@ -45,7 +46,7 @@ In brief `ERTMon` performs the following sequence of transformations.
 
 The transformations are specified with a "computation specification" dataset. 
 
-Here is an example of an ERTMon pipeline over event records:
+Here is an example of an `ERTMon` pipeline over event records:
 
 ![ERTMon-small-pipeline-example](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-small-pipeline-example.png)
 
@@ -77,7 +78,7 @@ We retrieve the data with the function `WeatherEventRecords` from the package
 
     ?WeatherEventRecords
 
-> WeatherEventRecords[   citiesSpec_: {{_String, _String}..},   dateRange:{{_Integer, _Integer, _Integer}, {_Integer, _Integer, _Integer}},   wProps:{_String..} : {"Temperature"},   nStations_Integer : 1 ] gives an association with event records data.
+> WeatherEventRecords[ citiesSpec_: {{_String, _String}..}, dateRange:{{_Integer, _Integer, _Integer}, {_Integer, _Integer, _Integer}}, wProps:{_String..} : {"Temperature"},  nStations_Integer : 1 ] gives an association with event records data.
 
     citiesSpec = {{"Miami", "USA"}, {"Chicago", "USA"}, {"London",  "UK"}};
     dateRange = {{2017, 7, 1}, {2018, 6, 31}};
@@ -108,7 +109,7 @@ Here are the summaries of the datasets `eventRecords` and `entityAttributes`:
 
 ### Workflow
 
-The steps of the main event records workflow addressed in this document follow.
+The steps of the main event records transformations workflow addressed in this document follow.
 
    1. Ingest event records and entity attributes given in the [Star schema](https://en.wikipedia.org/wiki/Star_schema) style.
 
@@ -158,11 +159,11 @@ Couple of examples follow.
 
 From the examples above -- and some others -- we conclude that for each feature we want to be able to specify:
 
+   + maximum history length (say from the most recent observation),
+
    + aggregation interval length,
 
    + aggregation function (to be applied in each interval),
-
-   + maximum history length (say from the most recent observation),
 
    + normalization function (per entity, per cohort of entities, per variable),
 
@@ -239,7 +240,9 @@ And here plot the corresponding time series obtained by grouping the records by 
 
 ## Monad elements
 
-This section goes through the steps of the general ERTMon workflow.
+This section goes through the steps of the general `ERTMon` workflow.
+For didactic purposes each sub-section changes the pipeline assigned to the variable `p`. 
+Of course all functions can be chained into one big pipeline as shown in the section "Larger example pipeline".
 
 ### Monad unit
 
@@ -264,10 +267,10 @@ Alternatively, they can be read from files in a specified directory.
 
 ### Computation specification
 
-Using the package [AAp3] we can create computation specification dataset. 
+Using the package \[AAp3\] we can create computation specification dataset. 
 Below is given an example of constructing a fairly complicated computation specification. 
 
-The package EmptyComputationSpecificationRow can be used to construct the rows of the specification.
+The package function `EmptyComputationSpecificationRow` can be used to construct the rows of the specification.
 
     EmptyComputationSpecificationRow[]
 
@@ -303,7 +306,8 @@ The package EmptyComputationSpecificationRow can be used to construct the rows o
         Union[Normal[eventRecords[All, "Variable"]]]
        ];
 
-The constructed rows are assembled into a dataset (with Dataset). The function ProcessComputationSpecification is used to convert a user-made specification dataset into a form used by ERTMon.
+The constructed rows are assembled into a dataset (with `Dataset`). 
+The function `ProcessComputationSpecification` is used to convert a user-made specification dataset into a form used by `ERTMon`.
 
     wCompSpec = 
      ProcessComputationSpecification[Dataset[compSpecRows]][SortBy[#Variable &]]
@@ -311,13 +315,15 @@ The constructed rows are assembled into a dataset (with Dataset). The function P
 ![ERTMon-wCompSpec](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-wCompSpec.png)
 
 
-The computation specification is set to the monad with the function ERTMonSetComputationSpecification.
+The computation specification is set to the monad with the function `ERTMonSetComputationSpecification`.
 
-Alternatively, a computation specification can be created and filled-in as a CSV file and read into the monad. (Not described here.)
+Alternatively, a computation specification can be created and filled-in as a CSV file and read into the monad. 
+(Not described here.)
 
 ### Grouping event records by entity-variable pairs
 
-With the function ERTMonGroupEntityVariableRecords we group the event records by the found unique entity-variable pairs. Note that in the pipeline below we set the computation specification first.
+With the function `ERTMonGroupEntityVariableRecords` we group the event records by the found unique entity-variable pairs. 
+Note that in the pipeline below we set the computation specification first.
 
     p =
       p⟹
@@ -347,9 +353,13 @@ After the data is ingested into the monad and the event records are grouped per 
                 
 ### Finding the variables outlier boundaries
 
-The finding of outliers counts and fractions can be specified in the computation specification. Because of this there is a specialized function for outlier finding ERTMonFindVariableOutlierBoundaries. That function makes the association of the found variable outlier boundaries (i) to be the pipeline value and (ii) to be the value of context key "variableOutlierBoundaries". The outlier boundaries are found using the functions of the package [[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m)].
+The finding of outliers counts and fractions can be specified in the computation specification. 
+Because of this there is a specialized function for outlier finding ERTMonFindVariableOutlierBoundaries. 
+That function makes the association of the found variable outlier boundaries (i) to be the pipeline value and (ii) to be the value of context key "variableOutlierBoundaries". 
+The outlier boundaries are found using the functions of the package 
+\[[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m)\].
 
-If no argument is specified ERTMonFindVariableOutlierBoundaries uses the Hampel identifier (HampelIdentifierParameters).
+If no argument is specified ERTMonFindVariableOutlierBoundaries uses the Hampel identifier (`HampelIdentifierParameters`).
 
     p⟹ERTMonFindVariableOutlierBoundaries⟹ERTMonEchoValue;
 
@@ -375,8 +385,8 @@ In the rest of document we use the outlier boundaries found with the more conser
 
 ### Conversion of event records to time series
 
-The grouped event records are converted into time series with the function ERTMonEntityVariableGroupsToTimeSeries. 
-The time series are aligned to the time point given as an argument. 
+The grouped event records are converted into time series with the function `ERTMonEntityVariableGroupsToTimeSeries`. 
+The time series are aligned to a time point specification given as an argument. 
 The argument can be: a date object, "MinTime", "MaxTime", or "None". ("MaxTime" is the default.)
 
     p⟹
@@ -396,7 +406,7 @@ Compare the last output with the output of the following command.
 
 ### Time series restriction and aggregation.
 
-The main goal of ERTMon is to convert a diverse, general collection of event records into a collection of aligned time series over specified regular time grids.
+The main goal of `ERTMon` is to convert a diverse, general collection of event records into a collection of aligned time series over specified regular time grids.
 
 The regular time grids are specified with the columns "MaxHistoryLength" and "AggregationIntervalLength" of the computation specification. 
 The time series of the variables in the computation specification are restricted to the corresponding maximum history lengths and are aggregated using the corresponding aggregation lengths and functions. 
@@ -421,11 +431,14 @@ At this point we can apply time series modifying functions. An often used such f
 
 Note that the result is given as a pipeline value, the value of the context key "timeSeries" is not changed.
 
+(In the future, the computation specification and its handling might be extended to handle moving average or other time series function specifications.)
+
 ### Normalization
 
-With "normalization" we mean that the values of a given time series values are divided (normalized) with a descriptive statistic derived from a specified set of values. The specified set of values is given with the parameter "NormalizationScope" in computation specification.
+With "normalization" we mean that the values of a given time series values are divided (normalized) with a descriptive statistic derived from a specified set of values. 
+The specified set of values is given with the parameter "NormalizationScope" in computation specification.
 
-At the normalization stage each time series is associated with an entity ID and variable.
+At the normalization stage each time series is associated with an entity ID and a variable.
 
 Normalization is done at three different scopes: "entity", "attribute", and "variable".  
 
@@ -476,9 +489,9 @@ Here are the normalization values that should be used when normalizing "unseen d
 
 ### Making contingency matrices
 
-One of the main goals of ERTMon is to produce contingency matrices corresponding to the event records data.
+One of the main goals of `ERTMon` is to produce contingency matrices corresponding to the event records data.
 
-The contingency matrices are created and stored as SSparseMatrix objects, [AAp7].
+The contingency matrices are created and stored as `SSparseMatrix` objects, \[AAp7\].
 
     p =
       p⟹ERTMonMakeContingencyMatrices;
@@ -503,7 +516,8 @@ We can obtain an association of the contingency matrices for each variable-and-a
 
 ## Larger example pipeline
 
-The pipeline shown in this section utilizes all workflow functions of ERTMon. The used weather data and computation specification are described above.
+The pipeline shown in this section utilizes all main workflow functions of `ERTMon`. 
+The used weather data and computation specification are described above.
 
 ![ERTMon-large-pipeline-example](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-large-pipeline-example.png)
 
