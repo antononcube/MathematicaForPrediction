@@ -1,18 +1,18 @@
 # Parametrized event records data transformations
 
-Anton Antonov
-[MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)
-[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)
-[MathematicaVsR at GitHub](https://github.com/antononcube/MathematicaVsR/tree/master/Projects)
-August-October  2018
+Anton Antonov   
+[MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)   
+[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
+[MathematicaVsR at GitHub](https://github.com/antononcube/MathematicaVsR/tree/master/Projects)   
+August-October 2018
 
-[//]: # (No rules defined for Chapter)
+#### *Version 1.0*
 
 ## Introduction
 
 In this document we describe transformations of events records data in order to make that data more amenable for the application of Machine Learning (ML) algorithms.
 
-Consider the following **problem formulation** that is** **done with the next five bullet points.
+Consider the following **problem formulation** that is done with the next five bullet points.
 
    + From data representing a (most likely very) diverse set of events we want to derive contingency matrices corresponding to each of the variables in that data. 
 
@@ -26,13 +26,16 @@ Consider the following **problem formulation** that is** **done with the next fi
 
 The phrase "event records data" is used instead of "time series" in order to emphasize that (i) some variables have categorical values, and (ii) the data can be given in some general database form, like transactions long-form.
 
-The required transformations of the event records in the problem formulation above are done through the monad ERTMon, [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicEventRecordsTransformations.m)]. (The name ERTMon comes from "**E**vent **R**ecords **T**ransformations **Mon**ad".) 
+The required transformations of the event records in the problem formulation above are done through the monad `ERTMon`, 
+[[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicEventRecordsTransformations.m)]. (The name ERTMon comes from "**E**vent **R**ecords **T**ransformations **Mon**ad".) 
 
-The monad code generation and utilization is explained in [[AA1](https://mathematicaforprediction.wordpress.com/2017/06/23/monad-code-generation-and-extension/)] and implemented with [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m)].
+The monad code generation and utilization is explained in \[[AA1](https://mathematicaforprediction.wordpress.com/2017/06/23/monad-code-generation-and-extension/)\] 
+and implemented with 
+\[[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m)\].
 
 It is assumed that the event records data is put in a form that makes it (relatively) easy to extract time series for the set of entity-variable pairs present in that data. 
 
-In brief ERTMon performs the following sequence of transformations.
+In brief `ERTMon` performs the following sequence of transformations.
 
    1. The event records of each entity-variable pair are shifted to adhere to a specified start or end point,
 
@@ -44,7 +47,7 @@ The transformations are specified with a "computation specification" dataset.
 
 Here is an example of an ERTMon pipeline over event records:
 
-
+![ERTMon-small-pipeline-example](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-small-pipeline-example.png)
 
 The rest of the document describes in detail:
 
@@ -54,53 +57,43 @@ The rest of the document describes in detail:
 
    + the software pattern design -- a monad -- that allows sequential specifications of desired transformations.
 
-Concrete examples are given using weather data. See [[AAp9](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/WeatherEventRecords.m)].
+Concrete examples are given using weather data. See 
+\[[AAp9](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/WeatherEventRecords.m)\].
 
 ## Package load
 
-The following commands load the packages [AAp1-AAp9].
+The following commands load the packages \[AAp1-AAp9\].
 
-
-
-    Import["https://raw.githubusercontent.com/antononcube/\
-    MathematicaForPrediction/master/MonadicProgramming/\
-    MonadicEventRecordsTransformations.m"]
-    Import["https://raw.githubusercontent.com/antononcube/\
-    MathematicaForPrediction/master/MonadicProgramming/MonadicTracing.m"]
-    Import["https://raw.githubusercontent.com/antononcube/\
-    MathematicaForPrediction/master/Misc/WeatherEventRecords.m"]
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicEventRecordsTransformations.m"]
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicTracing.m"]
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/WeatherEventRecords.m"]
 
 ## Data load
 
-The data we use is weather data from meteorological stations close to certain major cities. We retrieve the data with the function WeatherEventRecords from the package [AAp9].
-
+The data we use is weather data from meteorological stations close to certain major cities. 
+We retrieve the data with the function `WeatherEventRecords` from the package
+\[[AAp9](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/WeatherEventRecords.m)\].
 
 
     ?WeatherEventRecords
 
+> WeatherEventRecords[   citiesSpec_: {{_String, _String}..},   dateRange:{{_Integer, _Integer, _Integer}, {_Integer, _Integer, _Integer}},   wProps:{_String..} : {"Temperature"},   nStations_Integer : 1 ] gives an association with event records data.
 
-
-    citiesSpec = {{"Miami", "USA"}, {"Chicago", "USA"}, {"London", 
-        "UK"}};
+    citiesSpec = {{"Miami", "USA"}, {"Chicago", "USA"}, {"London",  "UK"}};
     dateRange = {{2017, 7, 1}, {2018, 6, 31}};
-    wProps = {"Temperature", "MaxTemperature", "Pressure", "Humidity", 
-       "WindSpeed"};
+    wProps = {"Temperature", "MaxTemperature", "Pressure", "Humidity", "WindSpeed"};
     res1 = WeatherEventRecords[citiesSpec, dateRange, wProps, 1];
 
-
-
-    citiesSpec = {{"Jacksonville", "USA"}, {"Peoria", 
-        "USA"}, {"Melbourne", "Australia"}};
+    citiesSpec = {{"Jacksonville", "USA"}, {"Peoria", "USA"}, {"Melbourne", "Australia"}};
     dateRange = {{2016, 12, 1}, {2017, 12, 31}};
     res2 = WeatherEventRecords[citiesSpec, dateRange, wProps, 1];
 
 Here we assign the obtained datasets to variables we use below:
 
     eventRecords = Join[res1["eventRecords"], res2["eventRecords"]];
-    entityAttributes = 
-      Join[res1["entityAttributes"], res2["entityAttributes"]];
+    entityAttributes = Join[res1["entityAttributes"], res2["entityAttributes"]];
 
-Here are the summaries of the datasets eventRecords and entitiyAttributes:
+Here are the summaries of the datasets `eventRecords` and `entityAttributes`:
 
     RecordsSummary[eventRecords]
 
@@ -230,16 +223,19 @@ For example, here we take all weather stations in USA:
 
     ws = Normal[entityAttributes[Select[#Attribute == "Country" && #Value == "USA" &], "EntityID"]]
 
+    (* {"KMFL", "KMDW", "KNIP", "KGEU"} *)
+    
 Here we take all temperature event records for those weather stations:
 
-    srecs = eventRecords[
-       Select[#Variable == "Temperature" && MemberQ[ws, #EntityID] &]];
+    srecs = eventRecords[Select[#Variable == "Temperature" && MemberQ[ws, #EntityID] &]];
 
 And here plot the corresponding time series obtained by grouping the records by station (entity ID's) and taking the columns "ObservationTime" and "Value":
 
-    grecs = Normal@
-       GroupBy[srecs, #EntityID &][All, All, {"ObservationTime", "Value"}];
+    grecs = Normal @ GroupBy[srecs, #EntityID &][All, All, {"ObservationTime", "Value"}];
     DateListPlot[grecs, ImageSize -> Large, PlotTheme -> "Detailed"]
+
+![ERTMon-DateListPlot-USA-Temperature](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-DateListPlot-USA-Temperature.png)
+
 
 ## Monad elements
 
@@ -251,6 +247,8 @@ The monad is initialized with ERTMonUnit.
 
     ERTMonUnit[]
 
+    (* ERTMon[None, <||>] *)
+    
 ### Ingesting event records and entity attributes
 
 The event records dataset (table) and entity attributes dataset (table) are set with corresponding setter functions. 
@@ -261,6 +259,8 @@ Alternatively, they can be read from files in a specified directory.
        ERTMonSetEventRecords[eventRecords]⟹
        ERTMonSetEntityAttributes[entityAttributes]⟹
        ERTMonEchoDataSummary;
+       
+![ERTMon-echo-data-summary](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-echo-data-summary.png)
 
 ### Computation specification
 
@@ -271,8 +271,12 @@ The package EmptyComputationSpecificationRow can be used to construct the rows o
 
     EmptyComputationSpecificationRow[]
 
-
-
+    (* <|"Variable" -> Missing[], "Explanation" -> "", 
+        "MaxHistoryLength" -> 3600, "AggregationIntervalLength" -> 60, 
+        "AggregationFunction" -> "Mean", "NormalizationScope" -> "Entity", 
+        "NormalizationFunction" -> "None"|> *)
+        
+        
     compSpecRows = 
       Join[EmptyComputationSpecificationRow[], <|"Variable" -> #, 
           "MaxHistoryLength" -> 60*24*3600, 
@@ -303,6 +307,9 @@ The constructed rows are assembled into a dataset (with Dataset). The function P
 
     wCompSpec = 
      ProcessComputationSpecification[Dataset[compSpecRows]][SortBy[#Variable &]]
+     
+![ERTMon-wCompSpec](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-wCompSpec.png)
+
 
 The computation specification is set to the monad with the function ERTMonSetComputationSpecification.
 
@@ -432,9 +439,9 @@ Given a time series $T(i,var)$ corresponding to entity ID $i$ and a variable $va
 
       + next we find all entity ID's that are associated with the same attribute value,
 
-      + next we find value of normalization descriptive statistic using the time series that correspond to the variable $\text{var}$ and the entity ID's found in the previous step.
+      + next we find value of normalization descriptive statistic using the time series that correspond to the variable $var$ and the entity ID's found in the previous step.
 
-   + Normalization with scope "variable" means that the descriptive statistic is derived from the values of all time series corresponding to $\text{var}$.
+   + Normalization with scope "variable" means that the descriptive statistic is derived from the values of all time series corresponding to $var$.
 
 Note that the scope "entity" is the most granular, and the scope "variable" is the coarsest.
 
