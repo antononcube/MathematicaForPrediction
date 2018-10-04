@@ -328,33 +328,33 @@ SparseArray[rmat_SSparseMatrix] ^:= First[rmat]["SparseMatrix"];
 
 (* Setters *)
 
-SetAttributes[SetRowNames, HoldFirst]
+(*SetAttributes[SetRowNames, HoldFirst]*)
 SetRowNames[ rmat_, names_:{_String..} ] :=
     Block[{res},
       res = ToSSparseMatrix[rmat,"RowNames"->names,"ColumnNames"->ColumnNames[rmat],"DimensionNames"->DimensionNames[rmat]];
       If[ Head[res] === SSparseMatrix,
-        rmat = res; rmat,
+        res,
         $Failed
       ]
     ];
 
-SetAttributes[SetColumnNames, HoldFirst]
+(*SetAttributes[SetColumnNames, HoldFirst]*)
 SetColumnNames[ rmat_, names_:{_String..} ] :=
     Block[{res},
       res = ToSSparseMatrix[rmat,"RowNames"->RowNames[rmat],"ColumnNames"->names,"DimensionNames"->DimensionNames[rmat]];
       If[ TrueQ[Head[res] === SSparseMatrix],
-        rmat = res; rmat,
+         res,
         $Failed
       ]
     ];
 
 
-SetAttributes[SetDimensionNames, HoldFirst]
+(*SetAttributes[SetDimensionNames, HoldFirst]*)
 SetDimensionNames[ rmat_, names_:{_String..} ] :=
     Block[{res},
       res = ToSSparseMatrix[rmat,"RowNames"->RowNames[rmat],"ColumnNames"->ColumnNames[rmat],"DimensionNames"->names];
       If[ TrueQ[Head[res] === SSparseMatrix],
-        rmat = res; rmat,
+        res,
         $Failed
       ]
     ];
@@ -607,10 +607,15 @@ ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
           Join[Transpose@SparseArray[r1], Transpose@SparseArray[r2]];
       (* Special handling of duplication of column names in the result. *)
 
-      joinedRowAssoc = Join[r1[[1]]["ColumnNames"], r2[[1]]["ColumnNames"]];
+      joinedRowAssoc = Join[ColumnNamesAssociation[r1], ColumnNamesAssociation[r2]];
       If[Length[joinedRowAssoc] == Dimensions[sarr][[2]],
         resColumnNames = Join[ColumnNames[r1], ColumnNames[r2]],
         (*ELSE*)
+        Print[ColumnNamesAssociation[r1]];
+        Print[ColumnNamesAssociation[r2]];
+        Print[Dimensions[sarr]];
+        Print[joinedRowAssoc];
+        Print[Length[joinedRowAssoc]];
         resColumnNames =
             Join[# <> ".1" & /@ ColumnNames[r1], # <> ".2" & /@ ColumnNames[r2]]
       ];
