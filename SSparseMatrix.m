@@ -258,11 +258,11 @@ ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
       rnames = OptionValue[ToSSparseMatrix, "RowNames"];
       cnames = OptionValue[ToSSparseMatrix, "ColumnNames"];
       dnames = OptionValue[ToSSparseMatrix, "DimensionNames"];
-      If[! (rnames === None || (MatchQ[rnames, {_String ..}] && Length[rnames] == Dimensions[sarr][[1]])),
+      If[! ( rnames === None || (VectorQ[rnames, StringQ] && Length[rnames] == Dimensions[sarr][[1]]) ),
         Message[SSparseMatrix::rnset, rnames, Dimensions[sarr][[1]]];
         Return[$Failed]
       ];
-      If[! (cnames === None || (MatchQ[cnames, {_String ..}] && Length[cnames] == Dimensions[sarr][[2]])),
+      If[! ( cnames === None || (VectorQ[cnames, StringQ] && Length[cnames] == Dimensions[sarr][[2]]) ),
         Message[SSparseMatrix::cnset, cnames, Dimensions[sarr][[2]]];
         Return[$Failed]
       ];
