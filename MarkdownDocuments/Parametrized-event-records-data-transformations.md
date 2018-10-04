@@ -186,7 +186,7 @@ The following diagram further describes the repeated execution workflow.
 
 ![ERTMon-repeated-execution-workflow](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Parametrized-event-records-data-transformations/ERTMon-repeated-execution-workflow.jpg)
 
-Further discussion of making and using Machine Learning classification workflows through the monad software design pattern can be found in 
+Further discussion of making and using ML classification workflows through the monad software design pattern can be found in 
 [[AA2](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/)].
 
 ## Event records data design
@@ -354,7 +354,7 @@ After the data is ingested into the monad and the event records are grouped per 
 ### Finding the variables outlier boundaries
 
 The finding of outliers counts and fractions can be specified in the computation specification. 
-Because of this there is a specialized function for outlier finding ERTMonFindVariableOutlierBoundaries. 
+Because of this there is a specialized function for outlier finding `ERTMonFindVariableOutlierBoundaries`. 
 That function makes the association of the found variable outlier boundaries (i) to be the pipeline value and (ii) to be the value of context key "variableOutlierBoundaries". 
 The outlier boundaries are found using the functions of the package 
 \[[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m)\].
@@ -372,7 +372,7 @@ If no argument is specified ERTMonFindVariableOutlierBoundaries uses the Hampel 
     (* {"eventRecords", "entityAttributes", "computationSpecification",
         "entityVariableRecordGroups", "variableOutlierBoundaries"} *)
        
-In the rest of document we use the outlier boundaries found with the more conservative identifier SPLUSQuartileIdentifierParameters.
+In the rest of document we use the outlier boundaries found with the more conservative identifier `SPLUSQuartileIdentifierParameters`.
 
     p =
       p⟹
