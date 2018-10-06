@@ -421,6 +421,12 @@ ColumnSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"]];
 
 ColumnSumsAssociation[smat_SSparseMatrix] := AssociationThread[ColumnNames[smat], ColumnSums[smat]];
 
+Clip[SSparseMatrix[objArg_], args___] ^:=
+    Block[{obj=objArg},
+      obj["SparseMatrix"] = Clip[ obj["SparseMatrix"], args];
+      SSparseMatrix[obj]
+    ];
+
 Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
 
 (*Dot product*)
