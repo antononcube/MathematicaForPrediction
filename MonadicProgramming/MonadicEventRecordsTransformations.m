@@ -136,6 +136,8 @@ ERTMonReadData::usage = "Reads data from specified files or directory."
 
 ERTMonEchoDataSummary::usage = "Echoes a summary of the data."
 
+ERTMonRemapEntitiesByGroups::usage = "Remaps entity ID's to group ID's."
+
 ERTMonGroupEntityVariableRecords::usage = "Groups entity-variable records. \
 Only the variables in the specification are used."
 
@@ -246,6 +248,38 @@ OutliersCount[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
 ClearAll[OutliersFraction]
 OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
     Length[Select[vec, # < lower || upper < #&]] / Length[vec];
+
+
+(**************************************************************)
+(* Remap entities by groups                                   *)
+(**************************************************************)
+
+ClearAll[ERTMonRemapEntitiesByGroups]
+
+ERTMonRemapEntitiesByGroups[$ERTMonFailure] := $ERTMonFailure;
+ERTMonRemapEntitiesByGroups[][___] := $ERTMonFailure;
+ERTMonRemapEntitiesByGroups[xs_, context_] := $ERTMonFailure;
+
+ERTMonRemapEntitiesByGroups[ entityGroups:{{_String..}..} ][xs_, context_Association] :=
+    ERTMonRemapEntitiesByGroups[
+      AssociationThread[ Map[ "group" <> ToString[#]&, Range[Length[entityGroups]] ], entityGroups]
+    ][xs, context];
+
+ERTMonRemapEntitiesByGroups[ aEntityGroups : Association[ (_String -> {_String..}) .. ] ][xs_, context_Association] :=
+    Block[{eventRecs, entityAttrs, aEntityToGroupID},
+
+      eventRecs = context["eventRecords"];
+      entityAttrs = context["entityAttributes"];
+
+      aEntityToGroupID = Association @ Flatten @ KeyValueMap[ AssociationThread[ #2 -> #1 ]&, aEntityGroups ];
+
+      eventRecs = eventRecs[All, Join[ #, <| "EntityID" -> aEntityToGroupID[#EntityID] |> ]& ];
+      entityAttrs = Query[DeleteDuplicates] @ entityAttrs[All, Join[ #, <| "EntityID" -> aEntityToGroupID[#EntityID] |> ]& ];
+
+      ERTMonUnit[ xs, Join[ context, <| "eventRecords" -> eventRecs, "entityAttributes" -> entityAttrs |> ] ]
+    ];
+
+ERTMonRemapEntitiesByGroups[___][__] := $ERTMonFailure;
 
 
 (**************************************************************)
@@ -805,24 +839,23 @@ Clear[AggregateBySpec]
 AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctionSpec_Association] :=
     Block[{ts, timeWindowSpec},
 
-      Which[
-        MemberQ[ {"LocationID", "Label"}, specRow["Variable"]],
-        <||>,
+      If[ MemberQ[ {"LocationID", "Label"}, specRow["Variable"] ],
+        Return[<||>]
+      ];
 
-        NumberQ[specRow["AggregationIntervalLength"]] && NumberQ[specRow["MaxHistoryLength"]],
+      ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
 
-        ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
-
+      If[ NumberQ[specRow["MaxHistoryLength"] ] ,
         ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] >= 0, {#["FirstTime"], #["FirstTime"] + specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
+      ];
 
+      If[ NumberQ[specRow["AggregationIntervalLength"] ],
         ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationIntervalLength"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
+      ];
 
-        ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["AggregationFunction"]]}&, ts];
-        ts,
+      ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["AggregationFunction"]]}&, ts];
 
-        True,
-        <||>
-      ]
+      ts
     ];
 
 ClearAll[ERTMonAggregateTimeSeries]
