@@ -1096,7 +1096,7 @@ ERTMonNormalize[___][__] :=
 
 ClearAll[ERTMonMakeContingencyMatrices]
 
-Options[ERTMonMakeContingencyMatrices] = { "SameRowNames" -> True };
+Options[ERTMonMakeContingencyMatrices] = { "SameRowNames" -> True, "ColumnNamesPrefixes" -> None };
 
 ERTMonMakeContingencyMatrices[$ERTMonFailure] := $ERTMonFailure;
 
@@ -1105,9 +1105,10 @@ ERTMonMakeContingencyMatrices[xs_, context_Association] := ERTMonMakeContingency
 ERTMonMakeContingencyMatrices[][xs_, context_] := ERTMonMakeContingencyMatrices[ "SameRowNames" -> True ][xs, context];
 
 ERTMonMakeContingencyMatrices[ opts:OptionsPattern[] ][xs_, context_] :=
-    Block[{tsRowSpecIDs, tbls, cmats, sameRowNamesQ, allRowNames},
+    Block[{sameRowNamesQ, cnPrefixes, tsRowSpecIDs, tbls, cmats, allRowNames},
 
       sameRowNamesQ = TrueQ[ OptionValue[ ERTMonMakeContingencyMatrices, "SameRowNames" ] ];
+      cnPrefixes = OptionValue[ ERTMonMakeContingencyMatrix, "ColumnNamesPrefixes" ];
 
       tsRowSpecIDs = Union[Keys[context["timeSeries"]][[All, 2]]];
 
@@ -1131,6 +1132,34 @@ ERTMonMakeContingencyMatrices[ opts:OptionsPattern[] ][xs_, context_] :=
       If[ sameRowNamesQ,
         allRowNames = Union[ Flatten[ RowNames /@ Values[cmats ] ] ];
         cmats = ImposeRowNames[ #, allRowNames ]& /@ cmats;
+      ];
+
+      Which[
+
+        TrueQ[cnPrefixes === Automatic],
+        cmats = Association[
+          KeyValueMap[
+            Function[{k,m},
+              k -> SetColumnNames[ m, Table[k <> "." <> ToString[i], {i, ColumnsCount[m]}] ]
+            ],
+            cmats ]
+        ],
+
+        VectorQ[cnPrefixes, StringQ] && Length[cnPrefixes] == Length[cmats],
+        cmats = Association[
+          MapThread[
+            Function[{p,m},
+              k -> SetColumnNames[ m, Map[p <> "." <> # &, ColumnNames[m]] ]
+            ],
+            { cnPrefixes, Values[cmats] } ]
+        ],
+
+        !TrueQ[cnPrefixes === None],
+        Echo[
+          "Incorrect value for the option \"ColumnNamesPrefixes\". " <>
+              "Expected values are: None, Automatic, or a string vector with length that equals the number of variable-aggregation pairs.",
+          "ERTMonMakeContingencyMatrices:"];
+        Return[$ERTMonFailure]
       ];
 
       ERTMonUnit[cmats, Join[context, <| "contingencyMatrices"->cmats |>]]
@@ -1168,40 +1197,22 @@ ERTMonMakeContingencyMatrix[ opts:OptionsPattern[] ][xs_, context_] :=
 
       smats = Lookup[ context, "contingencyMatrices", $ERTMonFailure ];
 
-      If[ TrueQ[ smats === $ERTMonFailure ],
-        Echo["Make the contingency matrices first.", "ERTMonMakeContingencyMatrix:"];
-        Return[$ERTMonFailure]
+      If[ TrueQ[ smats === $ERTMonFailure ] ||
+          Length[{opts}] > 0 ||
+          AssociationQ[smats] && !TrueQ[Apply[Equal, RowsCount /@ smats ]],
+
+        smats =
+            Fold[
+              ERTMonBind,
+              ERTMon[xs,context],
+              {
+                ERTMonMakeContingencyMatrices["SameRowNames"->True, "ColumnNamesPrefixes"-> cnPrefixes],
+                ERTMonTakeContingencyMatrices
+              }
+            ];
       ];
 
-      Which[
-        TrueQ[cnPrefixes === None],
-        res = ColumnBind[ Values[smats] ],
-
-        TrueQ[cnPrefixes === Automatic],
-        res = ColumnBind[
-          KeyValueMap[
-            Function[{k,m},
-              SetColumnNames[ m, Table[k <> "." <> ToString[i], {i, ColumnsCount[m]}] ]
-            ],
-            smats ]
-        ],
-
-        VectorQ[cnPrefixes, StringQ] && Length[cnPrefixes] == Length[smats],
-        res = ColumnBind[
-          MapThread[
-            Function[{p,m},
-              SetColumnNames[ m, Map[p <> "." <> # &, ColumnNames[m]] ]
-            ],
-            { cnPrefixes, Values[smats] } ]
-        ],
-
-        True,
-        Echo[
-          "Incorrect value for the option \"ColumnNamesPrefixes\". " <>
-            "Expected values are: None, Automatic, or a string vector with length that equals the number of variable-aggregation pairs.",
-          "ERTMonMakeContingencyMatrix:"];
-        Return[$ERTMonFailure]
-      ];
+      res = ColumnBind[ Values[smats] ];
 
       ERTMon[res, context]
     ];
