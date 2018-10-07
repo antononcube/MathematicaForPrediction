@@ -617,11 +617,6 @@ ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
       If[Length[joinedRowAssoc] == Dimensions[sarr][[2]],
         resColumnNames = Join[ColumnNames[r1], ColumnNames[r2]],
         (*ELSE*)
-        Print[ColumnNamesAssociation[r1]];
-        Print[ColumnNamesAssociation[r2]];
-        Print[Dimensions[sarr]];
-        Print[joinedRowAssoc];
-        Print[Length[joinedRowAssoc]];
         resColumnNames =
             Join[# <> ".1" & /@ ColumnNames[r1], # <> ".2" & /@ ColumnNames[r2]]
       ];
