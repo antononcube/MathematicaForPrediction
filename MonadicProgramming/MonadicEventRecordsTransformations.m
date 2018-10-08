@@ -837,7 +837,7 @@ ERTMonApplyTimeSeriesFunction[___][__] :=
 
 Clear[AggregateBySpec]
 AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctionSpec_Association] :=
-    Block[{ts, timeWindowSpec},
+    Block[{ts, timeWindowSpec, tsFirstTimes, tsLastTimes},
 
       If[ MemberQ[ {"LocationID", "Label"}, specRow["Variable"] ],
         Return[<||>]
@@ -845,12 +845,33 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
 
       ts = KeySelect[timeSeries, MatchQ[#, {_, specRow["Variable"]}] &];
 
+      tsFirstTimes =  #["FirstTime"]& /@ ts;
+      tsLastTimes =  #["LastTime"]& /@ ts;
+
       If[ NumberQ[specRow["MaxHistoryLength"] ] ,
+        (*If[ specRow["Variable"]=="Humidity", Print[Map[#["FirstTime"]&, ts] ]];*)
+        (*If[ specRow["Variable"]=="Humidity", Print[Map[#["LastTime"]&, ts] ]];*)
         ts = Map[ TimeSeriesWindow[#, If[ #["FirstTime"] >= 0, {#["FirstTime"], #["FirstTime"] + specRow["MaxHistoryLength"]}, {-specRow["MaxHistoryLength"], 0}] ]&, ts];
       ];
 
       If[ NumberQ[specRow["AggregationIntervalLength"] ],
-        ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationIntervalLength"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
+        (*ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationIntervalLength"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];*)
+        (*Print["----"];*)
+        If[ specRow["Variable"]=="Humidity", Print[Map[#["Times"]&, ts]]];
+        ts =
+            MapThread[
+              Which[
+                #2 >= 0 && #1["FirstTime"] != #2, Print["1"];
+                TimeSeriesShift[ #1, #2 - #1["FirstTime"]  ],
+
+                #2 < 0 && #1["LastTime"] != #3, Print["2"];
+                TimeSeriesShift[ #1, #3 - #1["LastTime"]  ],
+
+                True, Print["3"];
+                #1
+              ]&,
+              {ts, tsFirstTimes, tsLastTimes }
+            ]
       ];
 
       ts = KeyMap[ {#[[1]], StringJoin[specRow["Variable"], ".", specRow["AggregationFunction"]]}&, ts];
