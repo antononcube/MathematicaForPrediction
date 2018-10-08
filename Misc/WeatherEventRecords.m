@@ -158,7 +158,7 @@ WeatherEventRecords[
       eventRecords = eventRecords[Select[NumberQ[#Value] &]];
 
       entityAttributes =
-          Dataset[KeyValueMap[Flatten[{#1, #2}] &, aWStations]][All, AssociationThread[{"Station", "City", "Country"} -> #] &];
+          Dataset[KeyValueMap[Flatten[{#1, #2[[1]], #2[[-1]]}] &, aWStations]][All, AssociationThread[{"Station", "City", "Country"} -> #] &];
 
       entityAttributes =
           ToLongForm[entityAttributes, "Station", {"City", "Country"}];
