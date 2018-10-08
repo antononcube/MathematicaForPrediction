@@ -83,6 +83,19 @@
 
 *)
 
+(**************************************************************)
+(* Importing packages (if needed)                             *)
+(**************************************************************)
+
+If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
+];
+
+
+(**************************************************************)
+(* Package definition                                         *)
+(**************************************************************)
+
 BeginPackage["HeatmapPlot`"]
 
 MatrixPlotWithTooltips::usage = "MatrixPlotWithTooltips[data, rowNames, columnNames] makes a MatrixPlot with tooltips."
@@ -93,7 +106,7 @@ and HierarchicalClustering`Agglomerate ."
 Begin["`Private`"]
 
 Needs["HierarchicalClustering`"]
-
+Needs["SSparseMatrix`"]
 
 MatrixPlotWithTooltips[mat_, rowNames_, columnNames_, opts : OptionsPattern[]] :=
     With[{dims = Dimensions[mat],
@@ -138,6 +151,11 @@ HeatmapPlot[xtabs_Association, opts:OptionsPattern[]] :=
     Block[{},
       HeatmapPlot[ xtabs["SparseMatrix"], xtabs["RowNames"], xtabs["ColumnNames"], opts ]
     ] /; KeyExistsQ[xtabs, "SparseMatrix"] && KeyExistsQ[xtabs, "RowNames"] && KeyExistsQ[xtabs, "ColumnNames"];
+
+HeatmapPlot[smat_SSparseMatrix, opts:OptionsPattern[]] :=
+    Block[{},
+      HeatmapPlot[ SparseArray[smat], RowNames[smat], ColumnNames[smat], opts ]
+    ];
 
 HeatmapPlot[data_?MatrixQ, opts:OptionsPattern[]] :=
     HeatmapPlot[ data, Range[Dimensions[data][[1]]], Range[Dimensions[data][[2]]], opts];
