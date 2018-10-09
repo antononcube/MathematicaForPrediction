@@ -855,19 +855,18 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
       ];
 
       If[ NumberQ[specRow["AggregationIntervalLength"] ],
-        (*ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationIntervalLength"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];*)
-        (*Print["----"];*)
-        If[ specRow["Variable"]=="Humidity", Print[Map[#["Times"]&, ts]]];
+        ts = Map[ TimeSeriesAggregate[#, {specRow["AggregationIntervalLength"], Left}, aAggregationFunctionSpec[specRow["AggregationFunction"]] ]&, ts];
+        (*If[ specRow["Variable"]=="Humidity",Print[Map[#["Times"]&, ts]]];*)
         ts =
             MapThread[
               Which[
-                #2 >= 0 && #1["FirstTime"] != #2, Print["1"];
+                #2 >= 0 && #1["FirstTime"] != #2,
                 TimeSeriesShift[ #1, #2 - #1["FirstTime"]  ],
 
-                #2 < 0 && #1["LastTime"] != #3, Print["2"];
+                #2 < 0 && #1["LastTime"] != #3,
                 TimeSeriesShift[ #1, #3 - #1["LastTime"]  ],
 
-                True, Print["3"];
+                True,
                 #1
               ]&,
               {ts, tsFirstTimes, tsLastTimes }
