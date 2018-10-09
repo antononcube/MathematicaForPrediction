@@ -707,7 +707,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
 
       listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
       plotOpts = Normal @ KeyTake[ {opts}, First /@ Options[Plot]];
-
+      plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle->_] ];
 
       res=
           Which[
@@ -744,7 +744,7 @@ ClearAll[QRMonDateListPlot];
 
 Options[QRMonDateListPlot] = Options[QRMonPlot];
 
-QRMonPlot[QRMonDateListPlot] := $QRMonFailure;
+QRMonDateListPlot[$QRMonFailure] := $QRMonFailure;
 
 QRMonDateListPlot[xs_, context_Association] := QRMonPlot["DateListPlot"->True][xs, context];
 
