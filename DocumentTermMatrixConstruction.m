@@ -218,7 +218,7 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
         globalWeights = N[freqSums / globalWeights],
 
         funcName == "None",
-        globalWeights = ConstantArray[1, Dimensions[docTermMat][[1]] ],
+        globalWeights = ConstantArray[1, Dimensions[docTermMat][[2]] ],
 
         funcName == "Binary",
         globalWeights = ConstantArray[1, Dimensions[docTermMat][[2]]],
