@@ -250,27 +250,29 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
 
 ClearAll[ApplyNormalizationFunction]
 ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
-    Block[{mat, normWeights},
+    Block[{dtSMat, mat, normWeights},
+
+      dtSMat = SparseArray[docTermMat];
 
       Which[
         funcName == "None",
         Return[docTermMat],
 
+        dtSMat["Density"] == 0,
+        Return[docTermMat],
+
         funcName == "Cosine",
-        mat = SparseArray[docTermMat];
-        normWeights = N[Sqrt[Total[mat * mat, {2}]]];
+        normWeights = N[Sqrt[Total[dtSMat * dtSMat, {2}]]];
         normWeights = normWeights /. { 0. -> 1. };
         normWeights = 1. / normWeights,
 
         funcName == "RowStochastic" || funcName == "RowSum",
-        mat = docTermMat;
-        normWeights = N[Total[mat, {2}]];
+        normWeights = N[Total[dtSMat, {2}]];
         normWeights = normWeights /. { 0. -> 1. };
         normWeights = 1. / normWeights,
 
         funcName == "Max",
-        mat = docTermMat;
-        normWeights = N[Map[Max, mat]];
+        normWeights = N[Map[Max, dtSMat]];
         normWeights = normWeights /. { 0. -> 1. };
         normWeights = 1. / normWeights,
 
@@ -280,7 +282,7 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
       ];
 
       mat = DiagonalMatrix[SparseArray[normWeights]];
-      mat = mat . SparseArray[docTermMat];
+      mat = mat . dtSMat;
 
       mat
     ];
