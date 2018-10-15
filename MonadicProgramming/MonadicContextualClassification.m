@@ -209,6 +209,8 @@ the variable importance. (Does not modify the context.)"
 ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context. \
 Echoes the result with the default option values."
 
+ClConEchoDataSummary::usage = "Synonym of as ClConSummarizeData."
+
 ClConSummarizeDataLongForm::usage = "Summarizes the data in long form. Does not modify the context. \
 Does not echo the result."
 
@@ -642,7 +644,7 @@ ClConAssignVariableNames[varNamesArg:{_String...}][xs_, context_Association] :=
 
 ClConAssignVariableNames[___][xs_, context_Association] :=
     Block[{},
-      Echo["The first argument is expected to be a list of strings or Automatic.", "ClConAssignVariableNames:"]
+      Echo["The first argument is expected to be a list of strings or Automatic.", "ClConAssignVariableNames:"];
       $ClConFailure
     ];
 
@@ -767,6 +769,8 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+
+ClConEchoDataSummary = ClConSummarizeData;
 
 
 (**************************************************************)
