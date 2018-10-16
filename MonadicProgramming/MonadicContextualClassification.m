@@ -195,6 +195,8 @@ The obtained classifier object is put as the result pipeline value; also in the 
 The Association values of \"trainingData\", \"testData\", \"validationData\" are put in the context too, if taken from \
 the current pipeline value. "
 
+ClConTrainClassifier::usage = "Synonym of ClConMakeClassifier."
+
 ClConClassifierMeasurements::usage = "ClConClassifierMeasurements[measures : (_String | {_String ..})] \
 computes the specified measurements for the classifier in the context. (Does not modify the context.)"
 
@@ -209,7 +211,7 @@ the variable importance. (Does not modify the context.)"
 ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context. \
 Echoes the result with the default option values."
 
-ClConEchoDataSummary::usage = "Synonym of as ClConSummarizeData."
+ClConEchoDataSummary::usage = "Echoes results of data summarization."
 
 ClConSummarizeDataLongForm::usage = "Summarizes the data in long form. Does not modify the context. \
 Does not echo the result."
@@ -718,6 +720,9 @@ ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
 
     ];
 
+ClConSummarizeData[___][__] := $ClConFailure;
+
+
 Options[ClConSummarizeDataLongForm] = Join[ {"Echo"->True}, Options[DataColumnsSummary]];
 
 ClConSummarizeDataLongForm[$ClConFailure] := $ClConFailure;
@@ -769,12 +774,35 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+ClConSummarizeDataLongForm[___][__] := $ClConFailure;
 
-ClConEchoDataSummary = ClConSummarizeData;
+
+
+(************************************************************)
+(* ClConEchoDataSummary                                     *)
+(************************************************************)
+
+ClearAll[ClConEchoDataSummary];
+
+Options[ClConEchoDataSummary] = Options[ClConSummarizeData];
+
+ClConEchoDataSummary[$ClConFailure] := $ClConFailure;
+
+ClConEchoDataSummary[___][$ClConFailure] := $ClConFailure;
+
+ClConEchoDataSummary[xs_, context_Association] := ClConEchoDataSummary[][xs,context];
+
+ClConEchoDataSummary[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{res},
+      res = Fold[ ClConBind, ClConUnit[xs, context], {ClConSummarizeData}];
+      ClConUnit[xs, context]
+    ];
+
+ClConEchoDataSummary[___][__] := $ClConFailure;
 
 
 (**************************************************************)
-(* DeleteMissing                                             *)
+(* DeleteMissing                                              *)
 (**************************************************************)
 
 ClearAll[ClConDeleteMissing];
@@ -886,6 +914,10 @@ ClConMakeClassifier[___][xs_, context_Association] :=
       ];
       $ClConFailure
     ];
+
+
+ClearAll[ClConTrainClassifier]
+ClConTrainClassifier = ClConMakeClassifier;
 
 
 (************************************************************)
