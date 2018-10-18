@@ -699,6 +699,9 @@ QRMonNetRegression[xs_, context_Association] := QRMonNetRegression[][xs, context
 
 QRMonNetRegression[][xs_, context_Association] := QRMonNetRegression[0.75][xs, context];
 
+QRMonNetRegression[opts:OptionsPattern[]][xs_, context_] :=
+    QRMonNetRegression[0.75, opts][xs, context];
+
 QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFunc, trainingData, testData, trainedNet, lowestVal},
 

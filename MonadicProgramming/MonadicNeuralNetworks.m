@@ -106,6 +106,23 @@ GenerateStateMonadCode[ "MonadicNeuralNetworks`NetMon", "FailureSymbol" -> $NetM
 (**************************************************************)
 
 
+ClearAll[NetMonSetNet]
+NetMonSetNet[$NetMonFailure] := $NetMonFailure;
+NetMonSetNet[xs_, context_] := NetMonSetNet[][xs, context];
+NetMonSetNet[][xs_, context_] := $NetMonFailure;
+NetMonSetNet[net:(_NetChain|_NetGraph)][xs_, context_] := NetMonUnit[ xs, Join[ context, <|"net"->net|> ] ];
+NetMonSetNet[__][___] := $NetMonFailure;
+
+
+ClearAll[NetMonTakeNet]
+NetMonTakeNet[$NetMonFailure] := $NetMonFailure;
+NetMonTakeNet[][$NetMonFailure] := $NetMonFailure;
+NetMonTakeNet[xs_, context_] := NetMonTakeNet[][xs, context];
+NetMonTakeNet[][xs_, context_] := Lookup[context, "net", $NetMonFailure];
+NetMonTakeNet[__][___] := $NetMonFailure;
+
+
+
 (**************************************************************)
 (* Training                                                   *)
 (**************************************************************)
