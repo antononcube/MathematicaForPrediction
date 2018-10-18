@@ -99,7 +99,7 @@ Needs["StateMonadCodeGenerator`"]
 
 (* Generate base functions of NetMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "MonadicQuantileRegression`NetMon", "FailureSymbol" -> $NetMonFailure, "StringContextNames" -> False ]
+GenerateStateMonadCode[ "MonadicNeuralNetworks`NetMon", "FailureSymbol" -> $NetMonFailure, "StringContextNames" -> False ]
 
 (**************************************************************)
 (* Setters / getters                                          *)
@@ -125,7 +125,7 @@ NetMonTrain[opts:OptionsPattern[]][xs_, context_] :=
 
 NetMonTrain[trainingData_?DataRulesForClassifyQ, opts:OptionsPattern[]][xs_, context_] :=
     Block[{res},
-      res = NetTrain[context["netChain"], trainingData, All, opts]
+      res = NetTrain[context["netChain"], trainingData, All, opts];
       NetMonUnit[res, <||>]
     ];
 
