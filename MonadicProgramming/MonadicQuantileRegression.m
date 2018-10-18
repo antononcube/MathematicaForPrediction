@@ -141,6 +141,10 @@ QRMonTakeOutliers::usage = "Gives the value of the key \"outliers\" from the mon
 
 QRMonTakeOutlierRegressionFunctions::usage = "Gives the value of the key \"outlierRegressionFunctions\" from the monad context."
 
+QRMonSetNet::usage = "Assigns the argument to the key \"net\" in the monad context."
+
+QRMonTakeNet::usage = "Gives the value of the key \"net\" from the monad context."
+
 QRMonDropData::usage = "Drops from the context the element with key \"data\"."
 
 QRMonDropRegressionFunctions::usage = "Drops from the context the element with key \"regressionFunctions\"."
@@ -170,6 +174,8 @@ using specified functions to fit."
 
 QRMonRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
 using specified functions to fit. (Same as QRMonQuantileRegressionFit.)"
+
+QRMonNetRegression::usage = "Regression using a neural network."
 
 QRMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers."
 
@@ -277,6 +283,31 @@ QRMonTakeOutlierRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
 QRMonTakeOutlierRegressionFunctions[xs_, context_] := context["outlierRegressionFunctions"];
 QRMonTakeOutlierRegressionFunctions[][xs_, context_] := context["outlierRegressionFunctions"];
 QRMonTakeOutlierRegressionFunctions[__][___] := $QRMonFailure;
+
+
+ClearAll[QRMonSetNet]
+QRMonSetNet[$QRMonFailure] := $QRMonFailure;
+QRMonSetNet[xs_, context_] := QRMonSetNet[][xs, context];
+QRMonSetNet[][xs_, context_] :=
+    Block[{net},
+      net =
+          NetChain[{
+            LinearLayer[15], BatchNormalizationLayer[],
+            ElementwiseLayer[Tanh], LinearLayer[10], BatchNormalizationLayer[],
+            ElementwiseLayer[Tanh], LinearLayer[1]},
+            "Input" -> 1, "Output" -> "Scalar" ];
+      QRMonUnit[ xs, Join[ context, <|"net"->net|> ] ]
+    ];
+QRMonSetNet[net_NetChain][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"net"->net|> ] ];
+QRMonSetNet[__][___] := $QRMonFailure;
+
+
+ClearAll[QRMonTakeNet]
+QRMonTakeNet[$QRMonFailure] := $QRMonFailure;
+QRMonTakeNet[][$QRMonFailure] := $QRMonFailure;
+QRMonTakeNet[xs_, context_] := QRMonTakeNet[][xs, context];
+QRMonTakeNet[][xs_, context_] := Lookup[context, "net", $QRMonFailure];
+QRMonTakeNet[__][___] := $QRMonFailure;
 
 
 (**************************************************************)
@@ -566,7 +597,7 @@ QRMonQuantileRegression[___][__] :=
         StringJoin[
           "The first argument is expected to be knots specification, (_Integer | {_?NumberQ..}). ",
           "The second option argument is expected to quantiles specification, {_?NumberQ..}."
-        ]
+        ],
         "QRMonQuantileRegression:"
       ];
 
@@ -651,6 +682,57 @@ QRMonQuantileRegressionFit[___][__] := $QRMonFailure;
 
 ClearAll[QRMonRegressionFit]
 QRMonRegressionFit = QRMonQuantileRegressionFit;
+
+
+
+(**************************************************************)
+(* Net regression                                            *)
+(**************************************************************)
+
+ClearAll[QRMonNetRegression];
+
+Options[QRMonNetRegression] = Options[NetTrain];
+
+QRMonNetRegression[$QRMonFailure] := $QRMonFailure;
+
+QRMonNetRegression[xs_, context_Association] := QRMonNetRegression[][xs, context];
+
+QRMonNetRegression[][xs_, context_Association] := QRMonNetRegression[0.75][xs, context];
+
+QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{data, qFunc, trainingData, testData, trainedNet, lowestVal},
+
+      If[ ! KeyExistsQ[context, "net"],
+        Echo["Cannot find a neural net. (Context key \"net\".).", "QRMonNetRegression:"];
+        Return[$QRMonFailure]
+      ];
+
+      data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
+
+      {trainingData, testData} = TakeDrop[RandomSample[data], Floor[splitRatio*Length[data]]];
+      trainingData = Rule @@@ trainingData;
+      trainingData[[All, 1]] = List /@ trainingData[[All, 1]];
+      testData = Rule @@@ testData;
+      testData[[All, 1]] = List /@ testData[[All, 1]];
+
+      {trainedNet, lowestVal} =
+          NetTrain[ context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"}, ValidationSet -> testData];
+
+      qFunc = Interpolation[Transpose[{data[[All, 1]], trainedNet /@ data[[All, 1]]}]];
+
+      QRMonUnit[qFunc,
+        Join[context,
+          <|"data"->data, "net" -> trainedNet,
+            "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], <| "net" -> qFunc |> ] |>
+        ]
+      ]
+    ] /; 0 < splitRatio < 1;
+
+QRMonNetRegression[___][__] :=
+    Block[{},
+      Echo["The first argument is expected to be a split ratio specification: a number between 0 and 1.", "QRMonNetRegression:"];
+      $QRMonFailure
+    ];
 
 
 (**************************************************************)
