@@ -719,7 +719,7 @@ QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
       testData[[All, 1]] = List /@ testData[[All, 1]];
 
       {trainedNet, lowestVal} =
-          NetTrain[ context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"}, ValidationSet -> testData];
+          NetTrain[ context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"}, ValidationSet -> testData, opts];
 
       qFunc = Interpolation[Transpose[{data[[All, 1]], trainedNet /@ data[[All, 1]]}]];
 
