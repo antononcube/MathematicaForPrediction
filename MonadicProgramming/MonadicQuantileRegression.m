@@ -691,7 +691,7 @@ QRMonRegressionFit = QRMonQuantileRegressionFit;
 
 ClearAll[QRMonNetRegression];
 
-Options[QRMonNetRegression] = Options[NetTrain];
+Options[QRMonNetRegression] = Prepend[Options[NetTrain], InterpolationOrder->3];
 
 QRMonNetRegression[$QRMonFailure] := $QRMonFailure;
 
@@ -703,12 +703,14 @@ QRMonNetRegression[opts:OptionsPattern[]][xs_, context_] :=
     QRMonNetRegression[0.75, opts][xs, context];
 
 QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
-    Block[{data, qFunc, trainingData, testData, trainedNet, lowestVal},
+    Block[{interpolationOrder, data, qFunc, netRegressionPoints, trainingData, testData, trainedNet, lowestVal},
 
       If[ ! KeyExistsQ[context, "net"],
         Echo["Cannot find a neural net. (Context key \"net\".).", "QRMonNetRegression:"];
         Return[$QRMonFailure]
       ];
+
+      interpolationOrder = OptionValue[QRMonNetRegression, InterpolationOrder];
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
 
@@ -719,13 +721,20 @@ QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
       testData[[All, 1]] = List /@ testData[[All, 1]];
 
       {trainedNet, lowestVal} =
-          NetTrain[ context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"}, ValidationSet -> testData, opts];
+          NetTrain[
+            context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"},
+            ValidationSet -> testData,
+            DeleteCases[ {opts}, HoldPattern[InterpolationOrder->_] ]
+          ];
 
-      qFunc = Interpolation[Transpose[{data[[All, 1]], trainedNet /@ data[[All, 1]]}]];
+      netRegressionPoints = Transpose[{data[[All, 1]], trainedNet /@ data[[All, 1]]}];
+      qFunc = Interpolation[ Union[netRegressionPoints], InterpolationOrder -> Round[interpolationOrder] ];
 
       QRMonUnit[qFunc,
         Join[context,
-          <|"data"->data, "net" -> trainedNet,
+          <|"data" -> data,
+            "net" -> trainedNet,
+            "netRegressionPoints" -> netRegressionPoints,
             "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], <| "net" -> qFunc |> ] |>
         ]
       ]
