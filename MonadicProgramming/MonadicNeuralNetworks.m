@@ -136,7 +136,8 @@ NetMonTrain[xs_, context_] := NetMonTrain[][xs, context];
 NetMonTrain[opts:OptionsPattern[]][xs_, context_] :=
     Block[{},
       If[DataRulesForClassifyQ[xs],
-        NetMonTrain[xs, opts][xs, context]
+        NetMonTrain[xs, opts][xs, context],
+        $NetMonFailure
       ]
     ];
 
