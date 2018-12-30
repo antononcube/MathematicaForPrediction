@@ -233,57 +233,17 @@ Needs["OutlierIdentifiers`"]
 
 GenerateStateMonadCode[ "MonadicQuantileRegression`QRMon", "FailureSymbol" -> $QRMonFailure, "StringContextNames" -> False ]
 
+GenerateMonadAccessors[
+  "MonadicQuantileRegression`QRMon",
+  {"data", "regressionFunctions", "outliers", "outlierRegressionFunctions", "net",
+    "dataPlot", "regressionFunctionsPlot",
+    "dataPlotOptions", "regressionFunctionsPlotOptions"},
+  "FailureSymbol" -> $QRMonFailure ];
+
+
 (**************************************************************)
 (* Setters / getters                                          *)
 (**************************************************************)
-
-ClearAll[QRMonSetData]
-QRMonSetData[$QRMonFailure] := $QRMonFailure;
-QRMonSetData[][$QRMonFailure] := $QRMonFailure;
-QRMonSetData[xs_, context_] := $QRMonFailure;
-QRMonSetData[data_List][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"data"->data|> ] ];
-QRMonSetData[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonTakeData]
-QRMonTakeData[$QRMonFailure] := $QRMonFailure;
-QRMonTakeData[][$QRMonFailure] := $QRMonFailure;
-QRMonTakeData[xs_, context_] := QRMonTakeData[][xs, context];
-QRMonTakeData[][xs_, context_] := QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
-QRMonTakeData[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonSetRegressionFunctions]
-QRMonSetRegressionFunctions[$QRMonFailure] := $QRMonFailure;
-QRMonSetRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
-QRMonSetRegressionFunctions[xs_, context_] := $QRMonFailure;
-QRMonSetRegressionFunctions[funcs_Association][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"regressionFunctions"->funcs|> ] ];
-QRMonSetRegressionFunctions[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonTakeRegressionFunctions]
-QRMonTakeRegressionFunctions[$QRMonFailure] := $QRMonFailure;
-QRMonTakeRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
-QRMonTakeRegressionFunctions[xs_, context_] := context["regressionFunctions"];
-QRMonTakeRegressionFunctions[][xs_, context_] := context["regressionFunctions"];
-QRMonTakeRegressionFunctions[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonTakeOutliers]
-QRMonTakeOutliers[$QRMonFailure] := $QRMonFailure;
-QRMonTakeOutliers[][$QRMonFailure] := $QRMonFailure;
-QRMonTakeOutliers[xs_, context_] := context["outliers"];
-QRMonTakeOutliers[][xs_, context_] := context["outliers"];
-QRMonTakeOutliers[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonTakeOutlierRegressionFunctions]
-QRMonTakeOutlierRegressionFunctions[$QRMonFailure] := $QRMonFailure;
-QRMonTakeOutlierRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
-QRMonTakeOutlierRegressionFunctions[xs_, context_] := context["outlierRegressionFunctions"];
-QRMonTakeOutlierRegressionFunctions[][xs_, context_] := context["outlierRegressionFunctions"];
-QRMonTakeOutlierRegressionFunctions[__][___] := $QRMonFailure;
-
 
 ClearAll[QRMonSetNet]
 QRMonSetNet[$QRMonFailure] := $QRMonFailure;
@@ -300,50 +260,6 @@ QRMonSetNet[][xs_, context_] :=
     ];
 QRMonSetNet[net_NetChain][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"net"->net|> ] ];
 QRMonSetNet[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonTakeNet]
-QRMonTakeNet[$QRMonFailure] := $QRMonFailure;
-QRMonTakeNet[][$QRMonFailure] := $QRMonFailure;
-QRMonTakeNet[xs_, context_] := QRMonTakeNet[][xs, context];
-QRMonTakeNet[][xs_, context_] := Lookup[context, "net", $QRMonFailure];
-QRMonTakeNet[__][___] := $QRMonFailure;
-
-
-(**************************************************************)
-(* Dropping data                                              *)
-(**************************************************************)
-
-ClearAll[QRMonDropData]
-QRMonDropData[$QRMonFailure] := $QRMonFailure;
-QRMonDropData[][$QRMonFailure] := $QRMonFailure;
-QRMonDropData[xs_, context_] := QRMonDropData[][xs, context];
-QRMonDropData[][xs_, context_] := QRMonDropFromContext["data"][xs, context];
-QRMonDropData[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonDropRegressionFunctions]
-QRMonDropRegressionFunctions[$QRMonFailure] := $QRMonFailure;
-QRMonDropRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
-QRMonDropRegressionFunctions[xs_, context_] := QRMonDropRegressionFunctions[][xs, context];
-QRMonDropRegressionFunctions[][xs_, context_] := QRMonDropFromContext["regressionFunctions"][xs, context];
-QRMonDropRegressionFunctions[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonDropOutliers]
-QRMonDropOutliers[$QRMonFailure] := $QRMonFailure;
-QRMonDropOutliers[][$QRMonFailure] := $QRMonFailure;
-QRMonDropOutliers[xs_, context_] := QRMonDropOutliers[][xs, context];
-QRMonDropOutliers[][xs_, context_] := QRMonDropFromContext["outliers"][xs, context];
-QRMonDropOutliers[__][___] := $QRMonFailure;
-
-
-ClearAll[QRMonDropOutlierRegressionFunctions]
-QRMonDropOutlierRegressionFunctions[$QRMonFailure] := $QRMonFailure;
-QRMonDropOutlierRegressionFunctions[][$QRMonFailure] := $QRMonFailure;
-QRMonDropOutlierRegressionFunctions[xs_, context_] := QRMonDropOutlierRegressionFunctions[][xs, context];
-QRMonDropOutlierRegressionFunctions[][xs_, context_] := QRMonDropFromContext["outlierRegressionFunctions"][xs, context];
-QRMonDropOutlierRegressionFunctions[__][___] := $QRMonFailure;
 
 
 (**************************************************************)
@@ -550,8 +466,8 @@ QRMonLeastSquaresFit[___][__] := $QRMonFailure;
 
 
 ClearAll[QRMonFit];
-
 QRMonFit = QRMonLeastSquaresFit;
+
 
 (**************************************************************)
 (* Quantile regression                                        *)
@@ -564,7 +480,7 @@ Options[QRMonQuantileRegression] = Options[QuantileRegression];
 Options[QRMonQuantileRegression] =
     ReplaceAll[
       Options[QRMonQuantileRegression],
-      HoldPattern[Method->_] -> ( Method -> {LinearProgramming, Method -> "CLP"} ) ];
+      HoldPattern[Method->_] -> ( Method -> {LinearProgramming, Method -> "CLP", Tolerance -> 10^(-3)} ) ];
 
 QRMonQuantileRegression[$QRMonFailure] := $QRMonFailure;
 
@@ -684,7 +600,6 @@ ClearAll[QRMonRegressionFit]
 QRMonRegressionFit = QRMonQuantileRegressionFit;
 
 
-
 (**************************************************************)
 (* Net regression                                            *)
 (**************************************************************)
@@ -802,6 +717,14 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
       listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
       plotOpts = Normal @ KeyTake[ {opts}, First /@ Options[Plot]];
       plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle->_] ];
+
+      If[ KeyExistsQ[context, "dataPlotOptions"],
+        listPlotOpts = Join[ context["dataPlotOptions"], listPlotOpts];
+      ];
+
+      If[ KeyExistsQ[context, "regressionFunctionsPlotOptions"],
+        plotOpts = Join[ context["regressionFunctionsPlotOptions"], plotOpts];
+      ];
 
       res=
           Which[
@@ -1144,7 +1067,7 @@ QRMonOutliers[__][__] :=
 
 ClearAll[QRMonOutliersPlot]
 
-Options[QRMonOutliersPlot] := { "Echo" -> True, "DateListPlot" -> False, ListPlot -> {Joined->False}, Plot -> {} };
+Options[QRMonOutliersPlot] := Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
 
 QRMonOutliersPlot[$QRMonFailure] := $QRMonFailure;
 
@@ -1153,7 +1076,7 @@ QRMonOutliersPlot[__][$QRMonFailure] := $QRMonFailure;
 QRMonOutliersPlot[xs_, context_Association] := QRMonOutliersPlot[][xs, context];
 
 QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{unit, listPlotFunc = ListPlot, listPlotOpts, res},
+    Block[{unit, listPlotFunc = ListPlot, listPlotOpts, plotOpts, res},
 
       unit =
           If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionFunctions"],
@@ -1162,9 +1085,19 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
             QRMonBind[ QRMonUnit[ xs, context ], QRMonOutliers ]
           ];
 
-      listPlotFunc = If[ TrueQ[OptionValue[QRMonOutliersPlot, "DateListPlot"]], DateListPlot, ListPlot ];
+      If[ TrueQ[OptionValue[QRMonOutliersPlot, "DateListPlot"]], listPlotFunc = DateListPlot ];
 
-      listPlotOpts = Normal @ KeyTake[ OptionValue[QRMonOutliersPlot, ListPlot], First /@ Options[listPlotFunc]];
+      listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
+      plotOpts = Normal @ KeyTake[ {opts}, First /@ Options[Plot]];
+      plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle->_] ];
+
+      If[ KeyExistsQ[context, "dataPlotOptions"],
+        listPlotOpts = Join[ context["dataPlotOptions"], listPlotOpts];
+      ];
+
+      If[ KeyExistsQ[context, "regressionFunctionsPlotOptions"],
+        plotOpts = Join[ context["regressionFunctionsPlotOptions"], plotOpts];
+      ];
 
 
       (* This can be improved: right now the regression quantiles are plotted over the outlier points. *)
@@ -1180,7 +1113,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
-              Evaluate[OptionValue[QRMonOutliersPlot, Plot]],
+              Evaluate[plotOpts],
               PlotStyle -> {Opacity[0.1], GrayLevel[0.9]},
               PerformanceGoal -> "Speed"
               (*PlotRange -> {MinMax[#data[[All,1]]], MinMax[#data[[All,2]]]}*)
