@@ -306,6 +306,18 @@ Monad's failure symbol is specified with the option \"FailureSymbol\"."
 AssociationModule::usage = "AssociationModule[asc_Association, body_] transforms the elements of asc into \
 symbol assignments ascAssign and executes Module[ ascAssign, body ]. The keys of asc are assumed to be strings."
 
+GenerateMonadDroper::usage = "GenerateMonadDroper[monadName_String, elementName_String] generates monadic \
+droper functions for specified monad and element names."
+
+GenerateMonadSetter::usage = "GenerateMonadSetter[monadName_String, elementName_String] generates monadic \
+setter functions for specified monad and element names."
+
+GenerateMonadTaker::usage = "GenerateMonadTaker[monadName_String, elementName_String] generates monadic \
+taker functions for specified monad and element names."
+
+GenerateMonadAccessors::usage = "GenerateMonadAccessors[monadName_String, elementNames:{_String..}] generates monadic \
+droper, setter, and taker functions for specified monad and element names."
+
 Begin["`Private`"]
 
 Attributes[AssociationModule] = HoldRest;
@@ -554,7 +566,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             fNo[MStateUnit[xs, context]],
             fMu[MStateUnit[xs, context]]
           ];
-      MStateIf[___][xs_, context:(_Association|_String)] := MStateFailureSymbol
+      MStateIf[___][xs_, context:(_Association|_String)] := MStateFailureSymbol;
 
       MStateNest[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateNest[f_, n_Integer][xs_, context_] := Nest[f, MStateUnit[xs, context], n];
@@ -582,6 +594,83 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
     (*NonCommutativeMultiply[NonCommutativeMultiply[Global`x, Global`y], Global`z];*)
 
     ];
+
+
+Clear[GenerateMonadSetter]
+Options[GenerateMonadSetter] = {"FailureSymbol" -> None};
+GenerateMonadSetter[monadName_String, elementName_String, opts : OptionsPattern[]] :=
+    With[{
+      MStateUnit = ToExpression[monadName <> "Unit"],
+      MStateSetter = ToExpression[monadName <> "Set" <> Capitalize[elementName]],
+      MStateFailureSymbol = OptionValue["FailureSymbol"],
+      dElementName = Decapitalize[elementName]
+    },
+
+      ClearAll[MStateSetter];
+
+      MStateSetter[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateSetter[][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateSetter[xs_, context_] := MStateFailureSymbol;
+      MStateSetter[arg_List][xs_, context_] := MStateUnit[ xs, Join[ context, <|dElementName->arg|> ] ];
+      MStateSetter[__][___] := MStateFailureSymbol;
+
+    ];
+
+
+Clear[GenerateMonadTaker]
+Options[GenerateMonadTaker] = {"FailureSymbol" -> None};
+GenerateMonadTaker[monadName_String, elementName_String, opts : OptionsPattern[]] :=
+    With[{
+      MState = ToExpression[monadName],
+      MStateTaker = ToExpression[monadName <> "Take" <> Capitalize[elementName]],
+      MStateFailureSymbol = OptionValue["FailureSymbol"],
+      dElementName = Decapitalize[elementName]
+    },
+
+      ClearAll[MStateTaker];
+
+      MStateTaker[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTaker[][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateTaker[xs_, context_] := context[dElementName];
+      MStateTaker[][xs_, context_] := context[dElementName];
+      MStateTaker[__][___] := MStateFailureSymbol;
+
+    ];
+
+
+Clear[GenerateMonadDroper]
+Options[GenerateMonadDroper] = {"FailureSymbol" -> None};
+GenerateMonadDroper[monadName_String, elementName_String, opts : OptionsPattern[]] :=
+    With[{
+      MState = ToExpression[monadName],
+      MStateDroper = ToExpression[monadName <> "Drop" <> Capitalize[elementName]],
+      MStateFailureSymbol = OptionValue["FailureSymbol"],
+      MStateDropFromContext = ToExpression[monadName <> "DropFromContext"],
+      dElementName = Decapitalize[elementName]
+    },
+
+      ClearAll[MStateDroper];
+
+      MStateDroper[MStateFailureSymbol] := MStateFailureSymbol;
+      MStateDroper[][MStateFailureSymbol] := MStateFailureSymbol;
+      MStateDroper[xs_, context_] := MStateDroper[][xs, context];
+      MStateDroper[][xs_, context_] := MStateDropFromContext[dElementName][xs, context];
+      MStateDroper[__][___] := MStateFailureSymbol;
+
+    ];
+
+
+Clear[GenerateMonadAccessors]
+Options[GenerateMonadAccessors] = Options[GenerateMonadSetter];
+GenerateMonadAccessors[monadName_String, elementName_String, opts : OptionsPattern[]] :=
+    GenerateMonadAccessors[monadName, {elementName}, opts ];
+GenerateMonadAccessors[monadName_String, elementNames:{_String..}, opts : OptionsPattern[]] :=
+    Block[{},
+      Map[GenerateMonadSetter[monadName, #, opts]&, elementNames];
+      Map[GenerateMonadTaker[monadName, #, opts]&, elementNames];
+      Map[GenerateMonadDroper[monadName, #, opts]&, elementNames];
+    ];
+
 
 End[] (* `Private` *)
 
