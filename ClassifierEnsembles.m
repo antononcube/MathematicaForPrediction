@@ -351,7 +351,7 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
 (* Calculating classifier ensemble measurements               *)
 (**************************************************************)
 
-ClearAll[EnsembleClassifierMeasurements]
+Clear[EnsembleClassifierMeasurements]
 
 EnsembleClassifierMeasurements::nargs =
     "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
@@ -420,7 +420,7 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
 (* Calculating classifier ensemble ROC data and plots         *)
 (**************************************************************)
 
-ClearAll[EnsembleClassifierROCData]
+Clear[EnsembleClassifierROCData]
 
 EnsembleClassifierROCData::nargs =
     "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
@@ -462,7 +462,7 @@ EnsembleClassifierROCData[aCL_Association,
 EnsembleClassifierROCData[___] := (Message[EnsembleClassifierROCData::nargs]; $Failed);
 
 
-ClearAll[EnsembleClassifierROCPlots];
+Clear[EnsembleClassifierROCPlots];
 
 EnsembleClassifierROCPlots::nargs =
     "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
