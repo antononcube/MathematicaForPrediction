@@ -56,7 +56,7 @@ Clear[CallGraph]
 
 Options[CallGraph] =
     Join[
-      { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True },
+      { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True, "AtomicSymbols" -> True },
       Options[Graph]
     ];
 
@@ -65,6 +65,7 @@ CallGraph[context_String, opts:OptionsPattern[] ] := CallGraph[{context}, opts ]
 CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
     Block[{pSymbs, pPrivateSymbs, dvs, dRes, aDependencyRules, gRules, grOpts},
 
+      (* Find the symbols in the contexts. *)
       pSymbs =
           Flatten@
               Map[
@@ -73,6 +74,7 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
                     Select[Map[ToExpression[c <> #] &, p], Head[#] === Symbol &]]
                 ], contexts];
 
+      (* Find the symbols in the private contexts. *)
       If[ TrueQ[OptionValue[CallGraph, "PrivateContexts"]],
         pPrivateSymbs =
             Flatten@
@@ -81,32 +83,47 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
         pSymbs = Join[pSymbs, pPrivateSymbs];
       ];
 
+      (* Find the definitions: down-values and sub-values. *)
       dvs = AssociationThread[pSymbs, MapThread[Join, {DownValues /@ pSymbs, SubValues /@ pSymbs}] ];
       dvs = Select[dvs, Length[#] > 0 &];
 
-      Block[{pSymbs = Keys[dvs]},
-        dRes = AssociationThread[
-          pSymbs ->
-              Map[Function[{s}, Map[! FreeQ[HoldPattern[#], s] &, dvs]], pSymbs]];
+      (* Drop atomic symbols. *)
+      If[ !TrueQ[OptionValue[CallGraph, "AtomicSymbols"]],
+        pSymbs = Keys[dvs]
       ];
+
+      (* Find dependencies. *)
+      dRes = AssociationThread[
+        pSymbs ->
+            Map[Function[{s}, Map[! FreeQ[HoldPattern[#], s] &, dvs]], pSymbs]];
 
       aDependencyRules = Map[Pick[Keys[#], Values[#]] &, dRes];
 
       gRules = Reverse /@ Flatten[Thread /@ Normal[aDependencyRules]];
 
-      (*Delete the self-referencing rules:*)
+      (* Delete self-referencing rules. *)
       If[ !TrueQ[OptionValue[CallGraph, "SelfReferencing"]],
         gRules = DeleteCases[gRules, x_ -> x_];
       ];
 
+      (* Add tooltips with usage messages. *)
       If[ TrueQ[OptionValue[CallGraph, "UsageTooltips"]],
         gRules = Map[Tooltip[#, #::usage] &, gRules, {2}];
       ];
 
+      (* Make the graph. *)
       grOpts = Normal @ KeyTake[ {opts}, First /@ Options[Graph]];
 
       Graph[gRules, grOpts, VertexLabels -> "Name"]
     ];
+
+CallGraph[___] :=
+    Block[{},
+      Message[CallGraph::args];
+      $Failed
+    ];
+
+CallGraph::args = "The first argument is expected to be a string or a list of strings; each string corresponds to a context."
 
 End[]; (* `Private` *)
 
