@@ -127,32 +127,6 @@ $QRMonFailure::usage = "Failure symbol for the monad QRMon."
 
 QRMonGetData::usage = "Get time series path data."
 
-QRMonSetData::usage = "Assigns the argument to the key \"data\" in the monad context. \
-(The rest of the monad context is unchanged.)"
-
-QRMonTakeData::usage = "Gives the value of the key \"data\" from the monad context."
-
-QRMonSetRegressionFunctions::usage = "Assigns the argument to the key \"regressionFunctions\" in the monad context. \
-(The rest of the monad context is unchanged.)"
-
-QRMonTakeRegressionFunctions::usage = "Gives the value of the key \"regressionFunctions\" from the monad context."
-
-QRMonTakeOutliers::usage = "Gives the value of the key \"outliers\" from the monad context."
-
-QRMonTakeOutlierRegressionFunctions::usage = "Gives the value of the key \"outlierRegressionFunctions\" from the monad context."
-
-QRMonSetNet::usage = "Assigns the argument to the key \"net\" in the monad context."
-
-QRMonTakeNet::usage = "Gives the value of the key \"net\" from the monad context."
-
-QRMonDropData::usage = "Drops from the context the element with key \"data\"."
-
-QRMonDropRegressionFunctions::usage = "Drops from the context the element with key \"regressionFunctions\"."
-
-QRMonDropOutlierRegressionFunctions::usage = "Drops from the context the element with key \"outlierRegressionFunctions\"."
-
-QRMonDropOutliers::usage = "Drops from the context the element with key \"outliers\"."
-
 QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
 QRMonDeleteMissing::usage = "Deletes records with missing data."
