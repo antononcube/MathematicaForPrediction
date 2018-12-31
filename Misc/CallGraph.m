@@ -119,8 +119,9 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
       (* Make the graph. *)
       grOpts = Normal @ KeyTake[ {opts}, First /@ Options[Graph]];
 
-      Graph[gRules, grOpts, VertexLabels -> "Name"]
+      Graph[gRules, Sequence @@ grOpts, VertexLabels -> "Name"]
     ];
+
 
 CallGraph[___] :=
     Block[{},
