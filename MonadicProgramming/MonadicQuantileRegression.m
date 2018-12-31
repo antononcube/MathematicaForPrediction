@@ -210,7 +210,6 @@ GenerateStateMonadCode[ "MonadicQuantileRegression`QRMon", "FailureSymbol" -> $Q
 GenerateMonadAccessors[
   "MonadicQuantileRegression`QRMon",
   {"data", "regressionFunctions", "outliers", "outlierRegressionFunctions", "net",
-    "dataPlot", "regressionFunctionsPlot",
     "dataPlotOptions", "regressionFunctionsPlotOptions"},
   "FailureSymbol" -> $QRMonFailure ];
 
