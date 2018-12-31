@@ -26,12 +26,16 @@ SymbolQ[x_] := Head[x] === Symbol;
 
 Clear[CallGraph]
 
-Options[CallGraph] = { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True };
+Options[CallGraph] =
+    Join[
+      { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True },
+      Options[Graph]
+    ];
 
 CallGraph[context_String, opts:OptionsPattern[] ] := CallGraph[{context}, opts ];
 
 CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
-    Block[{pSymbs, pPrivateSymbs, dvs, dRes, aDependencyRules, gRules},
+    Block[{pSymbs, pPrivateSymbs, dvs, dRes, aDependencyRules, gRules, grOpts},
 
       pSymbs =
           Flatten@
@@ -71,7 +75,9 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
         gRules = Map[Tooltip[#, #::usage] &, gRules, {2}];
       ];
 
-      Graph[gRules, VertexLabels -> "Name"]
+      grOpts = Normal @ KeyTake[ {opts}, First /@ Options[Graph]];
+
+      Graph[gRules, grOpts, VertexLabels -> "Name"]
     ];
 
 End[]; (* `Private` *)
