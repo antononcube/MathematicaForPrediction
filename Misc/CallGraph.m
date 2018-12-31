@@ -56,14 +56,14 @@ Clear[CallGraph]
 
 Options[CallGraph] =
     Join[
-      { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True, "AtomicSymbols" -> True },
+      { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True, "AtomicSymbols" -> True, Exclusions -> {} },
       Options[Graph]
     ];
 
 CallGraph[context_String, opts:OptionsPattern[] ] := CallGraph[{context}, opts ];
 
 CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
-    Block[{pSymbs, pPrivateSymbs, dvs, dRes, aDependencyRules, gRules, grOpts},
+    Block[{pSymbs, pPrivateSymbs, exclSymbs, dvs, dRes, aDependencyRules, gRules, grOpts},
 
       (* Find the symbols in the contexts. *)
       pSymbs =
@@ -91,6 +91,11 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
       If[ !TrueQ[OptionValue[CallGraph, "AtomicSymbols"]],
         pSymbs = Keys[dvs]
       ];
+
+      (* Exclude specified symbols. *)
+      exclSymbs = Flatten[{OptionValue[CallGraph, Exclusions]}];
+      pSymbs = Complement[pSymbs, exclSymbs];
+      dvs = KeyDrop[dvs, exclSymbs];
 
       (* Find dependencies. *)
       dRes = AssociationThread[
