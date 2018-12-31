@@ -35,7 +35,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-12-31 *)
 
-(* :Package Version: 0.6 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: call graph, dependencies, down values, sub values *)
@@ -45,6 +45,9 @@ BeginPackage["CallGraph`"];
 
 CallGraph::usage = "CallGraph[contexts:{_String..}, opts___] makes a call graph for the functions of \
 specified (package) contexts."
+
+CallGraphAddUsageMessages::usage = "CallGraphAddUsageMessages[gr_Graph] adds tooltips with usage messages for \
+the nodes of the call graph gr."
 
 Begin["`Private`"];
 
@@ -119,7 +122,11 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
       (* Make the graph. *)
       grOpts = Normal @ KeyTake[ {opts}, First /@ Options[Graph]];
 
-      Graph[gRules, Sequence @@ grOpts, VertexLabels -> "Name"]
+      If[ TrueQ[OptionValue[CallGraph, "UsageTooltips"]],
+        Graph[gRules, Sequence @@ grOpts, VertexLabels -> "Name"],
+        (*ELSE*)
+        Graph[gRules, Sequence @@ grOpts ]
+      ]
     ];
 
 
@@ -130,6 +137,15 @@ CallGraph[___] :=
     ];
 
 CallGraph::args = "The first argument is expected to be a string or a list of strings; each string corresponds to a context."
+
+
+Clear[CallGraphAddUsageMessages];
+
+CallGraphAddUsageMessages[gr_Graph] :=
+    Block[{grInfoRules},
+      grInfoRules = Map[Tooltip[#, #::usage] &, EdgeList[gr], {2}];
+      Graph[grInfoRules, VertexLabels -> "Name"]
+    ];
 
 End[]; (* `Private` *)
 
