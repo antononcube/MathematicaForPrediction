@@ -49,7 +49,12 @@ specified (package) contexts."
 CallGraphAddUsageMessages::usage = "CallGraphAddUsageMessages[gr_Graph] adds tooltips with usage messages for \
 the nodes of the call graph gr."
 
+CallGraphAddPrintDefinitionsButtons::usage = "CallGraphAddPrintDefinitionsButtons[gr_Graph] adds buttons for \
+printing the codes corresponding to the nodes of the call graph gr."
+
 Begin["`Private`"];
+
+(*Needs["GeneralUtilities`"];*)
 
 Clear[SymbolQ]
 SymbolQ[x_] := Head[x] === Symbol;
@@ -141,10 +146,23 @@ CallGraph::args = "The first argument is expected to be a string or a list of st
 
 Clear[CallGraphAddUsageMessages];
 
-CallGraphAddUsageMessages[gr_Graph] :=
+Options[CallGraphAddUsageMessages] = Options[Graph];
+
+CallGraphAddUsageMessages[gr_Graph, opts:OptionsPattern[] ] :=
     Block[{grInfoRules},
       grInfoRules = Map[Tooltip[#, #::usage] &, EdgeList[gr], {2}];
-      Graph[grInfoRules, VertexLabels -> "Name"]
+      Graph[grInfoRules, opts, VertexLabels -> "Name"]
+    ];
+
+
+Clear[CallGraphAddPrintDefinitionsButtons];
+
+Options[CallGraphAddPrintDefinitionsButtons] = Options[Graph];
+
+CallGraphAddPrintDefinitionsButtons[gr_Graph, opts:OptionsPattern[] ] :=
+    Block[{grDefRules},
+      grDefRules = Map[Button[#, GeneralUtilities`PrintDefinitions[#]]&, EdgeList[gr], {2}];
+      Graph[grDefRules, opts, VertexLabels -> "Name"]
     ];
 
 End[]; (* `Private` *)
