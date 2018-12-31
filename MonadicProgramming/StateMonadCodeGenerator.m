@@ -614,6 +614,7 @@ GenerateMonadSetter[monadName_String, elementName_String, opts : OptionsPattern[
       MStateSetter[arg_List][xs_, context_] := MStateUnit[ xs, Join[ context, <|dElementName->arg|> ] ];
       MStateSetter[__][___] := MStateFailureSymbol;
 
+      MStateSetter::usage = "Assigns the argument to the key \"" <> dElementName <> "\" in the monad context."
     ];
 
 
@@ -635,6 +636,7 @@ GenerateMonadTaker[monadName_String, elementName_String, opts : OptionsPattern[]
       MStateTaker[][xs_, context_] := context[dElementName];
       MStateTaker[__][___] := MStateFailureSymbol;
 
+      MStateTaker::usage = "Gives the value of the key \"" <> dElementName <> "\" from the monad context."
     ];
 
 
@@ -657,6 +659,7 @@ GenerateMonadDroper[monadName_String, elementName_String, opts : OptionsPattern[
       MStateDroper[][xs_, context_] := MStateDropFromContext[dElementName][xs, context];
       MStateDroper[__][___] := MStateFailureSymbol;
 
+      MStateDroper::usage = "Drops from the context the element with key \"" <> dElementName <> "\"."
     ];
 
 
