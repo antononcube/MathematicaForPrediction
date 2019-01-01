@@ -74,6 +74,13 @@
       CallGraphAddPrintDefinitionsButtons[gr, GraphLayout -> "SpringElectricalEmbedding", ImageSize -> 900]
 
 
+   ## Generate circular embedding graph color
+
+      cols = RandomSample[ ColorData["Rainbow"] /@ Rescale[Range[VertexCount[gr]]]]]
+
+      CallGraphBiColorCircularEmbedding[ CallGraphAddPrintDefinitionsButtons[gr, ImageSize -> 1200], "VertexColors" -> cols ]
+
+
    # Options
 
    The package functions "CallGraph*" take all of the options of the function Graph.
@@ -118,7 +125,7 @@
    2. [ ] Use the symbols up-values to make the call graph.
    3. [ ] Consider/implement call graph making with specified patterns and list of symbols.
           Instead of just using contexts and exclusions. (The current approach/implementation.)
-   4. [ ] Implement special radial graph visualization.
+   4. [X] Implement special radial graph visualization. (Circular embedding with edges that are Bezier curves.)
    5. [ ] Provide special functions for "call sequence" tracing for a specified symbol.
 
 *)
@@ -133,6 +140,9 @@ the nodes of the call graph gr."
 
 CallGraphAddPrintDefinitionsButtons::usage = "CallGraphAddPrintDefinitionsButtons[gr_Graph] adds buttons for \
 printing the codes corresponding to the nodes of the call graph gr."
+
+CallGraphBiColorCircularEmbedding::usage = "CallGraphBiColorCircularEmbedding[gr_Graph] applies to the graph gr \
+the layout \"CircularEmbedding\" and makes renders using Bezier curves and two colors."
 
 Begin["`Private`"];
 
@@ -229,6 +239,10 @@ CallGraph[___] :=
 CallGraph::args = "The first argument is expected to be a string or a list of strings; each string corresponds to a context."
 
 
+(***********************************************************)
+(* CallGraphAddUsageMessages                               *)
+(***********************************************************)
+
 Clear[CallGraphAddUsageMessages];
 
 Options[CallGraphAddUsageMessages] = Options[Graph];
@@ -240,6 +254,10 @@ CallGraphAddUsageMessages[gr_Graph, opts:OptionsPattern[] ] :=
     ];
 
 
+(***********************************************************)
+(* CallGraphAddPrintDefinitionsButtons                     *)
+(***********************************************************)
+
 Clear[CallGraphAddPrintDefinitionsButtons];
 
 Options[CallGraphAddPrintDefinitionsButtons] = Options[Graph];
@@ -248,6 +266,64 @@ CallGraphAddPrintDefinitionsButtons[gr_Graph, opts:OptionsPattern[] ] :=
     Block[{grDefRules},
       grDefRules = Map[Button[#, GeneralUtilities`PrintDefinitions[#], Appearance->Frameless]&, EdgeList[gr], {2}];
       Graph[grDefRules, opts, VertexLabels -> "Name"]
+    ];
+
+
+(***********************************************************)
+(* CallGraphBiColorCircularEmbedding                       *)
+(***********************************************************)
+
+(*
+  The functions eSf and vSf are taken from kglr's Mathematica Stackexchange answer:
+
+    https://mathematica.stackexchange.com/a/188390/34008 .
+
+  The functions were modified to take additional arguments for:
+  point size, edge thickness, edge halves drawing functions.
+*)
+
+ClearAll[eSf, vSf];
+
+eSf[g_, cols_, edgeThickness_: Thin, firstHalfEdgeFunc_: Line,
+  secodHalfEdgeFunc_: Arrow] :=
+    Module[{bsf =
+        BSplineFunction[{#[[1]],
+          RegionNearest[
+            Disk[Mean[#[[{1, -1}]]], Norm[#[[1]] - #[[-1]]]], {0,
+            0}], #[[-1]]}], p1 = Subdivide[0, 1/2, 50],
+      p2 = Subdivide[1/2, 1, 50]}, {edgeThickness,
+      cols[[VertexIndex[g, #2[[1]]]]], firstHalfEdgeFunc[bsf /@ p1],
+      cols[[VertexIndex[g, #2[[2]]]]], secodHalfEdgeFunc[bsf /@ p2]}] &;
+
+vSf[g_, cols_, pointSize_: Large] :=
+    Module[{off = If[-Pi/2 < ArcTan @@ # < Pi/2, Left, Right]}, {cols[[
+        VertexIndex[g, #2]]],
+      Text[Style[Framed[#2, FrameStyle -> None],
+        FontSize -> Scaled[.03]], #, {off, Center},
+        ArcTan[#] (off /. {Left -> 1, Right -> -1})],
+      PointSize[pointSize], Point@#}] &;
+
+
+Clear[CallGraphBiColorCircularEmbedding]
+
+Options[CallGraphBiColorCircularEmbedding] = Join[ {"VertexColors" -> Automatic }, Options[Graph] ];
+
+CallGraphBiColorCircularEmbedding[gr_Graph, opts:OptionsPattern[] ] :=
+    Block[{cc, cols, grOpts},
+
+      cols = OptionValue["VertexColors"];
+      If[ TrueQ[ cols === Automatic ],
+        cc = PageRankCentrality[gr];
+        cols = ColorData[{"Rainbow", {1, VertexCount@gr}}] /@ Range[VertexCount[gr]];
+        cols = cols[[Ordering[cc]]];
+      ];
+
+      grOpts = Normal @ KeyTake[ {opts}, First /@ Options[Graph]];
+
+      Graph[EdgeList[gr], Sequence @@ grOpts,
+        VertexLabels -> None, GraphLayout -> "CircularEmbedding",
+        VertexShapeFunction -> vSf[gr, cols],
+        EdgeShapeFunction -> eSf[gr, cols, If[EdgeCount[gr]/(VertexCount[gr]+1) < 1.5, Thick, Thin]]]
     ];
 
 End[]; (* `Private` *)
