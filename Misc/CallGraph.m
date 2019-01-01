@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2019 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -46,8 +46,8 @@
    This package provides functions for making a call graph between the functions that belong to specified contexts.
 
    The main function is CallGraph that gives a graph with vertices that are functions names and edges that
-   show which function calls which other functions. With the default option values the graph vertices labeled with
-   function names that have as tooltips the corresponding usage messages.
+   show which function calls which other functions. With the default option values the graph vertices are labeled
+   and have tooltips corresponding to usage messages.
 
 
    # General design
