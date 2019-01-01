@@ -290,11 +290,11 @@ CallGraphAddPrintDefinitionsButtons[gr_Graph, opts:OptionsPattern[] ] :=
 (***********************************************************)
 
 (*
-  The functions eSf and vSf are taken from kglr's Mathematica Stackexchange answer:
+  The functions eSf and vSf were taken from kglr's Mathematica Stack Exchange answer:
 
     https://mathematica.stackexchange.com/a/188390/34008 .
 
-  The functions were modified to take additional arguments for:
+  Those functions were modified to take additional arguments for:
   point size, edge thickness, edge halves drawing functions.
 *)
 
