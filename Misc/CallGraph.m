@@ -1,5 +1,5 @@
 (*
-    Call graph for context functions Mathematica package
+    Call graph generation for context functions Mathematica package
     Copyright (C) 2018  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -50,6 +50,21 @@
    function names that have as tooltips the corresponding usage messages.
 
 
+   # General design
+
+   The main package function is CallGraph. With the default values of its options CallGraph produces a graph with
+   labeled nodes and the labels have tooltips that show the usage messages of the functions. It assumed that this
+   is would be the most generated type of call graph when studying the code of different sets of packages.
+
+   We can make simple, non-label, non-tooltip graph using `CallGraph[ ... , "UsageTooltips" -> False ]`.
+
+   The simple graph can be modified with the functions:
+
+      CallGraphAddUsageMessages, CallGraphAddPrintDefinitionsButtons, CallGraphBiColorCircularEmbedding
+
+   Each of those functions is decorating the simple graph in a particular way.
+
+
    # Usage examples
 
    This imports a package from GitHub:
@@ -58,7 +73,7 @@
 
    ## Generate a call graph with usage tooltips
 
-      CallGraph["MonadicQuantileRegression`", GraphLayout -> "SpringElectricalEmbedding" ]
+      CallGraph["MonadicQuantileRegression`", GraphLayout -> "SpringElectricalEmbedding", ImageSize -> Large]
 
 
    ## Generate a call graph with exclusions
@@ -66,19 +81,20 @@
       gr =
         CallGraph["MonadicQuantileRegression`",
                   Exclusions -> {QRMonUnit, QRMon, QRMonBind, $QRMonFailure, ToExpression /@ Names["QRMonTake*"], ToExpression /@ Names["QRMonSet*"]},
-                  GraphLayout -> "SpringEmbedding", ImageSize -> Large];
+                  GraphLayout -> "SpringEmbedding", ImageSize -> Large]
 
 
    ## Generate call graph with buttons to print definitions
 
-      CallGraphAddPrintDefinitionsButtons[gr, GraphLayout -> "SpringElectricalEmbedding", ImageSize -> 900]
+      gr0 = CallGraph["MonadicQuantileRegression`", "UsageTooltips" -> False];
+      gr1 = CallGraphAddPrintDefinitionsButtons[gr0, GraphLayout -> "StarEmbedding", ImageSize -> 900]
 
 
    ## Generate circular embedding graph color
 
-      cols = RandomSample[ ColorData["Rainbow"] /@ Rescale[Range[VertexCount[gr]]]]]
+      cols = RandomSample[ ColorData["Rainbow"] /@ Rescale[Range[VertexCount[gr1]]]];
 
-      CallGraphBiColorCircularEmbedding[ CallGraphAddPrintDefinitionsButtons[gr, ImageSize -> 1200], "VertexColors" -> cols ]
+      CallGraphBiColorCircularEmbedding[ gr1, "VertexColors" -> cols, ImageSize -> 900 ]
 
 
    # Options
@@ -99,7 +115,7 @@
      Symbols to be excluded from the call graph.
 
    - "UsageTooltips"
-     Should vertex labesl with the usage tooltips be added.
+     Should vertex labels with the usage tooltips be added.
 
    - "UsageTooltipsStyle"
      The style of the usage tooltips.
@@ -142,7 +158,7 @@ CallGraphAddPrintDefinitionsButtons::usage = "CallGraphAddPrintDefinitionsButton
 printing the codes corresponding to the nodes of the call graph gr."
 
 CallGraphBiColorCircularEmbedding::usage = "CallGraphBiColorCircularEmbedding[gr_Graph] applies to the graph gr \
-the layout \"CircularEmbedding\" and makes renders using Bezier curves and two colors."
+the layout \"CircularEmbedding\" and renders the gr edges using Bezier curves and two colors."
 
 Begin["`Private`"];
 
