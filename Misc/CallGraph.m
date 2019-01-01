@@ -39,7 +39,89 @@
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: call graph, dependencies, down values, sub values *)
-(* :Discussion: *)
+(* :Discussion:
+
+   # In brief
+
+   This package provides functions for making a call graph between the functions that belong to specified contexts.
+
+   The main function is CallGraph that gives a graph with vertices that are functions names and edges that
+   show which function calls which other functions. With the default option values the graph vertices labeled with
+   function names that have as tooltips the corresponding usage messages.
+
+
+   # Usage examples
+
+   This imports a package from GitHub:
+
+      Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
+
+   ## Generate a call graph with usage tooltips
+
+      CallGraph["MonadicQuantileRegression`", GraphLayout -> "SpringElectricalEmbedding" ]
+
+
+   ## Generate a call graph with exclusions
+
+      gr =
+        CallGraph["MonadicQuantileRegression`",
+                  Exclusions -> {QRMonUnit, QRMon, QRMonBind, $QRMonFailure, ToExpression /@ Names["QRMonTake*"], ToExpression /@ Names["QRMonSet*"]},
+                  GraphLayout -> "SpringEmbedding", ImageSize -> Large];
+
+
+   ## Generate call graph with buttons to print definitions
+
+      CallGraphAddPrintDefinitionsButtons[gr, GraphLayout -> "SpringElectricalEmbedding", ImageSize -> 900]
+
+
+   # Options
+
+   The package functions "CallGraph*" take all of the options of the function Graph.
+   Below are described the additional options of CallGraph.
+
+   - "PrivateContexts"
+     Should the functions of the private contexts be included in the call graph.
+
+   - "SelfReferencing"
+     Should the self referencing edges be excluded or not.
+
+   - "AtomicSymbols"
+     Should atomic symbols be included in the call graph.
+
+   - Exclusions
+     Symbols to be excluded from the call graph.
+
+   - "UsageTooltips"
+     Should vertex labesl with the usage tooltips be added.
+
+   - "UsageTooltipsStyle"
+     The style of the usage tooltips.
+
+
+   # Possible issues
+
+   - With large context (e.g. "System`") the call graph generation might take long time. (See the TODOs below.)
+
+   - With "PrivateContexts"->False the call graph will be empty if the public functions do not depend on each other.
+
+   - For certain packages the scanning of the down values would produce (multiple) error messages or warnings.
+
+
+   Anton Antonov
+   Windermere, Florida, USA
+   2019-01-01
+*)
+
+(*
+   TODO
+   1. [ ] Special handling for the "System`" context.
+   2. [ ] Use the symbols up-values to make the call graph.
+   3. [ ] Consider/implement call graph making with specified patterns and list of symbols.
+          Instead of just using contexts and exclusions. (The current approach/implementation.)
+   4. [ ] Implement special radial graph visualization.
+   5. [ ] Provide special functions for "call sequence" tracing for a specified symbol.
+
+*)
 
 BeginPackage["CallGraph`"];
 
@@ -64,14 +146,15 @@ Clear[CallGraph]
 
 Options[CallGraph] =
     Join[
-      { "PrivateContexts" -> False, "SelfReferencing" -> False, "UsageTooltips" -> True, "AtomicSymbols" -> True, Exclusions -> {} },
+      { "PrivateContexts" -> False, "SelfReferencing" -> False, "AtomicSymbols" -> True, Exclusions -> {},
+        "UsageTooltips" -> True, "UsageTooltipsStyle" -> "Subsubsection" },
       Options[Graph]
     ];
 
 CallGraph[context_String, opts:OptionsPattern[] ] := CallGraph[{context}, opts ];
 
 CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
-    Block[{pSymbs, pPrivateSymbs, exclSymbs, dvs, dRes, aDependencyRules, gRules, grOpts},
+    Block[{pSymbs, pPrivateSymbs, exclSymbs, dvs, dRes, aDependencyRules, gRules, grOpts, utStyle, styleFunc},
 
       (* Find the symbols in the contexts. *)
       pSymbs =
@@ -121,7 +204,9 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
 
       (* Add tooltips with usage messages. *)
       If[ TrueQ[OptionValue[CallGraph, "UsageTooltips"]],
-        gRules = Map[Tooltip[#, #::usage] &, gRules, {2}];
+        utStyle = OptionValue[CallGraph, "UsageTooltipsStyle"];
+        styleFunc = If[ TrueQ[ utStyle === None ], Identity, Style[#,utStyle]& ];
+        gRules = Map[Tooltip[#, styleFunc @ Row[{Style[SymbolName[#],Italic,Bold], ": ", ToString[#::usage]}] ]&, gRules, {2}]
       ];
 
       (* Make the graph. *)
@@ -161,7 +246,7 @@ Options[CallGraphAddPrintDefinitionsButtons] = Options[Graph];
 
 CallGraphAddPrintDefinitionsButtons[gr_Graph, opts:OptionsPattern[] ] :=
     Block[{grDefRules},
-      grDefRules = Map[Button[#, GeneralUtilities`PrintDefinitions[#]]&, EdgeList[gr], {2}];
+      grDefRules = Map[Button[#, GeneralUtilities`PrintDefinitions[#], Appearance->Frameless]&, EdgeList[gr], {2}];
       Graph[grDefRules, opts, VertexLabels -> "Name"]
     ];
 
