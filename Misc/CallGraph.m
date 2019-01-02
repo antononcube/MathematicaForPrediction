@@ -45,20 +45,25 @@
 
    This package provides functions for making a call graph between the functions that belong to specified contexts.
 
-   The main function is CallGraph that gives a graph with vertices that are functions names and edges that
-   show which function calls which other functions. With the default option values the graph vertices are labeled
-   and have tooltips corresponding to usage messages.
+   The main function is `CallGraph` that gives a graph with vertices that are functions names and edges that show
+   which functions call which other functions. With the default option values the graph vertices are labeled and
+   have tooltips with function usage messages.
 
 
    # General design
 
-   The main package function is CallGraph. With the default values of its options CallGraph produces a graph with
-   labeled nodes and the labels have tooltips that show the usage messages of the functions. It assumed that this
-   is would be the most generated type of call graph when studying the code of different sets of packages.
+   The call graphs produced by the main package function `CallGraph` are assumed to be used for studying or refactoring
+   of large code bases written with Mathematica / Wolfram Language.
 
-   We can make simple, non-label, non-tooltip graph using `CallGraph[ ... , "UsageTooltips" -> False ]`.
+   The argument of `CallGraph` is a context string or a list of context strings.
 
-   The simple graph can be modified with the functions:
+   With the default values of its options `CallGraph` produces a graph with labeled nodes and the labels have tooltips
+   that show the usage messages of the functions from the specified contexts.
+   It is assumed that this would be the most useful call graph type for studying the codes of different sets of packages.
+
+   We can make simple, non-label, non-tooltip call graph using `CallGraph[ ... , "UsageTooltips" -> False ]`.
+
+   The simple call graph can be modified with the functions:
 
       CallGraphAddUsageMessages, CallGraphAddPrintDefinitionsButtons, CallGraphBiColorCircularEmbedding
 
@@ -339,7 +344,7 @@ CallGraphBiColorCircularEmbedding[gr_Graph, opts:OptionsPattern[] ] :=
       Graph[EdgeList[gr], Sequence @@ grOpts,
         VertexLabels -> None, GraphLayout -> "CircularEmbedding",
         VertexShapeFunction -> vSf[gr, cols],
-        EdgeShapeFunction -> eSf[gr, cols, If[EdgeCount[gr]/(VertexCount[gr]+1) < 1.5, Thick, Thin]]]
+        EdgeShapeFunction -> eSf[gr, cols, If[EdgeCount[gr]/(VertexCount[gr]+1) > 1.5 || EdgeCount[gr] > 400, Thin, Thick, Thin]]]
     ];
 
 End[]; (* `Private` *)
