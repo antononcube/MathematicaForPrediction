@@ -8,21 +8,28 @@ January 2019
 
 ## In brief
 
-This document describes the package [CallGraph.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/CallGraph.m) for making call graphs between the functions that belong to specified contexts.
+This document describes the package 
+[CallGraph.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/CallGraph.m) 
+for making call graphs between the functions that belong to specified contexts.
 
-The main function is `CallGraph` that gives a graph with vertices that are functions names and edges that show which function calls which other functions. With the default option values the graph vertices are labeled and have tooltips corresponding usage messages.
+The main function is `CallGraph` that gives a graph with vertices that are functions names and edges that show 
+which functions call which other functions. With the default option values the graph vertices are labeled and 
+have tooltips with function usage messages.
 
 ## General design
 
-The call graphs produced by the main package function `CallGraph` are assumed to be used for studying or refactoring of large code bases written with Mathematica / Wolfram Language.
+The call graphs produced by the main package function `CallGraph` are assumed to be used for studying or refactoring 
+of large code bases written with Mathematica / Wolfram Language.
 
 The argument of `CallGraph` is a context string or a list of context strings.
 
-With the default values of its options `CallGraph` produces a graph with labeled nodes and the labels have tooltips that show the usage messages of the functions. It assumed that this is would be the most generated type of call graph when studying the code of different sets of packages.
+With the default values of its options `CallGraph` produces a graph with labeled nodes and the labels have tooltips 
+that show the usage messages of the functions from the specified contexts.
+It is assumed that this would be the most useful call graph type for studying the codes of different sets of packages.
 
-We can make simple, non-label, non-tooltip graph using `CallGraph[ ... , "UsageTooltips" -> False ]`.
+We can make simple, non-label, non-tooltip call graph using `CallGraph[ ... , "UsageTooltips" -> False ]`.
 
-The simple graph can be modified with the functions:
+The simple call graph can be modified with the functions:
 
     CallGraphAddUsageMessages, CallGraphAddPrintDefinitionsButtons, CallGraphBiColorCircularEmbedding
 
