@@ -127,6 +127,8 @@ $QRMonFailure::usage = "Failure symbol for the monad QRMon."
 
 QRMonGetData::usage = "Get time series path data."
 
+QRMonTakeData::usage = "Takes the time series path data."
+
 QRMonEchoDataSummary::usage = "Echoes a summary of the data."
 
 QRMonDeleteMissing::usage = "Deletes records with missing data."
@@ -217,6 +219,15 @@ GenerateMonadAccessors[
 (**************************************************************)
 (* Setters / getters                                          *)
 (**************************************************************)
+
+(* This is has to be re-implemented because of the use of QRMonGetData. *)
+ClearAll[QRMonTakeData]
+QRMonTakeData[$QRMonFailure] := $QRMonFailure;
+QRMonTakeData[][$QRMonFailure] := $QRMonFailure;
+QRMonTakeData[xs_, context_] := QRMonTakeData[][xs, context];
+QRMonTakeData[][xs_, context_] := QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
+QRMonTakeData[__][___] := $QRMonFailure;
+
 
 Clear[QRMonSetNet]
 QRMonSetNet[$QRMonFailure] := $QRMonFailure;
@@ -351,7 +362,7 @@ QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
 
       axesOpt = OptionValue[QRMonRescale, Axes];
 
-      data = QRMonTakeData[xs, context];
+      data = QRMonTakeData[ xs, context ];
 
       If[data === $QRMonFailure, Return[$QRMonFailure]];
 
