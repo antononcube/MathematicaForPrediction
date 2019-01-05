@@ -171,6 +171,8 @@ QRMonOutliers::usage = "Find the outliers in the data."
 
 QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
 
+QRMonPickPathPoints::usage = "Pick points close to the regression functions."
+
 QRMonSeparate::usage = "Separate the argument by the regression functions in the context."
 
 QRMonSeparateToFractions::usage = "Separate the argument by the regression functions in the context \
@@ -1045,6 +1047,7 @@ QRMonOutliers[__][__] :=
       $QRMonFailure
     ];
 
+
 (**************************************************************)
 (* Outliers plot                                              *)
 (**************************************************************)
@@ -1114,6 +1117,44 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
 
 
 QRMonOutliersPlot[___][__] := $QRMonFailure;
+
+
+(**************************************************************)
+(* Pick path points                                           *)
+(**************************************************************)
+
+Clear[QRMonPickPathPoints]
+
+QRMonPickPathPoints[$QRMonFailure] := $QRMonFailure;
+
+QRMonPickPathPoints[__][$QRMonFailure] := $QRMonFailure;
+
+QRMonPickPathPoints[xs_, context_Association] := QRMonPickPathPoints[][xs, context];
+
+QRMonPickPathPoints[][xs_, context_Association] := QRMonPickPathPoints[0.1][xs, context];
+
+QRMonPickPathPoints[threshold_?NumberQ][xs_, context_] :=
+    Block[{data, qFuncs, res},
+
+      data = QRMonTakeData[xs, context];
+
+      If[ !KeyExistsQ[context, "regressionFunctions"],
+        Echo["Cannot find regression functions.", "QRMonPickPathPoints:"];
+        Return[$QRMonFailure]
+      ];
+
+      qFuncs = context["regressionFunctions"];
+
+      res = Map[ Function[{qf}, Select[data, Abs[qf[#[[1]]] - #[[2]]] <= threshold &]], qFuncs ];
+
+      QRMonUnit[res, context]
+    ] /; threshold >= 0;
+
+QRMonPickPathPoints[___][__] :=
+    Block[{},
+      Echo["The first argument is expected to be a non-negative number.", "QRMonPickPathPoints:"];
+      $QRMonFailure
+    ];
 
 
 (**************************************************************)
