@@ -446,42 +446,57 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             ];
       ];
       MStateBind[___] := MStateFailureSymbol;
+      MStateBind::usage = "Moand binding function.";
 
       MStateEcho[MStateFailureSymbol] := MStateFailureSymbol;
       MStateEcho[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateEcho[echoArgs__][x_, context_Association] := (Echo[echoArgs]; MState[x, context]);
       MStateEcho[x_, context_Association] := (Echo[Short[MState[x, context]]]; MState[x, context]);
       MStateEcho[][x_, context_Association] := MStateEcho[x, context];
+      MStateEcho::usage = "Echoes the argument. If no argument is given the short print of the monad object is echoed.";
+
 
       MStateEchoValue[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoValue[x_, context_Association] := (Echo[x,"value:"]; MState[x, context]);
 
       MStateEchoValue[][MStateFailureSymbol] := MStateEchoValue[MStateFailureSymbol];
       MStateEchoValue[][x_, context_Association] := MStateEchoValue[x, context];
+      MStateEchoValue::usage = "Echoes the monad value.";
+
 
       MStateEchoFunctionValue[f___][MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoFunctionValue[f___][x_, context_Association] := (EchoFunction[f][x]; MState[x, context]);
+      MStateEchoFunctionValue::usage = "Echoes function application over the monad value.";
+
 
       MStateEchoContext[MStateFailureSymbol] := (Echo[MStateFailureSymbol]; MStateFailureSymbol);
       MStateEchoContext[x_, context_Association] := (Echo[context,"context:"]; MState[x, context]);
 
       MStateEchoContext[][MStateFailureSymbol] := MStateEchoContext[MStateFailureSymbol];
       MStateEchoContext[][x_, context_Association] := MStateEchoContext[x, context];
+      MStateEchoContext::usage = "Echoes the monad context.";
+
 
       MStateEchoFunctionContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateEchoFunctionContext[f___][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
+      MStateEchoFunctionContext::usage = "Echoes function application over the monad context.";
+
 
       MStateTakeValue[MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeValue[x_, context_] := x;
 
       MStateTakeValue[][MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeValue[][x_, context_] := x;
+      MStateTakeValue::usage = "Takes the monad value.";
+
 
       MStateTakeContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeContext[x_, context_] := context;
 
       MStateTakeContext[][MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeContext[][x_, context_] := context;
+      MStateTakeContext::usage = "Takes the monad context.";
+
 
       MStatePutContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutContext[newContext_Association][x_, context_Association] := MState[x, newContext];
@@ -493,16 +508,22 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               MState[x, newContext]
             ];
       ];
+      MStatePutContext::usage = "Replaces the monad context with the argument.";
+
 
       MStateSetContext = MStatePutContext;
 
       MStatePutValue[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutValue[newValue_][x_, context_] := MState[newValue, context];
+      MStatePutValue::usage = "Replaces the monad value with the argument.";
+
 
       MStateSetValue = MStatePutValue;
 
       MStateModifyContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateModifyContext[f_][x_, context_Association] := MState[x, f[context]];
+      MStateModifyContext::usage = SymbolName[MState] <> "ModifyContext[f] replaces the monad context f[context].";
+
 
       MStateAddToContext[MStateFailureSymbol] := MStateFailureSymbol;
       MStateAddToContext[___][MStateFailureSymbol] := MStateFailureSymbol;
@@ -510,25 +531,43 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateAddToContext[][x_Association, context_Association] := MState[{}, Join[context, x]];
       MStateAddToContext[x_Association, context_Association] := MState[{}, Join[context, x]];
       MStateAddToContext[arg_Association][x_, context_Association] := MState[x, Join[context, arg]];
+      MStateAddToContext::usage =
+          SymbolName[MState] <> "AddToContext[varName_String] adds to the monad context the monad value under key varName.\n" <>
+              SymbolName[MState] <> "AddToContext[arg_Association] joins the monad context with arg.\n" <>
+              SymbolName[MState] <> "AddToContext[] joins the monad context with the monad value.";
+
 
       MStateRetrieveFromContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateRetrieveFromContext[varName_String][x_, context_Association] := MState[context[varName], context];
+      MStateRetrieveFromContext::usage =
+          SymbolName[MState] <> "RetrieveFromContext[varName_String] retrieves from the monad context the value of the key varName.";
+
 
       MStateDropFromContext[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateDropFromContext[varNames:(_String|{_String..})][x_, context_Association] := MState[x, KeyDrop[context, varNames]];
+      MStateDropFromContext::usage = "Drop from the monad context elements withe specified keys.";
+
 
       MStateOption[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateOption[f_][xs_, context_] :=
           Block[{res = f[xs, context]}, If[FreeQ[res, MStateFailureSymbol], res, MState[xs, context]]];
+      MStateOption::usage =
+          "If the application of the argument to the monad produces monad failure the monad is unchanged.";
+
 
       MStateIfElse[testFunc_, fYes_, fNo_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateIfElse[testFunc_, fYes_, fNo_][xs_, context_] :=
           Block[{testRes = testFunc[xs, context]},
             If[TrueQ[testRes], fYes[xs, context], fNo[xs, context]]
           ];
+      MStateIfElse::usage =
+          SymbolName[MState] <> "IfElse[testFunc_, fYes_, fNo_] if TrueQ[testFunc[xs, context]] then fYes[xs, context], otherwise fNo[xs, context].";
+
 
       MStateWhen[testFunc_, f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateWhen[testFunc_, f_][xs_, context_] := MStateIfElse[testFunc, f, MStateUnit][xs, context];
+      MStateWhen::usage = "Shorter version of " <> SymbolName[MState] <> "IfElse.";
+
 
       (* Iteration functions *)
       MStateIterate[___][___] := MStateFailureSymbol;
