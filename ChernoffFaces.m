@@ -365,7 +365,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
 ChernoffFace[___] := (Message[ChernoffFace::pars]; $Failed);
 
 
-ClearAll[ChernoffFaceAutoColored]
+Clear[ChernoffFaceAutoColored]
 
 ChernoffFaceAutoColored[vec_?VectorQ, opts : OptionsPattern[]] :=
     ChernoffFaceAutoColored[vec, ColorData["Pastel"], opts];
