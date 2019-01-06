@@ -248,9 +248,13 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
 
       (* Drop atomic symbols. *)
       atomicSymbolsQ = TrueQ[OptionValue[CallGraph, "AtomicSymbols"]];
-      If[ !atomicSymbolsQ,
-        pSymbs = Select[ pSymbs, FunctionQ ]
-      ];
+
+      pSymbs =
+          If[ atomicSymbolsQ,
+            Select[ pSymbs, SymbolQ ],
+            (*ELSE*)
+            Select[ pSymbs, FunctionQ ]
+          ];
 
       (* Exclude specified symbols. *)
       exclSymbs = Flatten[{OptionValue[CallGraph, Exclusions]}];
