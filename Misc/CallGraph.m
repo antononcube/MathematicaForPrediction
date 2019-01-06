@@ -269,7 +269,7 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
 
       aDependencyRules = Map[ Intersection[pSymbs, #]&, dRes];
 
-      gRules = Reverse /@ Flatten[Thread /@ Normal[aDependencyRules]];
+      gRules = Flatten[Thread /@ Normal[aDependencyRules]];
 
       (* Delete self-referencing rules. *)
       If[ !TrueQ[OptionValue[CallGraph, "SelfReferencing"]],
