@@ -153,6 +153,8 @@
 
 BeginPackage["CallGraph`"];
 
+FunctionDependencies::usage = "Find functions called by the down values and sub values of the argument."
+
 CallGraph::usage = "CallGraph[contexts:{_String..}, opts___] makes a call graph for the functions of \
 specified (package) contexts."
 
@@ -172,6 +174,45 @@ Begin["`Private`"];
 Clear[SymbolQ]
 SymbolQ[x_] := Head[x] === Symbol;
 
+(***********************************************************)
+(* Dependencies                                               *)
+(***********************************************************)
+
+(*
+  Initial implementation by Szabolcs Horvat:
+    https://mathematica.stackexchange.com/a/4344/34008
+*)
+
+Clear[FunctionQ]
+SetAttributes[FunctionQ, HoldAll]
+FunctionQ[sym_Symbol] :=
+    ((DownValues[sym] =!= {}) || SubValues[sym] =!= {}) && (OwnValues[sym] === {});
+
+Clear[FunctionDependencies]
+Options[FunctionDependencies] = {"AtomicSymbols" -> False };
+SetAttributes[FunctionDependencies, HoldAll]
+FunctionDependencies[sym_Symbol, opts:OptionsPattern[] ] :=
+    Block[{atomicSymbolsQ, testFunc},
+      atomicSymbolsQ = TrueQ[OptionValue[FunctionDependencies, "AtomicSymbols"]];
+      With[{ functionQ = If[ atomicSymbolsQ, SymbolQ, FunctionQ] },
+        Union @
+            Join[
+              List @@
+                  Select[Union@
+                      Level[(Hold @@ DownValues[sym])[[All, 2]], {-1}, Hold, Heads -> True],
+                    functionQ],
+              List @@
+                  Select[Union@
+                      Level[(Hold @@ SubValues[sym])[[All, 2]], {-1}, Hold, Heads -> True],
+                    functionQ]
+            ]
+      ]
+    ];
+
+
+(***********************************************************)
+(* CallGraph                                               *)
+(***********************************************************)
 
 Clear[CallGraph]
 
@@ -185,7 +226,7 @@ Options[CallGraph] =
 CallGraph[context_String, opts:OptionsPattern[] ] := CallGraph[{context}, opts ];
 
 CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
-    Block[{pSymbs, pPrivateSymbs, exclSymbs, dvs, dRes, aDependencyRules, gRules, grOpts, utStyle, styleFunc},
+    Block[{pSymbs, pPrivateSymbs, exclSymbs, atomicSymbolsQ, dRes, aDependencyRules, gRules, grOpts, utStyle, styleFunc},
 
       (* Find the symbols in the contexts. *)
       pSymbs =
@@ -205,26 +246,24 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
         pSymbs = Join[pSymbs, pPrivateSymbs];
       ];
 
-      (* Find the definitions: down-values and sub-values. *)
-      dvs = AssociationThread[pSymbs, MapThread[Join, {DownValues /@ pSymbs, SubValues /@ pSymbs}] ];
-      dvs = Select[dvs, Length[#] > 0 &];
-
       (* Drop atomic symbols. *)
-      If[ !TrueQ[OptionValue[CallGraph, "AtomicSymbols"]],
-        pSymbs = Keys[dvs]
+      atomicSymbolsQ = TrueQ[OptionValue[CallGraph, "AtomicSymbols"]];
+      If[ !atomicSymbolsQ,
+        pSymbs = Select[ pSymbs, FunctionQ ]
       ];
 
       (* Exclude specified symbols. *)
       exclSymbs = Flatten[{OptionValue[CallGraph, Exclusions]}];
       pSymbs = Complement[pSymbs, exclSymbs];
-      dvs = KeyDrop[dvs, exclSymbs];
 
       (* Find dependencies. *)
-      dRes = AssociationThread[
-        pSymbs ->
-            Map[Function[{s}, Map[! FreeQ[HoldPattern[#], s] &, dvs]], pSymbs]];
+      dRes =
+          AssociationThread[
+            pSymbs,
+            Map[ FunctionDependencies[#, "AtomicSymbols" -> atomicSymbolsQ]&, pSymbs]
+          ];
 
-      aDependencyRules = Map[Pick[Keys[#], Values[#]] &, dRes];
+      aDependencyRules = Map[ Intersection[pSymbs, #]&, dRes];
 
       gRules = Reverse /@ Flatten[Thread /@ Normal[aDependencyRules]];
 
