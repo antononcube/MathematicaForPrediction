@@ -318,12 +318,18 @@ CallGraph::args = "The first argument is expected to be a string or a list of st
 
 Clear[CallGraphAddUsageMessages];
 
-Options[CallGraphAddUsageMessages] = Options[Graph];
+Options[CallGraphAddUsageMessages] = Join[ {"UsageTooltipsStyle"->"Subsubsection"}, Options[Graph] ];
 
 CallGraphAddUsageMessages[gr_Graph, opts:OptionsPattern[] ] :=
-    Block[{grInfoRules},
-      grInfoRules = Map[Tooltip[#, #::usage] &, EdgeList[gr], {2}];
-      Graph[grInfoRules, opts, VertexLabels -> "Name"]
+    Block[{grOpts, utStyle, styleFunc, gRules},
+
+      grOpts = FilterRules[ {opts}, Options[Graph]];
+
+      utStyle = OptionValue[CallGraphAddUsageMessages, "UsageTooltipsStyle"];
+      styleFunc = If[ TrueQ[ utStyle === None ], Identity, Style[#,utStyle]& ];
+      gRules = Map[Tooltip[#, styleFunc @ Row[{Style[SymbolName[#],Italic,Bold], ": ", ToString[#::usage]}] ]&, EdgeList[gr], {2}];
+
+      Graph[gRules, Sequence @@ grOpts, VertexLabels -> "Name"]
     ];
 
 
