@@ -183,16 +183,16 @@ SymbolQ[x_] := Head[x] === Symbol;
     https://mathematica.stackexchange.com/a/4344/34008
 *)
 
-Clear[FunctionQ]
+ClearAll[FunctionQ]
 SetAttributes[FunctionQ, HoldAll]
 FunctionQ[sym_Symbol] :=
     ((DownValues[sym] =!= {}) || SubValues[sym] =!= {}) && (OwnValues[sym] === {});
 
-Clear[FunctionDependencies]
-Options[FunctionDependencies] = {"AtomicSymbols" -> False };
-SetAttributes[FunctionDependencies, HoldAll]
+ClearAll[FunctionDependencies]
+Options[FunctionDependencies] = {"AtomicSymbols" -> True };
+SetAttributes[FunctionDependencies, HoldFirst];
 FunctionDependencies[sym_Symbol, opts:OptionsPattern[] ] :=
-    Block[{atomicSymbolsQ, testFunc},
+    Block[{atomicSymbolsQ},
       atomicSymbolsQ = TrueQ[OptionValue[FunctionDependencies, "AtomicSymbols"]];
       With[{ functionQ = If[ atomicSymbolsQ, SymbolQ, FunctionQ] },
         Union @
@@ -234,7 +234,7 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
               Map[
                 Function[{c},
                   Block[{p = Names[c <> "*"]},
-                    Select[Map[ToExpression[c <> #] &, p], Head[#] === Symbol &]]
+                    Select[Map[ToExpression[c <> #] &, p], SymbolQ]]
                 ], contexts];
 
       (* Find the symbols in the private contexts. *)
@@ -252,7 +252,6 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
       pSymbs =
           If[ atomicSymbolsQ,
             Select[ pSymbs, SymbolQ ],
-            (*ELSE*)
             Select[ pSymbs, FunctionQ ]
           ];
 
@@ -262,11 +261,9 @@ CallGraph[contexts:{_String..}, opts:OptionsPattern[] ] :=
 
       (* Find dependencies. *)
       dRes =
-          AssociationThread[
-            pSymbs,
-            Map[ FunctionDependencies[#, "AtomicSymbols" -> atomicSymbolsQ]&, pSymbs]
-          ];
+          Association[ Map[ # -> FunctionDependencies[#, "AtomicSymbols" -> atomicSymbolsQ] &, pSymbs] ];
 
+      (* Restrict to symbols in the contexts. *)
       aDependencyRules = Map[ Intersection[pSymbs, #]&, dRes];
 
       gRules = Flatten[Thread /@ Normal[aDependencyRules]];
