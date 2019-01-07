@@ -167,6 +167,18 @@ printing the codes corresponding to the nodes of the call graph gr."
 CallGraphBiColorCircularEmbedding::usage = "CallGraphBiColorCircularEmbedding[gr_Graph] applies to the graph gr \
 the layout \"CircularEmbedding\" and renders the gr edges using Bezier curves and two colors."
 
+NodeInducedInEdges::usage = "NodeInducedInEdges[gr_Graph, nd_?AtomQ, k_Integer:3] \
+finds the edges of the graph gr that make paths finishing at the node nd; \
+the paths are at most k edges long."
+
+NodeInducedOutEdges::usage = "NodeInducedOutEdges[gr_Graph, nd_?AtomQ, k_Integer:3] \
+finds the edges of the graph gr that make paths starting from the node nd; \
+the paths are at most k edges long."
+
+NodeInducedEdges::usage = "NodeInducedEdges[gr_Graph, nd_?AtomQ, k_Integer:3] \
+finds the edges of the graph gr that make paths starting from the node nd or finishing at nd; \
+the paths are at most k edges long."
+
 Begin["`Private`"];
 
 (*Needs["GeneralUtilities`"];*)
@@ -175,7 +187,7 @@ Clear[SymbolQ]
 SymbolQ[x_] := Head[x] === Symbol;
 
 (***********************************************************)
-(* Dependencies                                               *)
+(* Dependencies                                            *)
 (***********************************************************)
 
 (*
@@ -386,6 +398,37 @@ CallGraphBiColorCircularEmbedding[gr_Graph, opts:OptionsPattern[] ] :=
         VertexShapeFunction -> vSf[gr, cols],
         EdgeShapeFunction -> eSf[gr, cols, If[EdgeCount[gr]/(VertexCount[gr]+1) > 1.5 || EdgeCount[gr] > 400, Thin, Thick, Thin]]]
     ];
+
+
+(***********************************************************)
+(* Sub-graph making                                        *)
+(***********************************************************)
+
+Clear[NodeInducedInEdges, NodeInducedOutEdges, NodeInducedEdges];
+
+NodeInducedInEdges[gr_Graph, node_?AtomQ, n_Integer: 3] :=
+    Union@Flatten@Rest@
+        NestList[
+          Flatten[Map[Cases[EdgeList[gr], _ \[DirectedEdge] #] &, #[[All, 1]]]] &,
+          {node \[DirectedEdge] node},
+          n
+        ];
+
+NodeInducedOutEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
+    Union@Flatten@Rest@
+        NestList[
+          Flatten[Map[Cases[EdgeList[gr], # \[DirectedEdge] _] &, #[[All, 2]]]] &,
+          {node \[DirectedEdge] node},
+          n
+        ];
+
+NodeInducedEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
+    Union@Flatten@Rest@
+        NestList[
+          Flatten[Map[Cases[EdgeList[gr], # \[DirectedEdge] _ | _ \[DirectedEdge] #] &, Union[Flatten[List @@@ #]]]] &,
+          {node \[DirectedEdge] node},
+          n
+        ];
 
 End[]; (* `Private` *)
 
