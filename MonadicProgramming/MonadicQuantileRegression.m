@@ -825,7 +825,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
           ];
 
       If[ TrueQ[OptionValue[QRMonErrorPlots, "Echo"]],
-        Echo[res, "Relative error plots:"];
+        Echo[res, If[relativeErrorsQ, "Relative error plots:", "Error plots:"]];
       ];
 
       QRMonUnit[res, context]
