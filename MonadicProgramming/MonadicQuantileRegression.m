@@ -762,18 +762,24 @@ QRMonDateListPlot[__][__] := $QRMonFailure;
 
 Clear[QRMonErrors]
 
+Options[QRMonErrors] = { "RelativeErrors" -> True };
+
 QRMonErrors[$QRMonFailure] := $QRMonFailure;
 
 QRMonErrors[xs_, context_Association] := QRMonErrors[][xs, context];
 
-QRMonErrors[][xs_, context_] :=
-    Block[{res},
+QRMonErrors[][xs_, context_] := QRMonErrors["RelativeErrors"->True][xs, context];
+
+QRMonErrors[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{res, relativeErrorsQ},
+
+      relativeErrorsQ = TrueQ[OptionValue[QRMonErrors, "RelativeErrors"]];
 
       res =
           Association @
               KeyValueMap[
                 Function[{k, f},
-                  k -> Map[ Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/ If[ p[[2]] == 0, 1, p[[2]] ]}], context["data"] ]
+                  k -> Map[ Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/ If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ]}], context["data"] ]
                 ],
                 context["regressionFunctions"]
               ];
@@ -790,18 +796,20 @@ QRMonErrors[__][__] := $QRMonFailure;
 
 Clear[QRMonErrorPlots]
 
-Options[QRMonErrorPlots] = Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
+Options[QRMonErrorPlots] = Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False, "RelativeErrors" -> True}, Options[ListPlot] ];
 
 QRMonErrorPlots[$QRMonFailure] := $QRMonFailure;
 
 QRMonErrorPlots[xs_, context_Association] := QRMonErrorPlots[][xs, context];
 
 QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{res, listPlotFunc = ListPlot, listPlotOpts},
+    Block[{res, listPlotFunc = ListPlot, listPlotOpts, relativeErrorsQ},
 
       listPlotFunc = If[ TrueQ[OptionValue[QRMonErrorPlots, "DateListPlot"]], DateListPlot, ListPlot ];
 
       listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
+
+      relativeErrorsQ = TrueQ[OptionValue[QRMonErrorPlots, "RelativeErrors"]];
 
       (* The error values can be reused from QRMonErrors, but it seems easier to just computed them here. *)
       res =
@@ -809,7 +817,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
             Function[{k, f},
               k ->
                   listPlotFunc[
-                    Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]]) / If[ p[[2]] == 0, 1, p[[2]] ] }], context["data"] ],
+                    Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]]) / If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ] }], context["data"] ],
                     listPlotOpts,
                     Joined->False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
             ],
