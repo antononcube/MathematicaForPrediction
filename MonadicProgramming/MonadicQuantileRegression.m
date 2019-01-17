@@ -171,7 +171,8 @@ QRMonOutliers::usage = "Find the outliers in the data."
 
 QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
 
-QRMonPickPathPoints::usage = "Pick points close to the regression functions."
+QRMonPickPathPoints::usage = "Pick points close to the regression functions using a specified threshold. \
+With option setting \"PickAboveThreshold\"->True the points picked are away from the regression functions."
 
 QRMonSeparate::usage = "Separate the argument by the regression functions in the context."
 
@@ -1133,16 +1134,14 @@ QRMonOutliersPlot[___][__] := $QRMonFailure;
 
 Clear[QRMonPickPathPoints]
 
+Options[QRMonPickPathPoints] = { "PickAboveThreshold" -> False };
+
 QRMonPickPathPoints[$QRMonFailure] := $QRMonFailure;
 
 QRMonPickPathPoints[__][$QRMonFailure] := $QRMonFailure;
 
-QRMonPickPathPoints[xs_, context_Association] := QRMonPickPathPoints[][xs, context];
-
-QRMonPickPathPoints[][xs_, context_Association] := QRMonPickPathPoints[0.1][xs, context];
-
-QRMonPickPathPoints[threshold_?NumberQ][xs_, context_] :=
-    Block[{data, qFuncs, res},
+QRMonPickPathPoints[threshold_?NumberQ, opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{data, qFuncs, res, criteriaFunc = LessEqual},
 
       data = QRMonTakeData[xs, context];
 
@@ -1153,7 +1152,11 @@ QRMonPickPathPoints[threshold_?NumberQ][xs_, context_] :=
 
       qFuncs = context["regressionFunctions"];
 
-      res = Map[ Function[{qf}, Select[data, Abs[qf[#[[1]]] - #[[2]]] <= threshold &]], qFuncs ];
+      If[ TrueQ[OptionValue[QRMonPickPathPoints, "PickAboveThreshold"]],
+        criteriaFunc = Greater;
+      ];
+
+      res = Map[ Function[{qf}, Select[data, criteriaFunc[ Abs[qf[#[[1]]] - #[[2]]], threshold] &]], qFuncs ];
 
       QRMonUnit[res, context]
     ] /; threshold >= 0;
