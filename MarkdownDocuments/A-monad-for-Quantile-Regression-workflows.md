@@ -2,7 +2,7 @@
 
 ### ***Version 1.0***
 
-Anton Antonov
+Anton Antonov  
 [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)   
 [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
 [MathematicaVsR at GitHub](https://github.com/antononcube/MathematicaVsR/tree/master/Projects)   
@@ -10,9 +10,21 @@ June-July 2018
 
 ## Introduction
 
-In this document we describe the design and implementation of a (software programming) monad for [Quantile Regression](https://en.wikipedia.org/wiki/Quantile_regression) workflows specification and execution. The design and implementation are done with Mathematica / Wolfram Language (WL).
+In this document we describe the design and implementation of a (software programming) monad for 
+[Quantile Regression](https://en.wikipedia.org/wiki/Quantile_regression) 
+workflows specification and execution. 
+The design and implementation are done with Mathematica / Wolfram Language (WL).
 
-**What is Quantile Regression? :** Assume we have a set of two dimensional points each point being a pair of an independent variable value and a dependent variable value. We want to find a curve that is a function of the independent variable that splits the points in such a way that, say, 30% of the points are above that curve. This is done with [Quantile Regression](https://en.wikipedia.org/wiki/Quantile_regression), see [[Wk2](https://en.wikipedia.org/wiki/Quantile_regression), [CN1](http://www.econ.uiuc.edu/~roger/research/rq/QReco.pdf), [AA2](https://mathematicaforprediction.wordpress.com/2013/12/16/quantile-regression-through-linear-programming/), [AA3](https://mathematicaforprediction.wordpress.com/2014/01/01/quantile-regression-with-b-splines/)]. Quantile Regression is a method to estimate the variable relations for all parts of the distribution. (Not just, say, the mean of the relationships found with Least Squares Regression.)
+**What is Quantile Regression? :** Assume we have a set of two dimensional points each point being a pair of 
+an independent variable value and a dependent variable value. 
+We want to find a curve that is a function of the independent variable that splits the points in such a way 
+that, say, 30% of the points are above that curve. 
+This is done with [Quantile Regression](https://en.wikipedia.org/wiki/Quantile_regression), 
+see [[Wk2](https://en.wikipedia.org/wiki/Quantile_regression), [CN1](http://www.econ.uiuc.edu/~roger/research/rq/QReco.pdf),
+[AA2](https://mathematicaforprediction.wordpress.com/2013/12/16/quantile-regression-through-linear-programming/), 
+[AA3](https://mathematicaforprediction.wordpress.com/2014/01/01/quantile-regression-with-b-splines/)]. 
+Quantile Regression is a method to estimate the variable relations for all parts of the distribution. 
+(Not just, say, the mean of the relationships found with Least Squares Regression.)
 
 The goal of the monad design is to make the specification of Quantile Regression workflows (relatively) easy, straightforward, by following a certain main scenario and specifying variations over that scenario. Since Quantile Regression is often compared with Least Squares Regression and some type of filtering (like, Moving Average) those functionalities should be included in the monad design scenarios.
 
@@ -60,37 +72,16 @@ The document has the following structure.
 
 **Remark:** One can read only the sections "Introduction", "Design consideration", "Monad design", and "QRMon overview". That set of sections provide a fairly good, programming language agnostic exposition of the substance and novel ideas of this document.
 
-The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
+The table above is produced with the package 
+["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), 
+[[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), 
+[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], 
+and some of the explanations below also utilize that package.
 
-As it was mentioned above the monad QRMon can be seen as a DSL. Because of this the monad pipelines made with QRMon are sometimes called "specifications".
+As it was mentioned above the monad QRMon can be seen as a DSL. Because of this the monad pipelines made with QRMon 
+are sometimes called "specifications".
 
 **Remark:** With "*regression quantile*" we mean "a curve or function that is computed with Quantile Regression".
-
-### Contents description
-
-The document has the following structure.
-
-   + The sections "Package load" and "Data load" obtain the needed code and data.
-
-      + (Needed and put upfront from the ["Reproducible research"](https://en.wikipedia.org/wiki/Reproducibility#Reproducible_research) point of view.)
-
-   + The sections "Design consideration" and "Monad design" provide motivation and design decisions rationale.
-
-   + The sections "QRMon overview" and "Monad elements" provide technical description of the QRMon monad needed to utilize it.
-
-      + (Using a fair amount of examples.)
-
-   + The section "Unit tests" describes the tests used in the development of the QRMon monad.
-
-      + (The random pipelines unit tests are especially interesting.)
-
-   + The section "Future plans" outlines future directions of development.
-
-      + (The most interesting and important one is the ["conversational agent"](https://github.com/antononcube/ConversationalAgents/tree/master/Projects/TimeSeriesWorkflowsAgent) direction.)
-
-   + The section "Implementation notes" just says that QRMon's development process and this document follow the ones of the classifications workflows monad ClCon, [[AA6](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/)].
-
-**Remark:** One can read only the sections "Introduction", "Design consideration", "Monad design", and "QRMon overview". That set of sections provide a fairly good, programming language agnostic exposition of the substance and novel ideas of this document.
 
 ## Package load
 
@@ -108,7 +99,9 @@ The following commands load the packages [[AAp1](https://github.com/antononcube/
 
 In this section we load data that is used in the rest of the document. The time series data is obtained through WL's repository.
 
-The data summarization and plots are done through QRMon, which in turn uses the function RecordsSummary from the package ["MathematicaForPredictionUtilities.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), [[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)].
+The data summarization and plots are done through QRMon, which in turn uses the function RecordsSummary from the package 
+["MathematicaForPredictionUtilities.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), 
+[[AAp6](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)].
 
 ### Distribution data
 
