@@ -174,10 +174,12 @@ QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if n
 QRMonPickPathPoints::usage = "Pick points close to the regression functions using a specified threshold. \
 With option setting \"PickAboveThreshold\"->True the points picked are away from the regression functions."
 
-QRMonSeparate::usage = "Separate the argument by the regression functions in the context."
+QRMonSeparate::usage = "Separate the argument by the regression functions in the context. \
+If no argument is given the data in the monad object is separated."
 
 QRMonSeparateToFractions::usage = "Separate the argument by the regression functions in the context \
-and find the corresponding fractions."
+and find the corresponding fractions. \
+If no argument is given the data in the monad object is separated."
 
 QRMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles."
 
