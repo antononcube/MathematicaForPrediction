@@ -624,7 +624,7 @@ Consider the problem of making a time series that is a simulation of a process g
 
 More formally, 
 
-   + we are given a  time-axis grid (regular or irregular),
+   + we are given a time-axis grid (regular or irregular),
 
    + we consider each grid node to correspond to a random variable,
 
@@ -889,6 +889,6 @@ A lot of the functionalities and signatures of QRMon were designed and programed
 [PS1] Patrick Scheibe, [Mathematica (Wolfram Language) support for IntelliJ IDE](https://github.com/halirutan/Mathematica-IntelliJ-Plugin)A, (2013-2018), [Mathematica-IntelliJ-Plugin at GitHub](https://github.com/halirutan/Mathematica-IntelliJ-Plugin).
    URL: [https://github.com/halirutan/Mathematica-IntelliJ-Plugin](https://github.com/halirutan/Mathematica-IntelliJ-Plugin) .
 
-[RG1] Roger Koenker, [Quantile Regression](https://books.google.com/books/about/Quantile_Regression.html?id=hdkt7V4NXsgC), ‪Cambridge University Press, 2005‬.
+[RK1] Roger Koenker, [Quantile Regression](https://books.google.com/books/about/Quantile_Regression.html?id=hdkt7V4NXsgC), ‪Cambridge University Press, 2005‬.
 
 
