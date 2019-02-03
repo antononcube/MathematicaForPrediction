@@ -28,11 +28,13 @@ Quantile Regression is a method to estimate the variable relations for all parts
 
 The goal of the monad design is to make the specification of Quantile Regression workflows (relatively) easy, straightforward, by following a certain main scenario and specifying variations over that scenario. Since Quantile Regression is often compared with Least Squares Regression and some type of filtering (like, Moving Average) those functionalities should be included in the monad design scenarios.
 
-The monad is named QRegMon and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)] and the Quantile Regression package ["QuantileRegression.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/QuantileRegression.m), [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/QuantileRegression.m), [AA2](https://mathematicaforprediction.wordpress.com/2013/12/16/quantile-regression-through-linear-programming/)].
+The monad is named QRMon and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)] and the Quantile Regression package ["QuantileRegression.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/QuantileRegression.m), [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/QuantileRegression.m), [AA2](https://mathematicaforprediction.wordpress.com/2013/12/16/quantile-regression-through-linear-programming/)].
 
 The data for this document is read from WL's repository or created ad-hoc.
 
-The monadic programming design is used as a [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). The QRegMon monad can be also seen as a [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) for the specification and programming of machine learning classification workflows.  
+The monadic programming design is used as a [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). 
+The QRMon monad can be also seen as a [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) 
+for the specification and programming of machine learning classification workflows.  
 
 Here is an example of using the QRMon monad over heteroscedastic data::
 
@@ -845,7 +847,7 @@ A lot of the functionalities and signatures of QRMon were designed and programed
 [AAp9] Anton Antonov, [Monadic contextual classification Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction). 
   URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m) .
 
-### ConverationalAgents Packages
+### ConversationalAgents Packages
 
 [AAp10] Anton Antonov, [Time series workflows grammar in EBNF](https://github.com/antononcube/ConversationalAgents/blob/master/EBNF/TimeSeriesWorkflowsGrammar.m), (2018), [ConversationalAgents at GitHub](https://github.com/antononcube/ConversationalAgents), [https://github.com/antononcube/ConversationalAgents](https://github.com/antononcube/ConversationalAgents).
 
