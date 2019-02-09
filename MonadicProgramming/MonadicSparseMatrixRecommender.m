@@ -462,8 +462,10 @@ SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]
 
       tagTypeNames = Keys[smats];
 
+      rowNames = Map[RowNames, smats];
+
       If[ !(Equal @@ rowNames),
-        Echo["The row names of SSparseMatrix objects are not the same.", "SMRMonCreate:"];
+        Echo["The row names of the SSparseMatrix objects are expected to be the same.", "SMRMonCreate:"];
         Return[$SMRMonFailure]
       ];
 
