@@ -221,7 +221,7 @@ GenerateStateMonadCode[ "MonadicSparseMatrixRecommender`SMRMon", "FailureSymbol"
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClearAll[SMRMonSetItemNames]
+Clear[SMRMonSetItemNames]
 
 SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
 
@@ -229,21 +229,21 @@ SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
 (*SMRMonSetItemNames[names_][xs_, context_Association] :=*)
     (*SMRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
 
-ClearAll[SMRMonGetTagTypeWeights]
+Clear[SMRMonGetTagTypeWeights]
 SMRMonGetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 SMRMonGetTagTypeWeights[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonGetTagTypeWeights[xs_, context_] := SMRMonGetTagTypeWeights[][xs, context];
 SMRMonGetTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
 SMRMonGetTagTypeWeights[__][___] := $SMRMonFailure;
 
-ClearAll[SMRMonGetTagTypes]
+Clear[SMRMonGetTagTypes]
 SMRMonGetTagTypes[$SMRMonFailure] := $SMRMonFailure;
 SMRMonGetTagTypes[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonGetTagTypes[xs_, context_] := SMRMonGetTagTypes[][xs, context];
 SMRMonGetTagTypes[][xs_, context_Association] := Keys[Lookup[context, "tagTypes"]];
 SMRMonGetTagTypes[__][___] := $SMRMonFailure;
 
-ClearAll[SMRMonTakeMatrix]
+Clear[SMRMonTakeMatrix]
 SMRMonTakeMatrix[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrix[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrix[xs_, context_] := SMRMonTakeMatrix[][xs, context];
@@ -251,7 +251,7 @@ SMRMonTakeMatrix[][xs_, context_Association] := Lookup[context, "M", $SMRMonFail
 SMRMonTakeMatrix[__][___] := $SMRMonFailure;
 
 
-ClearAll[SMRMonTakeMatrices]
+Clear[SMRMonTakeMatrices]
 SMRMonTakeMatrices[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrices[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrices[xs_, context_] := SMRMonTakeMatrices[][xs, context];
@@ -259,7 +259,7 @@ SMRMonTakeMatrices[][xs_, context_Association] := Lookup[context, "matrices", $S
 SMRMonTakeMatrices[__][___] := $SMRMonFailure;
 
 
-ClearAll[SMRMonTakeItemNames]
+Clear[SMRMonTakeItemNames]
 SMRMonTakeItemNames[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeItemNames[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeItemNames[xs_, context_] := SMRMonTakeItemNames[][xs, context];
@@ -267,7 +267,7 @@ SMRMonTakeItemNames[][xs_, context_Association] := Lookup[context, "itemNames", 
 SMRMonTakeItemNames[__][___] := $SMRMonFailure;
 
 
-ClearAll[SMRMonTakeTags]
+Clear[SMRMonTakeTags]
 SMRMonTakeTags[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeTags[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeTags[xs_, context_] := SMRMonTakeTags[][xs, context];
@@ -275,7 +275,7 @@ SMRMonTakeTags[][xs_, context_Association] := Lookup[context, "tags", $SMRMonFai
 SMRMonTakeTags[__][___] := $SMRMonFailure;
 
 
-ClearAll[SMRMonTakeMatrixDataset]
+Clear[SMRMonTakeMatrixDataset]
 SMRMonTakeMatrixDataset[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrixDataset[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrixDataset[xs_, context_] := SMRMonTakeMatrixDataset[][xs, context];
@@ -297,7 +297,7 @@ SMRMonTakeMatrixDataset[][xs_, context_Association] :=
 SMRMonTakeMatrixDataset[__][___] := $SMRMonFailure;
 
 
-ClearAll[SMRMonSetTimeSeriesMatrix]
+Clear[SMRMonSetTimeSeriesMatrix]
 SMRMonSetTimeSeriesMatrix[$SMRMonFailure] := $SMRMonFailure;
 SMRMonSetTimeSeriesMatrix[][___] := $SMRMonFailure;
 SMRMonSetTimeSeriesMatrix[xs_, context_] := $SMRMonFailure;
@@ -309,7 +309,7 @@ SMRMonSetTimeSeriesMatrix[__][___] := $SMRMonFailure;
 (* Predicates                                                 *)
 (**************************************************************)
 
-ClearAll[ScoredItemIndexesQ]
+Clear[ScoredItemIndexesQ]
 
 ScoredItemIndexesQ[recs_Association, context_Association] :=
     If[ KeyExistsQ[context, "M"],
@@ -323,7 +323,7 @@ ScoredItemIndexesQ[recs_Association, context_Association] :=
 
 ScoredItemIndexesQ[___] := False
 
-ClearAll[SMRMonScoredItemsQ]
+Clear[SMRMonScoredItemsQ]
 
 SMRMonScoredItemsQ[$SMRMonFailure] := $SMRMonFailure;
 
@@ -349,7 +349,7 @@ SMRMonScoredItemsQ[recs_Association][xs_, context_Association] :=
 SMRMonScoredItemsQ[__][___] := $SMRMonFailure;
 
 
-ClearAll[SMRMonScoredTagsQ]
+Clear[SMRMonScoredTagsQ]
 
 SMRMonScoredTagsQ[$SMRMonFailure] := $SMRMonFailure;
 
@@ -376,7 +376,7 @@ SMRMonScoredTagsQ[__][___] := $SMRMonFailure;
 
 
 (* Private function. *)
-ClearAll[ScoredItemsQ]
+Clear[ScoredItemsQ]
 ScoredItemsQ[recs_Association, context_Association] :=
     Block[{},
       Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}]
@@ -385,7 +385,7 @@ ScoredItemsQ[___] := (Echo["Wrong signature!", "ScoredItemsQ:"]; False);
 
 
 (* Private function. *)
-ClearAll[ScoredTagsQ]
+Clear[ScoredTagsQ]
 ScoredTagsQ[prof_Association, context_Association] :=
     Block[{},
       Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredTagsQ[prof], SMRMonTakeValue}]
@@ -424,7 +424,7 @@ NumericalColumnToSSparseMatrix[dsArg_Dataset, idColumnName_, varColumnName_] :=
       ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}] ]
     ];
 
-ClearAll[SMRMonCreate]
+Clear[SMRMonCreate]
 
 (*SyntaxInformation[SMRMonCreate] = {"ArgumentsPattern" -> {_., _., OptionsPattern[]}};*)
 
@@ -556,7 +556,7 @@ SMRMonCreate[___][__] :=
 (* SMRMonApplyLocalWeightFunction                             *)
 (**************************************************************)
 
-ClearAll[SMRMonApplyLocalWeightFunction]
+Clear[SMRMonApplyLocalWeightFunction]
 
 SMRMonApplyLocalWeightFunction[$SMRMonFailure] := $SMRMonFailure;
 
@@ -592,7 +592,7 @@ SMRMonApplyLocalWeightFunction[___][__] := $SMRMonFailure;
 (* SMRMonApplyGlobalWeightFunction                            *)
 (**************************************************************)
 
-ClearAll[SMRMonApplyGlobalWeightFunction]
+Clear[SMRMonApplyGlobalWeightFunction]
 
 SMRMonApplyGlobalWeightFunction[$SMRMonFailure] := $SMRMonFailure;
 
@@ -631,7 +631,7 @@ SMRMonApplyGlobalWeightFunction[___][__] := $SMRMonFailure;
 (* SMRMonApplyNormalizationFunction                           *)
 (**************************************************************)
 
-ClearAll[SMRMonApplyNormalizationFunction]
+Clear[SMRMonApplyNormalizationFunction]
 
 SMRMonApplyNormalizationFunction[$SMRMonFailure] := $SMRMonFailure;
 
@@ -666,7 +666,7 @@ SMRMonApplyNormalizationFunction[___][__] := $SMRMonFailure;
 (* SMRMonApplyNormalizationFunction                           *)
 (**************************************************************)
 
-ClearAll[SMRMonApplyTermWeightFunctions]
+Clear[SMRMonApplyTermWeightFunctions]
 
 SMRMonApplyTermWeightFunctions[$SMRMonFailure] := $SMRMonFailure;
 
@@ -723,7 +723,7 @@ GetFilterIDs[context_Association, callerFunctionName_String] :=
       ]
     ]
 
-ClearAll[SMRMonRecommend];
+Clear[SMRMonRecommend];
 
 Options[SMRMonRecommend] = {"RemoveHistory"->True, "ItemNames"->True};
 
@@ -812,7 +812,7 @@ SMRMonRecommend[___][__] :=
       $SMRMonFailure
     ];
 
-ClearAll[SMRMonRecommendByHistory ]
+Clear[SMRMonRecommendByHistory ]
 SMRMonRecommendByHistory = SMRMonRecommend;
 
 
@@ -820,7 +820,7 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 (* SMRMonRecommendByProfile                                   *)
 (**************************************************************)
 
-ClearAll[SMRMonRecommendByProfile]
+Clear[SMRMonRecommendByProfile]
 
 Options[SMRMonRecommendByProfile] = {"ItemNames"->True, "Normalize"->True, "IgnoreUnknownTags"->False};
 
@@ -931,7 +931,7 @@ SMRMonRecommendByProfile[___][__] :=
 (* SMRMonRecommendByCorrelation                               *)
 (**************************************************************)
 
-ClearAll[SMRMonRecommendByCorrelation]
+Clear[SMRMonRecommendByCorrelation]
 
 Options[SMRMonRecommendByCorrelation] = { Method-> Correlation, "SMRNumberOfRecommendations"-> 200 };
 
@@ -987,7 +987,7 @@ SMRMonRecommendByCorrelation[___][__] := $SMRMonFailure;
 (* Convert recommendations to a Dataset                       *)
 (**************************************************************)
 
-ClearAll[SMRMonToItemsDataset]
+Clear[SMRMonToItemsDataset]
 
 SMRMonToItemsDataset[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1026,7 +1026,7 @@ SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 (* Join recommendations with a Dataset                       *)
 (**************************************************************)
 
-ClearAll[SMRMonJoinAcross]
+Clear[SMRMonJoinAcross]
 
 Options[SMRMonJoinAcross] = {"DropJoiningColumnName"->True};
 
@@ -1094,7 +1094,7 @@ SMRMonJoinAcross[__][___] :=
 (**************************************************************)
 
 (* Essentially repeating SMRMonRecommend but with minor changes. *)
-(*ClearAll[SMRMonProfile]*)
+(*Clear[SMRMonProfile]*)
 (*SMRMonProfile[ ]*)
 
 (*SMRMonRecommendByProfile[___][__] := $SMRMonFailure;*)
@@ -1104,7 +1104,7 @@ SMRMonJoinAcross[__][___] :=
 (* SMRMonToProfileVector                                      *)
 (**************************************************************)
 
-ClearAll[SMRMonToProfileVector]
+Clear[SMRMonToProfileVector]
 
 SMRMonToProfileVector[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1125,7 +1125,7 @@ SMRMonToProfileVector[___][__] := $SMRMonFailure;
 (* SMRMonSetTagTypeWeights                                    *)
 (**************************************************************)
 
-ClearAll[SMRMonSetTagTypeWeights]
+Clear[SMRMonSetTagTypeWeights]
 
 SMRMonSetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1169,7 +1169,7 @@ SMRMonSetTagTypeWeights[___][__] :=
 (* SMRMonSetTagWeights                                        *)
 (**************************************************************)
 
-ClearAll[SMRMonSetTagWeights]
+Clear[SMRMonSetTagWeights]
 
 SMRMonSetTagWeights[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1213,7 +1213,7 @@ SMRMonSetTagWeights[___][__] :=
 (* SMR Join                                                   *)
 (**************************************************************)
 
-ClearAll[SMRMonJoin]
+Clear[SMRMonJoin]
 
 SMRMonJoin[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1254,7 +1254,7 @@ SMRMonJoin[___][__] :=
     ];
 
 
-ClearAll[SMRMonRowBind]
+Clear[SMRMonRowBind]
 SMRMonRowBind = SMRMonJoin;
 
 
