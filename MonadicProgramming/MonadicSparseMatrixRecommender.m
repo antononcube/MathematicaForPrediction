@@ -1260,6 +1260,59 @@ Clear[SMRMonRowBind]
 SMRMonRowBind = SMRMonJoin;
 
 
+(*=========================================================*)
+(* Classify                                                *)
+(*=========================================================*)
+
+Clear[SMRMonClassify]
+
+Options[SMRMonClassify] = { "Voting" -> False, "DropZeroScoredLabels" -> True };
+
+SMRMonClassify[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonClassify[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonClassify[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{recs, clMat, s, t, votingQ, dropZeroScoredLabelsQ},
+
+      votingQ = TrueQ[OptionValue[SMRMonClassify, "Voting"]];
+      dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassify, "DropZeroScoredLabels"]];
+
+      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[profile,nTopNNs], SMRMonTakeValue}];
+
+      If[ TrueQ[recs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      clMat = context["matrices", tagType];
+
+      If[ votingQ,
+        clMat = Clip[clMat+1000];
+        recs = AssociationThread[ Keys[recs], 1];
+      ];
+
+      s = Values[ recs / Max[recs] ] . SparseArray[ clMat[[ Keys[recs], All ]] ];
+
+      s = AssociationThread[ ColumnNames[clMat], s];
+
+      If[ dropZeroScoredLabelsQ, s = Select[s, # > 0&] ];
+
+      s = s / Max[s];
+
+      SMRMonUnit[ ReverseSort[s], context ]
+    ];
+
+SMRMonClassify[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts___] .",
+        "SMRMonClassify:"];
+      $SMRMonFailure
+    ];
+
+
 End[]; (* `Private` *)
 
 EndPackage[]
