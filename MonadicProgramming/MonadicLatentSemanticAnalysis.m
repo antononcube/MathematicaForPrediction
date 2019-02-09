@@ -711,6 +711,8 @@ Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "A
 
 LSAMonTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
 
+LSAMonTopicsRepresentation[xs_, context_Association] := LSAMonTopicsRepresentation[][xs, context];
+
 LSAMonTopicsRepresentation[][xs_, context_] :=
     LSAMonTopicsRepresentation[Automatic,"ComputeTopicRepresentation" -> True][xs, context];
 
