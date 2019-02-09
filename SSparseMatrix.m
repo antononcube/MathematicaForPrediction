@@ -190,7 +190,7 @@ In effect makes an union of rn and RowNames[smat]."
 
 Begin["`Private`"]
 
-ClearAll[SSparseMatrix, MakeSSparseMatrix, ToSSparseMatrix,
+Clear[SSparseMatrix, MakeSSparseMatrix, ToSSparseMatrix,
   RowNames, ColumnNames, DimensionNames, SetRowNames, SetColumnNames, SetDimensionNames, RowsCount, ColumnsCount,
   RowBind, ColumnBind,
   ImposeRowNames, ImposeColumnNames]
