@@ -44,7 +44,6 @@
 
   # Introduction
 
-
     This file (package) provides monad-like implementation for for the following Latent Semantic Analysis (LSA)
     main sequence of steps :
 
@@ -65,8 +64,8 @@
       8. provide different statistics over the document collection.
 
 
-  This monadic implementation is just a wrapper interface to the functions provided by the packages [1,2]
-  described in [3].
+  This monadic implementation is just a wrapper interface to the functions provided by the packages [1,2];
+  those functions described in [3].
 
 
   # Usage example
@@ -140,6 +139,7 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
 
+
 (**************************************************************)
 (* Package definition                                         *)
 (**************************************************************)
@@ -205,17 +205,17 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 (* Setters and takers                                         *)
 (**************************************************************)
 
-ClearAll[LSAMonTakeTexts]
-LSAMonTakeTexts[$SMRMonFailure] := $LSAMonFailure;
-LSAMonTakeTexts[][$SMRMonFailure] := $LSAMonFailure;
+Clear[LSAMonTakeTexts]
+LSAMonTakeTexts[$LSAMonFailure] := $LSAMonFailure;
+LSAMonTakeTexts[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeTexts[xs_, context_] := LSAMonTakeTexts[][xs, context];
 LSAMonTakeTexts[][xs_, context_Association] := Lookup[context, "texts"];
 LSAMonTakeTexts[__][___] := $LSAMonFailure;
 
 
-ClearAll[LSAMonTakeMatrix]
-LSAMonTakeMatrix[$SMRMonFailure] := $LSAMonFailure;
-LSAMonTakeMatrix[][$SMRMonFailure] := $LSAMonFailure;
+Clear[LSAMonTakeMatrix]
+LSAMonTakeMatrix[$LSAMonFailure] := $LSAMonFailure;
+LSAMonTakeMatrix[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeMatrix[xs_, context_] := LSAMonTakeMatrix[][xs, context];
 LSAMonTakeMatrix[][xs_, context_Association] :=
     Block[{mat},
@@ -229,9 +229,9 @@ LSAMonTakeMatrix[][xs_, context_Association] :=
 LSAMonTakeMatrix[__][___] := $LSAMonFailure;
 
 
-ClearAll[LSAMonTakeWeightedMatrix]
-LSAMonTakeWeightedMatrix[$SMRMonFailure] := $LSAMonFailure;
-LSAMonTakeWeightedMatrix[][$SMRMonFailure] := $LSAMonFailure;
+Clear[LSAMonTakeWeightedMatrix]
+LSAMonTakeWeightedMatrix[$LSAMonFailure] := $LSAMonFailure;
+LSAMonTakeWeightedMatrix[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeWeightedMatrix[xs_, context_] := LSAMonTakeWeightedMatrix[][xs, context];
 LSAMonTakeWeightedMatrix[][xs_, context_Association] :=
     Block[{mat},
@@ -254,7 +254,7 @@ Clear[LSAMonTextCollectionQ]
 LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ];
 
 
-ClearAll[LSAMonMakeDocumentTermMatrix]
+Clear[LSAMonMakeDocumentTermMatrix]
 
 LSAMonMakeDocumentTermMatrix[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWords : {_String ...}][xs_, context_] :=
@@ -275,8 +275,16 @@ LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWor
       ]
     ];
 
+LSAMonMakeDocumentTermMatrix[__][___] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWords : {_String ...}] .",
+        "LSAMonMakeDocumentTermMatrix:"];
+      $LSAMonFailure
+    ];
 
-ClearAll[LSAMonApplyTermWeightFunctions]
+
+Clear[LSAMonApplyTermWeightFunctions]
 
 LSAMonApplyTermWeightFunctions[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -307,8 +315,16 @@ LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
       ]
     ];
 
+LSAMonApplyTermWeightFunctions[__][___] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String] .",
+        "LSAMonApplyTermWeightFunctions:"];
+      $LSAMonFailure
+    ];
 
-ClearAll[LSAMonMakeGraph]
+
+Clear[LSAMonMakeGraph]
 
 Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite", "RemoveLoops"->True };
 
@@ -386,13 +402,19 @@ LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
 
     ];
 
+LSAMonMakeGraph[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonMakeGraph:"];
+      $LSAMonFailure
+    ];
 
 
-ClearAll[LSAMonMostImportantTexts]
+Clear[LSAMonMostImportantTexts]
 
 Options[LSAMonMostImportantTexts] = { "CentralityFunction" -> EigenvectorCentrality };
 
 LSAMonMostImportantTexts[___][$LSAMonFailure] := $LSAMonFailure;
+
 LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
     Block[{cFunc, gr, cvec, inds },
 
@@ -432,8 +454,16 @@ LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+LSAMonMostImportantTexts[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonMostImportantTexts[topN_Integer, opts___] .",
+        "LSAMonMostImportantTexts::"];
+      $LSAMonFailure;
+    ];
 
-ClearAll[LSAMonTopicExtraction]
+
+Clear[LSAMonTopicExtraction]
 
 Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
 
@@ -488,8 +518,16 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializi
       ]
     ];
 
+LSAMonTopicExtraction[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializingDocuments_Integer, opts___] .",
+        "LSAMonTopicExtraction::"];
+      $LSAMonFailure;
+    ];
 
-ClearAll[LSAMonStatisticalThesaurus]
+
+Clear[LSAMonStatisticalThesaurus]
 
 LSAMonStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
@@ -513,10 +551,21 @@ LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, conte
       ]
     ];
 
+LSAMonStatisticalThesaurus[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer] .",
+        "LSAMonStatisticalThesaurus::"];
+      $LSAMonFailure;
+    ];
 
-ClearAll[LSAMonEchoStatisticalThesaurus]
+
+Clear[LSAMonEchoStatisticalThesaurus]
 
 LSAMonEchoStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonEchoStatisticalThesaurus[xs_, context_Association] := LSAMonEchoStatisticalThesaurus[][xs, context];
+
 LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
     Block[{},
       Which[
@@ -537,8 +586,14 @@ LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
       ]
     ];
 
+LSAMonEchoStatisticalThesaurus[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "LSAMonEchoStatisticalThesaurus:"];
+      $LSAMonFailure;
+    ];
 
-ClearAll[LSAMonBasisVectorInterpretation]
+
+Clear[LSAMonBasisVectorInterpretation]
 
 Options[LSAMonBasisVectorInterpretation] = { "NumberOfTerms" -> 12 };
 
@@ -563,12 +618,23 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
 
     ];
 
+LSAMonBasisVectorInterpretation[___][__] :=
+    Block[{},
+      Echo[
+        "The expected arguments are LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts___] .",
+        "LSAMonBasisVectorInterpretation:"];
+      $LSAMonFailure;
+    ];
 
-ClearAll[LSAMonTopicsTable]
+
+Clear[LSAMonTopicsTable]
 
 Options[LSAMonTopicsTable] = { "NumberOfTerms" -> 12 };
 
 LSAMonTopicsTable[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonTopicsTable[xs_, context_Association] := LSAMonTopicsTable[][xs, context];
+
 LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
     Block[{topicsTbl, k, numberOfTerms},
 
@@ -584,8 +650,14 @@ LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
       LSAMon[ topicsTbl, Join[ context, <| "topicsTables"->topicsTbl|> ] ]
     ];
 
+LSAMonTopicsTable[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonTopicsTable:"];
+      $LSAMonFailure
+    ];
 
-ClearAll[LSAMonEchoTopicsTable]
+
+Clear[LSAMonEchoTopicsTable]
 
 Options[LSAMonEchoTopicsTable] = Join[
   {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
@@ -626,8 +698,14 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
       LSAMon[ topicsTbl, context ]
     ];
 
+LSAMonEchoTopicsTable[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonEchoTopicsTable:"];
+      $LSAMonFailure
+    ];
 
-ClearAll[LSAMonTopicsRepresentation]
+
+Clear[LSAMonTopicsRepresentation]
 
 Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
@@ -636,7 +714,7 @@ LSAMonTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTopicsRepresentation[][xs_, context_] :=
     LSAMonTopicsRepresentation[Automatic,"ComputeTopicRepresentation" -> True][xs, context];
 
-LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, context_] :=
+LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, context_] :=
     Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
 
       computeTopicRepresentationQ = OptionValue[LSAMonTopicsRepresentation, "ComputeTopicRepresentation"];
@@ -704,6 +782,12 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List),opts:OptionsPattern[]][xs_, co
       ]
     ];
 
+LSAMonTopicsRepresentation[__][___] :=
+    Block[{},
+      Echo["The expected signature is LSAMonTopicsRepresentation[tags:(Automatic|_List), opts___] .", "LSAMonTopicsRepresentation:"];
+      $LSAMonFailure
+    ];
+
 
 Clear[LSAMonEchoTextCollectionStatistics]
 
@@ -711,7 +795,7 @@ Options[LSAMonEchoTextCollectionStatistics] = Options[Histogram];
 
 LSAMonEchoTextCollectionStatistics[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
-    Block[{texts, textWords, eLabel=None, dOpts},
+    Block[{texts, textWords, eLabel=None, dOpts, smat},
 
       Which[
         LSAMonTextCollectionQ[xs], texts = xs; eLabel = "Pipeline value:",
@@ -726,18 +810,48 @@ LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
 
       dOpts = Join[{opts}, {PlotRange -> All, PlotTheme -> "Detailed", ImageSize->300}];
 
+      If[ !KeyExistsQ[context, "docTermMat"],
+        smat = None,
+        (*ELSE*)
+        smat = context["docTermMat"];
+        If[ !MatrixQ[smat],
+          smat = None,
+          (*ELSE*)
+          smat = Clip[smat];
+        ]
+      ];
+
       Echo[
-          Grid[{
-            {Row[{"Number of texts:", Length[texts]}],
-              Row[{"Number of unique words:", Length[Union[Flatten[textWords]]]}]},
-            {Histogram[StringLength /@ texts, PlotLabel -> "Number of characters", dOpts],
-              Histogram[Length /@ textWords, PlotLabel -> "Number of words", dOpts]}
-          }],
+        Grid[{
+          {Row[{"Number of documents:", Length[texts]}],
+            Row[{"Number of unique words:", Length[Union[Flatten[textWords]]]}],
+            If[ TrueQ[smat === None],
+              Nothing,
+              Row[{"Document-term matrix dimensions:", Dimensions[smat]}]],
+            If[ TrueQ[smat === None], Nothing, ""]
+          },
+          {Histogram[StringLength /@ texts, PlotLabel -> "Number of characters", dOpts],
+            Histogram[Length /@ textWords, PlotLabel -> "Number of words", dOpts],
+            If[ TrueQ[smat === None],
+              Nothing,
+              Histogram[Total[smat], PlotLabel -> "Number of documents per word", dOpts]],
+            If[ TrueQ[smat === None],
+              Nothing,
+              Column[{"Summary of number of\ndocuments per word", RecordsSummary[Total[smat], {"# documents"}]}]]
+          }
+        }],
         eLabel
       ];
 
       LSAMon[xs,context]
     ];
+
+LSAMonEchoTextCollectionStatistics[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonEchoTextCollectionStatistics:"];
+      $LSAMonFailure
+    ];
+
 
 End[]  (*`Private`*)
 
