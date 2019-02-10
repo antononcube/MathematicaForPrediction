@@ -1274,23 +1274,48 @@ SMRMonClassify[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonClassify[][xs_, context_Association] := $SMRMonFailure;
 
+SMRMonClassify[tagType_String, profile:{_String..}, args___][xs_, context_Association] :=
+    SMRMonClassify[tagType, AssociationThread[profile, 1], args][xs, context];
+
 SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{recs, clMat, s, t, votingQ, dropZeroScoredLabelsQ},
+    Block[{recs, clMat, clMat01, s, t, votingQ, dropZeroScoredLabelsQ, qProfile},
 
       votingQ = TrueQ[OptionValue[SMRMonClassify, "Voting"]];
       dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassify, "DropZeroScoredLabels"]];
 
-      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[profile,nTopNNs], SMRMonTakeValue}];
-
-      If[ TrueQ[recs === $SMRMonFailure],
+      If[ !MemberQ[ Keys[context["matrices"]], tagType],
+        Echo[
+          "Unknown tag type \"" <> tagType <> "\"; the first argument should be one of: " <>
+              ToString[ "\""<>#<>"\""& /@ Keys[context["matrices"]] ] <> " .",
+          "SMRMonClassify:"
+        ];
         Return[$SMRMonFailure]
       ];
 
       clMat = context["matrices", tagType];
 
+      qProfile = KeySelect[ profile, !MemberQ[ColumnNames[clMat], #]& ];
+
+      If[ Length[qProfile] == 0,
+        Echo[
+          "The profile argument has to have at least one tag that does not belong to the tag type \"" <> tagType <>"\".",
+          "SMRMonClassify:"
+        ];
+        Return[$SMRMonFailure]
+      ];
+
+      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[qProfile, nTopNNs], SMRMonTakeValue}];
+
+      If[ TrueQ[recs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
       If[ votingQ,
-        clMat = Clip[clMat+1000];
-        recs = AssociationThread[ Keys[recs], 1];
+        clMat01 = SparseArray[clMat];
+        t = Most[ArrayRules[clMat]]; t[[All,2]] = 1.;
+        clMat01 = SparseArray[t,Dimensions[clMat]];
+        clMat = ToSSparseMatrix[ clMat01, "RowNames"->RowNames[clMat], "ColumnNames"->ColumnNames[clMat] ];
+        recs = AssociationThread[ Keys[recs], 1.];
       ];
 
       s = Values[ recs / Max[recs] ] . SparseArray[ clMat[[ Keys[recs], All ]] ];
