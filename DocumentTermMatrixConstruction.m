@@ -57,6 +57,8 @@ the entries of docTermMat according to the functions for global weight, local we
 
 GlobalTermWeight::usage = "GlobalTermWeight implements the global weight over a vector."
 
+GlobalTermFunctionWeights::usage = "Gives the global weights for a given matrix and function name."
+
 ApplyGlobalTermFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies the global term weight \
 function fname to the elements of mat."
 
@@ -197,6 +199,9 @@ ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
 
     ];
 
+GlobalTermFunctionWeights::unfunc = "Unknown global weight function specification. \
+Returning a constant vector of 1's. \
+The known global weight function names are \"IDF\", \"GFIDF\", \"None\", \"Binary\", \"ColumnStochastic\".";
 
 Clear[GlobalTermFunctionWeights]
 GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
