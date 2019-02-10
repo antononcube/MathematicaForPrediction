@@ -1283,6 +1283,11 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:Option
       votingQ = TrueQ[OptionValue[SMRMonClassify, "Voting"]];
       dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassify, "DropZeroScoredLabels"]];
 
+      If[!KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonClassify:"];
+        Return[$SMRMonFailure]
+      ];
+
       If[ !MemberQ[ Keys[context["matrices"]], tagType],
         Echo[
           "Unknown tag type \"" <> tagType <> "\"; the first argument should be one of: " <>
@@ -1318,6 +1323,7 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:Option
         recs = AssociationThread[ Keys[recs], 1.];
       ];
 
+      (* Finally the "classification" computation follows. *)
       s = Values[ recs / Max[recs] ] . SparseArray[ clMat[[ Keys[recs], All ]] ];
 
       s = AssociationThread[ ColumnNames[clMat], s];
