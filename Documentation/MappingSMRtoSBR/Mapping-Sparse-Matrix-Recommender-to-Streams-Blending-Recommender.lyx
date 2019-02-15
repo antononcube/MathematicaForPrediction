@@ -829,7 +829,7 @@ The metadata matrix
 \end_layout
 
 \begin_layout Standard
-Let us list some of the metadata sub-matrices a music recommender:
+Let us list some of the metadata sub-matrices of a music recommender:
 \end_layout
 
 \begin_layout Itemize
@@ -925,7 +925,7 @@ and others...
 \end_layout
 
 \begin_layout Standard
-It is important to keep in mind what are the spaces corresponding to these
+It is important to keep in mind what are the spaces corresponding to those
  matrices.
  In some cases it will be convenient to work with the transposed matrices.
  (So we can form item streams based on metadata tags, see below.)
@@ -1016,10 +1016,10 @@ name "subsec:Mapping-between-metadata"
 \end_layout
 
 \begin_layout Standard
-Consider the graph made of the associations between the products and the
+Consider the graph made with the associations between the products and the
  makers.
- We can look at that graph as a bi-partite graph: one set of nodes for the
- products, and the other set of nodes for the makers.
+ We can look at that graph as a bi-partite graph: one set of nodes for correspon
+ds to the products, and the other set of nodes corresponds to the makers.
  When we consider sub-graphs by edge types we (probably) most of the time
  will deal with one set of nodes.
  It is useful to consider the operations of mapping between the two sets.
@@ -2187,7 +2187,7 @@ If we assume that
 \begin_inset Formula $S$
 \end_inset
 
- is for mustic track
+ is for music track
 \begin_inset Formula $\times$
 \end_inset
 
