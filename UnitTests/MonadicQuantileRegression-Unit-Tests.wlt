@@ -354,6 +354,28 @@ VerificationTest[(* 20 *)
   TestID->"Simulate-3"
 ]
 
+(*
+  In order the facilitate de-trending we want the errors to be calculated with y - rq[x] not with rq[x] - y .
+  This test is to assert the use of the former formula. It is assumed that it is sufficient to test that
+  Max[data[[All,2]]] has the same sign as the corresponding error.
+*)
+VerificationTest[(* 21 *)
+  errs =
+      DoubleLongRightArrow[
+        QRMonUnit[data],
+        QRMonQuantileRegression[3, 0.5],
+        QRMonErrors["RelativeErrors" -> False],
+        QRMonTakeValue
+      ];
+  maxInd = First@Flatten@Position[data[[All, 2]], Max[data[[All, 2]]]];
+  Max[data[[All, 2]]] > 0 && errs[0.5][[maxInd, 2]] > 0 ||
+      Max[data[[All, 2]]] < 0 && errs[0.5][[maxInd, 2]] < 0
+  ,
+  True
+  ,
+  TestID->"De-trending-1"
+]
+
 
 
 EndTestSection[]
