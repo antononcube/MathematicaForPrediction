@@ -782,7 +782,7 @@ QRMonErrors[opts:OptionsPattern[]][xs_, context_] :=
           Association @
               KeyValueMap[
                 Function[{k, f},
-                  k -> Map[ Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]])/ If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ]}], context["data"] ]
+                  k -> Map[ Function[{p}, {p[[1]], (p[[2]] - f[p[[1]]])/ If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ]}], context["data"] ]
                 ],
                 context["regressionFunctions"]
               ];
@@ -820,7 +820,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
             Function[{k, f},
               k ->
                   listPlotFunc[
-                    Map[Function[{p}, {p[[1]], (f[p[[1]]] - p[[2]]) / If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ] }], context["data"] ],
+                    Map[Function[{p}, {p[[1]], (p[[2]] - f[p[[1]]]) / If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ] }], context["data"] ],
                     listPlotOpts,
                     Joined->False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
             ],
