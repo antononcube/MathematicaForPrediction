@@ -1501,7 +1501,7 @@ QRMonSimulate[nTimePoints_Integer, opts:OptionsPattern[]][xs_, context_] :=
       r = QRMonBind[ QRMonUnit[xs, context], QRMonTakeData ];
       r = MinMax @ r[[All,1]];
 
-      tPoints = Range[ r[[1]], r[[2]], (r[[2]] - r[[1]])/nTimePoints ];
+      tPoints = Range[ r[[1]], r[[2]], (r[[2]] - r[[1]])/ (nTimePoints-1) ];
 
       QRMonSimulate[tPoints, opts][xs, context]
     ];
