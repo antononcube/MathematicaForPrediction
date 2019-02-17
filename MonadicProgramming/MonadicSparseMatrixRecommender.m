@@ -162,6 +162,8 @@ SMRMonToProfileVector::usage = "Makes a profile vector from an argument that is 
 
 SMRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument."
 
+SMRMonProfile::usage = "Profile based on history."
+
 SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object."
 
 SMRMonJoinAcross::usage = "Joins a recommendations association with a given Dataset object."
@@ -810,7 +812,7 @@ SMRMonRecommend[___][__] :=
         "The first argument is expected to be an association of scored items. " <>
             "The second argument is expected to be a positive integer. " <>
             "The items are recommendation matrix row indices or row names. The scores are positive numbers.",
-        "SMRMonRecommend:"]
+        "SMRMonRecommend:"];
       $SMRMonFailure
     ];
 
@@ -924,7 +926,7 @@ SMRMonRecommendByProfile[___][__] :=
         "The first argument is expected to be an association of scored tags. " <>
             "The second argument is expected to be a positive integer. " <>
             "The tags are recommendation matrix column names. The scores are positive numbers.",
-        "SMRMonRecommendByProfile:"]
+        "SMRMonRecommendByProfile:"];
       $SMRMonFailure
     ];
 
@@ -1096,10 +1098,82 @@ SMRMonJoinAcross[__][___] :=
 (**************************************************************)
 
 (* Essentially repeating SMRMonRecommend but with minor changes. *)
-(*Clear[SMRMonProfile]*)
-(*SMRMonProfile[ ]*)
 
-(*SMRMonRecommendByProfile[___][__] := $SMRMonFailure;*)
+Clear[SMRMonProfile];
+
+Options[SMRMonProfile] = {"TagNames"->True};
+
+SMRMonProfile[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonProfile[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{h},
+
+      h = KeyMap[ context["itemNames"][#]&, history ];
+      h = KeySelect[ h, IntegerQ ];
+
+      If[ Length[h] < Length[history],
+        Echo["Some of the item names are not known by the recommender.", "SMRMonProfile:"];
+      ];
+
+      SMRMonProfile[ Keys[h], Values[h], nRes, opts][xs, context]
+    ];
+
+SMRMonProfile[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ Keys[history], Values[history], nRes, opts][xs, context];
+
+SMRMonProfile[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
+
+SMRMonProfile[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+    Block[{vec, smat, prof, tagNamesQ, columnNames},
+
+      If[Length[itemIndices],
+        Echo["Empty history as an argument.", "SMRMonProfile:"];
+        Return[<||>]
+      ];
+
+      tagNamesQ = TrueQ[OptionValue[SMRMonProfile, "TagNames"]];
+
+      If[!KeyExistsQ[context, "M"],
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonProfile:"];
+        Return[$SMRMonFailure]
+      ];
+
+      smat = SparseArray[context["M"]];
+
+      (*1*)
+      vec = SparseArray[Thread[itemIndices->itemRatings],{Length[smat]}];
+
+      (*2*)
+      vec = vec.smat;
+
+      (*3 and 4 and 5*)
+
+      prof = Association[ Most[ArrayRules[vec]] ];
+
+      prof = KeyMap[ First, prof ];
+
+      If[tagNamesQ,
+        columnNames = ColumnNames[ context["M"] ];
+        prof = KeyMap[ columnNames[[#]]&, prof];
+      ];
+
+      SMRMonUnit[prof, context]
+
+    ]/;Length[itemIndices]==Length[itemRatings];
+
+
+SMRMonProfile[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be an association of scored items. " <>
+            "The second argument is expected to be a positive integer. " <>
+            "The items are recommendation matrix row indices or row names. The scores are positive numbers.",
+        "SMRMonProfile:"];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
