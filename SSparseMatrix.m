@@ -624,22 +624,35 @@ ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
         "ColumnNames" -> resColumnNames, "DimensionNames" -> DimensionNames[r1]]
     ];
 
+
 Clear[ImposeRowNames, ImposeColumnNames]
+
 ImposeRowNames[rmat_SSparseMatrix, rowNames : {_String ..}] :=
-    Block[{rmRowNames = RowNames[rmat], resMat, pos},
-      resMat =
-          Table[SparseArray[{0}, ColumnsCount[rmat]], {Length[rowNames]}];
-      resMat =
-          Fold[Function[{m, rn},
-            pos = Position[rowNames, RowNames[rmat][[rn]]];
-            If[Length[pos] == 0, m,
-              pos = pos[[1, 1]];
-              ReplacePart[m, pos -> rmat[[rn, All]]]
-            ]
-          ], resMat, Range[RowsCount[rmat]]];
-      ToSSparseMatrix[SparseArray[resMat], "RowNames" -> rowNames, "ColumnNames" -> ColumnNames[rmat]]
+    ImposeRowNames[rmat, AssociationThread[rowNames -> Range[Length[rowNames]]]];
+
+ImposeRowNames[rmat_SSparseMatrix, rowNames : Association[(_String -> _Integer) ..]] :=
+
+    Block[{arules, rmatRowNames, aInds, resMat},
+
+      arules = ArrayRules[SparseArray[rmat]];
+
+      rmatRowNames = RowNamesAssociation[rmat];
+
+      aInds =
+          AssociationThread[Values[rmatRowNames],
+            Lookup[rowNames, #, None] & /@ Keys[rmatRowNames]];
+
+      arules =
+          Append[Map[{aInds[#[[1, 1]]], #[[1, 2]]} -> #[[2]] &,
+            Most[arules]], Last[arules]];
+      arules = DeleteCases[arules, {None, _Integer} -> _];
+
+      ToSSparseMatrix[
+        SparseArray[arules, {Length[rowNames], ColumnsCount[rmat]}],
+        "RowNames" -> Keys[rowNames], "ColumnNames" -> ColumnNames[rmat]]
     ];
-ImposeColumnNames[rmat_SSparseMatrix, colNames : {_String ..}] :=
+
+ImposeColumnNames[rmat_SSparseMatrix, colNames : {_String ..} | Association[(_String->_Integer)..]] :=
     Transpose[ImposeRowNames[Transpose[rmat], colNames]];
 
 

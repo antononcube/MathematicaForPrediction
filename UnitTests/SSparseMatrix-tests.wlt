@@ -122,7 +122,11 @@ VerificationTest[(* 9 *)
 ]
 
 VerificationTest[(* 10 *)
-	CompoundExpression[Set[rmat2, rmat], SetColumnNames[rmat2, Map[ToString, Range[ColumnsCount[rmat]]]], Equal[ColumnNames[rmat2], Map[ToString, Range[ColumnsCount[rmat]]]]]
+	CompoundExpression[
+		Set[rmat2, rmat],
+		rmat2 = SetColumnNames[rmat2, Map[ToString, Range[ColumnsCount[rmat]]]],
+		Equal[ColumnNames[rmat2], Map[ToString, Range[ColumnsCount[rmat]]]]
+	]
 	,
 	True	
 	,
@@ -130,7 +134,10 @@ VerificationTest[(* 10 *)
 ]
 
 VerificationTest[(* 11 *)
-	CompoundExpression[Set[rmat2, rmat], SetRowNames[rmat2, Map[ToString, Range[RowsCount[rmat]]]], Equal[RowNames[rmat2], Map[ToString, Range[RowsCount[rmat]]]]]
+	CompoundExpression[
+		Set[rmat2, rmat],
+		rmat2 = SetRowNames[rmat2, Map[ToString, Range[RowsCount[rmat]]]],
+		Equal[RowNames[rmat2], Map[ToString, Range[RowsCount[rmat]]]]]
 	,
 	True	
 	,
@@ -430,6 +437,61 @@ VerificationTest[(* 46 *)
 	List[True, True, True]	
 	,
 	TestID->"ColumnBind-2"
+]
+
+
+VerificationTest[(* 47 *)
+
+	newRows = {"D", "A", "A1", "B", "B1", "C"};
+	rmat2 = ImposeRowNames[rmat, newRows];
+
+	rs2 = RowSumsAssociation[rmat2];
+	rs = RowSumsAssociation[rmat];
+	cs2 = ColumnSumsAssociation[rmat2];
+	cs = ColumnSumsAssociation[rmat];
+
+	ColumnNames[rmat2] == ColumnNames[rmat] &&
+
+			RowNames[rmat2] == newRows &&
+
+			rs2["A1"] == 0 &&
+
+			rs2["B1"] == 0 &&
+
+			Apply[ And, Map[ rs2[#] == rs[#] &, RowNames[rmat]] ] &&
+			Apply[ And, Map[ cs2[#] == cs[#] &, Intersection[ColumnNames[rmat2], ColumnNames[rmat]]]],
+
+	True,
+
+	TestID->"ImposeRowNames-1"
+]
+
+
+VerificationTest[(* 48 *)
+
+	newColumns = {"d", "a", "a1", "b", "b1", "c", "e"};
+	rmat3 = ImposeColumnNames[rmat, newColumns];
+
+	rs3 = RowSumsAssociation[rmat3];
+	rs = RowSumsAssociation[rmat];
+	cs3 = ColumnSumsAssociation[rmat3];
+	cs = ColumnSumsAssociation[rmat];
+
+	RowNames[rmat3] == RowNames[rmat] &&
+
+			ColumnNames[rmat3] == newColumns &&
+
+			cs3["a1"] == 0 &&
+
+			cs3["b1"] == 0 &&
+
+			Apply[ And, Map[ rs3[#] == rs[#] &, Intersection[RowNames[rmat3], RowNames[rmat]]] ] &&
+
+			Apply[ And, Map[ cs3[#] == cs[#] &, ColumnNames[rmat]] ],
+
+	True,
+
+	TestID->"ImposeColumnNames-1"
 ]
 
 EndTestSection[]
