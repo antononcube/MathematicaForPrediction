@@ -26,27 +26,28 @@
 ## Updated February 2015, March, 2015, January 2016
 ##=======================================================================================
 
-library(plyr)
+library(dplyr)
+library(purrr)
 library(ggplot2)
 
-#' @description Make a plot that demonstrates the adherence to the Pareto law of the unique entries
-#' of a categorical vector.
-#' @param dataVec a vector with categorical entries
-#' @param plotTitle a string for the title of the plot
-#' @param xlab label for the x-axis
-#' @param ylab label for the y-axis
+#' @description Make a plot that demonstrates the adherence to the Pareto law 
+#' of the unique entries of a categorical vector.
+#' @param dataVec A vector with categorical entries.
+#' @param plotTitle A string for the title of the plot.
+#' @param xlab Label for the x-axis.
+#' @param ylab Label for the y-axis.
 ParetoLawForCountsPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", ... ) {
   taCounts <- plyr::count(dataVec)
   taCounts <- taCounts[rev(order(taCounts$freq)),]
   ParetoLawPlot( taCounts$freq, main, xlab=xlab, ylab=ylab, ...)
 }
 
-#' @description Make a plot that demonstrates the adherence to the Pareto law of a numerical vector
-#' with contingency values (counts).
-#' @param dataVec a numerical vector 
-#' @param plotTitle a string for the title of the plot
-#' @param xlab label for the x-axis
-#' @param ylab label for the y-axis
+#' @description Make a plot that demonstrates the adherence to the Pareto law of 
+#' a numerical vector with contingency values (counts).
+#' @param dataVec A numerical vector.
+#' @param plotTitle A string for the title of the plot.
+#' @param xlab Label for the x-axis.
+#' @param ylab Label for the y-axis.
 ParetoLawPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", xFraction = 0.2, yFraction = 0.8, ... ) {
   dataVec <- rev( sort(dataVec) )
   plot( cumsum( dataVec ) / sum( dataVec ), type='l', main=main, xlab=xlab, ylab=ylab, ... )
@@ -55,36 +56,57 @@ ParetoLawPlot <- function( dataVec, main = NULL, xlab="|levels|", ylab="%", xFra
   abline( v=c(xFraction*length(dataVec)), h=c(yFraction), col="red", lty="dotted" )
 }
 
-#' @description Make a plot that demonstrates the adherence to the Pareto law of a numerical vector
-#' with contingency values (counts).
-#' @param dataDF a two column data frame with the first column of a variable name and second column a numerical vector c("Name", "Value")
-#' @param plotTitle a string for the title of the plot
-ParetoLawGGPlot <- function( dataDF, main = NULL, scales = "free_x", ...  ) {
+#' @description Make a plot that demonstrates the adherence to the Pareto law of a 
+#' a data frame with item names and weight values.
+#' @param dataDF A two column data frame with the first column of a variable name 
+#' and second column a numerical vector \code{c("Name", "Value")}.
+#' @param main A string for the title of the plot.
+#' @param separatedPlotsQ Should the plotted Pareto curves be separated or not?
+#' @param scales Sames as \code{scales} of \code{ggplot2::facet_wrap}.
+#' @param nrow Sames as \code{nrow} of \code{ggplot2::facet_wrap}.
+#' @param ncol Sames as \code{ncol} of \code{ggplot2::facet_wrap}.
+ParetoLawGGPlot <- function( dataDF, main = NULL, separatedPlotsQ = TRUE, scales = "fixed", nrow = NULL, ncol = NULL, ...  ) {
   qdf <- 
-    ddply( dataDF, c("Name"), function(x) {
+    purrr::map_df( split( dataDF, dataDF[["Name"]] ), function(x) {
       dataVec <- rev( sort(x$Value) )
       dataVec <- cumsum( dataVec ) / sum( dataVec )
-      pres <- data.frame( Name = x$Name[[1]], Index = 1:nrow(x), ParetoFraction = dataVec )
-      qdf <- cbind( pres,
-                    p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
+      pres <- data.frame( Name = x$Name[[1]], Index = 1:nrow(x), ParetoFraction = dataVec, stringsAsFactors = FALSE )
+      cbind( pres,
+             p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
     })
 
-  
-  ggplot(qdf) +
-    geom_line( aes( x = Index, y = ParetoFraction) ) +
-    geom_vline( aes( xintercept = p10), linetype = 3 ) +
-    geom_vline( aes( xintercept = p20), linetype = 3 ) +
-    geom_vline( aes( xintercept = p30), linetype = 3 ) +
-    geom_vline( aes( xintercept = p40), linetype = 3 ) +
-    geom_vline( aes( xintercept = p50), linetype = 3 ) +
-    facet_wrap( ~ Name, scales = scales ) +
-    theme( ... )
+  if( separatedPlotsQ ) {
+    ggplot2::ggplot(qdf) +
+      ggplot2::geom_line(  ggplot2::aes( x = Index, y = ParetoFraction) ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p10), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p20), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p30), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p40), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p50), linetype = 3 ) +
+      ggplot2::facet_wrap( ~ Name, scales = scales, nrow = nrow, ncol = ncol  ) +
+      ggplot2::theme( ... )
+  } else {
+    ggplot2::ggplot(qdf) +
+      ggplot2::geom_line(  ggplot2::aes( x = Index, y = ParetoFraction, color = Name) ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p10), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p20), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p30), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p40), linetype = 3 ) +
+      ggplot2::geom_vline( ggplot2::aes( xintercept = p50), linetype = 3 ) +
+      ggplot2::theme( ... )
+  }  
 }
 
 #' @description Sorts the tally of given categorical data descendingly and computes the list of the cumulative sums.
-#' @param dataVec a vector with categorical entries
-#' @param weightVec a vector of weights for the values of dataVec; see the argument wt_var of plyr::count
+#' @param dataVec A vector with categorical entries.
+#' @param weightVec A vector of weights for the values of \code{dataVec}; 
+#' see the argument wt_var of \code{plyr::count}.
 ParetoLawData <- function( dataVec, weightsVec = NULL ) {
+  
+  if ( is.numeric(dataVec) ) {
+    stop("The argument dataVec is expected to be a categorical vector.", call. = TRUE )
+  }
+  
   if ( is.null(weightsVec) ) {
     dTally <- plyr::count( dataVec ) 
   } else {
@@ -99,17 +121,19 @@ ParetoLawData <- function( dataVec, weightsVec = NULL ) {
 }
 
 #' @description Apply the ParetoLawData function over a list of names.
-#' @param data a data frame 
-#' @param colNames a list of column names corresponding to categrical columns in \param data
+#' @param data A data frame.
+#' @param colNames A list of column names corresponding to categrical columns in \code{data}.
 ParetoLawDataForColumns <- function( data, colNames ) {
-  llply(colNames, function(c) {t<-ParetoLawData(data[[c]]); cbind(1:length(t[,1]), t[,2])})
+  res <- purrr::map(colNames, function(c) {t<-ParetoLawData(data[[c]]); cbind(1:length(t[,1]), t[,2])})
+  names(res) <- colNames
+  res
 }
 
 
 #' @description Finds the Pareto items in a column of a data frame.
-#' @param data a data frame
-#' @param colName the column name of items to be counted
-#' @param paretoFraction a number between 0 and 1 specifying the Pareto fraction
+#' @param data A data frame.
+#' @param colName The column name of items to be counted.
+#' @param paretoFraction A number between 0 and 1 specifying the Pareto fraction.
 #' @return A data frame with columns c( "Item", "Score", "CumSums" ).
 ParetoItems <- function( data, colName, paretoFraction ) {
   
@@ -131,8 +155,8 @@ ParetoItems <- function( data, colName, paretoFraction ) {
 
 
 #' @description Finds the Pareto items in a column of a data frame.
-#' @param dataVec a data vector
-#' @param paretoFraction a number between 0 and 1 specifying the Pareto fraction
+#' @param dataVec A data vector.
+#' @param paretoFraction A number between 0 and 1 specifying the Pareto fraction.
 #' @return A data frame with columns c( "Index", "Score", "CumSums" ).
 #' @details "CumSums" should be "CumSumFractions" but it is left to be "CumSums" for backward compatibility.
 ParetoPositions <- function( dataVec, paretoFraction = 1 ) {
@@ -152,9 +176,9 @@ ParetoPositions <- function( dataVec, paretoFraction = 1 ) {
 }
 
 #' @description Apply the ParetoLawData function over a list of names and make a multi-panel ggplot.
-#' @param data a data frame
-#' @param colNames a list of column names corresponding to categrical columns in \param data
-#' @param ... arguments for ggplot2::facet_wrap .
+#' @param data A data frame.
+#' @param colNames A list of column names corresponding to categrical columns in \code{data}.
+#' @param ... Arguments for \code{ggplot2::facet_wrap}.
 ParetoLawPlotForColumns <- function( data, colNames = colnames(data), weights = NULL, ... ) {
   
   if( is.null(weights) ) {
@@ -168,11 +192,11 @@ ParetoLawPlotForColumns <- function( data, colNames = colnames(data), weights = 
   }
   
   qdf <-
-    ldply( colNames, function(cn) {
+    purrr::map_df( colNames, function(cn) {
       pres <- ParetoLawData( data[[cn]], weightsVec = weightsVec )
       cbind( ColName = cn, Index = 1:nrow(pres), pres,
              p10 = 0.1*nrow(pres), p20 = 0.2*nrow(pres), p30 = 0.3*nrow(pres),  p40 = 0.4*nrow(pres),  p50 = 0.5*nrow(pres) )
-    }, .progress = "none" )
+    })
   
   ggplot(qdf) +
     geom_line( aes( x = Index, y = ParetoFraction) ) +
