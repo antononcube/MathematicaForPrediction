@@ -187,33 +187,46 @@ VerificationTest[(* 16 *)
 VerificationTest[(* 17 *)
 	Dot[rmat, Transpose[Part[rmat, List[1], All]]]
 	,
-	SSparseMatrix`SSparseMatrix[Association[Rule["SparseMatrix", SparseArray[Automatic, List[4, 1], 0, List[1, List[List[0, 1, 1, 1, 1], List[List[1]]], List[17]]]], Rule["RowNames", Association[Rule["A", 1], Rule["B", 2], Rule["C", 3], Rule["D", 4]]], Rule["ColumnNames", Association[Rule["A", 1]]], Rule["DimensionNames", Association[Rule["U", 2]]]]]	
+	(* The previous version of this test had "DimensionNames" -> Association["U" -> 2] . *)
+	(* I changed it when I introduced the SSparseMatrix::dnsame message. *)
+	SSparseMatrix[
+		Association["SparseMatrix" -> SparseArray[Automatic, {4, 1}, 0,
+			{1, {{0, 1, 1, 1, 1}, {{1}}}, {17}}],
+			"RowNames" -> Association["A" -> 1, "B" -> 2, "C" -> 3, "D" -> 4],
+			"ColumnNames" -> Association["A" -> 1],
+			"DimensionNames" -> <|"1" -> 1, "2" -> 2|>]]
 	,
-	TestID->"Dot-marix-vector-1"
+	{SSparseMatrix::dnsame}
+	,
+	TestID->"Dot-matrix-vector-1"
 ]
 
 VerificationTest[(* 18 *)
 	Normal[SparseArray[Dot[rmat, Transpose[Part[rmat, List[1], All]]]]]
 	,
-	List[List[17], List[0], List[0], List[0]]	
+	List[List[17], List[0], List[0], List[0]]
+  ,
+	{SSparseMatrix::dnsame}
 	,
-	TestID->"Dot-marix-vector-2"
+	TestID->"Dot-matrix-vector-2"
 ]
 
 VerificationTest[(* 19 *)
 	Equal[SparseArray[Dot[rmat, Transpose[Part[rmat, List[1], All]]]], Dot[SparseArray[rmat], Transpose[SparseArray[Part[rmat, List[1], All]]]]]
 	,
-	True	
+	True
 	,
-	TestID->"Dot-marix-vector-3"
+	{SSparseMatrix::dnsame}
+	,
+	TestID->"Dot-matrix-vector-3"
 ]
 
 VerificationTest[(* 20 *)
 	Equal[SparseArray[Dot[rmat, Part[rmat, 1, All]]], Dot[SparseArray[rmat], Part[rmat, 1, All]]]
 	,
-	True	
+	True
 	,
-	TestID->"Dot-marix-vector-4"
+	TestID->"Dot-matrix-vector-4"
 ]
 
 VerificationTest[(* 21 *)
@@ -492,6 +505,30 @@ VerificationTest[(* 48 *)
 	True,
 
 	TestID->"ImposeColumnNames-1"
+]
+
+
+VerificationTest[(* 49 *)
+
+	smatProf = SparseArray[RandomReal[{0, 1}, {200, 120}]];
+
+	rmatProf =
+			ToSSparseMatrix[smatProf,
+				"RowNames" ->
+						Map["A" <> ToString[#] &, Range[Dimensions[smatProf][[1]]]],
+				"ColumnNames" ->
+						Map["b" <> ToString[#] &, Range[Dimensions[smatProf][[2]]]]];
+
+	sres = smatProf.Transpose[smatProf];
+	rres = rmatProf.Transpose[rmatProf];
+
+	Norm[sres[[1 ;; 120, 1 ;; 120]] - SparseArray[rres[[1 ;; 120, 1 ;; 120]]]],
+
+	0.,
+
+	{SSparseMatrix::dnsame},
+
+	TestID -> "Dimension-names-after-Dot-1"
 ]
 
 EndTestSection[]

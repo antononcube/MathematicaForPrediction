@@ -210,7 +210,10 @@ SSparseMatrix::cnset =
     "The column names `1` are expected to be a list of strings with length that equals the number of columns (`2`) of the SSparseMatrix object.";
 
 SSparseMatrix::dnset =
-    "The dimension names `1` are expected to be a list of two strings.";
+    "The dimension names `1` are expected to be a list of two strings or None.";
+
+SSparseMatrix::dnsame =
+    "The dimension names `1` are the same; using {\"1\", \"2\"} instead.";
 
 ToSSparseMatrix::arg1 =
     "The first argument is expected to be a sparse array, a dataset with two dimensions, or a SSparseMatrix object";
@@ -255,23 +258,36 @@ ToSSparseMatrix[rmat_SSparseMatrix, opts : OptionsPattern[]] :=
 
 ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
     Block[{rnames, cnames, dnames},
+
       rnames = OptionValue[ToSSparseMatrix, "RowNames"];
       cnames = OptionValue[ToSSparseMatrix, "ColumnNames"];
       dnames = OptionValue[ToSSparseMatrix, "DimensionNames"];
+
       If[! ( rnames === None || (VectorQ[rnames, StringQ] && Length[rnames] == Dimensions[sarr][[1]]) ),
         Message[SSparseMatrix::rnset, rnames, Dimensions[sarr][[1]]];
         Return[$Failed]
       ];
+
       If[! ( cnames === None || (VectorQ[cnames, StringQ] && Length[cnames] == Dimensions[sarr][[2]]) ),
         Message[SSparseMatrix::cnset, cnames, Dimensions[sarr][[2]]];
         Return[$Failed]
       ];
+
       If[dnames === {None, None}, dnames = None];
+
       If[ MatchQ[dnames, {_String, None}], dnames = {dnames[[1]], "2"} ];
+
       If[ MatchQ[dnames, {None, _String}], dnames = {"1", dnames[[2]]} ];
+
       If[! (dnames === None || (MatchQ[dnames, {_String ..}] && Length[dnames] == 2)),
         Message[SSparseMatrix::dnset, dnames]; Return[$Failed]
       ];
+
+      If[ Length[dnames] == 2 && dnames[[1]] == dnames[[2]],
+        Message[SSparseMatrix::dnsame, dnames];
+        dnames = {"1", "2"}
+      ];
+
       SSparseMatrix[<|"SparseMatrix" -> sarr,
           "RowNames" ->
               If[rnames === None, None,
