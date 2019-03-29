@@ -225,10 +225,10 @@ ROCValues <- function( classResMat, testLabels, range = seq(0,1,0.05), .progress
     data.frame( "Threshold" = th,
     "TPR" = clSuccessRateDF[ successLabel, successLabel ],
     "FPR" = clSuccessRateDF[ nonSuccessLabel, successLabel ],
-    "TP"  = clSuccessDF[ successLabel, successLabel ],
-    "TN"  = clSuccessDF[ nonSuccessLabel, nonSuccessLabel ],
-    "FP"  = clSuccessDF[ nonSuccessLabel, successLabel ],
-    "FN"  = clSuccessDF[ successLabel, nonSuccessLabel ],
+    "TP"  = clSuccessRateDF[ successLabel, successLabel ],
+    "TN"  = clSuccessRateDF[ nonSuccessLabel, nonSuccessLabel ],
+    "FP"  = clSuccessRateDF[ nonSuccessLabel, successLabel ],
+    "FN"  = clSuccessRateDF[ successLabel, nonSuccessLabel ],
     stringsAsFactors = FALSE)
 
   }, .progress = .progress )
