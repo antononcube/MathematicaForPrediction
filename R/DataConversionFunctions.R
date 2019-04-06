@@ -52,6 +52,7 @@ library(reshape2)
 library(Matrix)
 library(lubridate)
 library(dplyr)
+library(purrr)
 
 #' @description Partition combined columns
 #' @param dataColumn data vector
@@ -267,6 +268,23 @@ MakePiecewiseFunction <- function( points, tags=NULL ) {
   funcStr <- paste( funcStr, "+ (", points[length(points)], " < x )*", tags[length(points)+1], "}" )
 
   eval( parse( text=funcStr ) )
+}
+
+#' Categorize to quantile intervals.
+#' @param vec A numerical vector to be categorized.
+#' @param probs A numerical vector to be given to 
+#' the argument \code{probs} of \code{\link{quantile}}.
+#' @param breaks A the breaks to be used.
+#' If NULL \code{quantile} is used.
+#' @return A character vector.
+CategorizeToQuantileIntervals <- function( vec, breaks = NULL, probs = seq(0,1,0.1) ) {
+  if( missing(breaks) || is.null(breaks) ) {
+    breaks <- unique( quantile( vec, probs, na.rm = T) )
+  }
+  intervalNames <- purrr::map2_chr( breaks[-length(breaks)], breaks[-1], function(x, y) paste0( x, "≤v<", y )) 
+  resVec <- findInterval( x = vec, vec = breaks, all.inside = T )
+  resVec <- intervalNames[resVec]
+  resVec
 }
 
 #' @param itemRows a data frame of flat content data
