@@ -302,7 +302,7 @@ GenerateStateMonadCode["MonadicContextualClassification`ClCon", "FailureSymbol" 
 (* General functions                                          *)
 (**************************************************************)
 
-ClearAll[ClConToNormalClassifierData]
+Clear[ClConToNormalClassifierData]
 
 Options[ClConToNormalClassifierData] = {"DeleteMissing"->True, "ClassLabelColumn" -> Automatic };
 
@@ -354,7 +354,7 @@ ClConToNormalClassifierData[ data_?MatrixQ, opts:OptionsPattern[] ] :=
 (**************************************************************)
 (* Data splitting and recovery functions                      *)
 (**************************************************************)
-ClearAll[ClConSplitData]
+Clear[ClConSplitData]
 
 (* This function does not respect specified label column yet. *)
 Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
@@ -410,7 +410,7 @@ ClConSplitData[___][xs_, context_Association] :=
     ];
 
 
-ClearAll[ClConRecoverData]
+Clear[ClConRecoverData]
 
 ClConRecoverData[$ClConFailure] := $ClConFailure;
 
@@ -442,7 +442,7 @@ ClConRecoverData[xs_, context_Association] :=
 (* Setters / getters                                          *)
 (**************************************************************)
 
-ClearAll["ClConSet*Data", "ClConTake*Data", ClConTakeClassifier, ClConTakeClassLabelIndex, ClConTakeVariableNames];
+Clear["ClConSet*Data", "ClConTake*Data", ClConTakeClassifier, ClConTakeClassLabelIndex, ClConTakeVariableNames];
 
 ClConSetTrainingData[___][$ClConFailure] := $ClConFailure;
 ClConSetTrainingData[xs_, context_Association] := $ClConFailure;
@@ -556,7 +556,7 @@ DatasetWithColumnNamesQ[ds_Dataset] :=
 DatasetWithColumnNamesQ[___] := False;
 
 
-ClearAll[ClConGetVariableNames];
+Clear[ClConGetVariableNames];
 ClConGetVariableNames[][$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[$ClConFailure] := $ClConFailure;
 ClConGetVariableNames[][xs_, context_] := ClConGetVariableNames[xs, context];
@@ -585,7 +585,7 @@ ClConGetVariableNames[xs_, context_Association] :=
     ];
 
 
-ClearAll[ClConEchoVariableNames];
+Clear[ClConEchoVariableNames];
 ClConEchoVariableNames[$ClConFailure] := $ClConFailure;
 ClConEchoVariableNames[][$ClConFailure] := $ClConFailure;
 ClConEchoVariableNames[][xs_, context_] := ClConEchoVariableNames[xs, context];
@@ -599,7 +599,7 @@ ClConEchoVariableNames[xs_, context_Association] :=
       ]
     ];
 
-ClearAll[ClConAssignVariableNames]
+Clear[ClConAssignVariableNames]
 
 ClConAssignVariableNames[$ClConFailure] := $ClConFailure;
 ClConAssignVariableNames[][$ClConFailure] := $ClConFailure;
@@ -673,7 +673,7 @@ GetData[xs_, context_] :=
       ]
     ];
 
-ClearAll[ClConSummarizeData, ClConSummarizeDataLongForm];
+Clear[ClConSummarizeData, ClConSummarizeDataLongForm];
 
 Options[ClConSummarizeData] = Join[ {"Type" -> Automatic, "Echo"->True }, Options[DataColumnsSummary]];
 
@@ -782,7 +782,7 @@ ClConSummarizeDataLongForm[___][__] := $ClConFailure;
 (* ClConEchoDataSummary                                     *)
 (************************************************************)
 
-ClearAll[ClConEchoDataSummary];
+Clear[ClConEchoDataSummary];
 
 Options[ClConEchoDataSummary] = Options[ClConSummarizeData];
 
@@ -805,7 +805,7 @@ ClConEchoDataSummary[___][__] := $ClConFailure;
 (* DeleteMissing                                              *)
 (**************************************************************)
 
-ClearAll[ClConDeleteMissing];
+Clear[ClConDeleteMissing];
 
 ClConDeleteMissing[$ClConFailure] := $ClConFailure;
 
@@ -830,7 +830,7 @@ ClConDeleteMissing[___][__] := $ClConFailure;
 (************************************************************)
 (* ClConMakeClassifier                                      *)
 (************************************************************)
-ClearAll[ClConMethodQ, ClConMethodListQ, ClConResamplingMethodListQ, ClConMethodSpecQ, ClConClassifierQ, ClConMakeClassifier];
+Clear[ClConMethodQ, ClConMethodListQ, ClConResamplingMethodListQ, ClConMethodSpecQ, ClConClassifierQ, ClConMakeClassifier];
 
 ClConMethodQ[x_] := StringQ[x] || MatchQ[ x, {_String, _Rule..} ]; (* And check is it known by Classify. *)
 
@@ -916,7 +916,7 @@ ClConMakeClassifier[___][xs_, context_Association] :=
     ];
 
 
-ClearAll[ClConTrainClassifier]
+Clear[ClConTrainClassifier]
 ClConTrainClassifier = ClConMakeClassifier;
 
 
@@ -1041,7 +1041,7 @@ ClConClassifierMeasurementsByThreshold[___][xs_, context_Association] :=
 (* Meaning the classifier is repeatedly called over a test set. *)
 (* Note that there is an *Echo* version. This prompts as possible computation optimization. *)
 
-ClearAll[ClConROCData]
+Clear[ClConROCData]
 
 Options[ClConROCData] = { "ROCRange" -> Automatic, "ClassLabels" -> All };
 
@@ -1112,7 +1112,7 @@ ClConROCData[___][xs_,context_Association] :=
 (************************************************************)
 (* ClConROCPlot                                             *)
 (************************************************************)
-ClearAll[ClConROCPlot];
+Clear[ClConROCPlot];
 
 Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot], {"Echo"->True} ];
 
@@ -1121,6 +1121,8 @@ ClConROCPlot[___][$ClConFailure] := $ClConFailure;
 (*ClConROCPlot[][xs_,context_]:= ClConROCPlot[ "FPR", "TPR"][xs, context];*)
 
 ClConROCPlot[opts:OptionsPattern[]][xs_,context_]:= ClConROCPlot[ "FPR", "TPR", opts][xs, context];
+
+ClConROCPlot[ { xFuncName_String, yFuncName_String }, opts:OptionsPattern[] ][xs_,context_]:= ClConROCPlot[ xFuncName, yFuncName, opts][xs, context];
 
 ClConROCPlot[ xFuncName_String, yFuncName_String, opts:OptionsPattern[]][xs_,context_]:=
     Block[{rocFuncs = rocFuncsArg, rocDataOpts, rocPlotOpts, rocPlotFunc, echoQ},
@@ -1173,7 +1175,7 @@ ClConROCPlot[___][xs_,context_] :=
 (************************************************************)
 (* ClConROCLinePlot                                         *)
 (************************************************************)
-ClearAll[ClConROCListLinePlot];
+Clear[ClConROCListLinePlot];
 
 Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot], {"Echo"->True} ];
 
@@ -1247,7 +1249,7 @@ ClConROCListLinePlot[___][xs_,context_Association] :=
 (************************************************************)
 (* ClConSuggestROCThresholds                                *)
 (************************************************************)
-ClearAll[ClConSuggestROCThresholds]
+Clear[ClConSuggestROCThresholds]
 
 Options[ClConSuggestROCThresholds] = Options[ROCData];
 
@@ -1284,7 +1286,7 @@ ClConSuggestROCThresholds[n_Integer:1, opts:OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 (* ClConAccuracyByVariableShuffling                         *)
 (************************************************************)
-ClearAll[ClConAccuracyByVariableShuffling];
+Clear[ClConAccuracyByVariableShuffling];
 
 Options[ClConAccuracyByVariableShuffling] = { "ClassLabels" -> None };
 
@@ -1341,7 +1343,7 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
 (* ClConReduceDimension                                     *)
 (************************************************************)
 
-ClearAll[ClConReduceDimension]
+Clear[ClConReduceDimension]
 
 Options[ClConReduceDimension] = { "Echo" -> True };
 
@@ -1446,7 +1448,7 @@ ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
 (************************************************************)
 (* ClConOutlierPosition                                     *)
 (************************************************************)
-ClearAll[ClConOutlierPosition, ClConDataOutlierPosition]
+Clear[ClConOutlierPosition, ClConDataOutlierPosition]
 
 Options[ClConOutlierPosition] = {
   "CentralItemFunction" -> Mean,
@@ -1555,7 +1557,7 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 (* ClConFindOutliersPerClassLabel                                *)
 (************************************************************)
-ClearAll[ClConFindOutliersPerClassLabel]
+Clear[ClConFindOutliersPerClassLabel]
 
 Options[ClConFindOutliersPerClassLabel] = {
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
@@ -1608,7 +1610,7 @@ ClConFindOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
   4. That dataset is returned as monad pipeline value.
 *)
 
-ClearAll[ClConDropOutliersPerClassLabel]
+Clear[ClConDropOutliersPerClassLabel]
 
 Options[ClConDropOutliersPerClassLabel] = Options[ClConFindOutliersPerClassLabel];
 
@@ -1643,7 +1645,7 @@ ClConDropOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
 (************************************************************)
 (* ClConOutliersOperationsProcessing                        *)
 (************************************************************)
-ClearAll[ClConOutliersOperationsProcessing]
+Clear[ClConOutliersOperationsProcessing]
 
 Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClassLabel];
 
