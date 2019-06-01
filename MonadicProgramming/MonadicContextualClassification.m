@@ -219,6 +219,8 @@ Does not echo the result."
 ClConToNormalClassifierData::usage = "Non-monadic function. Converts data of different forms into record-label rules. \
 I.e. in the form { (rec:{___}->lbl_)..} ."
 
+ClConSetData::usage = "Sets the data argument to be the pipeline value. (Synonym of ClConSetValue.)"
+
 ClConSetTrainingData::usage = "Sets the training data in the context. Does not change the pipeline value."
 
 ClConSetTestData::usage = "Sets the test data in the context. Does not change the pipeline value."
@@ -443,6 +445,9 @@ ClConRecoverData[xs_, context_Association] :=
 (**************************************************************)
 
 Clear["ClConSet*Data", "ClConTake*Data", ClConTakeClassifier, ClConTakeClassLabelIndex, ClConTakeVariableNames];
+
+Clear[ClConSetData]
+ClConSetData = ClConSetValue;
 
 ClConSetTrainingData[___][$ClConFailure] := $ClConFailure;
 ClConSetTrainingData[xs_, context_Association] := $ClConFailure;
