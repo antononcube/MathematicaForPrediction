@@ -227,11 +227,11 @@ ToROCAssociation::sgntrs = "The allowed signatures are one of : \
 ToROCAssociation[ {trueLabel_, falseLabel_}, actualLabels_List, predictedLabels_List ] :=
     Block[{ra,localFalseLabel, flRules},
       If[ ! ( AtomQ[trueLabel] && ( AtomQ[falseLabel] || MatchQ[falseLabel,{_?AtomQ..}] ) ),
-        Message[ToROCAssociation::nalbl]
+        Message[ToROCAssociation::nalbl];
         Return[$Failed]
       ];
       If[ ! ( VectorQ[actualLabels] && VectorQ[predictedLabels] && Length[actualLabels] == Length[predictedLabels] ),
-        Message[ToROCAssociation::nvecs]
+        Message[ToROCAssociation::nvecs];
         Return[$Failed]
       ];
       If[ AtomQ[falseLabel],
@@ -291,7 +291,7 @@ ACC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[ACC, rocs]
 FOR[rocAssoc_?ROCAssociationQ] := 1 - NPV[rocAssoc];
 FOR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FOR, rocs];
 
-F1[rocAssoc_?ROCAssociationQ] := 2 * PPV[rocAssoc] * SPC[rocAssoc] / ( PPC[rocAssoc] + SPC[rocAssoc] );
+F1[rocAssoc_?ROCAssociationQ] := 2 * PPV[rocAssoc] * TPR[rocAssoc] / ( PPV[rocAssoc] + TPR[rocAssoc] );
 F1[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[F1, rocs];
 
 AUROC[pROCs:{_?ROCAssociationQ..}] :=
@@ -524,7 +524,7 @@ ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ, 
 
 ROCValues[___] :=
     Block[{},
-      Message[ROCValues::args]
+      Message[ROCValues::args];
       $Failed
     ];
 
