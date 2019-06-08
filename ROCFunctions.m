@@ -299,27 +299,38 @@ AUROC[pROCs:{_?ROCAssociationQ..}] :=
         /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)];
 AUROC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[AUROC, rocs];
 
+MCC[rocAssoc_?ROCAssociationQ] :=
+    Block[{tp, tn, fp, fn, tpfp, tpfn, tnfp, tnfn},
+
+      {tp, tn, fp, fn} = Through[ { TPR, SPC, FPR, FNR}[rocAssoc] ];
+      {tpfp, tpfn, tnfp, tnfn} = Map[ If[#==0, 1,#]&, { tp + fp, tp + fn, tn + fp, tn + fn }];
+
+      (tp*tn - fp*fn) / Sqrt[ tpfp * tpfn * tnfp * tnfn ]
+    ];
+MCC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[MCC, rocs];
+
 
 aROCAcronyms =
     AssociationThread[
       {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "FOR",
-        "F1", "Recall", "Precision", "Accuracy", "Sensitivity"},
+        "F1", "MCC", "Recall", "Precision", "Accuracy", "Sensitivity"},
       {"true positive rate", "true negative rate", "specificity", "positive predictive value",
         "negative predictive value", "false positive rate",
         "false discovery rate", "false negative rate", "accuracy", "area under the ROC curve", "false omission rate",
-        "F1 score", "same as TPR", "same as PPV", "same as ACC", "same as TPR"}
+        "F1 score", "Matthews correlation coefficient",
+        "same as TPR", "same as PPV", "same as ACC", "same as TPR"}
     ];
 
 aROCFunctions =
     Join[
       AssociationThread[
-        {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "FOR", "F1"},
-        {TPR, SPC, SPC, PPV, NPV, FPR, FDR, FNR, ACC, AUROC, FOR, F1}],
+        {"TPR", "TNR", "SPC", "PPV", "NPV", "FPR", "FDR", "FNR", "ACC", "AUROC", "FOR", "F1", "MCC"},
+        {TPR, SPC, SPC, PPV, NPV, FPR, FDR, FNR, ACC, AUROC, FOR, F1, MCC}],
       AssociationThread[
         {"Recall", "Sensitivity", "Precision", "Accuracy", "Specificity",
           "FalsePositiveRate", "TruePositiveRate", "FalseNegativeRate", "TrueNegativeRate", "FalseDiscoveryRate",
-          "FalseOmissionRate", "F1Score", "AreaUnderROCCurve" },
-        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FNR, SPC, FDR, FOR, F1, AUROC }
+          "FalseOmissionRate", "F1Score", "AreaUnderROCCurve", "MatthewsCorrelationCoefficient" },
+        {TPR, TPR, PPV, ACC, SPC, FPR, TPR, FNR, SPC, FDR, FOR, F1, AUROC, MCC }
       ]
     ];
 
