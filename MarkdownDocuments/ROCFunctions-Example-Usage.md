@@ -95,7 +95,7 @@ This variable dependence grid shows the relationships between the variables.
 
     N @ Through[ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC", "MCC"}][aROCs[[3]]]]
 
-    {0.513514, 0.790698, 0.778689, 0.627389, 0.53125, 0.319886}
+    (* {0.513514, 0.790698, 0.778689, 0.627389, 0.53125, 0.319886} *)
 
 ### Standard ROC plot
 
