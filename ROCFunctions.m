@@ -543,23 +543,28 @@ ToClassifyROCCurvePlot[gr_] :=
 Modified/productized version of kglr's MSE answer: https://mathematica.stackexchange.com/a/200221/34008 .
 *)
 Clear[ConfusionMatrixPlot]
-Options[ConfusionMatrixPlot] = { "Normalize" -> False };
+Options[ConfusionMatrixPlot] = Join[ { "Normalize" -> False }, Options[MatrixPlot] ];
 ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {_, _}: {"False", "True"}, opts:OptionsPattern[] ] :=
-   Block[{m},
+   Block[{mat, refMat, n},
 
-     m = {{aROC["TrueNegative"], aROC["FalsePositive"]}, {aROC["FalsePositive"], aROC["TruePositive"]}};
+     mat = {{aROC["TrueNegative"], aROC["FalsePositive"]}, {aROC["FalseNegative"], aROC["TruePositive"]}};
+
+     refMat = mat;
 
      If[ TrueQ[OptionValue[ConfusionMatrixPlot, "Normalize"]],
-       m = N[ m / ( aROC["TruePositive"] + aROC["FalseNegative"] ) ];
+       mat = N[ mat / { aROC["TrueNegative"] + aROC["FalsePositive"], aROC["TruePositive"] + aROC["FalseNegative"] } ];
      ];
 
-     MatrixPlot[m, ColorRules -> {0 -> White}, Frame -> True,
+     MatrixPlot[mat,
+       FilterRules[{opts}, Options[MatrixPlot]],
+       ColorRules -> {0 -> White},
+       Frame -> True,
        FrameLabel -> {"actual", "predicted"},
        FrameTicks ->
-           {{MapIndexed[{#2[[1]], #} &, labelNames], MapIndexed[{#2[[1]], #} &, Total@Transpose@m]},
-             {MapIndexed[{#2[[1]], #} &, Total[m]], MapIndexed[{#2[[1]], #} &, labelNames]}},
+           {{MapIndexed[{#2[[1]], #} &, labelNames], MapIndexed[{#2[[1]], #} &, Total@Transpose@refMat]},
+             {MapIndexed[{#2[[1]], #} &, Total[refMat]], MapIndexed[{#2[[1]], #} &, labelNames]}},
        ColorFunction -> "Rainbow",
-       Epilog -> MapIndexed[Text[#, #2 - 1/2] &, Transpose@Reverse@m, {2}]]
+       Epilog -> MapIndexed[Text[#, #2 - 1/2] &, Transpose@Reverse@mat, {2}]]
    ];
 
 End[] (* `Private` *)
