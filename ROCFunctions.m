@@ -211,6 +211,9 @@ computes ROC associations (for ROCPlot)."
 
 ToClassifyROCCurvePlot::usage = "Changes the style of ROCPlot plots. (Experimental.)"
 
+ConfusionMatrixPlot::usage = "ConfusionMatrixPlot[aROC, labelNames] plots a confusion matrix based \
+on a ROC association."
+
 Begin["`Private`"]
 
 Clear[ToROCAssociation]
@@ -535,6 +538,29 @@ ToClassifyROCCurvePlot[gr_] :=
       cols = Cases[gr, _RGBColor, Infinity];
       gr /. {Line[x__] -> pFunc[x, {Darker[Blue], LightBlue}], PointSize[x_] -> PointSize[0.001]}
     ];
+
+(*
+Modified/productized version of kglr's MSE answer: https://mathematica.stackexchange.com/a/200221/34008 .
+*)
+Clear[ConfusionMatrixPlot]
+Options[ConfusionMatrixPlot] = { "Normalize" -> False };
+ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {_, _}: {"False", "True"}, opts:OptionsPattern[] ] :=
+   Block[{m},
+
+     m = {{aROC["TrueNegative"], aROC["FalsePositive"]}, {aROC["FalsePositive"], aROC["TruePositive"]}};
+
+     If[ TrueQ[OptionValue[ConfusionMatrixPlot, "Normalize"]],
+       m = N[ m / ( aROC["TruePositive"] + aROC["FalseNegative"] ) ];
+     ];
+
+     MatrixPlot[m, ColorRules -> {0 -> White}, Frame -> True,
+       FrameLabel -> {"actual", "predicted"},
+       FrameTicks ->
+           {{MapIndexed[{#2[[1]], #} &, labelNames], MapIndexed[{#2[[1]], #} &, Total@Transpose@m]},
+             {MapIndexed[{#2[[1]], #} &, Total[m]], MapIndexed[{#2[[1]], #} &, labelNames]}},
+       ColorFunction -> "Rainbow",
+       Epilog -> MapIndexed[Text[#, #2 - 1/2] &, Transpose@Reverse@m, {2}]]
+   ];
 
 End[] (* `Private` *)
 
