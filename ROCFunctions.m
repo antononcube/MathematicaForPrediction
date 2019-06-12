@@ -211,8 +211,8 @@ computes ROC associations (for ROCPlot)."
 
 ToClassifyROCCurvePlot::usage = "Changes the style of ROCPlot plots. (Experimental.)"
 
-ConfusionMatrixPlot::usage = "ConfusionMatrixPlot[aROC, labelNames] plots a confusion matrix based \
-on a ROC association."
+ConfusionMatrixPlot::usage = "ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {yesLabel_, noLabel_}
+plots a confusion matrix based on a ROC association."
 
 Begin["`Private`"]
 
@@ -544,15 +544,15 @@ Modified/productized version of kglr's MSE answer: https://mathematica.stackexch
 *)
 Clear[ConfusionMatrixPlot]
 Options[ConfusionMatrixPlot] = Join[ { "Normalize" -> False }, Options[MatrixPlot] ];
-ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {_, _}: {"False", "True"}, opts:OptionsPattern[] ] :=
+ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {yesLabel_, noLabel_}: {"True", "False"}, opts:OptionsPattern[] ] :=
    Block[{mat, refMat, n},
 
-     mat = {{aROC["TrueNegative"], aROC["FalsePositive"]}, {aROC["FalseNegative"], aROC["TruePositive"]}};
+     mat = { {aROC["FalseNegative"], aROC["TruePositive"]}, {aROC["TrueNegative"], aROC["FalsePositive"]}};
 
      refMat = mat;
 
      If[ TrueQ[OptionValue[ConfusionMatrixPlot, "Normalize"]],
-       mat = N[ mat / { aROC["TrueNegative"] + aROC["FalsePositive"], aROC["TruePositive"] + aROC["FalseNegative"] } ];
+       mat = N[ mat / { aROC["TruePositive"] + aROC["FalseNegative"], aROC["TrueNegative"] + aROC["FalsePositive"]} ];
      ];
 
      MatrixPlot[mat,
