@@ -89,13 +89,13 @@ RecordsSummary[modelValues]
     testLabels = testData[[All, -1]];
 
     thRange = Range[0.1, 0.9, 0.025];
-    aROCs = Table[ToROCAssociation[{0, 1}, testLabels, Map[If[# > \[Theta], 1, 0] &, modelValues]], {\[Theta], thRange}];
-
+    aROCs = Table[ToROCAssociation[{1, 0}, testLabels, Map[If[# > \[Theta], 1, 0] &, modelValues]], {\[Theta], thRange}];
+    
 ### Evaluate ROC functions for given ROC association
 
     Through[ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC"}][aROCs[[3]]]]
 
-(* {34/43, 19/37, 17/32, 197/314, 95/122} *)
+(* {19/37, 34/43, 95/122, 197/314, 17/32} *)
 
 ### Standard ROC plot
 
@@ -105,8 +105,14 @@ RecordsSummary[modelValues]
 
 ### Plot ROC functions wrt to parameter values
 
-    ListLinePlot[Map[Transpose[{thRange, #}] &, Transpose[Map[Through[ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC"}][#]] &, aROCs]]],
-     Frame -> True, FrameLabel -> Map[Style[#, Larger] &, {"threshold, \[Theta]", "rate"}], PlotLegends -> Map[# <> ", " <> (ROCFunctions["FunctionInterpretations"][#]) &, {"PPV", "NPV", "TPR", "ACC", "SPC"}], GridLines -> Automatic]
+    rocFuncs = {"PPV", "NPV", "TPR", "ACC", "SPC", "MCC"};
+    rocFuncTips = Map[# <> ", " <> (ROCFunctions["FunctionInterpretations"][#]) &, rocFuncs];
+    ListLinePlot[
+     MapThread[Tooltip[Transpose[{thRange, #1}], #2] &, {Transpose[Map[Through[ROCFunctions[rocFuncs][#]] &, aROCs]], rocFuncTips}],
+     Frame -> True, 
+     FrameLabel -> Map[Style[#, Larger] &, {"threshold, \[Theta]", "rate"}], 
+     PlotLegends -> rocFuncTips, GridLines -> Automatic]
+     
 
 [![ROCPlot2][6]][6]
 
@@ -131,13 +137,13 @@ Calculating AUROC is easy using the Trapezoidal quadrature formula:
      N@Total[Partition[Sort@Transpose[{ROCFunctions["FPR"] /@ aROCs, ROCFunctions["TPR"] /@ aROCs}], 2, 1] 
        /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)]
 
-     (* 0.698685 *)
+     (* 0.474513 *)
 
 It is also implemented in \[[2](https://github.com/antononcube/MathematicaForPrediction/blob/master/ROCFunctions.m)\]:
 
     N@ROCFunctions["AUROC"][aROCs]
 
-    (* 0.698685 *)
+    (* 0.474513 *)
 
 ## References
 
@@ -163,6 +169,6 @@ It is also implemented in \[[2](https://github.com/antononcube/MathematicaForPre
 [2]:http://i.imgur.com/d663I98.png
 [3]:http://i.imgur.com/bBXsDp2.png
 [4]:http://i.imgur.com/mzWjhZc.png
-[5]:http://i.imgur.com/EeaALMz.png
-[6]:http://i.imgur.com/mQvPDmA.png
+[5]:https://i.imgur.com/Sam8wX5.png
+[6]:https://i.imgur.com/lrGRgJp.png
 [7]:http://i.imgur.com/DSkPQOH.png
