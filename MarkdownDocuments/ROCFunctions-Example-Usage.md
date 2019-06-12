@@ -51,14 +51,14 @@ This variable dependence grid shows the relationships between the variables.
     trainingData = DeleteCases[data, {___, _Missing, ___}];
     Dimensions[trainingData]
 
-(* {732, 4} *)
+    (* {732, 4} *)
 
     data = ExampleData[{"MachineLearning", "Titanic"}, "TestData"];
     data = ((Flatten@*List) @@@ data)[[All, {1, 2, 3, -1}]];
     testData = DeleteCases[data, {___, _Missing, ___}];
     Dimensions[testData]
 
-(* {314, 4} *)
+    (* {314, 4} *)
 
 ### Replace categorical with numerical values
 
@@ -80,7 +80,7 @@ This variable dependence grid shows the relationships between the variables.
 
 [![Prediction1][3]][3]
 
-RecordsSummary[modelValues]
+    RecordsSummary[modelValues]
 
 [![Prediction2][4]][4]
 
@@ -93,9 +93,9 @@ RecordsSummary[modelValues]
     
 ### Evaluate ROC functions for given ROC association
 
-    Through[ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC"}][aROCs[[3]]]]
+    Through[ROCFunctions[{"PPV", "NPV", "TPR", "ACC", "SPC", "MCC"}][aROCs[[3]]]]
 
-(* {19/37, 34/43, 95/122, 197/314, 17/32} *)
+    (* {19/37, 34/43, 95/122, 197/314, 17/32, 0.319886} *)
 
 ### Standard ROC plot
 
@@ -126,7 +126,7 @@ Examining the plot above we can come up with the initial condition for $x$.
     tprFunc = Interpolation[Transpose@{thRange, ROCFunctions["TPR"] /@ aROCs}];
     FindRoot[ppvFunc[x] - tprFunc[x] == 0, {x, 0.2}]
 
-(* {x -> 0.3} *)
+    (* {x -> 0.3} *)
 
 ### Area under the ROC curve
 
