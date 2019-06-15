@@ -197,6 +197,8 @@ QRMonLocalExtrema::usage = "Finds local extrema."
 
 QRMonFindLocalExtrema::usage = "Finds local extrema. (Same as QRMonLocalExtrema.)"
 
+QRMonChowTestStatistic::usage = "Computes the Chow test statistic for identifying structural breaks in time series."
+
 Begin["`Private`"]
 
 Needs["MathematicaForPredictionUtilities`"]
@@ -1618,9 +1620,121 @@ QRMonLocalExtrema[___][__] :=
       $QRMonFailure
     ];
 
-
 Clear[QRMonFindLocalExtrema]
 QRMonFindLocalExtrema = QRMonLocalExtrema;
+
+
+(**************************************************************)
+(* Chow Test                                                  *)
+(**************************************************************)
+
+(*
+   The function QRFindExtrema was originally defined in the package:
+
+      https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/ChowTestStatistic.m .
+*)
+
+Clear[ChowTestStatistic]
+
+ChowTestStatistic::empfuncs = "A non empty list of functions is expected.";
+ChowTestStatistic::novar = "The specified variable is not a symbol.";
+ChowTestStatistic::nofuncsvar = "The specified variable should be found in the functions list.";
+
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_: {1, x}, var_: x] :=
+    Block[{S, S1, S2, k, data1, data2, fm, res},
+
+      If[Length[funcs] == 0,
+        Message[ChowTestStatistic::empfuncs];
+        Return[$Failed]
+      ];
+
+      If[! Developer`SymbolQ[var],
+        Message[ChowTestStatistic::novar];
+        Return[$Failed]
+      ];
+
+      If[FreeQ[funcs, var],
+        Message[ChowTestStatistic::nofuncsvar];
+        Return[$Failed]
+      ];
+
+      k = Count[Developer`SymbolQ /@ funcs, True];
+
+      data1 = Select[data, #[[1]] < splitPoint &];
+      data2 = Select[data, #[[1]] >= splitPoint &];
+
+      {S, S1, S2} =
+          Map[
+            Function[{d},
+              res = Fit[d, funcs, var, "FitResiduals"];
+              res.res
+            ],
+            {data, data1, data2}];
+
+      ((S - (S1 + S2))/ k)/((S1 + S2)/(Length[data1] + Length[data2] - 2 k))
+
+    ];
+
+
+Clear[QRMonChowTestStatistic]
+
+QRMonChowTestStatistic[$QRMonFailure] := $QRMonFailure;
+
+QRMonChowTestStatistic[xs_, context_Association] := QRMonChowTestStatistic[][xs, context];
+
+QRMonChowTestStatistic[][xs_, context_] := QRMonChowTestStatistic[Automatic, {1, x}][xs, context];
+
+QRMonChowTestStatistic[splitPoints_][xs_, context_] := QRMonChowTestStatistic[splitPoints, {1, x}][xs, context];
+
+QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
+  funcs_: List][xs_, context_] :=
+
+    Block[{data, localSplitPoints = splitPoints, var, ctStats},
+
+      data = QRMonBind[QRMonGetData[xs, context], QRMonTakeValue];
+
+      If[Length[funcs] == 0,
+        Echo["A non empty list of functions is expected.", "QRMonChowTestStatistic:"];
+        Return[$QRMonFailure]
+      ];
+
+      If[TrueQ[localSplitPoints === Automatic],
+        localSplitPoints = (Min[data[[All, 1]]] + Accumulate[Differences[Sort[data[[All, 1]]]]]);
+      ];
+
+      If[TrueQ[NumericQ[localSplitPoints]],
+        localSplitPoints = {localSplitPoints};
+      ];
+
+      var = With[{globalQ = Context@# === "Global`" &},
+        DeleteDuplicates@Cases[funcs, _Symbol?globalQ, Infinity]];
+
+      Which[
+        Length[var] == 0,
+        Echo["No variable was found in the list of functions.", "QRMonChowTestStatistic:"];
+        Return[$QRMonFailure],
+
+        Length[var] > 1,
+        Echo["More than one variable was found in the list of functions.", "QRMonChowTestStatistic:"];
+        Return[$QRMonFailure],
+
+        True,
+        var = First[var]
+      ];
+
+      ctStats = {#, ChowTestStatistic[data, #, funcs, var]} & /@ localSplitPoints;
+
+      QRMonUnit[ctStats, context]
+    ];
+
+QRMonChowTestStatistic[___][__] :=
+    Block[{},
+      Echo["The first argument is expected to be a specification of split points, (Automatic|{_?NumericQ..}|_?NumericQ). " <>
+           "The second argument is expected to be a list of functions.",
+          "QRMonChowTestStatistic:"];
+      $QRMonFailure;
+    ];
+
 
 End[] (* `Private` *)
 
