@@ -83,8 +83,9 @@
 BeginPackage["ChowTestStatistic`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-ChowTestStatistic::usage = "ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_: {1, x}, var_: x] \
-computes the Chow test statistic for identifying structural breaks in time series."
+ChowTestStatistic::usage = "ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : ({_?NumberQ..} | _?NumberQ), funcs_: {1, x}, var_: x] \
+computes the Chow test statistic for identifying structural breaks in time series.\n\
+ChowTestStatistic[data1, data2, funcs, var] computes the Chow test statistic for two datasets."
 
 Begin["`Private`"];
 
@@ -93,9 +94,27 @@ Clear[ChowTestStatistic]
 ChowTestStatistic::empfuncs = "A non empty list of functions is expected.";
 ChowTestStatistic::novar = "The specified variable is not a symbol.";
 ChowTestStatistic::nofuncsvar = "The specified variable should be found in the functions list.";
+ChowTestStatistic::empdata = "The split point `1` produced an empty split dataset.";
+ChowTestStatistic::expargs = "The implemented signatures are:\n\
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_List: {1, x}, var_: x],\n\
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List: {1, x}, var_: x], and\n\
+ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List: {1, x}, var_: x].";
 
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_: {1, x}, var_: x] :=
-    Block[{S, S1, S2, k, data1, data2, fm, res},
+
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_List : {1, x}, var_: x] :=
+    Block[{res},
+
+      res = ChowTestStatistic[ data, {splitPoint}, funcs, var];
+
+      If[TrueQ[res === $Failed] || !FreeQ[res, $Failed],
+        $Failed,
+        res[[1,2]]
+      ]
+    ];
+
+
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List : {1, x}, var_: x] :=
+    Block[{data1, data2, S, S1, S2, k, fm, res},
 
       If[Length[funcs] == 0,
         Message[ChowTestStatistic::empfuncs];
@@ -114,8 +133,59 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs
 
       k = Count[Developer`SymbolQ /@ funcs, True];
 
-      data1 = Select[data, #[[1]] < splitPoint &];
-      data2 = Select[data, #[[1]] >= splitPoint &];
+      res = Fit[data, funcs, var, "FitResiduals"];
+      S = res.res;
+
+      Map[
+        Function[{sp},
+
+          data1 = Select[data, #[[1]] < sp &];
+          data2 = Select[data, #[[1]] >= sp &];
+
+          If[ Length[data1] == 0 || Length[data2] == 0,
+
+            Message[ChowTestStatistic::empdata, sp];
+            $Failed,
+
+            (* ELSE *)
+
+            {S1, S2} =
+                Map[
+                  Function[{d},
+                    res = Fit[d, funcs, var, "FitResiduals"];
+                    res.res
+                  ],
+                  {data1, data2}];
+
+            {sp, ((S - (S1 + S2))/ k)/((S1 + S2)/(Length[data1] + Length[data2] - 2 k)) }
+          ]
+
+        ],
+        splitPoints
+      ]
+
+    ];
+
+
+ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List : {1, x}, var_: x] :=
+    Block[{data, S, S1, S2, k, fm, res},
+
+      If[Length[funcs] == 0,
+        Message[ChowTestStatistic::empfuncs];
+        Return[$Failed]
+      ];
+
+      If[! Developer`SymbolQ[var],
+        Message[ChowTestStatistic::novar];
+        Return[$Failed]
+      ];
+
+      If[FreeQ[funcs, var],
+        Message[ChowTestStatistic::nofuncsvar];
+        Return[$Failed]
+      ];
+
+      k = Count[Developer`SymbolQ /@ funcs, True];
 
       {S, S1, S2} =
           Map[
@@ -123,11 +193,13 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs
               res = Fit[d, funcs, var, "FitResiduals"];
               res.res
             ],
-            {data, data1, data2}];
+            {Join[data1, data2], data1, data2}];
 
       ((S - (S1 + S2))/ k)/((S1 + S2)/(Length[data1] + Length[data2] - 2 k))
 
     ];
+
+ChowTestStatistic[___] := Message[ChowTestStatistic::expargs];
 
 End[]; (* `Private` *)
 
