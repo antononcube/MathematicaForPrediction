@@ -1639,9 +1639,14 @@ Clear[ChowTestStatistic]
 ChowTestStatistic::empfuncs = "A non empty list of functions is expected.";
 ChowTestStatistic::novar = "The specified variable is not a symbol.";
 ChowTestStatistic::nofuncsvar = "The specified variable should be found in the functions list.";
+ChowTestStatistic::empdata = "The split point `1` produced an empty split dataset.";
+ChowTestStatistic::expargs = "The implemented signatures are:\n\
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_List: {1, x}, var_: x],\n\
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List: {1, x}, var_: x], and\n\
+ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List: {1, x}, var_: x].";
 
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_: {1, x}, var_: x] :=
-    Block[{S, S1, S2, k, data1, data2, fm, res},
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List : {1, x}, var_: x] :=
+    Block[{data1, data2, S, S1, S2, k, fm, res},
 
       If[Length[funcs] == 0,
         Message[ChowTestStatistic::empfuncs];
@@ -1660,18 +1665,36 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs
 
       k = Count[Developer`SymbolQ /@ funcs, True];
 
-      data1 = Select[data, #[[1]] < splitPoint &];
-      data2 = Select[data, #[[1]] >= splitPoint &];
+      res = Fit[data, funcs, var, "FitResiduals"];
+      S = res.res;
 
-      {S, S1, S2} =
-          Map[
-            Function[{d},
-              res = Fit[d, funcs, var, "FitResiduals"];
-              res.res
-            ],
-            {data, data1, data2}];
+      Map[
+        Function[{sp},
 
-      ((S - (S1 + S2))/ k)/((S1 + S2)/(Length[data1] + Length[data2] - 2 k))
+          data1 = Select[data, #[[1]] < sp &];
+          data2 = Select[data, #[[1]] >= sp &];
+
+          If[ Length[data1] == 0 || Length[data2] == 0,
+
+            Message[ChowTestStatistic::empdata, sp];
+            $Failed,
+
+            (* ELSE *)
+
+            {S1, S2} =
+                Map[
+                  Function[{d},
+                    res = Fit[d, funcs, var, "FitResiduals"];
+                    res.res
+                  ],
+                  {data1, data2}];
+
+            {sp, ((S - (S1 + S2))/ k)/((S1 + S2)/(Length[data1] + Length[data2] - 2 k)) }
+          ]
+
+        ],
+        splitPoints
+      ]
 
     ];
 
@@ -1722,7 +1745,11 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
         var = First[var]
       ];
 
-      ctStats = {#, ChowTestStatistic[data, #, funcs, var]} & /@ localSplitPoints;
+      ctStats = ChowTestStatistic[data, localSplitPoints, funcs, var];
+
+      If[ TrueQ[ctStats === $Failed] || !FreeQ[ctStats, $Failed],
+        Return[$QRMonFailure]
+      ];
 
       QRMonUnit[ctStats, context]
     ];
