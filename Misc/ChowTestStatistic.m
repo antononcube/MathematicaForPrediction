@@ -36,8 +36,8 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2019-06-15 *)
 
-(* :Package Version: 0.1 *)
-(* :Mathematica Version: 11.3 *)
+(* :Package Version: 1.0 *)
+(* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2019 Anton Antonov *)
 (* :Keywords: *)
 (* :Discussion:
@@ -74,9 +74,14 @@
 
     Here is a usage example:
 
-         res = {#, ChowTestStatistic[data, #, {1, x}, x]} & /@
+        res = ChowTestStatistic[data, Min[data[[All, 1]]] + Accumulate[Differences[Sort[data[[All, 1]]]]], {1, x}, x];
+        ListPlot[res, Filling -> Axis, PlotRange -> All]
+
+    The example code above is equivalent to this one:
+
+        res = {#, ChowTestStatistic[data, #, {1, x}, x]} & /@
            (Min[data[[All, 1]]] + Accumulate[Differences[Sort[data[[All, 1]]]]]);
-         ListPlot[res, Filling -> Axis, PlotRange -> All]
+        ListPlot[res, Filling -> Axis, PlotRange -> All]
 
 *)
 
