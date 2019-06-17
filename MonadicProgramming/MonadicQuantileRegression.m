@@ -1699,20 +1699,18 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
     ];
 
 
-Clear[QRMonChowTestStatistic]
+ClearAll[QRMonChowTestStatistic]
 
 QRMonChowTestStatistic[$QRMonFailure] := $QRMonFailure;
 
 QRMonChowTestStatistic[xs_, context_Association] := QRMonChowTestStatistic[][xs, context];
 
-QRMonChowTestStatistic[][xs_, context_] := QRMonChowTestStatistic[Automatic, {1, x}][xs, context];
+QRMonChowTestStatistic[][xs_, context_] := QRMonChowTestStatistic[Automatic, {1, x}, x][xs, context];
 
-QRMonChowTestStatistic[splitPoints_][xs_, context_] := QRMonChowTestStatistic[splitPoints, {1, x}][xs, context];
+QRMonChowTestStatistic[splitPoints_][xs_, context_] := QRMonChowTestStatistic[splitPoints, {1, x}, x][xs, context];
 
-QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
-  funcs_: List][xs_, context_] :=
-
-    Block[{data, localSplitPoints = splitPoints, var, ctStats},
+QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ), funcs_: List, var_: Automatic][xs_, context_] :=
+    Block[{data, localSplitPoints = splitPoints, localVar = var, ctStats},
 
       data = QRMonBind[QRMonGetData[xs, context], QRMonTakeValue];
 
@@ -1729,23 +1727,29 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
         localSplitPoints = {localSplitPoints};
       ];
 
-      var = With[{globalQ = Context@# === "Global`" &},
-        DeleteDuplicates@Cases[funcs, _Symbol?globalQ, Infinity]];
+      If[ TrueQ[localVar===Automatic],
+        localVar =
+            With[{globalQ = Context@# === "Global`" &},
+              DeleteDuplicates@Cases[funcs, _Symbol?globalQ, Infinity]
+            ],
+        (* ELSE *)
+        localVar = {localVar}
+      ];
 
       Which[
-        Length[var] == 0,
+        Length[localVar] == 0,
         Echo["No variable was found in the list of functions.", "QRMonChowTestStatistic:"];
         Return[$QRMonFailure],
 
-        Length[var] > 1,
+        Length[localVar] > 1,
         Echo["More than one variable was found in the list of functions.", "QRMonChowTestStatistic:"];
         Return[$QRMonFailure],
 
         True,
-        var = First[var]
+        localVar = First[localVar]
       ];
 
-      ctStats = ChowTestStatistic[data, localSplitPoints, funcs, var];
+      ctStats = ChowTestStatistic[data, localSplitPoints, funcs, localVar];
 
       If[ TrueQ[ctStats === $Failed] || !FreeQ[ctStats, $Failed],
         Return[$QRMonFailure]
@@ -1754,10 +1758,11 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
       QRMonUnit[ctStats, context]
     ];
 
-QRMonChowTestStatistic[___][__] :=
+QRMonChowTestStatistic[args___][__] :=
     Block[{},
       Echo["The first argument is expected to be a specification of split points, (Automatic|{_?NumericQ..}|_?NumericQ). " <>
-           "The second argument is expected to be a list of functions.",
+           "The second argument is expected to be a list of functions. " <>
+           "The third argument is expected to be Automatic or a variable symbol.",
           "QRMonChowTestStatistic:"];
       $QRMonFailure;
     ];
