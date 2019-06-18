@@ -1699,22 +1699,27 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
     ];
 
 
-ClearAll[QRMonChowTestStatistic]
+Clear[QRMonChowTestStatistic]
 
 QRMonChowTestStatistic[$QRMonFailure] := $QRMonFailure;
 
 QRMonChowTestStatistic[xs_, context_Association] := QRMonChowTestStatistic[][xs, context];
 
-QRMonChowTestStatistic[][xs_, context_] := QRMonChowTestStatistic[Automatic, {1, x}, x][xs, context];
+QRMonChowTestStatistic[][xs_, context_] := QRMonChowTestStatistic[Automatic, Automatic, Automatic][xs, context];
 
-QRMonChowTestStatistic[splitPoints_][xs_, context_] := QRMonChowTestStatistic[splitPoints, {1, x}, x][xs, context];
+QRMonChowTestStatistic[splitPoints_][xs_, context_] := QRMonChowTestStatistic[splitPoints, Automatic, Automatic][xs, context];
 
-QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ), funcs_: List, var_: Automatic][xs_, context_] :=
-    Block[{data, localSplitPoints = splitPoints, localVar = var, ctStats},
+QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ), funcs:( Automatic | _List), var_: Automatic][xs_, context_] :=
+    Block[{data, localSplitPoints = splitPoints, localFuncs = funcs, localVar = var, x, ctStats},
 
       data = QRMonBind[QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[Length[funcs] == 0,
+      If[ TrueQ[localFuncs===Automatic],
+        localFuncs = {1,x};
+        localVar = x
+      ];
+
+      If[Length[localFuncs] == 0,
         Echo["A non empty list of functions is expected.", "QRMonChowTestStatistic:"];
         Return[$QRMonFailure]
       ];
@@ -1730,7 +1735,7 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
       If[ TrueQ[localVar===Automatic],
         localVar =
             With[{globalQ = Context@# === "Global`" &},
-              DeleteDuplicates@Cases[funcs, _Symbol?globalQ, Infinity]
+              DeleteDuplicates@Cases[localFuncs, _Symbol?globalQ, Infinity]
             ],
         (* ELSE *)
         localVar = {localVar}
@@ -1749,7 +1754,7 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
         localVar = First[localVar]
       ];
 
-      ctStats = ChowTestStatistic[data, localSplitPoints, funcs, localVar];
+      ctStats = ChowTestStatistic[data, localSplitPoints, localFuncs, localVar];
 
       If[ TrueQ[ctStats === $Failed] || !FreeQ[ctStats, $Failed],
         Return[$QRMonFailure]
@@ -1761,7 +1766,7 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
 QRMonChowTestStatistic[args___][__] :=
     Block[{},
       Echo["The first argument is expected to be a specification of split points, (Automatic|{_?NumericQ..}|_?NumericQ). " <>
-           "The second argument is expected to be a list of functions. " <>
+           "The second argument is expected to be Automatic or a list of functions. " <>
            "The third argument is expected to be Automatic or a variable symbol.",
           "QRMonChowTestStatistic:"];
       $QRMonFailure;
