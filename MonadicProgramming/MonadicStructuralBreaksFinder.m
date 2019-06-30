@@ -1,16 +1,86 @@
-(* Mathematica Package *)
-(* Created by Mathematica Plugin for IntelliJ IDEA, see http://wlplugin.halirutan.de/ *)
+(*
+    Monadic Structural Breaks Finder Mathematica package
+    Copyright (C) 2019  Anton Antonov
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
+*)
+
+(*
+    Mathematica is (C) Copyright 1988-2019 Wolfram Research, Inc.
+
+    Protected by copyright law and international treaties.
+
+    Unauthorized reproduction or distribution subject to severe civil
+    and criminal penalties.
+
+    Mathematica is a registered trademark of Wolfram Research, Inc.
+*)
 
 (* :Title: MonadicStructuralBreaksFinder *)
 (* :Context: MonadicStructuralBreaksFinder` *)
 (* :Author: Anton Antonov *)
-(* :Date: 2019-06-29 *)
+(* :Date: 2019-06-30 *)
 
-(* :Package Version: 0.1 *)
-(* :Mathematica Version: 11.3 *)
-(* :Copyright: (c) 2019 antonov *)
-(* :Keywords: *)
-(* :Discussion: *)
+(* :Package Version: 0.5 *)
+(* :Mathematica Version: 12 *)
+(* :Copyright: (c) 2019 Anton Antonov *)
+(* :Keywords: Chow Test, Quantile Regression, Structural Breaks *)
+(* :Discussion:
+
+   # In brief
+
+   This package provides functions to for the Quantile Regression Monad package (QRMon):
+
+     https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicQuantileRegression.m .
+
+   Here is an example usage:
+
+      ts = FinancialData[Entity["Financial", "^SPX"], {{2015, 1, 1}, Date[]}];
+
+      QRMonUnit[ts]⟹
+        QRMonFindChowTestLocalMaxima[ts["Times"][[2 ;; -2 ;; 10]], {1, x, x^2}, "EchoPlots" -> True]⟹
+        QRMonEchoValue;
+
+   The function QRMonFindChowTestLocalMaxima takes the options of QRMon's functions
+   QRMonQuantileRegression, QRMonFindLocalExtrema, and QRMonPlot.
+
+   For example:
+
+      QRMonUnit[ts]
+        QRMonFindChowTestLocalMaxima[
+             "Knots" -> 20, InterpolationOrder -> 2,
+             "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 5,
+             "DateListPlot" -> True,
+             "EchoPlots" -> True]⟹
+       QRMonEchoValue;
+
+   # Future plans
+
+   It is probably a good idea to provide a function for plotting the fits over partitions based on
+   the structural breaks.
+
+
+
+   Anton Antonov
+   Windermere, Florida, USA
+   2019-06-30
+
+*)
 
 (**************************************************************)
 (* Importing packages (if needed)                             *)
@@ -57,9 +127,11 @@ QRMonFindChowTestLocalMaxima[$QRMonFailure] := $QRMonFailure;
 
 QRMonFindChowTestLocalMaxima[xs_, context_Association] := QRMonFindChowTestLocalMaxima[][xs, context];
 
-QRMonFindChowTestLocalMaxima[][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, {1, x} ][xs, context];
+QRMonFindChowTestLocalMaxima[][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, Automatic ][xs, context];
 
-QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs_List, opts:OptionsPattern[] ][xs_, context_Association] :=
+QRMonFindChowTestLocalMaxima[ opts:OptionsPattern[] ][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, Automatic, opts ][xs, context];
+
+QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs_, opts:OptionsPattern[] ][xs_, context_Association] :=
     Block[{knots, echoPlotsQ, localMaximaPlotFunc, ctStats, res},
 
       knots = OptionValue["Knots"];
