@@ -295,30 +295,30 @@
     2017-06-05
 *)
 
-BeginPackage["StateMonadCodeGenerator`"]
+BeginPackage["StateMonadCodeGenerator`"];
 (* Exported symbols added here with SymbolName::usage *)
 
 GenerateStateMonadCode::usage = "GenerateStateMonadCode[monadName_String] generates the basic functions \
 of a State monad that allows computations with a mutable context. Code for handling context string names \
 is generated depending on the Boolean values of the option \"StringContextNames\". \
-Monad's failure symbol is specified with the option \"FailureSymbol\"."
+Monad's failure symbol is specified with the option \"FailureSymbol\".";
 
 AssociationModule::usage = "AssociationModule[asc_Association, body_] transforms the elements of asc into \
-symbol assignments ascAssign and executes Module[ ascAssign, body ]. The keys of asc are assumed to be strings."
+symbol assignments ascAssign and executes Module[ ascAssign, body ]. The keys of asc are assumed to be strings.";
 
 GenerateMonadDroper::usage = "GenerateMonadDroper[monadName_String, elementName_String] generates monadic \
-droper functions for specified monad and element names."
+droper functions for specified monad and element names.";
 
 GenerateMonadSetter::usage = "GenerateMonadSetter[monadName_String, elementName_String] generates monadic \
-setter functions for specified monad and element names."
+setter functions for specified monad and element names.";
 
 GenerateMonadTaker::usage = "GenerateMonadTaker[monadName_String, elementName_String] generates monadic \
-taker functions for specified monad and element names."
+taker functions for specified monad and element names.";
 
 GenerateMonadAccessors::usage = "GenerateMonadAccessors[monadName_String, elementNames:{_String..}] generates monadic \
-droper, setter, and taker functions for specified monad and element names."
+droper, setter, and taker functions for specified monad and element names.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 Attributes[AssociationModule] = HoldRest;
 AssociationModule[asc_Association, body_] :=
@@ -446,7 +446,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             ];
       ];
       MStateBind[___] := MStateFailureSymbol;
-      MStateBind::usage = "Moand binding function.";
+      MStateBind::usage = "Monad binding function.";
 
       MStateEcho[MStateFailureSymbol] := MStateFailureSymbol;
       MStateEcho[___][MStateFailureSymbol] := MStateFailureSymbol;
