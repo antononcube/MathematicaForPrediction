@@ -29,7 +29,7 @@ If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
 BeginPackage["MonadicStructuralBreaksFinder`"];
 
 QRMonFindChowTestLocalMaxima::usage = "Finds structural breaks in the data using the Chow Test. \
-It takes as options the options of QRMonFindLocalExtrema.";
+It takes as options the options of QRMonQuantileRegression, QRMonFindLocalExtrema, and QRMonPlot.";
 
 Begin["`Private`"];
 
@@ -42,7 +42,16 @@ Needs["MonadicQuantileRegression`"];
 
 ClearAll[QRMonFindChowTestLocalMaxima];
 
-Options[QRMonFindChowTestLocalMaxima] = { "Knots" -> 20, "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 15, "EchoPlots" -> False };
+Options[QRMonFindChowTestLocalMaxima] = { "Knots" -> 12, "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 15, "EchoPlots" -> False };
+
+Options[QRMonFindChowTestLocalMaxima] =
+    Join[
+      { "Knots" -> 20, "EchoPlots" -> False },
+      Options[QRMonQuantileRegression],
+      Options[QRMonFindLocalExtrema],
+      Options[QRMonPlot]
+    ];
+
 
 QRMonFindChowTestLocalMaxima[$QRMonFailure] := $QRMonFailure;
 
@@ -51,14 +60,9 @@ QRMonFindChowTestLocalMaxima[xs_, context_Association] := QRMonFindChowTestLocal
 QRMonFindChowTestLocalMaxima[][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, {1, x} ][xs, context];
 
 QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs_List, opts:OptionsPattern[] ][xs_, context_Association] :=
-    Block[{knots, nearestWithOutliersQ, nProxPoints, echoPlotsQ, ctStats, res},
+    Block[{knots, echoPlotsQ, localMaximaPlotFunc, ctStats, res},
 
       knots = OptionValue["Knots"];
-(*      Better leave the check to QRMonQuantileRegression. *)
-
-      nearestWithOutliersQ = TrueQ[OptionValue["NearestWithOutliers"]];
-
-      nProxPoints = OptionValue["NumberOfProximityPoints"];
 
       echoPlotsQ = TrueQ[OptionValue["EchoPlots"]];
 
@@ -70,22 +74,27 @@ QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs
               QRMonTakeValue
             }];
 
+      localMaximaPlotFunc = ListPlot;
+      If[ TrueQ[ "DateListPlot" /. {opts} /. { "DateListPlot"->False} ],
+        localMaximaPlotFunc = DateListPlot
+      ];
+
       res =
           Fold[
             QRMonBind,
             QRMonUnit[ ctStats ],
-            { QRMonQuantileRegression[ knots, 0.5 ],
-              QRMonSetRegressionFunctionsPlotOptions[{PlotStyle -> Red}],
+            { QRMonQuantileRegression[ knots, 0.5, FilterRules[ {opts}, Options[QRMonQuantileRegression] ] ],
               QRMonIfElse[ echoPlotsQ &,
-                Function[{x,c}, QRMonPlot[][x,c]],
+                Function[{x,c}, QRMonPlot[ FilterRules[ {opts}, Options[QRMonPlot] ] ][x,c]],
                 Function[{x,c}, QRMonUnit[x,c]]
               ],
-              QRMonFindLocalExtrema[ "NearestWithOutliers" -> nearestWithOutliersQ, "NumberOfProximityPoints" -> nProxPoints ],
+              QRMonFindLocalExtrema[ FilterRules[ {opts}, Options[QRMonFindLocalExtrema] ] ],
               QRMonAddToContext["localExtrema"],
               QRMonIfElse[ echoPlotsQ &,
                 Function[{x,c},
                   QRMonEchoFunctionContext[
-                    ListPlot[#["data"],
+                    localMaximaPlotFunc[#["data"],
+                      FilterRules[ {opts}, Options[localMaximaPlotFunc] ],
                       GridLines -> {#["localExtrema", "localMaxima"][[All, 1]], None},
                       GridLinesStyle -> Pink, Joined -> False, Filling -> Axis,
                       PlotTheme -> "Detailed", ImageSize -> Large] &][x, c]
