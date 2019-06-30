@@ -121,91 +121,91 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["MonadicQuantileRegression`"]
+BeginPackage["MonadicQuantileRegression`"];
 
-$QRMonFailure::usage = "Failure symbol for the monad QRMon."
+$QRMonFailure::usage = "Failure symbol for the monad QRMon.";
 
-QRMonGetData::usage = "Get time series path data."
+QRMonGetData::usage = "Get time series path data.";
 
-QRMonTakeData::usage = "Takes the time series path data."
+QRMonTakeData::usage = "Takes the time series path data.";
 
-QRMonEchoDataSummary::usage = "Echoes a summary of the data."
+QRMonEchoDataSummary::usage = "Echoes a summary of the data.";
 
-QRMonDeleteMissing::usage = "Deletes records with missing data."
+QRMonDeleteMissing::usage = "Deletes records with missing data.";
 
-QRMonRescale::usage = "Rescales the data."
+QRMonRescale::usage = "Rescales the data.";
 
 QRMonLeastSquaresFit::usage = "Linear regression fit for the data in the pipeline or the context \
-using specified functions to fit."
+using specified functions to fit.";
 
-QRMonFit::usage = "Same as QRMonLinearRegressionFit."
+QRMonFit::usage = "Same as QRMonLinearRegressionFit.";
 
-QRMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context."
+QRMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context.";
 
 QRMonRegression::usage = "Quantile regression for the data in the pipeline or the context. \
-(Same as QRMonQuantileRegression.)"
+(Same as QRMonQuantileRegression.)";
 
 QRMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
-using specified functions to fit."
+using specified functions to fit.";
 
 QRMonRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
-using specified functions to fit. (Same as QRMonQuantileRegressionFit.)"
+using specified functions to fit. (Same as QRMonQuantileRegressionFit.)";
 
-QRMonNetRegression::usage = "Regression using a neural network."
+QRMonNetRegression::usage = "Regression using a neural network.";
 
-QRMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers."
+QRMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers.";
 
-QRMonPlot::usage = "Plots the data points or the data points together with the found regression curves."
+QRMonPlot::usage = "Plots the data points or the data points together with the found regression curves.";
 
-QRMonDateListPlot::usage = "Plots the data points or the data points together with the found regression curves."
+QRMonDateListPlot::usage = "Plots the data points or the data points together with the found regression curves.";
 
-QRMonErrors::usage = "Relative approximation errors for each regression quantile."
+QRMonErrors::usage = "Relative approximation errors for each regression quantile.";
 
-QRMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile."
+QRMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile.";
 
-QRMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points."
+QRMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points.";
 
-QRMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF."
+QRMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF.";
 
-QRMonOutliers::usage = "Find the outliers in the data."
+QRMonOutliers::usage = "Find the outliers in the data.";
 
-QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context."
+QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context.";
 
 QRMonPickPathPoints::usage = "Pick points close to the regression functions using a specified threshold. \
-With option setting \"PickAboveThreshold\"->True the points picked are away from the regression functions."
+With option setting \"PickAboveThreshold\"->True the points picked are away from the regression functions.";
 
 QRMonSeparate::usage = "Separate the argument by the regression functions in the context. \
-If no argument is given the data in the monad object is separated."
+If no argument is given the data in the monad object is separated.";
 
 QRMonSeparateToFractions::usage = "Separate the argument by the regression functions in the context \
 and find the corresponding fractions. \
-If no argument is given the data in the monad object is separated."
+If no argument is given the data in the monad object is separated.";
 
-QRMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles."
+QRMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles.";
 
-QRMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid."
+QRMonGridSequence::usage = "Maps the time series values into a sequence of indices derived from a values grid.";
 
-QRMonMovingAverage::usage = "Moving average over a specified number of elements or a list of weights."
+QRMonMovingAverage::usage = "Moving average over a specified number of elements or a list of weights.";
 
-QRMonMovingMedian::usage = "Moving median over a specified number of elements."
+QRMonMovingMedian::usage = "Moving median over a specified number of elements.";
 
-QRMonMovingMap::usage = "Moving map with a specified function using a given window specification."
+QRMonMovingMap::usage = "Moving map with a specified function using a given window specification.";
 
-QRMonSimulate::usage = "Simulates a time series using computed regression quantiles."
+QRMonSimulate::usage = "Simulates a time series using computed regression quantiles.";
 
-QRMonLocalExtrema::usage = "Finds local extrema."
+QRMonLocalExtrema::usage = "Finds local extrema.";
 
-QRMonFindLocalExtrema::usage = "Finds local extrema. (Same as QRMonLocalExtrema.)"
+QRMonFindLocalExtrema::usage = "Finds local extrema. (Same as QRMonLocalExtrema.)";
 
-QRMonChowTestStatistic::usage = "Computes the Chow test statistic for identifying structural breaks in time series."
+QRMonChowTestStatistic::usage = "Computes the Chow test statistic for identifying structural breaks in time series.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Needs["MathematicaForPredictionUtilities`"]
-Needs["StateMonadCodeGenerator`"]
-Needs["QuantileRegression`"]
-Needs["CrossTabulate`"]
-Needs["OutlierIdentifiers`"]
+Needs["MathematicaForPredictionUtilities`"];
+Needs["StateMonadCodeGenerator`"];
+Needs["QuantileRegression`"];
+Needs["CrossTabulate`"];
+Needs["OutlierIdentifiers`"];
 
 
 (**************************************************************)
@@ -272,7 +272,7 @@ Clear[QRMonGetData];
 
 QRMonGetData[$QRMonFailure] := $QRMonFailure;
 
-QRMonGetData[][xs_, context_] := QRMonGetData[xs, context]
+QRMonGetData[][xs_, context_] := QRMonGetData[xs, context];
 
 QRMonGetData[xs_, context_] :=
     Block[{data},
@@ -1559,15 +1559,21 @@ Options[QRMonLocalExtrema] = { "NearestWithOutliers" -> False, "NumberOfProximit
 
 QRMonLocalExtrema[$QRMonFailure] = $QRMonFailure;
 
-QRMonLocalExtrema[xs_, context_] = QRMonLocalExtrema[][xs, context];
+QRMonLocalExtrema[xs_, context_Association] = QRMonLocalExtrema[][xs, context];
 
 QRMonLocalExtrema[ opts:OptionsPattern[] ][$QRMonFailure] := $QRMonFailure;
 
 QRMonLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
     Module[{nearestByOutliersQ, numberOfProximityPoints, data, fn, extrema1, extrema2, minima, maxima, x, signs1, signs2, extremaPoints, nfMax, nfMin },
 
-      nearestByOutliersQ = OptionValue[QRMonLocalExtrema, "NearestWithOutliers" ];
+      nearestByOutliersQ = TrueQ[OptionValue[QRMonLocalExtrema, "NearestWithOutliers" ]];
       numberOfProximityPoints = OptionValue[QRMonLocalExtrema, "NumberOfProximityPoints" ];
+
+      If[ ! IntegerQ[numberOfProximityPoints],
+        Echo[ "The value of the option \"NumberOfProximityPoints\" is expected to be an integer.",
+          "QRMonLocalExtrema:"];
+        Return[$QRMonFailure];
+      ];
 
       (* Step 1 *)
       If[ !( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"], "mean"]] > 0 ),
@@ -1610,7 +1616,7 @@ QRMonLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
         Map[ First@SortBy[ nfMax[#, numberOfProximityPoints], -#[[-1]]& ]&, maxima ]
       };
 
-      QRMonUnit[ AssociationThread[ { "localMinima", "localMaxima" }, extremaPoints ], context]
+      QRMonUnit[ Union /@ AssociationThread[ { "localMinima", "localMaxima" }, extremaPoints ], context]
     ];
 
 QRMonLocalExtrema[___][__] :=
