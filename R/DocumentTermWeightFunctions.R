@@ -262,18 +262,21 @@ SMRToBagOfWords <- function( text, split = "\\W", punctuationPattern = "[[:punct
   } else { res }
 }
 
-#' @description Creates a document-term matrix from a list of documents and list of ID's
-#' @param documents a list of documents
-#' @param ids a list of ID's corresponding to the documents
-#' @param split a string pattern to split with
-#' @param applyWordStemming should word stemming be applied or not
-#' @param .progress progress argument of plyr functions (ldply)
+#' @description Creates a document-term matrix from a list of documents and list of ID's.
+#' @param documents A character vector of documents.
+#' @param ids A character vector of ID's corresponding to the documents.
+#' If NULL the ID's are automatically assigned.
+#' @param split A string pattern to split with.
+#' @param applyWordStemming Should word stemming be applied or not?
+#' @param .progress Progress argument of plyr functions (ldply).
 #' @detail It would be nice if this function uses SMRToBagOfWords function defined above.
 SMRMakeDocumentTermMatrix <- function( documents, ids = NULL, split = "\\W", 
                                        applyWordStemming = TRUE, minWordLength = 2, 
                                        .progress = "none" ) {
   
-  if ( is.null(ids) ) { ids = 1:length(documents) }
+  if ( is.null(ids) ) { 
+    ids <- paste0( "id", formatC( x = 1:length(documents), width = ceiling(log10(length(documents))) + 1, flag = "0" ) ) 
+  }
   
   if ( length(documents) != length(ids) ) {
     stop( "The lengths of the arguments 'documents' and 'ids' are expected to be the same.", call. = TRUE )
