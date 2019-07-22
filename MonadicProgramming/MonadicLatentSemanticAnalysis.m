@@ -183,13 +183,13 @@ LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of th
 
 Begin["`Private`"]
 
-Needs["MathematicaForPredictionUtilities`"]
-Needs["StateMonadCodeGenerator`"]
-Needs["DocumentTermMatrixConstruction`"]
-Needs["NonNegativeMatrixFactorization`"]
-Needs["CrossTabulate`"]
-Needs["SSparseMatrix`"]
-Needs["OutlierIdentifiers`"]
+Needs["MathematicaForPredictionUtilities`"];
+Needs["StateMonadCodeGenerator`"];
+Needs["DocumentTermMatrixConstruction`"];
+Needs["NonNegativeMatrixFactorization`"];
+Needs["CrossTabulate`"];
+Needs["SSparseMatrix`"];
+Needs["OutlierIdentifiers`"];
 
 
 (**************************************************************)
@@ -205,7 +205,7 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 (* Setters and takers                                         *)
 (**************************************************************)
 
-Clear[LSAMonTakeTexts]
+Clear[LSAMonTakeTexts];
 LSAMonTakeTexts[$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeTexts[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeTexts[xs_, context_] := LSAMonTakeTexts[][xs, context];
@@ -213,7 +213,7 @@ LSAMonTakeTexts[][xs_, context_Association] := Lookup[context, "texts"];
 LSAMonTakeTexts[__][___] := $LSAMonFailure;
 
 
-Clear[LSAMonTakeMatrix]
+Clear[LSAMonTakeMatrix];
 LSAMonTakeMatrix[$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeMatrix[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeMatrix[xs_, context_] := LSAMonTakeMatrix[][xs, context];
@@ -229,7 +229,7 @@ LSAMonTakeMatrix[][xs_, context_Association] :=
 LSAMonTakeMatrix[__][___] := $LSAMonFailure;
 
 
-Clear[LSAMonTakeWeightedMatrix]
+Clear[LSAMonTakeWeightedMatrix];
 LSAMonTakeWeightedMatrix[$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeWeightedMatrix[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeWeightedMatrix[xs_, context_] := LSAMonTakeWeightedMatrix[][xs, context];
@@ -254,7 +254,7 @@ Clear[LSAMonTextCollectionQ]
 LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ];
 
 
-Clear[LSAMonMakeDocumentTermMatrix]
+Clear[LSAMonMakeDocumentTermMatrix];
 
 LSAMonMakeDocumentTermMatrix[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWords : {_String ...}][xs_, context_] :=
@@ -284,7 +284,7 @@ LSAMonMakeDocumentTermMatrix[__][___] :=
     ];
 
 
-Clear[LSAMonApplyTermWeightFunctions]
+Clear[LSAMonApplyTermWeightFunctions];
 
 LSAMonApplyTermWeightFunctions[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -324,7 +324,7 @@ LSAMonApplyTermWeightFunctions[__][___] :=
     ];
 
 
-Clear[LSAMonMakeGraph]
+Clear[LSAMonMakeGraph];
 
 Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite", "RemoveLoops"->True };
 
@@ -409,20 +409,30 @@ LSAMonMakeGraph[__][___] :=
     ];
 
 
-Clear[LSAMonMostImportantTexts]
+Clear[LSAMonMostImportantTexts];
 
 Options[LSAMonMostImportantTexts] = { "CentralityFunction" -> EigenvectorCentrality };
 
 LSAMonMostImportantTexts[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
-    Block[{cFunc, gr, cvec, inds },
+    Block[{cFunc, gr, cvec, inds, smat },
 
       cFunc = OptionValue[LSAMonMostImportantTexts, "CentralityFunction"];
 
-      If[ !KeyExistsQ[context, "texts"],
-        Echo["No texts.", "LSAMonMostImportantTexts:"];
-        Return[$LSAMonFailure]
+      (* Here we should check that the monad value is a text collection. *)
+      If[ !( KeyExistsQ[context, "texts"] || KeyExistsQ[context, "wDocTermMat"] || KeyExistsQ["docTermMat"] ),
+
+        If[ !KeyExistsQ[context, "texts"] && !(KeyExistsQ[context, "wDocTermMat"] || KeyExistsQ["docTermMat"]) ,
+          Echo["No texts.", "LSAMonMostImportantTexts:"];
+          Return[$LSAMonFailure]
+        ];
+
+
+        If[ !( KeyExistsQ[context, "wDocTermMat"] || KeyExistsQ["docTermMat"] ),
+          Echo["No texts and document-term matrices.", "LSAMonMostImportantTexts:"];
+          Return[$LSAMonFailure]
+        ];
       ];
 
       Which[
@@ -436,7 +446,27 @@ LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
         gr = Fold[ LSAMonBind, LSAMon[xs,context], {LSAMonMakeGraph["Type"->"Bipartite"], LSAMonTakeValue} ]
       ];
 
-      cvec = cFunc[gr];
+
+      (* There is some inconsistencies in handling weighted graphs. *)
+      (* That is why the most popular/likely case is computed directly. (For now.) *)
+      If[ TrueQ[ cFunc === EigenvectorCentrality ] && VertexCount[xs] == Length[context["texts"]],
+
+        (* Get document-term matrix. *)
+        smat = If[ TrueQ[ KeyExistsQ[context, "wDocTermMat"] ], Lookup[context, "wDocTermMat"], Lookup[context, "docTermMat"] ];
+
+        (* Make column stochastic. *)
+        smat = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[smat]]]];
+
+        (* Compute eigenvector. *)
+        cvec = SingularValueDecomposition[ N[smat], 1 ];
+
+        cvec = cvec[[1]][[All,1]];
+        cvec = Abs[cvec] / Max[Abs[cvec]],
+
+        (*ELSE*)
+        cvec = cFunc[gr];
+      ];
+
       If[ !ListQ[cvec], Return[$LSAMonFailure] ];
 
       inds = Take[Reverse[Ordering[cvec]], UpTo[topN]];
@@ -463,7 +493,7 @@ LSAMonMostImportantTexts[___][__] :=
     ];
 
 
-Clear[LSAMonTopicExtraction]
+Clear[LSAMonTopicExtraction];
 
 Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
 
@@ -527,7 +557,7 @@ LSAMonTopicExtraction[___][__] :=
     ];
 
 
-Clear[LSAMonStatisticalThesaurus]
+Clear[LSAMonStatisticalThesaurus];
 
 LSAMonStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
@@ -593,7 +623,7 @@ LSAMonEchoStatisticalThesaurus[___][__] :=
     ];
 
 
-Clear[LSAMonBasisVectorInterpretation]
+Clear[LSAMonBasisVectorInterpretation];
 
 Options[LSAMonBasisVectorInterpretation] = { "NumberOfTerms" -> 12 };
 
@@ -627,7 +657,7 @@ LSAMonBasisVectorInterpretation[___][__] :=
     ];
 
 
-Clear[LSAMonTopicsTable]
+Clear[LSAMonTopicsTable];
 
 Options[LSAMonTopicsTable] = { "NumberOfTerms" -> 12 };
 
@@ -657,7 +687,7 @@ LSAMonTopicsTable[__][___] :=
     ];
 
 
-Clear[LSAMonEchoTopicsTable]
+Clear[LSAMonEchoTopicsTable];
 
 Options[LSAMonEchoTopicsTable] = Join[
   {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
@@ -705,7 +735,7 @@ LSAMonEchoTopicsTable[__][___] :=
     ];
 
 
-Clear[LSAMonTopicsRepresentation]
+Clear[LSAMonTopicsRepresentation];
 
 Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
@@ -791,7 +821,7 @@ LSAMonTopicsRepresentation[__][___] :=
     ];
 
 
-Clear[LSAMonEchoTextCollectionStatistics]
+Clear[LSAMonEchoTextCollectionStatistics];
 
 Options[LSAMonEchoTextCollectionStatistics] = Options[Histogram];
 
