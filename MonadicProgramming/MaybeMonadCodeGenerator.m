@@ -153,7 +153,12 @@ GenerateMaybeMonadCode[monadName_String, opts : OptionsPattern[]] :=
           Block[{res = f[x]},
             If[FreeQ[res, MaybeFailureSymbol], res,
               If[MaybeEchoFailingFunction,
-                Echo[TemplateApply[StringTemplate[MaybeBind::ffail], HoldForm[f]], ToString[MaybeBind]<>":"]
+                Echo[
+                  TemplateApply[
+                    StringTemplate[MaybeBind::ffail],
+                    If[ LeafCount[HoldForm[f]] > 200, Short[HoldForm[f]], HoldForm[f] ]
+                  ],
+                  ToString[MaybeBind]<>":"]
               ];
               MaybeFailureSymbol
             ]
