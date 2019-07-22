@@ -264,12 +264,12 @@ ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
       dnames = OptionValue[ToSSparseMatrix, "DimensionNames"];
 
       If[! ( rnames === None || (VectorQ[rnames, StringQ] && Length[rnames] == Dimensions[sarr][[1]]) ),
-        Message[SSparseMatrix::rnset, rnames, Dimensions[sarr][[1]]];
+        Message[SSparseMatrix::rnset, If[LeafCount[rnames]>200, Short[rnames], rnames], Dimensions[sarr][[1]]];
         Return[$Failed]
       ];
 
       If[! ( cnames === None || (VectorQ[cnames, StringQ] && Length[cnames] == Dimensions[sarr][[2]]) ),
-        Message[SSparseMatrix::cnset, cnames, Dimensions[sarr][[2]]];
+        Message[SSparseMatrix::cnset, If[LeafCount[cnames]>200, Short[cnames], cnames], Dimensions[sarr][[2]]];
         Return[$Failed]
       ];
 
