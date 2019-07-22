@@ -168,9 +168,11 @@ SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dat
 
 SMRMonJoinAcross::usage = "Joins a recommendations association with a given Dataset object.";
 
-SMRMonJoin::usage = "Joins the recommender with another recommender. (By row-binding the corresponding tag-type sub-matrices.)";
+SMRMonJoin::usage = "Joins the recommender with another recommender. \
+(By column-binding the corresponding tag-type sub-matrices.)";
 
-SMRMonRowBind::usage = "Synonym of SMRMonJoin.";
+SMRMonRowBind::usage = "Row-binds the recommender with another recommender. \
+(By row-binding the corresponding tag-type sub-matrices.)";
 
 SMRMonSetTagTypeWeights::usage = "Sets weights (significance factors) to the IIR tag types.";
 
@@ -231,24 +233,24 @@ SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
 (*SMRMonSetItemNames[names_][xs_, context_Association] :=*)
     (*SMRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
 
-Clear[SMRMonGetTagTypeWeights];
-SMRMonGetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
-SMRMonGetTagTypeWeights[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonGetTagTypeWeights[xs_, context_] := SMRMonGetTagTypeWeights[][xs, context];
-SMRMonGetTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
-SMRMonGetTagTypeWeights[__][___] := $SMRMonFailure;
+Clear[SMRMonTakeTagTypeWeights];
+SMRMonTakeTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeTagTypeWeights[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeTagTypeWeights[xs_, context_] := SMRMonTakeTagTypeWeights[][xs, context];
+SMRMonTakeTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
+SMRMonTakeTagTypeWeights[__][___] := $SMRMonFailure;
 
-Clear[SMRMonGetTagTypes]
-SMRMonGetTagTypes[$SMRMonFailure] := $SMRMonFailure;
-SMRMonGetTagTypes[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonGetTagTypes[xs_, context_] := SMRMonGetTagTypes[][xs, context];
-SMRMonGetTagTypes[][xs_, context_Association] := Keys[Lookup[context, "tagTypes"]];
-SMRMonGetTagTypes[__][___] := $SMRMonFailure;
+Clear[SMRMonTakeTagTypes]
+SMRMonTakeTagTypes[$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeTagTypes[][$SMRMonFailure] := $SMRMonFailure;
+SMRMonTakeTagTypes[xs_, context_Association] := SMRMonTakeTagTypes[][xs, context];
+SMRMonTakeTagTypes[][xs_, context_Association] := Keys[Lookup[context, "matrices"]];
+SMRMonTakeTagTypes[__][___] := $SMRMonFailure;
 
 Clear[SMRMonTakeMatrix];
 SMRMonTakeMatrix[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeMatrix[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeMatrix[xs_, context_] := SMRMonTakeMatrix[][xs, context];
+SMRMonTakeMatrix[xs_, context_Association] := SMRMonTakeMatrix[][xs, context];
 SMRMonTakeMatrix[][xs_, context_Association] := Lookup[context, "M", $SMRMonFailure];
 SMRMonTakeMatrix[__][___] := $SMRMonFailure;
 
@@ -272,7 +274,7 @@ SMRMonTakeItemNames[__][___] := $SMRMonFailure;
 Clear[SMRMonTakeTags];
 SMRMonTakeTags[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeTags[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeTags[xs_, context_] := SMRMonTakeTags[][xs, context];
+SMRMonTakeTags[xs_, context_Association] := SMRMonTakeTags[][xs, context];
 SMRMonTakeTags[][xs_, context_Association] := Lookup[context, "tags", $SMRMonFailure];
 SMRMonTakeTags[__][___] := $SMRMonFailure;
 
@@ -1107,7 +1109,7 @@ SMRMonProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonProfile[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], opts:OptionsPattern[]][xs_, context_Association] :=
     Block[{h},
 
       h = KeyMap[ context["itemNames"][#]&, history ];
@@ -1117,16 +1119,16 @@ SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, op
         Echo["Some of the item names are not known by the recommender.", "SMRMonProfile:"];
       ];
 
-      SMRMonProfile[ Keys[h], Values[h], nRes, opts][xs, context]
+      SMRMonProfile[ Keys[h], Values[h], opts][xs, context]
     ];
 
-SMRMonProfile[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    SMRMonProfile[ Keys[history], Values[history], nRes, opts][xs, context];
+SMRMonProfile[ history:Association[ (_Integer->_?NumberQ) ... ], opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ Keys[history], Values[history], opts][xs, context];
 
-SMRMonProfile[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    SMRMonProfile[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
+SMRMonProfile[ itemIndices:{_Integer...}, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ itemIndices, ConstantArray[1,Length[itemIndices]], opts][xs, context];
 
-SMRMonProfile[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+SMRMonProfile[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, opts:OptionsPattern[]][xs_, context_Association]:=
     Block[{vec, smat, prof, tagNamesQ, columnNames},
 
       If[Length[itemIndices],
@@ -1169,7 +1171,6 @@ SMRMonProfile[___][__] :=
     Block[{},
       Echo[
         "The first argument is expected to be an association of scored items. " <>
-            "The second argument is expected to be a positive integer. " <>
             "The items are recommendation matrix row indices or row names. The scores are positive numbers.",
         "SMRMonProfile:"];
       $SMRMonFailure
@@ -1295,7 +1296,84 @@ SMRMonJoin[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonJoin[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonJoin[smr2_SMRMon][xs_, context_Association] :=
+SMRMonJoin[ smr2_SMRMon ][xs_, context_Association] :=
+    SMRMonJoin[ smr2, "same", Automatic, Automatic ][xs, context];
+
+SMRMonJoin[ smr2_SMRMon, joinType_String ][xs_, context_Association] :=
+    SMRMonJoin[ smr2, joinType, Automatic, Automatic ][xs, context];
+
+SMRMonJoin[ smr2_SMRMon, joinType_String, colnamesPrefix1:(_String|Automatic), colnamesPrefix2:(_String|Automatic) ][xs_, context_Association] :=
+    Block[{smats1, smats2, allRownames, matrices},
+
+      (*  Get the appropriate all row names. *)
+      If[ joinType != "same",
+
+        Which[
+          joinType == "outer",
+          allRownames =
+              Union[ Flatten[
+                RowNames[ context["M"] ],
+                RowNames[ SMRMonBind[ smr2, SMRMonTakeContext]["M"] ] ] ],
+
+          joinType == "inner",
+          allRownames =
+              Intersection[
+                RowNames[ context["M"] ],
+                RowNames[ SMRMonBind[ smr2, SMRMonTakeContext]["M"] ] ],
+
+          joinType == "left",
+          allRownames = RowNames[ context["M"] ],
+
+          True,
+          Echo[ "The second argument is expected to be one of \"same\", \"outer\", \"inner\", \"left\".", "SMRMonJoin:"];
+          Return[$SMRMonFailure];
+
+        ];
+
+      ];
+
+      smats1 = context["matrices"];
+
+      smats2 = SMRMonBind[ smr2, SMRMonTakeContext]["matrices"];
+
+      If[ Length[ Intersection[ Keys[smats1], Keys[smats2] ] ] > 0,
+        Echo[
+          "The tag types " <> ToString[ Intersection[ Keys[smats1], Keys[smats2] ] ] <>
+              " are also in the SMRMon argument, hence will be dropped.",
+          "SMRMonJoin:"
+        ];
+      ];
+
+      matrices =
+      Join[
+        Map[ ImposeRowNames[#, allRownames]&, smats1 ],
+        Map[ ImposeRowNames[#, allRownames]&, smats2 ]
+      ];
+
+      Fold[ SMRMonBind, SMRMonUnit[], {SMRMonCreate[ matrices ] } ]
+    ];
+
+SMRMonJoin[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be a SMRMon object. " <>
+            "The second argument is expected to be a string specifying the type of joining.",
+        "SMRMonJoin:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMR row-bind                                               *)
+(**************************************************************)
+
+Clear[SMRMonRowBind];
+
+SMRMonRowBind[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonRowBind[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonRowBind[smr2_SMRMon][xs_, context_Association] :=
     Block[{smats1, smats2, resSMmats, cnames},
 
       smats1 = context["matrices"];
@@ -1317,21 +1395,17 @@ SMRMonJoin[smr2_SMRMon][xs_, context_Association] :=
         SMRMonCreate[resSMmats][xs,context],
 
         True,
-        Echo["The tag types of the SMRMon objects to be joined(row-bound) are not the same.", "SMRMonJoin:"];
+        Echo["The tag types of the SMRMon objects to be joined (row-bound) are not the same.", "SMRMonJoin:"];
         $SMRMonFailure
       ]
 
     ];
 
-SMRMonJoin[___][__] :=
+SMRMonRowBind[___][__] :=
     Block[{},
-      Echo[ "The first argument is expected to be a SMRMon object.", "SMRMonJoin:"];
+      Echo[ "The first argument is expected to be a SMRMon object.", "SMRMonRowBind:"];
       $SMRMonFailure
     ];
-
-
-Clear[SMRMonRowBind];
-SMRMonRowBind = SMRMonJoin;
 
 
 (*=========================================================*)
