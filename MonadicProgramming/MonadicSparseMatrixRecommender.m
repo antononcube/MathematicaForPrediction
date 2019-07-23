@@ -1115,7 +1115,12 @@ SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], opts:OptionsPatt
       h = KeyMap[ context["itemNames"][#]&, history ];
       h = KeySelect[ h, IntegerQ ];
 
-      If[ Length[h] < Length[history],
+      If[ 0 == Length[h],
+        Echo["None of the item names is known by the recommender.", "SMRMonProfile:"];
+        Return[$SMRMonFailure];
+      ];
+
+      If[ 0 < Length[h] < Length[history],
         Echo["Some of the item names are not known by the recommender.", "SMRMonProfile:"];
       ];
 
