@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2019 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -46,7 +46,7 @@
      https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicQuantileRegression.m
 
 *)
-BeginTestSection["MonadicSparseMatrixRecommender-Unit-Tests.mt"]
+BeginTestSection["MonadicSparseMatrixRecommender-Unit-Tests.mt"];
 
 
 VerificationTest[(* 1 *)
@@ -58,21 +58,19 @@ VerificationTest[(* 1 *)
   True
   ,
   TestID->"LoadPackage"
-]
+];
 
 VerificationTest[(* 2 *)
-  SeedRandom[342]
+  SeedRandom[342];
   data = RandomInteger[{0, 20}, {100, 5}];
   ds = Dataset[MapThread[Prepend, {data, Range[Length[data]]}]];
-  ds = ds[All,
-    AssociationThread[
-      Prepend[ToString /@ Range[Length[data[[1]]]], "id"], #] &];
+  ds = ds[All, AssociationThread[Prepend[ToString /@ Range[Length[data[[1]]]], "id"], #] &];
   MatchQ[ds, _Dataset] && Count[ds, 0, Infinity] > 10
   ,
   True
   ,
   TestID->"GenerateData"
-]
+];
 
 VerificationTest[(* 2 *)
   dsMiss = ds /. {0 -> Missing[]};
@@ -81,7 +79,157 @@ VerificationTest[(* 2 *)
   True
   ,
   TestID->"MakeDataWithMissing"
-]
+];
 
+VerificationTest[(* 4 *)
+  lsTitanic = Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Titantic.csv"];
+  dsTitanic = Dataset[Dataset[Rest[lsTitanic]][All, AssociationThread[First[lsTitanic], #] &]];
+  Head[dsTitanic] === Dataset && Normal[Keys[dsTitanic[[1]]]] == {"id", "passengerClass", "passengerAge", "passengerSex", "passengerSurvival"}
+  ,
+  True
+  ,
+  TestID->"LoadTitanicData"
+];
+
+VerificationTest[(* 5 *)
+  lsMushroom = Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Mushroom.csv"];
+  dsMushroom = Dataset[Dataset[Rest[lsMushroom]][All, AssociationThread[First[lsMushroom], #] &]];
+  expectedColumnNames = Sort @ {"id", "cap-Shape", "cap-Surface", "cap-Color", "bruises?", "odor", \
+    "gill-Attachment", "gill-Spacing", "gill-Size", "gill-Color", \
+    "stalk-Shape", "stalk-Root", "stalk-Surface-Above-Ring", \
+    "stalk-Surface-Below-Ring", "stalk-Color-Above-Ring", \
+    "stalk-Color-Below-Ring", "veil-Type", "veil-Color", "ring-Number", \
+    "ring-Type", "spore-Print-Color", "population", "habitat", \
+    "edibility"};
+  Head[dsMushroom] === Dataset && Sort[Normal[Keys[dsMushroom[[1]]]]] == expectedColumnNames
+  ,
+  True
+  ,
+  TestID->"LoadMushroomData"
+];
+
+
+(*---------------------------------------------------------*)
+(* Creations                                               *)
+(*---------------------------------------------------------*)
+
+VerificationTest[(* 6 *)
+  smrTitanic = SMRMonBind[ SMRMonUnit[], SMRMonCreate[dsTitanic, "id"] ];
+  TrueQ[Head[smrTitanic] === SMRMon] &&
+      AssociationQ[smrTitanic[[2]]] &&
+      Keys[smrTitanic[[2]]] == {"data", "itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
+  ,
+  True
+  ,
+  TestID->"SMR-creation-with-Titanic-data"
+];
+
+VerificationTest[(* 7 *)
+  colNames = Normal[Keys[dsTitanic[[1]]]];
+  smats = Association @
+      Map[# -> ToSSparseMatrix[CrossTabulate[dsTitanic[All, {First[colNames], #}]]] &, Rest[colNames] ];
+  smrTitanic2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ];
+  TrueQ[Head[smrTitanic2] === SMRMon] &&
+      AssociationQ[smrTitanic2[[2]]] &&
+      Keys[smrTitanic2[[2]]] == {"itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
+  ,
+  True
+  ,
+  TestID->"SMR-creation-with-Titanic-matrices"
+];
+
+VerificationTest[(* 8 *)
+  smrMushroom = SMRMonBind[ SMRMonUnit[], SMRMonCreate[dsMushroom, "id", "AddTagTypesToColumnNames" -> True, "TagValueSeparator" -> ":" ]];
+  TrueQ[Head[smrMushroom] === SMRMon] &&
+      AssociationQ[smrMushroom[[2]]] &&
+      Keys[smrMushroom[[2]]] == {"data", "itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
+  ,
+  True
+  ,
+  TestID->"SMR-creation-with-Mushroom-data"
+];
+
+VerificationTest[(* 9 *)
+  colNames = Normal[Keys[dsMushroom[[1]]]];
+  smats = Association @
+      Map[# -> ToSSparseMatrix[CrossTabulate[dsMushroom[All, {First[colNames], #}]]] &, Rest[colNames]];
+  smrMushroom2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ];
+  TrueQ[Head[smrMushroom2] === SMRMon] &&
+      AssociationQ[smrMushroom2[[2]]] &&
+      Keys[smrMushroom2[[2]]] == {"itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
+  ,
+  True
+  ,
+  TestID->"SMR-creation-with-Mushroom-matrices"
+];
+
+
+(*---------------------------------------------------------*)
+(* Recommendations                                         *)
+(*---------------------------------------------------------*)
+
+VerificationTest[(* 13 *)
+  recs2 = Fold[ SMRMonBind, smrTitanic2, {SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12], SMRMonTakeValue } ];
+  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  ,
+  True
+  ,
+  TestID->"smrTitanic2-recommendations-1"
+];
+
+VerificationTest[(* 15 *)
+  recs4 = Fold[ SMRMonBind, smrMushroom2, {SMRMonRecommend[<|"1" -> 1, "12" -> 0.5|>, 12], SMRMonTakeValue } ];
+  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  ,
+  True
+  ,
+  TestID->"smrMushroom2-recommendations-1"
+];
+
+
+(*---------------------------------------------------------*)
+(* Recommendations by profile                              *)
+(*---------------------------------------------------------*)
+
+VerificationTest[(* 17 *)
+  precs1 = Fold[ SMRMonBind, smrTitanic, { SMRMonRecommendByProfile[<|"male" -> 1, "died" -> 1|>, 12], SMRMonTakeValue } ];
+
+  Union[Flatten[Normal[dsTitanic[Select[MemberQ[Keys[precs1], ToString@#["id"]] &], {"passengerSex"}][Values]]]] == {"male"} &&
+      Union[Flatten[Normal[dsTitanic[Select[MemberQ[Keys[precs1], ToString@#["id"]] &], {"passengerSurvival"}][Values]]]] == {"died"}
+  ,
+  True
+  ,
+  TestID->"smrTitanic-recommendations-by-profile-1"
+];
+
+VerificationTest[(* 18 *)
+  precs2 = Fold[ SMRMonBind, smrMushroom, {SMRMonRecommendByProfile[<|"odor:pungent" -> 1, "edibility:poisonous" -> 1|>, 12], SMRMonTakeValue} ];
+
+  Union[Flatten[Normal[dsMushroom[Select[MemberQ[Keys[precs2], ToString@#["id"]] &], {"odor"}][Values]]]] == {"pungent"} &&
+      Union[Flatten[Normal[dsMushroom[Select[MemberQ[Keys[precs2], ToString@#["id"]] &], {"edibility"}][Values]]]] == {"poisonous"}
+  ,
+  True
+  ,
+  TestID->"smrMushroom-recommendations-by-profile-1"
+];
+
+
+(*---------------------------------------------------------*)
+(* Application of term weights                             *)
+(*---------------------------------------------------------*)
+
+VerificationTest[(* 20 *)
+  recs2 = Fold[
+    SMRMonBind,
+    smrTitanic2,
+    { SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+      SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12],
+      SMRMonTakeValue } ];
+  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  ,
+  True
+  ,
+  TestID->"smrTitanic2-apply-term-weights"
+];
 
 EndTestSection[]
