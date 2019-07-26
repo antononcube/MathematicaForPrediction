@@ -411,22 +411,20 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               !FreeQ[res, MStateFailureSymbol],
 
               If[MStateEchoFailingFunction,
-                Echo[
-                  TemplateApply[
-                    StringTemplate[MStateBind::ffail],
-                    If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ]
-                  ], ToString[MStateBind] <> ":" ]
+                With[{ef = If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ] },
+                  Echo[
+                    TemplateApply[StringTemplate[MStateBind::ffail], ef], ToString[MStateBind] <> ":" ]
+                ]
               ];
               MStateFailureSymbol,
 
               MatchQ[res, MState[_]],
 
               If[MStateEchoFailingFunction,
-                Echo[
-                  TemplateApply[
-                    StringTemplate[MStateBind::mscxt],
-                    If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ]
-                  ], ToString[MStateBind] <> ":"]
+                With[{ef = If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ] },
+                  Echo[
+                    TemplateApply[StringTemplate[MStateBind::mscxt], ef], ToString[MStateBind] <> ":"]
+                ]
               ];
               MState[res[[1]], context],
 
@@ -444,11 +442,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               Which[
                 ! FreeQ[res, MStateFailureSymbol],
                 If[MStateEchoFailingFunction,
-                  Echo[
-                    TemplateApply[
-                      StringTemplate[MStateBind::ffail],
-                      If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ]
-                    ], ToString[MStateBind] <> ":"]
+                  With[{ef = If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ] },
+                    Echo[
+                      TemplateApply[StringTemplate[MStateBind::ffail], ef], ToString[MStateBind] <> ":"]
+                  ]
                 ];
                 MStateFailureSymbol,
                 StringQ[res[[2]]], res,
