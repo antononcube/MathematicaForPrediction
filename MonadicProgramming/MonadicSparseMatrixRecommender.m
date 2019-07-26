@@ -752,14 +752,14 @@ SMRMonRecommend[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, 
       SMRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
     ];
 
+SMRMonRecommend[ itemNames:{_String...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ AssociationThread[itemNames, 1], nRes, opts][xs, context];
+
 SMRMonRecommend[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ Keys[history], Values[history], nRes, opts][xs, context];
 
 SMRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
-
-SMRMonRecommend[ itemNames:{_String...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    SMRMonRecommend[ itemNames, ConstantArray[1,Length[itemNames]], nRes, opts][xs, context];
 
 SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
     Block[{vec, filterIDs=All, filterInds, smat, fmat, recs, removeHistoryQ, itemNamesQ, rowNames},
