@@ -414,7 +414,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
                 Echo[
                   TemplateApply[
                     StringTemplate[MStateBind::ffail],
-                    If[ LeafCount[HoldForm[f]] > 200, Short[HoldForm[f]], HoldForm[f] ]
+                    If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ]
                   ], ToString[MStateBind] <> ":" ]
               ];
               MStateFailureSymbol,
@@ -425,7 +425,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
                 Echo[
                   TemplateApply[
                     StringTemplate[MStateBind::mscxt],
-                    If[ LeafCount[HoldForm[f]] > 200, Short[HoldForm[f]], HoldForm[f] ]
+                    If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ]
                   ], ToString[MStateBind] <> ":"]
               ];
               MState[res[[1]], context],
@@ -447,7 +447,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
                   Echo[
                     TemplateApply[
                       StringTemplate[MStateBind::ffail],
-                      If[ LeafCount[HoldForm[f]] > 200, Short[HoldForm[f]], HoldForm[f] ]
+                      If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ]
                     ], ToString[MStateBind] <> ":"]
                 ];
                 MStateFailureSymbol,
