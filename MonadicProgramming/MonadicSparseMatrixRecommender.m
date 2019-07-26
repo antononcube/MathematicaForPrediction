@@ -383,7 +383,7 @@ SMRMonScoredTagsQ[__][___] := $SMRMonFailure;
 Clear[ScoredItemsQ];
 ScoredItemsQ[recs_Association, context_Association] :=
     Block[{},
-      Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}]
+     TrueQ[ Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}] ]
     ];
 ScoredItemsQ[___] := (Echo["Wrong signature!", "ScoredItemsQ:"]; False);
 
@@ -392,7 +392,7 @@ ScoredItemsQ[___] := (Echo["Wrong signature!", "ScoredItemsQ:"]; False);
 Clear[ScoredTagsQ];
 ScoredTagsQ[prof_Association, context_Association] :=
     Block[{},
-      Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredTagsQ[prof], SMRMonTakeValue}]
+      TrueQ[ Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredTagsQ[prof], SMRMonTakeValue}] ]
     ];
 ScoredTagsQ[___] := (Echo["Wrong signature!", "ScoredTagsQ:"]; False);
 
@@ -1034,7 +1034,7 @@ SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 
 Clear[SMRMonJoinAcross];
 
-Options[SMRMonJoinAcross] = {"DropJoiningColumnName"->True};
+Options[SMRMonJoinAcross] = {"DropJoiningColumnName"->True, "AsDataset" -> True };
 
 SMRMonJoinAcross[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1074,15 +1074,34 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, co
     ];
 
 SMRMonJoinAcross[asc_Association, opts:OptionsPattern[]][xs_, context_Association] :=
-    Block[{dsRecs},
+    Block[{dsRecs, datasetQ},
 
-      dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
+      datasetQ = TrueQ[ OptionValue["AsDataset"] ];
 
-      If[ TrueQ[dsRecs === $SMRMonFailure],
-        Return[$SMRMonFailure]
+      (* The assumption is that the monad value xs is recommendations result. *)
+      (* I.e. an association of with item names as keys and real numbers as values. *)
+      (* This should be checked and verified. *)
+
+      If[ !( AssociationQ[xs] && TrueQ[ ScoredItemsQ[xs, context] ] ),
+        Echo[ "The pipeline value is not an association of scored items.", "SMRMonJoinAcross" ];
+        Return[$SMRMonFailure];
       ];
 
-      SMRMonUnit[ dsRecs[ All, Join[ #, <| "Value" -> asc[#Item] |>]& ], context ]
+      If[ datasetQ,
+
+        dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
+
+        If[ TrueQ[dsRecs === $SMRMonFailure],
+          Return[$SMRMonFailure]
+        ];
+
+        SMRMonUnit[ dsRecs[ All, Join[ #, <| "Value" -> asc[#Item] |>]& ], context ],
+        (* ELSE *)
+
+
+        dsRecs = KeyValueMap[ Prepend[ asc[#1], #2 ]&, xs ];
+        SMRMonUnit[ dsRecs, context ]
+      ]
     ];
 
 SMRMonJoinAcross[__][___] :=
