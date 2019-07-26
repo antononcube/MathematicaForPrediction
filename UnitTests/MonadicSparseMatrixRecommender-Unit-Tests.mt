@@ -178,8 +178,8 @@ VerificationTest[(* 13 *)
 ];
 
 VerificationTest[(* 14 *)
-  recs2 = Fold[ SMRMonBind, smrTitanic2, {SMRMonRecommend[{"10", "120"}, 12], SMRMonTakeValue } ];
-  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  recs3 = Fold[ SMRMonBind, smrTitanic2, {SMRMonRecommend[{"10", "120"}, 12], SMRMonTakeValue } ];
+  VectorQ[Keys[recs3], StringQ] && VectorQ[Values[recs3], NumberQ]
   ,
   True
   ,
@@ -188,7 +188,7 @@ VerificationTest[(* 14 *)
 
 VerificationTest[(* 15 *)
   recs4 = Fold[ SMRMonBind, smrMushroom2, {SMRMonRecommend[<|"1" -> 1, "12" -> 0.5|>, 12], SMRMonTakeValue } ];
-  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  VectorQ[Keys[recs4], StringQ] && VectorQ[Values[recs4], NumberQ]
   ,
   True
   ,
