@@ -676,13 +676,15 @@ Clear[SMRMonApplyTermWeightFunctions];
 
 SMRMonApplyTermWeightFunctions[$SMRMonFailure] := $SMRMonFailure;
 
-SMRMonApplyTermWeightFunctions[][xs_, context_Association] := $SMRMonFailure;
+SMRMonApplyTermWeightFunctions[xs_, context_Association] := SMRMonApplyTermWeightFunctions[][xs, context];
+
+SMRMonApplyTermWeightFunctions[][xs_, context_Association] := SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"][xs, context];
 
 SMRMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_Association] :=
     Block[{mat, smats},
 
       If[!KeyExistsQ[context, "matrices"],
-        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonApplyNormalizationFunction:"];
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonApplyTermWeightFunctions:"];
         Return[$SMRMonFailure]
       ];
 
@@ -755,6 +757,9 @@ SMRMonRecommend[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer,
 
 SMRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
+
+SMRMonRecommend[ itemNames:{_String...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ itemNames, ConstantArray[1,Length[itemNames]], nRes, opts][xs, context];
 
 SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
     Block[{vec, filterIDs=All, filterInds, smat, fmat, recs, removeHistoryQ, itemNamesQ, rowNames},
@@ -840,7 +845,7 @@ SMRMonRecommendByProfile[nRes_Integer, opts:OptionsPattern[]][xs_, context_Assoc
       SMRMonRecommendByProfile[xs, nRes, opts][xs, context]
     ];
 
-SMRMonRecommendByProfile[profileInds:{_Integer...}, profileScores:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+SMRMonRecommendByProfile[profileInds:{_Integer..}, profileScores:{_?NumberQ..}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
     Block[{inds, vec, smat},
 
       If[!KeyExistsQ[context, "M"],
@@ -912,8 +917,9 @@ SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer, opts:Opti
         tags = KeyTake[tags, ColumnNames[context["M"]]];
       ];
 
-      If[ AssociationQ[tags] && !ScoredTagsQ[tags, context] ||
-          ListQ[tags] && !ScoredTagsQ[AssociationThread[tags->1], context] ,
+      If[ ListQ[tags], tags = AssociationThread[ tags -> 1 ] ];
+
+      If[ AssociationQ[tags] && !ScoredTagsQ[tags, context],
         Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
         Return[$SMRMonFailure]
       ];
