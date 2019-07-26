@@ -165,7 +165,7 @@ VerificationTest[(* 9 *)
 
 
 (*---------------------------------------------------------*)
-(* Recommendations                                         *)
+(* Recommendations by history                              *)
 (*---------------------------------------------------------*)
 
 VerificationTest[(* 13 *)
@@ -175,6 +175,15 @@ VerificationTest[(* 13 *)
   True
   ,
   TestID->"smrTitanic2-recommendations-1"
+];
+
+VerificationTest[(* 14 *)
+  recs2 = Fold[ SMRMonBind, smrTitanic2, {SMRMonRecommend[{"10", "120"}, 12], SMRMonTakeValue } ];
+  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  ,
+  True
+  ,
+  TestID->"smrTitanic2-recommendations-2"
 ];
 
 VerificationTest[(* 15 *)
@@ -213,6 +222,16 @@ VerificationTest[(* 18 *)
   TestID->"smrMushroom-recommendations-by-profile-1"
 ];
 
+VerificationTest[(* 19 *)
+  precs2 = Fold[ SMRMonBind, smrMushroom, {SMRMonRecommendByProfile[ {"odor:pungent", "edibility:poisonous"}, 12], SMRMonTakeValue} ];
+
+  Union[Flatten[Normal[dsMushroom[Select[MemberQ[Keys[precs2], ToString@#["id"]] &], {"odor"}][Values]]]] == {"pungent"} &&
+      Union[Flatten[Normal[dsMushroom[Select[MemberQ[Keys[precs2], ToString@#["id"]] &], {"edibility"}][Values]]]] == {"poisonous"}
+  ,
+  True
+  ,
+  TestID->"smrMushroom-recommendations-by-profile-2"
+];
 
 (*---------------------------------------------------------*)
 (* Application of term weights                             *)
@@ -229,7 +248,21 @@ VerificationTest[(* 20 *)
   ,
   True
   ,
-  TestID->"smrTitanic2-apply-term-weights"
+  TestID->"smrTitanic2-apply-term-weights-1"
+];
+
+VerificationTest[(* 20 *)
+  recs2 = Fold[
+    SMRMonBind,
+    smrTitanic2,
+    { SMRMonApplyTermWeightFunctions,
+      SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12],
+      SMRMonTakeValue } ];
+  VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
+  ,
+  True
+  ,
+  TestID->"smrTitanic2-apply-term-weights-2"
 ];
 
 EndTestSection[]
