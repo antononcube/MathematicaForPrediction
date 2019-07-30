@@ -739,6 +739,9 @@ RGTerminal[parsed_] :=
       parsed == "\"_LetterString\"" || parsed == "'_LetterString'",
       rgLetterString,
 
+      parsed == "\"_IdentifierString\"" || parsed == "'_IdentifierString'",
+      rgLetterString,
+
       True,
       If[StringMatchQ[parsed, ("'" | "\"") ~~ ___ ~~ ("'" | "\"")], StringTake[parsed, {2, -2}], parsed]
 
