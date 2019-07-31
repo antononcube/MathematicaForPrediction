@@ -35,6 +35,7 @@
 (* :Context: MonadicStructuralBreaksFinder` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2019-06-30 *)
+(* Created with the Wolfram Language Plugin for IntelliJ, see http://wlplugin.halirutan.de/ . *)
 
 (* :Package Version: 0.5 *)
 (* :Mathematica Version: 12 *)
@@ -81,6 +82,7 @@
    2019-06-30
 
 *)
+
 
 (**************************************************************)
 (* Importing packages (if needed)                             *)
@@ -200,11 +202,16 @@ Clear[QRMonPlotStructuralBreakSplits];
 
 Options[QRMonPlotStructuralBreakSplits] = { "LeftPartColor" -> Gray, "RightPartColor" -> Red, "DateListPlot" -> False, "Echo" -> True };
 
+Options[QRMonPlotStructuralBreakSplits] = Join[ Options[QRMonPlotStructuralBreakSplits], Options[QRMonPlot] ];
+
 QRMonPlotStructuralBreakSplits[$QRMonFailure] := $QRMonFailure;
 
 QRMonPlotStructuralBreakSplits[xs_, context_Association] := QRMonPlotStructuralBreakSplits[][xs, context];
 
 QRMonPlotStructuralBreakSplits[][xs_, context_Association] := QRMonPlotStructuralBreakSplits[ Automatic, Automatic, Options[QRMonPlotStructuralBreakSplits] ][xs, context];
+
+QRMonPlotStructuralBreakSplits[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    QRMonPlotStructuralBreakSplits[ Automatic, Automatic, opts ][xs, context];
 
 QRMonPlotStructuralBreakSplits[ splitPoints : ( { _?NumberQ.. } | Automatic ), opts : OptionsPattern[] ][xs_, context_Association] :=
     QRMonPlotStructuralBreakSplits[ splitPoints, Automatic, opts ][xs, context];
@@ -254,12 +261,12 @@ QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic )
                     QRMonUnit[data1] \[DoubleLongRightArrow]
                         QRMonFit[fitFuncs] \[DoubleLongRightArrow]
                         QRMonSetDataPlotOptions[{PlotStyle -> leftPartColor}] \[DoubleLongRightArrow]
-                        QRMonPlot[ "DateListPlot"-> dateListPlotQ, "Echo" -> False] \[DoubleLongRightArrow]
+                        QRMonPlot[ "DateListPlot"-> dateListPlotQ, "Echo" -> False, Sequence@@FilterRules[{opts}, Options[QRMonPlot]] ] \[DoubleLongRightArrow]
                         QRMonTakeValue,
                     QRMonUnit[data2] \[DoubleLongRightArrow]
                         QRMonFit[fitFuncs] \[DoubleLongRightArrow]
                         QRMonSetDataPlotOptions[{PlotStyle -> rightPartColor}] \[DoubleLongRightArrow]
-                        QRMonPlot[ "DateListPlot"-> dateListPlotQ, "Echo" -> False, PlotLegends -> None] \[DoubleLongRightArrow]
+                        QRMonPlot[ "DateListPlot"-> dateListPlotQ, "Echo" -> False, PlotLegends -> None, Sequence@@FilterRules[{opts}, Options[QRMonPlot]] ] \[DoubleLongRightArrow]
                         QRMonTakeValue},
                     PlotRange -> All]
             ],
@@ -267,7 +274,7 @@ QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic )
 
       If[ TrueQ[echoPlotsQ],
         Echo[
-          KeyValueMap[ Show[#2, PlotLabel -> Grid[{{"Point:", #1[[1]]}, {"Chow Test statistic:", #1[[2]] }}, Alignment->Left]]&, res],
+          KeyValueMap[ Show[#2, PlotLabel -> Grid[{{"Point:", #1[[1]]}, {"Chow Test statistic:",   #1[[2]] }}, Alignment->Left]]&, res],
           "structural break splits:"
         ]
       ];
