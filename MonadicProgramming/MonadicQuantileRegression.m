@@ -257,7 +257,7 @@ QRMonSetNet[__][___] := $QRMonFailure;
 (* GetData                                                    *)
 (**************************************************************)
 
-Clear[DataToNormalForm]
+Clear[DataToNormalForm];
 
 DataToNormalForm[data_] :=
     Which[
@@ -1640,7 +1640,7 @@ QRMonFindLocalExtrema = QRMonLocalExtrema;
       https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/ChowTestStatistic.m .
 *)
 
-Clear[ChowTestStatistic]
+Clear[ChowTestStatistic];
 
 ChowTestStatistic::empfuncs = "A non empty list of functions is expected.";
 ChowTestStatistic::novar = "The specified variable is not a symbol.";
@@ -1705,7 +1705,7 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
     ];
 
 
-Clear[QRMonChowTestStatistic]
+Clear[QRMonChowTestStatistic];
 
 QRMonChowTestStatistic[$QRMonFailure] := $QRMonFailure;
 
