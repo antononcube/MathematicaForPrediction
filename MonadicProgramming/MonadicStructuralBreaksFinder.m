@@ -98,8 +98,12 @@ If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
 
 BeginPackage["MonadicStructuralBreaksFinder`"];
 
-QRMonFindChowTestLocalMaxima::usage = "Finds structural breaks in the data using the Chow Test. \
+QRMonFindChowTestLocalMaxima::usage = "QRMonFindChowTestLocalMaxima[points : ( { _?NumberQ.. } | Automatic ), fitFuncs_, opts___] \
+finds structural breaks in the data using the Chow Test. \
 It takes as options the options of QRMonQuantileRegression, QRMonFindLocalExtrema, and QRMonPlot.";
+
+QRMonPlotStructuralBreakSplits::usage = "QRMonPlotStructuralBreakSplits[ points, fitFuncs, opts___] \
+makes a list of plots of structural break splits.";
 
 Begin["`Private`"];
 
@@ -110,7 +114,7 @@ Needs["MonadicQuantileRegression`"];
 (**************************************************************)
 
 
-ClearAll[QRMonFindChowTestLocalMaxima];
+Clear[QRMonFindChowTestLocalMaxima];
 
 Options[QRMonFindChowTestLocalMaxima] = { "Knots" -> 12, "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 15, "EchoPlots" -> False };
 
@@ -122,16 +126,15 @@ Options[QRMonFindChowTestLocalMaxima] =
       Options[QRMonPlot]
     ];
 
-
 QRMonFindChowTestLocalMaxima[$QRMonFailure] := $QRMonFailure;
 
 QRMonFindChowTestLocalMaxima[xs_, context_Association] := QRMonFindChowTestLocalMaxima[][xs, context];
 
 QRMonFindChowTestLocalMaxima[][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, Automatic ][xs, context];
 
-QRMonFindChowTestLocalMaxima[ opts:OptionsPattern[] ][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, Automatic, opts ][xs, context];
+QRMonFindChowTestLocalMaxima[ opts : OptionsPattern[] ][xs_, context_Association] := QRMonFindChowTestLocalMaxima[ Automatic, Automatic, opts ][xs, context];
 
-QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs_, opts:OptionsPattern[] ][xs_, context_Association] :=
+QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs_, opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{knots, echoPlotsQ, localMaximaPlotFunc, ctStats, res},
 
       knots = OptionValue["Knots"];
@@ -147,7 +150,7 @@ QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs
             }];
 
       localMaximaPlotFunc = ListPlot;
-      If[ TrueQ[ "DateListPlot" /. {opts} /. { "DateListPlot"->False} ],
+      If[ TrueQ[ "DateListPlot" /. {opts} /. { "DateListPlot" -> False} ],
         localMaximaPlotFunc = DateListPlot
       ];
 
@@ -157,13 +160,13 @@ QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs
             QRMonUnit[ ctStats ],
             { QRMonQuantileRegression[ knots, 0.5, FilterRules[ {opts}, Options[QRMonQuantileRegression] ] ],
               QRMonIfElse[ echoPlotsQ &,
-                Function[{x,c}, QRMonPlot[ FilterRules[ {opts}, Options[QRMonPlot] ] ][x,c]],
-                Function[{x,c}, QRMonUnit[x,c]]
+                Function[{x, c}, QRMonPlot[ FilterRules[ {opts}, Options[QRMonPlot] ] ][x, c]],
+                Function[{x, c}, QRMonUnit[x, c]]
               ],
               QRMonFindLocalExtrema[ FilterRules[ {opts}, Options[QRMonFindLocalExtrema] ] ],
               QRMonAddToContext["localExtrema"],
               QRMonIfElse[ echoPlotsQ &,
-                Function[{x,c},
+                Function[{x, c},
                   QRMonEchoFunctionContext[
                     localMaximaPlotFunc[#["data"],
                       FilterRules[ {opts}, Options[localMaximaPlotFunc] ],
@@ -171,7 +174,7 @@ QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs
                       GridLinesStyle -> Pink, Joined -> False, Filling -> Axis,
                       PlotTheme -> "Detailed", ImageSize -> Large] &][x, c]
                 ],
-                Function[{x,c}, QRMonUnit[x,c]]
+                Function[{x, c}, QRMonUnit[x, c]]
               ],
               QRMonTakeValue
             }];
@@ -179,6 +182,104 @@ QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs
       QRMonUnit[ res["localMaxima"], context ]
     ];
 
+QRMonFindChowTestLocalMaxima[___][xs_, context_Association] :=
+    Block[{},
+      Echo["The first argument is expected to be a list of points;" <>
+            "the second argument is expected to be a list of fit functions",
+        "QRMonFindChowTestLocalMaxima:"
+      ];
+      $QRMonFailure
+    ];
+
+
+(**************************************************************)
+(* Plot structural break splits                               *)
+(**************************************************************)
+
+Clear[QRMonPlotStructuralBreakSplits];
+
+Options[QRMonPlotStructuralBreakSplits] = { "LeftPartColor" -> Gray, "RightPartColor" -> Red, "Echo" -> True };
+
+QRMonPlotStructuralBreakSplits[$QRMonFailure] := $QRMonFailure;
+
+QRMonPlotStructuralBreakSplits[xs_, context_Association] := QRMonPlotStructuralBreakSplits[][xs, context];
+
+QRMonPlotStructuralBreakSplits[][xs_, context_Association] := QRMonPlotStructuralBreakSplits[ Automatic, Automatic, Options[QRMonPlotStructuralBreakSplits] ][xs, context];
+
+QRMonPlotStructuralBreakSplits[ splitPoints : ( { _?NumberQ.. } | Automatic ), opts : OptionsPattern[] ][xs_, context_Association] :=
+    QRMonPlotStructuralBreakSplits[ splitPoints, Automatic, opts ][xs, context];
+
+QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic ), fitFuncsArg_, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ fitFuncs = fitFuncsArg, splitPoints = splitPointsArg, leftPartColor, rightPartColor, echoPlotsQ, data, chowTestStat, res},
+
+      leftPartColor = OptionValue[ QRMonPlotStructuralBreakSplits, "LeftPartColor" ];
+      rightPartColor = OptionValue[ QRMonPlotStructuralBreakSplits, "RightPartColor" ];
+      echoPlotsQ = TrueQ[ OptionValue[ QRMonPlotStructuralBreakSplits, "Echo" ] ];
+
+      If[ TrueQ[ fitFuncs === Automatic ],
+        fitFuncs = {1, Global`x};
+      ];
+
+      If[ !( VectorQ[splitPoints, NumberQ] || TrueQ[ splitPoints === Automatic ] ),
+        Echo["The first argument is expected to be a list of regressor split points.", "QRMonPlotStructuralBreakSplits:"];
+        Return[$QRMonFailure];
+      ];
+
+      data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue } ];
+
+      If[ TrueQ[ splitPoints === Automatic ],
+        splitPoints =
+            QRMonUnit[data] \[DoubleLongRightArrow]
+                QRMonFindChowTestLocalMaxima["Knots" -> 20, "NearestWithOutliers" -> True, "NumberOfProximityPoints" -> 5, "EchoPlots" -> False, "DateListPlot" -> True] \[DoubleLongRightArrow]
+                QRMonTakeValue;
+
+        If[ TrueQ[ splitPoints === $QRMonFailure ],
+          Return[$QRMonFailure];
+        ];
+
+        splitPoints = splitPoints[[All,1]];
+      ];
+
+      res = Association @
+          Table[
+            Block[{data1, data2},
+              data1 = Select[data, #[[1]] <= sp &];
+              data2 = Select[data, #[[1]] > sp &];
+              chowTestStat =  (QRMonUnit[data] \[DoubleLongRightArrow] QRMonChowTestStatistic[sp, fitFuncs] \[DoubleLongRightArrow] QRMonTakeValue)[[1, 2]];
+              {sp, chowTestStat} ->
+                  Show[{
+                    QRMonUnit[data1] \[DoubleLongRightArrow]
+                        QRMonFit[fitFuncs] \[DoubleLongRightArrow]
+                        QRMonSetDataPlotOptions[{PlotStyle -> leftPartColor}] \[DoubleLongRightArrow]
+                        QRMonDateListPlot["Echo" -> False] \[DoubleLongRightArrow]
+                        QRMonTakeValue,
+                    QRMonUnit[data2] \[DoubleLongRightArrow]
+                        QRMonFit[fitFuncs] \[DoubleLongRightArrow]
+                        QRMonSetDataPlotOptions[{PlotStyle -> rightPartColor}] \[DoubleLongRightArrow]
+                        QRMonDateListPlot["Echo" -> False, PlotLegends -> None] \[DoubleLongRightArrow]
+                        QRMonTakeValue},
+                    PlotRange -> All]
+            ],
+            {sp, splitPoints}];
+
+      If[ TrueQ[echoPlotsQ],
+        Echo[
+          KeyValueMap[ Show[#2, PlotLabel -> Row[{"Point:", Spacer[3], #1[[1]], ",", Spacer[5], "Chow Test statistic:", Spacer[3], #1[[2]] }]]&, res],
+          "structural break splits:"
+        ]
+      ];
+
+      QRMonUnit[ res, context ]
+    ];
+
+QRMonPlotStructuralBreakSplits[___][xs_, context_Association] :=
+    Block[{},
+      Echo["The first argument is expected to be a list of points;" <>
+            "the second argument is expected to be a list of fit functions",
+        "QRMonPlotStructuralBreakSplits:"
+      ];
+      $QRMonFailure
+    ];
 
 (**************************************************************)
 (* Find structural breaks                                     *)
