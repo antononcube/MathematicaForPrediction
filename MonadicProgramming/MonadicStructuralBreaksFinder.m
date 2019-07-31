@@ -198,7 +198,7 @@ QRMonFindChowTestLocalMaxima[___][xs_, context_Association] :=
 
 Clear[QRMonPlotStructuralBreakSplits];
 
-Options[QRMonPlotStructuralBreakSplits] = { "LeftPartColor" -> Gray, "RightPartColor" -> Red, "Echo" -> True };
+Options[QRMonPlotStructuralBreakSplits] = { "LeftPartColor" -> Gray, "RightPartColor" -> Red, "DateListPlot" -> False, "Echo" -> True };
 
 QRMonPlotStructuralBreakSplits[$QRMonFailure] := $QRMonFailure;
 
@@ -210,10 +210,13 @@ QRMonPlotStructuralBreakSplits[ splitPoints : ( { _?NumberQ.. } | Automatic ), o
     QRMonPlotStructuralBreakSplits[ splitPoints, Automatic, opts ][xs, context];
 
 QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic ), fitFuncsArg_, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{ fitFuncs = fitFuncsArg, splitPoints = splitPointsArg, leftPartColor, rightPartColor, echoPlotsQ, data, chowTestStat, res},
+    Block[{ fitFuncs = fitFuncsArg, splitPoints = splitPointsArg,
+      leftPartColor, rightPartColor, dateListPlotQ, echoPlotsQ,
+      data, chowTestStat, res},
 
       leftPartColor = OptionValue[ QRMonPlotStructuralBreakSplits, "LeftPartColor" ];
       rightPartColor = OptionValue[ QRMonPlotStructuralBreakSplits, "RightPartColor" ];
+      dateListPlotQ = TrueQ[ OptionValue[ QRMonPlotStructuralBreakSplits, "DateListPlot" ] ];
       echoPlotsQ = TrueQ[ OptionValue[ QRMonPlotStructuralBreakSplits, "Echo" ] ];
 
       If[ TrueQ[ fitFuncs === Automatic ],
@@ -230,7 +233,7 @@ QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic )
       If[ TrueQ[ splitPoints === Automatic ],
         splitPoints =
             QRMonUnit[data] \[DoubleLongRightArrow]
-                QRMonFindChowTestLocalMaxima["Knots" -> 20, "NearestWithOutliers" -> True, "NumberOfProximityPoints" -> 5, "EchoPlots" -> False, "DateListPlot" -> True] \[DoubleLongRightArrow]
+                QRMonFindChowTestLocalMaxima["Knots" -> 20, "NearestWithOutliers" -> True, "NumberOfProximityPoints" -> 5, "EchoPlots" -> False] \[DoubleLongRightArrow]
                 QRMonTakeValue;
 
         If[ TrueQ[ splitPoints === $QRMonFailure ],
@@ -251,12 +254,12 @@ QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic )
                     QRMonUnit[data1] \[DoubleLongRightArrow]
                         QRMonFit[fitFuncs] \[DoubleLongRightArrow]
                         QRMonSetDataPlotOptions[{PlotStyle -> leftPartColor}] \[DoubleLongRightArrow]
-                        QRMonDateListPlot["Echo" -> False] \[DoubleLongRightArrow]
+                        QRMonPlot[ "DateListPlot"-> dateListPlotQ, "Echo" -> False] \[DoubleLongRightArrow]
                         QRMonTakeValue,
                     QRMonUnit[data2] \[DoubleLongRightArrow]
                         QRMonFit[fitFuncs] \[DoubleLongRightArrow]
                         QRMonSetDataPlotOptions[{PlotStyle -> rightPartColor}] \[DoubleLongRightArrow]
-                        QRMonDateListPlot["Echo" -> False, PlotLegends -> None] \[DoubleLongRightArrow]
+                        QRMonPlot[ "DateListPlot"-> dateListPlotQ, "Echo" -> False, PlotLegends -> None] \[DoubleLongRightArrow]
                         QRMonTakeValue},
                     PlotRange -> All]
             ],
@@ -264,7 +267,7 @@ QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic )
 
       If[ TrueQ[echoPlotsQ],
         Echo[
-          KeyValueMap[ Show[#2, PlotLabel -> Row[{"Point:", Spacer[3], #1[[1]], ",", Spacer[5], "Chow Test statistic:", Spacer[3], #1[[2]] }]]&, res],
+          KeyValueMap[ Show[#2, PlotLabel -> Grid[{{"Point:", #1[[1]]}, {"Chow Test statistic:", #1[[2]] }}, Alignment->Left]]&, res],
           "structural break splits:"
         ]
       ];
