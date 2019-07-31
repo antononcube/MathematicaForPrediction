@@ -173,7 +173,7 @@ The computation below combines steps 2,3, and 4.
 
     qrObj =
       QRMonUnit[tsSP500]⟹
-       QRMonFindChowTestLocalMaxima["Knots" -> 20, 
+       QRMonFindChowTestLocalMaxima["Knots" -> 30, 
         "NearestWithOutliers" -> True, 
         "NumberOfProximityPoints" -> 5, "EchoPlots" -> True, 
         "DateListPlot" -> True, 
