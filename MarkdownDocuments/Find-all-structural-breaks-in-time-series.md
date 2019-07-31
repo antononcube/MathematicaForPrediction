@@ -40,6 +40,8 @@ The Chow test, proposed by econometrician Gregory Chow in 1960, is a test of whe
 Here is an example of the described algorithm application to the data from [[Wk2](https://en.wikipedia.org/wiki/Chow_test#/media/File:Chowtest4.svg)].
 
     QRMonUnit[data]⟹QRMonPlotStructuralBreakSplits[ImageSize -> Small];
+    
+ ![IntroductionsExample](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Introductions-example.png)   
 
 ## Load packages
 
@@ -68,11 +70,16 @@ Here is the data used in the Wikipedia article "Chow test", [[Wk2](https://en.wi
         1.8}, {3.7, 2.1}, {3.8, 1.6}, {3.8, 1.8}, {3.9, 1.9}, {4., 2.1}};
     ListPlot[data]
 
+![DataUsedWk2](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Data-used-Wk2.png)
+
 ### S&P 500 Index
 
 Here we get the time series corresponding to [S&P 500 Index](https://en.wikipedia.org/wiki/S%26P_500_Index).
 
+    FinancialData[Entity["Financial", "^SPX"], {{2015, 1, 1}, Date[]}]
     DateListPlot[tsSP500, ImageSize -> Medium]
+
+![DataUsedSP500](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Data-used-SP500.png)
 
 ## Application of Chow Test
 
@@ -93,6 +100,8 @@ We see that the regressor points $\text{$\$$Failed}$ and $1.7$ have the largest 
     ListPlot[{chowStats, chPoint}, Filling -> Axis, PlotLabel -> Row[{"Point with largest Chow Test statistic:", 
     Spacer[8], chPoint}]]]
 
+![ApplicationOfChowTestchowStats](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Application-of-Chow-Test-chowStats.png)
+
 The first argument of QRMonChowTestStatistic is a list of regressor points or Automatic. 
 The second argument is a list of functions to be used for the regressions. 
 
@@ -105,23 +114,29 @@ Here is an example of an automatic values call.
     OutlierIdentifiers`OutlierPosition[
     Part[chowStats2, All, 2],  OutlierIdentifiers`SPLUSQuartileIdentifierParameters]], None}, GridLinesStyle -> Directive[{Orange, Dashed}], Filling -> Axis]
 
+![ApplicationOfChowTestchowStats2](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Application-of-Chow-Test-chowStats2.png)
+
 For the set of values displayed above we can apply simple 1D outlier identification methods, 
 [[AAp3](https://github.com/antononcube/MathematicaForPrediction/blob/master/OutlierIdentifiers.m)], 
 to automatically find the structural break point.
 
     chowStats2[[All, 1]][[OutlierPosition[chowStats2[[All, 2]], SPLUSQuartileIdentifierParameters]]]
-
+    (* {1.7} *)
+    
     OutlierPosition[chowStats2[[All, 2]], SPLUSQuartileIdentifierParameters]
-
+    (* {20} *)
+    
 We cannot use that approach for finding all structural breaks in the general time series cases though as exemplified with the following code using the time series S&P 500 Index.
 
     chowStats3 = QRMonUnit[tsSP500]⟹QRMonChowTestStatistic⟹QRMonTakeValue;
     DateListPlot[chowStats3, Joined -> False, Filling -> Axis]
 
     OutlierPosition[chowStats3[[All, 2]], SPLUSQuartileIdentifierParameters]
-
+    (* {} *)
+     
     OutlierPosition[chowStats3[[All, 2]], HampelIdentifierParameters]
-
+    (* {} *)
+    
 In the rest of the document we provide an algorithm that works for general time series.
 
 ## Finding all structural break points
@@ -163,6 +178,8 @@ The computation below combines steps 2,3, and 4.
         ImageSize -> Medium]⟹
        QRMonEchoValue;
 
+![ComputationLocalMaxima](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Computation-local-maxima.png)
+
 ### Find most significant structural break point
 
     splitPoint = TakeLargestBy[qrObj⟹QRMonTakeValue, #[[2]] &, 1][[1, 1]]
@@ -178,7 +195,7 @@ Here we just make the plots without showing them.
         "Echo" -> False, 
         ImageSize -> Medium]⟹
        QRMonTakeValue;
-
+       
 The function QRMonPlotStructuralBreakSplits returns an association that has as keys paired split points and Chow Test statistics; the plots are association's values.
 
 Here we tabulate the plots with plots with most significant breaks shown first.
@@ -188,6 +205,8 @@ Here we tabulate the plots with plots with most significant breaks shown first.
       Show[#2, PlotLabel -> 
          Grid[{{"Point:", #1[[1]]}, {"Chow Test statistic:", #1[[2]]}}, Alignment -> Left]] &, KeySortBy[sbPlots, -#[[2]] &]], 2]
 
+![ComputationStructuralBreaksPlots](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Computation-structural-breaks-plots.png)       
+
 ## Future plans
 
 We can further apply the algorithm explained above to identifying time series states or components. 
@@ -195,6 +214,8 @@ The structural break points are used as knots in appropriate Quantile Regression
 
 The plan is to develop such an identifier of time series states in the near future. 
 (And present it at [WTC-2019](https://www.wolfram.com/events/technology-conference/2019/).)
+
+![FuturePlansTimeSeriesStates](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Future-plans-time-series-states.png)
 
 ## References
 
