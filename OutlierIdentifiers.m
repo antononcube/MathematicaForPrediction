@@ -15,13 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Written by Anton Antonov, 
-	antononcube @ gmail . com,
-	Windermere, Florida, USA.
+    Written by Anton Antonov,
+    antononcube @ gmail . com,
+    Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2013 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2019 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -32,7 +32,52 @@
 *)
 
 (* Version 1.0 *)
-(* This package contains definitions for detection and visualization of outliers in a list of numbers. *)
+(*
+   # In brief
+
+   This package contains definitions for detection and visualization of outliers in a list of numbers.
+
+   The purpose of the outlier detection algorithms is to find those elements in a list of numbers
+   that have values significantly higher or lower than the rest of the values.
+
+   Taking a certain number of elements with the highest values is not the same as an outlier detection,
+   but it can be used as a replacement.
+
+   # Usage
+
+   Let us consider the following set of 50 numbers:
+
+      SeedRandom[343]
+      pnts = RandomVariate[GammaDistribution[5, 1], 50]
+
+   Here we find the outliers using the HampelIdentifierParameters function:
+
+      OutlierIdentifier[pnts, HampelIdentifierParameters]
+
+   Here we find the top outliers only:
+
+      OutlierIdentifier[pnts, TopOutliers @* HampelIdentifierParameters]
+
+      (* {7.68192, 8.47235, <<9>>, 6.57855, 6.96975} *)
+
+   Here we find the top outliers positions:
+
+      OutlierPosition[pnts, TopOutliers @* HampelIdentifierParameters]
+
+      (* {3, 4, 6, 8, 13, 26, 34, 37, 38, 41, 42, 47, 48} *)
+
+   Here is the application of all outlier parameter finding functions in this package:
+
+      Through[ {HampelIdentifierParameters, SPLUSQuartileIdentifierParameters, QuartileIdentifierParameters}[pnts] ]
+
+      (* {{2.17496, 6.54877}, {-2.09104, 11.7803}, {0.572922, 7.50859}} *)
+
+   # References
+
+   [1] Ronald K. Pearson, “Mining Imperfect Data: Dealing with Contamination and Incomplete Records”, 2005, SIAM.
+
+*)
+
 
 BeginPackage["OutlierIdentifiers`"]
 
