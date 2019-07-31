@@ -131,6 +131,8 @@ We cannot use that approach for finding all structural breaks in the general tim
     chowStats3 = QRMonUnit[tsSP500]⟹QRMonChowTestStatistic⟹QRMonTakeValue;
     DateListPlot[chowStats3, Joined -> False, Filling -> Axis]
 
+![ApplicationOfChowTestSP500](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Application-of-Chow-Test-SP500.png)
+
     OutlierPosition[chowStats3[[All, 2]], SPLUSQuartileIdentifierParameters]
     (* {} *)
      
