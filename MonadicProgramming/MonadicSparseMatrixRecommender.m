@@ -729,7 +729,7 @@ GetFilterIDs[context_Association, callerFunctionName_String] :=
           callerFunctionName<>":"];
         All
       ]
-    ]
+    ];
 
 Clear[SMRMonRecommend];
 
@@ -1223,7 +1223,7 @@ SMRMonToProfileVector[ scoredTags:Association[ (_Integer->_?NumberQ)..] ][xs_, c
     ];
 
 SMRMonToProfileVector[ scoredTags:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
-    SMRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context]
+    SMRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context];
 
 SMRMonToProfileVector[___][__] := $SMRMonFailure;
 
@@ -1252,13 +1252,18 @@ SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)...]
         Return[$SMRMonFailure]
       ];
 
-      scoredTagTypes = Join[ AssociationThread[ Keys[context["matrices"]] -> defaultValue ], scoredTagTypes ];
+      scoredTagTypes = KeySort[ Join[ AssociationThread[ Keys[context["matrices"]] -> defaultValue ], scoredTagTypes ] ];
+
+      (* Optimization -- useful with interactive interfaces. *)
+      If[ KeyExistsQ[ context, "TagTypeWeights" ] && context["TagTypeWeights"] == scoredTagTypes,
+        Return[ SMRMonUnit[xs, context] ]
+      ];
 
       smats = Association[KeyValueMap[ #1 -> scoredTagTypes[#1] * #2 &, context["matrices"]]];
 
       mat = ColumnBind[ Values[smats] ];
 
-      SMRMonUnit[xs, Join[ context, <| "M" -> mat |> ]]
+      SMRMonUnit[xs, Join[ context, <| "M" -> mat, "TagTypeWeights" -> scoredTagTypes |> ]]
 
     ];
 
