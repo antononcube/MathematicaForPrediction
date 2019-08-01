@@ -411,7 +411,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               !FreeQ[res, MStateFailureSymbol],
 
               If[MStateEchoFailingFunction,
-                With[{ef = If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ] },
+                With[{ef = ToString @ If[ LeafCount[HoldForm[f]] > 200, StringTake[ToString[f], UpTo[300]] <> "...", HoldForm[f] ] },
                   Echo[
                     TemplateApply[StringTemplate[MStateBind::ffail], ef], ToString[MStateBind] <> ":" ]
                 ]
@@ -421,7 +421,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               MatchQ[res, MState[_]],
 
               If[MStateEchoFailingFunction,
-                With[{ef = If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ] },
+                With[{ef = ToString @ If[ LeafCount[HoldForm[f]] > 200, StringTake[ToString[f], UpTo[300]] <> "...", HoldForm[f] ] },
                   Echo[
                     TemplateApply[StringTemplate[MStateBind::mscxt], ef], ToString[MStateBind] <> ":"]
                 ]
@@ -442,7 +442,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
               Which[
                 ! FreeQ[res, MStateFailureSymbol],
                 If[MStateEchoFailingFunction,
-                  With[{ef = If[ LeafCount[HoldForm[f]] > 200, Shallow[HoldForm[f]], HoldForm[f] ] },
+                  With[{ef = ToString @ If[ LeafCount[HoldForm[f]] > 200, StringTake[ToString[f], UpTo[300]] <> "...", HoldForm[f] ] },
                     Echo[
                       TemplateApply[StringTemplate[MStateBind::ffail], ef], ToString[MStateBind] <> ":"]
                   ]
