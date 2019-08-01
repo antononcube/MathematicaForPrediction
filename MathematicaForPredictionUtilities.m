@@ -43,56 +43,59 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
 ];
 
 
-BeginPackage["MathematicaForPredictionUtilities`"]
+BeginPackage["MathematicaForPredictionUtilities`"];
 
-ClassificationSuccessTableForm::usage = "Turns classification success rate rules into and array and applys TableForm to it."
+ClassificationSuccessTableForm::usage = "Turns classification success rate rules into and array and applys TableForm to it.";
 
-ClassificationSuccessGrid::usage = "Turns classification success rate rules into and array and applys Grid to it."
+ClassificationSuccessGrid::usage = "Turns classification success rate rules into and array and applys Grid to it.";
 
-NumericVectorSummary::usage = "Summary of a numerical vector."
+NumericVectorSummary::usage = "Summary of a numerical vector.";
 
-CategoricalVectorSummary::usage = "Summary of a categorical vector."
+CategoricalVectorSummary::usage = "Summary of a categorical vector.";
 
-DataColumnsSummary::usage = "Summary of a list of data columns."
+DataColumnsSummary::usage = "Summary of a list of data columns.";
 
-RecordsSummary::usage = "Summary of a list of records that form a full two dimensional array."
+RecordsSummary::usage = "Summary of a list of records that form a full two dimensional array.";
 
 GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimics TableForm by using Grid \
-(and producing fancier outlook)."
+(and producing fancier outlook).";
 
 ParetoLawPlot::usage = "ParetoLawPlot[data,opts] makes a list plot for the manifestation of the Pareto law. \
 It has the same signature and options as ListPlot. \
-The argument data is expected to be a numerical a vector or a list of numerical vectors."
+The argument data is expected to be a numerical a vector or a list of numerical vectors.";
 
 IntervalMappingFunction::usage = "IntervalMappingFunction[boundaries] makes a piece-wise function for mapping of \
-a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1]."
+a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1].";
 
 ToCategoricalColumns::usage = "ToCategoricalColumns[data_?ArrayQ, qs_: Range[0, 1, 0.2]] \
-converts the numerical columns of an array to categorical. (Using IntervalMappingFunction.)"
+converts the numerical columns of an array to categorical. (Using IntervalMappingFunction.)";
 
 VariableDependenceGrid::usage = "VariableDependenceGrid[data_?MatrixQ,columnNames,opts] makes a grid with \
-variable dependence plots."
+variable dependence plots.";
 
-ExcessKurtosis::usage = "ExcessKurtosis[d] computes the excess kurtosis for d (which is Kurtosis[d]-3)."
+ExcessKurtosis::usage = "ExcessKurtosis[d] computes the excess kurtosis for d (which is Kurtosis[d]-3).";
 
 KurtosisUpperBound::usage = "KurtosisUpperBound[vec_?VectorQ] computes the upper bound of the kurtosis of vec. \
 KurtosisUpperBound[d_,n_Integer] computes the upper bound of the kurtosis of a sample of size n from \
-the distribution d."
+the distribution d.";
 
 GridOfCodeAndComments::usage = "GridOfCodeAndComments[code_String, opts___] tabulates code and comments. \
-The tabulation function is specified with the option \"GridFunction\"."
+The tabulation function is specified with the option \"GridFunction\".";
 
-DataRulesForClassifyQ::usage = "Checks is the argument is a list of item->label rules that can be used by Classify."
+DataRulesForClassifyQ::usage = "Checks is the argument is a list of item->label rules that can be used by Classify.";
 
 DataArrayRulesForClassifyQ::usage = "Checks is the argument is a list of record->label rules that can be used by Classify. \
-All records should form an array."
+All records should form an array.";
 
-ImportCSVToDataset::usage = "Imports a CSV file and attempts to convert into a Dataset object."
+ImportCSVToDataset::usage = "Imports a CSV file and attempts to convert into a Dataset object.";
 
 DatasetColumnNumericQ::usage = "DatasetColumnNumericQ[ds] Returns Vector[#,NumericQ]& over the columns of ds \
-after removing missing and NA values."
+after removing missing and NA values.";
 
-Begin["`Private`"]
+ToAutomaticKeysAssociation::usage = "ToAutomaticKeysAssociation[ls_List, prefix_String] makes an association with \
+automatically derived keys.";
+
+Begin["`Private`"];
 
 Needs["MosaicPlot`"];
 Needs["CrossTabulate`"];
@@ -443,6 +446,19 @@ DatasetColumnNumericQ[data_Dataset, opts:OptionsPattern[]]:=
       Transpose[data][All, VectorQ[DeleteCases[DeleteMissing[#], (x_String /; StringMatchQ[x, naPattern, IgnoreCase -> ignoreCase])], NumericQ] &]
     ];
 
-End[]
+
+(***********************************************************)
+(* Automatic keys Associations                             *)
+(***********************************************************)
+
+(* We use nd-1 because that includes the decimal point. *)
+Clear[ToIDString];
+ToIDString[i_Integer, nd_Integer] := ToString[NumberForm[i, {nd-1, 0}, NumberPadding -> {"0", ""}]];
+
+Clear[ToAutomaticKeysAssociation];
+ToAutomaticKeysAssociation[ ls_List, prefix_String : "id." ] :=
+    AssociationThread[ Map[ prefix <> ToIDString[#, Ceiling[Log10[Length[ls]]] + 1] &, Range[Length[ls]]], ls ];
+
+End[];
 
 EndPackage[]
