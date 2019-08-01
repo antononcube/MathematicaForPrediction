@@ -42,33 +42,33 @@ TODO:
    (2) [X] remove or change the profiling statements with PRINT and AbsoluteTiming.
 *)
 
-BeginPackage["DocumentTermMatrixConstruction`"]
+BeginPackage["DocumentTermMatrixConstruction`"];
 
 ToBagOfWords::usage = "ToBagOfWords[docs:{_String..},{stemmingRules_List, stopWords_List}] converts a list of documents \
 docs into bags words using stemming rules and removing stop words. As options can be given string splitting characters \
-and a post string splitting predicate."
+and a post string splitting predicate.";
 
 DocumentTermMatrix::usage = "DocumentTermMatrix[docs:{_String..},{stemmingRules_List, stopWords_List}] converts \
 a list of documents docs into sparse matrix using stemming rules and removing stop words. As options can be given \
-string splitting characters and a post string splitting predicate. DocumentTermMatrix uses ToBagOfWords."
+string splitting characters and a post string splitting predicate. DocumentTermMatrix uses ToBagOfWords.";
 
 WeightTerms::usage = "WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizerFunc_] changes \
-the entries of docTermMat according to the functions for global weight, local weight, and normalization."
+the entries of docTermMat according to the functions for global weight, local weight, and normalization.";
 
-GlobalTermWeight::usage = "GlobalTermWeight implements the global weight over a vector."
+GlobalTermWeight::usage = "GlobalTermWeight implements the global weight over a vector.";
 
-GlobalTermFunctionWeights::usage = "Gives the global weights for a given matrix and function name."
+GlobalTermFunctionWeights::usage = "Gives the global weights for a given matrix and function name.";
 
 ApplyGlobalTermFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies the global term weight \
-function fname to the elements of mat."
+function fname to the elements of mat.";
 
 ApplyLocalTermFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies the local term weight \
-function fname to the elements of mat."
+function fname to the elements of mat.";
 
 ApplyNormalizationFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies term normalization \
-function fname to the elements of mat."
+function fname to the elements of mat.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 Clear[ToBagOfWords]
 Options[ToBagOfWords] = {"SplittingCharacters" -> {Whitespace, "\n",
@@ -112,7 +112,7 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
       docTerms
     ];
 
-Clear[DocumentTermMatrix]
+Clear[DocumentTermMatrix];
 DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:(_List|_Dispatch|_Association), stopWords_}, opts : OptionsPattern[]] :=
     Block[{terms, mat, docTerms, nDocuments, splittingCharaters,
       n = Length[docs], globalWeights, termToIndexRules},
@@ -154,7 +154,7 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWe
 *
 * *)
 
-Clear[WeightTerms]
+Clear[WeightTerms];
 WeightTerms[docTermMat_?MatrixQ] := WeightTerms[docTermMat, "IDF", "None", "Cosine" ];
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String, normalizerFunc_String ] :=
@@ -172,7 +172,7 @@ ApplyLocalTermFunction::unfunc = "Unknown local weight function specification. R
 ApplyGlobalTermFunction::unfunc = "Unknown global weight function specification. Returning the matrix unmodified.";
 ApplyNormalizationFunction::unfunc = "Unknown normalization function specification. Returning the matrix unmodified.";
 
-Clear[ApplyLocalTermFunction]
+Clear[ApplyLocalTermFunction];
 ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{arules},
 
@@ -203,7 +203,7 @@ GlobalTermFunctionWeights::unfunc = "Unknown global weight function specificatio
 Returning a constant vector of 1's. \
 The known global weight function names are \"IDF\", \"GFIDF\", \"None\", \"Binary\", \"ColumnStochastic\".";
 
-Clear[GlobalTermFunctionWeights]
+Clear[GlobalTermFunctionWeights];
 GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{mat, globalWeights, freqSums},
 
@@ -243,7 +243,7 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
     ];
 
 
-Clear[ApplyGlobalTermFunction]
+Clear[ApplyGlobalTermFunction];
 ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{globalWeights},
 
@@ -253,7 +253,7 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
     ];
 
 
-ClearAll[ApplyNormalizationFunction]
+ClearAll[ApplyNormalizationFunction];
 ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
     Block[{dtSMat, mat, normWeights},
 
@@ -334,7 +334,7 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_, localWeightFunc_, normalizer
       mat
     ];
 
-Clear[GlobalTermWeight]
+Clear[GlobalTermWeight];
 (*SetAttributes[GlobalTermWeight,HoldAll]*)
 ZEROFREQUENCYWEIGHT = 10^4;
 GlobalTermWeight["None", termIndex_Integer, termDoc : ({_SparseArray ..} | _SparseArray), d_] := 1;
@@ -417,6 +417,6 @@ GlobalTermWeight["ProbabilisticInverse", termIndex_Integer, termDoc : ({_SparseA
       ]
     ];
 
-End[]
+End[];
 
 EndPackage[]
