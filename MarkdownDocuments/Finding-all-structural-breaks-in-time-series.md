@@ -76,7 +76,7 @@ Here is the data used in the Wikipedia article "Chow test", [[Wk2](https://en.wi
 
 Here we get the time series corresponding to [S&P 500 Index](https://en.wikipedia.org/wiki/S%26P_500_Index).
 
-    FinancialData[Entity["Financial", "^SPX"], {{2015, 1, 1}, Date[]}]
+    tsSP500 = FinancialData[Entity["Financial", "^SPX"], {{2015, 1, 1}, Date[]}]
     DateListPlot[tsSP500, ImageSize -> Medium]
 
 ![DataUsedSP500](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Finding-all-structural-breaks-in-time-series/Data-used-SP500.png)
