@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2019 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -31,11 +31,11 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: MonadicContextualClassification-Unit-Tests *)
+(* :Title: MonadicQuantileRegression-Unit-Tests *)
 (* :Author: Anton Antonov *)
 (* :Date: 2018-06-24 *)
 
-(* :Package Version: 0.7 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: 11.3 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: monad, monadic, quantile regression, workflow, State monad, Mathematica, Wolfram Language, unit test *)
@@ -46,7 +46,7 @@
      https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicQuantileRegression.m
 
 *)
-BeginTestSection["MonadicQuantileRegression-Unit-Tests"]
+BeginTestSection["MonadicQuantileRegression-Unit-Tests"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
@@ -57,7 +57,7 @@ VerificationTest[(* 1 *)
   True
   ,
   TestID->"LoadPackage"
-]
+];
 
 VerificationTest[(* 2 *)
   data = Table[{x, Exp[-x^2] + RandomVariate[NormalDistribution[0, .15]]}, {x, -3, 3, .2}];
@@ -66,7 +66,7 @@ VerificationTest[(* 2 *)
   True
   ,
   TestID->"GenerateData"
-]
+];
 
 VerificationTest[(* 3 *)
   res =
@@ -80,7 +80,7 @@ VerificationTest[(* 3 *)
   Range[0.2,0.8,0.2]
   ,
   TestID->"QuantileRegression-1"
-]
+];
 
 VerificationTest[(* 4 *)
   res =
@@ -94,7 +94,7 @@ VerificationTest[(* 4 *)
   { 0.25, 0.5, 0.75 }
   ,
   TestID->"QuantileRegression-2"
-]
+];
 
 VerificationTest[(* 5 *)
   res =
@@ -108,7 +108,7 @@ VerificationTest[(* 5 *)
   { 0.2, 0.4, 0.6, 0.8 }
   ,
   TestID->"QuantileRegression-3"
-]
+];
 
 VerificationTest[(* 6 *)
   res =
@@ -123,7 +123,7 @@ VerificationTest[(* 6 *)
   Sort @ Prepend[Range[0.2,0.8,0.2], "mean"]
   ,
   TestID->"QuantileRegression-and-Fit-1"
-]
+];
 
 VerificationTest[(* 7 *)
   res =
@@ -138,7 +138,7 @@ VerificationTest[(* 7 *)
   Sort @ Prepend[Range[0.2,0.8,0.2], "mean"]
   ,
   TestID->"Fit-and-QuantileRegression-1"
-]
+];
 
 
 VerificationTest[(* 8 *)
@@ -154,7 +154,7 @@ VerificationTest[(* 8 *)
   Sort @ Prepend[Range[0.2,0.8,0.2], "mean"]
   ,
   TestID->"QuantileRegressionFit-and-Fit-1"
-]
+];
 
 
 VerificationTest[(* 9 *)
@@ -170,7 +170,7 @@ VerificationTest[(* 9 *)
   Sort @ Prepend[Range[0.2,0.8,0.2], "mean"]
   ,
   TestID->"Fit-and-QuantileRegressionFit-1"
-]
+];
 
 
 VerificationTest[(* 10 *)
@@ -186,7 +186,7 @@ VerificationTest[(* 10 *)
   <|"topOutliers" -> True, "bottomOutliers" -> True|>
   ,
   TestID->"Outliers-1"
-]
+];
 
 
 VerificationTest[(* 11 *)
@@ -202,7 +202,7 @@ VerificationTest[(* 11 *)
   <|"topOutliers" -> True|>
   ,
   TestID->"Outliers-2"
-]
+];
 
 
 VerificationTest[(* 12 *)
@@ -218,7 +218,7 @@ VerificationTest[(* 12 *)
   True
   ,
   TestID->"GridSequence-1"
-]
+];
 
 
 VerificationTest[(* 13 *)
@@ -234,7 +234,7 @@ VerificationTest[(* 13 *)
   True
   ,
   TestID->"BandsSequence-1"
-]
+];
 
 
 VerificationTest[(* 14 *)
@@ -250,7 +250,7 @@ VerificationTest[(* 14 *)
   { True, True }
   ,
   TestID->"ConditionalCDF-1"
-]
+];
 
 
 VerificationTest[(* 15 *)
@@ -266,7 +266,7 @@ VerificationTest[(* 15 *)
   True
   ,
   TestID->"Evaluate-1"
-]
+];
 
 
 VerificationTest[(* 16 *)
@@ -283,7 +283,7 @@ VerificationTest[(* 16 *)
   Sort[Prepend[Range[0.2, 0.8, 0.2],"mean"]]
   ,
   TestID->"Evaluate-2"
-]
+];
 
 
 VerificationTest[(* 17 *)
@@ -300,7 +300,7 @@ VerificationTest[(* 17 *)
   True
   ,
   TestID->"Evaluate-3"
-]
+];
 
 
 VerificationTest[(* 18 *)
@@ -319,7 +319,7 @@ VerificationTest[(* 18 *)
   True
   ,
   TestID->"Simulate-1"
-]
+];
 
 
 VerificationTest[(* 19 *)
@@ -335,7 +335,7 @@ VerificationTest[(* 19 *)
   True
   ,
   TestID->"Simulate-2"
-]
+];
 
 
 VerificationTest[(* 20 *)
@@ -352,7 +352,7 @@ VerificationTest[(* 20 *)
   True
   ,
   TestID->"Simulate-3"
-]
+];
 
 (*
   In order the facilitate de-trending we want the errors to be calculated with y - rq[x] not with rq[x] - y .
@@ -374,8 +374,7 @@ VerificationTest[(* 21 *)
   True
   ,
   TestID->"De-trending-1"
-]
-
+];
 
 
 EndTestSection[]
