@@ -48,7 +48,7 @@
 *)
 (* Created with the Wolfram Language Plugin for IntelliJ, see http://wlplugin.halirutan.de/. *)
 
-BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt.mt"];
+BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"];
 
 
 VerificationTest[(* 1 *)
@@ -88,6 +88,9 @@ VerificationTest[ (* 3 *)
   TestID -> "StopWords"
 ];
 
+(*************************************************************)
+(* Basic pipeline                                            *)
+(*************************************************************)
 
 VerificationTest[ (* 4 *)
   docTermMat =
@@ -108,7 +111,7 @@ VerificationTest[ (* 5 *)
       Fold[
         LSAMonBind,
         LSAMonUnit[Values[aStateOfUnionSpeeches]],
-        { LSAMonMakeDocumentTermMatrix[{}, stopWords], LSAMonTakeDocTermMat }
+        { LSAMonMakeDocumentTermMatrix[{}, stopWords] }
       ];
 
   Keys[LSAMonBind[ lsaObj, LSAMonTakeContext] ]
@@ -120,14 +123,14 @@ VerificationTest[ (* 5 *)
 
 
 VerificationTest[ (* 6 *)
-  lsaObj =
+  lsaObj2 =
       Fold[
         LSAMonBind,
         lsaObj,
         {LSAMonTopicExtraction[100, 20, 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False], LSAMonTopicsTable}
       ];
 
-  Keys[LSAMonBind[ lsaObj, LSAMonTakeContext] ]
+  Keys[LSAMonBind[ lsaObj2, LSAMonTakeContext] ]
   ,
   {"texts", "docTermMat", "terms", "wDocTermMat", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
   ,
@@ -137,11 +140,85 @@ VerificationTest[ (* 6 *)
 
 VerificationTest[ (* 7 *)
   (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
-  MatchQ[LSAMonBind[ lsaObj, LSAMonTakeValue], {_TableForm ..}]
+  MatchQ[LSAMonBind[ lsaObj2, LSAMonTakeValue], {_TableForm ..}]
   ,
   True
   ,
   TestID -> "Topic-extraction-2"
 ];
+
+
+VerificationTest[ (* 8 *)
+  lsaObj3 =
+      Fold[
+        LSAMonBind,
+        lsaObj,
+        { LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+          LSAMonTopicExtraction[100, 20, 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False], LSAMonTopicsTable}
+      ];
+
+  Keys[LSAMonBind[ lsaObj3, LSAMonTakeContext] ]
+  ,
+  {"texts", "docTermMat", "terms", "wDocTermMat", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
+  ,
+  TestID -> "Topic-extraction-3"
+];
+
+
+VerificationTest[ (* 9 *)
+  (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
+  MatchQ[LSAMonBind[ lsaObj3, LSAMonTakeValue], {_TableForm ..}]
+  ,
+  True
+  ,
+  TestID -> "Topic-extraction-4"
+];
+
+
+(*************************************************************)
+(* Data members and accessors                                *)
+(*************************************************************)
+
+VerificationTest[ (* 10 *)
+  TrueQ[ Head[LSAMonBind[lsaObj2, LSAMonTakeMatrix]] === SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Take-document-term-matrix-1"
+];
+
+VerificationTest[ (* 11 *)
+  TrueQ[ Head[LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix]] === SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Take-weighted-document-term-matrix-1"
+];
+
+VerificationTest[ (* 12 *)
+  TrueQ[ Head[LSAMonBind[lsaObj3, LSAMonTakeMatrix]] === SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Take-document-term-matrix-2"
+];
+
+VerificationTest[ (* 13 *)
+  TrueQ[ Head[LSAMonBind[lsaObj3, LSAMonTakeWeightedMatrix]] === SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Take-weighted-document-term-matrix-2"
+];
+
+
+VerificationTest[ (* 14 *)
+  ColumnNames[ LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix] ] == LSAMonBind[lsaObj2, LSAMonTakeTerms]
+  ,
+  True
+  ,
+  TestID -> "Take-terms-1"
+];
+
 
 EndTestSection[]
