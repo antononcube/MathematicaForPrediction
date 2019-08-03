@@ -35,6 +35,7 @@
 (* :Context: MonadicLatentSemanticAnalysis` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2017-10-06 *)
+(* Created with the Wolfram Language Plugin for IntelliJ, see http://wlplugin.halirutan.de/ . *)
 
 (* :Package Version: 0.8 *)
 (* :Mathematica Version: *)
@@ -144,44 +145,44 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["MonadicLatentSemanticAnalysis`"]
+BeginPackage["MonadicLatentSemanticAnalysis`"];
 
-$LSAMonFailure::usage = "Failure symbol for the monad LSAMon."
+$LSAMonFailure::usage = "Failure symbol for the monad LSAMon.";
 
-LSAMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries of the document-term matrix."
+LSAMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries of the document-term matrix.";
 
-LSAMonBasisVectorInterpretation::usage = "Interpret the a specified basis vector."
+LSAMonBasisVectorInterpretation::usage = "Interpret the a specified basis vector.";
 
-LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries for a specified list of words."
+LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries for a specified list of words.";
 
-LSAMonEchoTextCollectionStatistics::usage = "Echo statistics for the text collection."
+LSAMonEchoTextCollectionStatistics::usage = "Echo statistics for the text collection.";
 
-LSAMonEchoTopicsTable::usage = "Echo the a table with the extracted topics."
+LSAMonEchoTopicsTable::usage = "Echo the a table with the extracted topics.";
 
-LSAMonMakeDocumentTermMatrix::usage = "Make the document-term matrix."
+LSAMonMakeDocumentTermMatrix::usage = "Make the document-term matrix.";
 
-LSAMonMakeGraph::usage = "Make a graph of the document-term, document-document, or term-term relationships."
+LSAMonMakeGraph::usage = "Make a graph of the document-term, document-document, or term-term relationships.";
 
-LSAMonMostImportantTexts::usage = "Find the most important texts in the text collection."
+LSAMonMostImportantTexts::usage = "Find the most important texts in the text collection.";
 
-LSAMonStatisticalThesaurus::usage = "Compute the statistical thesaurus for specified list of words."
+LSAMonStatisticalThesaurus::usage = "Compute the statistical thesaurus for specified list of words.";
 
-LSAMonTextCollectionQ::usage = "Gives True if the argument is a text collection."
+LSAMonTextCollectionQ::usage = "Gives True if the argument is a text collection.";
 
-LSAMonTopicExtraction::usage = "Extract topics."
+LSAMonTopicExtraction::usage = "Extract topics.";
 
 LSAMonTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
-Each monad document is expected to have a tag. One tag might correspond to multiple documents."
+Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
 
-LSAMonTopicsTable::usage = "Make a table of topics."
+LSAMonTopicsTable::usage = "Make a table of topics.";
 
-LSAMonTakeTexts::usage = "Gives the value of the key \"texts\" from the monad context."
+LSAMonTakeTexts::usage = "Gives the value of the key \"texts\" from the monad context.";
 
-LSAMonTakeMatrix::usage = "Gives SSparseMatrix object of the value of the key \"docTermMat\" from the monad context."
+LSAMonTakeMatrix::usage = "Gives SSparseMatrix object of the value of the key \"docTermMat\" from the monad context.";
 
-LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of the key \"wDocTermMat\" from the monad context."
+LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of the key \"wDocTermMat\" from the monad context.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 Needs["MathematicaForPredictionUtilities`"];
 Needs["StateMonadCodeGenerator`"];
@@ -198,8 +199,14 @@ Needs["OutlierIdentifiers`"];
 
 (* Generate base functions of LSAMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" -> $LSAMonFailure, "StringContextNames" -> False ]
+GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" -> $LSAMonFailure, "StringContextNames" -> False ];
 
+GenerateMonadAccessors[
+  "MonadicLatentSemanticAnalysis`LSAMon",
+  {"texts", "terms", "docTermMat", "wDocTermMat",
+    "W", "H",  "topicColumnPositions",
+    "automaticTopicNames", "statisticalThesaurus" },
+  "FailureSymbol" -> $LSAMonFailure ];
 
 (**************************************************************)
 (* Setters and takers                                         *)
@@ -235,7 +242,7 @@ LSAMonTakeWeightedMatrix[][$LSAMonFailure] := $LSAMonFailure;
 LSAMonTakeWeightedMatrix[xs_, context_] := LSAMonTakeWeightedMatrix[][xs, context];
 LSAMonTakeWeightedMatrix[][xs_, context_Association] :=
     Block[{mat},
-      If[ !KeyExistsQ["wDocTermMaa"], Return[$LSAMonFailure] ];
+      If[ !KeyExistsQ["wDocTermMat"], Return[$LSAMonFailure] ];
       ToSSparseMatrix[
         context["wDocTermMat"],
         "RowNames"-> Map[ToString, Range[ Dimensions[context["wDocTermMat"]][[1]] ]],
@@ -245,14 +252,9 @@ LSAMonTakeWeightedMatrix[][xs_, context_Association] :=
 LSAMonTakeWeightedMatrix[__][___] := $LSAMonFailure;
 
 
-
 (**************************************************************)
 (* General functions                                          *)
 (**************************************************************)
-
-Clear[LSAMonTextCollectionQ]
-LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ];
-
 
 Clear[LSAMonMakeDocumentTermMatrix];
 
@@ -643,7 +645,7 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
 
       If[ !MatchQ[res,{{{_?NumberQ, _String}..}..}],
         $LSAMonFailure,
-        LSAMon[ res, context ]
+        LSAMonUnit[ res, context ]
       ]
 
     ];
@@ -677,7 +679,7 @@ LSAMonTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
             TableForm[{NumberForm[#[[1]]/t[[1, 1]], {4, 3}], #[[2]]} & /@ t],
             {t, First @ LSAMonBasisVectorInterpretation[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
 
-      LSAMon[ topicsTbl, Join[ context, <| "topicsTables"->topicsTbl|> ] ]
+      LSAMonUnit[ topicsTbl, Join[ context, <| "topicsTable"->topicsTbl|> ] ]
     ];
 
 LSAMonTopicsTable[__][___] :=
@@ -693,15 +695,22 @@ Options[LSAMonEchoTopicsTable] = Join[
   {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
   Options[Multicolumn] ];
 
-LSAMonEchoTopicsTable[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonEchoTopicsTable[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonEchoTopicsTable[ opts:OptionsPattern[] ][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonEchoTopicsTable[xs_, context_Association] := LSAMonEchoTopicsTable[][xs, context];
+
+LSAMonEchoTopicsTable[][xs_, context_Association] := LSAMonEchoTopicsTable[Options[LSAMonEchoTopicsTable]][xs, context];
+
 LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
     Block[{topicsTbl, k, numberOfTableColumns, numberOfTerms, mFactor, tOpts},
 
-      numberOfTableColumns = OptionValue["NumberOfTableColumns"];
+      numberOfTableColumns = OptionValue[LSAMonEchoTopicsTable, "NumberOfTableColumns"];
 
-      numberOfTerms = OptionValue["NumberOfTerms"];
+      numberOfTerms = OptionValue[LSAMonEchoTopicsTable, "NumberOfTerms"];
 
-      mFactor = OptionValue["MagnificationFactor"];
+      mFactor = OptionValue[LSAMonEchoTopicsTable, "MagnificationFactor"];
       If[ TrueQ[mFactor === Automatic], mFactor = 0.8 ];
 
       k = Dimensions[context["W"]][[2]];
@@ -712,9 +721,7 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
         topicsTbl = First @ LSAMonTopicsTable["NumberOfTerms"->numberOfTerms][xs,context]
       ];
 
-      tOpts = Join[
-        DeleteCases[ {opts}, ("NumberOfTableColumns"|"NumberOfTerms"|"MagnificationFactor") -> __],
-        {Dividers -> All, Alignment -> Left} ];
+      tOpts = Join[ FilterRules[ {opts}, Options[Multicolumn] ], {Dividers -> All, Alignment -> Left} ];
 
       Echo @ Magnify[#, mFactor] & @
           If[ TrueQ[numberOfTableColumns === Automatic],
@@ -725,7 +732,7 @@ LSAMonEchoTopicsTable[opts:OptionsPattern[]][xs_, context_] :=
               ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns, tOpts]
           ];
 
-      LSAMon[ topicsTbl, context ]
+      LSAMonUnit[ topicsTbl, context ]
     ];
 
 LSAMonEchoTopicsTable[__][___] :=
@@ -806,7 +813,7 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, c
           ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ]
         ];
 
-        LSAMon[ ctMat, Join[ context, <| "docTopicIndices"->docTopicIndices |> ] ],
+        LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices"->docTopicIndices |> ] ],
       (* ELSE *)
 
         Echo["No document-term matrix factorization is computed.", "LSAMonTopicsRepresentation:"];
@@ -875,7 +882,7 @@ LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
         eLabel
       ];
 
-      LSAMon[xs,context]
+      LSAMonUnit[xs,context]
     ];
 
 LSAMonEchoTextCollectionStatistics[__][___] :=
@@ -885,6 +892,6 @@ LSAMonEchoTextCollectionStatistics[__][___] :=
     ];
 
 
-End[]  (*`Private`*)
+End[]; (*`Private`*)
 
 EndPackage[]
