@@ -70,7 +70,7 @@ function fname to the elements of mat.";
 
 Begin["`Private`"];
 
-Clear[ToBagOfWords]
+Clear[ToBagOfWords];
 Options[ToBagOfWords] = {"SplittingCharacters" -> {Whitespace, "\n",
   " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
   "PostSplittingPredicate" -> (StringLength[#] > 2 &)};
@@ -252,8 +252,12 @@ ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
       SparseArray[docTermMat] . DiagonalMatrix[SparseArray[globalWeights]]
     ];
 
+Clear[ApplyNormalizationFunction];
 
-ClearAll[ApplyNormalizationFunction];
+ApplyNormalizationFunction::unfunc = "Unknown normalization function specification. \
+Returning the argument unchanged. \
+The known normalization function names are \"Cosine\", \"Max\", \"None\", \"RowStochastic\".";
+
 ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
     Block[{dtSMat, mat, normWeights},
 
