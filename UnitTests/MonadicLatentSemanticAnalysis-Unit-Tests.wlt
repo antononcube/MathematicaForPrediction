@@ -99,10 +99,11 @@ VerificationTest[ (* 3 *)
 VerificationTest[ (* 4 *)
   docTermMat =
       Fold[LSAMonBind,
-        LSAMonUnit[Values[aStateOfUnionSpeeches]],
+        LSAMonUnit[aStateOfUnionSpeeches],
         { LSAMonMakeDocumentTermMatrix[{}, stopWords], LSAMonTakeDocumentTermMatrix }];
 
   SSparseMatrixQ[docTermMat] &&
+      RowNames[docTermMat] == Keys[aStateOfUnionSpeeches] &&
       Dimensions[docTermMat][[1]] == Length[aStateOfUnionSpeeches] &&
       Dimensions[docTermMat][[2]] > 2000
   ,
@@ -207,6 +208,26 @@ VerificationTest[ (* 10 *)
 ];
 
 
+VerificationTest[ (* 11 *)
+  (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
+  MatchQ[
+    Fold[
+      LSAMonBind,
+      lsaObj3,
+      {
+        LSAMonStatisticalThesaurus[{"indians", "ships", "bank"}, 12],
+        LSAMonTakeValue
+      }
+    ],
+    { { _String, { _String .. } } .. }
+  ]
+  ,
+  True
+  ,
+  TestID -> "Statistical-thesaurus-1"
+];
+
+
 (*************************************************************)
 (* Data members and accessors                                *)
 (*************************************************************)
@@ -228,7 +249,7 @@ VerificationTest[ (* 12 *)
 ];
 
 VerificationTest[ (* 13 *)
-  TrueQ[ Head[LSAMonBind[lsaObj3, LSAMonTakeMatrix]] === SSparseMatrix ]
+  SSparseMatrixQ[ LSAMonBind[lsaObj3, LSAMonTakeMatrix] ]
   ,
   True
   ,
@@ -236,13 +257,12 @@ VerificationTest[ (* 13 *)
 ];
 
 VerificationTest[ (* 14 *)
-  TrueQ[ Head[LSAMonBind[lsaObj3, LSAMonTakeWeightedMatrix]] === SSparseMatrix ]
+  SSparseMatrixQ[ LSAMonBind[lsaObj3, LSAMonTakeWeightedMatrix] ]
   ,
   True
   ,
   TestID -> "Take-weighted-document-term-matrix-2"
 ];
-
 
 VerificationTest[ (* 15 *)
   ColumnNames[ LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix] ] == LSAMonBind[lsaObj2, LSAMonTakeTerms]
@@ -250,6 +270,33 @@ VerificationTest[ (* 15 *)
   True
   ,
   TestID -> "Take-terms-1"
+];
+
+VerificationTest[ (* 16 *)
+  W = LSAMonBind[lsaObj3, LSAMonTakeW];
+  H = LSAMonBind[lsaObj3, LSAMonTakeH];
+  SSparseMatrixQ[ W ] && SSparseMatrixQ[ H ] && ColumnNames[ W ] == RowNames[ H ]
+  ,
+  True
+  ,
+  TestID -> "Take-Factors-1"
+];
+
+VerificationTest[ (* 17 *)
+  RowNames[ LSAMonBind[lsaObj3, LSAMonTakeW] ] == RowNames[ LSAMonBind[lsaObj3, LSAMonTakeDocumentTermMatrix] ]
+  ,
+  True
+  ,
+  TestID -> "Take-Factors-2"
+];
+
+VerificationTest[ (* 18 *)
+  pos = LSAMonBind[ lsaObj3, LSAMonTakeTopicColumnPositions ];
+  ColumnNames[ LSAMonBind[lsaObj3, LSAMonTakeH] ] == ColumnNames[ LSAMonBind[lsaObj3, LSAMonTakeDocumentTermMatrix]] [[ pos ]]
+  ,
+  True
+  ,
+  TestID -> "Take-Factors-3"
 ];
 
 
