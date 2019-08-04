@@ -182,8 +182,9 @@ VerificationTest[ (* 9 *)
   lsaObj3 =
       Fold[
         LSAMonBind,
-        lsaObj,
+        LSAMonUnit[aStateOfUnionSpeeches],
         {
+          LSAMonMakeDocumentTermMatrix[{}, Automatic],
           LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
           LSAMonTopicExtraction[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
           LSAMonTopicsTable
@@ -299,5 +300,15 @@ VerificationTest[ (* 18 *)
   TestID -> "Take-Factors-3"
 ];
 
+VerificationTest[ (* 18 *)
+  W = LSAMonBind[lsaObj3, LSAMonTakeW];
+  docTermMat = LSAMonBind[lsaObj3, LSAMonTakeDocumentTermMatrix];
+  RowNames[W] == Keys[aStateOfUnionSpeeches] &&
+      RowNames[docTermMat] == Keys[aStateOfUnionSpeeches]
+  ,
+  True
+  ,
+  TestID -> "Take-Factors-4"
+];
 
 EndTestSection[]
