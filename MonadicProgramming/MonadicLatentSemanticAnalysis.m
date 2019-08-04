@@ -155,9 +155,11 @@ LSAMonBasisVectorInterpretation::usage = "Interpret the a specified basis vector
 
 LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries for a specified list of words.";
 
-LSAMonEchoTextCollectionStatistics::usage = "Echo statistics for the text collection.";
+LSAMonEchoDocumentsStatistics::usage = "Echo statistics for the text collection.";
 
 LSAMonEchoTopicsTable::usage = "Echo the a table with the extracted topics.";
+
+LSAMonGetDocuments::usage = "Get monad's document collection.";
 
 LSAMonMakeDocumentTermMatrix::usage = "Make the document-term matrix.";
 
@@ -201,80 +203,131 @@ Needs["OutlierIdentifiers`"];
 
 GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" -> $LSAMonFailure, "StringContextNames" -> False ];
 
-GenerateMonadAccessors[
-  "MonadicLatentSemanticAnalysis`LSAMon",
-  {"texts", "terms", "docTermMat", "wDocTermMat",
-    "W", "H",  "topicColumnPositions",
-    "automaticTopicNames", "statisticalThesaurus" },
-  "FailureSymbol" -> $LSAMonFailure ];
-
 (**************************************************************)
 (* Setters and takers                                         *)
 (**************************************************************)
 
-Clear[LSAMonTakeTexts];
-LSAMonTakeTexts[$LSAMonFailure] := $LSAMonFailure;
-LSAMonTakeTexts[][$LSAMonFailure] := $LSAMonFailure;
-LSAMonTakeTexts[xs_, context_] := LSAMonTakeTexts[][xs, context];
-LSAMonTakeTexts[][xs_, context_Association] := Lookup[context, "texts"];
-LSAMonTakeTexts[__][___] := $LSAMonFailure;
+GenerateMonadAccessors[
+  "MonadicLatentSemanticAnalysis`LSAMon",
+  {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix",
+    "W", "H",  "topicColumnPositions",
+    "automaticTopicNames", "statisticalThesaurus", "topicsTable" },
+  "FailureSymbol" -> $LSAMonFailure ];
 
+ClearAll[LSAMonTakeMatrix, LSAMonTakeWeightedMatrix];
 
-Clear[LSAMonTakeMatrix];
-LSAMonTakeMatrix[$LSAMonFailure] := $LSAMonFailure;
-LSAMonTakeMatrix[][$LSAMonFailure] := $LSAMonFailure;
-LSAMonTakeMatrix[xs_, context_] := LSAMonTakeMatrix[][xs, context];
-LSAMonTakeMatrix[][xs_, context_Association] :=
-    Block[{mat},
-      If[ !KeyExistsQ["docTermMat"], Return[$LSAMonFailure] ];
+LSAMonTakeMatrix = LSAMonTakeDocumentTermMatrix;
+
+LSAMonTakeWeightedMatrix = LSAMonTakeWeightedDocumentTermMatrix;
+
+(**************************************************************)
+(* Adapter functions                                          *)
+(**************************************************************)
+
+ClearAll[DocumentTermSSparseMatrix];
+
+DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:(_List|_Dispatch|_Association), stopWords_}, opts : OptionsPattern[] ] :=
+    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, opts ];
+
+DocumentTermSSparseMatrix[
+  docs : ( Association[ (_->_String) ...] | Association[ (_-> {_String...}) ... ] ),
+  {stemmingRules:(_List|_Dispatch|_Association), stopWords_},
+  opts : OptionsPattern[]] :=
+    Block[{docIDs, docTermMat, terms},
+
+      docIDs = Keys[docs];
+
+      {docTermMat, terms} = DocumentTermMatrix[ Values[docs], { stemmingRules, stopWords}, opts];
+
+      ToSSparseMatrix[ docTermMat, "RowNames" -> docIDs, "ColumnNames" -> terms ]
+    ];
+
+(*------------------------------------------------------------*)
+(* Also can be used in SMRMon. *)
+
+ClearAll[WeightTermsOfSSparseMatrix];
+
+WeightTermsOfSSparseMatrix[ smat_SSparseMatrix ] := WeightTermsOfSSparseMatrix[ smat, "IDF", "None", "Cosine"];
+
+WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeightFunction_, localWeightFunction_, normalizerFunction_ ] :=
+    Block[{},
       ToSSparseMatrix[
-        context["docTermMat"],
-        "RowNames"-> Map[ToString, Range[ Dimensions[context["docTermMat"]][[1]] ]],
-        "ColumnNames" -> context["terms"]
+        WeightTerms[SparseArray[smat], globalWeightFunction, localWeightFunction, normalizerFunction],
+        "RowNames" -> RowNames[smat],
+        "ColumnNames" -> ColumnNames[smat]
       ]
     ];
-LSAMonTakeMatrix[__][___] := $LSAMonFailure;
 
+(**************************************************************)
+(* Get texts                                                  *)
+(**************************************************************)
 
-Clear[LSAMonTakeWeightedMatrix];
-LSAMonTakeWeightedMatrix[$LSAMonFailure] := $LSAMonFailure;
-LSAMonTakeWeightedMatrix[][$LSAMonFailure] := $LSAMonFailure;
-LSAMonTakeWeightedMatrix[xs_, context_] := LSAMonTakeWeightedMatrix[][xs, context];
-LSAMonTakeWeightedMatrix[][xs_, context_Association] :=
-    Block[{mat},
-      If[ !KeyExistsQ["wDocTermMat"], Return[$LSAMonFailure] ];
-      ToSSparseMatrix[
-        context["wDocTermMat"],
-        "RowNames"-> Map[ToString, Range[ Dimensions[context["wDocTermMat"]][[1]] ]],
-        "ColumnNames" -> context["terms"]
+ClearAll[LSAMonTextCollectionQ];
+LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ];
+
+(*ClearAll[LSAMonTextCollectionQ]*)
+(*LSAMonTextCollectionQ[x_] := VectorQ[x, StringQ] || AssociationQ[x] && VectorQ[ Values[x], StringQ ];*)
+
+ClearAll[LSAMonGetDocuments];
+
+LSAMonGetDocuments[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonGetDocuments[][xs_, context_] := LSAMonGetDocuments[xs, context];
+
+LSAMonGetDocuments[xs_, context_] :=
+    Block[{texts},
+
+      Which[
+
+        KeyExistsQ[context, "documents"] && LSAMonTextCollectionQ[ context["documents"] ],
+        LSAMonUnit[ context["documents"], context],
+
+        LSAMonTextCollectionQ[xs],
+        LSAMonUnit[xs, context],
+
+        VectorQ[xs, StringQ],
+        texts = AssociationThread[ ToString /@ Range[Length[xs]], xs];
+        LSAMonUnit[ texts, context],
+
+        True,
+        Echo["Cannot find documents.", "LSAMonGetDocuments:"];
+        $LSAMonFailure
       ]
+
     ];
-LSAMonTakeWeightedMatrix[__][___] := $LSAMonFailure;
+
+LSAMonGetDocuments[___][xs_, context_Association] := $LSAMonFailure;
 
 
 (**************************************************************)
 (* General functions                                          *)
 (**************************************************************)
 
-Clear[LSAMonMakeDocumentTermMatrix];
+(*------------------------------------------------------------*)
+(* Make document-term matrix                                  *)
+(*------------------------------------------------------------*)
+ClearAll[LSAMonMakeDocumentTermMatrix];
 
 LSAMonMakeDocumentTermMatrix[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWords : {_String ...}][xs_, context_] :=
-    Block[{docTermMat, terms},
+LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
+    Block[{stopWords = stopWordsArg, docs, docTermMat },
 
-      Which[
-        LSAMonTextCollectionQ[xs],
-        {docTermMat, terms} = DocumentTermMatrix[ToLowerCase /@ xs, {stemRules, stopWords}];
-        LSAMon[xs, Join[context, <|"texts" -> xs, "docTermMat" -> docTermMat, "terms" -> terms|>]],
+      docs = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonGetDocuments, LSAMonTakeValue } ];
 
-        KeyExistsQ[context, "texts"] && LSAMonTextCollectionQ[context["texts"]],
-        {docTermMat, terms} = DocumentTermMatrix[ToLowerCase /@ context["texts"], {stemRules, stopWords}];
-        LSAMon[xs, Join[context, <|"docTermMat" -> docTermMat, "terms" -> terms|>]],
-
-        True,
+      If[ TrueQ[docs === $LSAMonFailure],
         Echo["Ingest texts first.", "LSMonMakeDocumentTermMatrix:"];
-        $LSAMonFailure
-      ]
+        Return[$LSAMonFailure]
+      ];
+
+      If[ TrueQ[ stopWords === Automatic ],
+        stopWords = DictionaryLookup["*"];
+        stopWords = Complement[stopWords, DeleteStopwords[stopWords]];
+      ];
+
+      docTermMat = DocumentTermSSparseMatrix[ ToLowerCase /@ docs, {stemRules, stopWords} ];
+
+      LSAMon[xs, Join[context, <| "documents" -> docs, "documentTermMatrix" -> docTermMat, "terms" -> ColumnNames[docTermMat] |>]]
+
     ];
 
 LSAMonMakeDocumentTermMatrix[__][___] :=
@@ -286,30 +339,36 @@ LSAMonMakeDocumentTermMatrix[__][___] :=
     ];
 
 
-Clear[LSAMonApplyTermWeightFunctions];
+(*------------------------------------------------------------*)
+(* Apply term weight function to matrix entries               *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonApplyTermWeightFunctions];
 
 LSAMonApplyTermWeightFunctions[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_] :=
     Block[{wDocTermMat},
+
       Which[
-        KeyExistsQ[context, "docTermMat"],
-        wDocTermMat = WeightTerms[context["docTermMat"], globalWeightFunction, localWeightFunction, normalizerFunction];
-        LSAMon[xs, Join[context, <|"wDocTermMat" -> wDocTermMat|>]],
+        KeyExistsQ[context, "documentTermMatrix"],
+        wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], globalWeightFunction, localWeightFunction, normalizerFunction];
+        LSAMon[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
 
         True,
         Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
         $LSAMonFailure
       ]
+
     ];
 
 LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
     Block[{wDocTermMat},
       (* This code is the same as above. But I want to emphasize the string function names specification. *)
       Which[
-        KeyExistsQ[context, "docTermMat"],
-        wDocTermMat = WeightTerms[context["docTermMat"], args];
-        LSAMon[xs, Join[context, <|"wDocTermMat" -> wDocTermMat|>]],
+        KeyExistsQ[context, "documentTermMatrix"],
+        wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], args];
+        LSAMon[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
 
         True,
         Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
@@ -326,195 +385,72 @@ LSAMonApplyTermWeightFunctions[__][___] :=
     ];
 
 
-Clear[LSAMonMakeGraph];
+(*------------------------------------------------------------*)
+(* Make document-term matrix                                  *)
+(*------------------------------------------------------------*)
 
-Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite", "RemoveLoops"->True };
+ClearAll[LSAMonTopicExtraction];
 
-LSAMonMakeGraph[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
-    Block[{weightedQ, type, am, res, knownGrTypes, removeLoopsQ },
-
-      weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
-
-      type = OptionValue[LSAMonMakeGraph, "Type"];
-
-      removeLoopsQ = TrueQ[OptionValue[LSAMonMakeGraph, "RemoveLoops"]];
-
-      knownGrTypes = { "Bipartite", "DocumentDocument", "TermTerm", "Document", "Term" };
-      If[ !MemberQ[knownGrTypes, type],
-        Echo[Row[{"The value of the option \"Type\" is expected to be one of:", knownGrTypes}], "LSAMonMakeGraph:"];
-        Return[$LSAMonFailure]
-      ];
-
-      Which[
-        MatrixQ[xs],
-        am = xs,
-
-        KeyExistsQ[context, "wDocTermMat"],
-        am = context["wDocTermMat"],
-
-        KeyExistsQ[context, "docTermMat"],
-        am = context["docTermMat"],
-
-        True,
-        Echo["Make a document-term matrix first.", "LSAMonMakeGraph:"];
-        Return[$LSAMonFailure]
-      ];
-
-      am = SparseArray[am];
-
-      Which[
-
-        weightedQ && type == "Bipartite",
-        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        am = SparseArray[ ArrayFlatten[{{Infinity, am}, {Transpose[am], Infinity}}] ];
-        res = WeightedAdjacencyGraph[am, DirectedEdges -> True],
-
-        !weightedQ && type == "Bipartite",
-        am = SparseArray[ArrayFlatten[{{0, am}, {Transpose[am], 0}}]];
-        res = AdjacencyGraph[am, DirectedEdges -> True],
-
-        weightedQ && ( type == "DocumentDocument" || type == "Document" ),
-        am = am . Transpose[am];
-        am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
-        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = WeightedAdjacencyGraph[am],
-
-        !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
-        am = am . Transpose[am];
-        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = AdjacencyGraph[Unitize[am]],
-
-        weightedQ && ( type == "TermTerm" || type == "Term" ),
-        am = Transpose[am] . am;
-        am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
-        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = WeightedAdjacencyGraph[am],
-
-        !weightedQ && ( type == "TermTerm" || type == "Term" ),
-        am = Transpose[am] . am;
-        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = AdjacencyGraph[Unitize[am]];
-
-      ];
-
-      LSAMon[res, context]
-
+Options[LSAMonTopicExtraction] =
+    Join[
+      { Method -> "NNMF", "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12 },
+      Options[GDCLSGlobal]
     ];
-
-LSAMonMakeGraph[__][___] :=
-    Block[{},
-      Echo["No arguments, just options are expected.", "LSAMonMakeGraph:"];
-      $LSAMonFailure
-    ];
-
-
-Clear[LSAMonMostImportantTexts];
-
-Options[LSAMonMostImportantTexts] = { "CentralityFunction" -> EigenvectorCentrality };
-
-LSAMonMostImportantTexts[___][$LSAMonFailure] := $LSAMonFailure;
-
-LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
-    Block[{cFunc, gr, cvec, inds, smat },
-
-      cFunc = OptionValue[LSAMonMostImportantTexts, "CentralityFunction"];
-
-      (* Here we should check that the monad value is a text collection. *)
-      If[ !( KeyExistsQ[context, "texts"] || KeyExistsQ[context, "wDocTermMat"] || KeyExistsQ["docTermMat"] ),
-
-        If[ !KeyExistsQ[context, "texts"] && !(KeyExistsQ[context, "wDocTermMat"] || KeyExistsQ["docTermMat"]) ,
-          Echo["No texts.", "LSAMonMostImportantTexts:"];
-          Return[$LSAMonFailure]
-        ];
-
-
-        If[ !( KeyExistsQ[context, "wDocTermMat"] || KeyExistsQ["docTermMat"] ),
-          Echo["No texts and document-term matrices.", "LSAMonMostImportantTexts:"];
-          Return[$LSAMonFailure]
-        ];
-      ];
-
-      Which[
-        TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["texts"]] ,
-        gr = xs,
-
-        TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["texts"]] + Length[context["terms"]],
-        gr = xs,
-
-        True,
-        gr = Fold[ LSAMonBind, LSAMon[xs,context], {LSAMonMakeGraph["Type"->"Bipartite"], LSAMonTakeValue} ]
-      ];
-
-
-      (* There is some inconsistencies in handling weighted graphs. *)
-      (* That is why the most popular/likely case is computed directly. (For now.) *)
-      If[ TrueQ[ cFunc === EigenvectorCentrality ] && VertexCount[xs] == Length[context["texts"]],
-
-        (* Get document-term matrix. *)
-        smat = If[ TrueQ[ KeyExistsQ[context, "wDocTermMat"] ], Lookup[context, "wDocTermMat"], Lookup[context, "docTermMat"] ];
-
-        (* Make column stochastic. *)
-        smat = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[smat]]]];
-
-        (* Compute eigenvector. *)
-        cvec = SingularValueDecomposition[ N[smat], 1 ];
-
-        cvec = cvec[[1]][[All,1]];
-        cvec = Abs[cvec] / Max[Abs[cvec]],
-
-        (*ELSE*)
-        cvec = cFunc[gr];
-      ];
-
-      If[ !ListQ[cvec], Return[$LSAMonFailure] ];
-
-      inds = Take[Reverse[Ordering[cvec]], UpTo[topN]];
-
-      Which[
-
-        VertexCount[gr] == Length[context["texts"]],
-        LSAMonUnit[ Transpose[{cvec[[inds]], inds, context["texts"][[inds]]}], context ],
-
-        VertexCount[gr] == Length[context["texts"]] + Length[context["terms"]],
-        LSAMonUnit[ Transpose[{cvec[[inds]], inds, Join[context["texts"],context["terms"]][[inds]]}], context ],
-
-        True,
-        $LSAMonFailure
-      ]
-    ];
-
-LSAMonMostImportantTexts[___][__] :=
-    Block[{},
-      Echo[
-        "The expected signature is LSAMonMostImportantTexts[topN_Integer, opts___] .",
-        "LSAMonMostImportantTexts::"];
-      $LSAMonFailure;
-    ];
-
-
-Clear[LSAMonTopicExtraction];
-
-Options[LSAMonTopicExtraction] = Options[GDCLSGlobal];
 
 LSAMonTopicExtraction[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=
-    Block[{documentsPerTerm, pos, W, H, M1, k, p, m, n, automaticTopicNames },
+LSAMonTopicExtraction[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonTopicExtraction[xs_, context_Association] := $LSAMonFailure;
+
+(*LSAMonTopicExtraction[nTopics_Integer, nMinDocumentsPerTerm_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=*)
+(*    LSAMonTopicExtraction[ nTopics, Join[ { "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}] ][xs, context];*)
+
+LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :=
+    Block[{method, nMinDocumentsPerTerm, nInitializingDocuments,
+      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, automaticTopicNames },
+
+      method = OptionValue[ LSAMonTopicExtraction, Method ];
+      If[ !MemberQ[ {"SVD", "NNMF"}, method ],
+        Echo["The value of the option Method is expected to be \"SVD\" or \"NNMF\".", "LSAMonTopicExtraction:"];
+        Return[$LSAMonFailure]
+      ];
+
+      nMinDocumentsPerTerm = OptionValue[ LSAMonTopicExtraction, "MinDocumentsPerTerm" ];
+      If[ ! ( IntegerQ[ nMinDocumentsPerTerm ] && nMinDocumentsPerTerm > 0 ),
+        Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a positive integer.", "LSAMonTopicExtraction:"];
+        Return[$LSAMonFailure]
+      ];
+
+      nInitializingDocuments = OptionValue[ LSAMonTopicExtraction, "NumberOfInitializingDocuments" ];
+      If[ ! ( IntegerQ[ nInitializingDocuments ] && nInitializingDocuments > 0 ),
+        Echo["The value of the option \"NumberOfInitializingDocuments\" is expected to be a positive integer.", "LSAMonTopicExtraction:"];
+        Return[$LSAMonFailure]
+      ];
+
       Which[
-        KeyExistsQ[context, "docTermMat"] && !KeyExistsQ[context, "wDocTermMat"],
+        KeyExistsQ[context, "documentTermMatrix"] && !KeyExistsQ[context, "weightedDocumentTermMatrix"],
         Fold[
           LSAMonBind,
           LSAMonUnit[xs, context],
-          {LSAMonApplyTermWeightFunctions[], LSAMonTopicExtraction[nMinDocumentsPerTerm, nTopics, nInitializingDocuments, opts] } ],
+          {
+            LSAMonApplyTermWeightFunctions[],
+            LSAMonTopicExtraction[
+              nTopics,
+              Join[ { Method -> method, "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}]
+            ]
+           }
+        ],
 
-        KeyExistsQ[context, "wDocTermMat"] && MatrixQ[context["wDocTermMat"]],
-        documentsPerTerm = Total /@ Transpose[Clip[context["docTermMat"], {0, 1}]];
+        method == "NNMF" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
+        (*  Non-negative matrix factorization   *)
+
+        docTermMat = SparseArray[ context["documentTermMatrix"] ];
+
+        documentsPerTerm = Total /@ Transpose[Clip[docTermMat, {0, 1}]];
         pos = Flatten[Position[documentsPerTerm, s_?NumberQ /; s >= nMinDocumentsPerTerm]];
 
-        M1 = context["wDocTermMat"][[All, pos]];
+        M1 = SparseArray[ context["weightedDocumentTermMatrix"][[All, pos]] ];
 
         {k, p} = {nTopics, nInitializingDocuments};
         {m, n} = Dimensions[M1];
@@ -531,7 +467,7 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializi
 
         W = SparseArray[W];
         H = SparseArray[H];
-        {W, H} = GDCLSGlobal[M1, W, H, opts];
+        {W, H} = GDCLSGlobal[M1, W, H, Evaluate[ FilterRules[ {opts}, Options[GDCLSGlobal] ] ] ];
 
         automaticTopicNames =
                 Table[
@@ -544,6 +480,11 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializi
 
         LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames"->automaticTopicNames |>]],
 
+        method == "SVD" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
+        (*  Singular Value Decomposition  *)
+        Echo["SVD method is not implemented yet.", "LSAMonTopicExtraction:"];
+        $LSAMonFailure,
+
         True,
         Echo["Cannot find a document-term matrix.", "LSAMonTopicExtraction:"];
         $LSAMonFailure
@@ -553,13 +494,17 @@ LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializi
 LSAMonTopicExtraction[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonTopicExtraction[nMinDocumentsPerTerm_Integer, nTopics_Integer, nInitializingDocuments_Integer, opts___] .",
+        "The expected signature is LSAMonTopicExtraction[ nTopics_Integer, opts___] .",
         "LSAMonTopicExtraction::"];
       $LSAMonFailure;
     ];
 
 
-Clear[LSAMonStatisticalThesaurus];
+(*------------------------------------------------------------*)
+(* Make statistical thesaurus                                 *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonStatisticalThesaurus];
 
 LSAMonStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
@@ -592,7 +537,11 @@ LSAMonStatisticalThesaurus[___][__] :=
     ];
 
 
-Clear[LSAMonEchoStatisticalThesaurus]
+(*------------------------------------------------------------*)
+(* Echo statistical thesaurus                                 *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonEchoStatisticalThesaurus];
 
 LSAMonEchoStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -625,7 +574,11 @@ LSAMonEchoStatisticalThesaurus[___][__] :=
     ];
 
 
-Clear[LSAMonBasisVectorInterpretation];
+(*------------------------------------------------------------*)
+(* Basis vector interpretation                                *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonBasisVectorInterpretation];
 
 Options[LSAMonBasisVectorInterpretation] = { "NumberOfTerms" -> 12 };
 
@@ -658,8 +611,11 @@ LSAMonBasisVectorInterpretation[___][__] :=
       $LSAMonFailure;
     ];
 
+(*------------------------------------------------------------*)
+(* Topics table making                                        *)
+(*------------------------------------------------------------*)
 
-Clear[LSAMonTopicsTable];
+ClearAll[LSAMonTopicsTable];
 
 Options[LSAMonTopicsTable] = { "NumberOfTerms" -> 12 };
 
@@ -689,7 +645,11 @@ LSAMonTopicsTable[__][___] :=
     ];
 
 
-Clear[LSAMonEchoTopicsTable];
+(*------------------------------------------------------------*)
+(* Topics table echoing                                       *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonEchoTopicsTable];
 
 Options[LSAMonEchoTopicsTable] = Join[
   {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
@@ -742,7 +702,11 @@ LSAMonEchoTopicsTable[__][___] :=
     ];
 
 
-Clear[LSAMonTopicsRepresentation];
+(*------------------------------------------------------------*)
+(* Topics representation                                      *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonTopicsRepresentation];
 
 Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
@@ -759,7 +723,7 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, c
       computeTopicRepresentationQ = OptionValue[LSAMonTopicsRepresentation, "ComputeTopicRepresentation"];
       assignAutomaticTopicNamesQ = OptionValue[LSAMonTopicsRepresentation, "AssignAutomaticTopicNames"];
 
-      If[ KeyExistsQ[context, "docTermMat"] && KeyExistsQ[context, "W"],
+      If[ KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"],
 
         Which[
 
@@ -767,9 +731,9 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, c
           ctTags = context["docTags"],
 
           TrueQ[tags===Automatic],
-          ctTags = Range[Dimensions[context["docTermMat"]][[1]]],
+          ctTags = Range[Dimensions[context["documentTermMatrix"]][[1]]],
 
-          Length[tags] == Dimensions[context["docTermMat"]][[1]],
+          Length[tags] == Dimensions[context["documentTermMatrix"]][[1]],
           ctTags = tags,
 
           True,
@@ -828,17 +792,21 @@ LSAMonTopicsRepresentation[__][___] :=
     ];
 
 
-Clear[LSAMonEchoTextCollectionStatistics];
+(*------------------------------------------------------------*)
+(* Documents collection statistics                            *)
+(*------------------------------------------------------------*)
 
-Options[LSAMonEchoTextCollectionStatistics] = Options[Histogram];
+ClearAll[LSAMonEchoDocumentsStatistics];
 
-LSAMonEchoTextCollectionStatistics[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
+Options[LSAMonEchoDocumentsStatistics] = Options[Histogram];
+
+LSAMonEchoDocumentsStatistics[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonEchoDocumentsStatistics[opts:OptionsPattern[]][xs_,context_]:=
     Block[{texts, textWords, eLabel=None, dOpts, smat},
 
       Which[
         LSAMonTextCollectionQ[xs], texts = xs; eLabel = "Pipeline value:",
-        KeyExistsQ[context,"texts"], texts = context["texts"]; eLabel = "Context value \"texts\":",
+        KeyExistsQ[context,"documents"], texts = context["documents"]; eLabel = "Context value \"texts\":",
         True,
         Echo["Ingest texts first.", "LSMonMakeDocumentTermMatrix:"];
         $LSAMonFailure
@@ -849,10 +817,10 @@ LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
 
       dOpts = Join[{opts}, {PlotRange -> All, PlotTheme -> "Detailed", ImageSize->300}];
 
-      If[ !KeyExistsQ[context, "docTermMat"],
+      If[ !KeyExistsQ[context, "documentTermMatrix"],
         smat = None,
         (*ELSE*)
-        smat = context["docTermMat"];
+        smat = context["documentTermMatrix"];
         If[ !MatrixQ[smat],
           smat = None,
           (*ELSE*)
@@ -885,10 +853,188 @@ LSAMonEchoTextCollectionStatistics[opts:OptionsPattern[]][xs_,context_]:=
       LSAMonUnit[xs,context]
     ];
 
-LSAMonEchoTextCollectionStatistics[__][___] :=
+LSAMonEchoDocumentsStatistics[__][___] :=
     Block[{},
-      Echo["No arguments, just options are expected.", "LSAMonEchoTextCollectionStatistics:"];
+      Echo["No arguments, just options are expected.", "LSAMonEchoDocumentsStatistics:"];
       $LSAMonFailure
+    ];
+
+
+(*------------------------------------------------------------*)
+(* Make a graph                                               *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonMakeGraph];
+
+Options[LSAMonMakeGraph] = { "Weighted"->True, "Type" -> "Bipartite", "RemoveLoops"->True };
+
+LSAMonMakeGraph[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonMakeGraph[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{weightedQ, type, am, res, knownGrTypes, removeLoopsQ },
+
+      weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
+
+      type = OptionValue[LSAMonMakeGraph, "Type"];
+
+      removeLoopsQ = TrueQ[OptionValue[LSAMonMakeGraph, "RemoveLoops"]];
+
+      knownGrTypes = { "Bipartite", "DocumentDocument", "TermTerm", "Document", "Term" };
+      If[ !MemberQ[knownGrTypes, type],
+        Echo[Row[{"The value of the option \"Type\" is expected to be one of:", knownGrTypes}], "LSAMonMakeGraph:"];
+        Return[$LSAMonFailure]
+      ];
+
+      Which[
+        MatrixQ[xs],
+        am = xs,
+
+        KeyExistsQ[context, "weightedDocumentTermMatrix"],
+        am = context["weightedDocumentTermMatrix"],
+
+        KeyExistsQ[context, "documentTermMatrix"],
+        am = context["documentTermMatrix"],
+
+        True,
+        Echo["Make a document-term matrix first.", "LSAMonMakeGraph:"];
+        Return[$LSAMonFailure]
+      ];
+
+      (* Note that this takes the SparseArray object of a SSparseMatrix object. *)
+      am = SparseArray[am];
+
+      Which[
+
+        weightedQ && type == "Bipartite",
+        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        am = SparseArray[ ArrayFlatten[{{Infinity, am}, {Transpose[am], Infinity}}] ];
+        res = WeightedAdjacencyGraph[am, DirectedEdges -> True],
+
+        !weightedQ && type == "Bipartite",
+        am = SparseArray[ArrayFlatten[{{0, am}, {Transpose[am], 0}}]];
+        res = AdjacencyGraph[am, DirectedEdges -> True],
+
+        weightedQ && ( type == "DocumentDocument" || type == "Document" ),
+        am = am . Transpose[am];
+        am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
+        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
+        res = WeightedAdjacencyGraph[am],
+
+        !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
+        am = am . Transpose[am];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
+        res = AdjacencyGraph[Unitize[am]],
+
+        weightedQ && ( type == "TermTerm" || type == "Term" ),
+        am = Transpose[am] . am;
+        am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[am]]]];
+        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
+        res = WeightedAdjacencyGraph[am],
+
+        !weightedQ && ( type == "TermTerm" || type == "Term" ),
+        am = Transpose[am] . am;
+        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
+        res = AdjacencyGraph[Unitize[am]];
+
+      ];
+
+      LSAMon[res, context]
+
+    ];
+
+LSAMonMakeGraph[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonMakeGraph:"];
+      $LSAMonFailure
+    ];
+
+
+(*------------------------------------------------------------*)
+(* Find most important texts                                  *)
+(*------------------------------------------------------------*)
+
+ClearAll[LSAMonMostImportantTexts];
+
+Options[LSAMonMostImportantTexts] = { "CentralityFunction" -> EigenvectorCentrality };
+
+LSAMonMostImportantTexts[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonMostImportantTexts[topN_Integer, opts:OptionsPattern[]][xs_, context_] :=
+    Block[{cFunc, gr, cvec, inds, smat },
+
+      cFunc = OptionValue[LSAMonMostImportantTexts, "CentralityFunction"];
+
+      (* Here we should check that the monad value is a text collection. *)
+      If[ !( KeyExistsQ[context, "documents"] || KeyExistsQ[context, "weightedDocumentTermMatrix"] || KeyExistsQ["documentTermMatrix"] ),
+
+        If[ !KeyExistsQ[context, "documents"] && !(KeyExistsQ[context, "weightedDocumentTermMatrix"] || KeyExistsQ["documentTermMatrix"]) ,
+          Echo["No texts.", "LSAMonMostImportantTexts:"];
+          Return[$LSAMonFailure]
+        ];
+
+
+        If[ !( KeyExistsQ[context, "weightedDocumentTermMatrix"] || KeyExistsQ["documentTermMatrix"] ),
+          Echo["No texts and document-term matrices.", "LSAMonMostImportantTexts:"];
+          Return[$LSAMonFailure]
+        ];
+      ];
+
+      Which[
+        TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["documents"]] ,
+        gr = xs,
+
+        TrueQ[ Head[xs] === Graph ] && VertexCount[xs] == Length[context["documents"]] + Length[context["terms"]],
+        gr = xs,
+
+        True,
+        gr = Fold[ LSAMonBind, LSAMon[xs,context], {LSAMonMakeGraph["Type"->"Bipartite"], LSAMonTakeValue} ]
+      ];
+
+
+      (* There is some inconsistencies in handling weighted graphs. *)
+      (* That is why the most popular/likely case is computed directly. (For now.) *)
+      If[ TrueQ[ cFunc === EigenvectorCentrality ] && VertexCount[xs] == Length[context["documents"]],
+
+        (* Get document-term matrix. *)
+        smat = If[ TrueQ[ KeyExistsQ[context, "weightedDocumentTermMatrix"] ], Lookup[context, "weightedDocumentTermMatrix"], Lookup[context, "documentTermMatrix"] ];
+
+        (* Make column stochastic. *)
+        smat = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1/Norm[#1]] &, Transpose[smat]]]];
+
+        (* Compute eigenvector. *)
+        cvec = SingularValueDecomposition[ N[smat], 1 ];
+
+        cvec = cvec[[1]][[All,1]];
+        cvec = Abs[cvec] / Max[Abs[cvec]],
+
+        (*ELSE*)
+        cvec = cFunc[gr];
+      ];
+
+      If[ !ListQ[cvec], Return[$LSAMonFailure] ];
+
+      inds = Take[Reverse[Ordering[cvec]], UpTo[topN]];
+
+      Which[
+
+        VertexCount[gr] == Length[context["documents"]],
+        LSAMonUnit[ Transpose[{cvec[[inds]], inds, context["documents"][[inds]]}], context ],
+
+        VertexCount[gr] == Length[context["documents"]] + Length[context["terms"]],
+        LSAMonUnit[ Transpose[{cvec[[inds]], inds, Join[context["documents"],context["terms"]][[inds]]}], context ],
+
+        True,
+        $LSAMonFailure
+      ]
+    ];
+
+LSAMonMostImportantTexts[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonMostImportantTexts[topN_Integer, opts___] .",
+        "LSAMonMostImportantTexts::"];
+      $LSAMonFailure;
     ];
 
 
