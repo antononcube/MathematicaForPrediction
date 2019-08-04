@@ -210,9 +210,13 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 GenerateMonadAccessors[
   "MonadicLatentSemanticAnalysis`LSAMon",
   {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix",
-    "W", "H",  "topicColumnPositions",
-    "automaticTopicNames", "statisticalThesaurus", "topicsTable" },
+    "topicColumnPositions", "automaticTopicNames", "statisticalThesaurus", "topicsTable" },
   "FailureSymbol" -> $LSAMonFailure ];
+
+GenerateMonadAccessors[
+  "MonadicLatentSemanticAnalysis`LSAMon",
+  {"W", "H" },
+  "FailureSymbol" -> $LSAMonFailure, "DecapitalizeElementName" -> False ];
 
 ClearAll[LSAMonTakeMatrix, LSAMonTakeWeightedMatrix];
 
@@ -498,6 +502,9 @@ LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :
         automaticTopicNames = MapIndexed[ #1<>"-"<>ToString[#2]&, automaticTopicNames ];
       ];
 
+      W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["documentTermMatrix"]], "ColumnNames" -> automaticTopicNames ];
+      H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> automaticTopicNames, "ColumnNames" -> ColumnNames[context["documentTermMatrix"]][[pos]] ];
+
       LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames"->automaticTopicNames |>]]
 
     ];
@@ -522,7 +529,9 @@ LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, conte
     Block[{W, H, HNF, thRes},
       Which[
         KeyExistsQ[context, "H"] && KeyExistsQ[context, "W"],
-        {W, H} = NormalizeMatrixProduct[context["W"], context["H"]];
+
+        {W, H} = NormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
+
         HNF = Nearest[Range[Dimensions[H][[2]]], DistanceFunction -> (Norm[H[[All, #1]] - H[[All, #2]]] &)];
 
         thRes =
@@ -573,7 +582,7 @@ LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
         LSAMon[xs, context],
 
         True,
-        Echo["No statistical thesurus is computed.", "LSAMonEchoStatisticalThesaurus:"];
+        Echo["No statistical thesaurus is computed.", "LSAMonEchoStatisticalThesaurus:"];
         $LSAMonFailure
       ]
     ];
@@ -599,12 +608,12 @@ LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts:Opti
 
       numberOfTerms = OptionValue[LSAMonBasisVectorInterpretation, "NumberOfTerms"];
 
-      {W, H} = RightNormalizeMatrixProduct[context["W"], context["H"]];
+      {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
       res =
           Map[
-            BasisVectorInterpretation[#, numberOfTerms, context["terms"][[context["topicColumnPositions"]]]]&,
-            Normal@H[[Flatten@{vectorIndices}]]
+            BasisVectorInterpretation[#, numberOfTerms, ColumnNames[context["H"]] ]&,
+            Normal @ H[[ Flatten @ {vectorIndices} ]]
           ];
 
       If[ !MatchQ[res,{{{_?NumberQ, _String}..}..}],
