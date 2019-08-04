@@ -52,7 +52,8 @@ BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"];
 
 
 VerificationTest[(* 1 *)
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
+  (*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];*)
+  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
   Length[SubValues[MonadicLatentSemanticAnalysis`LSAMonTopicExtraction]] > 0
   ,
   True
@@ -71,7 +72,10 @@ VerificationTest[(* 2 *)
   aStateOfUnionSpeeches =
       AssociationThread[Normal[dsStateOfUnionSpeeches[All, "ID"]], Normal[dsStateOfUnionSpeeches[All, "Text"]]];
 
-  Length[aStateOfUnionSpeeches] > 200 && Min[Values[StringLength /@ aStateOfUnionSpeeches]] > 5000
+  SeedRandom[123];
+  aStateOfUnionSpeeches = RandomSample[aStateOfUnionSpeeches, 22];
+
+  Length[aStateOfUnionSpeeches] > 20 && Min[Values[StringLength /@ aStateOfUnionSpeeches]] > 5000
   ,
   True
   ,
@@ -96,9 +100,11 @@ VerificationTest[ (* 4 *)
   docTermMat =
       Fold[LSAMonBind,
         LSAMonUnit[Values[aStateOfUnionSpeeches]],
-        { LSAMonMakeDocumentTermMatrix[{}, stopWords], LSAMonTakeDocTermMat }];
+        { LSAMonMakeDocumentTermMatrix[{}, stopWords], LSAMonTakeDocumentTermMatrix }];
 
-  Dimensions[docTermMat][[1]] == Length[aStateOfUnionSpeeches] && Dimensions[docTermMat][[2]] > 20000
+  SSparseMatrixQ[docTermMat] &&
+      Dimensions[docTermMat][[1]] == Length[aStateOfUnionSpeeches] &&
+      Dimensions[docTermMat][[2]] > 2000
   ,
   True
   ,
@@ -116,29 +122,52 @@ VerificationTest[ (* 5 *)
 
   Keys[LSAMonBind[ lsaObj, LSAMonTakeContext] ]
   ,
-  {"texts", "docTermMat", "terms"}
+  {"documents", "documentTermMatrix", "terms"}
   ,
   TestID -> "Make-document-term-matrix-2"
 ];
 
 
 VerificationTest[ (* 6 *)
+  lsaContext =
+      Fold[
+        LSAMonBind,
+        lsaObj,
+        {
+          LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+          LSAMonTakeContext
+        }
+      ];
+  Keys[ lsaContext ] == {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix"} &&
+      SSparseMatrixQ[lsaContext["weightedDocumentTermMatrix"]] &&
+      Dimensions[lsaContext["weightedDocumentTermMatrix"]] == Dimensions[lsaContext["documentTermMatrix"]]
+  ,
+  True
+  ,
+  TestID -> "Apply-term-weights-1"
+];
+
+
+VerificationTest[ (* 7 *)
   lsaObj2 =
       Fold[
         LSAMonBind,
         lsaObj,
-        {LSAMonTopicExtraction[100, 20, 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False], LSAMonTopicsTable}
+        {
+          LSAMonTopicExtraction[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonTopicsTable
+        }
       ];
 
   Keys[LSAMonBind[ lsaObj2, LSAMonTakeContext] ]
   ,
-  {"texts", "docTermMat", "terms", "wDocTermMat", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
+  {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
   ,
   TestID -> "Topic-extraction-1"
 ];
 
 
-VerificationTest[ (* 7 *)
+VerificationTest[ (* 8 *)
   (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
   MatchQ[LSAMonBind[ lsaObj2, LSAMonTakeValue], {_TableForm ..}]
   ,
@@ -148,24 +177,27 @@ VerificationTest[ (* 7 *)
 ];
 
 
-VerificationTest[ (* 8 *)
+VerificationTest[ (* 9 *)
   lsaObj3 =
       Fold[
         LSAMonBind,
         lsaObj,
-        { LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-          LSAMonTopicExtraction[100, 20, 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False], LSAMonTopicsTable}
+        {
+          LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+          LSAMonTopicExtraction[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonTopicsTable
+        }
       ];
 
   Keys[LSAMonBind[ lsaObj3, LSAMonTakeContext] ]
   ,
-  {"texts", "docTermMat", "terms", "wDocTermMat", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
+  {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
   ,
   TestID -> "Topic-extraction-3"
 ];
 
 
-VerificationTest[ (* 9 *)
+VerificationTest[ (* 10 *)
   (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
   MatchQ[LSAMonBind[ lsaObj3, LSAMonTakeValue], {_TableForm ..}]
   ,
@@ -179,23 +211,23 @@ VerificationTest[ (* 9 *)
 (* Data members and accessors                                *)
 (*************************************************************)
 
-VerificationTest[ (* 10 *)
-  TrueQ[ Head[LSAMonBind[lsaObj2, LSAMonTakeMatrix]] === SSparseMatrix ]
+VerificationTest[ (* 11 *)
+  SSparseMatrixQ[LSAMonBind[lsaObj2, LSAMonTakeMatrix]]
   ,
   True
   ,
   TestID -> "Take-document-term-matrix-1"
 ];
 
-VerificationTest[ (* 11 *)
-  TrueQ[ Head[LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix]] === SSparseMatrix ]
+VerificationTest[ (* 12 *)
+  SSparseMatrixQ[LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix]]
   ,
   True
   ,
   TestID -> "Take-weighted-document-term-matrix-1"
 ];
 
-VerificationTest[ (* 12 *)
+VerificationTest[ (* 13 *)
   TrueQ[ Head[LSAMonBind[lsaObj3, LSAMonTakeMatrix]] === SSparseMatrix ]
   ,
   True
@@ -203,7 +235,7 @@ VerificationTest[ (* 12 *)
   TestID -> "Take-document-term-matrix-2"
 ];
 
-VerificationTest[ (* 13 *)
+VerificationTest[ (* 14 *)
   TrueQ[ Head[LSAMonBind[lsaObj3, LSAMonTakeWeightedMatrix]] === SSparseMatrix ]
   ,
   True
@@ -212,7 +244,7 @@ VerificationTest[ (* 13 *)
 ];
 
 
-VerificationTest[ (* 14 *)
+VerificationTest[ (* 15 *)
   ColumnNames[ LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix] ] == LSAMonBind[lsaObj2, LSAMonTakeTerms]
   ,
   True
