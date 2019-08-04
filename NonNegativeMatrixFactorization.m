@@ -70,10 +70,12 @@ takes the n largest coordinates of vec, finds the corresponding elements in inte
 NearestWords::usage = "NearestWords[HNF, word, terms, stemmingRules, n] calculates a statistical thesaurus entry \
 for a specified nearest function over the columns of a matrix of topics and a word."
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Clear[GDCLS]
+Clear[GDCLS];
+
 Options[GDCLS] = {"MaxSteps" -> 200, "NonNegative" -> True, "Epsilon" -> 10^-9., "RegularizationParameter" -> 0.01, PrecisionGoal -> Automatic, "PrintProfilingInfo" -> False};
+
 GDCLS[V_?MatrixQ, k_?IntegerQ, opts:OptionsPattern[]] :=
   Block[{t, fls, A, W, H, T, m, n, b, diffNorm, normV, nSteps = 0,
     nonnegQ = OptionValue[GDCLS,"NonNegative"],
@@ -110,9 +112,13 @@ GDCLS[V_?MatrixQ, k_?IntegerQ, opts:OptionsPattern[]] :=
    {W, H}
   ];
 
-Clear[GDCLSGlobal]
+
+Clear[GDCLSGlobal];
+
 Options[GDCLSGlobal] = Options[GDCLS];
-SetAttributes[GDCLSGlobal,HoldAll]
+
+SetAttributes[GDCLSGlobal,HoldAll];
+
 GDCLSGlobal[V_, W_, H_, opts:OptionsPattern[]] :=
   Block[{t, fls, A, k, T, m, n, b, diffNorm, normV, nSteps = 0,
     nonnegQ = OptionValue[GDCLSGlobal,"NonNegative"],
@@ -190,6 +196,6 @@ NearestWords[HNF_NearestFunction, word_String, terms : {_String ..},
       ]
     ];
 
-End[]
+End[];
 
 EndPackage[]
