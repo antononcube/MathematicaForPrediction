@@ -644,14 +644,14 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
     ];
 
 
-Clear[GenerateMonadSetter]
-Options[GenerateMonadSetter] = {"FailureSymbol" -> None};
+Clear[GenerateMonadSetter];
+Options[GenerateMonadSetter] = {"FailureSymbol" -> None, "DecapitalizeElementName" -> True};
 GenerateMonadSetter[monadName_String, elementName_String, opts : OptionsPattern[]] :=
     With[{
       MStateUnit = ToExpression[monadName <> "Unit"],
       MStateSetter = ToExpression[monadName <> "Set" <> Capitalize[elementName]],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
-      dElementName = Decapitalize[elementName]
+      dElementName = If[ TrueQ[OptionValue["DecapitalizeElementName"]], Decapitalize[elementName], elementName ]
     },
 
       ClearAll[MStateSetter];
@@ -668,14 +668,14 @@ GenerateMonadSetter[monadName_String, elementName_String, opts : OptionsPattern[
     ];
 
 
-Clear[GenerateMonadTaker]
-Options[GenerateMonadTaker] = {"FailureSymbol" -> None};
+Clear[GenerateMonadTaker];
+Options[GenerateMonadTaker] = {"FailureSymbol" -> None, "DecapitalizeElementName" -> True};
 GenerateMonadTaker[monadName_String, elementName_String, opts : OptionsPattern[]] :=
     With[{
       MState = ToExpression[monadName],
       MStateTaker = ToExpression[monadName <> "Take" <> Capitalize[elementName]],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
-      dElementName = Decapitalize[elementName]
+      dElementName = If[ TrueQ[OptionValue["DecapitalizeElementName"]], Decapitalize[elementName], elementName ]
     },
 
       ClearAll[MStateTaker];
@@ -690,15 +690,15 @@ GenerateMonadTaker[monadName_String, elementName_String, opts : OptionsPattern[]
     ];
 
 
-Clear[GenerateMonadDroper]
-Options[GenerateMonadDroper] = {"FailureSymbol" -> None};
+Clear[GenerateMonadDroper];
+Options[GenerateMonadDroper] = {"FailureSymbol" -> None, "DecapitalizeElementName" -> True};
 GenerateMonadDroper[monadName_String, elementName_String, opts : OptionsPattern[]] :=
     With[{
       MState = ToExpression[monadName],
       MStateDroper = ToExpression[monadName <> "Drop" <> Capitalize[elementName]],
       MStateFailureSymbol = OptionValue["FailureSymbol"],
       MStateDropFromContext = ToExpression[monadName <> "DropFromContext"],
-      dElementName = Decapitalize[elementName]
+      dElementName = If[ TrueQ[OptionValue["DecapitalizeElementName"]], Decapitalize[elementName], elementName ]
     },
 
       ClearAll[MStateDroper];
@@ -713,7 +713,7 @@ GenerateMonadDroper[monadName_String, elementName_String, opts : OptionsPattern[
     ];
 
 
-Clear[GenerateMonadAccessors]
+Clear[GenerateMonadAccessors];
 Options[GenerateMonadAccessors] = Options[GenerateMonadSetter];
 GenerateMonadAccessors[monadName_String, elementName_String, opts : OptionsPattern[]] :=
     GenerateMonadAccessors[monadName, {elementName}, opts ];
@@ -725,6 +725,6 @@ GenerateMonadAccessors[monadName_String, elementNames : {_String..}, opts : Opti
     ];
 
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
