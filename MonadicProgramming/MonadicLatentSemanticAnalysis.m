@@ -751,7 +751,7 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, c
           ctTags = context["docTags"],
 
           TrueQ[tags===Automatic],
-          ctTags = Range[Dimensions[context["documentTermMatrix"]][[1]]],
+          ctTags = RowNames[context["documentTermMatrix"]],
 
           Length[tags] == Dimensions[context["documentTermMatrix"]][[1]],
           ctTags = tags,
@@ -762,7 +762,7 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, c
           Return[$LSAMonFailure]
         ];
 
-        {W, H} = NormalizeMatrixProduct[context["W"], context["H"] ];
+        {W, H} = NormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
         W = Clip[W, {0.01, 1}, {0, 1}];
 
 
@@ -793,8 +793,10 @@ LSAMonTopicsRepresentation[tags:(Automatic|_List), opts:OptionsPattern[]][xs_, c
         (* The matrix rows correspond to the union of the tags. *)
         ctMat = CrossTabulate`CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
 
+        (* This should be done better. *)
         If[ assignAutomaticTopicNamesQ,
-          ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ]
+          ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ];
+          ctMat = ToSSparseMatrix[ ctMat ];
         ];
 
         LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices"->docTopicIndices |> ] ],
