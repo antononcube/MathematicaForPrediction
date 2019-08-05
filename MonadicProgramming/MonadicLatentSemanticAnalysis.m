@@ -1086,10 +1086,13 @@ LSAMonFindMostImportantDocuments[___][__] :=
 Clear[FindMostImportantSentences];
 
 Options[FindMostImportantSentences] =
-    {
-      "Splitter" -> Function[{text}, Select[StringSplit[text, {".", "!", "?", "..."}], StringLength[#] >= 3 &] ],
-      "StopWords" -> Automatic
-    };
+    Join[
+      {
+        "Splitter" -> Function[{text}, Select[StringSplit[text, {".", "!", "?", "..."}], StringLength[#] >= 3 &] ],
+        "StopWords" -> Automatic
+      },
+      Options[Grid]
+    ];
 
 FindMostImportantSentences[text_String, nTop_Integer : 5, opts : OptionsPattern[] ] :=
     Block[{splitFunc = OptionValue["Splitter"]},
@@ -1114,7 +1117,7 @@ FindMostImportantSentences[sentences : {_String ..}, nTop_Integer : 5, opts : Op
             ];
       ];
 
-      Grid[res, FilterRules[opts, Options[Grid]], Alignment -> Left]
+      Grid[res, FilterRules[{opts}, Options[Grid]], Alignment -> Left]
     ];
 
 
