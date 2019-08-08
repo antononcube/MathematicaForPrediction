@@ -209,6 +209,8 @@ SMRMonTakeMatrixDataset::usage = "Take the Dataset object corresponding to the r
 SMRMonMetadataProofs::usage = "Metadata proofs for a recommended item and a profile. \
 (Tags from item's profile that are found in the given profile.)";
 
+SMRMonHistoryProofs::usage = "History proofs for a recommended item and scored history items.";
+
 Begin["`Private`"];
 
 
@@ -1555,7 +1557,7 @@ SMRMonClassify[___][__] :=
 
 ClearAll[SMRMonMetadataProofs];
 
-Options[SMRMonMetadataProofs] = { "OutlierIdentifier" -> None, "Normalize" -> True };
+Options[SMRMonMetadataProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
 SMRMonMetadataProofs[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1566,7 +1568,7 @@ SMRMonMetadataProofs[][xs_, context_Association] := $SMRMonFailure;
 SMRMonMetadataProofs[ profile_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{scores, oiFunc, normalizeQ, res},
 
-      oiFunc = OptionValue[SMRMonMetadataProofs, "OutlierIdentifier"];
+      oiFunc = OptionValue[SMRMonMetadataProofs, "OutlierIdentifierParameters"];
       normalizeQ = TrueQ[ OptionValue[SMRMonMetadataProofs, "Normalize"] ];
 
       (* Check that the argument profile is a profile according to the monad object. *)
@@ -1600,6 +1602,67 @@ SMRMonMetadataProofs[___][__] :=
         "SMRMonMetadataProofs:"];
       $SMRMonFailure
     ];
+
+
+
+(*=========================================================*)
+(* History  Proofs                                         *)
+(*=========================================================*)
+
+ClearAll[SMRMonHistoryProofs];
+
+Options[SMRMonHistoryProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+
+SMRMonHistoryProofs[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonHistoryProofs[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonHistoryProofs[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonHistoryProofs[ history_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{ oiFunc, normalizeQ, scores, maxScore, res},
+
+      oiFunc = OptionValue[SMRMonMetadataProofs, "OutlierIdentifierParameters"];
+      normalizeQ = TrueQ[ OptionValue[SMRMonMetadataProofs, "Normalize"] ];
+
+      (* Check that the argument profile is a profile according to the monad object. *)
+      If[ ! ScoredItemsQ[ history, context ],
+        Echo[ "The first argument is not an association of scored items in the monad object.", "SMRMonHistoryProofs:"];
+        Return[$SMRMonFailure]
+      ];
+
+      scores = SparseArray[ context["M"][[ Keys[history], All ]] . context["M"][[ itemName, All ]] ];
+
+      If[ normalizeQ && Length[scores] > 0,
+        maxScore = context["M"][[ itemName, All ]] . context["M"][[ itemName, All ]];
+        scores = N[ scores / maxScore ]
+      ];
+
+      scores = AssociationThread[ Keys[history], Normal[SparseArray[scores]] * Values[history] ];
+
+      scores = Select[scores, # > 0 &];
+
+      res =
+          If[TrueQ[oiFunc === None],
+            scores,
+            scores[[ If[# === {}, All, #]& @ OutlierPosition[ Values[scores], TopOutliers @* oiFunc ] ]]
+          ];
+
+      If[ normalizeQ && Length[res] > 0,
+        res = N[ res / Max[res] ]
+      ];
+
+      SMRMonUnit[ ReverseSort[res], context ]
+    ];
+
+SMRMonHistoryProofs[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonHistoryProofs[history_Association, itemName_String, opts___] .",
+        "SMRMonHistoryProofs:"];
+      $SMRMonFailure
+    ];
+
 
 End[]; (* `Private` *)
 
