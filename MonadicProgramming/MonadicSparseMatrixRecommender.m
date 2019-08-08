@@ -122,6 +122,10 @@ If[Length[DownValues[DocumentTermMatrixConstruction`WeightTerms]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DocumentTermMatrixConstruction.m"]
 ];
 
+If[Length[DownValues[OutlierIdentifiers`OutlierIdentifier]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
+];
+
 (**************************************************************)
 (* Package definition                                         *)
 (**************************************************************)
@@ -202,6 +206,9 @@ SMRMonTakeTagTypes::usage = "Takes the tag-types.";
 
 SMRMonTakeMatrixDataset::usage = "Take the Dataset object corresponding to the recommendation matrix.";
 
+SMRMonMetadataProofs::usage = "Metadata proofs for a recommended item and a profile. \
+(Tags from item's profile that are found in the given profile.)";
+
 Begin["`Private`"];
 
 
@@ -210,6 +217,7 @@ Needs["CrossTabulate`"];
 Needs["StateMonadCodeGenerator`"];
 Needs["SSparseMatrix`"];
 Needs["DocumentTermMatrixConstruction`"];
+Needs["OutlierIdentifiers`"];
 
 
 (**************************************************************)
@@ -231,7 +239,7 @@ SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
 
 (* Here we can/have to have a correctness check. It is one of the advantages to SSparseMatrix. *)
 (*SMRMonSetItemNames[names_][xs_, context_Association] :=*)
-    (*SMRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
+(*SMRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
 
 Clear[SMRMonTakeTagTypeWeights];
 SMRMonTakeTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
@@ -291,11 +299,11 @@ SMRMonTakeMatrixDataset[][xs_, context_Association] :=
         (*ELSE*)
         smats =
             Map[
-              Dataset[SSparseMatrixToTriplets[#]][All, AssociationThread[{"Item", "Tag", "Weight"}->#]&]&,
+              Dataset[SSparseMatrixToTriplets[#]][All, AssociationThread[{"Item", "Tag", "Weight"} -> #]&]&,
               smats
             ];
-        smats = KeyValueMap[ Function[{k,v}, v[All, Join[#, <|"TagType"->k|>]&]], smats];
-        (Join@@smats)[All, {"Item", "TagType", "Tag", "Weight"}]
+        smats = KeyValueMap[ Function[{k, v}, v[All, Join[#, <|"TagType" -> k|>]&]], smats];
+        (Join @@ smats)[All, {"Item", "TagType", "Tag", "Weight"}]
       ]
     ];
 SMRMonTakeMatrixDataset[__][___] := $SMRMonFailure;
@@ -305,7 +313,7 @@ Clear[SMRMonSetTimeSeriesMatrix];
 SMRMonSetTimeSeriesMatrix[$SMRMonFailure] := $SMRMonFailure;
 SMRMonSetTimeSeriesMatrix[][___] := $SMRMonFailure;
 SMRMonSetTimeSeriesMatrix[xs_, context_] := $SMRMonFailure;
-SMRMonSetTimeSeriesMatrix[smat_?SSparseMatrixQ][xs_, context_] := SMRMonUnit[ xs, Join[ context, <|"timeSeriesMatrix"->smat|> ] ];
+SMRMonSetTimeSeriesMatrix[smat_?SSparseMatrixQ][xs_, context_] := SMRMonUnit[ xs, Join[ context, <|"timeSeriesMatrix" -> smat|> ] ];
 SMRMonSetTimeSeriesMatrix[__][___] := $SMRMonFailure;
 
 
@@ -325,9 +333,9 @@ ScoredItemIndexesQ[recs_Association, context_Association] :=
       AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
     ];
 
-ScoredItemIndexesQ[___] := False
+ScoredItemIndexesQ[___] := False;
 
-Clear[SMRMonScoredItemsQ]
+Clear[SMRMonScoredItemsQ];
 
 SMRMonScoredItemsQ[$SMRMonFailure] := $SMRMonFailure;
 
@@ -383,7 +391,7 @@ SMRMonScoredTagsQ[__][___] := $SMRMonFailure;
 Clear[ScoredItemsQ];
 ScoredItemsQ[recs_Association, context_Association] :=
     Block[{},
-     TrueQ[ Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}] ]
+      TrueQ[ Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}] ]
     ];
 ScoredItemsQ[___] := (Echo["Wrong signature!", "ScoredItemsQ:"]; False);
 
@@ -420,9 +428,9 @@ ToSSparseMatrix@
 *)
 Clear[NumericalColumnToSSparseMatrix];
 NumericalColumnToSSparseMatrix[dsArg_Dataset, idColumnName_, varColumnName_] :=
-    Block[{ds=dsArg},
+    Block[{ds = dsArg},
 
-      ds = dsArg[All, {idColumnName, varColumnName}][All, Join[#, <|"Variable"->varColumnName|>]&];
+      ds = dsArg[All, {idColumnName, varColumnName}][All, Join[#, <|"Variable" -> varColumnName|>]&];
       ds = Query[ReplaceAll[Missing[] -> 0], All][ds];
 
       ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}] ]
@@ -435,7 +443,7 @@ Clear[SMRMonCreate];
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
-Options[SMRMonCreate] = {"AddTagTypesToColumnNames"->False, "TagValueSeparator"->".", "NumericalColumnsAsCategorical"->False };
+Options[SMRMonCreate] = {"AddTagTypesToColumnNames" -> False, "TagValueSeparator" -> ".", "NumericalColumnsAsCategorical" -> False };
 
 SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
@@ -443,9 +451,9 @@ SMRMonCreate[xs_, context_Association] := SMRMonCreate[][xs, context];
 
 SMRMonCreate[][xs_, context_Association] := SMRMonCreate[Options[SMRMonCreate]][xs, context];
 
-SMRMonCreate[ opts:OptionsPattern[] ][xs_, context_Association] :=
+SMRMonCreate[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Which[
-      MatchQ[xs, _SSparseMatrix] || MatchQ[xs, Association[ (_->_SSparseMatrix) ..] ],
+      MatchQ[xs, _SSparseMatrix] || MatchQ[xs, Association[ (_ -> _SSparseMatrix) ..] ],
       SMRMonCreate[ xs, opts ][xs, context],
 
       AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ[xs, "idColumnName"],
@@ -458,10 +466,10 @@ SMRMonCreate[ opts:OptionsPattern[] ][xs_, context_Association] :=
       SMRMonCreate["Fail"][xs, context]
     ];
 
-SMRMonCreate[ smat_SSparseMatrix, opts:OptionsPattern[] ][xs_, context_Association]:=
+SMRMonCreate[ smat_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
 
-SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonCreate[smats : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{tagTypeNames, rowNames, columnNames, splicedMat},
 
       tagTypeNames = Keys[smats];
@@ -484,8 +492,8 @@ SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]
         Join[
           context,
           <|
-            "itemNames" -> AssociationThread[rowNames->Range[Length[rowNames]]],
-            "tags" -> AssociationThread[columnNames->Range[Length[columnNames]]],
+            "itemNames" -> AssociationThread[rowNames -> Range[Length[rowNames]]],
+            "tags" -> AssociationThread[columnNames -> Range[Length[columnNames]]],
             "tagTypeWeights" -> AssociationThread[Keys[smats], ConstantArray[1, Length[smats]]],
             "matrices" -> smats,
             "M01" -> splicedMat,
@@ -495,7 +503,7 @@ SMRMonCreate[smats : Association[ (_->_SSparseMatrix) ..], opts:OptionsPattern[]
       ]
     ];
 
-SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonCreate[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{ncol, tagTypeNames, smats, idPos, idName, numCols, addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ, tagValueSeparator},
 
       addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
@@ -507,7 +515,7 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context
       tagTypeNames = Normal[Keys[ds[1]]];
 
       idPos = Flatten[Position[tagTypeNames, itemVarName]];
-      If[ Length[idPos]==0,
+      If[ Length[idPos] == 0,
         Echo["The specified item variable name is not one of the column names of the dataset.", "SMRMonCreate:"];
         Return[$Failed]
       ];
@@ -537,14 +545,14 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts:OptionsPattern[]][xs_, context
 
         smats =
             Association @
-                KeyValueMap[Function[{k,mat},
+                KeyValueMap[Function[{k, mat},
                   k -> ToSSparseMatrix[mat,
                     "ColumnNames" -> Map[ k <> tagValueSeparator <> #&, ColumnNames[mat] ],
                     "RowNames" -> RowNames[mat]
                   ]], smats]
       ];
 
-      SMRMonCreate[smats][xs, Join[context, <|"data"->ds|>]]
+      SMRMonCreate[smats][xs, Join[context, <|"data" -> ds|>]]
     ];
 
 SMRMonCreate[___][__] :=
@@ -715,31 +723,31 @@ GetFilterIDs[context_Association, callerFunctionName_String] :=
     Block[{},
       Which[
         !KeyExistsQ[context, "filter"],
-        Echo["There is no key \"filter\" in the context.", callerFunctionName<>":"];
+        Echo["There is no key \"filter\" in the context.", callerFunctionName <> ":"];
         All,
 
         AssociationQ[context["filter"]] && ScoredItemsQ[context["filter"], context],
         Keys[context["filter"]],
 
-        ListQ[context["filter"]] && ScoredItemsQ[AssociationThread[context["filter"],1], context],
+        ListQ[context["filter"]] && ScoredItemsQ[AssociationThread[context["filter"], 1], context],
         context["filter"],
 
         True,
         Echo["The value for the key \"filter\" in the context is expected to a list of items or an association of scored items.",
-          callerFunctionName<>":"];
+          callerFunctionName <> ":"];
         All
       ]
     ];
 
 Clear[SMRMonRecommend];
 
-Options[SMRMonRecommend] = {"RemoveHistory"->True, "ItemNames"->True};
+Options[SMRMonRecommend] = {"RemoveHistory" -> True, "ItemNames" -> True, "Normalize" -> True };
 
 SMRMonRecommend[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommend[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommend[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{h},
 
       h = KeyMap[ context["itemNames"][#]&, history ];
@@ -752,17 +760,20 @@ SMRMonRecommend[ history:Association[ (_String->_?NumberQ) ... ], nRes_Integer, 
       SMRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
     ];
 
-SMRMonRecommend[ itemNames:{_String...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ itemName_String, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ AssociationThread[{itemName}, 1], nRes, opts][xs, context];
+
+SMRMonRecommend[ itemNames : {_String...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ AssociationThread[itemNames, 1], nRes, opts][xs, context];
 
-SMRMonRecommend[ history:Association[ (_Integer->_?NumberQ) ... ], nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ history : Association[ (_Integer -> _?NumberQ) ... ], nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ Keys[history], Values[history], nRes, opts][xs, context];
 
-SMRMonRecommend[ itemIndices:{_Integer...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
-    SMRMonRecommend[ itemIndices, ConstantArray[1,Length[itemIndices]], nRes, opts][xs, context];
+SMRMonRecommend[ itemIndices : {_Integer...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ itemIndices, ConstantArray[1, Length[itemIndices]], nRes, opts][xs, context];
 
-SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
-    Block[{vec, filterIDs=All, filterInds, smat, fmat, recs, removeHistoryQ, itemNamesQ, rowNames},
+SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{vec, filterIDs = All, filterInds, smat, fmat, recs, removeHistoryQ, itemNamesQ, normalizeQ, rowNames},
 
       If[Length[itemIndices],
         Echo["Empty history as an argument.", "SMRMonRecommend:"];
@@ -771,6 +782,7 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
 
       removeHistoryQ = TrueQ[OptionValue[SMRMonRecommend, "RemoveHistory"]];
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommend, "ItemNames"]];
+      normalizeQ = TrueQ[OptionValue[SMRMonRecommend, "Normalize"]];
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
@@ -780,7 +792,7 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
       smat = SparseArray[context["M"]];
 
       (*1*)
-      vec = SparseArray[Thread[itemIndices->itemRatings],{Length[smat]}];
+      vec = SparseArray[Thread[itemIndices -> itemRatings], {Length[smat]}];
 
       (*2*)
       vec = smat.(vec.smat);
@@ -808,9 +820,13 @@ SMRMonRecommend[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, nRes_Int
         recs = KeyMap[ rowNames[[#]]&, recs]
       ];
 
+      If[ normalizeQ && Length[recs] > 0,
+        recs = recs / Max[recs];
+      ];
+
       SMRMonUnit[recs, context]
 
-    ]/;Length[itemIndices]==Length[itemRatings];
+    ] /; Length[itemIndices] == Length[itemRatings];
 
 
 SMRMonRecommend[___][__] :=
@@ -833,19 +849,19 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 
 Clear[SMRMonRecommendByProfile];
 
-Options[SMRMonRecommendByProfile] = {"ItemNames"->True, "Normalize"->True, "IgnoreUnknownTags"->False};
+Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "IgnoreUnknownTags" -> False};
 
 SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommendByProfile[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommendByProfile[nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{},
       (* Without verification. *)
       SMRMonRecommendByProfile[xs, nRes, opts][xs, context]
     ];
 
-SMRMonRecommendByProfile[profileInds:{_Integer..}, profileScores:{_?NumberQ..}, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ..}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{inds, vec, smat},
 
       If[!KeyExistsQ[context, "M"],
@@ -855,12 +871,12 @@ SMRMonRecommendByProfile[profileInds:{_Integer..}, profileScores:{_?NumberQ..}, 
 
       smat = SparseArray[context["M"]];
 
-      vec = SparseArray[Thread[profileInds->profileScores],{Dimensions[smat][[2]]}];
+      vec = SparseArray[Thread[profileInds -> profileScores], {Dimensions[smat][[2]]}];
 
       SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
-    ]/;Length[profileInds]==Length[profileScores];
+    ] /; Length[profileInds] == Length[profileScores];
 
-SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer, opts:OptionsPattern[]][xs_, context_Association]:=
+SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{itemNamesQ, normalizeQ, inds, vec, smat, recs, filterIDs, filterInds, rowNames, fmat},
 
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "ItemNames"]];
@@ -901,19 +917,19 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer, opts:OptionsPatte
         recs = KeyMap[ rowNames[[#]]&, recs]
       ];
 
-      If[normalizeQ && Max[recs]>0,
-        recs = recs/Max[recs];
+      If[normalizeQ && Max[recs] > 0,
+        recs = recs / Max[recs];
       ];
 
       SMRMonUnit[recs, context]
 
     ];
 
-SMRMonRecommendByProfile[tagsArg:(_Association | _List), nRes_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{tags = tagsArg, p},
 
       If[ TrueQ[OptionValue[SMRMonRecommendByProfile, "IgnoreUnknownTags"]],
-        If[ ListQ[tags], tags =  AssociationThread[tags->1] ];
+        If[ ListQ[tags], tags = AssociationThread[tags -> 1] ];
         tags = KeyTake[tags, ColumnNames[context["M"]]];
       ];
 
@@ -945,11 +961,11 @@ SMRMonRecommendByProfile[___][__] :=
 
 Clear[SMRMonRecommendByCorrelation];
 
-Options[SMRMonRecommendByCorrelation] = { Method-> Correlation, "SMRNumberOfRecommendations"-> 200 };
+Options[SMRMonRecommendByCorrelation] = { Method -> Correlation, "SMRNumberOfRecommendations" -> 200 };
 
 SMRMonRecommendByCorrelation[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts:OptionsPattern[] ][xs_, context_Association] :=
+SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{recs, corRecs, smrNRecs, methodFunc, corMat},
 
       methodFunc = OptionValue[ SMRMonRecommendByCorrelation, Method ];
@@ -1040,7 +1056,7 @@ SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 
 Clear[SMRMonJoinAcross];
 
-Options[SMRMonJoinAcross] = {"DropJoiningColumnName"->True, "AsDataset" -> True };
+Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "AsDataset" -> True };
 
 SMRMonJoinAcross[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1048,7 +1064,7 @@ SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonJoinAcross[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{ds = dsArg, dsRecs, res, dropQ},
 
       dropQ = TrueQ[OptionValue[SMRMonJoinAcross, "DropJoiningColumnName"]];
@@ -1071,15 +1087,15 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts:OptionsPattern[]][xs_, co
         ];
       ];
 
-      res = JoinAcross[ Normal[dsRecs[All, {"Score", "Item"}]], Normal[ds], Key["Item"]->Key[byColName] ];
+      res = JoinAcross[ Normal[dsRecs[All, {"Score", "Item"}]], Normal[ds], Key["Item"] -> Key[byColName] ];
       res = Dataset[res][SortBy[-#Score &]];
 
-      If[ dropQ, res = res[All, KeyDrop[#,byColName]&] ];
+      If[ dropQ, res = res[All, KeyDrop[#, byColName]&] ];
 
       SMRMonUnit[res, context]
     ];
 
-SMRMonJoinAcross[asc_Association, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonJoinAcross[asc_Association, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{dsRecs, datasetQ},
 
       datasetQ = TrueQ[ OptionValue["AsDataset"] ];
@@ -1128,13 +1144,19 @@ SMRMonJoinAcross[__][___] :=
 
 Clear[SMRMonProfile];
 
-Options[SMRMonProfile] = {"TagNames"->True};
+Options[SMRMonProfile] = {"TagNames" -> True};
 
 SMRMonProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonProfile[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonProfile[ itemName_String, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ AssociationThread[ itemName, 1], opts ][xs, context];
+
+SMRMonProfile[ itemNames : {_String .. }, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ AssociationThread[itemNames, 1], opts ][xs, context];
+
+SMRMonProfile[ history : Association[ (_String -> _?NumberQ) ... ], opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{h},
 
       h = KeyMap[ context["itemNames"][#]&, history ];
@@ -1152,13 +1174,13 @@ SMRMonProfile[ history:Association[ (_String->_?NumberQ) ... ], opts:OptionsPatt
       SMRMonProfile[ Keys[h], Values[h], opts][xs, context]
     ];
 
-SMRMonProfile[ history:Association[ (_Integer->_?NumberQ) ... ], opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonProfile[ history : Association[ (_Integer -> _?NumberQ) ... ], opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonProfile[ Keys[history], Values[history], opts][xs, context];
 
-SMRMonProfile[ itemIndices:{_Integer...}, opts:OptionsPattern[]][xs_, context_Association] :=
-    SMRMonProfile[ itemIndices, ConstantArray[1,Length[itemIndices]], opts][xs, context];
+SMRMonProfile[ itemIndices : {_Integer...}, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonProfile[ itemIndices, ConstantArray[1, Length[itemIndices]], opts][xs, context];
 
-SMRMonProfile[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, opts:OptionsPattern[]][xs_, context_Association]:=
+SMRMonProfile[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{vec, smat, prof, tagNamesQ, columnNames},
 
       If[Length[itemIndices],
@@ -1176,7 +1198,7 @@ SMRMonProfile[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, opts:Optio
       smat = SparseArray[context["M"]];
 
       (*1*)
-      vec = SparseArray[Thread[itemIndices->itemRatings],{Length[smat]}];
+      vec = SparseArray[Thread[itemIndices -> itemRatings], {Length[smat]}];
 
       (*2*)
       vec = vec.smat;
@@ -1194,7 +1216,7 @@ SMRMonProfile[ itemIndices:{_Integer...}, itemRatings:{_?NumberQ...}, opts:Optio
 
       SMRMonUnit[prof, context]
 
-    ]/;Length[itemIndices]==Length[itemRatings];
+    ] /; Length[itemIndices] == Length[itemRatings];
 
 
 SMRMonProfile[___][__] :=
@@ -1217,12 +1239,12 @@ SMRMonToProfileVector[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonToProfileVector[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonToProfileVector[ scoredTags:Association[ (_Integer->_?NumberQ)..] ][xs_, context_Association] :=
+SMRMonToProfileVector[ scoredTags : Association[ (_Integer -> _?NumberQ)..] ][xs_, context_Association] :=
     Block[{},
       SMRMonUnit[ SparseArray[ Normal@scoredTags, ColumnsCount[context["M"]] ], context]
     ];
 
-SMRMonToProfileVector[ scoredTags:Association[ (_String->_?NumberQ)..] ][xs_, context_Association] :=
+SMRMonToProfileVector[ scoredTags : Association[ (_String -> _?NumberQ)..] ][xs_, context_Association] :=
     SMRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context];
 
 SMRMonToProfileVector[___][__] := $SMRMonFailure;
@@ -1244,7 +1266,7 @@ SMRMonSetTagTypeWeights[ defaultValue_?NumberQ ][xs_, context_Association] :=
 SMRMonSetTagTypeWeights[ scoredTagTypes_Association ][xs_, context_Association] :=
     SMRMonSetTagTypeWeights[ scoredTagTypes, 1][xs, context];
 
-SMRMonSetTagTypeWeights[ scoredTagTypesArg:Association[ (_String->_?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
+SMRMonSetTagTypeWeights[ scoredTagTypesArg : Association[ (_String -> _?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
     Block[{ scoredTagTypes = scoredTagTypesArg, smats, mat},
 
       If[!KeyExistsQ[context, "matrices"],
@@ -1293,7 +1315,7 @@ SMRMonSetTagWeights[ defaultValue_?NumberQ ][xs_, context_Association] :=
 SMRMonSetTagWeights[ scoredTags_Association ][xs_, context_Association] :=
     SMRMonSetTagWeights[ scoredTags, 1][xs, context];
 
-SMRMonSetTagWeights[ scoredTagsArg:Association[ (_String->_?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
+SMRMonSetTagWeights[ scoredTagsArg : Association[ (_String -> _?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
     Block[{ scoredTags = scoredTagsArg, mat},
 
       If[!KeyExistsQ[context, "M"],
@@ -1337,7 +1359,7 @@ SMRMonJoin[ smr2_SMRMon ][xs_, context_Association] :=
 SMRMonJoin[ smr2_SMRMon, joinType_String ][xs_, context_Association] :=
     SMRMonJoin[ smr2, joinType, Automatic, Automatic ][xs, context];
 
-SMRMonJoin[ smr2_SMRMon, joinType_String, colnamesPrefix1:(_String|Automatic), colnamesPrefix2:(_String|Automatic) ][xs_, context_Association] :=
+SMRMonJoin[ smr2_SMRMon, joinType_String, colnamesPrefix1 : (_String | Automatic), colnamesPrefix2 : (_String | Automatic) ][xs_, context_Association] :=
     Block[{smats1, smats2, allRownames, matrices},
 
       (*  Get the appropriate all row names. *)
@@ -1380,10 +1402,10 @@ SMRMonJoin[ smr2_SMRMon, joinType_String, colnamesPrefix1:(_String|Automatic), c
       ];
 
       matrices =
-      Join[
-        Map[ ImposeRowNames[#, allRownames]&, smats1 ],
-        Map[ ImposeRowNames[#, allRownames]&, smats2 ]
-      ];
+          Join[
+            Map[ ImposeRowNames[#, allRownames]&, smats1 ],
+            Map[ ImposeRowNames[#, allRownames]&, smats2 ]
+          ];
 
       Fold[ SMRMonBind, SMRMonUnit[], {SMRMonCreate[ matrices ] } ]
     ];
@@ -1427,7 +1449,7 @@ SMRMonRowBind[smr2_SMRMon][xs_, context_Association] :=
               {smats1, smats2}];
 
 
-        SMRMonCreate[resSMmats][xs,context],
+        SMRMonCreate[resSMmats][xs, context],
 
         True,
         Echo["The tag types of the SMRMon objects to be joined (row-bound) are not the same.", "SMRMonJoin:"];
@@ -1457,10 +1479,10 @@ SMRMonClassify[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonClassify[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonClassify[tagType_String, profile:{_String..}, args___][xs_, context_Association] :=
+SMRMonClassify[tagType_String, profile : {_String..}, args___][xs_, context_Association] :=
     SMRMonClassify[tagType, AssociationThread[profile, 1], args][xs, context];
 
-SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:OptionsPattern[]][xs_, context_Association] :=
+SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{recs, clMat, clMat01, s, t, votingQ, dropZeroScoredLabelsQ, qProfile},
 
       votingQ = TrueQ[OptionValue[SMRMonClassify, "Voting"]];
@@ -1474,7 +1496,7 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:Option
       If[ !MemberQ[ Keys[context["matrices"]], tagType],
         Echo[
           "Unknown tag type \"" <> tagType <> "\"; the first argument should be one of: " <>
-              ToString[ "\""<>#<>"\""& /@ Keys[context["matrices"]] ] <> " .",
+              ToString[ "\"" <> # <> "\""& /@ Keys[context["matrices"]] ] <> " .",
           "SMRMonClassify:"
         ];
         Return[$SMRMonFailure]
@@ -1486,7 +1508,7 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:Option
 
       If[ Length[qProfile] == 0,
         Echo[
-          "The profile argument has to have at least one tag that does not belong to the tag type \"" <> tagType <>"\".",
+          "The profile argument has to have at least one tag that does not belong to the tag type \"" <> tagType <> "\".",
           "SMRMonClassify:"
         ];
         Return[$SMRMonFailure]
@@ -1500,9 +1522,9 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts:Option
 
       If[ votingQ,
         clMat01 = SparseArray[clMat];
-        t = Most[ArrayRules[clMat]]; t[[All,2]] = 1.;
-        clMat01 = SparseArray[t,Dimensions[clMat]];
-        clMat = ToSSparseMatrix[ clMat01, "RowNames"->RowNames[clMat], "ColumnNames"->ColumnNames[clMat] ];
+        t = Most[ArrayRules[clMat]]; t[[All, 2]] = 1.;
+        clMat01 = SparseArray[t, Dimensions[clMat]];
+        clMat = ToSSparseMatrix[ clMat01, "RowNames" -> RowNames[clMat], "ColumnNames" -> ColumnNames[clMat] ];
         recs = AssociationThread[ Keys[recs], 1.];
       ];
 
@@ -1526,6 +1548,58 @@ SMRMonClassify[___][__] :=
       $SMRMonFailure
     ];
 
+
+(*=========================================================*)
+(* Metadata Proofs                                         *)
+(*=========================================================*)
+
+ClearAll[SMRMonMetadataProofs];
+
+Options[SMRMonMetadataProofs] = { "OutlierIdentifier" -> None, "Normalize" -> True };
+
+SMRMonMetadataProofs[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonMetadataProofs[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonMetadataProofs[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonMetadataProofs[ profile_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{scores, oiFunc, normalizeQ, res},
+
+      oiFunc = OptionValue[SMRMonMetadataProofs, "OutlierIdentifier"];
+      normalizeQ = TrueQ[ OptionValue[SMRMonMetadataProofs, "Normalize"] ];
+
+      (* Check that the argument profile is a profile according to the monad object. *)
+      If[ ! ScoredTagsQ[ profile, context ],
+        Echo[ "The first argument is not a profile (an association of scored tags) in the monad object.", "SMRMonMetadataProofs:"];
+        Return[$SMRMonFailure]
+      ];
+
+      scores = ColumnSumsAssociation[ context["M"][[ {itemName}, Keys[profile] ]] ];
+      scores = Select[scores, # > 0 &];
+
+      scores = KeySelect[ profile, MemberQ[Keys[scores], #]& ];
+
+      res =
+          If[TrueQ[oiFunc === None],
+            scores,
+            scores[[ If[# === {}, All, #]& @ OutlierPosition[ Values[scores], TopOutliers @* oiFunc ] ]]
+          ];
+
+      If[ normalizeQ && Length[res] > 0,
+        res = N[ res / Max[res] ]
+      ];
+
+      SMRMonUnit[ ReverseSort[res], context ]
+    ];
+
+SMRMonMetadataProofs[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonMetadataProofs[profile_Association, itemName_String, opts___] .",
+        "SMRMonMetadataProofs:"];
+      $SMRMonFailure
+    ];
 
 End[]; (* `Private` *)
 
