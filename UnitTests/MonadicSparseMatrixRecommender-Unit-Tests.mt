@@ -35,15 +35,15 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2018-09-15 *)
 
-(* :Package Version: 0.1 *)
-(* :Mathematica Version: 11.3 *)
+(* :Package Version: 0.4 *)
+(* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2018 Anton Antonov *)
 (* :Keywords: monad, monadic, sparse matrix, recommender, workflow, State monad, Mathematica, Wolfram Language, unit test *)
 (* :Discussion:
 
    This file has units tests for the package
 
-     https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicQuantileRegression.m
+     https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicSparseMatrixRecommender.m
 
 *)
 BeginTestSection["MonadicSparseMatrixRecommender-Unit-Tests.mt"];
@@ -57,7 +57,7 @@ VerificationTest[(* 1 *)
   ,
   True
   ,
-  TestID->"LoadPackage"
+  TestID -> "LoadPackage"
 ];
 
 VerificationTest[(* 2 *)
@@ -69,7 +69,7 @@ VerificationTest[(* 2 *)
   ,
   True
   ,
-  TestID->"GenerateData"
+  TestID -> "GenerateData"
 ];
 
 VerificationTest[(* 2 *)
@@ -78,7 +78,7 @@ VerificationTest[(* 2 *)
   ,
   True
   ,
-  TestID->"MakeDataWithMissing"
+  TestID -> "MakeDataWithMissing"
 ];
 
 VerificationTest[(* 4 *)
@@ -88,24 +88,24 @@ VerificationTest[(* 4 *)
   ,
   True
   ,
-  TestID->"LoadTitanicData"
+  TestID -> "LoadTitanicData"
 ];
 
 VerificationTest[(* 5 *)
   lsMushroom = Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Mushroom.csv"];
   dsMushroom = Dataset[Dataset[Rest[lsMushroom]][All, AssociationThread[First[lsMushroom], #] &]];
-  expectedColumnNames = Sort @ {"id", "cap-Shape", "cap-Surface", "cap-Color", "bruises?", "odor", \
-    "gill-Attachment", "gill-Spacing", "gill-Size", "gill-Color", \
-    "stalk-Shape", "stalk-Root", "stalk-Surface-Above-Ring", \
-    "stalk-Surface-Below-Ring", "stalk-Color-Above-Ring", \
-    "stalk-Color-Below-Ring", "veil-Type", "veil-Color", "ring-Number", \
-    "ring-Type", "spore-Print-Color", "population", "habitat", \
+  expectedColumnNames = Sort @ {"id", "cap-Shape", "cap-Surface", "cap-Color", "bruises?", "odor",
+    "gill-Attachment", "gill-Spacing", "gill-Size", "gill-Color",
+    "stalk-Shape", "stalk-Root", "stalk-Surface-Above-Ring",
+    "stalk-Surface-Below-Ring", "stalk-Color-Above-Ring",
+    "stalk-Color-Below-Ring", "veil-Type", "veil-Color", "ring-Number",
+    "ring-Type", "spore-Print-Color", "population", "habitat",
     "edibility"};
   Head[dsMushroom] === Dataset && Sort[Normal[Keys[dsMushroom[[1]]]]] == expectedColumnNames
   ,
   True
   ,
-  TestID->"LoadMushroomData"
+  TestID -> "LoadMushroomData"
 ];
 
 
@@ -115,52 +115,60 @@ VerificationTest[(* 5 *)
 
 VerificationTest[(* 6 *)
   smrTitanic = SMRMonBind[ SMRMonUnit[], SMRMonCreate[dsTitanic, "id"] ];
+
   TrueQ[Head[smrTitanic] === SMRMon] &&
       AssociationQ[smrTitanic[[2]]] &&
       Keys[smrTitanic[[2]]] == {"data", "itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
   ,
   True
   ,
-  TestID->"SMR-creation-with-Titanic-data"
+  TestID -> "SMR-creation-with-Titanic-data"
 ];
 
 VerificationTest[(* 7 *)
   colNames = Normal[Keys[dsTitanic[[1]]]];
+
   smats = Association @
       Map[# -> ToSSparseMatrix[CrossTabulate[dsTitanic[All, {First[colNames], #}]]] &, Rest[colNames] ];
+
   smrTitanic2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ];
+
   TrueQ[Head[smrTitanic2] === SMRMon] &&
       AssociationQ[smrTitanic2[[2]]] &&
       Keys[smrTitanic2[[2]]] == {"itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
   ,
   True
   ,
-  TestID->"SMR-creation-with-Titanic-matrices"
+  TestID -> "SMR-creation-with-Titanic-matrices"
 ];
 
 VerificationTest[(* 8 *)
   smrMushroom = SMRMonBind[ SMRMonUnit[], SMRMonCreate[dsMushroom, "id", "AddTagTypesToColumnNames" -> True, "TagValueSeparator" -> ":" ]];
+
   TrueQ[Head[smrMushroom] === SMRMon] &&
       AssociationQ[smrMushroom[[2]]] &&
       Keys[smrMushroom[[2]]] == {"data", "itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
   ,
   True
   ,
-  TestID->"SMR-creation-with-Mushroom-data"
+  TestID -> "SMR-creation-with-Mushroom-data"
 ];
 
 VerificationTest[(* 9 *)
   colNames = Normal[Keys[dsMushroom[[1]]]];
+
   smats = Association @
       Map[# -> ToSSparseMatrix[CrossTabulate[dsMushroom[All, {First[colNames], #}]]] &, Rest[colNames]];
+
   smrMushroom2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ];
+
   TrueQ[Head[smrMushroom2] === SMRMon] &&
       AssociationQ[smrMushroom2[[2]]] &&
       Keys[smrMushroom2[[2]]] == {"itemNames", "tags", "tagTypeWeights", "matrices", "M01", "M"}
   ,
   True
   ,
-  TestID->"SMR-creation-with-Mushroom-matrices"
+  TestID -> "SMR-creation-with-Mushroom-matrices"
 ];
 
 
@@ -169,30 +177,54 @@ VerificationTest[(* 9 *)
 (*---------------------------------------------------------*)
 
 VerificationTest[(* 13 *)
-  recs2 = Fold[ SMRMonBind, smrTitanic2, {SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12], SMRMonTakeValue } ];
+  recs2 =
+      Fold[
+        SMRMonBind,
+        smrTitanic2,
+        {
+          SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12],
+          SMRMonTakeValue
+        }
+      ];
   VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
   ,
   True
   ,
-  TestID->"smrTitanic2-recommendations-1"
+  TestID -> "smrTitanic2-recommendations-1"
 ];
 
 VerificationTest[(* 14 *)
-  recs3 = Fold[ SMRMonBind, smrTitanic2, {SMRMonRecommend[{"10", "120"}, 12], SMRMonTakeValue } ];
+  recs3 =
+      Fold[
+        SMRMonBind,
+        smrTitanic2,
+        {
+          SMRMonRecommend[{"10", "120"}, 12],
+          SMRMonTakeValue
+        }
+      ];
   VectorQ[Keys[recs3], StringQ] && VectorQ[Values[recs3], NumberQ]
   ,
   True
   ,
-  TestID->"smrTitanic2-recommendations-2"
+  TestID -> "smrTitanic2-recommendations-2"
 ];
 
 VerificationTest[(* 15 *)
-  recs4 = Fold[ SMRMonBind, smrMushroom2, {SMRMonRecommend[<|"1" -> 1, "12" -> 0.5|>, 12], SMRMonTakeValue } ];
+  recs4 =
+      Fold[
+        SMRMonBind,
+        smrMushroom2,
+        {
+          SMRMonRecommend[<|"1" -> 1, "12" -> 0.5|>, 12],
+          SMRMonTakeValue
+        }
+      ];
   VectorQ[Keys[recs4], StringQ] && VectorQ[Values[recs4], NumberQ]
   ,
   True
   ,
-  TestID->"smrMushroom2-recommendations-1"
+  TestID -> "smrMushroom2-recommendations-1"
 ];
 
 
@@ -201,14 +233,22 @@ VerificationTest[(* 15 *)
 (*---------------------------------------------------------*)
 
 VerificationTest[(* 17 *)
-  precs1 = Fold[ SMRMonBind, smrTitanic, { SMRMonRecommendByProfile[<|"male" -> 1, "died" -> 1|>, 12], SMRMonTakeValue } ];
+  precs1 =
+      Fold[
+        SMRMonBind,
+        smrTitanic,
+        {
+          SMRMonRecommendByProfile[<|"male" -> 1, "died" -> 1|>, 12],
+          SMRMonTakeValue
+        }
+      ];
 
   Union[Flatten[Normal[dsTitanic[Select[MemberQ[Keys[precs1], ToString@#["id"]] &], {"passengerSex"}][Values]]]] == {"male"} &&
       Union[Flatten[Normal[dsTitanic[Select[MemberQ[Keys[precs1], ToString@#["id"]] &], {"passengerSurvival"}][Values]]]] == {"died"}
   ,
   True
   ,
-  TestID->"smrTitanic-recommendations-by-profile-1"
+  TestID -> "smrTitanic-recommendations-by-profile-1"
 ];
 
 VerificationTest[(* 18 *)
@@ -219,18 +259,26 @@ VerificationTest[(* 18 *)
   ,
   True
   ,
-  TestID->"smrMushroom-recommendations-by-profile-1"
+  TestID -> "smrMushroom-recommendations-by-profile-1"
 ];
 
 VerificationTest[(* 19 *)
-  precs2 = Fold[ SMRMonBind, smrMushroom, {SMRMonRecommendByProfile[ {"odor:pungent", "edibility:poisonous"}, 12], SMRMonTakeValue} ];
+  precs2 =
+      Fold[
+        SMRMonBind,
+        smrMushroom,
+        {
+          SMRMonRecommendByProfile[ {"odor:pungent", "edibility:poisonous"}, 12],
+          SMRMonTakeValue
+        }
+      ];
 
   Union[Flatten[Normal[dsMushroom[Select[MemberQ[Keys[precs2], ToString@#["id"]] &], {"odor"}][Values]]]] == {"pungent"} &&
       Union[Flatten[Normal[dsMushroom[Select[MemberQ[Keys[precs2], ToString@#["id"]] &], {"edibility"}][Values]]]] == {"poisonous"}
   ,
   True
   ,
-  TestID->"smrMushroom-recommendations-by-profile-2"
+  TestID -> "smrMushroom-recommendations-by-profile-2"
 ];
 
 (*---------------------------------------------------------*)
@@ -241,28 +289,100 @@ VerificationTest[(* 20 *)
   recs2 = Fold[
     SMRMonBind,
     smrTitanic2,
-    { SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+    {
+      SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
       SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12],
-      SMRMonTakeValue } ];
+      SMRMonTakeValue
+    }
+  ];
   VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
   ,
   True
   ,
-  TestID->"smrTitanic2-apply-term-weights-1"
+  TestID -> "smrTitanic2-apply-term-weights-1"
 ];
 
 VerificationTest[(* 20 *)
   recs2 = Fold[
     SMRMonBind,
     smrTitanic2,
-    { SMRMonApplyTermWeightFunctions,
+    {
+      SMRMonApplyTermWeightFunctions,
       SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12],
-      SMRMonTakeValue } ];
+      SMRMonTakeValue
+    }
+  ];
   VectorQ[Keys[recs2], StringQ] && VectorQ[Values[recs2], NumberQ]
   ,
   True
   ,
-  TestID->"smrTitanic2-apply-term-weights-2"
+  TestID -> "smrTitanic2-apply-term-weights-2"
+];
+
+VerificationTest[(* 21 *)
+  proofs1 = Fold[
+    SMRMonBind,
+    smrTitanic2,
+    {
+      SMRMonMetadataProofs[ <|"male" -> 1, "female" -> 1, "died" -> 1 |>, "10" ],
+      SMRMonTakeValue
+    }
+  ];
+  AssociationQ[proofs1] && Length[proofs1] == 1
+  ,
+  True
+  ,
+  TestID -> "smrTitanic2-metadata-proofs-1"
+];
+
+VerificationTest[(* 22 *)
+  itemNames = { "10", "120", "320" };
+  proofs2 = Fold[
+    SMRMonBind,
+    smrTitanic2,
+    {
+      SMRMonMetadataProofs[ <|"male" -> 1, "female" -> 1, "died" -> 1 |>, itemNames, "Normalize" -> True ],
+      SMRMonTakeValue
+    }
+  ];
+  AssociationQ[proofs2] && Length[proofs2] == Length[itemNames]
+  ,
+  True
+  ,
+  TestID -> "smrTitanic2-metadata-proofs-2"
+];
+
+VerificationTest[(* 23 *)
+  proofs3 = Fold[
+    SMRMonBind,
+    smrTitanic2,
+    {
+      SMRMonHistoryProofs[ <|"10" -> 1, "12" -> 1, "13" -> 1 |>, "120" ],
+      SMRMonTakeValue
+    }
+  ];
+  AssociationQ[proofs3] && Length[proofs3] == 1
+  ,
+  True
+  ,
+  TestID -> "smrTitanic2-history-proofs-1"
+];
+
+VerificationTest[(* 24 *)
+  itemNames = { "120", "220", "320" };
+  proofs4 = Fold[
+    SMRMonBind,
+    smrTitanic2,
+    {
+      SMRMonHistoryProofs[ <|"10" -> 1, "12" -> 1, "13" -> 1 |>, itemNames, "Normalize" -> True ],
+      SMRMonTakeValue
+    }
+  ];
+  AssociationQ[proofs4] && Length[proofs4] == Length[itemNames]
+  ,
+  True
+  ,
+  TestID -> "smrTitanic2-history-proofs-2"
 ];
 
 EndTestSection[]
