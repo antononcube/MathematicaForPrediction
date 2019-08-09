@@ -1555,7 +1555,7 @@ SMRMonClassify[___][__] :=
 (* Metadata Proofs                                         *)
 (*=========================================================*)
 
-ClearAll[SMRMonMetadataProofs];
+Clear[SMRMonMetadataProofs];
 
 Options[SMRMonMetadataProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
@@ -1592,13 +1592,25 @@ SMRMonMetadataProofs[ profile_Association, itemName_String, opts : OptionsPatter
         res = N[ res / Max[res] ]
       ];
 
-      SMRMonUnit[ ReverseSort[res], context ]
+      SMRMonUnit[ <|itemName -> ReverseSort[res] |>, context ]
+    ];
+
+SMRMonMetadataProofs[ profile_Association, itemNames : {_String..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{res},
+
+      res = Map[ Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonMetadataProofs[ profile, #, opts ], SMRMonTakeValue } ]& , itemNames ];
+
+      If[ !FreeQ[res, $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonUnit[ Join @@ res, context ]
     ];
 
 SMRMonMetadataProofs[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonMetadataProofs[profile_Association, itemName_String, opts___] .",
+        "The expected signature is SMRMonMetadataProofs[profile_Association, itemNames:( _String | {_String..} ), opts___] .",
         "SMRMonMetadataProofs:"];
       $SMRMonFailure
     ];
@@ -1609,7 +1621,7 @@ SMRMonMetadataProofs[___][__] :=
 (* History  Proofs                                         *)
 (*=========================================================*)
 
-ClearAll[SMRMonHistoryProofs];
+Clear[SMRMonHistoryProofs];
 
 Options[SMRMonHistoryProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
@@ -1652,13 +1664,25 @@ SMRMonHistoryProofs[ history_Association, itemName_String, opts : OptionsPattern
         res = N[ res / Max[res] ]
       ];
 
-      SMRMonUnit[ ReverseSort[res], context ]
+      SMRMonUnit[ <| itemName -> ReverseSort[res] |>, context ]
+    ];
+
+SMRMonHistoryProofs[ history_Association, itemNames : {_String..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{res},
+
+      res = Map[ Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonHistoryProofs[ history, #, opts ], SMRMonTakeValue } ]& , itemNames ];
+
+      If[ !FreeQ[res, $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonUnit[ Join @@ res, context ]
     ];
 
 SMRMonHistoryProofs[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonHistoryProofs[history_Association, itemName_String, opts___] .",
+        "The expected signature is SMRMonHistoryProofs[history_Association, itemName : ( _String | {_String..} ), opts___] .",
         "SMRMonHistoryProofs:"];
       $SMRMonFailure
     ];
