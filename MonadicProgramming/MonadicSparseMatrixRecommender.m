@@ -391,20 +391,45 @@ SMRMonScoredTagsQ[__][___] := $SMRMonFailure;
 
 (* Private function. *)
 Clear[ScoredItemsQ];
+
 ScoredItemsQ[recs_Association, context_Association] :=
     Block[{},
       TrueQ[ Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredItemsQ[recs], SMRMonTakeValue}] ]
     ];
+
+ScoredItemsQ[_, context_Association] := False;
+
 ScoredItemsQ[___] := (Echo["Wrong signature!", "ScoredItemsQ:"]; False);
 
 
 (* Private function. *)
 Clear[ScoredTagsQ];
+
 ScoredTagsQ[prof_Association, context_Association] :=
     Block[{},
       TrueQ[ Fold[ SMRMonBind, SMRMonUnit[None, context], { SMRMonScoredTagsQ[prof], SMRMonTakeValue}] ]
     ];
+
+ScoredTagsQ[_, context_Association] := False;
+
 ScoredTagsQ[___] := (Echo["Wrong signature!", "ScoredTagsQ:"]; False);
+
+(* Private function. *)
+Clear[DatasetWithScoredItemsQ];
+
+DatasetWithScoredItemsQ[recs_Dataset, context_Association] :=
+    Block[{colNames = Normal @ Keys @ recs[[1]] },
+
+      If[ Length[ Intersection[ colNames, {"Item", "Score"} ] ] < 2,
+        False,
+        ScoredItemsQ[ AssociationThread[ Normal[ recs[All, "Item"] ], Normal[ recs[All, "Score"] ] ], context ]
+      ]
+
+    ];
+
+DatasetWithScoredItemsQ[_, context_Association] := False;
+
+DatasetWithScoredItemsQ[___] := (Echo["Wrong signature!", "DatasetWithScoredItemsQ:"]; False);
 
 
 (**************************************************************)
@@ -445,7 +470,13 @@ Clear[SMRMonCreate];
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
-Options[SMRMonCreate] = {"AddTagTypesToColumnNames" -> False, "TagValueSeparator" -> ".", "NumericalColumnsAsCategorical" -> False };
+Options[SMRMonCreate] =
+    {
+      "AddTagTypesToColumnNames" -> False,
+      "TagValueSeparator" -> ".",
+      "NumericalColumnsAsCategorical" -> False,
+      "MissingValuesPattern" -> (None | "None" | Missing[___])
+    };
 
 SMRMonCreate[$SMRMonFailure] := $SMRMonFailure;
 
@@ -471,16 +502,17 @@ SMRMonCreate[ opts : OptionsPattern[] ][xs_, context_Association] :=
 SMRMonCreate[ smat_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
 
-SMRMonCreate[smats : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{tagTypeNames, rowNames, columnNames, splicedMat},
+SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{smats = smatsArg, tagTypeNames, rowNames, columnNames, splicedMat},
 
       tagTypeNames = Keys[smats];
 
       rowNames = Map[RowNames, smats];
 
       If[ !(Equal @@ rowNames),
-        Echo["The row names of the SSparseMatrix objects are expected to be the same.", "SMRMonCreate:"];
-        Return[$SMRMonFailure]
+        (* Echo["The row names of the SSparseMatrix objects are expected to be the same.", "SMRMonCreate:"]; *)
+        rowNames = Union[Flatten[Values[rowNames]]];
+        smats = Map[ ImposeRowNames[ #, rowNames ]&, smats];
       ];
 
       splicedMat = ColumnBind[Values[smats]];
@@ -506,11 +538,13 @@ SMRMonCreate[smats : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPatte
     ];
 
 SMRMonCreate[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{ncol, tagTypeNames, smats, idPos, idName, numCols, addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ, tagValueSeparator},
+    Block[{ ncol, tagTypeNames, smats, idPos, idName, numCols, ds2, rowNames, allRowNames,
+      addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ, tagValueSeparator, missingValuesPattern},
 
       addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
       numericalColumnsAsCategoricalQ = TrueQ[OptionValue[SMRMonCreate, "NumericalColumnsAsCategorical"]];
       tagValueSeparator = ToString[OptionValue[SMRMonCreate, "TagValueSeparator"]];
+      missingValuesPattern = OptionValue[SMRMonCreate, "MissingValuesPattern"];
 
       ncol = Dimensions[ds][[2]];
 
@@ -537,7 +571,9 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, conte
               If[ MemberQ[numCols, v],
                 v -> NumericalColumnToSSparseMatrix[ds, idName, v],
                 (*ELSE*)
-                v -> ToSSparseMatrix[ CrossTabulate[ds[All, {idName, v}]] ]
+                ds2 = ds[All, {idName, v}];
+                ds2 = ds2[ Select[ FreeQ[#, missingValuesPattern]& ] ];
+                v -> ToSSparseMatrix[ CrossTabulate[ds2] ]
               ], {v, Complement[ tagTypeNames, {idName} ]}];
       ];
 
@@ -1067,9 +1103,9 @@ SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
 SMRMonJoinAcross[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{ds = dsArg, dsRecs, res, dropQ},
+    Block[{ds = dsArg, dropQ, dsRecs, res},
 
-      dropQ = TrueQ[OptionValue[SMRMonJoinAcross, "DropJoiningColumnName"]];
+      dropQ = TrueQ[ OptionValue[SMRMonJoinAcross, "DropJoiningColumnName"] ];
 
       dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
 
@@ -1097,33 +1133,44 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts : OptionsPattern[]][xs_, 
       SMRMonUnit[res, context]
     ];
 
-SMRMonJoinAcross[asc_Association, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{dsRecs, datasetQ},
+SMRMonJoinAcross[ asc_Association, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonJoinAcross[  "Value" -> asc, opts ][xs, context];
 
-      datasetQ = TrueQ[ OptionValue["AsDataset"] ];
+SMRMonJoinAcross[ dataName_String -> asc_Association, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{dsRecs, dsQ, datasetQ},
+
+      dsQ = TrueQ[ DatasetWithScoredItemsQ[xs, context] ];
+
+      datasetQ = TrueQ[ OptionValue["AsDataset"] ] || dsQ ;
 
       (* The assumption is that the monad value xs is recommendations result. *)
       (* I.e. an association of with item names as keys and real numbers as values. *)
       (* This should be checked and verified. *)
 
-      If[ !( AssociationQ[xs] && TrueQ[ ScoredItemsQ[xs, context] ] ),
-        Echo[ "The pipeline value is not an association of scored items.", "SMRMonJoinAcross" ];
+      If[ !( TrueQ[ ScoredItemsQ[xs, context] ] || dsQ ),
+        Echo[
+          "The pipeline value is not an association of scored items or a Dataset that with scored items.",
+          "SMRMonJoinAcross:"
+        ];
         Return[$SMRMonFailure];
       ];
 
       If[ datasetQ,
 
-        dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ];
+        If[ dsQ,
+          dsRecs = xs,
+          dsRecs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToItemsDataset, SMRMonTakeValue } ]
+        ];
 
         If[ TrueQ[dsRecs === $SMRMonFailure],
           Return[$SMRMonFailure]
         ];
 
-        SMRMonUnit[ dsRecs[ All, Join[ #, <| "Value" -> asc[#Item] |>]& ], context ],
+        SMRMonUnit[ dsRecs[ All, Join[ #, <| dataName -> asc[#Item] |>]& ], context ],
         (* ELSE *)
 
 
-        dsRecs = KeyValueMap[ Prepend[ asc[#1], #2 ]&, xs ];
+        dsRecs = KeyValueMap[ Prepend[ asc[#1], "RecommendationScore" -> #2 ]&, xs ];
         SMRMonUnit[ dsRecs, context ]
       ]
     ];
