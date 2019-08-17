@@ -52,7 +52,8 @@ BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"];
 
 
 VerificationTest[(* 1 *)
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
+(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];*)
+  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
   Length[SubValues[MonadicLatentSemanticAnalysis`LSAMonTopicExtraction]] > 0
   ,
   True
@@ -82,7 +83,20 @@ VerificationTest[(* 2 *)
 ];
 
 
-VerificationTest[ (* 3 *)
+VerificationTest[(* 3 *)
+  textHamplet = ToString /@ Flatten[Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Hamlet.csv"]];
+
+  aTextHamlet = ToAutomaticKeysAssociation[textHamplet];
+
+  Length[aTextHamlet] > 200 && Median[Values[StringLength /@ aTextHamlet]] > 80
+  ,
+  True
+  ,
+  TestID -> "HamletData"
+];
+
+
+VerificationTest[ (* 4 *)
   stopWords = Complement[DictionaryLookup["*"], DeleteStopwords[DictionaryLookup["*"]]];
   Length[stopWords] > 300
   ,
@@ -95,15 +109,15 @@ VerificationTest[ (* 3 *)
 (* Basic pipeline                                            *)
 (*************************************************************)
 
-VerificationTest[ (* 4 *)
+VerificationTest[ (* 5 *)
   docTermMat =
       Fold[LSAMonBind,
-        LSAMonUnit[aStateOfUnionSpeeches],
+        LSAMonUnit[aTextHamlet],
         { LSAMonMakeDocumentTermMatrix[{}, stopWords], LSAMonTakeDocumentTermMatrix }];
 
   SSparseMatrixQ[docTermMat] &&
-      RowNames[docTermMat] == Keys[aStateOfUnionSpeeches] &&
-      Dimensions[docTermMat][[1]] == Length[aStateOfUnionSpeeches] &&
+      RowNames[docTermMat] == Keys[aTextHamlet] &&
+      Dimensions[docTermMat][[1]] == Length[aTextHamlet] &&
       Dimensions[docTermMat][[2]] > 2000
   ,
   True
@@ -112,11 +126,11 @@ VerificationTest[ (* 4 *)
 ];
 
 
-VerificationTest[ (* 5 *)
+VerificationTest[ (* 6 *)
   lsaObj =
       Fold[
         LSAMonBind,
-        LSAMonUnit[Values[aStateOfUnionSpeeches]],
+        LSAMonUnit[Values[aTextHamlet]],
         { LSAMonMakeDocumentTermMatrix[{}, stopWords] }
       ];
 
@@ -128,7 +142,7 @@ VerificationTest[ (* 5 *)
 ];
 
 
-VerificationTest[ (* 6 *)
+VerificationTest[ (* 7 *)
   lsaContext =
       Fold[
         LSAMonBind,
@@ -148,7 +162,7 @@ VerificationTest[ (* 6 *)
 ];
 
 
-VerificationTest[ (* 7 *)
+VerificationTest[ (* 8 *)
   lsaObj2 =
       Fold[
         LSAMonBind,
@@ -167,7 +181,7 @@ VerificationTest[ (* 7 *)
 ];
 
 
-VerificationTest[ (* 8 *)
+VerificationTest[ (* 9 *)
   (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
   MatchQ[LSAMonBind[ lsaObj2, LSAMonTakeValue], {_TableForm ..}]
   ,
@@ -177,11 +191,11 @@ VerificationTest[ (* 8 *)
 ];
 
 
-VerificationTest[ (* 9 *)
+VerificationTest[ (* 10 *)
   lsaObj3 =
       Fold[
         LSAMonBind,
-        LSAMonUnit[aStateOfUnionSpeeches],
+        LSAMonUnit[aTextHamlet],
         {
           LSAMonMakeDocumentTermMatrix[{}, Automatic],
           LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
@@ -198,7 +212,7 @@ VerificationTest[ (* 9 *)
 ];
 
 
-VerificationTest[ (* 10 *)
+VerificationTest[ (* 11 *)
   (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
   MatchQ[LSAMonBind[ lsaObj3, LSAMonTakeValue], {_TableForm ..}]
   ,
@@ -208,14 +222,14 @@ VerificationTest[ (* 10 *)
 ];
 
 
-VerificationTest[ (* 11 *)
+VerificationTest[ (* 12 *)
   (*  Instead of:  lsaObj ⟹ LSAMonEchoTopicsTable[Dividers -> All];  *)
   MatchQ[
     Fold[
       LSAMonBind,
       lsaObj3,
       {
-        LSAMonStatisticalThesaurus[{"indians", "ships", "bank"}, 12],
+        LSAMonStatisticalThesaurus[{"ghost", "king", "lord"}, 12],
         LSAMonTakeValue
       }
     ],
@@ -232,7 +246,7 @@ VerificationTest[ (* 11 *)
 (* Topics representation                                     *)
 (*************************************************************)
 
-VerificationTest[ (* 12 *)
+VerificationTest[ (* 13 *)
   tMat =
       Fold[ LSAMonBind,
         lsaObj3,
@@ -242,7 +256,7 @@ VerificationTest[ (* 12 *)
         }];
 
   SSparseMatrixQ[tMat] &&
-      RowsCount[tMat] == Length[aStateOfUnionSpeeches] &&
+(*      RowsCount[tMat] == Length[aTextHamlet] &&*)
       Sort[ColumnNames[tMat]] == Sort[Intersection[ColumnNames[tMat], LSAMonBind[ lsaObj3, LSAMonTakeAutomaticTopicNames ] ]]
   ,
   True
@@ -255,7 +269,7 @@ VerificationTest[ (* 12 *)
 (* Data members and accessors                                *)
 (*************************************************************)
 
-VerificationTest[ (* 13 *)
+VerificationTest[ (* 14 *)
   SSparseMatrixQ[LSAMonBind[lsaObj2, LSAMonTakeMatrix]]
   ,
   True
@@ -263,7 +277,7 @@ VerificationTest[ (* 13 *)
   TestID -> "Take-document-term-matrix-1"
 ];
 
-VerificationTest[ (* 14 *)
+VerificationTest[ (* 15 *)
   SSparseMatrixQ[LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix]]
   ,
   True
@@ -271,7 +285,7 @@ VerificationTest[ (* 14 *)
   TestID -> "Take-weighted-document-term-matrix-1"
 ];
 
-VerificationTest[ (* 15 *)
+VerificationTest[ (* 16 *)
   SSparseMatrixQ[ LSAMonBind[lsaObj3, LSAMonTakeMatrix] ]
   ,
   True
@@ -279,7 +293,7 @@ VerificationTest[ (* 15 *)
   TestID -> "Take-document-term-matrix-2"
 ];
 
-VerificationTest[ (* 16 *)
+VerificationTest[ (* 17 *)
   SSparseMatrixQ[ LSAMonBind[lsaObj3, LSAMonTakeWeightedMatrix] ]
   ,
   True
@@ -287,7 +301,7 @@ VerificationTest[ (* 16 *)
   TestID -> "Take-weighted-document-term-matrix-2"
 ];
 
-VerificationTest[ (* 17 *)
+VerificationTest[ (* 18 *)
   ColumnNames[ LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix] ] == LSAMonBind[lsaObj2, LSAMonTakeTerms]
   ,
   True
@@ -295,7 +309,7 @@ VerificationTest[ (* 17 *)
   TestID -> "Take-terms-1"
 ];
 
-VerificationTest[ (* 18 *)
+VerificationTest[ (* 19 *)
   W = LSAMonBind[lsaObj3, LSAMonTakeW];
   H = LSAMonBind[lsaObj3, LSAMonTakeH];
   SSparseMatrixQ[ W ] && SSparseMatrixQ[ H ] && ColumnNames[ W ] == RowNames[ H ]
@@ -305,7 +319,7 @@ VerificationTest[ (* 18 *)
   TestID -> "Take-Factors-1"
 ];
 
-VerificationTest[ (* 19 *)
+VerificationTest[ (* 20 *)
   RowNames[ LSAMonBind[lsaObj3, LSAMonTakeW] ] == RowNames[ LSAMonBind[lsaObj3, LSAMonTakeDocumentTermMatrix] ]
   ,
   True
@@ -313,7 +327,7 @@ VerificationTest[ (* 19 *)
   TestID -> "Take-Factors-2"
 ];
 
-VerificationTest[ (* 20 *)
+VerificationTest[ (* 21 *)
   pos = LSAMonBind[ lsaObj3, LSAMonTakeTopicColumnPositions ];
   ColumnNames[ LSAMonBind[lsaObj3, LSAMonTakeH] ] == ColumnNames[ LSAMonBind[lsaObj3, LSAMonTakeDocumentTermMatrix]] [[ pos ]]
   ,
@@ -322,11 +336,11 @@ VerificationTest[ (* 20 *)
   TestID -> "Take-Factors-3"
 ];
 
-VerificationTest[ (* 21 *)
+VerificationTest[ (* 22 *)
   W = LSAMonBind[lsaObj3, LSAMonTakeW];
   docTermMat = LSAMonBind[lsaObj3, LSAMonTakeDocumentTermMatrix];
-  RowNames[W] == Keys[aStateOfUnionSpeeches] &&
-      RowNames[docTermMat] == Keys[aStateOfUnionSpeeches]
+  RowNames[W] == Keys[aTextHamlet] &&
+      RowNames[docTermMat] == Keys[aTextHamlet]
   ,
   True
   ,

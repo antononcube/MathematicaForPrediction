@@ -313,6 +313,11 @@ LSAMonGetDocuments[___][xs_, context_Association] := $LSAMonFailure;
 ClearAll[LSAMonMakeDocumentTermMatrix];
 
 LSAMonMakeDocumentTermMatrix[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonMakeDocumentTermMatrix[xs_, context_Association] := LSAMonMakeDocumentTermMatrix[][xs, context];
+
+LSAMonMakeDocumentTermMatrix[][xs_, context_Association] := LSAMonMakeDocumentTermMatrix[ {}, Automatic ][xs, context];
+
 LSAMonMakeDocumentTermMatrix[stemRules : (_List | _Dispatch | _Association), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
     Block[{stopWords = stopWordsArg, docs, docTermMat },
 
@@ -435,7 +440,7 @@ LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :
         Return[$LSAMonFailure]
       ];
 
-      If[ KeyExistsQ[context, "documentTermMatrix"] && !KeyExistsQ[context, "weightedDocumentTermMatrix"],
+      If[ !KeyExistsQ[context, "weightedDocumentTermMatrix"],
         Return[
           Fold[
             LSAMonBind,
