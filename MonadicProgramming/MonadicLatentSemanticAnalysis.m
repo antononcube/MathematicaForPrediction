@@ -330,7 +330,7 @@ LSAMonMakeDocumentTermMatrix[stemRules : (_List | _Dispatch | _Association), sto
 
       docTermMat = DocumentTermSSparseMatrix[ ToLowerCase /@ docs, {stemRules, stopWords} ];
 
-      LSAMon[xs, Join[context, <| "documents" -> docs, "documentTermMatrix" -> docTermMat, "terms" -> ColumnNames[docTermMat] |>]]
+      LSAMonUnit[xs, Join[context, <| "documents" -> docs, "documentTermMatrix" -> docTermMat, "terms" -> ColumnNames[docTermMat] |>]]
 
     ];
 
@@ -357,7 +357,7 @@ LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_
       Which[
         KeyExistsQ[context, "documentTermMatrix"],
         wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], globalWeightFunction, localWeightFunction, normalizerFunction];
-        LSAMon[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
+        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
 
         True,
         Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
@@ -372,7 +372,7 @@ LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
       Which[
         KeyExistsQ[context, "documentTermMatrix"],
         wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], args];
-        LSAMon[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
+        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
 
         True,
         Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
@@ -508,7 +508,7 @@ LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :
       W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["documentTermMatrix"]], "ColumnNames" -> automaticTopicNames ];
       H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> automaticTopicNames, "ColumnNames" -> ColumnNames[context["documentTermMatrix"]][[pos]] ];
 
-      LSAMon[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames" -> automaticTopicNames |>]]
+      LSAMonUnit[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames" -> automaticTopicNames |>]]
 
     ];
 
@@ -543,7 +543,7 @@ LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, conte
               numberOfNNs]} &,
               Sort[words]];
 
-        LSAMon[thRes, Join[context, <|"statisticalThesaurus" -> thRes|>]],
+        LSAMonUnit[thRes, Join[context, <|"statisticalThesaurus" -> thRes|>]],
 
         True,
         Echo["No factorization of the document-term matrix is made.", "LSAMonStatisticalThesaurus:"];
@@ -582,7 +582,7 @@ LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
                 Style[#, Blue, FontFamily -> "Times"] & /@ {"word", "statistical thesaurus"}],
               Dividers -> All, Alignment -> Left,
               Spacings -> {Automatic, 0.75}];
-        LSAMon[xs, context],
+        LSAMonUnit[xs, context],
 
         True,
         Echo["No statistical thesaurus is computed.", "LSAMonEchoStatisticalThesaurus:"];
@@ -969,7 +969,7 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
 
       ];
 
-      LSAMon[res, context]
+      LSAMonUnit[res, context]
 
     ];
 

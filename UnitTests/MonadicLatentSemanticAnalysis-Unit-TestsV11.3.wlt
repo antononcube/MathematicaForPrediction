@@ -52,8 +52,7 @@ BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"];
 
 
 VerificationTest[(* 1 *)
-  (*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];*)
-  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysisV11.3.m"];
   Length[SubValues[MonadicLatentSemanticAnalysis`LSAMonTopicExtraction]] > 0
   ,
   True
