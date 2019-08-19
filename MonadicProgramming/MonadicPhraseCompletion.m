@@ -94,6 +94,15 @@
       https://github.com/antononcube/MathematicaForPrediction/blob/master/JavaTriesWithFrequencies.m .
 *)
 
+(**************************************************************)
+(* Importing packages (if needed)                             *)
+(**************************************************************)
+
+If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
+];
+
+
 (*BeginPackage["MonadicPhraseCompletion`"]*)
 (** Exported symbols added here with SymbolName::usage *)
 
@@ -101,9 +110,19 @@
 
 (*Phrase Fill-in Monad (PhFillMon)*)
 
-GenerateStateMonadCode["PhFillMon"]
+(**************************************************************)
+(* Generation                                                 *)
+(**************************************************************)
 
-ClearAll[PhFillMonMakeNGramTrie]
+(* Generate base functions of PhFillMon monad (through StMon.) *)
+
+GenerateStateMonadCode[ "PhFillMon", "FailureSymbol" -> $PhFillMonFailure, "StringContextNames" -> False ];
+
+(**************************************************************)
+(* Generation                                                 *)
+(**************************************************************)
+
+ClearAll[PhFillMonMakeNGramTrie];
 PhFillMonMakeNGramTrie[___][None] := None;
 PhFillMonMakeNGramTrie[indexPermutation_: {_Integer ..}][xs_, context_] :=
     Block[{jTr, p, ip},
@@ -126,7 +145,7 @@ PhFillMonMakeNGramTrie[indexPermutation_: {_Integer ..}][xs_, context_] :=
     ];
 
 
-ClearAll[PhFillMonPhraseSuggestionPaths]
+ClearAll[PhFillMonPhraseSuggestionPaths];
 Options[PhFillMonPhraseSuggestionPaths] = {Prepend -> True};
 PhFillMonPhraseSuggestionPaths[phrase : {_String ..}, maxLength : (Automatic | _Integer) : Automatic][xs_, context_] :=
     Block[{prependQ = TrueQ[OptionValue[PhFillMonPhraseSuggestionPaths, Prepend]], res, phrasePairs},
@@ -160,15 +179,17 @@ PhFillMonPhraseSuggestionPaths[phrase : {_String ..}, maxLength : (Automatic | _
     ];
 
 
-ClearAll[PhFillMonPhraseSuggestions]
+ClearAll[PhFillMonPhraseSuggestions];
 PhFillMonPhraseSuggestions[phrase : {_String ...}][xs_, context_] :=
     Block[{res},
-      If[Length[phrase] == 0, PhFillMon[{}, context],
+      If[ Length[phrase] == 0,
+
+        PhFillMon[Unit{}, context],
       (*ELSE*)
 
-        res = PhFillMonBind[PhFillMon[xs, context], PhFillMonPhraseSuggestionPaths[phrase, Automatic]];
+        res = Fold[ PhFillMonBind, PhFillMonUnit[xs, context], { PhFillMonPhraseSuggestionPaths[phrase, Automatic], PhFillMonTakeValue } ];
 
-        res = Select[First[res], Length[#] == Length[context["indexPermutation"]] &];
+        res = Select[ res, Length[#] == Length[context["indexPermutation"]] &];
 
         res =
             Map[
@@ -180,7 +201,7 @@ PhFillMonPhraseSuggestions[phrase : {_String ...}][xs_, context_] :=
     ];
 
 
-ClearAll[PhFillMonPredictedIndex]
+ClearAll[PhFillMonPredictedIndex];
 PhFillMonPredictedIndex[][xs_,context_] :=
     Block[{},
       If[! KeyExistsQ[context["indexPermutation"]],

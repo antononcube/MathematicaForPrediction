@@ -92,17 +92,17 @@
 
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
-  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"]
+  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
 
 If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
-  Echo["CrossTabulate.m", "Importing from GitHub:"]
+  Echo["CrossTabulate.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
 If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
-  Echo["OutlierIdentifiers.m", "Importing from GitHub:"]
+  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
 
@@ -113,7 +113,7 @@ If[Length[DownValues[JavaTriesWithFrequencies`JavaTrieCreate]] == 0,
 ];
 
 If[Length[DownValues[Soundex`Soundex]] == 0,
-  Echo["Soundex.m", "Importing from GitHub:"]
+  Echo["Soundex.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/Soundex.m"]
 ];
 
@@ -135,7 +135,7 @@ Needs["JavaTriesWithFrequencies`"];
 
 (* Generate base functions of TextAMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "TextAMon", "StringContextNames" -> True ]
+GenerateStateMonadCode[ "TextAMon", "FailureSymbol" -> $TextAMonFailure, "StringContextNames" -> True ];
 
 
 (**************************************************************)
@@ -148,7 +148,8 @@ If[ !StringQ[$JavaTriesWithFrequenciesPath],
 ];
 
 If[ !StringQ[$POSTaggerPath],
-  $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-2015-12-09";
+(*  $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-full-2015-12-09";*)
+    $POSTaggerPath = "/Users/antonov/Java/StanfordPosTagger/stanford-postagger-full-2018-10-16";
 ];
 
 If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava],
@@ -156,7 +157,7 @@ If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava],
   Needs["JLink`"];
   AddToClassPath[$JavaTriesWithFrequenciesPath];
   AddToClassPath[$POSTaggerPath];
-  ReinstallJava[JVMArguments -> "-Xmx8g -Xms1g"];
+  ReinstallJava[JVMArguments -> "-Xmx12g -Xms2g"];
 
   LoadJavaClass["java.util.Collections"];
   LoadJavaClass["java.util.Arrays"];
@@ -176,13 +177,13 @@ If[ ( BooleanQ[$LoadJava] && $LoadJava ) || ! BooleanQ[$LoadJava],
 (**************************************************************)
 
 
-ClearAll[JavaStanfordTagString]
+ClearAll[JavaStanfordTagString];
 JavaStanfordTagString[str_String] :=
     JavaBlock[
       JAVASTABFORDPOSTAGGER@tagString[str]
     ];
 
-Clear[SeparatePOSTags]
+Clear[SeparatePOSTags];
 SeparatePOSTags[tagged_String] :=
     Block[{},
       StringCases[tagged,
@@ -218,24 +219,31 @@ aStanfordPOSTagToAbbr = <|"CC" -> "Coordinating conjunction ",
 (* Text analysis functions                                    *)
 (**************************************************************)
 
-ClearAll[TextAMonSentences]
+ClearAll[TextAMonSentences];
+
+Options[TextAMonSentences] =
+    {
+      "Splitter" -> Function[{text}, Select[StringSplit[text, {".", "!", "?", "...", ";"}], StringLength[#] >= 1 &] ]
+    };
 
 TextAMonSentences[___][None] := None;
-TextAMonSentences[][xs_, context_] :=
-    Block[{text, sentences},
+
+TextAMonSentences[ opts:OptionsPattern[] ][xs_, context_] :=
+    Block[{text, sentences, splitFunc = OptionValue[TextAMonSentences, "Splitter"]},
+
       Which[
 
         StringQ[xs],
-        sentences = TextSentences[ xs ];
+        sentences = splitFunc[ xs ];
         TextAMon[ sentences, Join[ context, <|"text"->xs, "sentences"->sentences|> ] ],
 
         VectorQ[xs,StringQ],
         text = StringJoin[Riffle[xs," "]];
-        sentences = TextSentences[ text ];
+        sentences = splitFunc[ text ];
         TextAMon[ sentences, Join[ context, <|"text"->text, "sentences"->sentences|> ] ],
 
         KeyExistsQ[context, "text"],
-        sentences = TextSentences[ context["text"] ];
+        sentences = splitFunc[ context["text"] ];
         TextAMon[ sentences, Join[ context, <|"sentences"->sentences|> ] ],
 
         True,
@@ -245,7 +253,7 @@ TextAMonSentences[][xs_, context_] :=
     ];
 
 
-ClearAll[TextAMonWords]
+ClearAll[TextAMonWords];
 
 Options[TextAMonWords] = { Method-> TextWords };
 
@@ -264,7 +272,7 @@ TextAMonWords[][xs_, context_] :=
     ];
 
 
-ClearAll[TextAMonComputePOSTags]
+ClearAll[TextAMonComputePOSTags];
 
 TextAMonComputePOSTags[___][None] := None;
 TextAMonComputePOSTags[args___][xs_, context_] :=
@@ -274,20 +282,21 @@ TextAMonComputePOSTags[args___][xs_, context_] :=
     ];
 
 
-ClearAll[TextAMonPOSWordsTrie]
+ClearAll[TextAMonPOSWordsTrie];
 
 TextAMonPOSWordsTrie[___][None] := None;
 TextAMonPOSWordsTrie[separator_String:"®"][xs_,context_] :=
     TextAMonBind[ TextAMon[xs,context], TextAMonTagWordsTrie[separator] ];
 
 
-ClearAll[TextAMonComputeTagWordPairs]
+ClearAll[TextAMonComputeTagWordPairs];
 
-Options[TextAMonComputeTagWordPairs] = {"SentenceToTagWordPairsFunction" -> "StandfordTagger"};
+Options[TextAMonComputeTagWordPairs] = { "SentenceToTagWordPairsFunction" -> "StandfordTagger" };
 
 TextAMonComputeTagWordPairs[___][None] := None;
+
 TextAMonComputeTagWordPairs[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{sentences, tagWordPairs, res, taggerFunc},
+    Block[{sentences, tagWordPairs, taggerFunc},
 
       taggerFunc = OptionValue[TextAMonComputeTagWordPairs, "SentenceToTagWordPairsFunction"];
 
@@ -318,7 +327,7 @@ TextAMonComputeTagWordPairs[opts : OptionsPattern[]][xs_, context_] :=
     ];
 
 
-ClearAll[TextAMonTagWordsTrie]
+ClearAll[TextAMonTagWordsTrie];
 
 TextAMonTagWordsTrie[___][None] := None;
 TextAMonTagWordsTrie[separator_String: "®"][xs_, context_] :=
@@ -424,7 +433,7 @@ TextAMonEchoPOSWordsInterface[ opts:OptionsPattern[] ][xs_, context_] :=
     ];
 
 
-ClearAll[TextAMonMakeWordTrie]
+ClearAll[TextAMonMakeWordTrie];
 
 TextAMonMakeWordTrie[___][None] := None;
 TextAMonMakeWordTrie[ separator_String:"®" ][xs_, context_] :=
@@ -449,7 +458,7 @@ TextAMonMakeWordTrie[ separator_String:"®" ][xs_, context_] :=
     ];
 
 
-ClearAll[TextAMonMakeNGramTrie]
+ClearAll[TextAMonMakeNGramTrie];
 
 TextAMonMakeNGramTrie[___][None] := None;
 TextAMonMakeNGramTrie[___][xs_, context_] :=
