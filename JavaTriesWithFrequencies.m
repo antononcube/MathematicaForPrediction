@@ -552,6 +552,6 @@ JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "Probabilities", opts:Option
     ];
 
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
