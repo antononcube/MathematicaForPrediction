@@ -296,9 +296,13 @@ JavaTrieLeafProbabilities[jTr_?JavaObjectQ, opts:OptionsPattern[]] :=
       ]
     ];
 
+(*JavaTrieLeafProbabilitiesSimple[jTr_?JavaObjectQ]:=*)
+(*    ImportString[ StringReplace[ TrieFunctions`leafProbabilitiesJSON[jTr], "\"\"\"" -> "\"\\\"\""], "JSON"];*)
 JavaTrieLeafProbabilitiesSimple[jTr_?JavaObjectQ]:=
-    ImportString[ StringReplace[ TrieFunctions`leafProbabilitiesJSON[jTr], "\"\"\"" -> "\"\\\"\""], "JSON"];
-
+    Block[{str},
+      str = StringReplace[ TrieFunctions`leafProbabilitiesJSON[jTr], "\"\"\"" -> "\"\\\"\""];
+      ImportString[ FromCharacterCode@ToCharacterCode[str, "UTF-8"], "RawJSON"]
+    ];
 
 Clear[JavaTrieNodeCounts];
 JavaTrieNodeCounts[jTr_?JavaObjectQ] :=
@@ -321,8 +325,13 @@ JavaTrieShrinkInternalNodes[jTr_?JavaObjectQ, sep_String, th_?NumberQ ] :=
     TrieFunctions`shrinkInternalNodes[jTr, sep, th];
 
 Clear[JavaTrieToJSON];
-JavaTrieToJSON[jTr_?JavaObjectQ] := ImportString[jTr@toJSON[], "JSON"];
-JavaTrieToJSON[jTr_?JavaObjectQ, maxLevel_Integer ] := ImportString[jTr@toJSON[maxLevel], "JSON"];
+(*JavaTrieToJSON[jTr_?JavaObjectQ] := ImportString[jTr@toJSON[], "JSON"];*)
+(*JavaTrieToJSON[jTr_?JavaObjectQ, maxLevel_Integer ] := ImportString[jTr@toJSON[maxLevel], "JSON"];*)
+JavaTrieToJSON[jTr_?JavaObjectQ] :=
+    ImportString[FromCharacterCode@ToCharacterCode[jTr@toJSON[], "UTF-8"], "RawJSON"];
+
+JavaTrieToJSON[jTr_?JavaObjectQ, maxLevel_Integer ] :=
+    ImportString[FromCharacterCode@ToCharacterCode[jTr@toJSON[maxLevel], "UTF-8"], "RawJSON"];
 
 Clear[JavaTrieRetrieve];
 JavaTrieRetrieve[jTr_?JavaObjectQ, sword : {_String ..}] :=
@@ -477,7 +486,7 @@ Clear[JavaTrieForm];
 Options[JavaTrieForm] = Options[LayeredGraphPlot];
 JavaTrieForm[jTr_?JavaObjectQ, opts:OptionsPattern[]] :=
     LayeredGraphPlot[JSONTrieToRules[JavaTrieToJSON[jTr]],
-      opts, VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &)];
+      opts, VertexShapeFunction -> (Text[GrFramed[#2[[1]]], #1] &), PlotTheme -> "Classic" ];
 
 
 ClearAll[JavaTrieComparisonGrid];
