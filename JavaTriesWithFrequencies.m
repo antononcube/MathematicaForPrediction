@@ -117,99 +117,99 @@
 
 (* This file was created with the Mathematica plug-in for IntelliJ IDEA. *)
 
-BeginPackage["JavaTriesWithFrequencies`"]
+BeginPackage["JavaTriesWithFrequencies`"];
 
-JavaTrieClone::usage = "JavaTrieClone[ jTr ] makes a deep clone of a given Java trie."
+JavaTrieClone::usage = "JavaTrieClone[ jTr ] makes a deep clone of a given Java trie.";
 
 JavaTrieHasCompleteMatchQ::usage = "JavaTrieHasCompleteMatchQ[ jTr_, sw:{_String..}] finds does a fraction\
- of the list of strings sw is a complete match in the Java trie jTr."
+ of the list of strings sw is a complete match in the Java trie jTr.";
 
 JavaTrieContains::usage = "JavaTrieContains[ jTr_, sw:{_String..}] finds is the list of strings\
- sw a complete match in the Java trie jTr."
+ sw a complete match in the Java trie jTr.";
 
-JavaTrieCreate::usage = "JavaTrieCreate[ ws:{{_String..}..}] creates a Java trie object from a list of string lists."
+JavaTrieCreate::usage = "JavaTrieCreate[ ws:{{_String..}..}] creates a Java trie object from a list of string lists.";
 
 JavaTrieCreateBySplit::usage = "JavaTrieCreateBySplit[ ws:{_String..}, regex_String:\"\"] creates a Java trie object\
- from a list of strings that are split with a given regex."
+ from a list of strings that are split with a given regex.";
 
 JavaTrieEqualQ::usage = "JavaTrieEqualQ[ jTr1, jTr2] compares two Java tries and returns True if\
- the tries have the same shape and all corresponding keys and values are the same."
+ the tries have the same shape and all corresponding keys and values are the same.";
 
-JavaTrieGetWords::usage = "JavaTrieGetWords[ jTr_, sw:{_String..}] gives a list words in jTr that start with sw."
+JavaTrieGetWords::usage = "JavaTrieGetWords[ jTr_, sw:{_String..}] gives a list words in jTr that start with sw.";
 
 JavaTrieInsert::usage = "JavaTrieInsert[ jTr_, sw:{_String..}] inserts a list of strings into the Java trie jTr.\
- JavaTrieInsert[ jTr_, sws:{{_String..}..}] inserts each of the \"words\" of sws into jTr."
+ JavaTrieInsert[ jTr_, sws:{{_String..}..}] inserts each of the \"words\" of sws into jTr.";
 
 JavaTrieInstall::usage = "JavaTrieInstall[path_String] installs Java and loads the JavaTrie classes\
- from the jar file in the specified class path."
+ from the jar file in the specified class path.";
 
 JavaTrieKeyQ::usage = "JavaTrieKeyQ[jTr_, sw:{_String..}] finds is the list of strings sw\
-a key in the Java trie jTr."
+a key in the Java trie jTr.";
 
-JavaTrieLeafProbabilities::usage = "Gives the probabilities to reach the leaves of a trie."
+JavaTrieLeafProbabilities::usage = "Gives the probabilities to reach the leaves of a trie.";
 
-JavaTrieMapOptimizationCall::usage = "Used for optimization calls over lists of \"words\"."
+JavaTrieMapOptimizationCall::usage = "Used for optimization calls over lists of \"words\".";
 
-JavaTrieMemberQ::usage = "Same as JavaTrieContains."
+JavaTrieMemberQ::usage = "Same as JavaTrieContains.";
 
-JavaTrieMerge::usage = "Merges two Java tries."
+JavaTrieMerge::usage = "Merges two Java tries.";
 
-JavaTrieNodeCounts::usage = "Returns the node counts in trie (total, internal, leaves.)"
+JavaTrieNodeCounts::usage = "Returns the node counts in trie (total, internal, leaves.)";
 
 JavaTriePosition::usage = "JavaTriePosition[ jTr_, sw:{_String..}] finds a sub-list of the list of strings\
- sw that corresponds to a sub-trie in the Java trie jTr."
+ sw that corresponds to a sub-trie in the Java trie jTr.";
 
 JavaTrieNodeProbabilities::usage = "Gives the corresponding Java trie with node frequencies converted\
- to probabilities."
+ to probabilities.";
 
 JavaTrieRetrieve::usage = "JavaTrieRetrieve[ jTr_, sw:{_String..}] retrieves the sub-trie in jTr\
  that corresponds to sw. Note that only a leading part of sw can be found jTr. \
- The last found element of sw is the root of the returned sub-trie."
+ The last found element of sw is the root of the returned sub-trie.";
 
 JavaTrieJSONRootToLeafPaths::usage = "Gives lists of key-value pairs corresponding to the root-to-leaf paths\
- in a given trie. (Using a JSON string.)"
+ in a given trie. (Using a JSON string.)";
 
 JavaTrieRootToLeafPaths::usage = "Gives lists of key-value pairs corresponding to the root-to-leaf paths\
- in a given trie."
+ in a given trie.";
 
-JavaTrieRegexRemove::usage = "Remove nodes that have keys adhering to a regex expression."
+JavaTrieRegexRemove::usage = "Remove nodes that have keys adhering to a regex expression.";
 
-JavaTriePrune::usage = "Prune a trie to a specified maximum level. The root is level 0."
+JavaTriePrune::usage = "Prune a trie to a specified maximum level. The root is level 0.";
 
 JavaTrieShrink::usage = "JavaTrieShrink[ jTr_, sep_String:\"\"] concatenates the \"single path\" nodes\
- in the trie jTr using the given separator sep."
+ in the trie jTr using the given separator sep.";
 
 JavaTrieShrinkInternalNodes::usage = "JavaTrieShrinkInternalNodes[ jTr_, sep_String:\"\"] concatenates\
- the \"single path\" internal nodes in the trie jTr using the given separator sep."
+ the \"single path\" internal nodes in the trie jTr using the given separator sep.";
 
-JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above) a threshold."
+JavaTrieThresholdRemove::usage = "Remove nodes that have values below (or above) a threshold.";
 
 JavaTrieParetoFractionRemove::usage = "Remove nodes that have values below (or above) thresholds derived\
- from a specified Pareto fraction."
+ from a specified Pareto fraction.";
 
-JavaTrieRandomChoice::usage = "Random choice of a root-to-leaf path."
+JavaTrieRandomChoice::usage = "Random choice of a root-to-leaf path.";
 
-JavaTrieToJSON::usage = "Converts a Java trie to a corresponding JSON expression."
+JavaTrieToJSON::usage = "Converts a Java trie to a corresponding JSON expression.";
 
-JSONTrieToRules::usage = "Converts a JSON trie into rules for GraphPlot."
+JSONTrieToRules::usage = "Converts a JSON trie into rules for GraphPlot.";
 
-JavaTrieForm::usage = "Plots a given Java trie object."
+JavaTrieForm::usage = "Plots a given Java trie object. Takes options for LayeredGraphPlot";
 
-JavaTrieComparisonGrid::usage = "Makes a grid trie plots for a specified list of Java trie expressions."
+JavaTrieComparisonGrid::usage = "Makes a grid trie plots for a specified list of Java trie expressions.";
 
 JavaTrieClassify::usage = "JavaTrieClassify[jTr_,record_] classifies a record using a Java trie. \
 The signature JavaTrieClassify[jTr_,record_,prop_] can take properties as the ones given to ClassifierFunction. \
-JavaTrieClassify[jTr_,record_] is the same as JavaTrieClassify[tr_,record_,\"Decision\"]."
+JavaTrieClassify[jTr_,record_] is the same as JavaTrieClassify[tr_,record_,\"Decision\"].";
 
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Needs["JLink`"]
+Needs["JLink`"];
 
-Clear[JavaTrieClone]
+Clear[JavaTrieClone];
 JavaTrieClone[ jTr_?JavaObjectQ ] := jTr@clone[];
 
-Clear[JavaTrieCreateBySplit]
+Clear[JavaTrieCreateBySplit];
 JavaTrieCreateBySplit[words : {_String ..}, regex_String: ""] :=
     Block[{jWords, jSp},
       jWords = MakeJavaObject[words];
@@ -226,7 +226,7 @@ JavaTrieCreateBySplit[ swords : {{_String ..} ..}, regex_String: "®ø®"] :=
       TrieFunctions`createBySplit[jWords, jSp]
     ];
 
-Clear[JavaTrieCreate]
+Clear[JavaTrieCreate];
 JavaTrieCreate[swords : {{_String ..} ..}] :=
     Block[{jWords, jW},
       jWords = JavaNew["java.util.ArrayList"];
@@ -238,14 +238,14 @@ JavaTrieCreate[swords : {{_String ..} ..}] :=
       TrieFunctions`create[jWords]
     ];
 
-Clear[JavaTrieEqualQ]
+Clear[JavaTrieEqualQ];
 JavaTrieEqualQ[ jTr1_?JavaObjectQ, jTr2_?JavaObjectQ ] := jTr1@equals[ jTr2 ];
 
-Clear[JavaTrieMerge]
+Clear[JavaTrieMerge];
 JavaTrieMerge[jTr1_?JavaObjectQ, jTr2_?JavaObjectQ] :=
     TrieFunctions`merge[jTr1, jTr2];
 
-Clear[JavaTrieInsert]
+Clear[JavaTrieInsert];
 JavaTrieInsert[jTr_?JavaObjectQ, word : {_String ..}] :=
     TrieFunctions`insert[jTr, Arrays`asList[MakeJavaObject[word]]];
 
@@ -261,7 +261,7 @@ JavaTrieInsert[jTr_?JavaObjectQ, words : {{_String ..} ..}] :=
       TrieFunctions`merge[jTr, jTr2]
     ];
 
-Clear[JavaTrieInstall]
+Clear[JavaTrieInstall];
 JavaTrieInstall[path_String, opts:OptionsPattern[]] :=
     Block[{},
       Needs["JLink`"];
@@ -276,7 +276,7 @@ JavaTrieInstall[path_String, opts:OptionsPattern[]] :=
       JLink`LoadJavaClass["TrieFunctions"];
     ];
 
-Clear[JavaTrieLeafProbabilities, JavaTrieLeafProbabilitiesSimple]
+Clear[JavaTrieLeafProbabilities, JavaTrieLeafProbabilitiesSimple];
 
 Options[JavaTrieLeafProbabilities] = { "Normalized"->False, "ChopValue"->Automatic };
 
@@ -300,38 +300,38 @@ JavaTrieLeafProbabilitiesSimple[jTr_?JavaObjectQ]:=
     ImportString[ StringReplace[ TrieFunctions`leafProbabilitiesJSON[jTr], "\"\"\"" -> "\"\\\"\""], "JSON"];
 
 
-Clear[JavaTrieNodeCounts]
+Clear[JavaTrieNodeCounts];
 JavaTrieNodeCounts[jTr_?JavaObjectQ] :=
     AssociationThread[{"total","internal","leaves"}->JLink`JavaObjectToExpression[TrieFunctions`nodeCounts[jTr]]];
 
-Clear[JavaTrieNodeProbabilities]
+Clear[JavaTrieNodeProbabilities];
 JavaTrieNodeProbabilities[jTr_?JavaObjectQ] :=
     TrieFunctions`nodeProbabilities[jTr];
 
-Clear[JavaTrieShrink]
+Clear[JavaTrieShrink];
 JavaTrieShrink[jTr_?JavaObjectQ, sep_String: ""] := TrieFunctions`shrink[jTr, sep];
 
 JavaTrieShrink[jTr_?JavaObjectQ, sep_String, th_?NumberQ ] := TrieFunctions`shrinkByThreshold[jTr, sep, th];
 
-Clear[JavaTrieShrinkInternalNodes]
+Clear[JavaTrieShrinkInternalNodes];
 JavaTrieShrinkInternalNodes[jTr_?JavaObjectQ, sep_String: ""] :=
     TrieFunctions`shrinkInternalNodes[jTr, sep, 1.0 ];
 
 JavaTrieShrinkInternalNodes[jTr_?JavaObjectQ, sep_String, th_?NumberQ ] :=
     TrieFunctions`shrinkInternalNodes[jTr, sep, th];
 
-Clear[JavaTrieToJSON]
+Clear[JavaTrieToJSON];
 JavaTrieToJSON[jTr_?JavaObjectQ] := ImportString[jTr@toJSON[], "JSON"];
 JavaTrieToJSON[jTr_?JavaObjectQ, maxLevel_Integer ] := ImportString[jTr@toJSON[maxLevel], "JSON"];
 
-Clear[JavaTrieRetrieve]
+Clear[JavaTrieRetrieve];
 JavaTrieRetrieve[jTr_?JavaObjectQ, sword : {_String ..}] :=
     TrieFunctions`retrieve[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
 JavaTrieRetrieve[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
     JavaTrieMapOptimizationCall[TrieFunctions`mapRetrieve, jTr, swords];
 
-Clear[JavaTriePosition]
+Clear[JavaTriePosition];
 JavaTriePosition[jTr_?JavaObjectQ, sword : {_String ..}] :=
     JavaObjectToExpression @ TrieFunctions`position[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
@@ -342,21 +342,21 @@ JavaTriePosition[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
           JavaTrieMapOptimizationCall[TrieFunctions`mapPosition, jTr, swords]
         ];
 
-Clear[JavaTrieKeyQ]
+Clear[JavaTrieKeyQ];
 JavaTrieKeyQ[jTr_?JavaObjectQ, sword : {_String ..}] :=
     TrieFunctions`isKey[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
 JavaTrieKeyQ[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
     JavaTrieMapOptimizationCall[TrieFunctions`mapIsKey, jTr, swords];
 
-Clear[JavaTrieHasCompleteMatchQ]
+Clear[JavaTrieHasCompleteMatchQ];
 JavaTrieHasCompleteMatchQ[jTr_?JavaObjectQ, sword : {_String ..}] :=
     TrieFunctions`hasCompleteMatch[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
 JavaTrieHasCompleteMatchQ[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
     JavaTrieMapOptimizationCall[TrieFunctions`mapHasCompleteMatch, jTr, swords];
 
-Clear[JavaTrieContains]
+Clear[JavaTrieContains];
 JavaTrieContains[jTr_?JavaObjectQ, sword : {_String ..}] :=
     TrieFunctions`contains[jTr, Arrays`asList[MakeJavaObject[sword]]];
 
@@ -365,7 +365,7 @@ JavaTrieContains[jTr_?JavaObjectQ, swords : {{_String ..} ..}] :=
 
 JavaTrieMemberQ = JavaTrieContains;
 
-Clear[JavaTrieMapOptimizationCall]
+Clear[JavaTrieMapOptimizationCall];
 JavaTrieMapOptimizationCall[func_, jTr_?JavaObjectQ,
   swords : {{_String ..} ..}, splitRegex_String: "®ø®"] :=
     Block[{jWords},
@@ -376,7 +376,7 @@ JavaTrieMapOptimizationCall[func_, jTr_?JavaObjectQ,
       func[jTr, jWords]
     ];
 
-Clear[JavaTrieGetWords]
+Clear[JavaTrieGetWords];
 JavaTrieGetWords[jTr_?JavaObjectQ] :=
     Block[{res},
       res = JavaObjectToExpression /@ JavaObjectToExpression[TrieFunctions`getWords[jTr]];
@@ -390,7 +390,7 @@ JavaTrieGetWords[jTr_?JavaObjectQ, sword : {_String ..}] :=
       If[res === Null, {}, res]
     ];
 
-Clear[JavaTrieJSONRootToLeafPaths]
+Clear[JavaTrieJSONRootToLeafPaths];
 JavaTrieJSONRootToLeafPaths[jTr_?JavaObjectQ] :=
     Map[{"key", "value"} /. # &,
       ImportString[TrieFunctions`pathsToJSON[TrieFunctions`rootToLeafPaths[jTr]], "JSON"], {2}];
@@ -404,14 +404,14 @@ JavaTrieRootToLeafPaths[jTr_?JavaObjectQ] :=
       MapThread[Transpose[{#1,#2}]&, {JLink`JavaObjectToExpression/@keyPaths, JLink`JavaObjectToExpression/@valuePaths}]
     ];
 
-Clear[JavaTrieRegexRemove]
+Clear[JavaTrieRegexRemove];
 JavaTrieRegexRemove[jTr_?JavaObjectQ, regex_String ] :=
       TrieFunctions`removeByKeyRegex[jTr, regex];
 
 JavaTrieRegexRemove[jTr_?JavaObjectQ, regex_String, postfix_String ] :=
     TrieFunctions`removeByKeyRegex[jTr, regex, postfix];
 
-Clear[JavaTrieThresholdRemove]
+Clear[JavaTrieThresholdRemove];
 JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ, belowThresholdQ:(True|False), postfix_String ] :=
     TrieFunctions`removeByThreshold[jTr, threshold, belowThresholdQ, postfix];
 
@@ -424,7 +424,7 @@ JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ] :=
 JavaTrieThresholdRemove[jTr_?JavaObjectQ, threshold_?NumericQ, postfix_String] :=
     TrieFunctions`removeByThreshold[jTr, threshold, True, postfix];
 
-Clear[JavaTrieParetoFractionRemove]
+Clear[JavaTrieParetoFractionRemove];
 JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, removeBottomElementsQ:(True|False), postfix_String ] :=
     TrieFunctions`removeByParetoFraction[jTr, paretoFraction, removeBottomElementsQ, postfix];
 
@@ -437,11 +437,11 @@ JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ] :=
 JavaTrieParetoFractionRemove[jTr_?JavaObjectQ, paretoFraction_?NumericQ, postfix_String] :=
     TrieFunctions`removeByParetoFraction[jTr, paretoFraction, True, postfix];
 
-Clear[JavaTriePrune]
+Clear[JavaTriePrune];
 JavaTriePrune[jTr_?JavaObjectQ, maxLevel_Integer ] :=
     TrieFunctions`prune[jTr, maxLevel];
 
-Clear[JavaTrieRandomChoice]
+Clear[JavaTrieRandomChoice];
 Options[JavaTrieRandomChoice] = { "Weighted"->True };
 JavaTrieRandomChoice[jTr_?JavaObjectQ, opts:OptionsPattern[] ] :=
     JavaObjectToExpression[ TrieFunctions`randomChoice[jTr, TrueQ[OptionValue["Weighted"]] ] ];
@@ -449,7 +449,7 @@ JavaTrieRandomChoice[jTr_?JavaObjectQ, opts:OptionsPattern[] ] :=
 JavaTrieRandomChoice[jTr_?JavaObjectQ, n_Integer, opts:OptionsPattern[] ] :=
     JavaObjectToExpression /@ JavaObjectToExpression[ TrieFunctions`randomChoice[jTr, n, TrueQ[OptionValue["Weighted"]] ] ];
 
-Clear[JSONTrieToRules]
+Clear[JSONTrieToRules];
 JSONTrieToRules[tree_] := Block[{ORDER = 0}, JSONTrieToRules[tree, 0, 0]];
 JSONTrieToRules[tree_, level_, order_] :=
     Block[{nodeRules},
@@ -466,20 +466,21 @@ JSONTrieToRules[tree_, level_, order_] :=
     ];
 
 
-Clear[GrFramed]
+Clear[GrFramed];
 GrFramed[text_] :=
     Framed[text, {Background -> RGBColor[1, 1, 0.8],
       FrameStyle -> RGBColor[0.94, 0.85, 0.36],
       FrameMargins -> Automatic}];
 
 
-Clear[JavaTrieForm]
+Clear[JavaTrieForm];
+Options[JavaTrieForm] = Options[LayeredGraphPlot];
 JavaTrieForm[jTr_?JavaObjectQ, opts:OptionsPattern[]] :=
     LayeredGraphPlot[JSONTrieToRules[JavaTrieToJSON[jTr]],
-      VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &), opts];
+      opts, VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &)];
 
 
-ClearAll[JavaTrieComparisonGrid]
+ClearAll[JavaTrieComparisonGrid];
 SetAttributes[JavaTrieComparisonGrid, HoldAll]
 Options[JavaTrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision"->3}];
 JavaTrieComparisonGrid[jTrs : {_?JavaObjectQ ..}, opts : OptionsPattern[]] :=
@@ -498,7 +499,7 @@ JavaTrieComparisonGrid[jTrs : {_?JavaObjectQ ..}, opts : OptionsPattern[]] :=
     ];
 
 
-Clear[JavaTrieClassify]
+Clear[JavaTrieClassify];
 
 Options[JavaTrieClassify] := {"Default" -> None};
 
