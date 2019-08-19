@@ -522,7 +522,7 @@ JavaTrieClassify[tr_, record_, "Probabilities", opts : OptionsPattern[]] :=
     Block[{res, dval = OptionValue[JavaTrieClassify, "Default"]},
       res = JavaTrieLeafProbabilities[JavaTrieRetrieve[tr, record], "Normalized"->True];
       If[Length[res] == 0, <|dval -> 0|>,
-        res = AssociationThread[res[[All, 2, 2]] -> res[[All, 1, 2]]];
+        res = AssociationThread[res[[All, 1, 2]] -> res[[All, 2, 2]]];
         res = ReverseSort[Association[Rule @@@ res]]
       ]
     ];
@@ -531,13 +531,13 @@ JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "Decision", opts : OptionsPa
     First @* Keys @* TakeLargest[1] /@ JavaTrieClassify[tr, records, "Probabilities", opts];
 
 JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "Probability" -> class_, opts : OptionsPattern[]] :=
-    Map[Lookup[#, class, 0]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];
+    Map[ Lookup[#, class, 0]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];
 
 JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities", opts : OptionsPattern[]] :=
     Map[ Select[#, # > 0 &]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];
 
 JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "TopProbabilities" -> n_Integer, opts : OptionsPattern[]] :=
-    Map[TakeLargest[#, UpTo[n]]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];
+    Map[ TakeLargest[#, UpTo[n]]&, JavaTrieClassify[tr, records, "Probabilities", opts] ];
 
 JavaTrieClassify[tr_, records:(_Dataset|{_List..}), "Probabilities", opts:OptionsPattern[] ] :=
     Block[{clRes, classLabels, stencil},
