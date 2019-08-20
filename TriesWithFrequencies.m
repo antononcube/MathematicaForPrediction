@@ -158,36 +158,36 @@ The signature TrieClassify[tr_,record_,prop_] can take properties as the ones gi
 TrieClassify[tr_,record_] is the same as TrieClassify[tr_,record_,\"Decision\"]."
 
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Clear[TrieBodyQ]
+Clear[TrieBodyQ];
 TrieBodyQ[a_Association] := KeyExistsQ[a, $TrieValue];
 TrieBodyQ[___] := False;
 
-Clear[TrieQ]
+Clear[TrieQ];
 TrieQ[a_Association] := MatchQ[a, Association[x_ -> b_?TrieBodyQ]];
 TrieQ[___] := False;
 
-Clear[TrieRuleQ]
+Clear[TrieRuleQ];
 TrieRuleQ[a_Rule] := MatchQ[a, Rule[x_, b_?TrieBodyQ]];
 TrieRuleQ[___] := False;
 
 (* This is private context only. *)
-Clear[TrieWithTrieRootQ]
+Clear[TrieWithTrieRootQ];
 TrieWithTrieRootQ[a_Association] := MatchQ[a, Association[$TrieRoot -> b_?TrieBodyQ]];
 TrieWithTrieRootQ[___] := False;
 
-Clear[TrieNodeCounts]
+Clear[TrieNodeCounts];
 TrieNodeCounts[tr_] :=
     Block[{cs},
       cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity], Count[tr, <|$TrieValue -> _|>, Infinity]};
       <|"total" -> cs[[1]], "internal" -> cs[[1]] - cs[[2]], "leaves" -> cs[[2]]|>
     ];
 
-Clear[TrieDepth]
+Clear[TrieDepth];
 TrieDepth[tr_?TrieQ] := Depth[tr] - 2;
 
-Clear[TrieMerge]
+Clear[TrieMerge];
 TrieMerge[<||>, <||>] := <||>;
 TrieMerge[t1_?TrieQ, t2_?TrieQ] :=
     Block[{ckey},
@@ -212,10 +212,10 @@ TrieMerge[{t1_Association, t2_Association}] :=
     ];
 
 
-Clear[TrieBlank]
+Clear[TrieBlank];
 TrieBlank[] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 
-Clear[TrieMake, TrieInsert]
+Clear[TrieMake, TrieInsert];
 
 TrieMake[chars_List] := TrieMake[chars, 1];
 TrieMake[chars_List, v_Integer] := TrieMake[chars, v, v];
@@ -233,14 +233,14 @@ TrieInsert[tr_, word_List, value_] :=
     ];
 
 
-Clear[TrieCreate1]
+Clear[TrieCreate1];
 TrieCreate1[{}] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 TrieCreate1[words : {_List ..}] :=
     Fold[TrieInsert, <|
       $TrieRoot -> Join[<|$TrieValue -> 1|>, TrieMake[First[words], 1]]|>, Rest@words];
 
 
-Clear[TrieCreate]
+Clear[TrieCreate];
 TrieCreate[{}] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 TrieCreate[words : {_List ..}] :=
     Block[{},
@@ -250,11 +250,13 @@ TrieCreate[words : {_List ..}] :=
       ]
     ];
 
-Clear[TrieCreateBySplit]
+Clear[TrieCreateBySplit];
 TrieCreateBySplit[words : {_String ..}, patt_: ""] :=
     TrieCreate[ Map[StringSplit[#,""]&, words]]
 
-Clear[TrieSubTrie, TrieSubTriePathRec]
+Clear[TrieSubTrie, TrieSubTriePathRec];
+
+TrieSubTrie::wargs = "The first argument is expected to be a trie; the second argument is expected to be a list.";
 
 TrieSubTrie[tr_?TrieQ, wordArg_List ] :=
     Block[{path, word=wordArg},
@@ -265,6 +267,12 @@ TrieSubTrie[tr_?TrieQ, wordArg_List ] :=
       ]
     ];
 
+TrieSubTrie[___] :=
+    Block[{},
+      Message[TrieSubTrie::wargs];
+      $Failed
+    ];
+
 TrieSubTriePathRec[tr_, {}] := {};
 TrieSubTriePathRec[tr_, word_List] :=
     If[KeyExistsQ[tr, First[word]],
@@ -273,14 +281,14 @@ TrieSubTriePathRec[tr_, word_List] :=
     ] /; TrieBodyQ[tr] || TrieQ[tr];
 
 
-Clear[TriePosition]
+Clear[TriePosition];
 TriePosition[tr_?TrieQ, word_List] :=
     If[TrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}],
       TrieSubTriePathRec[tr, Prepend[word, $TrieRoot] ],
       TrieSubTriePathRec[tr, word ]
     ];
 
-Clear[TrieRetrieve]
+Clear[TrieRetrieve];
 TrieRetrieve[tr_?TrieQ, wordArg_List] :=
     Block[{p, word=wordArg},
       If[TrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
@@ -296,7 +304,7 @@ TrieRetrieve[tr_?TrieQ, wordArg_List] :=
     ];
 
 
-Clear[TrieHasCompleteMatchQ]
+Clear[TrieHasCompleteMatchQ];
 TrieHasCompleteMatchQ[tr_?TrieQ, word_List ] :=
     Block[{pos, b},
       pos = TriePosition[tr, word];
@@ -312,7 +320,7 @@ TrieHasCompleteMatchQ[tr_?TrieQ, word_List ] :=
       b
     ];
 
-Clear[TrieContains]
+Clear[TrieContains];
 TrieContains[tr_?TrieQ, wordArg_List ] :=
     Block[{pos, word = wordArg},
 
@@ -329,7 +337,7 @@ TrieContains[tr_?TrieQ, wordArg_List ] :=
 
 TrieMemberQ = TrieContains;
 
-Clear[TrieKeyExistsQ]
+Clear[TrieKeyExistsQ];
 TrieKeyExistsQ[ tr_?TrieQ, wordArg_List ] :=
     Block[{pos, word = wordArg},
       If[ TrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot,___}], word = Prepend[word, $TrieRoot] ];
@@ -338,7 +346,7 @@ TrieKeyExistsQ[ tr_?TrieQ, wordArg_List ] :=
     ];
 
 
-Clear[TrieNodeProbabilities, TrieNodeProbabilitiesRec]
+Clear[TrieNodeProbabilities, TrieNodeProbabilitiesRec];
 
 Options[TrieNodeProbabilities] = {"ProbabilityModifier" -> N};
 Options[TrieNodeProbabilitiesRec] = Options[TrieNodeProbabilities];
@@ -364,15 +372,16 @@ TrieNodeProbabilitiesRec[trb_?TrieBodyQ, opts : OptionsPattern[]] :=
       ]
     ];
 
-Clear[TrieValueTotal]
+Clear[TrieValueTotal];
 TrieValueTotal[trb_?TrieBodyQ] := Total[Map[#[$TrieValue] &, KeyDrop[trb, $TrieValue]]];
 
-Clear[TrieLeafProbabilities, TrieLeafProbabilitiesRec]
+Clear[TrieLeafProbabilities, TrieLeafProbabilitiesRec];
 
 TrieLeafProbabilities::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency.";
 
 TrieLeafProbabilities[trieArg_?TrieQ] :=
     Block[{res},
+
       res =
           Which[
             TrueQ[trieArg[First@Keys@trieArg][$TrieValue] == 0],
@@ -381,7 +390,8 @@ TrieLeafProbabilities[trieArg_?TrieQ] :=
             True,
             TrieLeafProbabilitiesRec[First@Keys@trieArg, First@Values@trieArg]
           ];
-      Merge[res, Total]
+
+      If[Length[res]==1, res, Merge[res, Total]]
     ];
 
 TrieLeafProbabilities[args__] :=
@@ -392,19 +402,25 @@ TrieLeafProbabilities[args__] :=
 
 TrieLeafProbabilitiesRec[k_, trb_?TrieBodyQ] :=
     Block[{res, sum},
+
       Which[
-        Length[Keys[trb]] == 1, k -> trb[$TrieValue],
+
+        Length[Keys[trb]] == 1,
+        {k -> trb[$TrieValue]},
+
         True,
         sum = TrieValueTotal[trb];
         res = KeyValueMap[TrieLeafProbabilitiesRec, KeyDrop[trb, $TrieValue]];
         If[sum < 1,
           res = Append[res, k -> (1 - sum)]
         ];
-        res = Map[#[[1]] -> #[[2]]*trb[$TrieValue] &, Flatten[res, 1]]]
+        res = Map[#[[1]] -> #[[2]]*trb[$TrieValue] &, Flatten[res, 1]]
+
+      ]
     ];
 
 
-Clear[NodeJoin]
+Clear[NodeJoin];
 NodeJoin[n_String] := n;
 NodeJoin[n1_String, n2_String] := n1 <> n2;
 NodeJoin[n1_List, n2_String] := List[n1, n2];
@@ -414,7 +430,7 @@ NodeJoin[n1_, n2_List] := Prepend[n2, n1];
 NodeJoin[n1_List, n2_] := Append[n1, n2];
 NodeJoin[n1_, n2_] := List[n1, n2];
 
-Clear[TrieShrink, TrieShrinkRec]
+Clear[TrieShrink, TrieShrinkRec];
 
 TrieShrink::wargs = "The first argument is expected to be a trie; the second, optional argument is expected to a string.";
 
@@ -451,7 +467,7 @@ TrieShrinkRec[tr_?TrieRuleQ] :=
     ];
 
 (* I am not particularly happy with using FixedPoint. This has to be profiled. *)
-Clear[TrieRootToLeafPaths]
+Clear[TrieRootToLeafPaths];
 TrieRootToLeafPaths[tr_?TrieQ] :=
     Map[List @@@ Most[#[[1]]] &,
       FixedPoint[
@@ -471,7 +487,7 @@ TrieRootToLeafPaths[tr_?TrieQ] :=
     ];
 
 (* This is implemented because it looks neat, and it can be used for tensor creation. *)
-Clear[TrieRootToLeafPathRules]
+Clear[TrieRootToLeafPathRules];
 TrieRootToLeafPathRules[tr_?TrieQ] :=
     Map[ Most[#[[1]]]->#[[2]] &,
       FixedPoint[
@@ -484,7 +500,7 @@ TrieRootToLeafPathRules[tr_?TrieQ] :=
       ]
     ];
 
-Clear[TrieGetWords]
+Clear[TrieGetWords];
 TrieGetWords[ tr_?TrieQ, word_List ] :=
     Which[
       Length[word] == 0,
@@ -498,7 +514,7 @@ TrieGetWords[ tr_?TrieQ, word_List ] :=
     ];
 
 
-Clear[TriePrune, TriePruneRec]
+Clear[TriePrune, TriePruneRec];
 TriePrune[trie_?TrieQ, maxLevel_Integer] :=
     Block[{},
       Association[TriePruneRec[First @ Normal @ trie, maxLevel, 0]]
@@ -519,7 +535,7 @@ TriePruneRec[tr_?TrieRuleQ, maxLevel_Integer, level_Integer] :=
       ]
     ];
 
-Clear[TrieToRules]
+Clear[TrieToRules];
 TrieToRules[tree_?TrieQ] := Block[{ORDER = 0}, TrieToRules[tree, 0, 0]];
 TrieToRules[tree_, level_, order_] :=
     Block[{nodeRules, k, v},
@@ -539,17 +555,20 @@ TrieToRules[tree_, level_, order_] :=
     ] /; TrieQ[tree];
 
 
-Clear[GrFramed]
+Clear[GrFramed];
 GrFramed[text_] :=
     Framed[text, {Background -> RGBColor[1, 1, 0.8],
       FrameStyle -> RGBColor[0.94, 0.85, 0.36], FrameMargins -> Automatic}];
 
-Clear[TrieForm]
+Clear[TrieForm];
 Options[TrieForm] = Options[LayeredGraphPlot];
 TrieForm[mytrie_?TrieQ, opts : OptionsPattern[]] :=
-    LayeredGraphPlot[TrieToRules[mytrie], opts, VertexRenderingFunction -> (Text[GrFramed[#2[[1]]], #1] &)];
+    LayeredGraphPlot[
+      TrieToRules[mytrie],
+      opts,
+      VertexShapeFunction -> (Text[GrFramed[#2[[1]]], #1] &), PlotTheme -> "Classic" ];
 
-Clear[TrieToJSON]
+Clear[TrieToJSON];
 TrieToJSON[tr_?TrieQ] := TrieToJSON[First@Normal@tr];
 TrieToJSON[tr_?TrieRuleQ] :=
     Block[{k = First@tr},
@@ -557,14 +576,14 @@ TrieToJSON[tr_?TrieRuleQ] :=
         "children" -> Map[TrieToJSON, Normal[KeyDrop[tr[[2]], $TrieValue]]]}
     ];
 
-Clear[TrieToListTrie]
+Clear[TrieToListTrie];
 TrieToListTrie[tr_?TrieQ] := TrieToListTrie[First@Normal@tr] /. $TrieRoot -> {};
 TrieToListTrie[tr_?TrieRuleQ] :=
     Block[{k = First@tr},
       Join[ {{k, tr[[2]][$TrieValue]}}, Normal @ Map[TrieToListTrie, Normal[KeyDrop[tr[[2]], $TrieValue]]] ]
     ];
 
-ClearAll[TrieComparisonGrid]
+ClearAll[TrieComparisonGrid];
 SetAttributes[TrieComparisonGrid, HoldAll]
 Options[TrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision"->3}];
 TrieComparisonGrid[trs_List, opts : OptionsPattern[]] :=
@@ -582,7 +601,9 @@ TrieComparisonGrid[trs_List, opts : OptionsPattern[]] :=
       }, gridOpts, Dividers -> All, FrameStyle -> LightGray]
     ];
 
-Clear[TrieClassify]
+Clear[TrieClassify];
+
+TrieClassify::notkey = "The second argument is not key in the trie: `1`.";
 
 Options[TrieClassify] := {"Default" -> None};
 
@@ -603,9 +624,18 @@ TrieClassify[tr_?TrieQ, record_, "TopProbabilities" -> n_Integer, opts : Options
 
 TrieClassify[tr_?TrieQ, record_, "Probabilities", opts : OptionsPattern[]] :=
     Block[{res, dval = OptionValue[TrieClassify, "Default"]},
+
+      If[ !TrieKeyExistsQ[ tr, record ],
+        Message[TrieClassify::notkey, record];
+        Return[$Failed]
+      ];
+
       res = TrieSubTrie[tr, record];
-      If[Length[res] == 0, <|dval -> 0|>,
-        res = ReverseSort[Association[Rule @@@ TrieLeafProbabilities[res]]];
+      If[ TrueQ[res===$Failed], Return[$Failed] ];
+      If[ Length[res] == 0,
+        <|dval -> 0|>,
+        (* ELSE *)
+        res = ReverseSort[ Association[ Rule @@@ TrieLeafProbabilities[res] ] ];
         res / Total[res]
       ]
     ];
@@ -634,6 +664,8 @@ TrieClassify[tr_?TrieQ, records:(_Dataset|{_List..}), "Probabilities", opts:Opti
       KeySort[Join[stencil, #]] & /@ clRes
     ];
 
-End[] (* `Private` *)
+TrieClassify[___] := $Failed;
+
+End[]; (* `Private` *)
 
 EndPackage[]
