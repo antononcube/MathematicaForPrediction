@@ -89,11 +89,11 @@ If[Length[SubValues[MonadicQuantileRegression`QRMonQuantileRegression]] == 0,
 BeginPackage["MonadicQuantileRegressionRandomPipelinesUnitTests`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-MakeDistributionData::usage = "Make random test data."
+MakeDistributionData::usage = "Make random test data.";
 
-MakeQRMonRandomPipelines::usage = "Make QRMon random pipelines."
+MakeQRMonRandomPipelines::usage = "Make QRMon random pipelines.";
 
-TestRunQRMonPipelines::usage = "Run QRMon pipelines using VerificationTest."
+TestRunQRMonPipelines::usage = "Run QRMon pipelines using VerificationTest.";
 
 Begin["`Private`"];
 
