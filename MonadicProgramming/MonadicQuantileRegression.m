@@ -466,7 +466,7 @@ QRMonFit = QRMonLeastSquaresFit;
 
 Clear[QRMonQuantileRegression];
 
-Options[QRMonQuantileRegression] = Options[QuantileRegression];
+Options[QRMonQuantileRegression] =  Join[ { "Knots"->12, "Probabilities" -> {0.25, 0.5, 0.75} }, Options[QuantileRegression] ];
 
 Options[QRMonQuantileRegression] =
     ReplaceAll[
@@ -475,23 +475,49 @@ Options[QRMonQuantileRegression] =
 
 QRMonQuantileRegression[$QRMonFailure] := $QRMonFailure;
 
-QRMonQuantileRegression[xs_, context_Association] := $QRMonFailure;
+QRMonQuantileRegression[xs_, context_Association] := QRMonQuantileRegression[ Options[QRMonQuantileRegression] ][xs, context];
+
+QRMonQuantileRegression[][xs_, context_] := QRMonQuantileRegression[ Options[QRMonQuantileRegression] ][xs, context];
+
+QRMonQuantileRegression[opts:OptionsPattern[]][xs_, context_] :=
+    Block[{knots, probabilities},
+
+      knots = OptionValue[QRMonQuantileRegression, "Knots"];
+
+      If[ ! MatchQ[ knots, ( _Integer | { _?NumberQ..} ) ],
+        Echo[
+          "The value of the option \"Knots\" is expected to be a knots specification, (_Integer | {_?NumberQ..}). ",
+          "QRMonQuantileRegression:"];
+        Return[$QRMonFailure];
+      ];
+
+      probabilities = OptionValue[QRMonQuantileRegression, "Probabilities"];
+
+      If[ ! MatchQ[ probabilities, ( _?NumberQ | { _?NumberQ..} ) ],
+        Echo[
+          "The value of the option \"Probabilities\" is expected to be a probabilities specification, (_?NumberQ | {_?NumberQ..}). ",
+          "QRMonQuantileRegression:"];
+        Return[$QRMonFailure];
+      ];
+
+      QRMonQuantileRegression[knots, probabilities, opts][xs, context]
+    ];
 
 QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), opts:OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), q_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
-    QRMonQuantileRegression[knots, {q}, opts][xs, context];
+QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), p_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegression[knots, {p}, opts][xs, context];
 
-QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), qs:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
 
-      qFuncs = QuantileRegression[data, knots, qs, opts];
+      qFuncs = QuantileRegression[data, knots, ps, FilterRules[ {opts}, Options[QuantileRegression] ] ];
 
-      If[ ListQ[qFuncs] && Length[qFuncs] == Length[qs],
-        qFuncs = AssociationThread[qs, qFuncs];
+      If[ ListQ[qFuncs] && Length[qFuncs] == Length[ps],
+        qFuncs = AssociationThread[ps, qFuncs];
         QRMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
         (* ELSE *)
         $QRMonFailure
@@ -502,8 +528,8 @@ QRMonQuantileRegression[___][__] :=
     Block[{},
       Echo[
         StringJoin[
-          "The first argument is expected to be knots specification, (_Integer | {_?NumberQ..}). ",
-          "The second option argument is expected to quantiles specification, {_?NumberQ..}."
+          "The first argument is expected to be a knots specification, ( _Integer | {_?NumberQ..} ). ",
+          "The second optional argument is expected to be a probabilities specification, ( _?NumberQ | {_?NumberQ..} )."
         ],
         "QRMonQuantileRegression:"
       ];
