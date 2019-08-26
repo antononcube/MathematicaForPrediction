@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2016 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2019 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -84,101 +84,101 @@ TODO:
 
 *)
 
-BeginPackage["FunctionalParsers`"]
+BeginPackage["FunctionalParsers`"];
 
-ParseSymbol::usage = "ParseSymbol[s] parses a specified symbol s."
-ParseToken::usage = "ParseToken[t] parses the token t."
-ParsePredicate::usage = "ParsePredicate[p] parses strings that give True for the predicate p."
-ParseEpsilon::usage = "ParseEpsilon parses and empty string."
-ParseSucceed::usage = "ParseSucceed[v] does not consume input and always returns v."
-ParseFail::usage = "ParseFail fails to recognize any input string."
+ParseSymbol::usage = "ParseSymbol[s] parses a specified symbol s.";
+ParseToken::usage = "ParseToken[t] parses the token t.";
+ParsePredicate::usage = "ParsePredicate[p] parses strings that give True for the predicate p.";
+ParseEpsilon::usage = "ParseEpsilon parses and empty string.";
+ParseSucceed::usage = "ParseSucceed[v] does not consume input and always returns v.";
+ParseFail::usage = "ParseFail fails to recognize any input string.";
 
-ParseComposeWithResults::usage = "ParseComposeWithResults[p_][res : {{_, _} ..}]  is building block function for ParseSequentialComposition."
-ParseSequentialComposition::usage = "ParseSequentialComposition parses a sequential composition of two or more parsers."
-ParseAlternativeComposition::usage = "ParseAlternativeComposition parses a composition of two or more alternative parsers."
+ParseComposeWithResults::usage = "ParseComposeWithResults[p_][res : {{_, _} ..}]  is building block function for ParseSequentialComposition.";
+ParseSequentialComposition::usage = "ParseSequentialComposition parses a sequential composition of two or more parsers.";
+ParseAlternativeComposition::usage = "ParseAlternativeComposition parses a composition of two or more alternative parsers.";
 
 
-ParseSpaces::usage = "ParseSpaces[p] is a transformation of the parser p: the leading spaces of the input are dropped then the parser p is applied." 
-ParseJust::usage = "ParseJust[p] is a transformation of the parser p: those parts of output of p are selected that have empty rest strings."
+ParseSpaces::usage = "ParseSpaces[p] is a transformation of the parser p: the leading spaces of the input are dropped then the parser p is applied.";
+ParseJust::usage = "ParseJust[p] is a transformation of the parser p: those parts of output of p are selected that have empty rest strings.";
 ParseApply::usage = "ParseApply[f,p] applies the function f to each of the outputs of p.\
- ParseApply[{fNo, fYes}, p] applies the function fNo not unsuccessful parsing and the function fYes the output of successful parsing using p."
-ParseModify::usage = "ParseModify[f,p] applies the function f to the list of all outputs of p."
-ParseSome::usage = "ParseSome[p] applies ParseJust[p] and takes the first non-empty output if it exists."
-ParseShortest::usage = "ParseShortest[p] takes the output with the shortests rest string." 
-ParseSequentialCompositionPickLeft::usage = "ParseSequentialCompositionPickLeft[p1,p2] drops the output of the p2 parser."
-ParseSequentialCompositionPickRight::usage = "ParseSequentialCompositionPickRight[p1,p2] drops the output of the p1 parser."
+ ParseApply[{fNo, fYes}, p] applies the function fNo not unsuccessful parsing and the function fYes the output of successful parsing using p.";
+ParseModify::usage = "ParseModify[f,p] applies the function f to the list of all outputs of p.";
+ParseSome::usage = "ParseSome[p] applies ParseJust[p] and takes the first non-empty output if it exists.";
+ParseShortest::usage = "ParseShortest[p] takes the output with the shortest rest string.";
+ParseSequentialCompositionPickLeft::usage = "ParseSequentialCompositionPickLeft[p1,p2] drops the output of the p2 parser.";
+ParseSequentialCompositionPickRight::usage = "ParseSequentialCompositionPickRight[p1,p2] drops the output of the p1 parser.";
 
-ParseChoice::usage = "ParseChoice[p1,p2,p3,...] a version of ParseAlternativeComposition for more than two parsers."
+ParseChoice::usage = "ParseChoice[p1,p2,p3,...] a version of ParseAlternativeComposition for more than two parsers.";
 
-CircleDot::usage = "CircleDot[f_, p_] applies the function f to the output of p. It can be entered with \"Exc c . Esc\" ."
-CircleTimes::usage = "CircleTimes[p1,p2,p3] sequential composition of the parsers p1, p2, p3, ... It can be entered with \"Exc c * Esc\" ."
-CirclePlus::usage = "CirclePlus[p1,p2,p3] alternatives composition of the parsers p1, p2, p3, ... It can be entered with \"Exc c + Esc\" ."
-LeftTriangle::usage = "LeftTriangle[p1_, p2_] drops the output of the right parser, p2. It can be entered with \"\:22B2\"."
-RightTriangle::usage = "RightTriangle[p1_, p2_] drops the output of the left parser, p1. It can be entered with \"\:22B3\"."
+CircleDot::usage = "CircleDot[f_, p_] applies the function f to the output of p. It can be entered with \"Exc c . Esc\" .";
+CircleTimes::usage = "CircleTimes[p1,p2,p3] sequential composition of the parsers p1, p2, p3, ... It can be entered with \"Exc c * Esc\" .";
+CirclePlus::usage = "CirclePlus[p1,p2,p3] alternatives composition of the parsers p1, p2, p3, ... It can be entered with \"Exc c + Esc\" .";
+LeftTriangle::usage = "LeftTriangle[p1_, p2_] drops the output of the right parser, p2. It can be entered with \"\:22B2\".";
+RightTriangle::usage = "RightTriangle[p1_, p2_] drops the output of the left parser, p1. It can be entered with \"\:22B3\".";
 
-ParsePack::usage = "ParsePack[s1,p,s2] parses the sequential composition of s1, p, s2 and drops the output of s1 and s2."
-ParseParenthesized::usage = "ParseParenthesized[p] parses with p input enclosed in parentheses \"(\",\")\"."
-ParseBracketed::usage = "ParseBracketed[p] parses with p input enclosed in brackets \"[\",\"]\"."
-ParseCurlyBracketed::usage = "ParseCurlyBracketed[p] parses with p input enclosed in curly brackets \"{\",\"}\"."
+ParsePack::usage = "ParsePack[s1,p,s2] parses the sequential composition of s1, p, s2 and drops the output of s1 and s2.";
+ParseParenthesized::usage = "ParseParenthesized[p] parses with p input enclosed in parentheses \"(\",\")\".";
+ParseBracketed::usage = "ParseBracketed[p] parses with p input enclosed in brackets \"[\",\"]\".";
+ParseCurlyBracketed::usage = "ParseCurlyBracketed[p] parses with p input enclosed in curly brackets \"{\",\"}\".";
 
 ParseOption::usage = "ParseOption[p] is optional parsing of p.";
 ParseOption1::usage = "ParseOption1[p] is optional parsing of p. (Different implementation of ParseOption.)";
 
-ParseMany1::usage = "ParseMany1[p] attempts to parse one or many times with p."
-ParseMany::usage = "ParseMany[p] attempts to parse zero or many times with p."
-ParseManyByBranching::usage = "ParseManyByBranching[p] parsing many times with p and following branches."
+ParseMany1::usage = "ParseMany1[p] attempts to parse one or many times with p.";
+ParseMany::usage = "ParseMany[p] attempts to parse zero or many times with p.";
+ParseManyByBranching::usage = "ParseManyByBranching[p] parsing many times with p and following branches.";
 
-ParseListOf::usage = "ParseListOf[p_, sep_] parse a list of elements parsed by p and seprated by elements parsed by sep."
+ParseListOf::usage = "ParseListOf[p_, sep_] parse a list of elements parsed by p and seprated by elements parsed by sep.";
 
-ParseChainLeft::usage = "ParseChainLeft[p_, sep_] parse a nested application of the function with a name parsed by sep."
-ParseChain1Left::usage = "ParseChain1Left[p_, sep_] parse a nested application of the function with a name parsed by sep."
-ParseChainRight::usage = "ParseChainRight[p_, sep_] parse a nested application of the function with a name parsed by sep."
+ParseChainLeft::usage = "ParseChainLeft[p_, sep_] parse a nested application of the function with a name parsed by sep.";
+ParseChain1Left::usage = "ParseChain1Left[p_, sep_] parse a nested application of the function with a name parsed by sep.";
+ParseChainRight::usage = "ParseChainRight[p_, sep_] parse a nested application of the function with a name parsed by sep.";
 
-ParseRecursiveDefinition::usage = "ParseRecursiveDefinition[pname, rhs] makes a parser with name pname defined by rhs that can be used in recursive definitions."
+ParseRecursiveDefinition::usage = "ParseRecursiveDefinition[pname, rhs] makes a parser with name pname defined by rhs that can be used in recursive definitions.";
 
 ToTokens::usage = "ToTokens[text] breaks down text into tokens. ToTokens[text,terminals] breaks down text using specified terminals. \
-ToTokens[text,\"EBNF\"] has a special implementation for parsing EBNF code. (This function is becoming obsolete, use ParseToTokens.)"
+ToTokens[text,\"EBNF\"] has a special implementation for parsing EBNF code. (This function is becoming obsolete, use ParseToTokens.)";
 
-ParseToTokens::usage = "ParseToTokens[text, terminalDelimiters, whitespaces] breaks down text into tokens using specified terminal symbols and white spaces."
-ParseToEBNFTokens::usage = "ParseToEBNFTokens[text, whitespaces] breaks down text into tokens using EBNF terminal symbols and specified white spaces."
+ParseToTokens::usage = "ParseToTokens[text, terminalDelimiters, whitespaces] breaks down text into tokens using specified terminal symbols and white spaces.";
+ParseToEBNFTokens::usage = "ParseToEBNFTokens[text, whitespaces] breaks down text into tokens using EBNF terminal symbols and specified white spaces.";
 
 ParsingTestTable::usage = "ParsingTestTable[p, s, opts] parses a list of strings with the parser p and tabulates the result. \
-The options allow to specify the terminal symbols, tokenizer function, and table layout."
+The options allow to specify the terminal symbols, tokenizer function, and table layout.";
 
-EBNFNonTerminal::usage = "EBNFNonTerminal head for parsers for non-terminal symbols of EBNF grammars."
-EBNFTerminal::usage = "EBNFTerminal head for parsers for terminal symbols of EBNF grammars."
-EBNFOption::usage = "EBNFOption head for parsers for optional symbols of EBNF grammars."
-EBNFRepetition::usage = "EBNFRepetition head for parsers for repeating symbols of EBNF grammars."
-EBNFSequence::usage = "EBNFSequence head for parsers for sequential composition of symbols of EBNF grammars."
-EBNFAlternatives::usage = "EBNFAlternatives head for parsers for alternatives sequential composition of symbols of EBNF grammars."
-EBNFRule::usage = "EBNFRule head for parsers of EBNF grammar rules."
-EBNF::usage = "Head symbol used to for parsed EBNF grammars."
+EBNFNonTerminal::usage = "EBNFNonTerminal head for parsers for non-terminal symbols of EBNF grammars.";
+EBNFTerminal::usage = "EBNFTerminal head for parsers for terminal symbols of EBNF grammars.";
+EBNFOption::usage = "EBNFOption head for parsers for optional symbols of EBNF grammars.";
+EBNFRepetition::usage = "EBNFRepetition head for parsers for repeating symbols of EBNF grammars.";
+EBNFSequence::usage = "EBNFSequence head for parsers for sequential composition of symbols of EBNF grammars.";
+EBNFAlternatives::usage = "EBNFAlternatives head for parsers for alternatives sequential composition of symbols of EBNF grammars.";
+EBNFRule::usage = "EBNFRule head for parsers of EBNF grammar rules.";
+EBNF::usage = "Head symbol used to for parsed EBNF grammars.";
 
-EBNFNonTerminalInterpreter::usage = "EBNFNonTerminal generates parsers for non-terminal symbols of EBNF grammars."
-EBNFTerminalInterpreter::usage = "EBNFTerminal generates parsers for terminal symbols of EBNF grammars."
-EBNFOptionInterpreter::usage = "EBNFOption generates parsers for optional symbols of EBNF grammars."
-EBNFRepetitionInterpreter::usage = "EBNFRepetition generates parsers for repeating symbols of EBNF grammars."
-EBNFSequenceInterpreter::usage = "EBNFSequence generates parsers for sequential composition of symbols of EBNF grammars."
-EBNFAlternativesInterpreter::usage = "EBNFAlternatives generates parsers for alternatives sequential composition of symbols of EBNF grammars."
-EBNFRuleInterpreter::usage = "EBNFRule generates parsers of EBNF grammar rules."
+EBNFNonTerminalInterpreter::usage = "EBNFNonTerminal generates parsers for non-terminal symbols of EBNF grammars.";
+EBNFTerminalInterpreter::usage = "EBNFTerminal generates parsers for terminal symbols of EBNF grammars.";
+EBNFOptionInterpreter::usage = "EBNFOption generates parsers for optional symbols of EBNF grammars.";
+EBNFRepetitionInterpreter::usage = "EBNFRepetition generates parsers for repeating symbols of EBNF grammars.";
+EBNFSequenceInterpreter::usage = "EBNFSequence generates parsers for sequential composition of symbols of EBNF grammars.";
+EBNFAlternativesInterpreter::usage = "EBNFAlternatives generates parsers for alternatives sequential composition of symbols of EBNF grammars.";
+EBNFRuleInterpreter::usage = "EBNFRule generates parsers of EBNF grammar rules.";
 
-SetParserModifier::usage = "SetParserModifier[p_Symbol, f_] sets the function f to modify the output of the parser p. (Replaces the previous modifier.)"
-AddParserModifier::usage = "AddParserModifier[p_Symbol, f_] makes the function f to modify the output of the parser p."
+SetParserModifier::usage = "SetParserModifier[p_Symbol, f_] sets the function f to modify the output of the parser p. (Replaces the previous modifier.)";
+AddParserModifier::usage = "AddParserModifier[p_Symbol, f_] makes the function f to modify the output of the parser p.";
 
-InterpretWithContext::usage = "InterpretWithContext[pout_,cr_] interprets the parser output pout with the context rules cr."
+InterpretWithContext::usage = "InterpretWithContext[pout_,cr_] interprets the parser output pout with the context rules cr.";
 
-EBNFContextRules::usage = "Context rules for EBNF parser generation."
+EBNFContextRules::usage = "Context rules for EBNF parser generation.";
 
-ParseEBNF::usage = "ParseEBNF[gr:{_String..}] parses the EBNF grammar gr."
-GenerateParsersFromEBNF::usage = "GenerateParsersFromEBNF[gr:{_String..}] generate parsers the EBNF grammar gr."
+ParseEBNF::usage = "ParseEBNF[gr:{_String..}] parses the EBNF grammar gr.";
+GenerateParsersFromEBNF::usage = "GenerateParsersFromEBNF[gr:{_String..}] generate parsers the EBNF grammar gr.";
 
-GrammarNormalize::usage = "Remove special character sequences from an EBNF grammar string."
+GrammarNormalize::usage = "Remove special character sequences from an EBNF grammar string.";
 
-GrammarRandomSentences::usage = "GrammarRandomSentences[ gr: _String | _EBNF, n_Integer] generates n random sentences using the grammar gr."
+GrammarRandomSentences::usage = "GrammarRandomSentences[ gr: _String | _EBNF, n_Integer] generates n random sentences using the grammar gr.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Clear["Parse?*"]
+Clear["Parse?*"];
 
 
 (************************************************************)
@@ -204,7 +204,7 @@ ParseEpsilon = Function[{xs}, {{xs, {}}} ];
 
 ParseSucceed[v_] := Function[{xs}, {{xs, v}}];
 
-ParseFail[xs_] := {}
+ParseFail[xs_] := {};
 
 
 (************************************************************)
@@ -333,7 +333,7 @@ ParseMany1[p_][xs_] :=
 
 ParseMany[p_] := ParseMany1[p]\[CirclePlus]ParseSucceed[{}];
 
-Clear[ParseManyByBranching]
+Clear[ParseManyByBranching];
 ParseManyByBranching[p_][xs_] := ParseManyByBranching[p, {}, 100][xs];
 ParseManyByBranching[p_, epsilon_, maxSteps_Integer ][xs_] :=
     Block[{res = {}, pres, pres1, k = 0, p1},
@@ -438,7 +438,7 @@ ParseToEBNFTokens[text_, whitespaces_: {" ", "\n", "\t"}] :=
 (* ParsingTestTable                                         *)
 (************************************************************)
 
-Clear[ParsingTestTable]
+Clear[ParsingTestTable];
 
 ParsingTestTable::unval = "Unknown value `2` for the option `1`."
 
@@ -491,9 +491,9 @@ ParsingTestTable[parser_, statements : {_String ..}, optsArg : OptionsPattern[]]
 (* All parsers start with the prefix "pG" followed by a capital letter. ("p" is for "parser", "G" is for "grammar".) *)
 
 
-Clear[EBNFNonTerminal, EBNFTerminal, EBNFOption, EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule, EBNF]
+Clear[EBNFNonTerminal, EBNFTerminal, EBNFOption, EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule, EBNF];
 
-Clear["pG*"]
+Clear["pG*"];
 
 (* Parse typeTerminal. All teminals are assumed to be between single or double quotes. *)
 
@@ -533,9 +533,9 @@ pEBNF = EBNF\[CircleDot]ParseMany1[pGRule];
 (********************************************************************************)
 
 Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminalInterpreter, EBNFOptionInterpreter, EBNFRepetitionInterpreter,
-      EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter]
+      EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter];
 
-Clear[pNumber, pInteger, pWord, pLetterWord, pIdentifierWord]
+Clear[pNumber, pInteger, pWord, pLetterWord, pIdentifierWord];
 
 pNumber = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] &];
 
@@ -547,7 +547,7 @@ pLetterWord = ParsePredicate[StringMatchQ[#, LetterCharacter ..] &];
 
 pIdentifierWord = ParsePredicate[StringMatchQ[#, LetterCharacter ~~ (WordCharacter ... )] &];
 
-Clear[pNumberRange]
+Clear[pNumberRange];
 pNumberRange[{s_?NumberQ, e_?NumberQ}] :=
   ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] && s <= ToExpression[#] <= e &];
 
@@ -635,7 +635,7 @@ EBNFRuleInterpreter[parsed_] :=
 (************************************************************)
 
 (* one downvalue per parser is assumed *)
-Clear[AddParserModifier]
+Clear[AddParserModifier];
 AddParserModifier[parser_Symbol, func_] :=
   Block[{dvs = Cases[DownValues[parser], _RuleDelayed]},
    If[Length[dvs] == 0, {},
@@ -646,7 +646,7 @@ AddParserModifier[parser_Symbol, func_] :=
    ]
   ];
 
-Clear[SetParserModifier]
+Clear[SetParserModifier];
 SetParserModifier[parser_Symbol, func_] :=
   Block[{dvs = Cases[DownValues[parser], _RuleDelayed]},
    Which[
@@ -669,9 +669,9 @@ EBNFContextRules =
  EBNFRepetition -> EBNFRepetitionInterpreter, 
  EBNFSequence -> EBNFSequenceInterpreter, 
  EBNFAlternatives -> EBNFAlternativesInterpreter, 
- EBNFRule -> EBNFRuleInterpreter}
+ EBNFRule -> EBNFRuleInterpreter};
 
-Clear[InterpretWithContext]
+Clear[InterpretWithContext];
 InterpretWithContext[parsed_, contextRules : {_Rule ...}] :=
   Block[{},
    {parsed /. contextRules, {} }
@@ -702,16 +702,16 @@ GenerateParsersFromEBNF[code_] := InterpretWithContext[ pEBNF[code], EBNFContext
 (* Random sentences                                         *)
 (************************************************************)
 
-Clear[GrammarNormalize]
+Clear[GrammarNormalize];
 GrammarNormalize[ebnf_String] := StringReplace[ebnf, {"&>" -> ",", "<&" -> ",", ("<@" ~~ (Except[{">", "<"}] ..) ~~ ";") :> ";"}];
 GrammarNormalize[___] := $Failure;
 
 (* Random sentences generator from EBNF grammar (rule based) *)
 
 Clear[RGMakeSymbolName, RGNonTerminal, RGTerminal, RGOption, RGRepetition,
-  RGSequence, RGAlternatives, RGRule, EBNF]
+  RGSequence, RGAlternatives, RGRule, EBNF];
 
-Clear[rgInteger, rgNumber, rgString, rgLetterString]
+Clear[rgInteger, rgNumber, rgString, rgLetterString];
 rgInteger := ToString[RandomInteger[{0, 1000}]];
 rgNumber := ToString[RandomReal[{0, 1000}]];
 rgNumberRange[{s_?NumberQ, e_?NumberQ}] := ToString[RandomInteger[{s, e}]];
@@ -770,7 +770,7 @@ RGAlternatives[parsed_] :=
 MakeNonTerminalReplacementRules[parsedEBNFRules_] :=
     Cases[parsedEBNFRules, {s_String, rhs_} :> (EBNFNonTerminal[s] -> rhs), Infinity];
 
-Clear[RGSentence]
+Clear[RGSentence];
 RGSentence[parsedEBNF_EBNF] :=
     Block[{parsedEBNFRules = parsedEBNF[[1]], rrules, rrulesRest, EBNFToRGRules, t},
 
@@ -800,7 +800,7 @@ RGSentence[parsedEBNF_EBNF] :=
       StringTrim[StringReplace[StringRiffle[t, " "], (WhitespaceCharacter ~~ WhitespaceCharacter ..) -> " "]]
     ];
 
-Clear[GrammarRandomSentences]
+Clear[GrammarRandomSentences];
 GrammarRandomSentences[ebnfGrammar_String, n_Integer] :=
     Block[{EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
       EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule, tokens, res},
@@ -821,6 +821,6 @@ GrammarRandomSentences[parsedEBNFRules_EBNF, n_Integer] :=
       Table[RGSentence[parsedEBNFRules], {n}]
     ];
 
-End[]
+End[];
 
 EndPackage[]
