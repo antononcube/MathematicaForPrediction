@@ -464,7 +464,7 @@ QRMonFit = QRMonLeastSquaresFit;
 (* Quantile regression                                        *)
 (**************************************************************)
 
-ClearAll[QRMonQuantileRegression];
+Clear[QRMonQuantileRegression];
 
 Options[QRMonQuantileRegression] =
     Join[
@@ -552,7 +552,7 @@ QRMonRegression = QRMonQuantileRegression;
 (* Quantile regression fit                                    *)
 (**************************************************************)
 
-ClearAll[QRMonQuantileRegressionFit];
+Clear[QRMonQuantileRegressionFit];
 
 Options[QRMonQuantileRegressionFit] =
     Join[
@@ -603,7 +603,7 @@ QRMonQuantileRegressionFit[opts:OptionsPattern[]][xs_, context_Association] :=
 
       probabilities = If[ NumberQ[probabilities], {probabilities}, probabilities ];
 
-      If[ TrueQ[var === Automatic] || IntegerQ[funcs],
+      If[ IntegerQ[funcs],
         QRMonQuantileRegressionFit[funcs, probabilities, opts][xs, context],
         (* ELSE *)
         QRMonQuantileRegressionFit[funcs, var, probabilities, opts][xs, context]
@@ -628,6 +628,9 @@ QRMonQuantileRegressionFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, args___][x
     ];
 
 QRMonQuantileRegressionFit[funcs_List, ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonQuantileRegressionFit[funcs, Automatic, ps, opts][xs, context];
+
+QRMonQuantileRegressionFit[funcs_List, Automatic, ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
     Block[{var},
 
       var =
