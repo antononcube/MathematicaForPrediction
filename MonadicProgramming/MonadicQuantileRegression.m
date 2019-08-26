@@ -228,7 +228,7 @@ GenerateMonadAccessors[
 (**************************************************************)
 
 (* This is has to be re-implemented because of the use of QRMonGetData. *)
-ClearAll[QRMonTakeData]
+ClearAll[QRMonTakeData];
 QRMonTakeData[$QRMonFailure] := $QRMonFailure;
 QRMonTakeData[][$QRMonFailure] := $QRMonFailure;
 QRMonTakeData[xs_, context_] := QRMonTakeData[][xs, context];
@@ -236,7 +236,7 @@ QRMonTakeData[][xs_, context_] := QRMonBind[ QRMonGetData[xs, context], QRMonTak
 QRMonTakeData[__][___] := $QRMonFailure;
 
 
-Clear[QRMonSetNet]
+Clear[QRMonSetNet];
 QRMonSetNet[$QRMonFailure] := $QRMonFailure;
 QRMonSetNet[xs_, context_] := QRMonSetNet[][xs, context];
 QRMonSetNet[][xs_, context_] :=
@@ -512,7 +512,7 @@ QRMonQuantileRegression[___][__] :=
     ];
 
 
-Clear[QRMonRegression]
+Clear[QRMonRegression];
 QRMonRegression = QRMonQuantileRegression;
 
 
@@ -587,7 +587,7 @@ QRMonQuantileRegressionFit[funcs_List, var_Symbol, qs:{_?NumberQ..}, opts:Option
 QRMonQuantileRegressionFit[___][__] := $QRMonFailure;
 
 
-Clear[QRMonRegressionFit]
+Clear[QRMonRegressionFit];
 QRMonRegressionFit = QRMonQuantileRegressionFit;
 
 
@@ -659,7 +659,7 @@ QRMonNetRegression[___][__] :=
 (* See InterpolationFunction[___]["Evaluate"[{0.2, 0.3, 1}]] *)
 (* Probably can be optimized. *)
 
-Clear[QRMonEvaluate]
+Clear[QRMonEvaluate];
 
 QRMonEvaluate[$QRMonFailure] := $QRMonFailure;
 
@@ -765,7 +765,7 @@ QRMonDateListPlot[__][__] := $QRMonFailure;
 (* Errors                                                     *)
 (**************************************************************)
 
-Clear[QRMonErrors]
+Clear[QRMonErrors];
 
 Options[QRMonErrors] = { "RelativeErrors" -> True };
 
@@ -799,7 +799,7 @@ QRMonErrors[__][__] := $QRMonFailure;
 (* Error plots                                                *)
 (**************************************************************)
 
-Clear[QRMonErrorPlots]
+Clear[QRMonErrorPlots];
 
 Options[QRMonErrorPlots] = Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False, "RelativeErrors" -> True}, Options[ListPlot] ];
 
@@ -843,11 +843,11 @@ QRMonErrorPlots[__][__] := $QRMonFailure;
 (* Conditional distribution                                   *)
 (**************************************************************)
 
-Clear[CDFEstimate]
+Clear[CDFEstimate];
 CDFEstimate[qFuncs_Association, t0_, intOrder:_Integer:1] :=
     Interpolation[Transpose[{Through[Values[qFuncs][t0]], Keys[qFuncs]}], InterpolationOrder -> intOrder];
 
-Clear[CDFPDFPlot]
+Clear[CDFPDFPlot];
 CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts : OptionsPattern[]] :=
     Block[{},
       Plot[
@@ -856,7 +856,7 @@ CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts :
         opts, GridLines->{None, qs}, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
     ];
 
-Clear[QRMonConditionalCDF]
+Clear[QRMonConditionalCDF];
 
 QRMonConditionalCDF[$QRMonFailure] := $QRMonFailure;
 
@@ -887,7 +887,7 @@ QRMonConditionalCDF[___][___] :=
 (* Conditional distributions plot                             *)
 (**************************************************************)
 
-Clear[QRMonConditionalCDFPlot]
+Clear[QRMonConditionalCDFPlot];
 
 Options[QRMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
 
@@ -943,7 +943,7 @@ QRMonConditionalCDFPlot[__][__] :=
 (* Outlier finding (first)                                    *)
 (**************************************************************)
 
-Clear[QRMonOutliersFirst]
+Clear[QRMonOutliersFirst];
 
 Options[QRMonOutliersFirst] := { "Knots" -> 12, "TopOutliersQuantile" -> 0.98, "BottomOutliersQuantile" -> 0.02 };
 
@@ -1004,7 +1004,7 @@ QRMonOutliersFirst[__][__] :=
 (* Outlier finding                                            *)
 (**************************************************************)
 
-Clear[QRMonOutliers]
+Clear[QRMonOutliers];
 
 QRMonOutliers[$QRMonFailure] := $QRMonFailure;
 
@@ -1065,7 +1065,7 @@ QRMonOutliers[__][__] :=
 (* Outliers plot                                              *)
 (**************************************************************)
 
-Clear[QRMonOutliersPlot]
+Clear[QRMonOutliersPlot];
 
 Options[QRMonOutliersPlot] := Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
 
@@ -1136,7 +1136,7 @@ QRMonOutliersPlot[___][__] := $QRMonFailure;
 (* Pick path points                                           *)
 (**************************************************************)
 
-Clear[QRMonPickPathPoints]
+Clear[QRMonPickPathPoints];
 
 Options[QRMonPickPathPoints] = { "PickAboveThreshold" -> False };
 
@@ -1176,7 +1176,7 @@ QRMonPickPathPoints[___][__] :=
 (* Separate points by regression quantiles                    *)
 (**************************************************************)
 
-Clear[QRMonSeparate]
+Clear[QRMonSeparate];
 
 Options[QRMonSeparate] = { "Cumulative"->True, "Fractions"->False };
 
@@ -1250,7 +1250,7 @@ QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
 QRMonSeparate[___][__] := $QRMonFailure;
 
 
-Clear[QRMonSeparateToFractions]
+Clear[QRMonSeparateToFractions];
 
 Options[QRMonSeparateToFractions] = {"Cumulative"->False};
 
@@ -1270,7 +1270,7 @@ QRMonSeparateToFractions[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
       cumulativeQ = TrueQ[ OptionValue[ QRMonSeparateToFractions, "Cumulative" ] ];
 
       QRMonSeparate[ dataArg, "Fractions"->True, "Cumulative" -> cumulativeQ ][xs, context]
-    ]
+    ];
 
 QRMonSeparateToFractions[___][__] := $QRMonFailure;
 
@@ -1279,7 +1279,7 @@ QRMonSeparateToFractions[___][__] := $QRMonFailure;
 (* Bands sequential representation                            *)
 (**************************************************************)
 
-Clear[FindIntervalFunc]
+Clear[FindIntervalFunc];
 FindIntervalFunc[qBoundaries : {_?NumericQ ...}] :=
     Block[{XXX, t = Partition[Join[{- Infinity}, qBoundaries, {Infinity}], 2, 1]},
       Function[
@@ -1291,7 +1291,7 @@ FindIntervalFunc[qBoundaries : {_?NumericQ ...}] :=
       ]
     ];
 
-Clear[FindQRRange]
+Clear[FindQRRange];
 FindQRRange[{x_, y_}, funcs_List] :=
     Block[{qfs, pfunc},
       qfs = Through[funcs[x]];
@@ -1299,7 +1299,7 @@ FindQRRange[{x_, y_}, funcs_List] :=
       pfunc[y]
     ];
 
-Clear[QRMonBandsSequence]
+Clear[QRMonBandsSequence];
 
 QRMonBandsSequence[$QRMonFailure] := $QRMonFailure;
 
@@ -1338,7 +1338,7 @@ QRMonBandsSequence[__][__] :=
 (* Grid sequential representation                             *)
 (**************************************************************)
 
-Clear[QRMonGridSequence]
+Clear[QRMonGridSequence];
 
 QRMonGridSequence[$QRMonFailure] := $QRMonFailure;
 
@@ -1420,7 +1420,7 @@ QRMonGridSequence[___][__] :=
 (* MovingAverage                                              *)
 (**************************************************************)
 
-Clear[QRMonMovingAverage]
+Clear[QRMonMovingAverage];
 
 QRMonMovingAverage[$QRMonFailure] := $QRMonFailure;
 
@@ -1442,7 +1442,7 @@ QRMonMovingAverage[___][__] := $QRMonFailure;
 (* MovingMedian                                               *)
 (**************************************************************)
 
-Clear[QRMonMovingMedian]
+Clear[QRMonMovingMedian];
 
 QRMonMovingMedian[$QRMonFailure] := $QRMonFailure;
 
@@ -1464,7 +1464,7 @@ QRMonMovingMedian[___][__] := $QRMonFailure;
 (* Moving map                                                 *)
 (**************************************************************)
 
-Clear[QRMonMovingMap]
+Clear[QRMonMovingMap];
 
 QRMonMovingMap[$QRMonFailure] := $QRMonFailure;
 
@@ -1489,7 +1489,7 @@ QRMonMovingMap[___][__] := $QRMonFailure;
 (* Simulate                                                   *)
 (**************************************************************)
 
-Clear[QRMonSimulate]
+Clear[QRMonSimulate];
 
 QRMonSimulate[$QRMonFailure] := $QRMonFailure;
 
@@ -1553,7 +1553,7 @@ QRMonSimulate[___][__] :=
    previously computed regression quantiles.
 *)
 
-Clear[QRMonLocalExtrema]
+Clear[QRMonLocalExtrema];
 
 Options[QRMonLocalExtrema] = { "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 50 };
 
@@ -1626,7 +1626,7 @@ QRMonLocalExtrema[___][__] :=
       $QRMonFailure
     ];
 
-Clear[QRMonFindLocalExtrema]
+Clear[QRMonFindLocalExtrema];
 QRMonFindLocalExtrema = QRMonLocalExtrema;
 
 
@@ -1779,6 +1779,6 @@ QRMonChowTestStatistic[args___][__] :=
     ];
 
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
