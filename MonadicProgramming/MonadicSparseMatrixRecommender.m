@@ -1518,26 +1518,71 @@ SMRMonRowBind[___][__] :=
 (* Classify                                                *)
 (*=========================================================*)
 
-Clear[SMRMonClassify];
+ClearAll[SMRMonClassify];
 
-Options[SMRMonClassify] = { "Voting" -> False, "DropZeroScoredLabels" -> True };
+Options[SMRMonClassify] = {
+  "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
+  "NumberOfNearestNeighbors" -> Automatic, "NumberOfResults" -> All,
+  "Voting" -> False, "DropZeroScoredLabels" -> True
+};
 
 SMRMonClassify[$SMRMonFailure] := $SMRMonFailure;
 
-SMRMonClassify[xs_, context_Association] := $SMRMonFailure;
+(*SMRMonClassify[xs_, context_Association] := (Print["here"];$SMRMonFailure);*)
 
-SMRMonClassify[][xs_, context_Association] := $SMRMonFailure;
+SMRMonClassify[][xs_, context_Association] := SMRMonClassify[None][xs, context];
 
-SMRMonClassify[tagType_String, profile : {_String..}, args___][xs_, context_Association] :=
-    SMRMonClassify[tagType, AssociationThread[profile, 1], args][xs, context];
+SMRMonClassify[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{tagType, profile},
 
-SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{recs, clMat, clMat01, s, t, votingQ, dropZeroScoredLabelsQ, qProfile},
+      tagType = OptionValue[SMRMonClassify, "TagType"];
+      profile = OptionValue[SMRMonClassify, "Profile"];
+
+      If[ ! StringQ[ tagType ],
+        Echo["The value of the option \"TagType\" is expected to be a string.", "SMRMonClassify:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( AssociationQ[ profile ] || VectorQ[ profile, StringQ ] ),
+        Echo["The value of the option \"Profile\" is expected to be an association or a list of strings.", "SMRMonClassify:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonClassify[tagType, profile, opts][xs, context]
+    ];
+
+SMRMonClassify[tagType_String, profile : {_String..}, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonClassify[tagType, AssociationThread[profile, 1], opts][xs, context];
+
+SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{recs, clMat, clMat01, s, t,
+      property, expectedProperties, numberOfNearestNeighbors, numberOfResults,
+      votingQ, dropZeroScoredLabelsQ, qProfile, res},
+
+      property = OptionValue[SMRMonClassify, "Property"];
+      numberOfNearestNeighbors = OptionValue[SMRMonClassify, "NumberOfNearestNeighbors"];
+      numberOfResults = OptionValue[SMRMonClassify, "NumberOfResults"];
 
       votingQ = TrueQ[OptionValue[SMRMonClassify, "Voting"]];
       dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassify, "DropZeroScoredLabels"]];
 
-      If[!KeyExistsQ[context, "matrices"],
+      expectedProperties = { "Decision", "Probabilities", "Properties" };
+      If[ ! MemberQ[ expectedProperties, property ],
+        Echo["The value of the option \"Property\" is expected to be one of "<> ToString[expectedProperties] <> ".", "SMRMonClassify:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( TrueQ[numberOfNearestNeighbors === Automatic] || NumberQ[ numberOfNearestNeighbors ] ),
+        Echo["The value of the option \"NumberOfNearestNeighbors\" is expected to be a number or Automatic.", "SMRMonClassify:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( TrueQ[numberOfResults === All] || NumberQ[ numberOfResults ] ),
+        Echo["The value of the option \"NumberOfResults\" is expected to be a number or All.", "SMRMonClassify:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! KeyExistsQ[context, "matrices"],
         Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonClassify:"];
         Return[$SMRMonFailure]
       ];
@@ -1563,7 +1608,13 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts : Opti
         Return[$SMRMonFailure]
       ];
 
-      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[qProfile, nTopNNs], SMRMonTakeValue}];
+      If[ TrueQ[ numberOfNearestNeighbors === Automatic ],
+        numberOfNearestNeighbors = Ceiling[ 0.05 * RowsCount[ clMat ] ];
+        numberOfNearestNeighbors = If[ numberOfNearestNeighbors < 10, 10, numberOfNearestNeighbors ];
+        numberOfNearestNeighbors = Min[ numberOfNearestNeighbors, RowsCount[clMat] ];
+      ];
+
+      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[qProfile, numberOfNearestNeighbors], SMRMonTakeValue}];
 
       If[ TrueQ[recs === $SMRMonFailure],
         Return[$SMRMonFailure]
@@ -1586,13 +1637,28 @@ SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts : Opti
 
       s = s / Max[s];
 
-      SMRMonUnit[ ReverseSort[s], context ]
+      res = ReverseSort[s];
+
+      res =
+          Which[
+            property == "Decision", First[Keys[res]],
+
+            property == "Probabilities" && TrueQ[ numberOfResults === All ], res,
+
+            property == "Probabilities", TakeLargest[ res, UpTo[numberOfResults] ],
+
+            property == "Properties", expectedProperties,
+
+            True, res
+          ];
+
+      SMRMonUnit[ res, context ]
     ];
 
 SMRMonClassify[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonClassify[tagType_String, profile_Association, nTopNNs_Integer, opts___] .",
+        "The expected signature is SMRMonClassify[tagType_String, profile_Association, opts___].",
         "SMRMonClassify:"];
       $SMRMonFailure
     ];
