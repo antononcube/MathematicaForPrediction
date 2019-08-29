@@ -140,7 +140,12 @@ and numbers as values.";
 SMRMonScoredTagsQ::usage = "True if the argument is an association with tags or tag indices as keys \
 and numbers as values.";
 
-SMRMonCreate::usage = "Creates the recommender structures from a transactions Dataset and a specifications Dataset.";
+SMRMonCreate::usage = "Creates the recommender structures from a transactions Dataset or an association of sparse matrices.";
+
+SMRMonCreateFromWideForm::usage = "Creates the recommender structures from a transactions Dataset.";
+
+SMRMonCreateFromLongForm::usage = "Creates the recommender structures from a long form Dataset -- \
+each row is expected to have values corresponding to item ID, tag type, tag, weight.";
 
 SMRMonApplyLocalWeightFunction::usage = "Applies a specified local weight function to the entries \
 of the contingency matrix.";
@@ -540,13 +545,60 @@ SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPa
     ];
 
 SMRMonCreate[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{ },
+      SMRMonCreateFromWideForm[ds, itemVarName, opts][xs, context]
+    ];
+
+SMRMonCreate[ds_Dataset, { itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String }, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{ },
+      SMRMonCreateFromLongForm[
+        ds,
+        { itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName },
+        FilterRules[ opts, Options[SMRMonCreateFromLongForm] ]
+      ][xs, context]
+    ];
+
+SMRMonCreate[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be a Dataset or an Association of SSparseMatrix objects. " <>
+            "If the first argument is a Dataset a second argument is expected. " <>
+            "That second argument should be an item ID column name in that Dataset (wide form) " <>
+            "or a list of four strings specifying the column names that correspond to item ID, tag type, tag, weight. " <>
+            "If no arguments are given the pipeline value is used.",
+        "SMRMonCreate:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonCreateFromWideForm                                   *)
+(**************************************************************)
+
+Clear[SMRMonCreateFromWideForm];
+
+Options[SMRMonCreateFromWideForm] =
+    {
+      "AddTagTypesToColumnNames" -> False,
+      "TagValueSeparator" -> ".",
+      "NumericalColumnsAsCategorical" -> False,
+      "MissingValuesPattern" -> (None | "None" | Missing[___])
+    };
+
+SMRMonCreateFromWideForm[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonCreateFromWideForm[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonCreateFromWideForm[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonCreateFromWideForm[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{ ncol, tagTypeNames, smats, idPos, idName, numCols, ds2, rowNames, allRowNames,
       addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ, tagValueSeparator, missingValuesPattern},
 
-      addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
-      numericalColumnsAsCategoricalQ = TrueQ[OptionValue[SMRMonCreate, "NumericalColumnsAsCategorical"]];
-      tagValueSeparator = ToString[OptionValue[SMRMonCreate, "TagValueSeparator"]];
-      missingValuesPattern = OptionValue[SMRMonCreate, "MissingValuesPattern"];
+      addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreateFromWideForm, "AddTagTypesToColumnNames"]];
+      numericalColumnsAsCategoricalQ = TrueQ[OptionValue[SMRMonCreateFromWideForm, "NumericalColumnsAsCategorical"]];
+      tagValueSeparator = ToString[OptionValue[SMRMonCreateFromWideForm, "TagValueSeparator"]];
+      missingValuesPattern = OptionValue[SMRMonCreateFromWideForm, "MissingValuesPattern"];
 
       ncol = Dimensions[ds][[2]];
 
@@ -595,13 +647,12 @@ SMRMonCreate[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, conte
       SMRMonCreate[smats][xs, Join[context, <|"data" -> ds|>]]
     ];
 
-SMRMonCreate[___][__] :=
+SMRMonCreateFromWideForm[___][__] :=
     Block[{},
       Echo[
-        "The first argument is expected to be a Dataset or an Association of SSparseMatrix objects. " <>
-            "If the first argument is a Dataset the optional second argument is expected to be a column name in that Dataset. " <>
-            "If no arguments are given the pipeline value is used.",
-        "SMRMonCreate:"];
+        "The first argument is expected to be a Dataset object. " <>
+            "The optional second argument is expected to be a column name in that Dataset.",
+        "SMRMonCreateFromWideForm:"];
       $SMRMonFailure
     ];
 
@@ -610,6 +661,65 @@ SMRMonCreate[___][__] :=
 (* SMRMonCreateFromLongForm                                   *)
 (**************************************************************)
 
+Clear[SMRMonCreateFromLongForm];
+
+Options[SMRMonCreateFromLongForm] =
+    {
+      "AddTagTypesToColumnNames" -> False,
+      "TagValueSeparator" -> ".",
+      "MissingValuesPattern" -> (None | "None" | Missing[___])
+    };
+
+SMRMonCreateFromLongForm[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonCreateFromLongForm[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonCreateFromLongForm[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonCreateFromLongForm[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonCreateFromLongForm[ds, { "Item", "TagType", "Tag", "Weight" }, opts ][xs, context];
+
+SMRMonCreateFromLongForm[ds_Dataset, { itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String }, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{ tagTypeNames, smats, allRowNames,
+      addTagTypesToColumnNamesQ, tagValueSeparator, missingValuesPattern},
+
+      addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreateFromLongForm, "AddTagTypesToColumnNames"]];
+      tagValueSeparator = ToString[OptionValue[SMRMonCreateFromLongForm, "TagValueSeparator"]];
+      missingValuesPattern = OptionValue[SMRMonCreateFromLongForm, "MissingValuesPattern"];
+
+
+      If[ Length[ Intersection[ Normal @ Keys @ ds[[1]], {itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName}  ] ] != 4,
+        Echo["Not all of the specified column names are column names in the dataset.", "SMRMonCreateFromLongForm:"];
+        Return[$Failed]
+      ];
+
+      tagTypeNames = Union[ Normal[ ds[All, tagTypeColumnName] ] ];
+
+      smats = Association @ Map[Function[{tt}, tt -> ToSSparseMatrix @ CrossTabulate[ ds[ Select[#TagType == tt &], {itemColumnName, tagColumnName, weightColumnName}] ] ], tagTypeNames];
+
+      If[addTagTypesToColumnNamesQ,
+
+        smats =
+            Association @
+                KeyValueMap[Function[{k, mat},
+                  k -> ToSSparseMatrix[mat,
+                    "ColumnNames" -> Map[ k <> tagValueSeparator <> #&, ColumnNames[mat] ],
+                    "RowNames" -> RowNames[mat]
+                  ]], smats]
+      ];
+
+      SMRMonCreate[smats][xs, context]
+];
+
+SMRMonCreateFromLongForm[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be a Dataset object. " <>
+            "The optional second argument is expected to be of the form : " <>
+            "{ itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String } .",
+        "SMRMonCreateFromLongForm:"];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
@@ -1552,7 +1662,7 @@ SMRMonRowBind[___][__] :=
 (* Classify (original implementation)                      *)
 (*=========================================================*)
 
-ClearAll[SMRMonClassifyOriginal];
+Clear[SMRMonClassifyOriginal];
 
 Options[SMRMonClassifyOriginal] = {
   "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
@@ -1703,7 +1813,7 @@ SMRMonClassifyOriginal[___][__] :=
 (* Classify                                                *)
 (*=========================================================*)
 
-ClearAll[SMRMonClassify];
+Clear[SMRMonClassify];
 
 Options[SMRMonClassify] = {
   "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
