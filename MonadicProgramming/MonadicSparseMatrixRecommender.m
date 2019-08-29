@@ -184,9 +184,11 @@ SMRMonSetTagWeights::usage = "Sets weights (significance factors) to the IIR tag
 
 SMRMonSetTimeSeriesMatrix::usage = "Sets a time series matrix to be used with SMRMonRecommendByCorrelation.";
 
+SMRMonClassifyOriginal::usage = "Uses IIR as a classifier for specified label tag-type over a vector or a matrix.";
+
 SMRMonClassify::usage = "Uses IIR as a classifier for specified label tag-type over a vector or a matrix.";
 
-SMRMonSetClassificationParameters::usage = "Sets the parameters to be used by SMRMonClassify.";
+SMRMonSetClassificationParameters::usage = "Sets the parameters to be used by SMRMonClassifyOriginal.";
 
 SMRMonProveByHistory::usage = "Proof the recommendations using consumption history.";
 
@@ -351,8 +353,8 @@ SMRMonScoredItemsQ[recs_Association][xs_, context_Association] :=
           If[ KeyExistsQ[context, "itemNames"],
             AssociationQ[recs] &&
                 VectorQ[Values[recs], NumberQ] &&
-                ( Length[ Intersection[ Keys[recs], Keys[context["itemNames"]] ] ] == Length[recs] ||
-                    Length[ Intersection[ Keys[recs], Range[Length@context["itemNames"]] ] ] == Length[recs]
+                ( VectorQ[context["itemNames"] /@ Keys[recs], IntegerQ] ||
+                    1 <= Min[Keys[recs]] && Max[Keys[recs]] <= Length[context["itemNames"]]
                 ),
             (*ELSE*)
             AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
@@ -377,8 +379,8 @@ SMRMonScoredTagsQ[recs_Association][xs_, context_Association] :=
           If[ KeyExistsQ[context, "tags"],
             AssociationQ[recs] &&
                 VectorQ[Values[recs], NumberQ] &&
-                ( Length[ Intersection[ Keys[recs], Keys[context["tags"]] ] ] == Length[recs] ||
-                    Length[ Intersection[ Keys[recs], Range[Length@context["tags"]] ] ] == Length[recs]
+                ( VectorQ[context["tags"] /@ Keys[recs], IntegerQ] ||
+                    1 <= Min[Keys[recs]] && Max[Keys[recs]] <= Length[context["tags"]]
                 ),
             (*ELSE*)
             AssociationQ[recs] && VectorQ[Values[recs], NumberQ]
@@ -605,6 +607,12 @@ SMRMonCreate[___][__] :=
 
 
 (**************************************************************)
+(* SMRMonCreateFromLongForm                                   *)
+(**************************************************************)
+
+
+
+(**************************************************************)
 (* SMRMonApplyLocalWeightFunction                             *)
 (**************************************************************)
 
@@ -779,7 +787,7 @@ GetFilterIDs[context_Association, callerFunctionName_String] :=
 
 Clear[SMRMonRecommend];
 
-Options[SMRMonRecommend] = {"RemoveHistory" -> True, "ItemNames" -> True, "Normalize" -> True };
+Options[SMRMonRecommend] = {"RemoveHistory" -> True, "ItemNames" -> True, "Normalize" -> True, "VectorResult" -> False };
 
 SMRMonRecommend[$SMRMonFailure] := $SMRMonFailure;
 
@@ -810,8 +818,8 @@ SMRMonRecommend[ history : Association[ (_Integer -> _?NumberQ) ... ], nRes_Inte
 SMRMonRecommend[ itemIndices : {_Integer...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ itemIndices, ConstantArray[1, Length[itemIndices]], nRes, opts][xs, context];
 
-SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{vec, filterIDs = All, filterInds, smat, fmat, recs, removeHistoryQ, itemNamesQ, normalizeQ, rowNames},
+SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes:(_Integer|All), opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{vec, filterIDs = All, filterInds, smat, fmat, recs, resInds, removeHistoryQ, itemNamesQ, normalizeQ, vectorResultQ, rowNames},
 
       If[Length[itemIndices],
         Echo["Empty history as an argument.", "SMRMonRecommend:"];
@@ -821,6 +829,7 @@ SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes
       removeHistoryQ = TrueQ[OptionValue[SMRMonRecommend, "RemoveHistory"]];
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommend, "ItemNames"]];
       normalizeQ = TrueQ[OptionValue[SMRMonRecommend, "Normalize"]];
+      vectorResultQ = TrueQ[OptionValue[SMRMonRecommend, "VectorResult"]];
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
@@ -845,21 +854,33 @@ SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes
 
       (*3 and 4 and 5*)
 
+      If[ normalizeQ && Max[Abs[vec]] > 0,
+        vec = vec / Max[vec];
+      ];
+
+      If[ vectorResultQ,
+
+        If[ IntegerQ[ nRes ],
+          resInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1;;nRes ]];
+          vec = SparseArray[ Thread[ resInds -> vec[[resInds]] ], RowsCount[context["M"]] ];
+        ];
+
+        Return[ SMRMonUnit[ vec, context ] ]
+      ];
+
       recs = Association[ Most[ArrayRules[vec]] ];
 
       recs = KeyMap[ First, recs ];
 
       recs = If[ removeHistoryQ, KeySelect[ recs, !MemberQ[itemIndices, #]&], recs ];
 
-      recs = TakeLargest[recs, UpTo[nRes]];
+      If[ IntegerQ[nRes],
+        recs = TakeLargest[recs, UpTo[nRes]];
+      ];
 
       If[itemNamesQ,
         rowNames = RowNames[ context["M"] ];
         recs = KeyMap[ rowNames[[#]]&, recs]
-      ];
-
-      If[ normalizeQ && Length[recs] > 0,
-        recs = recs / Max[recs];
       ];
 
       SMRMonUnit[recs, context]
@@ -887,7 +908,7 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 
 Clear[SMRMonRecommendByProfile];
 
-Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "IgnoreUnknownTags" -> False};
+Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "IgnoreUnknownTags" -> False, "VectorResult" -> False };
 
 SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
@@ -914,11 +935,12 @@ SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ.
       SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
     ] /; Length[profileInds] == Length[profileScores];
 
-SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{itemNamesQ, normalizeQ, inds, vec, smat, recs, filterIDs, filterInds, rowNames, fmat},
+SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{itemNamesQ, normalizeQ, vectorResultQ, inds, vec, smat, recs, resInds, filterIDs, filterInds, rowNames, fmat},
 
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "ItemNames"]];
       normalizeQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "Normalize"]];
+      vectorResultQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "VectorResult"]];
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommendByProfile:"];
@@ -944,19 +966,31 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes_Integer, opts : OptionsPat
         ];
       ];
 
+      If[normalizeQ && Max[Abs[vec]] > 0,
+        vec = vec / Max[vec];
+      ];
+
+      If[ vectorResultQ,
+
+        If[ IntegerQ[ nRes ],
+          resInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1;;nRes ]];
+          vec = SparseArray[ Thread[ resInds -> vec[[resInds]] ], RowsCount[context["M"]] ];
+        ];
+
+        Return[ SMRMonUnit[ vec, context ] ]
+      ];
+
       recs = Association[ Most[ArrayRules[vec]] ];
 
       recs = KeyMap[ First, recs ];
 
-      recs = TakeLargest[recs, UpTo[nRes]];
+      If[ IntegerQ[nRes],
+        recs = TakeLargest[recs, UpTo[nRes]]
+      ];
 
       If[itemNamesQ,
         rowNames = RowNames[ context["M"] ];
         recs = KeyMap[ rowNames[[#]]&, recs]
-      ];
-
-      If[normalizeQ && Max[recs] > 0,
-        recs = recs / Max[recs];
       ];
 
       SMRMonUnit[recs, context]
@@ -967,11 +1001,11 @@ SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : 
     Block[{tags = tagsArg, p},
 
       If[ TrueQ[OptionValue[SMRMonRecommendByProfile, "IgnoreUnknownTags"]],
-        If[ ListQ[tags], tags = AssociationThread[tags -> 1] ];
+        If[ ListQ[tags], tags = AssociationThread[tags -> 1.] ];
         tags = KeyTake[tags, ColumnNames[context["M"]]];
       ];
 
-      If[ ListQ[tags], tags = AssociationThread[ tags -> 1 ] ];
+      If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
 
       If[ AssociationQ[tags] && !ScoredTagsQ[tags, context],
         Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
@@ -979,7 +1013,7 @@ SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : 
       ];
 
       p = SMRMonToProfileVector[tags][xs, context];
-      SMRMonRecommendByProfile[p[[1]], nRes][xs, context]
+      SMRMonRecommendByProfile[p[[1]], nRes, opts][xs, context]
     ];
 
 SMRMonRecommendByProfile[___][__] :=
@@ -1515,6 +1549,157 @@ SMRMonRowBind[___][__] :=
 
 
 (*=========================================================*)
+(* Classify (original implementation)                      *)
+(*=========================================================*)
+
+ClearAll[SMRMonClassifyOriginal];
+
+Options[SMRMonClassifyOriginal] = {
+  "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
+  "NumberOfNearestNeighbors" -> Automatic, "NumberOfResults" -> All,
+  "Voting" -> False, "DropZeroScoredLabels" -> True
+};
+
+SMRMonClassifyOriginal[$SMRMonFailure] := $SMRMonFailure;
+
+(*SMRMonClassifyOriginal[xs_, context_Association] := (Print["here"];$SMRMonFailure);*)
+
+SMRMonClassifyOriginal[][xs_, context_Association] := SMRMonClassifyOriginal[None][xs, context];
+
+SMRMonClassifyOriginal[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{tagType, profile},
+
+      tagType = OptionValue[SMRMonClassifyOriginal, "TagType"];
+      profile = OptionValue[SMRMonClassifyOriginal, "Profile"];
+
+      If[ ! StringQ[ tagType ],
+        Echo["The value of the option \"TagType\" is expected to be a string.", "SMRMonClassifyOriginal:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( AssociationQ[ profile ] || VectorQ[ profile, StringQ ] ),
+        Echo["The value of the option \"Profile\" is expected to be an association or a list of strings.", "SMRMonClassifyOriginal:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonClassifyOriginal[tagType, profile, opts][xs, context]
+    ];
+
+SMRMonClassifyOriginal[tagType_String, profile : {_String..}, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonClassifyOriginal[tagType, AssociationThread[profile, 1], opts][xs, context];
+
+SMRMonClassifyOriginal[tagType_String, profile_Association, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{recs, clMat, clMat01, s, t,
+      property, expectedProperties, numberOfNearestNeighbors, numberOfResults,
+      votingQ, dropZeroScoredLabelsQ, qProfile, res, recsVec},
+
+      property = OptionValue[SMRMonClassifyOriginal, "Property"];
+      numberOfNearestNeighbors = OptionValue[SMRMonClassifyOriginal, "NumberOfNearestNeighbors"];
+      numberOfResults = OptionValue[SMRMonClassifyOriginal, "NumberOfResults"];
+
+      votingQ = TrueQ[OptionValue[SMRMonClassifyOriginal, "Voting"]];
+      dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassifyOriginal, "DropZeroScoredLabels"]];
+
+      expectedProperties = { "Decision", "Probabilities", "Properties" };
+      If[ ! MemberQ[ expectedProperties, property ],
+        Echo["The value of the option \"Property\" is expected to be one of "<> ToString[expectedProperties] <> ".", "SMRMonClassifyOriginal:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( TrueQ[numberOfNearestNeighbors === Automatic] || NumberQ[ numberOfNearestNeighbors ] ),
+        Echo["The value of the option \"NumberOfNearestNeighbors\" is expected to be a number or Automatic.", "SMRMonClassifyOriginal:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( TrueQ[numberOfResults === All] || NumberQ[ numberOfResults ] ),
+        Echo["The value of the option \"NumberOfResults\" is expected to be a number or All.", "SMRMonClassifyOriginal:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! KeyExistsQ[context, "matrices"],
+        Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonClassifyOriginal:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ !MemberQ[ Keys[context["matrices"]], tagType],
+        Echo[
+          "Unknown tag type \"" <> tagType <> "\"; the first argument should be one of: " <>
+              ToString[ "\"" <> # <> "\""& /@ Keys[context["matrices"]] ] <> " .",
+          "SMRMonClassifyOriginal:"
+        ];
+        Return[$SMRMonFailure]
+      ];
+
+      clMat = context["matrices", tagType];
+
+      qProfile = KeySelect[ profile, !MemberQ[ColumnNames[clMat], #]& ];
+
+      If[ Length[qProfile] == 0,
+        Echo[
+          "The profile argument has to have at least one tag that does not belong to the tag type \"" <> tagType <> "\".",
+          "SMRMonClassifyOriginal:"
+        ];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ TrueQ[ numberOfNearestNeighbors === Automatic ],
+        numberOfNearestNeighbors = Ceiling[ 0.05 * RowsCount[ clMat ] ];
+        numberOfNearestNeighbors = If[ numberOfNearestNeighbors < 10, 10, numberOfNearestNeighbors ];
+        numberOfNearestNeighbors = If[ numberOfNearestNeighbors > 200, 200, numberOfNearestNeighbors ];
+        numberOfNearestNeighbors = Min[ numberOfNearestNeighbors, RowsCount[clMat] ];
+      ];
+
+      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[qProfile, numberOfNearestNeighbors], SMRMonTakeValue}];
+
+      If[ TrueQ[recs === $SMRMonFailure],
+        Return[$SMRMonFailure]
+      ];
+
+      If[ votingQ,
+        clMat01 = SparseArray[clMat];
+        t = Most[ArrayRules[clMat]]; t[[All, 2]] = 1.;
+        clMat01 = SparseArray[t, Dimensions[clMat]];
+        clMat = ToSSparseMatrix[ clMat01, "RowNames" -> RowNames[clMat], "ColumnNames" -> ColumnNames[clMat] ];
+        recs = AssociationThread[ Keys[recs], 1.];
+      ];
+
+      (* Finally the "classification" computation follows. *)
+      s = ( Values[recs] / Max[recs] ) . SparseArray[ clMat[[ Keys[recs], All ]] ];
+
+      If[ Max[Abs[s]] > 0, s = s / Max[s] ];
+
+      s = AssociationThread[ ColumnNames[clMat], s];
+
+      If[ dropZeroScoredLabelsQ, s = Select[s, # > 0&] ];
+
+      res = ReverseSort[s];
+
+      res =
+          Which[
+            property == "Decision", First[Keys[res]],
+
+            property == "Probabilities" && TrueQ[ numberOfResults === All ], res,
+
+            property == "Probabilities", TakeLargest[ res, UpTo[numberOfResults] ],
+
+            property == "Properties", expectedProperties,
+
+            True, res
+          ];
+
+      SMRMonUnit[ res, context ]
+    ];
+
+SMRMonClassifyOriginal[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonClassifyOriginal[tagType_String, profile_Association, opts___].",
+        "SMRMonClassifyOriginal:"];
+      $SMRMonFailure
+    ];
+
+
+(*=========================================================*)
 (* Classify                                                *)
 (*=========================================================*)
 
@@ -1528,23 +1713,23 @@ Options[SMRMonClassify] = {
 
 SMRMonClassify[$SMRMonFailure] := $SMRMonFailure;
 
-(*SMRMonClassify[xs_, context_Association] := (Print["here"];$SMRMonFailure);*)
+(*SMRMonClassifyOriginal[xs_, context_Association] := (Print["here"];$SMRMonFailure);*)
 
-SMRMonClassify[][xs_, context_Association] := SMRMonClassify[None][xs, context];
+SMRMonClassify[][xs_, context_Association] := SMRMonClassifyOriginal[None][xs, context];
 
 SMRMonClassify[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{tagType, profile},
 
-      tagType = OptionValue[SMRMonClassify, "TagType"];
-      profile = OptionValue[SMRMonClassify, "Profile"];
+      tagType = OptionValue[SMRMonClassifyOriginal, "TagType"];
+      profile = OptionValue[SMRMonClassifyOriginal, "Profile"];
 
       If[ ! StringQ[ tagType ],
-        Echo["The value of the option \"TagType\" is expected to be a string.", "SMRMonClassify:"];
+        Echo["The value of the option \"TagType\" is expected to be a string.", "SMRMonClassifyOriginal:"];
         Return[$SMRMonFailure]
       ];
 
       If[ ! ( AssociationQ[ profile ] || VectorQ[ profile, StringQ ] ),
-        Echo["The value of the option \"Profile\" is expected to be an association or a list of strings.", "SMRMonClassify:"];
+        Echo["The value of the option \"Profile\" is expected to be an association or a list of strings.", "SMRMonClassifyOriginal:"];
         Return[$SMRMonFailure]
       ];
 
@@ -1557,7 +1742,7 @@ SMRMonClassify[tagType_String, profile : {_String..}, opts : OptionsPattern[]][x
 SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{recs, clMat, clMat01, s, t,
       property, expectedProperties, numberOfNearestNeighbors, numberOfResults,
-      votingQ, dropZeroScoredLabelsQ, qProfile, res},
+      votingQ, dropZeroScoredLabelsQ, qProfile, resInds, res},
 
       property = OptionValue[SMRMonClassify, "Property"];
       numberOfNearestNeighbors = OptionValue[SMRMonClassify, "NumberOfNearestNeighbors"];
@@ -1611,10 +1796,11 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
       If[ TrueQ[ numberOfNearestNeighbors === Automatic ],
         numberOfNearestNeighbors = Ceiling[ 0.05 * RowsCount[ clMat ] ];
         numberOfNearestNeighbors = If[ numberOfNearestNeighbors < 10, 10, numberOfNearestNeighbors ];
+        numberOfNearestNeighbors = If[ numberOfNearestNeighbors > 200, 200, numberOfNearestNeighbors ];
         numberOfNearestNeighbors = Min[ numberOfNearestNeighbors, RowsCount[clMat] ];
       ];
 
-      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[qProfile, numberOfNearestNeighbors], SMRMonTakeValue}];
+      recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonRecommendByProfile[qProfile, numberOfNearestNeighbors, "VectorResult" -> True ], SMRMonTakeValue}];
 
       If[ TrueQ[recs === $SMRMonFailure],
         Return[$SMRMonFailure]
@@ -1625,19 +1811,25 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
         t = Most[ArrayRules[clMat]]; t[[All, 2]] = 1.;
         clMat01 = SparseArray[t, Dimensions[clMat]];
         clMat = ToSSparseMatrix[ clMat01, "RowNames" -> RowNames[clMat], "ColumnNames" -> ColumnNames[clMat] ];
-        recs = AssociationThread[ Keys[recs], 1.];
+        recs = SparseArray[ Thread[ Flatten[First /@ Most[ArrayRules[recs]]] -> 1. ], Length[recs] ];
       ];
 
       (* Finally the "classification" computation follows. *)
-      s = Values[ recs / Max[recs] ] . SparseArray[ clMat[[ Keys[recs], All ]] ];
+      s = recs . SparseArray[ clMat ];
 
-      s = AssociationThread[ ColumnNames[clMat], s];
+      If[ Max[s] > 0, s = s / Max[s] ];
 
-      If[ dropZeroScoredLabelsQ, s = Select[s, # > 0&] ];
 
-      s = s / Max[s];
+      If[ dropZeroScoredLabelsQ,
+        resInds = Range[Length[s]];
+        resInds = Pick[resInds, UnitStep[-s], 0];
+        resInds = resInds[[ Reverse[ Ordering[ Normal @ s[[resInds]] ] ] ]],
 
-      res = ReverseSort[s];
+        (* ELSE  *)
+        resInds = Reverse[ Ordering[ Normal[s] ] ]
+      ];
+
+      res = AssociationThread[ ColumnNames[clMat][[resInds]], Normal[s[[resInds]]] ];
 
       res =
           Which[
