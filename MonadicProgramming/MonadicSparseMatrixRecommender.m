@@ -1045,8 +1045,26 @@ SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ.
       SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
     ] /; Length[profileInds] == Length[profileScores];
 
+SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{tags = tagsArg, p},
+
+      If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
+
+      If[ TrueQ[OptionValue[SMRMonRecommendByProfile, "IgnoreUnknownTags"]],
+        tags = KeyTake[tags, ColumnNames[context["M"]]];
+      ];
+
+      If[ AssociationQ[tags] && !ScoredTagsQ[tags, context],
+        Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
+        Return[$SMRMonFailure]
+      ];
+
+      p = SMRMonToProfileVector[tags][xs, context];
+      SMRMonRecommendByProfile[p[[1]], nRes, opts][xs, context]
+    ];
+
 SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{itemNamesQ, normalizeQ, vectorResultQ, inds, vec, smat, recs, resInds, filterIDs, filterInds, rowNames, fmat},
+    Block[{itemNamesQ, normalizeQ, vectorResultQ, vec, smat, recs, recsInds, recsVals, ordInds, filterIDs, filterInds, rowNames, fmat},
 
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "ItemNames"]];
       normalizeQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "Normalize"]];
@@ -1093,39 +1111,31 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : Opt
         Return[ SMRMonUnit[ vec, context ] ]
       ];
 
-      recs = Association[ Most[ArrayRules[vec]] ];
+      (*  recs = Association[ Most[ArrayRules[vec]] ]; *)
+      recs = Most[ArrayRules[vec]];
 
-      recs = KeyMap[ First, recs ];
+      (*  recs = KeyMap[ First, recs ]; *)
+      recsInds = Flatten[recs[[All,1]]];
+      recsVals = recs[[All,2]];
+
+      ordInds = Reverse[ Ordering[ recsVals ] ];
 
       If[ IntegerQ[nRes],
-        recs = TakeLargest[recs, UpTo[nRes]]
+        ordInds = Take[ ordInds, UpTo[nRes] ]
       ];
+
+      recsInds = recsInds[[ordInds]];
+      recsVals = recsVals[[ordInds]];
 
       If[itemNamesQ,
         rowNames = RowNames[ context["M"] ];
-        recs = KeyMap[ rowNames[[#]]&, recs]
+        recs = AssociationThread[ rowNames[[recsInds]], recsVals ],
+        (* ELSE *)
+        recs = AssociationThread[ recsInds, recsVals ];
       ];
 
       SMRMonUnit[recs, context]
 
-    ];
-
-SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{tags = tagsArg, p},
-
-      If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
-
-      If[ TrueQ[OptionValue[SMRMonRecommendByProfile, "IgnoreUnknownTags"]],
-        tags = KeyTake[tags, ColumnNames[context["M"]]];
-      ];
-
-      If[ AssociationQ[tags] && !ScoredTagsQ[tags, context],
-        Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
-        Return[$SMRMonFailure]
-      ];
-
-      p = SMRMonToProfileVector[tags][xs, context];
-      SMRMonRecommendByProfile[p[[1]], nRes, opts][xs, context]
     ];
 
 SMRMonRecommendByProfile[___][__] :=
