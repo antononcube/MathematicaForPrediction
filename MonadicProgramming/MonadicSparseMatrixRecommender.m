@@ -1031,7 +1031,7 @@ SMRMonRecommendByProfile[nRes_Integer, opts : OptionsPattern[]][xs_, context_Ass
     ];
 
 SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ..}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{inds, vec, smat},
+    Block[{vec, smat},
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonRecommend:"];
@@ -1058,7 +1058,10 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : Opt
       ];
 
       If[ ColumnsCount[context["M"]] != Dimensions[profileVec][[1]],
-        Echo["The number of columns of the recommender matrix is different than the length of the profile vector argument.", "SMRMonRecommendByProfile:"];
+        Echo[
+          "The number of columns of the recommender matrix is different than the length of the profile vector argument.",
+          "SMRMonRecommendByProfile:"
+        ];
         Return[$SMRMonFailure]
       ];
 
@@ -1110,12 +1113,11 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : Opt
 SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{tags = tagsArg, p},
 
+      If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
+
       If[ TrueQ[OptionValue[SMRMonRecommendByProfile, "IgnoreUnknownTags"]],
-        If[ ListQ[tags], tags = AssociationThread[tags -> 1.] ];
         tags = KeyTake[tags, ColumnNames[context["M"]]];
       ];
-
-      If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
 
       If[ AssociationQ[tags] && !ScoredTagsQ[tags, context],
         Echo["The first argument is not an association of tags->score elements or a list of tags.", "SMRMonRecommendByProfile:"];
@@ -1850,7 +1852,7 @@ SMRMonClassify[tagType_String, profile : {_String..}, opts : OptionsPattern[]][x
     SMRMonClassify[tagType, AssociationThread[profile, 1], opts][xs, context];
 
 SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{recs, clMat, clMat01, s, t,
+    Block[{recs, clMat, clMat01, cnAsc, s, t,
       property, expectedProperties, numberOfNearestNeighbors, numberOfResults,
       votingQ, dropZeroScoredLabelsQ, qProfile, resInds, res},
 
@@ -1893,7 +1895,8 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
 
       clMat = context["matrices", tagType];
 
-      qProfile = KeySelect[ profile, !MemberQ[ColumnNames[clMat], #]& ];
+      cnAsc = ColumnNamesAssociation[clMat];
+      qProfile = KeyComplement[ {profile, cnAsc} ];
 
       If[ Length[qProfile] == 0,
         Echo[
@@ -1928,7 +1931,6 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
       s = recs . SparseArray[ clMat ];
 
       If[ Max[s] > 0, s = s / Max[s] ];
-
 
       If[ dropZeroScoredLabelsQ,
         resInds = Range[Length[s]];
