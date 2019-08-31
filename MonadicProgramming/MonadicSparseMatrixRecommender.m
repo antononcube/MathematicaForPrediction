@@ -929,7 +929,8 @@ SMRMonRecommend[ itemIndices : {_Integer...}, nRes_Integer, opts : OptionsPatter
     SMRMonRecommend[ itemIndices, ConstantArray[1, Length[itemIndices]], nRes, opts][xs, context];
 
 SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes:(_Integer|All), opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{vec, filterIDs = All, filterInds, smat, fmat, recs, resInds, removeHistoryQ, itemNamesQ, normalizeQ, vectorResultQ, rowNames},
+    Block[{removeHistoryQ, itemNamesQ, normalizeQ, vectorResultQ, vec, filterIDs = All,
+      filterInds, smat, fmat, recs, recsInds, recsVals, ordInds, rowNames},
 
       If[Length[itemIndices],
         Echo["Empty history as an argument.", "SMRMonRecommend:"];
@@ -971,26 +972,38 @@ SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes
       If[ vectorResultQ,
 
         If[ IntegerQ[ nRes ],
-          resInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1;;nRes ]];
-          vec = SparseArray[ Thread[ resInds -> vec[[resInds]] ], RowsCount[context["M"]] ];
+          recsInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1;;nRes ]];
+          vec = SparseArray[ Thread[ recsInds -> vec[[recsInds]] ], RowsCount[context["M"]] ];
         ];
 
         Return[ SMRMonUnit[ vec, context ] ]
       ];
 
-      recs = Association[ Most[ArrayRules[vec]] ];
+      If[ removeHistoryQ,
+        vec[[itemIndices]] = 0;
+        (* This is probably redundant -- Ordering won't be slowed-down that much. *)
+        (* vec = SparseArray[vec]; *)
+      ];
 
-      recs = KeyMap[ First, recs ];
+      recs = Most[ArrayRules[vec]];
 
-      recs = If[ removeHistoryQ, KeySelect[ recs, !MemberQ[itemIndices, #]&], recs ];
+      recsInds = Flatten[recs[[All,1]]];
+      recsVals = recs[[All,2]];
+
+      ordInds = Reverse[ Ordering[ recsVals ] ];
 
       If[ IntegerQ[nRes],
-        recs = TakeLargest[recs, UpTo[nRes]];
+        ordInds = Take[ ordInds, UpTo[nRes] ]
       ];
+
+      recsInds = recsInds[[ordInds]];
+      recsVals = recsVals[[ordInds]];
 
       If[itemNamesQ,
         rowNames = RowNames[ context["M"] ];
-        recs = KeyMap[ rowNames[[#]]&, recs]
+        recs = AssociationThread[ rowNames[[recsInds]], recsVals ],
+        (* ELSE *)
+        recs = AssociationThread[ recsInds, recsVals ];
       ];
 
       SMRMonUnit[recs, context]
