@@ -233,12 +233,12 @@ LSAMonTakeWeightedMatrix = LSAMonTakeWeightedDocumentTermMatrix;
 
 ClearAll[DocumentTermSSparseMatrix];
 
-DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association), stopWords_}, opts : OptionsPattern[] ] :=
+DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_}, opts : OptionsPattern[] ] :=
     DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, opts ];
 
 DocumentTermSSparseMatrix[
   docs : ( Association[ (_ -> _String) ...] | Association[ (_ -> {_String...}) ... ] ),
-  {stemmingRules : (_List | _Dispatch | _Association), stopWords_},
+  {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
   opts : OptionsPattern[]] :=
     Block[{docIDs, docTermMat, terms},
 
@@ -312,13 +312,41 @@ LSAMonGetDocuments[___][xs_, context_Association] := $LSAMonFailure;
 (*------------------------------------------------------------*)
 ClearAll[LSAMonMakeDocumentTermMatrix];
 
+Options[LSAMonMakeDocumentTermMatrix] = { "StemmingRules" -> {}, "StopWords" -> Automatic };
+
 LSAMonMakeDocumentTermMatrix[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonMakeDocumentTermMatrix[xs_, context_Association] := LSAMonMakeDocumentTermMatrix[][xs, context];
 
 LSAMonMakeDocumentTermMatrix[][xs_, context_Association] := LSAMonMakeDocumentTermMatrix[ {}, Automatic ][xs, context];
 
-LSAMonMakeDocumentTermMatrix[stemRules : (_List | _Dispatch | _Association), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
+LSAMonMakeDocumentTermMatrix[ opts:OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ stemRules, stopWords },
+
+      stemRules = OptionValue[ LSAMonMakeDocumentTermMatrix, "StemmingRules" ];
+
+      If[ ! ( AssociationQ[stemRules] || DispatchQ[stemRules] || MatchQ[ stemRules, {_Rule...} ] || TrueQ[ stemRules === Automatic ] ),
+        Echo[
+          "The value of the option \"StemmingRules\" is expected to be a list or rules, dispatch table, an association, or Automatic.",
+          "LSAMonMakeDocumentTermMatrix:"
+        ];
+        Return[$LSAMonFailure]
+      ];
+
+      stopWords = OptionValue[ LSAMonMakeDocumentTermMatrix, "StopWords" ];
+
+      If[ ! ( MatchQ[ stopWords, {_String..} ] || TrueQ[ stopWords === Automatic ] ),
+        Echo[
+          "The value of the option \"StopWords\" is expected to be a list or strings or Automatic.",
+          "LSAMonMakeDocumentTermMatrix:"
+        ];
+        Return[$LSAMonFailure]
+      ];
+
+      LSAMonMakeDocumentTermMatrix[ stemRules, stopWords ][xs, context]
+    ];
+
+LSAMonMakeDocumentTermMatrix[stemRules : (_List | _Dispatch | _Association | Automatic), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
     Block[{stopWords = stopWordsArg, docs, docTermMat },
 
       docs = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonGetDocuments, LSAMonTakeValue } ];
@@ -354,7 +382,35 @@ LSAMonMakeDocumentTermMatrix[__][___] :=
 
 ClearAll[LSAMonApplyTermWeightFunctions];
 
+Options[LSAMonApplyTermWeightFunctions] = { "GlobalWeightFunction" -> "IDF", "LocalWeightFunction" -> "None", "NormalizerFunction" -> "Cosine" };
+
 LSAMonApplyTermWeightFunctions[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonApplyTermWeightFunctions[xs_, context_Association] := LSAMonApplyTermWeightFunctions[][xs, context];
+
+LSAMonApplyTermWeightFunctions[ opts:OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ termFuncs, val },
+
+      termFuncs =
+          Table[
+            (
+              val = OptionValue[ LSAMonApplyTermWeightFunctions, funcName ];
+
+              If[ ! StringQ[val],
+                Echo[
+                  "The value of the option \""<> funcName <> "\" is expected to be a string.",
+                  "LSAMonMakeDocumentTermMatrix:"
+                ];
+                Return[$LSAMonFailure]
+              ];
+
+              val
+            ),
+            { funcName, { "GlobalWeightFunction", "LocalWeightFunction", "NormalizerFunction" } }
+          ];
+
+      LSAMonApplyTermWeightFunctions[ Sequence @@ termFuncs ][xs, context]
+    ];
 
 LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_] :=
     Block[{wDocTermMat},
@@ -402,7 +458,7 @@ ClearAll[LSAMonExtractTopics];
 
 Options[LSAMonExtractTopics] =
     Join[
-      { Method -> "NNMF", "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
+      { "NumberOfTopics" -> None, Method -> "NNMF", "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
       Options[GDCLSGlobal]
     ];
 
@@ -415,9 +471,25 @@ LSAMonExtractTopics[xs_, context_Association] := $LSAMonFailure;
 (*LSAMonExtractTopics[nTopics_Integer, nMinDocumentsPerTerm_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=*)
 (*    LSAMonExtractTopics[ nTopics, Join[ { "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}] ][xs, context];*)
 
-LSAMonExtractTopics[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :=
+LSAMonExtractTopics[ opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{nTopics},
+
+      nTopics = OptionValue[ LSAMonExtractTopics, "NumberOfTopics" ];
+
+      If[ ! IntegerQ[nTopics],
+        Echo[
+          "The value of the option \"NumberOfTopics\" is expected to be a integer.",
+          "LSAMonMakeDocumentTermMatrix:"
+        ];
+        Return[$LSAMonFailure]
+      ];
+
+      LSAMonExtractTopics[ nTopics, opts ][xs, context]
+    ];
+
+LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{method, nMinDocumentsPerTerm, nInitializingDocuments,
-      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, s, automaticTopicNames },
+      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, nnmfOpts, automaticTopicNames },
 
       method = OptionValue[ LSAMonExtractTopics, Method ];
       If[ StringQ[method], method = ToLowerCase[method]];
@@ -484,7 +556,13 @@ LSAMonExtractTopics[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :=
 
         W = SparseArray[W];
         H = SparseArray[H];
-        {W, H} = GDCLSGlobal[M1, W, H, Evaluate[ FilterRules[ {opts}, Options[GDCLSGlobal] ] ] ],
+
+        nnmfOpts = FilterRules[ {opts}, Options[GDCLSGlobal] ];
+        If[ TrueQ[ ("MaxSteps" /. nnmfOpts) === Automatic ],
+          nnmfOpts = Prepend[ nnmfOpts, "MaxSteps" -> 12 ];
+        ];
+
+        {W, H} = GDCLSGlobal[M1, W, H, Evaluate[ nnmfOpts ] ],
 
         method == "SVD" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
         (* Singular Value Decomposition *)
@@ -529,12 +607,41 @@ LSAMonTopicExtraction = LSAMonExtractTopics;
 
 
 (*------------------------------------------------------------*)
-(* Make statistical thesaurus                                 *)
+(* Extract statistical thesaurus                                 *)
 (*------------------------------------------------------------*)
 
 ClearAll[LSAMonExtractStatisticalThesaurus];
 
+Options[LSAMonExtractStatisticalThesaurus] = { "Words" -> None, "NumberOfNearestNeighbors" -> 12 };
+
 LSAMonExtractStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonExtractStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{words, numberOfNNs},
+
+      words = OptionValue[ LSAMonExtractStatisticalThesaurus, "Words" ];
+
+      If[ ! MatchQ[ words, {_String..} ],
+        Echo[
+          "The value of the option \"Words\" is expected to be a list of strings.",
+          "LSAMonExtractStatisticalThesaurus:"
+        ];
+        Return[$LSAMonFailure]
+      ];
+
+      numberOfNNs = OptionValue[ LSAMonExtractStatisticalThesaurus, "NumberOfNearestNeighbors" ];
+
+      If[ ! MatchQ[ words, {_String..} ],
+        Echo[
+          "The value of the option \"Words\" is expected to be a list of strings.",
+          "LSAMonExtractStatisticalThesaurus:"
+        ];
+        Return[$LSAMonFailure]
+      ];
+
+      LSAMonExtractStatisticalThesaurus[ words, numberOfNNs, opts ][xs, context]
+    ];
+
 LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
     Block[{W, H, HNF, thRes},
       Which[
