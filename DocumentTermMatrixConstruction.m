@@ -75,11 +75,11 @@ Options[ToBagOfWords] = {"SplittingCharacters" -> {Whitespace, "\n",
   " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
   "PostSplittingPredicate" -> (StringLength[#] > 2 &)};
 
-ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch|_Association), stopWords_List}, opts : OptionsPattern[]] :=
+ToBagOfWords[doc_String, {stemmingRules:(_List|_Dispatch|_Association|Automatic), stopWords_List}, opts : OptionsPattern[]] :=
     ToBagOfWords[{doc}, {stemmingRules, stopWords}, opts][[1]];
 
-ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_Dispatch), stopWords_List}, opts : OptionsPattern[]] :=
-    Block[{docTerms, splittingCharacters, pSPred, stopWordsRules},
+ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_Dispatch|Automatic), stopWords_List}, opts : OptionsPattern[]] :=
+    Block[{docTerms, splittingCharacters, pSPred, stopWordsRules, aDerivedStemmingRules},
 
       splittingCharacters = OptionValue[ToBagOfWords, "SplittingCharacters"];
       pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
@@ -105,7 +105,15 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
         docTerms = docTerms /. stemmingRules,
 
         AssociationQ[stemmingRules],
-        docTerms = stemmingRules /@ docTerms
+        docTerms = stemmingRules /@ docTerms,
+
+        TrueQ[ stemmingRules === Automatic ] && MatchQ[ docs, {_String..} ],
+        aDerivedStemmingRules = Association[ # -> WordData[#, "PorterStem"] & /@ Union[Flatten[docTerms]] ];
+        docTerms = Map[ aDerivedStemmingRules, docTerms, {2}],
+
+        TrueQ[ stemmingRules === Automatic ],
+        aDerivedStemmingRules = Association[ # -> WordData[#, "PorterStem"] & /@ Union[Flatten[docTerms]] ];
+        docTerms = Map[ aDerivedStemmingRules, docTerms]
 
       ];
 
@@ -113,9 +121,9 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules:(_List|_
     ];
 
 Clear[DocumentTermMatrix];
-DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:(_List|_Dispatch|_Association), stopWords_}, opts : OptionsPattern[]] :=
-    Block[{terms, mat, docTerms, nDocuments, splittingCharaters,
-      n = Length[docs], globalWeights, termToIndexRules},
+DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules:(_List|_Dispatch|_Association|Automatic), stopWords_}, opts : OptionsPattern[]] :=
+    Block[{terms, mat, docTerms,
+      n = Length[docs], termToIndexRules},
 
       (* for the construction of the doc*term matrix*)
       docTerms = ToBagOfWords[docs, {stemmingRules, stopWords}, opts];
