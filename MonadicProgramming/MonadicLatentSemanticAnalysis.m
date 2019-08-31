@@ -80,11 +80,11 @@
         LSAMonUnit[texts]⟹
         LSAMonMakeDocumentTermMatrix[{}, stopWords]⟹
         LSAMonApplyTermWeightFunctions[]⟹
-        LSAMonTopicExtraction[5, 60, 12, "MaxSteps" -> 6, "PrintProfilingInfo" -> True];
+        LSAMonExtractTopics[5, 60, 12, "MaxSteps" -> 6, "PrintProfilingInfo" -> True];
 
       (* Show statistical thesaurus in two different ways. *)
       res⟹
-        LSAMonStatisticalThesaurus[{"arms", "banking", "economy", "education", "freedom", "tariff", "welfare"}, 6]⟹
+        LSAMonExtractStatisticalThesaurus[{"arms", "banking", "economy", "education", "freedom", "tariff", "welfare"}, 6]⟹
         LSAMonRetrieveFromContext["statisticalThesaurus"]⟹
         LSAMonEchoValue⟹
         LSAMonEchoStatisticalThesaurus[];
@@ -151,7 +151,7 @@ $LSAMonFailure::usage = "Failure symbol for the monad LSAMon.";
 
 LSAMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries of the document-term matrix.";
 
-LSAMonBasisVectorInterpretation::usage = "Interpret the a specified basis vector.";
+LSAMonInterpretBasisVector::usage = "Interpret the a specified basis vector.";
 
 LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries for a specified list of words.";
 
@@ -167,16 +167,16 @@ LSAMonMakeGraph::usage = "Make a graph of the document-term, document-document, 
 
 LSAMonFindMostImportantDocuments::usage = "Find the most important texts in the text collection.";
 
-LSAMonStatisticalThesaurus::usage = "Compute the statistical thesaurus for specified list of words.";
+LSAMonExtractStatisticalThesaurus::usage = "Extract the statistical thesaurus for specified list of words.";
 
 LSAMonDocumentCollectionQ::usage = "Gives True if the argument is a text collection.";
 
-LSAMonTopicExtraction::usage = "Extract topics.";
+LSAMonExtractTopics::usage = "Extract topics.";
 
-LSAMonTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
+LSAMonFindTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
 Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
 
-LSAMonTopicsTable::usage = "Make a table of topics.";
+LSAMonMakeTopicsTable::usage = "Make a table of topics.";
 
 LSAMonTakeTexts::usage = "Gives the value of the key \"texts\" from the monad context.";
 
@@ -398,45 +398,45 @@ LSAMonApplyTermWeightFunctions[__][___] :=
 (* Make document-term matrix                                  *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonTopicExtraction];
+ClearAll[LSAMonExtractTopics];
 
-Options[LSAMonTopicExtraction] =
+Options[LSAMonExtractTopics] =
     Join[
       { Method -> "NNMF", "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
       Options[GDCLSGlobal]
     ];
 
-LSAMonTopicExtraction[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonExtractTopics[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonTopicExtraction[$LSAMonFailure] := $LSAMonFailure;
+LSAMonExtractTopics[$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonTopicExtraction[xs_, context_Association] := $LSAMonFailure;
+LSAMonExtractTopics[xs_, context_Association] := $LSAMonFailure;
 
-(*LSAMonTopicExtraction[nTopics_Integer, nMinDocumentsPerTerm_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=*)
-(*    LSAMonTopicExtraction[ nTopics, Join[ { "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}] ][xs, context];*)
+(*LSAMonExtractTopics[nTopics_Integer, nMinDocumentsPerTerm_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=*)
+(*    LSAMonExtractTopics[ nTopics, Join[ { "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}] ][xs, context];*)
 
-LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :=
+LSAMonExtractTopics[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :=
     Block[{method, nMinDocumentsPerTerm, nInitializingDocuments,
       docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, s, automaticTopicNames },
 
-      method = OptionValue[ LSAMonTopicExtraction, Method ];
+      method = OptionValue[ LSAMonExtractTopics, Method ];
       If[ StringQ[method], method = ToLowerCase[method]];
       If[ TrueQ[ MemberQ[ {SingularValueDecomposition, ToLowerCase["SingularValueDecomposition"], ToLowerCase["SVD"] }, method ] ], method = "SVD" ];
       If[ TrueQ[ MemberQ[ ToLowerCase[ { "NNMF", "NMF", "NonNegativeMatrixFactorization" } ], method ] ], method = "NNMF" ];
       If[ !MemberQ[ {"SVD", "NNMF"}, method ],
-        Echo["The value of the option Method is expected to be \"SVD\" or \"NNMF\".", "LSAMonTopicExtraction:"];
+        Echo["The value of the option Method is expected to be \"SVD\" or \"NNMF\".", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
-      nMinDocumentsPerTerm = OptionValue[ LSAMonTopicExtraction, "MinDocumentsPerTerm" ];
+      nMinDocumentsPerTerm = OptionValue[ LSAMonExtractTopics, "MinDocumentsPerTerm" ];
       If[ ! ( IntegerQ[ nMinDocumentsPerTerm ] && nMinDocumentsPerTerm > 0 ),
-        Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a positive integer.", "LSAMonTopicExtraction:"];
+        Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a positive integer.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
-      nInitializingDocuments = OptionValue[ LSAMonTopicExtraction, "NumberOfInitializingDocuments" ];
+      nInitializingDocuments = OptionValue[ LSAMonExtractTopics, "NumberOfInitializingDocuments" ];
       If[ ! ( IntegerQ[ nInitializingDocuments ] && nInitializingDocuments > 0 ),
-        Echo["The value of the option \"NumberOfInitializingDocuments\" is expected to be a positive integer.", "LSAMonTopicExtraction:"];
+        Echo["The value of the option \"NumberOfInitializingDocuments\" is expected to be a positive integer.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -447,7 +447,7 @@ LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :
             LSAMonUnit[xs, context],
             {
               LSAMonApplyTermWeightFunctions[],
-              LSAMonTopicExtraction[
+              LSAMonExtractTopics[
                 nTopics,
                 Join[ { Method -> method, "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}]
               ]
@@ -497,7 +497,7 @@ LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :
         H = S . H,
 
         True,
-        Echo["Cannot find a document-term matrix.", "LSAMonTopicExtraction:"];
+        Echo["Cannot find a document-term matrix.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -517,23 +517,25 @@ LSAMonTopicExtraction[nTopics_Integer, opts : OptionsPattern[]][xs_, context_] :
 
     ];
 
-LSAMonTopicExtraction[___][__] :=
+LSAMonExtractTopics[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonTopicExtraction[ nTopics_Integer, opts___] .",
-        "LSAMonTopicExtraction::"];
+        "The expected signature is LSAMonExtractTopics[ nTopics_Integer, opts___] .",
+        "LSAMonExtractTopics::"];
       $LSAMonFailure;
     ];
+
+LSAMonTopicExtraction = LSAMonExtractTopics;
 
 
 (*------------------------------------------------------------*)
 (* Make statistical thesaurus                                 *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonStatisticalThesaurus];
+ClearAll[LSAMonExtractStatisticalThesaurus];
 
-LSAMonStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
+LSAMonExtractStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
     Block[{W, H, HNF, thRes},
       Which[
         KeyExistsQ[context, "H"] && KeyExistsQ[context, "W"],
@@ -551,16 +553,16 @@ LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, conte
         LSAMonUnit[thRes, Join[context, <|"statisticalThesaurus" -> thRes|>]],
 
         True,
-        Echo["No factorization of the document-term matrix is made.", "LSAMonStatisticalThesaurus:"];
+        Echo["No factorization of the document-term matrix is made.", "LSAMonExtractStatisticalThesaurus:"];
         $LSAMonFailure
       ]
     ];
 
-LSAMonStatisticalThesaurus[___][__] :=
+LSAMonExtractStatisticalThesaurus[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer] .",
-        "LSAMonStatisticalThesaurus::"];
+        "The expected signature is LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer] .",
+        "LSAMonExtractStatisticalThesaurus::"];
       $LSAMonFailure;
     ];
 
@@ -606,15 +608,15 @@ LSAMonEchoStatisticalThesaurus[___][__] :=
 (* Basis vector interpretation                                *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonBasisVectorInterpretation];
+ClearAll[LSAMonInterpretBasisVector];
 
-Options[LSAMonBasisVectorInterpretation] = { "NumberOfTerms" -> 12 };
+Options[LSAMonInterpretBasisVector] = { "NumberOfTerms" -> 12 };
 
-LSAMonBasisVectorInterpretation[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonBasisVectorInterpretation[vectorIndices : (_Integer | {_Integer..}), opts : OptionsPattern[] ][xs_, context_] :=
+LSAMonInterpretBasisVector[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonInterpretBasisVector[vectorIndices : (_Integer | {_Integer..}), opts : OptionsPattern[] ][xs_, context_] :=
     Block[{W, H, res, numberOfTerms},
 
-      numberOfTerms = OptionValue[LSAMonBasisVectorInterpretation, "NumberOfTerms"];
+      numberOfTerms = OptionValue[LSAMonInterpretBasisVector, "NumberOfTerms"];
 
       {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
@@ -631,27 +633,28 @@ LSAMonBasisVectorInterpretation[vectorIndices : (_Integer | {_Integer..}), opts 
 
     ];
 
-LSAMonBasisVectorInterpretation[___][__] :=
+LSAMonInterpretBasisVector[___][__] :=
     Block[{},
       Echo[
-        "The expected arguments are LSAMonBasisVectorInterpretation[vectorIndices:(_Integer|{_Integer..}), opts___] .",
-        "LSAMonBasisVectorInterpretation:"];
+        "The expected arguments are LSAMonInterpretBasisVector[vectorIndices:(_Integer|{_Integer..}), opts___] .",
+        "LSAMonInterpretBasisVector:"];
       $LSAMonFailure;
     ];
+
 
 (*------------------------------------------------------------*)
 (* Topics table making                                        *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonTopicsTable];
+ClearAll[LSAMonMakeTopicsTable];
 
-Options[LSAMonTopicsTable] = { "NumberOfTerms" -> 12 };
+Options[LSAMonMakeTopicsTable] = { "NumberOfTerms" -> 12 };
 
-LSAMonTopicsTable[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonMakeTopicsTable[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonTopicsTable[xs_, context_Association] := LSAMonTopicsTable[][xs, context];
+LSAMonMakeTopicsTable[xs_, context_Association] := LSAMonMakeTopicsTable[][xs, context];
 
-LSAMonTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
+LSAMonMakeTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
     Block[{topicsTbl, k, numberOfTerms},
 
       numberOfTerms = OptionValue["NumberOfTerms"];
@@ -661,14 +664,14 @@ LSAMonTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
       topicsTbl =
           Table[
             TableForm[{NumberForm[#[[1]] / t[[1, 1]], {4, 3}], #[[2]]} & /@ t],
-            {t, First @ LSAMonBasisVectorInterpretation[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
+            {t, First @ LSAMonInterpretBasisVector[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
 
       LSAMonUnit[ topicsTbl, Join[ context, <| "topicsTable" -> topicsTbl|> ] ]
     ];
 
-LSAMonTopicsTable[__][___] :=
+LSAMonMakeTopicsTable[__][___] :=
     Block[{},
-      Echo["No arguments, just options are expected.", "LSAMonTopicsTable:"];
+      Echo["No arguments, just options are expected.", "LSAMonMakeTopicsTable:"];
       $LSAMonFailure
     ];
 
@@ -706,7 +709,7 @@ LSAMonEchoTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
       If[ KeyExistsQ[context, "topicsTable"],
         topicsTbl = context["topicsTable"],
         (*ELSE*)
-        topicsTbl = First @ LSAMonTopicsTable["NumberOfTerms" -> numberOfTerms][xs, context]
+        topicsTbl = First @ LSAMonMakeTopicsTable["NumberOfTerms" -> numberOfTerms][xs, context]
       ];
 
       tOpts = Join[ FilterRules[ {opts}, Options[Multicolumn] ], {Dividers -> All, Alignment -> Left} ];
@@ -734,22 +737,22 @@ LSAMonEchoTopicsTable[__][___] :=
 (* Topics representation                                      *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonTopicsRepresentation];
+ClearAll[LSAMonFindTopicsRepresentation];
 
-Options[LSAMonTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
+Options[LSAMonFindTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
-LSAMonTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonFindTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonTopicsRepresentation[xs_, context_Association] := LSAMonTopicsRepresentation[][xs, context];
+LSAMonFindTopicsRepresentation[xs_, context_Association] := LSAMonFindTopicsRepresentation[][xs, context];
 
-LSAMonTopicsRepresentation[][xs_, context_] :=
-    LSAMonTopicsRepresentation[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
+LSAMonFindTopicsRepresentation[][xs_, context_] :=
+    LSAMonFindTopicsRepresentation[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
 
-LSAMonTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
+LSAMonFindTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
     Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
 
-      computeTopicRepresentationQ = OptionValue[LSAMonTopicsRepresentation, "ComputeTopicRepresentation"];
-      assignAutomaticTopicNamesQ = OptionValue[LSAMonTopicsRepresentation, "AssignAutomaticTopicNames"];
+      computeTopicRepresentationQ = OptionValue[LSAMonFindTopicsRepresentation, "ComputeTopicRepresentation"];
+      assignAutomaticTopicNamesQ = OptionValue[LSAMonFindTopicsRepresentation, "AssignAutomaticTopicNames"];
 
       If[ KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"],
 
@@ -766,7 +769,7 @@ LSAMonTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][
 
           True,
           Echo["The length of the argument tags is expected to be same as the number of rows of the document-term matrix.",
-            "LSAMonTopicsRepresentation:"];
+            "LSAMonFindTopicsRepresentation:"];
           Return[$LSAMonFailure]
         ];
 
@@ -810,14 +813,14 @@ LSAMonTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][
         LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices" -> docTopicIndices |> ] ],
         (* ELSE *)
 
-        Echo["No document-term matrix factorization is computed.", "LSAMonTopicsRepresentation:"];
+        Echo["No document-term matrix factorization is computed.", "LSAMonFindTopicsRepresentation:"];
         $LSAMonFailure
       ]
     ];
 
-LSAMonTopicsRepresentation[__][___] :=
+LSAMonFindTopicsRepresentation[__][___] :=
     Block[{},
-      Echo["The expected signature is LSAMonTopicsRepresentation[tags:(Automatic|_List), opts___] .", "LSAMonTopicsRepresentation:"];
+      Echo["The expected signature is LSAMonFindTopicsRepresentation[tags:(Automatic|_List), opts___] .", "LSAMonFindTopicsRepresentation:"];
       $LSAMonFailure
     ];
 

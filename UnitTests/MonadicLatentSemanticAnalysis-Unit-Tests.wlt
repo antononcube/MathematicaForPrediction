@@ -54,7 +54,7 @@ BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"];
 VerificationTest[(* 1 *)
 (*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];*)
   Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
-  Length[SubValues[MonadicLatentSemanticAnalysis`LSAMonTopicExtraction]] > 0
+  Length[SubValues[MonadicLatentSemanticAnalysis`LSAMonExtractTopics]] > 0
   ,
   True
   ,
@@ -168,8 +168,8 @@ VerificationTest[ (* 8 *)
         LSAMonBind,
         lsaObj,
         {
-          LSAMonTopicExtraction[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
-          LSAMonTopicsTable
+          LSAMonExtractTopics[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonMakeTopicsTable
         }
       ];
 
@@ -199,8 +199,8 @@ VerificationTest[ (* 10 *)
         {
           LSAMonMakeDocumentTermMatrix[{}, Automatic],
           LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-          LSAMonTopicExtraction[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
-          LSAMonTopicsTable
+          LSAMonExtractTopics[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonMakeTopicsTable
         }
       ];
 
@@ -229,7 +229,7 @@ VerificationTest[ (* 12 *)
       LSAMonBind,
       lsaObj3,
       {
-        LSAMonStatisticalThesaurus[{"ghost", "king", "lord"}, 12],
+        LSAMonExtractStatisticalThesaurus[{"ghost", "king", "lord"}, 12],
         LSAMonTakeValue
       }
     ],
@@ -251,7 +251,7 @@ VerificationTest[ (* 13 *)
       Fold[ LSAMonBind,
         lsaObj3,
         {
-          LSAMonTopicsRepresentation[ Automatic ],
+          LSAMonFindTopicsRepresentation[ Automatic ],
           LSAMonTakeValue
         }];
 
@@ -278,7 +278,7 @@ VerificationTest[ (* 14 *)
 ];
 
 VerificationTest[ (* 15 *)
-  SSparseMatrixQ[LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix]]
+  SSparseMatrixQ[ LSAMonBind[lsaObj2, LSAMonTakeWeightedMatrix] ]
   ,
   True
   ,
