@@ -48,27 +48,27 @@
 
 *)
 
-BeginPackage["NonNegativeMatrixFactorization`"]
+BeginPackage["NonNegativeMatrixFactorization`"];
 
 GDCLS::usage = "GDCLS[V_?MatrixQ,k_Integer,opts] returns the pair of matrices {W,H} such that V = W H and \
-the number of the columns of W and the number of rows of H are k. The method used is called Gradient Descent with Constrained Least Squares."
+the number of the columns of W and the number of rows of H are k. The method used is called Gradient Descent with Constrained Least Squares.";
 
 GDCLSGlobal::usage = "GDCLSGlobal[V_?MatrixQ,W_?MatrixQ,H_?MatrixQ,opts] continues the GDCLS iterations over the matrices W and H \
-in the execution context and returns {W,H} as a result."
+in the execution context and returns {W,H} as a result.";
 
 NormalizeMatrixProduct::usage = "NormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} \
-such that W1 H1 = W H and the norms of the columns of W1 are 1."
+such that W1 H1 = W H and the norms of the columns of W1 are 1.";
 
-LeftNormalizeMatrixProduct::usage = "Same as NormalizeMatrixProduct."
+LeftNormalizeMatrixProduct::usage = "Same as NormalizeMatrixProduct.";
 	
 RightNormalizeMatrixProduct::usage = "RightNormalizeMatrixProduct[W_?MatrixQ,H_?MatrixQ] returns a pair of matrices {W1,H1} \
-such that W1 H1 = W H and the norms of the rows of H1 are 1."
+such that W1 H1 = W H and the norms of the rows of H1 are 1.";
 
 BasisVectorInterpretation::usage = "BasisVectorInterpretation[vec_?VectorQ,n_Integer,interpretationItems_List] \
-takes the n largest coordinates of vec, finds the corresponding elements in interpretationItems, and returns a list of coordinate-item pairs."
+takes the n largest coordinates of vec, finds the corresponding elements in interpretationItems, and returns a list of coordinate-item pairs.";
 
 NearestWords::usage = "NearestWords[HNF, word, terms, stemmingRules, n] calculates a statistical thesaurus entry \
-for a specified nearest function over the columns of a matrix of topics and a word."
+for a specified nearest function over the columns of a matrix of topics and a word.";
 
 Begin["`Private`"];
 
