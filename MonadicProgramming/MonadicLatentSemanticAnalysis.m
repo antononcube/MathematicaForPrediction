@@ -620,7 +620,7 @@ Options[LSAMonExtractStatisticalThesaurus] = { "Words" -> None, "NumberOfNearest
 
 LSAMonExtractStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonExtractStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_] :=
+LSAMonExtractStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{words, numberOfNNs},
 
       words = OptionValue[ LSAMonExtractStatisticalThesaurus, "Words" ];
@@ -643,10 +643,10 @@ LSAMonExtractStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_] :=
         Return[$LSAMonFailure]
       ];
 
-      LSAMonExtractStatisticalThesaurus[ words, numberOfNNs, opts ][xs, context]
+      LSAMonExtractStatisticalThesaurus[ words, numberOfNNs ][xs, context]
     ];
 
-LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_] :=
+LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_Association] :=
     Block[{W, H, HNF, thRes},
       Which[
         KeyExistsQ[context, "H"] && KeyExistsQ[context, "W"],
@@ -684,15 +684,23 @@ LSAMonExtractStatisticalThesaurus[___][__] :=
 
 Clear[LSAMonEchoStatisticalThesaurus];
 
+Options[LSAMonEchoStatisticalThesaurus] = Options[LSAMonExtractStatisticalThesaurus];
+
 LSAMonEchoStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonEchoStatisticalThesaurus[xs_, context_Association] := LSAMonEchoStatisticalThesaurus[][xs, context];
 
-LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
-    Block[{},
+LSAMonEchoStatisticalThesaurus[ opts:OptionsPattern[] ][xs_, context_Association] :=
+    Block[{words},
+
+      words = OptionValue[ LSAMonEchoStatisticalThesaurus, "Words" ];
+
       Which[
 
-        KeyExistsQ[context, "statisticalThesaurus"],
+        !TrueQ[ words === None ],
+        Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonExtractStatisticalThesaurus[opts], LSAMonEchoStatisticalThesaurus } ],
+
+        TrueQ[ words === None ] && KeyExistsQ[context, "statisticalThesaurus"],
         Echo@
             Grid[
               Prepend[
@@ -702,7 +710,7 @@ LSAMonEchoStatisticalThesaurus[][xs_, context_] :=
               Spacings -> {Automatic, 0.75}];
         LSAMonUnit[xs, context],
 
-        True,
+        True  ,
         Echo["No statistical thesaurus is computed.", "LSAMonEchoStatisticalThesaurus:"];
         $LSAMonFailure
       ]
