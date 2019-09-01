@@ -1,5 +1,5 @@
 (*
-    Monadic latent semantic analysis Mathematica package
+    Monadic Latent Semantic Analysis Mathematica package
     Copyright (C) 2017  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 (* :Date: 2017-10-06 *)
 (* Created with the Wolfram Language Plugin for IntelliJ, see http://wlplugin.halirutan.de/ . *)
 
-(* :Package Version: 0.8 *)
+(* :Package Version: 1.0 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2017 Anton Antonov *)
 (* :Keywords: *)
@@ -221,7 +221,7 @@ GenerateMonadAccessors[
   {"W", "H" },
   "FailureSymbol" -> $LSAMonFailure, "DecapitalizeElementName" -> False ];
 
-ClearAll[LSAMonTakeMatrix, LSAMonTakeWeightedMatrix];
+Clear[LSAMonTakeMatrix, LSAMonTakeWeightedMatrix];
 
 LSAMonTakeMatrix = LSAMonTakeDocumentTermMatrix;
 
@@ -231,7 +231,7 @@ LSAMonTakeWeightedMatrix = LSAMonTakeWeightedDocumentTermMatrix;
 (* Adapter functions                                          *)
 (**************************************************************)
 
-ClearAll[DocumentTermSSparseMatrix];
+Clear[DocumentTermSSparseMatrix];
 
 DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_}, opts : OptionsPattern[] ] :=
     DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, opts ];
@@ -252,7 +252,7 @@ DocumentTermSSparseMatrix[
 (*------------------------------------------------------------*)
 (* Also can be used in SMRMon. *)
 
-ClearAll[WeightTermsOfSSparseMatrix];
+Clear[WeightTermsOfSSparseMatrix];
 
 WeightTermsOfSSparseMatrix[ smat_SSparseMatrix ] := WeightTermsOfSSparseMatrix[ smat, "IDF", "None", "Cosine"];
 
@@ -269,10 +269,10 @@ WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeightFunction_, localWeig
 (* Get texts                                                  *)
 (**************************************************************)
 
-ClearAll[LSAMonDocumentCollectionQ];
+Clear[LSAMonDocumentCollectionQ];
 LSAMonDocumentCollectionQ[x_] := AssociationQ[x] && VectorQ[ Values[x], StringQ ];
 
-ClearAll[LSAMonGetDocuments];
+Clear[LSAMonGetDocuments];
 
 LSAMonGetDocuments[$LSAMonFailure] := $LSAMonFailure;
 
@@ -310,7 +310,7 @@ LSAMonGetDocuments[___][xs_, context_Association] := $LSAMonFailure;
 (*------------------------------------------------------------*)
 (* Make document-term matrix                                  *)
 (*------------------------------------------------------------*)
-ClearAll[LSAMonMakeDocumentTermMatrix];
+Clear[LSAMonMakeDocumentTermMatrix];
 
 Options[LSAMonMakeDocumentTermMatrix] = { "StemmingRules" -> {}, "StopWords" -> Automatic };
 
@@ -380,7 +380,7 @@ LSAMonMakeDocumentTermMatrix[__][___] :=
 (* Apply term weight function to matrix entries               *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonApplyTermWeightFunctions];
+Clear[LSAMonApplyTermWeightFunctions];
 
 Options[LSAMonApplyTermWeightFunctions] = { "GlobalWeightFunction" -> "IDF", "LocalWeightFunction" -> "None", "NormalizerFunction" -> "Cosine" };
 
@@ -454,7 +454,7 @@ LSAMonApplyTermWeightFunctions[__][___] :=
 (* Make document-term matrix                                  *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonExtractTopics];
+Clear[LSAMonExtractTopics];
 
 Options[LSAMonExtractTopics] =
     Join[
@@ -492,9 +492,13 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
       docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, nnmfOpts, automaticTopicNames },
 
       method = OptionValue[ LSAMonExtractTopics, Method ];
+
       If[ StringQ[method], method = ToLowerCase[method]];
+
       If[ TrueQ[ MemberQ[ {SingularValueDecomposition, ToLowerCase["SingularValueDecomposition"], ToLowerCase["SVD"] }, method ] ], method = "SVD" ];
+
       If[ TrueQ[ MemberQ[ ToLowerCase[ { "NNMF", "NMF", "NonNegativeMatrixFactorization" } ], method ] ], method = "NNMF" ];
+
       If[ !MemberQ[ {"SVD", "NNMF"}, method ],
         Echo["The value of the option Method is expected to be \"SVD\" or \"NNMF\".", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
@@ -610,7 +614,7 @@ LSAMonTopicExtraction = LSAMonExtractTopics;
 (* Extract statistical thesaurus                                 *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonExtractStatisticalThesaurus];
+Clear[LSAMonExtractStatisticalThesaurus];
 
 Options[LSAMonExtractStatisticalThesaurus] = { "Words" -> None, "NumberOfNearestNeighbors" -> 12 };
 
@@ -678,7 +682,7 @@ LSAMonExtractStatisticalThesaurus[___][__] :=
 (* Echo statistical thesaurus                                 *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonEchoStatisticalThesaurus];
+Clear[LSAMonEchoStatisticalThesaurus];
 
 LSAMonEchoStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -715,7 +719,7 @@ LSAMonEchoStatisticalThesaurus[___][__] :=
 (* Basis vector interpretation                                *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonInterpretBasisVector];
+Clear[LSAMonInterpretBasisVector];
 
 Options[LSAMonInterpretBasisVector] = { "NumberOfTerms" -> 12 };
 
@@ -753,7 +757,7 @@ LSAMonInterpretBasisVector[___][__] :=
 (* Topics table making                                        *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonMakeTopicsTable];
+Clear[LSAMonMakeTopicsTable];
 
 Options[LSAMonMakeTopicsTable] = { "NumberOfTerms" -> 12 };
 
@@ -787,7 +791,7 @@ LSAMonMakeTopicsTable[__][___] :=
 (* Topics table echoing                                       *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonEchoTopicsTable];
+Clear[LSAMonEchoTopicsTable];
 
 Options[LSAMonEchoTopicsTable] = Join[
   {"NumberOfTableColumns" -> Automatic, "NumberOfTerms" -> 12 , "MagnificationFactor" -> Automatic},
@@ -844,7 +848,7 @@ LSAMonEchoTopicsTable[__][___] :=
 (* Topics representation                                      *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonFindTopicsRepresentation];
+Clear[LSAMonFindTopicsRepresentation];
 
 Options[LSAMonFindTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
@@ -936,7 +940,7 @@ LSAMonFindTopicsRepresentation[__][___] :=
 (* Documents collection statistics                            *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonEchoDocumentsStatistics];
+Clear[LSAMonEchoDocumentsStatistics];
 
 Options[LSAMonEchoDocumentsStatistics] = Options[Histogram];
 
@@ -1009,7 +1013,7 @@ LSAMonEchoDocumentsStatistics[__][___] :=
 (* Make a graph                                               *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonMakeGraph];
+Clear[LSAMonMakeGraph];
 
 Options[LSAMonMakeGraph] = { "Weighted" -> True, "Type" -> "Bipartite", "RemoveLoops" -> True };
 
@@ -1099,7 +1103,7 @@ LSAMonMakeGraph[__][___] :=
 (* Find most important texts                                  *)
 (*------------------------------------------------------------*)
 
-ClearAll[LSAMonFindMostImportantDocuments];
+Clear[LSAMonFindMostImportantDocuments];
 
 Options[LSAMonFindMostImportantDocuments] = { "CentralityFunction" -> EigenvectorCentrality };
 
