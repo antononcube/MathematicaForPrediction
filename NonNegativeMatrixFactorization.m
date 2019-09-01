@@ -1,5 +1,5 @@
 (*
-    Implementation of the Non-Negative Matrix Factorization algorithm in Mathematica
+    Non-Negative Matrix Factorization algorithm implementation in Mathematica
     Copyright (C) 2013  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
