@@ -286,11 +286,15 @@ LSAMonGetDocuments[xs_, context_] :=
         KeyExistsQ[context, "documents"] && LSAMonDocumentCollectionQ[ context["documents"] ],
         LSAMonUnit[ context["documents"], context],
 
+        KeyExistsQ[context, "documents"] && VectorQ[ context["documents"], StringQ ],
+        texts = ToAutomaticKeysAssociation[context["documents"]];
+        LSAMonUnit[ texts, context],
+
         LSAMonDocumentCollectionQ[xs],
         LSAMonUnit[xs, context],
 
         VectorQ[xs, StringQ],
-        texts = AssociationThread[ ToString /@ Range[Length[xs]], xs];
+        texts = ToAutomaticKeysAssociation[xs];
         LSAMonUnit[ texts, context],
 
         True,
