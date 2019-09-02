@@ -954,7 +954,7 @@ LSAMonFindTopicsRepresentation[__][___] :=
 
 Clear[LSAMonEchoDocumentsStatistics];
 
-Options[LSAMonEchoDocumentsStatistics] = Options[Histogram];
+Options[LSAMonEchoDocumentsStatistics] = Join[ {"LogBase" -> None}, Options[Histogram] ];
 
 LSAMonEchoDocumentsStatistics[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -963,7 +963,9 @@ LSAMonEchoDocumentsStatistics[xs_, context_Association] := LSAMonEchoDocumentsSt
 LSAMonEchoDocumentsStatistics[][xs_, context_Association] := LSAMonEchoDocumentsStatistics[ImageSize -> 300][xs, context];
 
 LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{texts, textWords, eLabel = None, dOpts, smat},
+    Block[{logBase, logFunc, logInsert, texts, textWords, eLabel = None, dOpts, smat},
+
+      logBase = OptionValue[LSAMonEchoDocumentsStatistics, "LogBase"];
 
       texts = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonGetDocuments, LSAMonTakeValue} ];
 
@@ -976,7 +978,7 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
 
       textWords = StringSplit /@ texts;
 
-      dOpts = Join[{opts}, {PlotRange -> All, PlotTheme -> "Detailed", ImageSize -> 300}];
+      dOpts = FilterRules[ Join[{opts}, {PlotRange -> All, PlotTheme -> "Detailed", ImageSize -> 300}], Options[Histogram] ];
 
       If[ !KeyExistsQ[context, "documentTermMatrix"],
         smat = None,
@@ -989,23 +991,33 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
         ]
       ];
 
+      If[ NumberQ[logBase],
+        logFunc = N[Log[logBase,#]]&;
+        logInsert = "log " <> ToString[logBase] <> " ",
+        (* ELSE *)
+        logFunc = Identity;
+        logInsert = ""
+      ];
+
       Echo[
         Grid[{
-          {Row[{"Number of documents:", Length[texts]}],
+          {
+            Row[{"Number of documents:", Length[texts]}],
             Row[{"Number of unique words:", Length[Union[Flatten[Values[textWords]]]]}],
             If[ TrueQ[smat === None],
               Nothing,
               Row[{"Document-term matrix dimensions:", Dimensions[smat]}]],
             If[ TrueQ[smat === None], Nothing, ""]
           },
-          {Histogram[StringLength /@ texts, PlotLabel -> "Number of characters", dOpts],
-            Histogram[Length /@ textWords, PlotLabel -> "Number of words", dOpts],
+          {
+            Histogram[ logFunc[ StringLength /@ texts ], PlotLabel -> "Number of " <> logInsert <> "characters", dOpts],
+            Histogram[ logFunc[ Length /@ textWords ], PlotLabel -> "Number of " <> logInsert <> "words", dOpts],
             If[ TrueQ[smat === None],
               Nothing,
-              Histogram[Total[smat], PlotLabel -> "Number of documents per word", dOpts]],
+              Histogram[ logFunc[ Total[smat] ], PlotLabel -> "Number of " <> logInsert <> "documents per word", dOpts]],
             If[ TrueQ[smat === None],
               Nothing,
-              Column[{"Summary of number of\ndocuments per word", RecordsSummary[Total[smat], {"# documents"}]}]]
+              Column[{"Summary of " <> logInsert <> "number of\ndocuments per word", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]]
           }
         }],
         eLabel
