@@ -131,7 +131,6 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
       stage1 = {LSAMonUnit[], LSAMonUnit[aHamlet], LSAMonUnit[aStateOfUnionSpeeches]};
 
       stage2 = {
-        LSAMonEchoDataSummary,
         LSAMonSetDocuments[aHamlet],
         LSAMonSetDocuments[aStateOfUnionSpeeches]
       };
@@ -144,8 +143,7 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
       };
 
       stage4 = {
-        LSAMonEchoDocumentsStatistics,
-        LSAMonEchoDataSummary
+        LSAMonEchoDocumentsStatistics
       };
 
       stage5 = {
@@ -161,18 +159,18 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
 
       stage6 = {
         LSAMonExtractTopics[12],
-        LSAMonExtractTopics["Topics" -> 16, "Method" -> "SVD" ],
-        LSAMonExtractTopics["Topics" -> 16, "Method" -> "NNMF" ],
-        LSAMonExtractTopics["Topics" -> -1, "Method" -> "NNMF", "MaxSteps" -> 12 ],
-        LSAMonExtractTopics["Topics" -> 2, "Method" -> "NNMF", "MaxSteps" -> Automatic ],
-        LSAMonExtractTopics["Topics" -> 2000, "Method" -> "SVD", "MaxSteps" -> 12 ],
-        LSAMonExtractTopics["Topics" -> 16, "Method" -> "SVD", "MinNumberOfDocumentsPerTerm" -> 12 ],
-        LSAMonExtractTopics["Topics" -> 16, "Method" -> "SVD", "MinNumberOfDocumentsPerTerm" -> 1200 ],
-        LSAMonExtractTopics["Topics" -> 16, "Method" -> "SVD", "MinNumberOfDocumentsPerTerm" -> -12 ]
+        LSAMonExtractTopics["NumberOfTopics" -> 16, "Method" -> "SVD" ],
+        LSAMonExtractTopics["NumberOfTopics" -> 16, "Method" -> "NNMF" ],
+        LSAMonExtractTopics["NumberOfTopics" -> -1, "Method" -> "NNMF", "MaxSteps" -> 12 ],
+        LSAMonExtractTopics["NumberOfTopics" -> 2, "Method" -> "NNMF", "MaxSteps" -> Automatic ],
+        LSAMonExtractTopics["NumberOfTopics" -> 2000, "Method" -> "SVD", "MaxSteps" -> 12 ],
+        LSAMonExtractTopics["NumberOfTopics" -> 16, "Method" -> "SVD", "MinNumberOfDocumentsPerTerm" -> 12 ],
+        LSAMonExtractTopics["NumberOfTopics" -> 16, "Method" -> "SVD", "MinNumberOfDocumentsPerTerm" -> 1200 ],
+        LSAMonExtractTopics["NumberOfTopics" -> 16, "Method" -> "SVD", "MinNumberOfDocumentsPerTerm" -> -12 ]
       };
 
       stage7 = {
-        LSAMonExtractStatisticalThesaurus,
+        LSAMonExtractStatisticalThesaurus[{"life","countri"},12],
         LSAMonMakeTopicsTable,
         LSAMonFindMostImportantDocuments
       };
@@ -180,12 +178,13 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
       stage8 = {
         LSAMonEchoTopicsTable,
         LSAMonEchoStatisticalThesaurus,
+        LSAMonEchoStatisticalThesaurus["Words"->{"health", "friend"}],
         LSAMonTakeValue
       };
 
-      allStages = Map[ {1, Length[#]} -> # &, {stage1, stage2, stage3, stage4, stage5, stage6, stage7, stage8} ];
+      allStages = Map[ {1, 1} -> # &, {stage1, stage2, stage3, stage4, stage5, stage6, stage7, stage8} ];
 
-      allStages2 = {{1, 1} -> stage1, {2, Length[stage2]} -> stage2, {0, Length[stage3]} -> stage3, {1, Length[stage5]} -> stage5, {1, Length[stage6]} -> stage6 };
+      allStages2 = {{1, 1} -> stage1, {1,2} -> stage2, {0, 1} -> stage3, {1, 1} -> stage5, {1, 1} -> stage6 };
 
       pipelines =
           Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages], {n}];
