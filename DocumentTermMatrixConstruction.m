@@ -163,6 +163,9 @@ DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWe
 * *)
 
 Clear[WeightTerms];
+
+WeightTerms::wargs = "Wrong arguments `1`";
+
 WeightTerms[docTermMat_?MatrixQ] := WeightTerms[docTermMat, "IDF", "None", "Cosine" ];
 
 WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String, normalizerFunc_String ] :=
@@ -174,6 +177,21 @@ WeightTerms[docTermMat_?MatrixQ, globalWeightFunc_String, localWeightFunc_String
       mat = ApplyNormalizationFunction[mat, normalizerFunc];
 
       mat
+    ];
+
+WeightTerms[docTermMat_?MatrixQ, globalWeights_, localWeightFunc_String, normalizerFunc_String ] :=
+    Block[{mat},
+      mat = ApplyLocalTermFunction[docTermMat, localWeightFunc];
+      mat = mat . DiagonalMatrix[SparseArray[globalWeights]];
+      mat = ApplyNormalizationFunction[mat, normalizerFunc];
+
+      mat
+    ] /; VectorQ[globalWeights, NumberQ] && Length[globalWeights] == Dimensions[docTermMat][[2]] ;
+
+WeightTerms[args___] :=
+    Block[{},
+      Message[WeightTerms::wargs, {args}];
+      $Failed
     ];
 
 ApplyLocalTermFunction::unfunc = "Unknown local weight function specification. Returning the matrix unmodified.";
