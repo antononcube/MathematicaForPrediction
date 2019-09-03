@@ -1003,15 +1003,15 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
         Return[$LSAMonFailure]
       ];
 
+      If[ applyTermWeightFuncsQ,
+        mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ]
+      ];
+
       mat = ImposeColumnNames[ mat, ColumnNames[ context["H"] ] ];
 
       If[ Max[Abs[ColumnSums[mat]]] == 0,
         Echo["The terms of the argument cannot be found in the topics matrix factor (H).", "LSAMonRepresentByTopics:"];
         Return[$LSAMonFailure]
-      ];
-
-      If[ applyTermWeightFuncsQ,
-        mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ]
       ];
 
       {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
