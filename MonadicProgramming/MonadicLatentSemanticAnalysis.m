@@ -176,7 +176,7 @@ LSAMonExtractTopics::usage = "Extract topics.";
 LSAMonFindTagsTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
 Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
 
-LSAMonRepresentByTopics::usage = "Find the topics representation of a matrix.";
+LSAMonRepresentByTopics::usage = "Find the topics representation of a matrix or a query.";
 
 LSAMonMakeTopicsTable::usage = "Make a table of topics.";
 
@@ -218,7 +218,8 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 
 GenerateMonadAccessors[
   "MonadicLatentSemanticAnalysis`LSAMon",
-  {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix", "globalTermWeights",
+  {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix",
+    "globalWeights", "globalWeightFunction", "localWeightFunction", "normalizerFunction",
     "topicColumnPositions", "automaticTopicNames", "statisticalThesaurus", "topicsTable", "method" },
   "FailureSymbol" -> $LSAMonFailure ];
 
@@ -262,6 +263,12 @@ Clear[WeightTermsOfSSparseMatrix];
 
 WeightTermsOfSSparseMatrix[ smat_SSparseMatrix ] := WeightTermsOfSSparseMatrix[ smat, "IDF", "None", "Cosine"];
 
+WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeights_Association, localWeightFunction_, normalizerFunction_ ] :=
+    Block[{vals},
+      vals = Lookup[ globalWeights, #, 1.] &/@ ColumnNames[smat];
+      WeightTermsOfSSparseMatrix[ smat, Normal[vals], localWeightFunction, normalizerFunction ]
+    ];
+
 WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeightFunction_, localWeightFunction_, normalizerFunction_ ] :=
     Block[{},
       ToSSparseMatrix[
@@ -270,6 +277,7 @@ WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeightFunction_, localWeig
         "ColumnNames" -> ColumnNames[smat]
       ]
     ];
+
 
 (**************************************************************)
 (* Get texts                                                  *)
@@ -423,42 +431,28 @@ LSAMonApplyTermWeightFunctions[ opts : OptionsPattern[] ][xs_, context_Associati
     ];
 
 LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_] :=
-    Block[{wDocTermMat, globalWeights},
+    Block[{wDocTermMat, globalWeights, aSpec },
 
       Which[
         KeyExistsQ[context, "documentTermMatrix"],
+
         wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], globalWeightFunction, localWeightFunction, normalizerFunction];
+
         globalWeights =
             AssociationThread[
               ColumnNames[context["documentTermMatrix"]],
               GlobalTermFunctionWeights[ SparseArray[context["documentTermMatrix"]], globalWeightFunction ]
             ];
-        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat, "globalTermWeights" -> globalWeights |>]],
+
+        aSpec = AssociationThread[ {"globalWeightFunction", "localWeightFunction", "normalizerFunction"}, {globalWeightFunction, localWeightFunction, normalizerFunction}];
+
+        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat, "globalWeights" -> globalWeights |>, aSpec]],
 
         True,
         Echo["No document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
         $LSAMonFailure
       ]
 
-    ];
-
-LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
-    Block[{wDocTermMat, globalWeights},
-      (* This code is the same as above. But I want to emphasize the string function names specification. *)
-      Which[
-        KeyExistsQ[context, "documentTermMatrix"],
-        wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], args];
-        globalWeights =
-            AssociationThread[
-              ColumnNames[context["documentTermMatrix"]],
-              GlobalTermFunctionWeights[ SparseArray[context["documentTermMatrix"]], {args}[[1]] ]
-            ];
-        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat, "globalTermWeights" -> globalWeights |>]],
-
-        True,
-        Echo["No document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
-        $LSAMonFailure
-      ]
     ];
 
 LSAMonApplyTermWeightFunctions[__][___] :=
@@ -982,26 +976,23 @@ LSAMonRepresentByTopics[ query_String, opts : OptionsPattern[] ][xs_, context_] 
       LSAMonRepresentByTopics[ TextWords[query], opts][xs, context];
 
 LSAMonRepresentByTopics[ query : {_String .. }, opts : OptionsPattern[] ][xs_, context_] :=
-    Block[{vals, qmat},
-      If[ KeyExistsQ[context, "globalTermWeights"],
-        vals = Lookup[ context["globalTermWeights"], #, 1.] & /@ query;
-        vals = vals / Max[vals],
-        (* ELSE *)
-        vals = ConstantArray[1,Length[query]]
-      ];
-      qmat = ToSSparseMatrix[ SparseArray[{vals}], "RowNames" -> {"query"}, "ColumnNames" -> query ];
+    Block[{qmat},
+
+      qmat = ToSSparseMatrix[ SparseArray[{ConstantArray[1, Length[query]]}], "RowNames" -> {"query"}, "ColumnNames" -> query ];
+
       LSAMonRepresentByTopics[ qmat, opts][xs, context]
     ];
 
 LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{ nns, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
 
-      nns = OptionValue[ LSAMonRepresentByTopics, "NumberOfNearestNeighbors" ];
+      (* nns = OptionValue[ LSAMonRepresentByTopics, "NumberOfNearestNeighbors" ];
 
       If[ ! ( IntegerQ[nns] && nns > 0 ),
         Echo["The value of the option \"NumberOfNearestNeighbors\" is expected to be a positive integer.", "LSAMonRepresentByTopics:"];
         Return[$LSAMonFailure]
       ];
+      *)
 
       If[ ! ( KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"] ),
         Echo["No document-term matrix factorization is computed.", "LSAMonRepresentByTopics:"];
@@ -1014,6 +1005,8 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
         Echo["The terms of the argument cannot be found in the topics matrix factor (H).", "LSAMonRepresentByTopics:"];
         Return[$LSAMonFailure]
       ];
+
+      mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ];
 
       {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
