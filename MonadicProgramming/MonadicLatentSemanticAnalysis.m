@@ -218,7 +218,7 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 
 GenerateMonadAccessors[
   "MonadicLatentSemanticAnalysis`LSAMon",
-  {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix",
+  {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix", "globalTermWeights",
     "topicColumnPositions", "automaticTopicNames", "statisticalThesaurus", "topicsTable", "method" },
   "FailureSymbol" -> $LSAMonFailure ];
 
@@ -423,30 +423,40 @@ LSAMonApplyTermWeightFunctions[ opts : OptionsPattern[] ][xs_, context_Associati
     ];
 
 LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_] :=
-    Block[{wDocTermMat},
+    Block[{wDocTermMat, globalWeights},
 
       Which[
         KeyExistsQ[context, "documentTermMatrix"],
         wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], globalWeightFunction, localWeightFunction, normalizerFunction];
-        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
+        globalWeights =
+            AssociationThread[
+              ColumnNames[context["documentTermMatrix"]],
+              GlobalTermFunctionWeights[ SparseArray[context["documentTermMatrix"]], globalWeightFunction ]
+            ];
+        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat, "globalTermWeights" -> globalWeights |>]],
 
         True,
-        Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
+        Echo["No document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
         $LSAMonFailure
       ]
 
     ];
 
 LSAMonApplyTermWeightFunctions[args___][xs_, context_] :=
-    Block[{wDocTermMat},
+    Block[{wDocTermMat, globalWeights},
       (* This code is the same as above. But I want to emphasize the string function names specification. *)
       Which[
         KeyExistsQ[context, "documentTermMatrix"],
         wDocTermMat = WeightTermsOfSSparseMatrix[context["documentTermMatrix"], args];
-        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat|>]],
+        globalWeights =
+            AssociationThread[
+              ColumnNames[context["documentTermMatrix"]],
+              GlobalTermFunctionWeights[ SparseArray[context["documentTermMatrix"]], {args}[[1]] ]
+            ];
+        LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat, "globalTermWeights" -> globalWeights |>]],
 
         True,
-        Echo["Cannot find document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
+        Echo["No document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
         $LSAMonFailure
       ]
     ];
@@ -968,6 +978,21 @@ LSAMonRepresentByTopics[xs_, context_Association] := $LSAMonFailure;
 
 LSAMonRepresentByTopics[][xs_, context_] := $LSAMonFailure;
 
+LSAMonRepresentByTopics[ query_String, opts : OptionsPattern[] ][xs_, context_] :=
+      LSAMonRepresentByTopics[ TextWords[query], opts][xs, context];
+
+LSAMonRepresentByTopics[ query : {_String .. }, opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{vals, qmat},
+      If[ KeyExistsQ[context, "globalTermWeights"],
+        vals = Lookup[ context["globalTermWeights"], #, 1.] & /@ query;
+        vals = vals / Max[vals],
+        (* ELSE *)
+        vals = ConstantArray[1,Length[query]]
+      ];
+      qmat = ToSSparseMatrix[ SparseArray[{vals}], "RowNames" -> {"query"}, "ColumnNames" -> query ];
+      LSAMonRepresentByTopics[ qmat, opts][xs, context]
+    ];
+
 LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{ nns, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
 
@@ -986,7 +1011,7 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
       mat = ImposeColumnNames[ mat, ColumnNames[ context["H"] ] ];
 
       If[ Max[Abs[ColumnSums[mat]]] == 0,
-        Echo["The terms of the argument cannot be find in the topics matrix factor (H).", "LSAMonRepresentByTopics:"];
+        Echo["The terms of the argument cannot be found in the topics matrix factor (H).", "LSAMonRepresentByTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -1032,7 +1057,7 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
 LSAMonRepresentByTopics[__][___] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonFindTagsTopicsRepresentation[tags:(Automatic|_List), opts___] .",
+        "The expected signature is LSAMonRepresentByTopics[ mat_SSparseMatrix | {_String..} | _String ] .",
         "LSAMonRepresentByTopics:"];
       $LSAMonFailure
     ];
