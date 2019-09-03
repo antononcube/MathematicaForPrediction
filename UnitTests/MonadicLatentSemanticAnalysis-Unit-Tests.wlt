@@ -271,7 +271,7 @@ VerificationTest[ (* 14 *)
       Fold[ LSAMonBind,
         lsaObj3,
         {
-          LSAMonFindTopicsRepresentation[ Automatic ],
+          LSAMonFindTagsTopicsRepresentation[ Automatic ],
           LSAMonTakeValue
         }];
 
