@@ -472,7 +472,7 @@ Clear[LSAMonExtractTopics];
 
 Options[LSAMonExtractTopics] =
     Join[
-      { "NumberOfTopics" -> None, Method -> "NNMF", "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
+      { "NumberOfTopics" -> None, Method -> "NNMF", "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
       Options[GDCLSGlobal]
     ];
 
@@ -483,7 +483,7 @@ LSAMonExtractTopics[$LSAMonFailure] := $LSAMonFailure;
 LSAMonExtractTopics[xs_, context_Association] := $LSAMonFailure;
 
 (*LSAMonExtractTopics[nTopics_Integer, nMinDocumentsPerTerm_Integer, nInitializingDocuments_Integer, opts : OptionsPattern[]][xs_, context_] :=*)
-(*    LSAMonExtractTopics[ nTopics, Join[ { "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}] ][xs, context];*)
+(*    LSAMonExtractTopics[ nTopics, Join[ { "MinNumberOfDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}] ][xs, context];*)
 
 LSAMonExtractTopics[ opts : OptionsPattern[] ][xs_, context_] :=
     Block[{nTopics},
@@ -518,7 +518,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         Return[$LSAMonFailure]
       ];
 
-      nMinDocumentsPerTerm = OptionValue[ LSAMonExtractTopics, "MinDocumentsPerTerm" ];
+      nMinDocumentsPerTerm = OptionValue[ LSAMonExtractTopics, "MinNumberOfDocumentsPerTerm" ];
       If[ ! ( IntegerQ[ nMinDocumentsPerTerm ] && nMinDocumentsPerTerm > 0 ),
         Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a positive integer.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
@@ -539,7 +539,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
               LSAMonApplyTermWeightFunctions[],
               LSAMonExtractTopics[
                 nTopics,
-                Join[ { Method -> method, "MinDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}]
+                Join[ { Method -> method, "MinNumberOfDocumentsPerTerm" -> nMinDocumentsPerTerm, "NumberOfInitializingDocuments" -> nInitializingDocuments }, {opts}]
               ]
             }
           ]

@@ -44,9 +44,9 @@ TODO:
 
 BeginPackage["DocumentTermMatrixConstruction`"];
 
-ToBagOfWords::usage = "ToBagOfWords[docs:{_String..},{stemmingRules_List, stopWords_List}] converts a list of documents \
-docs into bags words using stemming rules and removing stop words. As options can be given string splitting characters \
-and a post string splitting predicate.";
+ToBagOfWords::usage = "ToBagOfWords[ docs : {_String..}, { stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_List } ] \
+converts a list of documents docs into bags words using stemming rules and removing stop words. \
+As options can be given string splitting characters and a post string splitting predicate.";
 
 DocumentTermMatrix::usage = "DocumentTermMatrix[docs:{_String..},{stemmingRules_List, stopWords_List}] converts \
 a list of documents docs into sparse matrix using stemming rules and removing stop words. As options can be given \
