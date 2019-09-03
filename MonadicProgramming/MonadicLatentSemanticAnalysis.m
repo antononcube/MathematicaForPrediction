@@ -966,6 +966,8 @@ Clear[LSAMonRepresentByTopics];
 
 (*Options[LSAMonRepresentByTopics] = { "NumberOfNearestNeighbors" -> 4 };*)
 
+Options[LSAMonRepresentByTopics] = { "ApplyTermWeightFunctions" -> True };
+
 LSAMonRepresentByTopics[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonRepresentByTopics[xs_, context_Association] := $LSAMonFailure;
@@ -984,7 +986,9 @@ LSAMonRepresentByTopics[ query : {_String .. }, opts : OptionsPattern[] ][xs_, c
     ];
 
 LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
-    Block[{ nns, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
+    Block[{ applyTermWeightFuncsQ, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
+
+      applyTermWeightFuncsQ = TrueQ[ OptionValue[ LSAMonRepresentByTopics, "ApplyTermWeightFunctions" ] ];
 
       (* nns = OptionValue[ LSAMonRepresentByTopics, "NumberOfNearestNeighbors" ];
 
@@ -1006,7 +1010,9 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
         Return[$LSAMonFailure]
       ];
 
-      mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ];
+      If[ applyTermWeightFuncsQ,
+        mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ]
+      ];
 
       {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
