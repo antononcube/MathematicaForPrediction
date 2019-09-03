@@ -173,8 +173,10 @@ LSAMonDocumentCollectionQ::usage = "Gives True if the argument is a text collect
 
 LSAMonExtractTopics::usage = "Extract topics.";
 
-LSAMonFindTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
+LSAMonFindTagsTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
 Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
+
+LSAMonRepresentByTopics::usage = "Find the topics representation of a matrix.";
 
 LSAMonMakeTopicsTable::usage = "Make a table of topics.";
 
@@ -186,6 +188,10 @@ LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of th
 
 FindMostImportantSentences::usage = "FindMostImportantSentences[sentences : ( _String | {_String ..} ), nTop_Integer : 5, opts : OptionsPattern[]] \
 finds the most important sentences in a text or a list of sentences.";
+
+DocumentTermSSparseMatrix::usage = "SSparseMatrix adapter function to DocumentTermMatrix.";
+
+WeightTermsOfSSparseMatrix::usage = "SSparseMatrix adapter function to WeightTerms.";
 
 Begin["`Private`"];
 
@@ -213,7 +219,7 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 GenerateMonadAccessors[
   "MonadicLatentSemanticAnalysis`LSAMon",
   {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix",
-    "topicColumnPositions", "automaticTopicNames", "statisticalThesaurus", "topicsTable" },
+    "topicColumnPositions", "automaticTopicNames", "statisticalThesaurus", "topicsTable", "method" },
   "FailureSymbol" -> $LSAMonFailure ];
 
 GenerateMonadAccessors[
@@ -324,7 +330,7 @@ LSAMonMakeDocumentTermMatrix[xs_, context_Association] := LSAMonMakeDocumentTerm
 
 LSAMonMakeDocumentTermMatrix[][xs_, context_Association] := LSAMonMakeDocumentTermMatrix[ {}, Automatic ][xs, context];
 
-LSAMonMakeDocumentTermMatrix[ opts:OptionsPattern[] ][xs_, context_Association] :=
+LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ stemRules, stopWords },
 
       stemRules = OptionValue[ LSAMonMakeDocumentTermMatrix, "StemmingRules" ];
@@ -392,7 +398,7 @@ LSAMonApplyTermWeightFunctions[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonApplyTermWeightFunctions[xs_, context_Association] := LSAMonApplyTermWeightFunctions[][xs, context];
 
-LSAMonApplyTermWeightFunctions[ opts:OptionsPattern[] ][xs_, context_Association] :=
+LSAMonApplyTermWeightFunctions[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ termFuncs, val },
 
       termFuncs =
@@ -402,7 +408,7 @@ LSAMonApplyTermWeightFunctions[ opts:OptionsPattern[] ][xs_, context_Association
 
               If[ ! StringQ[val],
                 Echo[
-                  "The value of the option \""<> funcName <> "\" is expected to be a string.",
+                  "The value of the option \"" <> funcName <> "\" is expected to be a string.",
                   "LSAMonMakeDocumentTermMatrix:"
                 ];
                 Return[$LSAMonFailure]
@@ -599,7 +605,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
       W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["documentTermMatrix"]], "ColumnNames" -> automaticTopicNames ];
       H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> automaticTopicNames, "ColumnNames" -> ColumnNames[context["documentTermMatrix"]][[pos]] ];
 
-      LSAMonUnit[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames" -> automaticTopicNames |>]]
+      LSAMonUnit[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames" -> automaticTopicNames, "method" -> method |>]]
 
     ];
 
@@ -694,7 +700,7 @@ LSAMonEchoStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonEchoStatisticalThesaurus[xs_, context_Association] := LSAMonEchoStatisticalThesaurus[][xs, context];
 
-LSAMonEchoStatisticalThesaurus[ opts:OptionsPattern[] ][xs_, context_Association] :=
+LSAMonEchoStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{words},
 
       words = OptionValue[ LSAMonEchoStatisticalThesaurus, "Words" ];
@@ -857,93 +863,177 @@ LSAMonEchoTopicsTable[__][___] :=
 
 
 (*------------------------------------------------------------*)
+(* Topics representation of tags                              *)
+(*------------------------------------------------------------*)
+
+Clear[LSAMonFindTagsTopicsRepresentation];
+
+Options[LSAMonFindTagsTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
+
+LSAMonFindTagsTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonFindTagsTopicsRepresentation[xs_, context_Association] := LSAMonFindTagsTopicsRepresentation[][xs, context];
+
+LSAMonFindTagsTopicsRepresentation[][xs_, context_] :=
+    LSAMonFindTagsTopicsRepresentation[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
+
+LSAMonFindTagsTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
+    Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
+
+      computeTopicRepresentationQ = OptionValue[LSAMonFindTagsTopicsRepresentation, "ComputeTopicRepresentation"];
+      assignAutomaticTopicNamesQ = OptionValue[LSAMonFindTagsTopicsRepresentation, "AssignAutomaticTopicNames"];
+
+      If[ ! ( KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"] ),
+        Echo["No document-term matrix factorization is computed.", "LSAMonFindTagsTopicsRepresentation:"];
+        Return[$LSAMonFailure]
+      ];
+
+      Which[
+
+        TrueQ[tags === Automatic] && KeyExistsQ[context, "docTags"],
+        ctTags = context["docTags"],
+
+        TrueQ[tags === Automatic],
+        ctTags = RowNames[context["documentTermMatrix"]],
+
+        Length[tags] == Dimensions[context["documentTermMatrix"]][[1]],
+        ctTags = tags,
+
+        True,
+        Echo["The length of the argument tags is expected to be same as the number of rows of the document-term matrix.",
+          "LSAMonFindTagsTopicsRepresentation:"];
+        Return[$LSAMonFailure]
+      ];
+
+      {W, H} = NormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
+      W = Clip[W, {0.01, 1}, {0, 1}];
+
+      If[ computeTopicRepresentationQ || !KeyExistsQ[context, "docTopicIndices"],
+
+        (* This is expected to be fairly quick, less than 1 second. *)
+        (* If not, some sort of memoization has to be used, which will require consistency support. *)
+        (* Using the option "ComputeTopicRepresentation" comes from those computation management concerns. *)
+        docTopicIndices =
+            Block[{v = Select[#, # > 0 &], vpos, ts1, ts2},
+              vpos = Flatten@Position[#, x_ /; x > 0];
+              ts1 =
+                  OutlierIdentifiers`OutlierPosition[v,
+                    OutlierIdentifiers`TopOutliers@*SPLUSQuartileIdentifierParameters];
+              ts2 =
+                  OutlierIdentifiers`OutlierPosition[v, OutlierIdentifiers`TopOutliers@*HampelIdentifierParameters];
+              Which[
+                Length[ts1] > 0, vpos[[ts1]],
+                Length[ts2] > 0, vpos[[ts2]],
+                True, vpos
+              ]
+            ] & /@ W,
+        (* ELSE *)
+        docTopicIndices = context["docTopicIndices"]
+      ];
+
+      (* Note that CrossTabulate is going to sort the matrix rows. *)
+      (* The matrix rows correspond to the union of the tags. *)
+      ctMat = CrossTabulate`CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
+
+      (* This should be done better. *)
+      If[ assignAutomaticTopicNamesQ,
+        ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ];
+        ctMat = ToSSparseMatrix[ ctMat ];
+      ];
+
+      LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices" -> docTopicIndices |> ] ]
+
+    ];
+
+LSAMonFindTagsTopicsRepresentation[__][___] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonFindTagsTopicsRepresentation[tags:(Automatic|_List), opts___] .",
+        "LSAMonFindTagsTopicsRepresentation:"];
+      $LSAMonFailure
+    ];
+
+
+(*------------------------------------------------------------*)
 (* Topics representation                                      *)
 (*------------------------------------------------------------*)
 
-Clear[LSAMonFindTopicsRepresentation];
+Clear[LSAMonRepresentByTopics];
 
-Options[LSAMonFindTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
+(*Options[LSAMonRepresentByTopics] = { "NumberOfNearestNeighbors" -> 4 };*)
 
-LSAMonFindTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonRepresentByTopics[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonFindTopicsRepresentation[xs_, context_Association] := LSAMonFindTopicsRepresentation[][xs, context];
+LSAMonRepresentByTopics[xs_, context_Association] := $LSAMonFailure;
 
-LSAMonFindTopicsRepresentation[][xs_, context_] :=
-    LSAMonFindTopicsRepresentation[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
+LSAMonRepresentByTopics[][xs_, context_] := $LSAMonFailure;
 
-LSAMonFindTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
-    Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
+LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{ nns, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
 
-      computeTopicRepresentationQ = OptionValue[LSAMonFindTopicsRepresentation, "ComputeTopicRepresentation"];
-      assignAutomaticTopicNamesQ = OptionValue[LSAMonFindTopicsRepresentation, "AssignAutomaticTopicNames"];
+      nns = OptionValue[ LSAMonRepresentByTopics, "NumberOfNearestNeighbors" ];
 
-      If[ KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"],
+      If[ ! ( IntegerQ[nns] && nns > 0 ),
+        Echo["The value of the option \"NumberOfNearestNeighbors\" is expected to be a positive integer.", "LSAMonRepresentByTopics:"];
+        Return[$LSAMonFailure]
+      ];
 
-        Which[
+      If[ ! ( KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"] ),
+        Echo["No document-term matrix factorization is computed.", "LSAMonRepresentByTopics:"];
+        Return[$LSAMonFailure]
+      ];
 
-          TrueQ[tags === Automatic] && KeyExistsQ[context, "docTags"],
-          ctTags = context["docTags"],
+      mat = ImposeColumnNames[ mat, ColumnNames[ context["H"] ] ];
 
-          TrueQ[tags === Automatic],
-          ctTags = RowNames[context["documentTermMatrix"]],
+      If[ Max[Abs[ColumnSums[mat]]] == 0,
+        Echo["The terms of the argument cannot be find in the topics matrix factor (H).", "LSAMonRepresentByTopics:"];
+        Return[$LSAMonFailure]
+      ];
 
-          Length[tags] == Dimensions[context["documentTermMatrix"]][[1]],
-          ctTags = tags,
+      {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
-          True,
-          Echo["The length of the argument tags is expected to be same as the number of rows of the document-term matrix.",
-            "LSAMonFindTopicsRepresentation:"];
-          Return[$LSAMonFailure]
-        ];
+      If[ context["method"] == "NNMF",
 
-        {W, H} = NormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
-        W = Clip[W, {0.01, 1}, {0, 1}];
+        invH = PseudoInverse[H];
 
+        (*
+        nf = Nearest[ Normal[W] -> Range[Dimensions[W][[1]]] ];
+        matNew =
+            Map[
+              Function[{vec},
+                inds = nf[ Normal[vec . invH], nns ];
+                approxVec = Total[ W[[inds]] ];
+                approxVec / Norm[approxVec]
+              ],
+              SparseArray[mat]
+            ];
+        *)
 
-        If[ computeTopicRepresentationQ || !KeyExistsQ[context, "docTopicIndices"],
+        matNew = Map[ # . invH &, SparseArray[mat] ];
+      ];
 
-          (* This is expected to be fairly quick, less than 1 second. *)
-          (* If not, some sort of memoization has to be used, which will require consistency support. *)
-          (* Using the option "ComputeTopicRepresentation" comes from those computation management concerns. *)
-          docTopicIndices =
-              Block[{v = Select[#, # > 0 &], vpos, ts1, ts2},
-                vpos = Flatten@Position[#, x_ /; x > 0];
-                ts1 =
-                    OutlierIdentifiers`OutlierPosition[v,
-                      OutlierIdentifiers`TopOutliers@*SPLUSQuartileIdentifierParameters];
-                ts2 =
-                    OutlierIdentifiers`OutlierPosition[v, OutlierIdentifiers`TopOutliers@*HampelIdentifierParameters];
-                Which[
-                  Length[ts1] > 0, vpos[[ts1]],
-                  Length[ts2] > 0, vpos[[ts2]],
-                  True, vpos
-                ]
-              ] & /@ W,
-          (* ELSE *)
-          docTopicIndices = context["docTopicIndices"]
-        ];
+      If[ context["method"] == "SVD",
 
-        (* Note that CrossTabulate is going to sort the matrix rows. *)
-        (* The matrix rows correspond to the union of the tags. *)
-        ctMat = CrossTabulate`CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
+        (* We are using Map in order to prevent too much memory usage. *)
+        (*  matNew = Map[ Transpose[H] . ( H . # )&, SparseArray[mat] ];*)
+        matNew = Map[ H . # &, SparseArray[mat] ];
+      ];
 
-        (* This should be done better. *)
-        If[ assignAutomaticTopicNamesQ,
-          ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ];
-          ctMat = ToSSparseMatrix[ ctMat ];
-        ];
+      If[ TrueQ[ matNew === None ],
+        Echo["Unknown value of the context member \"method\".", "LSAMonRepresentByTopics:"];
+        Return[$LSAMonFailure]
+      ];
 
-        LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices" -> docTopicIndices |> ] ],
-        (* ELSE *)
+      matNew = ToSSparseMatrix[ SparseArray[matNew], "RowNames" -> RowNames[mat], "ColumnNames" -> RowNames[context["H"]] ];
 
-        Echo["No document-term matrix factorization is computed.", "LSAMonFindTopicsRepresentation:"];
-        $LSAMonFailure
-      ]
+      LSAMonUnit[matNew, context]
     ];
 
-LSAMonFindTopicsRepresentation[__][___] :=
+LSAMonRepresentByTopics[__][___] :=
     Block[{},
-      Echo["The expected signature is LSAMonFindTopicsRepresentation[tags:(Automatic|_List), opts___] .", "LSAMonFindTopicsRepresentation:"];
+      Echo[
+        "The expected signature is LSAMonFindTagsTopicsRepresentation[tags:(Automatic|_List), opts___] .",
+        "LSAMonRepresentByTopics:"];
       $LSAMonFailure
     ];
 
@@ -978,7 +1068,7 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
 
       textWords = StringSplit /@ texts;
 
-      dOpts = FilterRules[ Join[{opts}, {PlotRange -> All, PlotTheme -> "Detailed", ImageSize -> 300}], Options[Histogram] ];
+      dOpts = FilterRules[ Join[{opts}, {PerformanceGoal -> "Speed", PlotRange -> All, PlotTheme -> "Detailed", ImageSize -> 300}], Options[Histogram] ];
 
       If[ !KeyExistsQ[context, "documentTermMatrix"],
         smat = None,
@@ -992,11 +1082,11 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
       ];
 
       If[ NumberQ[logBase],
-        logFunc = N[Log[logBase,#]]&;
-        logInsert = "log " <> ToString[logBase] <> " ",
+        logFunc = N[Log[logBase, #]]&;
+        logInsert = "log " <> ToString[logBase] <> " number of",
         (* ELSE *)
         logFunc = Identity;
-        logInsert = ""
+        logInsert = "number of"
       ];
 
       Echo[
@@ -1010,14 +1100,14 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
             If[ TrueQ[smat === None], Nothing, ""]
           },
           {
-            Histogram[ logFunc[ StringLength /@ texts ], PlotLabel -> "Number of " <> logInsert <> "characters", dOpts],
-            Histogram[ logFunc[ Length /@ textWords ], PlotLabel -> "Number of " <> logInsert <> "words", dOpts],
+            Histogram[ logFunc[ StringLength /@ texts ], PlotLabel -> Capitalize[logInsert] <> " characters per document", FrameLabel -> {"Characters", "Documents"}, dOpts],
+            Histogram[ logFunc[ Length /@ textWords ], PlotLabel -> Capitalize[logInsert] <> " words per document", FrameLabel -> {"Words", "Documents"}, dOpts],
             If[ TrueQ[smat === None],
               Nothing,
-              Histogram[ logFunc[ Total[smat] ], PlotLabel -> "Number of " <> logInsert <> "documents per word", dOpts]],
+              Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts]],
             If[ TrueQ[smat === None],
               Nothing,
-              Column[{"Summary of " <> logInsert <> "number of\ndocuments per word", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]]
+              Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]]
           }
         }],
         eLabel
@@ -1253,7 +1343,7 @@ FindMostImportantSentences[sentences : {_String ..}, nTop_Integer : 5, opts : Op
               {
                 LSAMonMakeDocumentTermMatrix[{}, stopWords],
                 LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-(*                LSAMonMakeGraph["Type" -> "DocumentDocument"],*)
+                (*                LSAMonMakeGraph["Type" -> "DocumentDocument"],*)
                 LSAMonFindMostImportantDocuments[nTop],
                 LSAMonTakeValue
               }
