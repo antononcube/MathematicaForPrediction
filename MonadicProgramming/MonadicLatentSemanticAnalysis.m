@@ -997,6 +997,11 @@ LSAMonRepresentByTerms[ queryArg : {_String .. }, opts : OptionsPattern[] ][xs_,
         query = Complement[ query, context["stopWords"] ]
       ];
 
+      If[ Length[query] == 0,
+        Echo["All query terms are stop words.", "LSAMonRepresentByTerms:"];
+        Return[$LSAMonFailure]
+      ];
+
       If[ KeyExistsQ[context, "stemmingRules" ],
         Which[
           AssociationQ[ context["stemmingRules"] ],
@@ -1027,6 +1032,11 @@ LSAMonRepresentByTerms[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, con
       ];
 
       mat = ImposeColumnNames[ mat, ColumnNames[ context["documentTermMatrix"] ] ];
+
+      If[ Max[Abs[ColumnSums[mat]]] == 0,
+        Echo["The terms of the argument cannot be found in the document-term matrix.", "LSAMonRepresentByTerms:"];
+        Return[$LSAMonFailure]
+      ];
 
       LSAMonUnit[ mat, context ]
     ];
