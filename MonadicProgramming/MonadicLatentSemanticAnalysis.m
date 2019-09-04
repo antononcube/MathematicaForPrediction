@@ -176,6 +176,8 @@ LSAMonExtractTopics::usage = "Extract topics.";
 LSAMonFindTagsTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
 Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
 
+LSAMonRepresentByTerms::usage = "Find the terms representation of a matrix or a query.";
+
 LSAMonRepresentByTopics::usage = "Find the topics representation of a matrix or a query.";
 
 LSAMonMakeTopicsTable::usage = "Make a table of topics.";
@@ -219,6 +221,7 @@ GenerateStateMonadCode[ "MonadicLatentSemanticAnalysis`LSAMon", "FailureSymbol" 
 GenerateMonadAccessors[
   "MonadicLatentSemanticAnalysis`LSAMon",
   {"documents", "terms", "documentTermMatrix", "weightedDocumentTermMatrix",
+    "stemmingRules", "stopWords",
     "globalWeights", "globalWeightFunction", "localWeightFunction", "normalizerFunction",
     "topicColumnPositions", "automaticTopicNames", "statisticalThesaurus", "topicsTable", "method" },
   "FailureSymbol" -> $LSAMonFailure ];
@@ -364,8 +367,8 @@ LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association
       LSAMonMakeDocumentTermMatrix[ stemRules, stopWords ][xs, context]
     ];
 
-LSAMonMakeDocumentTermMatrix[stemRules : (_List | _Dispatch | _Association | Automatic), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
-    Block[{stopWords = stopWordsArg, docs, docTermMat },
+LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _Dispatch | _Association | Automatic), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
+    Block[{ stemRules = stemRulesArg, stopWords = stopWordsArg, docs, docTermMat },
 
       docs = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonGetDocuments, LSAMonTakeValue } ];
 
@@ -381,14 +384,26 @@ LSAMonMakeDocumentTermMatrix[stemRules : (_List | _Dispatch | _Association | Aut
 
       docTermMat = DocumentTermSSparseMatrix[ ToLowerCase /@ docs, {stemRules, stopWords} ];
 
-      LSAMonUnit[xs, Join[context, <| "documents" -> docs, "documentTermMatrix" -> docTermMat, "terms" -> ColumnNames[docTermMat] |>]]
+      stemRules =
+          Which[
+            MatchQ[ stemRules, { Rule[_, _] .. } ],
+            Association[ stemRules ],
+
+            MatchQ[ stemRules, _Dispatch ],
+            Association[ Normal[stemRules] ],
+
+            True,
+            stemRules
+          ];
+
+      LSAMonUnit[xs, Join[context, <| "documents" -> docs, "documentTermMatrix" -> docTermMat, "terms" -> ColumnNames[docTermMat], "stopWords" -> stopWords, "stemmingRules" -> stemRules |>]]
 
     ];
 
 LSAMonMakeDocumentTermMatrix[__][___] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonMakeDocumentTermMatrix[stemRules : (_List|_Dispatch|_Association), stopWords : {_String ...}] .",
+        "The expected signature is LSAMonMakeDocumentTermMatrix[stemRules : ( { Rule[_String,_String] .. } | _Dispatch | _Association ), stopWords : { _String ... } ] .",
         "LSAMonMakeDocumentTermMatrix:"];
       $LSAMonFailure
     ];
@@ -954,6 +969,73 @@ LSAMonFindTagsTopicsRepresentation[__][___] :=
       Echo[
         "The expected signature is LSAMonFindTagsTopicsRepresentation[tags:(Automatic|_List), opts___] .",
         "LSAMonFindTagsTopicsRepresentation:"];
+      $LSAMonFailure
+    ];
+
+
+(*------------------------------------------------------------*)
+(* Terms representation                                      *)
+(*------------------------------------------------------------*)
+
+Clear[LSAMonRepresentByTerms];
+
+Options[LSAMonRepresentByTerms] = { "ApplyTermWeightFunctions" -> True };
+
+LSAMonRepresentByTerms[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonRepresentByTerms[xs_, context_Association] := $LSAMonFailure;
+
+LSAMonRepresentByTerms[][xs_, context_] := $LSAMonFailure;
+
+LSAMonRepresentByTerms[ query_String, opts : OptionsPattern[] ][xs_, context_] :=
+      LSAMonRepresentByTerms[ TextWords[query], opts][xs, context];
+
+LSAMonRepresentByTerms[ queryArg : {_String .. }, opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{query = queryArg, qmat},
+
+      If[ KeyExistsQ[context, "stopWords" ],
+        query = Complement[ query, context["stopWords"] ]
+      ];
+
+      If[ KeyExistsQ[context, "stemmingRules" ],
+        Which[
+          AssociationQ[ context["stemmingRules"] ],
+          query = Lookup[ context["stemmingRules"], #, #]& /@ query,
+
+          TrueQ[ context["stemmingRules"] === Automatic ],
+          query = WordData[#, "PorterStem"]& /@ query
+        ]
+      ];
+
+      qmat = ToSSparseMatrix[ SparseArray[{ConstantArray[1, Length[query]]}], "RowNames" -> {"query"}, "ColumnNames" -> query ];
+
+      LSAMonRepresentByTerms[ qmat, opts][xs, context]
+    ];
+
+LSAMonRepresentByTerms[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{ applyTermWeightFuncsQ, mat = matArg },
+
+      applyTermWeightFuncsQ = TrueQ[ OptionValue[ LSAMonRepresentByTopics, "ApplyTermWeightFunctions" ] ];
+
+      If[ ! KeyExistsQ[context, "documentTermMatrix"],
+        Echo["No document-term matrix.", "LSAMonRepresentByTerms:"];
+        Return[$LSAMonFailure]
+      ];
+
+      If[ applyTermWeightFuncsQ,
+        mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ]
+      ];
+
+      mat = ImposeColumnNames[ mat, ColumnNames[ context["documentTermMatrix"] ] ];
+
+      LSAMonUnit[ mat, context ]
+    ];
+
+LSAMonRepresentByTerms[__][___] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonRepresentByTerms[ mat_SSparseMatrix | {_String..} | _String ] .",
+        "LSAMonRepresentByTerms:"];
       $LSAMonFailure
     ];
 
