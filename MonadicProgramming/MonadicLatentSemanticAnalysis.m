@@ -157,6 +157,8 @@ LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries 
 
 LSAMonEchoDocumentsStatistics::usage = "Echo statistics for the text collection.";
 
+LSAMonEchoDocumentTermMatrixStatistics::usage = "Echo document-term matrix statistics.";
+
 LSAMonEchoTopicsTable::usage = "Echo the a table with the extracted topics.";
 
 LSAMonGetDocuments::usage = "Get monad's document collection.";
@@ -1235,6 +1237,73 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
 LSAMonEchoDocumentsStatistics[__][___] :=
     Block[{},
       Echo["No arguments, just options are expected.", "LSAMonEchoDocumentsStatistics:"];
+      $LSAMonFailure
+    ];
+
+
+(*------------------------------------------------------------*)
+(* Documents-term matrix statistics                            *)
+(*------------------------------------------------------------*)
+
+Clear[LSAMonEchoDocumentTermMatrixStatistics];
+
+Options[LSAMonEchoDocumentTermMatrixStatistics] = Join[ {"LogBase" -> None}, Options[Histogram] ];
+
+LSAMonEchoDocumentTermMatrixStatistics[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonEchoDocumentTermMatrixStatistics[xs_, context_Association] := LSAMonEchoDocumentTermMatrixStatistics[][xs, context];
+
+LSAMonEchoDocumentTermMatrixStatistics[][xs_, context_Association] := LSAMonEchoDocumentTermMatrixStatistics[ImageSize -> 300][xs, context];
+
+LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :=
+    Block[{logBase, logFunc, logInsert, texts, textWords, eLabel = None, dOpts, smat},
+
+      logBase = OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "LogBase"];
+
+      texts = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonGetDocuments, LSAMonTakeValue} ];
+
+      If[ TrueQ[ texts === $LSAMonFailure], Return[$LSAMonFailure] ];
+
+      If[ !KeyExistsQ[context, "documentTermMatrix"],
+        Echo["No document-term matrix.", "LSAMonEchoDocumentTermMatrixStatistics:" ];
+        Return[$LSAMonFailure]
+      ];
+
+      dOpts = FilterRules[ Join[{opts}, {PerformanceGoal -> "Speed", PlotRange -> All, PlotTheme -> "Detailed", ImageSize -> 300}], Options[Histogram] ];
+
+      smat = context["documentTermMatrix"];
+      smat = Clip[SparseArray[smat]];
+
+      If[ NumberQ[logBase],
+        logFunc = N[Log[logBase, #]]&;
+        logInsert = "log " <> ToString[logBase] <> " number of",
+        (* ELSE *)
+        logFunc = Identity;
+        logInsert = "number of"
+      ];
+
+      Echo[
+        Grid[{
+          {
+            Row[{"Dimensions:", Dimensions[smat]}],
+            Row[{"Density:", SparseArray[smat]["Density"]}],
+            SpanFromLeft
+          },
+          {
+            Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts],
+            Histogram[ logFunc[ Total[Transpose[smat]] ], PlotLabel -> Capitalize[logInsert] <> " terms per document", FrameLabel -> {"Terms", "Documents"}, dOpts],
+            Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]
+          }
+        }],
+        "Context value \"documentTermMatrix\":"
+      ];
+
+      LSAMonUnit[xs, context]
+    ];
+
+LSAMonEchoDocumentTermMatrixStatistics[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonEchoDocumentTermMatrixStatistics:"];
       $LSAMonFailure
     ];
 
