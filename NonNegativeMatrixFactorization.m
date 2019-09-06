@@ -179,7 +179,8 @@ RightNormalizeMatrixProduct[W_?MatrixQ, H_?MatrixQ] :=
 Clear[BasisVectorInterpretation];
 BasisVectorInterpretation[vec_, n_Integer, terms_] :=
     Block[{t},
-      t = Reverse@Ordering[vec, -n];
+      (* Applying Abs in order to accommodate the use of this function for SVD bases. *)
+      t = Reverse@Ordering[Abs[vec], -n];
       Transpose[{vec[[t]], terms[[t]]}]
     ];
 
