@@ -367,5 +367,24 @@ VerificationTest[ (* 23 *)
   TestID -> "Take-Factors-4"
 ];
 
+VerificationTest[ (* 24 *)
+  stopWords = Complement[ DictionaryLookup["*"], DeleteStopwords[DictionaryLookup["*"]]];
+  stopWords2 = Fold[ LSAMonBind, LSAMonUnit[aTextHamlet], {LSAMonMakeDocumentTermMatrix[Automatic, Automatic], LSAMonTakeStopWords}];
+  VectorQ[stopWords2, StringQ] && stopWords2 == stopWords;
+  ,
+  True
+  ,
+  TestID -> "Take-StopWords-1"
+];
+
+VerificationTest[ (* 25 *)
+  srules = Fold[ LSAMonBind, LSAMonUnit[aTextHamlet], {LSAMonMakeDocumentTermMatrix[Automatic, Automatic], LSAMonTakeStemmingRules}];
+  TrueQ[srules === Automatic] || AssociationQ[srules]
+  ,
+  True
+  ,
+  TestID -> "Take-StemmingRules-1"
+];
+
 
 EndTestSection[]
