@@ -270,7 +270,7 @@ WeightTermsOfSSparseMatrix[ smat_SSparseMatrix ] := WeightTermsOfSSparseMatrix[ 
 
 WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeights_Association, localWeightFunction_, normalizerFunction_ ] :=
     Block[{vals},
-      vals = Lookup[ globalWeights, #, 1.] &/@ ColumnNames[smat];
+      vals = Lookup[ globalWeights, #, 1.] & /@ ColumnNames[smat];
       WeightTermsOfSSparseMatrix[ smat, Normal[vals], localWeightFunction, normalizerFunction ]
     ];
 
@@ -990,13 +990,14 @@ LSAMonRepresentByTerms[xs_, context_Association] := $LSAMonFailure;
 LSAMonRepresentByTerms[][xs_, context_] := $LSAMonFailure;
 
 LSAMonRepresentByTerms[ query_String, opts : OptionsPattern[] ][xs_, context_] :=
-      LSAMonRepresentByTerms[ TextWords[query], opts][xs, context];
+      LSAMonRepresentByTerms[ TextWords[query], opts ][xs, context];
 
 LSAMonRepresentByTerms[ queryArg : {_String .. }, opts : OptionsPattern[] ][xs_, context_] :=
-    Block[{query = queryArg, qmat},
+    Block[{query = ToLowerCase[queryArg], qmat},
 
+      (* This should be optimized. *)
       If[ KeyExistsQ[context, "stopWords" ],
-        query = Complement[ query, context["stopWords"] ]
+        query = Select[ query, ! MemberQ[ context["stopWords"], # ]& ]
       ];
 
       If[ Length[query] == 0,
@@ -1014,15 +1015,17 @@ LSAMonRepresentByTerms[ queryArg : {_String .. }, opts : OptionsPattern[] ][xs_,
         ]
       ];
 
-      qmat = ToSSparseMatrix[ SparseArray[{ConstantArray[1, Length[query]]}], "RowNames" -> {"query"}, "ColumnNames" -> query ];
+      query = SortBy[ Tally[query], First];
 
-      LSAMonRepresentByTerms[ qmat, opts][xs, context]
+      qmat = ToSSparseMatrix[ SparseArray[{query[[All,2]]}], "RowNames" -> {"query"}, "ColumnNames" -> query[[All,1]] ];
+
+      LSAMonRepresentByTerms[ qmat, opts ][xs, context]
     ];
 
 LSAMonRepresentByTerms[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{ applyTermWeightFuncsQ, mat = matArg },
 
-      applyTermWeightFuncsQ = TrueQ[ OptionValue[ LSAMonRepresentByTopics, "ApplyTermWeightFunctions" ] ];
+      applyTermWeightFuncsQ = TrueQ[ OptionValue[ LSAMonRepresentByTerms, "ApplyTermWeightFunctions" ] ];
 
       If[ ! KeyExistsQ[context, "documentTermMatrix"],
         Echo["No document-term matrix.", "LSAMonRepresentByTerms:"];
@@ -1074,9 +1077,11 @@ LSAMonRepresentByTopics[ query_String, opts : OptionsPattern[] ][xs_, context_] 
 LSAMonRepresentByTopics[ query : {_String .. }, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{qmat},
 
-      qmat = ToSSparseMatrix[ SparseArray[{ConstantArray[1, Length[query]]}], "RowNames" -> {"query"}, "ColumnNames" -> query ];
+      qmat = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonRepresentByTerms[query], LSAMonTakeValue}];
 
-      LSAMonRepresentByTopics[ qmat, opts][xs, context]
+      If[ TrueQ[qmat === $LSAMonFailure], Return[$LSAMonFailure] ];
+
+      LSAMonRepresentByTopics[ qmat, opts ][xs, context]
     ];
 
 LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
