@@ -194,11 +194,13 @@ WeightTerms[args___] :=
       $Failed
     ];
 
-ApplyLocalTermFunction::unfunc = "Unknown local weight function specification. Returning the matrix unmodified.";
-ApplyGlobalTermFunction::unfunc = "Unknown global weight function specification. Returning the matrix unmodified.";
-ApplyNormalizationFunction::unfunc = "Unknown normalization function specification. Returning the matrix unmodified.";
 
 Clear[ApplyLocalTermFunction];
+
+ApplyLocalTermFunction::unfunc = "Unknown local weight function specification. Returning the matrix unmodified. \
+The known local weight function names are \
+\"Binary\", \"Log\", \"Logarithmic\" (same as \"Log\"), \"None\", \"TermFrequency\" (same as \"None\").";
+
 ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{arules},
 
@@ -225,11 +227,13 @@ ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
 
     ];
 
+
+Clear[GlobalTermFunctionWeights];
+
 GlobalTermFunctionWeights::unfunc = "Unknown global weight function specification. \
 Returning a constant vector of 1's. \
 The known global weight function names are \"IDF\", \"GFIDF\", \"None\", \"Binary\", \"ColumnStochastic\".";
 
-Clear[GlobalTermFunctionWeights];
 GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{mat, globalWeights, freqSums},
 
@@ -271,6 +275,9 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
 
 
 Clear[ApplyGlobalTermFunction];
+
+ApplyGlobalTermFunction::unfunc = GlobalTermFunctionWeights::unfunc;
+
 ApplyGlobalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
     Block[{globalWeights},
 
