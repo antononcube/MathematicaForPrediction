@@ -52,8 +52,7 @@ BeginTestSection["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"];
 
 
 VerificationTest[(* 1 *)
-(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];*)
-  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
   Length[SubValues[MonadicLatentSemanticAnalysis`LSAMonExtractTopics]] > 0
   ,
   True
@@ -136,7 +135,7 @@ VerificationTest[ (* 6 *)
 
   Keys[LSAMonBind[ lsaObj, LSAMonTakeContext] ]
   ,
-  {"documents", "documentTermMatrix", "terms"}
+  {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules"}
   ,
   TestID -> "Make-document-term-matrix-2"
 ];
@@ -152,7 +151,10 @@ VerificationTest[ (* 7 *)
           LSAMonTakeContext
         }
       ];
-  Keys[ lsaContext ] == {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix"} &&
+
+  Keys[ lsaContext ] ==
+      {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "weightedDocumentTermMatrix",
+        "globalWeights", "globalWeightFunction", "localWeightFunction", "normalizerFunction"} &&
       SSparseMatrixQ[lsaContext["weightedDocumentTermMatrix"]] &&
       Dimensions[lsaContext["weightedDocumentTermMatrix"]] == Dimensions[lsaContext["documentTermMatrix"]]
   ,
@@ -172,7 +174,10 @@ VerificationTest[ (* 8 *)
           LSAMonTakeContext
         }
       ];
-  Keys[ lsaContext ] == {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix"} &&
+
+  Keys[ lsaContext ] ==
+      {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "weightedDocumentTermMatrix",
+        "globalWeights", "globalWeightFunction", "localWeightFunction", "normalizerFunction"} &&
       SSparseMatrixQ[lsaContext["weightedDocumentTermMatrix"]] &&
       Dimensions[lsaContext["weightedDocumentTermMatrix"]] == Dimensions[lsaContext["documentTermMatrix"]]
   ,
@@ -188,14 +193,17 @@ VerificationTest[ (* 9 *)
         LSAMonBind,
         lsaObj,
         {
-          LSAMonExtractTopics[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
           LSAMonMakeTopicsTable
         }
       ];
 
   Keys[LSAMonBind[ lsaObj2, LSAMonTakeContext] ]
   ,
-  {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
+  {"documents", "documentTermMatrix", "terms", "stopWords",
+    "stemmingRules", "weightedDocumentTermMatrix", "globalWeights",
+    "globalWeightFunction", "localWeightFunction", "normalizerFunction",
+    "W", "H", "topicColumnPositions", "automaticTopicNames", "method", "topicsTable"}
   ,
   TestID -> "Topic-extraction-1"
 ];
@@ -219,14 +227,16 @@ VerificationTest[ (* 11 *)
         {
           LSAMonMakeDocumentTermMatrix[{}, Automatic],
           LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-          LSAMonExtractTopics[12, "MinDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
           LSAMonMakeTopicsTable
         }
       ];
 
   Keys[LSAMonBind[ lsaObj3, LSAMonTakeContext] ]
   ,
-  {"documents", "documentTermMatrix", "terms", "weightedDocumentTermMatrix", "W", "H", "topicColumnPositions", "automaticTopicNames", "topicsTable"}
+  {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "weightedDocumentTermMatrix", "globalWeights",
+   "globalWeightFunction", "localWeightFunction", "normalizerFunction",
+   "W", "H", "topicColumnPositions", "automaticTopicNames", "method", "topicsTable"}
   ,
   TestID -> "Topic-extraction-3"
 ];
@@ -370,7 +380,7 @@ VerificationTest[ (* 23 *)
 VerificationTest[ (* 24 *)
   stopWords = Complement[ DictionaryLookup["*"], DeleteStopwords[DictionaryLookup["*"]]];
   stopWords2 = Fold[ LSAMonBind, LSAMonUnit[aTextHamlet], {LSAMonMakeDocumentTermMatrix[Automatic, Automatic], LSAMonTakeStopWords}];
-  VectorQ[stopWords2, StringQ] && stopWords2 == stopWords;
+  VectorQ[stopWords2, StringQ] && stopWords2 == stopWords
   ,
   True
   ,
