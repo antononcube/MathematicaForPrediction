@@ -90,13 +90,13 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List
       ];
 
       If[TrueQ[pSPred =!= None],
-        docTerms = Select[#, pSPred] & /@ docTerms
+        docTerms = Map[ Pick[ #, pSPred /@ # ] &, docTerms ]
       ];
 
       If[ MatchQ[ stopWords, {_String..} ],
         stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ];
         (* docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms; *)
-        docTerms = Pick[#, Not /@ (# /. stopWordsRules) ]& /@ docTerms;
+        docTerms = Pick[ #, Not /@ (# /. stopWordsRules) ] & /@ docTerms;
       ];
 
       Which[
