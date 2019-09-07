@@ -1035,6 +1035,13 @@ LSAMonRepresentByTerms[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, con
       mat = ImposeColumnNames[ mat, ColumnNames[ context["documentTermMatrix"] ] ];
 
       If[ applyTermWeightFuncsQ,
+        If[ ! Apply[ And, KeyExistsQ[context, #]& /@ { "globalWeights", "localWeightFunction", "normalizerFunction" } ],
+          Echo[
+            "If the option \"ApplyTermWeightFunctions\" is set to True" <>
+                "then the monad context is expected to have the elements \"globalWeights\", \"localWeightFunction\", \"normalizerFunction\".",
+            "LSAMonRepresentByTerms:"];
+          Return[$LSAMonFailure]
+        ];
         mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ]
       ];
 
