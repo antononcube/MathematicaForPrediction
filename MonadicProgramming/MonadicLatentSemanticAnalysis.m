@@ -732,13 +732,15 @@ LSAMonEchoStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Associati
         Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonExtractStatisticalThesaurus[opts], LSAMonEchoStatisticalThesaurus } ],
 
         TrueQ[ words === None ] && KeyExistsQ[context, "statisticalThesaurus"],
-        Echo@
+        Echo[
             Grid[
               Prepend[
                 context["statisticalThesaurus"],
                 Style[#, Blue, FontFamily -> "Times"] & /@ {"word", "statistical thesaurus"}],
               Dividers -> All, Alignment -> Left,
-              Spacings -> {Automatic, 0.75}];
+              Spacings -> {Automatic, 0.75}],
+          "statistical thesaurus:"
+        ];
         LSAMonUnit[xs, context],
 
         True  ,
@@ -864,14 +866,17 @@ LSAMonEchoTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
 
       tOpts = Join[ FilterRules[ {opts}, Options[Multicolumn] ], {Dividers -> All, Alignment -> Left} ];
 
-      Echo @ Magnify[#, mFactor] & @
+      Echo[
+        Magnify[#, mFactor] & @
           If[ TrueQ[numberOfTableColumns === Automatic],
             Multicolumn[
               ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], tOpts],
             (* ELSE *)
             Multicolumn[
               ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns, tOpts]
-          ];
+          ],
+        "topics table:"
+      ];
 
       LSAMonUnit[ topicsTbl, context ]
     ];
