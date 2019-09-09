@@ -715,6 +715,16 @@ Here we run the unit tests file
 The natural language derived test ID's should give a fairly good idea of the functionalities covered in [AAp3].
 
     Values[Map[#["TestID"] &, testObject["TestResults"]]]
+    
+    (* {"LoadPackage", "USASpeechesData", "HamletData", "StopWords", 
+        "Make-document-term-matrix-1", "Make-document-term-matrix-2",
+        "Apply-term-weights-1", "Apply-term-weights-2", "Topic-extraction-1",
+        "Topic-extraction-2", "Topic-extraction-3", "Topic-extraction-4",
+        "Statistical-thesaurus-1", "Topics-representation-1",
+        "Take-document-term-matrix-1", "Take-weighted-document-term-matrix-1",
+        "Take-document-term-matrix-2", "Take-weighted-document-term-matrix-2",
+        "Take-terms-1", "Take-Factors-1", "Take-Factors-2", "Take-Factors-3",
+        "Take-Factors-4", "Take-StopWords-1", "Take-StemmingRules-1"} *)
 
 ### Random pipelines tests
 
@@ -754,16 +764,8 @@ From the test report results we see that a dozen tests failed with messages, all
 
     rpTRObj = TestReport[res]
 
-    (* {"LoadPackage", "USASpeechesData", "HamletData", "StopWords", 
-        "Make-document-term-matrix-1", "Make-document-term-matrix-2",
-        "Apply-term-weights-1", "Apply-term-weights-2", "Topic-extraction-1",
-        "Topic-extraction-2", "Topic-extraction-3", "Topic-extraction-4",
-        "Statistical-thesaurus-1", "Topics-representation-1",
-        "Take-document-term-matrix-1", "Take-weighted-document-term-matrix-1",
-        "Take-document-term-matrix-2", "Take-weighted-document-term-matrix-2",
-        "Take-terms-1", "Take-Factors-1", "Take-Factors-2", "Take-Factors-3",
-        "Take-Factors-4", "Take-StopWords-1", "Take-StemmingRules-1"} *)
-
+(The message failures, of course, have to be examined -- some bugs were found in that way. 
+Currently the actual test messages are expected.)
 
 ## Implementation notes
 
