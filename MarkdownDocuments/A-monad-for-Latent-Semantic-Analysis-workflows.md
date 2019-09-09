@@ -373,7 +373,7 @@ We can retrieve the stemming rules used in a monad with the function LSAMonTakeS
 
     Short[lsaObj⟹LSAMonTakeStemmingRules]
 
-The specification Automatic for stemming rules uses `WordData[#,"PorterStem"]&`.
+The specification `Automatic` for stemming rules uses `WordData[#,"PorterStem"]&`.
 
 Instead of the options style signature we can use positional signature.
 
@@ -427,10 +427,7 @@ Instead of using the positional signature of LSAMonApplyTermWeightFunctions we c
 
     wmat2 =
       lsaHamlet⟹
-       LSAMonApplyTermWeightFunctions[
-        "GlobalWeightFunction" -> "IDF", 
-        "LocalWeightFunction" -> "TermFrequency", 
-        "NormalizerFunction" -> "Cosine"]⟹
+       LSAMonApplyTermWeightFunctions["GlobalWeightFunction" -> "IDF", "LocalWeightFunction" -> "TermFrequency", "NormalizerFunction" -> "Cosine"]⟹
        LSAMonTakeWeightedDocumentTermMatrix;
 
     TakeLargest[ColumnSumsAssociation[wmat2], 6]
@@ -518,13 +515,13 @@ Things to keep in mind.
 
    5. NNMF is prone to get stuck into local minima, so several topic extractions (and corresponding evaluations) have to be done. 
 
-   6. We would get different results with different NNMF runs with the same parameters. (NNMF uses random numbers initialization.)
+   6. We would get different results with different NNMF runs using the same parameters. (NNMF uses random numbers initialization.)
 
    7. The NNMF topic vectors are not orthogonal.
 
    8. SVD is much faster than NNMF, but it topic vectors are hard to interpret.
 
-   9. Generally, the topics derived with SVD are stable, do not change with different runs with the same parameters. 
+   9. Generally, the topics derived with SVD are stable, they do not change with different runs with the same parameters. 
 
    10. The SVD topics vectors are orthogonal, which provides for quick to find representations of documents not in the monad's document collection.
 
@@ -578,8 +575,8 @@ Here is an association of documents from monad's document collection.
     queries = Part[lsaHamlet⟹LSAMonTakeDocuments, inds];
     queries
      
-     (* <|"id.0006" -> "Getrude, Queen of Denmark, mother to Hamlet. Ophelia, daughter to Polonius.", 
-          "id.0010" -> "ACT I. Scene I. Elsinore. A platform before the Castle."|> *)
+    (* <|"id.0006" -> "Getrude, Queen of Denmark, mother to Hamlet. Ophelia, daughter to Polonius.", 
+         "id.0010" -> "ACT I. Scene I. Elsinore. A platform before the Castle."|> *)
 
     lsaHamlet⟹
       LSAMonRepresentByTerms[queries]⟹
