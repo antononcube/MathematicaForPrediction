@@ -1,7 +1,5 @@
 # A monad for Latent Semantic Analysis workflows
 
-[//]: # (No rules defined for Chapter)
-
 Anton Antonov   
 [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)  
 [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
@@ -16,19 +14,19 @@ In this document we describe the design and implementation of a (software progra
 
 The goal of the monad design is to make the specification of LSA workflows (relatively) easy, straightforward, by following a certain main scenario and specifying variations over that scenario.
 
-The monad is named LSAMon and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], the document-term matrix making package ["DocumentTermMatrixConstruction.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m), [AAp4, AA2], the Non-Negative Matrix Factorization (NNMF) package ["NonNegativeMatrixFactorization.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AAp5, AA2], and the package "SSparseMatrix.m", [AAp2, AA5], that provides matrix objects with named rows and columns.
+The monad is named `LSAMon` and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], the document-term matrix making package ["DocumentTermMatrixConstruction.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m), [AAp4, AA2], the Non-Negative Matrix Factorization (NNMF) package ["NonNegativeMatrixFactorization.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AAp5, AA2], and the package "SSparseMatrix.m", [AAp2, AA5], that provides matrix objects with named rows and columns.
 
 The data for this document is obtained from WL's repository and it is manipulated into a certain ready-to-utilize form (and uploaded to GitHub.)
 
 The monadic programming design is used as a [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). The LSAMon monad can be also seen as a [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) for the specification and programming of machine learning classification workflows.  
 
-Here is an example of using the LSAMon monad over a collection of documents that consists of 233 US state of union speeches.
+Here is an example of using the `LSAMon` monad over a collection of documents that consists of 233 US state of union speeches.
 
 
 
 The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
 
-As it was mentioned above the monad LSAMon can be seen as a DSL. Because of this the monad pipelines made with LSAMon are sometimes called "specifications".
+As it was mentioned above the monad `LSAMon` can be seen as a DSL. Because of this the monad pipelines made with `LSAMon` are sometimes called "specifications".
 
 **Remark:** With "*term*" we mean "a word, a word stem, or other type of token". 
 
@@ -44,11 +42,11 @@ The document has the following structure.
 
    + The sections "Design consideration" and "Monad design" provide motivation and design decisions rationale.
 
-   + The sections "LSAMon overview" and "Monad elements" provide technical descriptions needed to utilize the LSAMon monad .
+   + The sections "LSAMon overview" and "Monad elements" provide technical descriptions needed to utilize the `LSAMon` monad .
 
       + (Using a fair amount of examples.)
 
-   + The section "Unit tests" describes the tests used in the development of the LSAMon monad.
+   + The section "Unit tests" describes the tests used in the development of the `LSAMon` monad.
 
       + (The random pipelines unit tests are especially interesting.)
 
@@ -56,7 +54,7 @@ The document has the following structure.
 
       + (The most interesting and important one is the ["conversational agent"](https://github.com/antononcube/ConversationalAgents/tree/master/Projects/TimeSeriesWorkflowsAgent) direction.)
 
-   + The section "Implementation notes" just says that LSAMon's development process and this document follow the ones of the classifications workflows monad ClCon, [[AA6](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/)].
+   + The section "Implementation notes" just says that `LSAMon`'s development process and this document follow the ones of the classifications workflows monad ClCon, [[AA6](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/)].
 
 **Remark:** One can read only the sections "Introduction", "Design consideration", "Monad design", and "LSAMon overview". That set of sections provide a fairly good, programming language agnostic exposition of the substance and novel ideas of this document.
 
@@ -72,7 +70,7 @@ The following commands load the packages
 
 In this section we load data that is used in the rest of the document. The text data was obtained through WL's repository, transformed in a certain more convenient form, and uploaded to GitHub.
 
-The text summarization and plots are done through LSAMon, which in turn uses the function RecordsSummary from the package ["MathematicaForPredictionUtilities.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)].
+The text summarization and plots are done through `LSAMon`, which in turn uses the function RecordsSummary from the package ["MathematicaForPredictionUtilities.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m), [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m)].
 
 ### Hamlet
 
@@ -193,13 +191,14 @@ refers to chained monadic operations as "pipelines". We use the terms "monad pip
 
 ## Monad design
 
-The monad we consider is designed to speed-up the programming of LSA workflows outlined in the previous section. The monad is named LSAMon for "**L**atent **S**emantic **A**nalysis** Mon**ad".
+The monad we consider is designed to speed-up the programming of LSA workflows outlined in the previous section. 
+The monad is named `LSAMon` for "**L**atent **S**emantic **A**nalysis** Mon**ad".
 
 We want to be able to construct monad pipelines of the general form:
 
 ![LSAMon-Monad-Design-formula-1](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Monad-Design-formula-1.png)
 
-LSAMon is based on the [State monad](https://en.wikipedia.org/wiki/Monad_(functional_programming)#State_monads), 
+`LSAMon` is based on the [State monad](https://en.wikipedia.org/wiki/Monad_(functional_programming)#State_monads), 
 [[Wk1](https://en.wikipedia.org/wiki/Monad_(functional_programming)), 
 [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], 
 so the monad pipeline form (1) has the following more specific form:
@@ -208,7 +207,7 @@ so the monad pipeline form (1) has the following more specific form:
 
 This means that some monad operations will not just change the pipeline value but they will also change the pipeline context.
 
-In the monad pipelines of LSAMon we store different objects in the contexts for at least one of the following two reasons.
+In the monad pipelines of `LSAMon` we store different objects in the contexts for at least one of the following two reasons.
 
    1. The object will be needed later on in the pipeline, or
 
@@ -242,9 +241,9 @@ Let us list the desired properties of the monad.
 
    + It is easy to specify and apply re-weighting functions for the entries of the document-term contingency matrices.
 
-The LSAMon components and their interactions are fairly simple.
+The `LSAMon` components and their interactions are fairly simple.
 
-The main LSAMon operations implicitly put in the context or utilize from the context the following objects: 
+The main `LSAMon` operations implicitly put in the context or utilize from the context the following objects: 
 
    + document-term matrix, 
 
@@ -252,7 +251,8 @@ The main LSAMon operations implicitly put in the context or utilize from the con
 
    + extracted topics.
 
-Note the that the monadic set of types of LSAMon pipeline values is fairly heterogenous and certain awareness of "the current pipeline value" is assumed when composing LSAMon pipelines.
+Note the that the monadic set of types of `LSAMon` pipeline values is fairly heterogenous and certain awareness of 
+"the current pipeline value" is assumed when composing `LSAMon` pipelines.
 
 Obviously, we can put in the context any object through the generic operations of the State monad of the package ["StateMonadGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)].
 
@@ -260,9 +260,11 @@ Obviously, we can put in the context any object through the generic operations o
 
 When using a monad we lift certain data into the "monad space", using monad's operations we navigate computations in that space, and at some point we take results from it. 
 
-With the approach taken in this document the "lifting" into the `LSAMon` monad is done with the function LSAMonUnit. Results from the monad can be obtained with the functions LSAMonTakeValue, LSAMonContext, or with the other LSAMon functions with the prefix "LSAMonTake" (see below.)
+With the approach taken in this document the "lifting" into the `LSAMon` monad is done with the function LSAMonUnit. 
+Results from the monad can be obtained with the functions `LSAMonTakeValue`, `LSAMonContext`, 
+or with the other `LSAMon` functions with the prefix "LSAMonTake" (see below.)
 
-Here is a corresponding diagram of a generic computation with the LSAMon monad:
+Here is a corresponding diagram of a generic computation with the `LSAMon` monad:
 
 ![LSAMon-pipeline](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-pipeline.jpg)
 
@@ -285,7 +287,7 @@ The `LSAMon` functions are separated into four groups:
 ### Monad functions interaction with the pipeline value and context
 
 An overview of the those functions is given in the tables in next two sub-sections. 
-The next section, "Monad elements", gives details and examples for the usage of the LSAMon operations.
+The next section, "Monad elements", gives details and examples for the usage of the `LSAMon` operations.
 
 ![LSAMon-Overview-operations-context-interactions-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Overview-operations-context-interactions-table.png)
 
@@ -293,23 +295,25 @@ The next section, "Monad elements", gives details and examples for the usage of 
 
 ### State monad functions
 
-Here are the LSAMon State Monad functions (generated using the prefix "LSAMon", [AAp1, AA1].)
+Here are the `LSAMon` State Monad functions (generated using the prefix "LSAMon", [AAp1, AA1].)
 
 ![LSAMon-Overview-StMon-usage-descriptions-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Overview-StMon-usage-descriptions-table.png)
 
 ### Main monad functions
 
-Here are the usage descriptions of the main (not monad-supportive) LSAMon functions, which are explained in detail in the next section.
+Here are the usage descriptions of the main (not monad-supportive) `LSAMon` functions, 
+which are explained in detail in the next section.
 
 ![LSAMon-Overview-operations-usage-descriptions-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Overview-operations-usage-descriptions-table.png)
 
 ## Monad elements
 
-In this section we show that LSAMon has all of the properties listed in the previous section.
+In this section we show that `LSAMon` has all of the properties listed in the previous section.
 
 ### The monad head
 
-The monad head is LSAMon. Anything wrapped in LSAMon can serve as monad's pipeline value. It is better though to use the constructor LSAMonUnit. (Which adheres to the definition in [Wk1].)
+The monad head is `LSAMon`. Anything wrapped in `LSAMon` can serve as monad's pipeline value. 
+It is better though to use the constructor `LSAMonUnit`. (Which adheres to the definition in [Wk1].)
 
     LSAMon[textHamlet, <||>]⟹LSAMonMakeDocumentTermMatrix[Automatic, Automatic]⟹LSAMonEchoFunctionContext[Short];
 
@@ -323,7 +327,7 @@ The lifting to the monad marks the beginning of the monadic pipeline. It can be 
 
     LSAMonUnit[]⟹LSAMonSetDocuments[textHamlet]⟹LSAMonMakeDocumentTermMatrix⟹LSAMonTakeDocumentTermMatrix
 
-(See the sub-section "Setters, droppers, and takers" for more details of setting and taking values in LSAMon contexts.)
+(See the sub-section "Setters, droppers, and takers" for more details of setting and taking values in `LSAMon` contexts.)
 
 Currently the monad can deal with data in the following forms: 
 
@@ -331,7 +335,8 @@ Currently the monad can deal with data in the following forms:
 
    + associations with string values.
 
-Generally, WL makes it easy to extract columns datasets order to obtain vectors or matrices, so datasets are not currently supported in LSAMon.
+Generally, WL makes it easy to extract columns datasets order to obtain vectors or matrices, 
+so datasets are not currently supported in `LSAMon`.
 
 ### Making of the document-term matrix
 
@@ -339,10 +344,10 @@ As it was mentioned above with "term" we mean "a word or a stemmed word". Here i
 
     WordData[#, "PorterStem"] & /@ {"consequential", "constitution", "forcing", ""}
 
-The fundamental model of LSAMon is the so called [Vector space model](https://en.wikipedia.org/wiki/Vector_space_model) 
+The fundamental model of `LSAMon` is the so called [Vector space model](https://en.wikipedia.org/wiki/Vector_space_model) 
 (or the closely related [Bag-of-words model.)](https://en.wikipedia.org/wiki/Bag-of-words_model)
 The document-term matrix is a linear vector space representation of the documents collection. 
-That representation is further used in LSAMon to find topics and statistical thesauri.
+That representation is further used in `LSAMon` to find topics and statistical thesauri.
 
 Here is an example of ad hoc construction of a document-term matrix using a couple of paragraphs from "Hamlet".
 
@@ -351,7 +356,8 @@ Here is an example of ad hoc construction of a document-term matrix using a coup
 
     MatrixForm @ CrossTabulate[Flatten[KeyValueMap[Thread[{#1, #2}] &, TextWords /@ ToLowerCase[aTempText]], 1]]
 
-When we construct the document-term matrix we (often) want to stem the words and (almost always) want to remove [stop words](https://en.wikipedia.org/wiki/Stop_words). LSAMon's function LSAMonMakeDocumentTermMatrix makes the document-term matrix and takes specifications for stemming and stop words.
+When we construct the document-term matrix we (often) want to stem the words and (almost always) want to remove [stop words](https://en.wikipedia.org/wiki/Stop_words). 
+`LSAMon`'s function LSAMonMakeDocumentTermMatrix makes the document-term matrix and takes specifications for stemming and stop words.
 
     lsaObj =
       LSAMonUnit[textHamlet]⟹
@@ -405,7 +411,7 @@ Here is a table of weight functions formulas.
 
 #### Computation specifications
 
-LSAMon function LSAMonApplyTermWeightFunctions delegates the LSI weight functions application to the package ["DocumentTermMatrixConstruction.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m), [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)].
+`LSAMon` function LSAMonApplyTermWeightFunctions delegates the LSI weight functions application to the package ["DocumentTermMatrixConstruction.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m), [[AAp4](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)].
 
 Here is an example.
 
@@ -449,7 +455,7 @@ of global, local, and normalization weight functions.
 
 ### Extracting topics
 
-Streamlining topic extraction is one of the main reasons LSAMon was implemented. The topic extraction correspond to the so called "syntagmatic" relationships between the terms, [MS1].
+Streamlining topic extraction is one of the main reasons `LSAMon` was implemented. The topic extraction correspond to the so called "syntagmatic" relationships between the terms, [MS1].
 
 #### Theoretical outline
 
@@ -634,13 +640,14 @@ Denote with $\frac{1}{H}$ the inverse or pseudo-inverse matrix of $H$. We have:
 
 [//]: # (No rules defined for DisplayFormula)
 
-In LSAMon for SVD $H^T$; for NNMF is $\frac{1}{H}$ is the pseudo-inverse of $H$.
+In `LSAMon` for SVD $H^T$; for NNMF is $\frac{1}{H}$ is the pseudo-inverse of $H$.
 
 The vector $x$ obtained with LSAMonRepresentByTopics.
 
 ### Finding the most important documents
 
-There are several algorithms we can apply for finding the most important documents in the collection. LSAMon utilizes two types algorithms: (1) graph centrality measures based, and (2) matrix factorization based. With certain graph centrality measures the two algorithms are equivalent. In this sub-section we demonstrate the matrix factorization algorithm (that uses SVD.)
+There are several algorithms we can apply for finding the most important documents in the collection. 
+`LSAMon` utilizes two types algorithms: (1) graph centrality measures based, and (2) matrix factorization based. With certain graph centrality measures the two algorithms are equivalent. In this sub-section we demonstrate the matrix factorization algorithm (that uses SVD.)
 
 **Definition:** The most important sentences have the most important words and the most important words are in the most important sentences.
 
@@ -691,48 +698,42 @@ Here is an example of the "data dropper" LSAMonDropDocuments:
 
 ## Unit tests
 
-The development of LSAMon was done with two types of unit tests: (i) directly specified tests, [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegression-Unit-Tests.wlt)], and (ii) tests based on randomly generated pipelines, [[AA8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegressionRandomPipelinesUnitTests.m)].
+The development of `LSAMon` was done with two types of unit tests: (i) directly specified tests, [[AAp7](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegression-Unit-Tests.wlt)], and (ii) tests based on randomly generated pipelines, [[AA8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicQuantileRegressionRandomPipelinesUnitTests.m)].
 
 The unit test package should be further extended in order to provide better coverage of the functionalities and illustrate -- and postulate -- pipeline behavior.
 
 ### Directly specified tests
 
-Here we run the unit tests file ["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt), [[AAp8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt)].
-
-
+Here we run the unit tests file 
+["MonadicLatentSemanticAnalysis-Unit-Tests.wlt"](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt),
+[[AAp8](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt)].
 
     AbsoluteTiming[
-     testObject = 
-      TestReport[
-       "~/MathematicaForPrediction/UnitTests/\
-    MonadicLatentSemanticAnalysis-Unit-Tests.wlt"]
-     ]
+     testObject = TestReport["~/MathematicaForPrediction/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt"]
+    ]
 
 The natural language derived test ID's should give a fairly good idea of the functionalities covered in [AAp3].
-
-
 
     Values[Map[#["TestID"] &, testObject["TestResults"]]]
 
 ### Random pipelines tests
 
-Since the monad LSAMon is a DSL it is natural to test it with a large number of randomly generated "sentences" of that DSL. For the LSAMon DSL the sentences are LSAMon pipelines. The package  ["MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m), [[AAp9](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m)], has functions for generation of QRMon random pipelines and running them as verification tests. A short example follows.
+Since the monad `LSAMon` is a DSL it is natural to test it with a large number of randomly generated "sentences" of that DSL. 
+For the `LSAMon` DSL the sentences are `LSAMon` pipelines. The package 
+["MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m), 
+[[AAp9](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m)], 
+has functions for generation of QRMon random pipelines and running them as verification tests. 
+A short example follows.
 
 Generate pipelines:
-
-
 
     SeedRandom[234]
     pipelines = MakeLSAMonRandomPipelines[100];
     Length[pipelines]
 
-
-
     (* 100 *)
 
 Here is a sample of the generated pipelines:
-
-
 
     (*Block[{DoubleLongRightArrow,pipelines=RandomSample[pipelines,6]},\
     Clear[DoubleLongRightArrow];
@@ -745,15 +746,11 @@ Here is a sample of the generated pipelines:
 
 Here we run the pipelines as unit tests:
 
-
-
     AbsoluteTiming[
      res = TestRunLSAMonPipelines[pipelines, "Echo" -> False];
-     ]
+    ]
 
 From the test report results we see that a dozen tests failed with messages, all of the rest passed.
-
-
 
     rpTRObj = TestReport[res]
 
@@ -761,9 +758,15 @@ From the test report results we see that a dozen tests failed with messages, all
 
 ## Implementation notes
 
-The implementation methodology of the LSAMon monad packages [AAp3, AAp9] followed the methodology created for the ClCon monad package [AAp10, AA6]. Similarly, this document closely follows the structure and exposition of the ClCon monad document ["A monad for classification workflows"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-classification-workflows.md), [AA6].
+The implementation methodology of the `LSAMon` monad packages [AAp3, AAp9] followed the methodology created 
+for the `ClCon` monad package [AAp10, AA6]. Similarly, this document closely follows the structure and exposition 
+of the `ClCon  monad document 
+["A monad for classification workflows"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-classification-workflows.md), 
+[AA6].
 
-A lot of the functionalities and signatures of LSAMon were designed and programed through considerations of natural language commands specifications given to a specialized conversational agent. (As discussed in the previous section.)
+A lot of the functionalities and signatures of `LSAMon` were designed and programed through considerations 
+of natural language commands specifications given to a specialized conversational agent. 
+
 
 ## References
 
