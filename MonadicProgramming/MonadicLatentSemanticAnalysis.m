@@ -358,7 +358,7 @@ LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association
 
       stopWords = OptionValue[ LSAMonMakeDocumentTermMatrix, "StopWords" ];
 
-      If[ ! ( MatchQ[ stopWords, {_String..} ] || TrueQ[ stopWords === Automatic ] ),
+      If[ ! ( MatchQ[ stopWords, {_String...} ] || TrueQ[ stopWords === Automatic ] ),
         Echo[
           "The value of the option \"StopWords\" is expected to be a list or strings or Automatic.",
           "LSAMonMakeDocumentTermMatrix:"
@@ -434,7 +434,7 @@ LSAMonApplyTermWeightFunctions[ opts : OptionsPattern[] ][xs_, context_Associati
               If[ ! StringQ[val],
                 Echo[
                   "The value of the option \"" <> funcName <> "\" is expected to be a string.",
-                  "LSAMonMakeDocumentTermMatrix:"
+                  "LSAMonApplyTermWeightFunctions:"
                 ];
                 Return[$LSAMonFailure]
               ];
@@ -510,7 +510,7 @@ LSAMonExtractTopics[ opts : OptionsPattern[] ][xs_, context_] :=
       If[ ! IntegerQ[nTopics],
         Echo[
           "The value of the option \"NumberOfTopics\" is expected to be a integer.",
-          "LSAMonMakeDocumentTermMatrix:"
+          "LSAMonExtractTopics:"
         ];
         Return[$LSAMonFailure]
       ];
@@ -1415,9 +1415,25 @@ LSAMonMakeGraph[__][___] :=
 
 Clear[LSAMonFindMostImportantDocuments];
 
-Options[LSAMonFindMostImportantDocuments] = { "CentralityFunction" -> EigenvectorCentrality };
+Options[LSAMonFindMostImportantDocuments] = { "NumberOfTopDocuments" -> 3, "CentralityFunction" -> EigenvectorCentrality };
 
 LSAMonFindMostImportantDocuments[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonFindMostImportantDocuments[ opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{topN},
+
+      topN = OptionValue[ LSAMonFindMostImportantDocuments, "NumberOfTopDocuments" ];
+
+      If[ ! ( IntegerQ[topN] && topN > 0 ),
+        Echo[
+          "The value of the option \"NumberOfTopDocuments\" is expected to be a positive integer.",
+          "LSAMonFindMostImportantDocuments:"
+        ];
+        Return[$LSAMonFailure]
+      ];
+
+      LSAMonFindMostImportantDocuments[ topN, opts ][xs, context]
+    ];
 
 LSAMonFindMostImportantDocuments[topN_Integer, opts : OptionsPattern[]][xs_, context_] :=
     Block[{cFunc, gr, cvec, inds, smat },
@@ -1425,16 +1441,15 @@ LSAMonFindMostImportantDocuments[topN_Integer, opts : OptionsPattern[]][xs_, con
       cFunc = OptionValue[LSAMonFindMostImportantDocuments, "CentralityFunction"];
 
       (* Here we should check that the monad value is a text collection. *)
-      If[ !( KeyExistsQ[context, "documents"] || KeyExistsQ[context, "weightedDocumentTermMatrix"] || KeyExistsQ["documentTermMatrix"] ),
+      If[ !( KeyExistsQ[context, "documents"] && KeyExistsQ[context, "weightedDocumentTermMatrix"] && KeyExistsQ["documentTermMatrix"] ),
 
         If[ !KeyExistsQ[context, "documents"] && !(KeyExistsQ[context, "weightedDocumentTermMatrix"] || KeyExistsQ["documentTermMatrix"]) ,
           Echo["No texts.", "LSAMonFindMostImportantDocuments:"];
           Return[$LSAMonFailure]
         ];
 
-
-        If[ !( KeyExistsQ[context, "weightedDocumentTermMatrix"] || KeyExistsQ["documentTermMatrix"] ),
-          Echo["No texts and document-term matrices.", "LSAMonFindMostImportantDocuments:"];
+        If[ !( KeyExistsQ[context, "weightedDocumentTermMatrix"] && KeyExistsQ["documentTermMatrix"] ),
+          Echo["No document-term matrices.", "LSAMonFindMostImportantDocuments:"];
           Return[$LSAMonFailure]
         ];
       ];
