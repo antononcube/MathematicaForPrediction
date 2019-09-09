@@ -387,13 +387,16 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateContexts::nocxt = "The string \"`1`\" does not refer to a known context.";
       MStateContexts::nocxtp = MStateContexts::nocxt <> " Associating with an empty context and proceeding.";
 
-      MStateFail[__] := MStateFailureSymbol;
-      MStateFail[][___] := MStateFailureSymbol;
+      MStateFail[x_, context_Association] := MStateFailureSymbol;
+      MStateFail[][x_, context_] := MStateFailureSymbol;
+      MStateFail[s__][x_, context_] := Fold[ MStateBind, MStateUnit[x, context], { MStateEcho[s], MStateFail[] }];
       (*MStateFail[echoArgs__][x_, c:(_String|_Association)] := (Echo[echoArgs]; MStateFailureSymbol);*)
+      MStateFail::usage = "Failure.";
 
-      MStateSucceed[___] := MState[{}];
-      MStateSucceed[][__] := MState[{}];
-      MStateSucceed[s__][___] := MState[s];
+      MStateSucceed[x_, context_] := MStateUnit[{}, context];
+      MStateSucceed[][x_, context_] := MStateUnit[{}, context];
+      MStateSucceed[s__][x_, context_] := MStateUnit[s, context];
+      MStateSucceed::usage = "Success.";
 
       MStateUnit[MStateFailureSymbol] := MStateFailureSymbol;
       MStateUnit[___][MStateFailureSymbol] := MStateFailureSymbol;
@@ -401,8 +404,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateUnit[x_] := MState[x, <||>];
       MStateUnit[{x_, c : (_String | _Association)}] := MState[x, c];
       MStateUnit[ x_, c : (_String | _Association) ] := MState[x, c];
+      MStateUnit::usage = SymbolName[MState] <> " monad unit constructor.";
 
       MStateUnitQ[x_] := MatchQ[x, MStateFailureSymbol] || MatchQ[x, MState[_, _Association]];
+      MStateUnitQ::usage = SymbolName[MState] <> " monad unit test.";
 
       MStateBind[MStateFailureSymbol] := MStateFailureSymbol;
       MStateBind[MState[x_, context_Association], f_] :=
@@ -519,15 +524,17 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       ];
       MStatePutContext::usage = "Replaces the monad context with the argument.";
 
-
       MStateSetContext = MStatePutContext;
+      MStateSetContext::usage = MStatePutContext::usage;
+
 
       MStatePutValue[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStatePutValue[newValue_][x_, context_] := MState[newValue, context];
       MStatePutValue::usage = "Replaces the monad value with the argument.";
 
-
       MStateSetValue = MStatePutValue;
+      MStateSetValue::usage = MStatePutValue::usage;
+
 
       MStateModifyContext[f_][MStateFailureSymbol] := MStateFailureSymbol;
       MStateModifyContext[f_][x_, context_Association] := MState[x, f[context]];
@@ -570,7 +577,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             If[TrueQ[testRes], fYes[xs, context], fNo[xs, context]]
           ];
       MStateIfElse::usage =
-          SymbolName[MState] <> "IfElse[testFunc_, fYes_, fNo_] if TrueQ[testFunc[xs, context]] then fYes[xs, context], otherwise fNo[xs, context].";
+          SymbolName[MState] <> "IfElse[testFunc_, fYes_, fNo_] executes fYes[xs, context] if TrueQ[testFunc[xs, context]]; otherwise fNo[xs, context].";
 
 
       MStateWhen[testFunc_, f_][MStateFailureSymbol] := MStateFailureSymbol;
@@ -615,6 +622,7 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
             fMu[MStateUnit[xs, context]]
           ];
       MStateIf[___][xs_, context : (_Association | _String)] := MStateFailureSymbol;
+      MStateIf::usage = SymbolName[MStateIf] <> "[f_, fYes_, fNo_] executes fYes[" <> SymbolName[MStateUnit] <> "[xs,context]] if f[" <> SymbolName[MStateUnit] <> "[xs,context]] is True; fNo[" <> SymbolName[MStateUnit] <> "[xs,context]] otherwise.";
 
       MStateNest[___][MStateFailureSymbol] := MStateFailureSymbol;
       MStateNest[f_, n_Integer][xs_, context_] := Nest[f, MStateUnit[xs, context], n];
