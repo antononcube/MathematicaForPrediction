@@ -175,12 +175,12 @@ LSAMonDocumentCollectionQ::usage = "Gives True if the argument is a text collect
 
 LSAMonExtractTopics::usage = "Extract topics.";
 
-LSAMonFindTagsTopicsRepresentation::usage = "Find the topic representation corresponding to a list of tags. \
+LSAMonRepresentDocumentTagsByTopics::usage = "Find the topic representation corresponding to a list of tags. \
 Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
 
-LSAMonRepresentByTerms::usage = "Find the terms representation of a matrix or a query.";
+LSAMonRepresentByTerms::usage = "Find the terms representation of a matrix or a document.";
 
-LSAMonRepresentByTopics::usage = "Find the topics representation of a matrix or a query.";
+LSAMonRepresentByTopics::usage = "Find the topics representation of a matrix or a document.";
 
 LSAMonMakeTopicsTable::usage = "Make a table of topics.";
 
@@ -887,25 +887,25 @@ LSAMonEchoTopicsTable[__][___] :=
 (* Topics representation of tags                              *)
 (*------------------------------------------------------------*)
 
-Clear[LSAMonFindTagsTopicsRepresentation];
+Clear[LSAMonRepresentDocumentTagsByTopics];
 
-Options[LSAMonFindTagsTopicsRepresentation] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
+Options[LSAMonRepresentDocumentTagsByTopics] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
 
-LSAMonFindTagsTopicsRepresentation[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonRepresentDocumentTagsByTopics[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonFindTagsTopicsRepresentation[xs_, context_Association] := LSAMonFindTagsTopicsRepresentation[][xs, context];
+LSAMonRepresentDocumentTagsByTopics[xs_, context_Association] := LSAMonRepresentDocumentTagsByTopics[][xs, context];
 
-LSAMonFindTagsTopicsRepresentation[][xs_, context_] :=
-    LSAMonFindTagsTopicsRepresentation[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
+LSAMonRepresentDocumentTagsByTopics[][xs_, context_] :=
+    LSAMonRepresentDocumentTagsByTopics[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
 
-LSAMonFindTagsTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
+LSAMonRepresentDocumentTagsByTopics[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
     Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
 
-      computeTopicRepresentationQ = OptionValue[LSAMonFindTagsTopicsRepresentation, "ComputeTopicRepresentation"];
-      assignAutomaticTopicNamesQ = OptionValue[LSAMonFindTagsTopicsRepresentation, "AssignAutomaticTopicNames"];
+      computeTopicRepresentationQ = OptionValue[LSAMonRepresentDocumentTagsByTopics, "ComputeTopicRepresentation"];
+      assignAutomaticTopicNamesQ = OptionValue[LSAMonRepresentDocumentTagsByTopics, "AssignAutomaticTopicNames"];
 
       If[ ! ( KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"] ),
-        Echo["No document-term matrix factorization is computed.", "LSAMonFindTagsTopicsRepresentation:"];
+        Echo["No document-term matrix factorization is computed.", "LSAMonRepresentDocumentTagsByTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -922,7 +922,7 @@ LSAMonFindTagsTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPat
 
         True,
         Echo["The length of the argument tags is expected to be same as the number of rows of the document-term matrix.",
-          "LSAMonFindTagsTopicsRepresentation:"];
+          "LSAMonRepresentDocumentTagsByTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -966,11 +966,11 @@ LSAMonFindTagsTopicsRepresentation[tags : (Automatic | _List), opts : OptionsPat
 
     ];
 
-LSAMonFindTagsTopicsRepresentation[__][___] :=
+LSAMonRepresentDocumentTagsByTopics[__][___] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonFindTagsTopicsRepresentation[tags:(Automatic|_List), opts___] .",
-        "LSAMonFindTagsTopicsRepresentation:"];
+        "The expected signature is LSAMonRepresentDocumentTagsByTopics[tags:(Automatic|_List), opts___] .",
+        "LSAMonRepresentDocumentTagsByTopics:"];
       $LSAMonFailure
     ];
 
@@ -1267,7 +1267,7 @@ LSAMonEchoDocumentTermMatrixStatistics[xs_, context_Association] := LSAMonEchoDo
 LSAMonEchoDocumentTermMatrixStatistics[][xs_, context_Association] := LSAMonEchoDocumentTermMatrixStatistics[ImageSize -> 300][xs, context];
 
 LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{logBase, logFunc, logInsert, texts, textWords, eLabel = None, dOpts, smat},
+    Block[{logBase, logFunc, logInsert, texts, dOpts, smat},
 
       logBase = OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "LogBase"];
 
