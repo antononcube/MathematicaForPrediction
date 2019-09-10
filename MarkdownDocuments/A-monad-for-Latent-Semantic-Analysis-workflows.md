@@ -781,34 +781,24 @@ of natural language commands specifications given to a specialized conversationa
 ###  Packages
 
 [AAp1] Anton Antonov, [State monad code generator Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.
-    *URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m) .
 
 [AAp2] Anton Antonov, [Monadic tracing Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.
-    *URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m) .
 
 [AAp3] Anton Antonov, [Monadic Latent Semantic Analysis Mathematica packag](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m)e, (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.*
-    URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m) .
 
 [AAp4] Anton Antonov, [Implementation of document-term matrix construction and re-weighting functions in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m)[, ](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m)(2013), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*.*
-    URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m) .
 
 [AAp5] Anton Antonov, [Non-Negative Matrix Factorization algorithm implementation in Mathematica](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), (2013), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
-  URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m)[ .](https://github.com/antononcube/MathematicaForPrediction/blob/master/QuantileRegression.m)
 
 [AAp6] Anton Antonov, [SSparseMatrix Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/SSparseMatrix.m),[ ](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m)(2018), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
-  URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/SSparseMatrix.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/SSparseMatrix.m) [.](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m)
 
 [AAp7] Anton Antonov, [MathematicaForPrediction utilities](https://github.com/antononcube/MathematicaForPrediction/raw/master/MathematicaForPredictionUtilities.m), (2014), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
-  URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MathematicaForPredictionUtilities.m) .
 
 [AAp8] Anton Antonov, [Monadic Latent Semantic Analysis unit tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt), (2019), [MathematicaVsR at GitHub](https://github.com/antononcube/MathematicaVsR).
-   URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysis-Unit-Tests.wlt) .
-
+ 
 [AAp9] Anton Antonov, [Monadic Latent Semantic Analysis random pipelines Mathematica unit tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m), (2019), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
-  URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m) .
 
 [AAp10] Anton Antonov, [Monadic contextual classification Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction). 
-  URL: [https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m) .
 
 ### ConverationalAgents Packages
 
@@ -823,28 +813,22 @@ of natural language commands specifications given to a specialized conversationa
 [AA2] Anton Antonov, ["Topic and thesaurus extraction from a document collection"](https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf), (2013), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
 [AA3] Anton Antonov, ["The Great conversation in USA presidential speeches"](https://mathematicaforprediction.wordpress.com/2017/12/24/the-great-conversation-in-usa-presidential-speeches/), (2017), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
-  URL: [https://mathematicaforprediction.wordpress.com/2017/12/24/the-great-conversation-in-usa-presidential-speeches](https://mathematicaforprediction.wordpress.com/2017/12/24/the-great-conversation-in-usa-presidential-speeches/) .
 
 [AA4] Anton Antonov, ["Contingency tables creation examples"](https://mathematicaforprediction.wordpress.com/2016/10/04/contingency-tables-creation-examples/), (2016), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
 
 [AA5] Anton Antonov, ["RSparseMatrix for sparse matrices with named rows and columns"](https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematrix-for-sparse-matrices-with-named-rows-and-columns/), (2015), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
 
 [AA6] Anton Antonov, ["A monad for classification workflows"](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/),  (2018), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
-  URL: [https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/) .
 
 ### Other
 
 [Wk1] Wikipedia entry, [Monad](https://en.wikipedia.org/wiki/Monad_(functional_programming)), 
-   URL: [https://en.wikipedia.org/wiki/Monad_(functional_programming)](https://en.wikipedia.org/wiki/Monad_(functional_programming)) . 
 
 [Wk2] Wikipedia entry, [Latent semantic analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis),
-  URL: [https://en.wikipedia.org/wiki/Latent_semantic_analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis) .
 
 [Wk3] Wikipedia entry, [Distributional semantics](https://en.wikipedia.org/wiki/Distributional_semantics),
-  URL: [https://en.wikipedia.org/wiki/Distributional_semantics](https://en.wikipedia.org/wiki/Distributional_semantics) .
 
 [Wk4] Wikipedia entry, [Non-negative matrix factorization](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization),
-  URL: [https://en.wikipedia.org/wiki/Non-negative_matrix _factorization](https://en.wikipedia.org/wiki/Non-negative_matrix_factorization) .
 
 [LE1] Lars Elden, Matrix Methods in Data Mining and Pattern Recognition, 2007, SIAM. ISBN-13: 978-0898716269.
 
@@ -853,5 +837,3 @@ of natural language commands specifications given to a specialized conversationa
 [MS1] Magnus Sahlgren, ["The Distributional Hypothesis"](http://soda.swedish-ict.se/3941/1/sahlgren.distr-hypo.pdf), (2008), Rivista di Linguistica. 20 (1): 33\[Dash]53.
 
 [PS1] Patrick Scheibe, [Mathematica (Wolfram Language) support for IntelliJ IDE](https://github.com/halirutan/Mathematica-IntelliJ-Plugin)A, (2013-2018), [Mathematica-IntelliJ-Plugin at GitHub](https://github.com/halirutan/Mathematica-IntelliJ-Plugin).
-   URL: [https://github.com/halirutan/Mathematica-IntelliJ-Plugin](https://github.com/halirutan/Mathematica-IntelliJ-Plugin) .
-
