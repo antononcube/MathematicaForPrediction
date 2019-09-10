@@ -458,7 +458,7 @@ Streamlining topic extraction is one of the main reasons `LSAMon` was implemente
 
 The original weighed document-term matrix $M$ is decomposed into the matrix factors $W$ and $H$.
 
-$M \approx W.H, W \in {R}^(k \times m), H \in] R^{k \times n} .$
+$M \approx W . H, W \in \mathbb{R}^{m \times k}, H \in \mathbb{R}^{k \times n}.$
 
 The $i$-th row of $M$ is expressed with the $i$-th row of $W$ multiplied by $H$.
 
@@ -621,21 +621,21 @@ In order to clarify what the function LSAMonRepresentByTopics is doing let us go
 
 The original weighed document-term matrix $M$ is decomposed into the matrix factors $W$ and $H$.
 
-[//]: # (No rules defined for DisplayFormula)
+$M \approx W . H, W \in \mathbb{R}^{m \times k}, H \in \mathbb{R}^{k \times n}$
 
 The $i$-th row of $M$ is expressed with the $i$-th row of $W$ multiplied by $H$.
 
-[//]: # (No rules defined for DisplayFormula)
+$m_{i} \approx w_{i} . H .$
 
-For a query vector $q_0\in \mathbb{R}^m$we want to find its topics representation vector $x\in \mathbb{R}^k$:
+For a query vector $q_0 \in \mathbb{R}^m$ we want to find its topics representation vector $x \in \mathbb{R}^k$:
 
-[//]: # (No rules defined for DisplayFormula)
+$q_{0} \approx x . H .$
 
-Denote with $\frac{1}{H}$ the inverse or pseudo-inverse matrix of $H$. We have:
+Denote with $H^{(-1)}$ the inverse or pseudo-inverse matrix of $H$. We have:
 
-[//]: # (No rules defined for DisplayFormula)
+$q_{0} . H^{(-1)} \approx (x . H ) . H^{(-1)} = x . ( H . H^{(-1)} ) = x . I,$
 
-[//]: # (No rules defined for DisplayFormula)
+$x \in \mathbb{R}^{k}, H^{(-1)} \in \mathbb{R}^{n \times k}, I \in \mathbb{R}^{k \times k}.$
 
 In `LSAMon` for SVD $H^T$; for NNMF is $\frac{1}{H}$ is the pseudo-inverse of $H$.
 
