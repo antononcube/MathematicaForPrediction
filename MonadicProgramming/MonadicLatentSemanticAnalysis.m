@@ -1166,7 +1166,7 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
 LSAMonRepresentByTopics[__][___] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonRepresentByTopics[ mat_SSparseMatrix | {_String..} | _String ] .",
+        "The expected signature is LSAMonRepresentByTopics[ mat_SSparseMatrix | _String | {_String ..} | {{_String ..} ..} ] .",
         "LSAMonRepresentByTopics:"];
       $LSAMonFailure
     ];
