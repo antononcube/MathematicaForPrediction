@@ -736,7 +736,7 @@ LSAMonEchoStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Associati
             Grid[
               Prepend[
                 context["statisticalThesaurus"],
-                Style[#, Blue, FontFamily -> "Times"] & /@ {"word", "statistical thesaurus"}],
+                Style[#, Blue, FontFamily -> "Times"] & /@ {"term", "statistical thesaurus entries"}],
               Dividers -> All, Alignment -> Left,
               Spacings -> {Automatic, 0.75}],
           "statistical thesaurus:"
