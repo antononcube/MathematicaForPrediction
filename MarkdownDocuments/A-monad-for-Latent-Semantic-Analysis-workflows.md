@@ -529,14 +529,26 @@ Things to keep in mind.
 
 The statistical thesaurus extraction corresponds to the "paradigmatic" relationships between the terms, [MS1].
 
+Here is an example over the State of Union speeches.
+
+    entryWords = {"bank", "war", "economy", "school", "port", "health", "enemy", "nuclear"};
+   
     lsaSpeeches⟹
-      LSAMonExtractStatisticalThesaurus[
-       "Words" -> Map[WordData[#, "PorterStem"] &, {"bank", "war", "economy", "school", "port", "health", "enemy", "nuclear"}], 
-       "NumberOfNearestNeighbors" -> 12]⟹
+      LSAMonExtractStatisticalThesaurus["Words" -> Map[WordData[#, "PorterStem"] &, entryWords], "NumberOfNearestNeighbors" -> 12]⟹
       LSAMonEchoStatisticalThesaurus;
 
 ![LSAMon-Extracting-statistical-thesauri-echo](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Extracting-statistical-thesauri-echo.png)
 
+In the code above: (i) the options signature style is used, (ii) the statistical thesaurus entry words are stemmed first. 
+
+We can also call `LSAMonEchoStatisticalThesaurus` directly without calling `LSAMonExtractStatisticalThesaurus` first.
+
+     lsaSpeeches⟹
+       LSAMonEchoStatisticalThesaurus["Words" -> Map[WordData[#, "PorterStem"] &, entryWords], "NumberOfNearestNeighbors" -> 12];
+   
+![LSAMon-Extracting-statistical-thesauri-echo](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Extracting-statistical-thesauri-echo.png)
+
+   
 ### Mapping queries and documents to terms
 
 One of the most natural operations is to find the representation of an arbitrary document (or sentence or a list of words) in monad's Linear vector space of terms. This is done with the function LSAMonRepresentByTerms.
