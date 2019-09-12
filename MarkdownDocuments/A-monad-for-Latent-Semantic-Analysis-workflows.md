@@ -670,7 +670,7 @@ $q_{0} . H^{(-1)} \approx (x . H ) . H^{(-1)} = x . ( H . H^{(-1)} ) = x . I,$
 
 $x \in \mathbb{R}^{k}, H^{(-1)} \in \mathbb{R}^{n \times k}, I \in \mathbb{R}^{k \times k}.$
 
-In `LSAMon` for SVD $H^T$; for NNMF is $\frac{1}{H}$ is the pseudo-inverse of $H$.
+In `LSAMon` for SVD $H^{(-1)} = H^T$; for NNMF $H^{(-1)}$ is the pseudo-inverse of $H$.
 
 The vector $x$ obtained with LSAMonRepresentByTopics.
 
