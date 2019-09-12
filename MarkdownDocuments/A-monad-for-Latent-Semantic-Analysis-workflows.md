@@ -687,7 +687,7 @@ Here we find the document tags (president names in this case.)
 
     tags = StringReplace[
        RowNames[
-        lsaSpeeches\[DoubleLongRightArrow]LSAMonTakeDocumentTermMatrix], 
+        lsaSpeeches⟹LSAMonTakeDocumentTermMatrix], 
        RegularExpression[".\\d\\d\\d\\d-\\d\\d-\\d\\d"] -> ""];
     Short[tags]
 
@@ -709,8 +709,7 @@ Here is a heatmap plot of the tag-topics matrix made with the package
 
     HeatmapPlot[tagTopicsMat[[All, Ordering@ColumnSums[tagTopicsMat]]], DistanceFunction -> None, ImageSize -> Large]
 
-![LSAMon-Tags-representation](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Tags-representation.png)
-
+![LSAMon-Tags-representation-heatmap](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Tags-representation-heatmap.png)
 
 ### Finding the most important documents
 
@@ -763,6 +762,112 @@ Here is an example of the "data dropper" LSAMonDropDocuments:
     (* {"documentTermMatrix", "terms", "stopWords", "stemmingRules"} *)
     
 (The "droppers" simply use the state monad function LSAMonDropFromContext, [AAp1]. For example, LSAMonDropDocuments is equivalent to LSAMonDropFromContext["documents"].)
+
+## The utilization of SSparseMatrix objects
+
+The LSAMon monad heavily relies on `SSparseMatrix` objects, [AAp6, AA5], for internal representation of data and computation results. 
+
+A `SSparseMatrix` object is a matrix with named rows and columns. 
+
+Here is an example.
+
+    n = 6;
+    rmat = ToSSparseMatrix[
+       SparseArray[{{1, 2} -> 1, {4, 5} -> 1}, {n, n}], 
+       "RowNames" -> RandomSample[CharacterRange["A", "Z"], n], 
+       "ColumnNames" -> RandomSample[CharacterRange["a", "z"], n]];
+    MatrixForm[rmat]
+
+![LSAMon-The-utilization-of-SSparseMatrix-random-matrix](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-The-utilization-of-SSparseMatrix-random-matrix.png)
+
+In this section we look into some useful SSparseMatrix idioms applied within LSAMon.
+
+### Visualize with sorted rows and columns
+
+In some situations it is beneficial to sort rows and columns of the (weighted) document-term matrix.
+
+    docTermMat = 
+      lsaSpeeches⟹LSAMonTakeDocumentTermMatrix;
+    MatrixPlot[docTermMat[[Ordering[RowSums[docTermMat]],  Ordering[ColumnSums[docTermMat]]]], MaxPlotPoints -> 300, ImageSize -> Large]
+    
+![LSAMon-The-utilization-of-SSparseMatrix-lsaSpeeces-docTermMat-plot](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-The-utilization-of-SSparseMatrix-lsaSpeeces-docTermMat-plot.png)    
+
+### Finding the most and least popular terms
+
+The most popular terms in the document collection can be found through the association of the column sums of the document-term matrix.
+
+    TakeLargest[ColumnSumsAssociation[lsaSpeeches⟹LSAMonTakeDocumentTermMatrix], 10]
+
+    (* <|"state" -> 8852, "govern" -> 8147, "year" -> 6362, "nation" -> 6182,
+         "congress" -> 5040, "unit" -> 5040, "countri" -> 4504, 
+         "peopl" -> 4306, "american" -> 3648, "law" -> 3496|> *)
+         
+Similarly for the lest popular terms.
+
+    TakeSmallest[
+     ColumnSumsAssociation[
+      lsaSpeeches⟹LSAMonTakeDocumentTermMatrix], 10]
+
+    (* <|"036" -> 1, "027" -> 1, "_____________________" -> 1, "0111" -> 1, 
+         "006" -> 1, "0000" -> 1, "0001" -> 1, "______________________" -> 1, 
+         "____" -> 1, "____________________" -> 1|> *)
+
+### Showing only non-zero columns
+
+In some cases we want to show only columns of the data or computation results matrices that have non-zero elements.
+
+Here is an example (similar to other examples in the previous section.)
+
+    lsaHamlet⟹
+      LSAMonRepresentByTerms[{"this country is rotten", 
+        "where is my sword my lord", 
+        "poison in the ear should be in the play"}]⟹
+      LSAMonEchoFunctionValue[ MatrixForm[#1[[All, Keys[Select[ColumnSumsAssociation[#1], #1 > 0 &]]]]] &];
+
+![LSAMon-The-utilization-of-SSparseMatrix-lsaHamlet-queries-to-terms-matrix](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-The-utilization-of-SSparseMatrix-lsaHamlet-queries-to-terms-matrix.png)
+
+In the pipeline code above: (i) from the list of queries a representation matrix is made, (ii) that matrix is assigned to the pipeline value, (iii) in the pipeline echo value function the non-zero columns are selected with by using the keys of the non-zero elements of the association obtained with ColumnSumsAssociation.
+
+### Similarities based on representation by terms 
+
+Here is way to compute the similarity matrix of different sets of documents that are not required to be in monad's document collection.
+
+    sMat1 =
+     lsaSpeeches⟹
+      LSAMonRepresentByTerms[ aStateOfUnionSpeeches[[ Range[-5, -2] ]] ]⟹
+      LSAMonTakeValue
+
+    sMat2 =
+     lsaSpeeches⟹
+      LSAMonRepresentByTerms[ aStateOfUnionSpeeches[[ Range[-7, -3] ]] ]⟹
+      LSAMonTakeValue
+
+    MatrixForm[sMat1.Transpose[sMat2]]
+
+![LSAMon-The-utilization-of-SSparseMatrix-lsaSpeeches-terms-similarities-matrix](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-The-utilization-of-SSparseMatrix-lsaSpeeches-terms-similarities-matrix.png)
+
+### Similarities based on representation by topics 
+
+Similarly to weighted Boolean similarities matrix computation above we can compute a similarity matrix using the topics representations. Note that an additional normalization steps is required.
+
+    sMat1 =
+      lsaSpeeches⟹
+       LSAMonRepresentByTopics[ aStateOfUnionSpeeches[[ Range[-5, -2] ]] ]⟹
+       LSAMonTakeValue;
+    sMat1 = WeightTermsOfSSparseMatrix[sMat1, "None", "None", "Cosine"]
+
+    sMat2 =
+      lsaSpeeches⟹
+       LSAMonRepresentByTopics[ aStateOfUnionSpeeches[[ Range[-7, -3] ]] ]⟹ 
+       LSAMonTakeValue;
+    sMat2 = WeightTermsOfSSparseMatrix[sMat2, "None", "None", "Cosine"]
+
+    MatrixForm[sMat1.Transpose[sMat2]]
+    
+![LSAMon-The-utilization-of-SSparseMatrix-lsaSpeeches-topics-similarities-matrix](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-The-utilization-of-SSparseMatrix-lsaSpeeches-topics-similarities-matrix.png)
+
+Note the differences with the weighted Boolean similarity matrix in the previous sub-section -- the similarities that are less than 1 are noticeably larger.
+
 
 ## Unit tests
 
