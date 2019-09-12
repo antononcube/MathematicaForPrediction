@@ -111,35 +111,41 @@
 (* Importing packages (if needed)                             *)
 (**************************************************************)
 
-If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
-  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
-];
 
 If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
+  Echo["StateMonadCodeGenerator.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
 ];
 
+If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
+  Echo["SSparseMatrix.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
+];
+
 If[Length[DownValues[DocumentTermMatrixConstruction`DocumentTermMatrix]] == 0,
+  Echo["DocumentTermMatrixConstruction.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DocumentTermMatrixConstruction.m"]
 ];
 
 If[Length[DownValues[NonNegativeMatrixFactorization`GDCLS]] == 0,
+  Echo["NonNegativeMatrixFactorization.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/NonNegativeMatrixFactorization.m"]
 ];
 
 If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Echo["CrossTabulate.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
-If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
-];
-
 If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
+  Echo["OutlierIdentifiers.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
 ];
 
+If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
+  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
+];
 
 (**************************************************************)
 (* Package definition                                         *)
