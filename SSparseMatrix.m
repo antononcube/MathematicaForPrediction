@@ -65,11 +65,11 @@ See the commented out delegation to SparseArray implementation at the end of the
 
 The first version of this package was made in 2015 with the name RSparseMatrix.m, [4].
 
-The reason for renaming RSparseMatrix into SSparseMatrix is becaus of the naming convention of the
+The reason for renaming RSparseMatrix into SSparseMatrix is because of the naming convention of the
 RLink functions. (E.g. RList, REvaluate, etc.)
 
 Since the language S precedes R and "S" stands for "Statistics" and S has matrices with named rows and columns,
-the "SSparseMatrix" was chosen.
+the name "SSparseMatrix" was chosen.
 
 "SSparseMatrix" should mean "statistical sparse matrix" or "S inspired sparse matrix".
 
@@ -77,7 +77,7 @@ the "SSparseMatrix" was chosen.
 # Unit tests
 
 In order to facilitate further package development (and demonstrate what the package functions do)
-the unit test file SSparseMatrix-tests.wlt was made, [3].
+the unit test file "SSparseMatrix-tests.wlt" was made, [3].
 
 
 # Usage examples
