@@ -525,6 +525,27 @@ Things to keep in mind.
 
    10. The SVD topics vectors are orthogonal, which provides for quick to find representations of documents not in the monad's document collection.
 
+The document-topic matrix $W$ has column names that are automatically derived from the top three terms in each topic.
+
+    ColumnNames[lsaHamlet⟹LSAMonTakeW]
+
+    (* {"player-plai-welcom", "ro-lord-sir", "laert-king-attend",
+        "end-inde-make", "state-room-castl", "daughter-pass-love",
+        "hamlet-ghost-father", "father-thou-king",
+        "rosencrantz-guildenstern-king", "ophelia-queen-poloniu",
+        "answer-sir-mother", "horatio-attend-gentleman"} *)
+
+Of course the row names of $H$ have the same names.
+
+    RowNames[lsaHamlet⟹LSAMonTakeH]
+
+    (* {"player-plai-welcom", "ro-lord-sir", "laert-king-attend",
+        "end-inde-make", "state-room-castl", "daughter-pass-love",
+        "hamlet-ghost-father", "father-thou-king",
+        "rosencrantz-guildenstern-king", "ophelia-queen-poloniu",
+        "answer-sir-mother", "horatio-attend-gentleman"} *)
+
+
 ### Extracting statistical thesauri
 
 The statistical thesaurus extraction corresponds to the "paradigmatic" relationships between the terms, [MS1].
@@ -652,6 +673,44 @@ $x \in \mathbb{R}^{k}, H^{(-1)} \in \mathbb{R}^{n \times k}, I \in \mathbb{R}^{k
 In `LSAMon` for SVD $H^T$; for NNMF is $\frac{1}{H}$ is the pseudo-inverse of $H$.
 
 The vector $x$ obtained with LSAMonRepresentByTopics.
+
+### Tags representation
+
+Sometimes we want to find the topics representation of tags associated with monad's documents and the tag-document 
+associations are one-to-many. See 
+[[AA3](https://mathematicaforprediction.wordpress.com/2017/12/24/the-great-conversation-in-usa-presidential-speeches/)]. 
+
+Let us consider a concrete example -- we want to find what topics correspond to the different presidents in 
+the collection of State of Union speeches.
+
+Here we find the document tags (president names in this case.)
+
+    tags = StringReplace[
+       RowNames[
+        lsaSpeeches\[DoubleLongRightArrow]LSAMonTakeDocumentTermMatrix], 
+       RegularExpression[".\\d\\d\\d\\d-\\d\\d-\\d\\d"] -> ""];
+    Short[tags]
+
+Here is the number of unique tags (president names.)
+
+    Length[Union[tags]]
+    (* 42 *)
+
+Here we compute the tag-topics representation matrix using the function `LSAMonRepresentDocumentTagsByTopics`.
+
+    tagTopicsMat =
+     lsaSpeeches⟹
+      LSAMonRepresentDocumentTagsByTopics[tags]⟹
+      LSAMonTakeValue
+
+Here is a heatmap plot of the tag-topics matrix made with the package 
+"[HeatmapPlot.m](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m)", 
+[[AAp11](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m)].
+
+    HeatmapPlot[tagTopicsMat[[All, Ordering@ColumnSums[tagTopicsMat]]], DistanceFunction -> None, ImageSize -> Large]
+
+![LSAMon-Tags-representation](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Tags-representation.png)
+
 
 ### Finding the most important documents
 
