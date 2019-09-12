@@ -197,10 +197,10 @@ Begin["`Private`"];
 
 Needs["MathematicaForPredictionUtilities`"];
 Needs["StateMonadCodeGenerator`"];
+Needs["SSparseMatrix`"];
 Needs["DocumentTermMatrixConstruction`"];
 Needs["NonNegativeMatrixFactorization`"];
 Needs["CrossTabulate`"];
-Needs["SSparseMatrix`"];
 Needs["OutlierIdentifiers`"];
 
 
@@ -871,6 +871,7 @@ LSAMonRepresentDocumentTagsByTopics[tags : (Automatic | _List), opts : OptionsPa
         ctTags = context["docTags"],
 
         TrueQ[tags === Automatic],
+        (* Probably using ctTags = RowNames[context["W"]] is better, but using "documentTermMatrix" for clarity. *)
         ctTags = RowNames[context["documentTermMatrix"]],
 
         Length[tags] == Dimensions[context["documentTermMatrix"]][[1]],
@@ -894,10 +895,10 @@ LSAMonRepresentDocumentTagsByTopics[tags : (Automatic | _List), opts : OptionsPa
             Block[{v = Select[#, # > 0 &], vpos, ts1, ts2},
               vpos = Flatten@Position[#, x_ /; x > 0];
               ts1 =
-                  OutlierIdentifiers`OutlierPosition[v,
-                    OutlierIdentifiers`TopOutliers@*SPLUSQuartileIdentifierParameters];
+                  OutlierPosition[v,
+                    TopOutliers @* SPLUSQuartileIdentifierParameters];
               ts2 =
-                  OutlierIdentifiers`OutlierPosition[v, OutlierIdentifiers`TopOutliers@*HampelIdentifierParameters];
+                  OutlierPosition[v, TopOutliers @* HampelIdentifierParameters];
               Which[
                 Length[ts1] > 0, vpos[[ts1]],
                 Length[ts2] > 0, vpos[[ts2]],
@@ -910,13 +911,15 @@ LSAMonRepresentDocumentTagsByTopics[tags : (Automatic | _List), opts : OptionsPa
 
       (* Note that CrossTabulate is going to sort the matrix rows. *)
       (* The matrix rows correspond to the union of the tags. *)
-      ctMat = CrossTabulate`CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
+      ctMat = CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
       ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ];
       ctMat = ToSSparseMatrix[ ctMat ];
 
       (* This should be done better. *)
       If[ preserveTagsOrderQ,
-        ctMat = ctMat[[ DeleteDuplicates[ctTags], All ]]
+        ctTags = DeleteDuplicates[ctTags];
+        ctTags = Pick[ ctTags, RowNamesAssociation[ctMat] /@ ctTags, _Integer ];
+        ctMat = ctMat[[ ctTags, All ]]
       ];
 
       LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices" -> docTopicIndices |> ] ]
