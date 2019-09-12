@@ -136,64 +136,64 @@ Windermere, FL, USA
 
 *)
 
-BeginPackage["SSparseMatrix`"]
+BeginPackage["SSparseMatrix`"];
 
-SSparseMatrix::usage = "Head of a sparse matrix with named rows and columns."
+SSparseMatrix::usage = "Head of a sparse matrix with named rows and columns.";
 
-SSparseMatrixQ::usage = "Predicate is the argument a SSparseMatrix object."
+SSparseMatrixQ::usage = "Predicate is the argument a SSparseMatrix object.";
 
-MakeSSparseMatrix::usage = "Makes a sparse matrix with named rows and columns."
+MakeSSparseMatrix::usage = "Makes a sparse matrix with named rows and columns.";
 
-ToSSparseMatrix::usage = "Converts several types of objects into SSparseMatrix objects. (SparseArray, Dataset, CrossTable results.)"
+ToSSparseMatrix::usage = "Converts several types of objects into SSparseMatrix objects. (SparseArray, Dataset, CrossTable results.)";
 
-RowNames::usage = "Gives the row names of a SSparseMatrix object."
+RowNames::usage = "Gives the row names of a SSparseMatrix object.";
 
-ColumnNames::usage = "Gives the column names of a SSparseMatrix object."
+ColumnNames::usage = "Gives the column names of a SSparseMatrix object.";
 
-DimensionNames::usage = "Gives the dimension names of a SSparseMatrix object."
+DimensionNames::usage = "Gives the dimension names of a SSparseMatrix object.";
 
-RowNamesAssociation::usage = "Gives the row names association of a SSparseMatrix object."
+RowNamesAssociation::usage = "Gives the row names association of a SSparseMatrix object.";
 
-ColumnNamesAssociation::usage = "Gives the column names association of a SSparseMatrix object."
+ColumnNamesAssociation::usage = "Gives the column names association of a SSparseMatrix object.";
 
-DimensionNamesAssociation::usage = "Gives the dimension names association of a SSparseMatrix object."
+DimensionNamesAssociation::usage = "Gives the dimension names association of a SSparseMatrix object.";
 
-SetColumnNames::usage = "Sets column names of a SSparseMatrix object."
+SetColumnNames::usage = "Sets column names of a SSparseMatrix object.";
 
-SetRowNames::usage = "Sets row names of a SSparseMatrix object."
+SetRowNames::usage = "Sets row names of a SSparseMatrix object.";
 
-SetDimensionNames::usage = "Sets dimension names of a SSparseMatrix object."
+SetDimensionNames::usage = "Sets dimension names of a SSparseMatrix object.";
 
-ColumnsCount::usage = "Gives the number of columns of a SSparseMatrix object."
+ColumnsCount::usage = "Gives the number of columns of a SSparseMatrix object.";
 
-RowsCount::usage = "Gives the number of rows of a SSparseMatrix object."
+RowsCount::usage = "Gives the number of rows of a SSparseMatrix object.";
 
-ColumnSums::usage = "Gives the sums of the columns of a SSparseMatrix object."
+ColumnSums::usage = "Gives the sums of the columns of a SSparseMatrix object.";
 
-ColumnSumsAssociation::usage = "Gives an Association of the sums of the columns of a SSparseMatrix object."
+ColumnSumsAssociation::usage = "Gives an Association of the sums of the columns of a SSparseMatrix object.";
 
-RowSums::usage = "Gives the sums of the rows of a SSparseMatrix object."
+RowSums::usage = "Gives the sums of the rows of a SSparseMatrix object.";
 
-RowSumsAssociation::usage = "Gives an Association the sums of the rows of a SSparseMatrix object."
+RowSumsAssociation::usage = "Gives an Association the sums of the rows of a SSparseMatrix object.";
 
-ColumnBind::usage = "Binds SSparseMatrix objects column-wise."
+ColumnBind::usage = "Binds SSparseMatrix objects column-wise.";
 
-RowBind::usage = "Binds SSparseMatrix objects row-wise."
+RowBind::usage = "Binds SSparseMatrix objects row-wise.";
 
-SSparseMatrixToTriplets::usage = "Gives the long form of a SSparseMatrix."
+SSparseMatrixToTriplets::usage = "Gives the long form of a SSparseMatrix.";
 
 ImposeColumnNames::usage = "ImposeColumnNames[smat,cn] imposes the column names cn into the SSparseMatrix smat. \
-In effect makes an union of cn and ColumnNames[smat]."
+In effect makes an union of cn and ColumnNames[smat].";
 
 ImposeRowNames::usage = "ImposeRowNames[smat,rn] imposes the row names rn into the SSparseMatrix smat. \
-In effect makes an union of rn and RowNames[smat]."
+In effect makes an union of rn and RowNames[smat].";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 Clear[SSparseMatrix, MakeSSparseMatrix, ToSSparseMatrix,
   RowNames, ColumnNames, DimensionNames, SetRowNames, SetColumnNames, SetDimensionNames, RowsCount, ColumnsCount,
   RowBind, ColumnBind,
-  ImposeRowNames, ImposeColumnNames]
+  ImposeRowNames, ImposeColumnNames];
 
 (* Predicate(s) *)
 
@@ -572,13 +572,13 @@ ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix, opts : OptionsPattern[]]
 There are three solutions (1) using array rules, (2) using matrix padding, ArrayPad, ArrayReshape, PadLeft and PadRight, and (3) using Join.
 
     Here are the steps of the first algorithm for RowBind:
-    1. Get array rules of both sparse arrays.
+        1. Get array rules of both sparse arrays.
         2. Increment the row indices of the second one with the number of rows of the first one.
         3. Join the rules and make a new SparseArray object.
         4. Make a new SSparseMatrix object with its row names being the joined row names of the arguments.
 
         Here are the steps of the second algorithm for RowBind:
-    1. Pad from below the sparse array of the first argument to the number of result rows.
+        1. Pad from below the sparse array of the first argument to the number of result rows.
         2. Pad from above the sparse array of the second argument to the number of result rows.
         3. Sum the padded sparse arrays.
         4. Make the result SSparseMatrix object with the row names being the joined row names of the arguments.
@@ -641,7 +641,7 @@ ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
     ];
 
 
-Clear[ImposeRowNames, ImposeColumnNames]
+Clear[ImposeRowNames, ImposeColumnNames];
 
 ImposeRowNames[rmat_SSparseMatrix, rowNames : {_String ..}] :=
     ImposeRowNames[rmat, AssociationThread[rowNames -> Range[Length[rowNames]]]];
@@ -718,6 +718,6 @@ Format[SSparseMatrix[obj_]] := obj["SparseMatrix"];
             (*Names["System`Activ*"]*)
           (*], SymbolName[F] ];*)
 
-End[]
+End[];
 
-EndPackage[]
+EndPackage[];
