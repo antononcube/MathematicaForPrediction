@@ -68,6 +68,10 @@ function fname to the elements of mat.";
 ApplyNormalizationFunction::usage = "ApplyGlobalTermFunction[mat_?MatrixQ, fname_String] applies term normalization \
 function fname to the elements of mat.";
 
+DocumentTermSSparseMatrix::usage = "SSparseMatrix adapter function to DocumentTermMatrix.";
+
+WeightTermsOfSSparseMatrix::usage = "SSparseMatrix adapter function to WeightTerms.";
+
 Begin["`Private`"];
 
 Clear[ToBagOfWords];
@@ -333,6 +337,51 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
       mat = mat . dtSMat;
 
       mat
+    ];
+
+(**************************************************************)
+(* Adapter functions                                          *)
+(**************************************************************)
+
+Clear[DocumentTermSSparseMatrix];
+
+DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_}, opts : OptionsPattern[] ] :=
+    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, opts ];
+
+DocumentTermSSparseMatrix[
+  docs : ( Association[ (_ -> _String) ...] | Association[ (_ -> {_String...}) ... ] ),
+  {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
+  opts : OptionsPattern[]] :=
+    Block[{docIDs, docTermMat, terms},
+
+      docIDs = ToString /@ Keys[docs];
+
+      {docTermMat, terms} = DocumentTermMatrix[ Values[docs], { stemmingRules, stopWords}, opts];
+
+      SSparseMatrix`ToSSparseMatrix[ docTermMat, "RowNames" -> docIDs, "ColumnNames" -> terms ]
+    ];
+
+(*------------------------------------------------------------*)
+(* To be used in LSAMon and SMRMon.                           *)
+(*------------------------------------------------------------*)
+
+Clear[WeightTermsOfSSparseMatrix];
+
+WeightTermsOfSSparseMatrix[ smat_SSparseMatrix`SSparseMatrix ] := WeightTermsOfSSparseMatrix[ smat, "IDF", "None", "Cosine"];
+
+WeightTermsOfSSparseMatrix[ smat_SSparseMatrix`SSparseMatrix, globalWeights_Association, localWeightFunction_, normalizerFunction_ ] :=
+    Block[{vals},
+      vals = Lookup[ globalWeights, #, 1.] & /@ SSparseMatrix`ColumnNames[smat];
+      WeightTermsOfSSparseMatrix[ smat, Normal[vals], localWeightFunction, normalizerFunction ]
+    ];
+
+WeightTermsOfSSparseMatrix[ smat_SSparseMatrix`SSparseMatrix, globalWeightFunction_, localWeightFunction_, normalizerFunction_ ] :=
+    Block[{},
+      SSparseMatrix`ToSSparseMatrix[
+        WeightTerms[SparseArray[smat], globalWeightFunction, localWeightFunction, normalizerFunction],
+        "RowNames" -> SSparseMatrix`RowNames[smat],
+        "ColumnNames" -> SSparseMatrix`ColumnNames[smat]
+      ]
     ];
 
 

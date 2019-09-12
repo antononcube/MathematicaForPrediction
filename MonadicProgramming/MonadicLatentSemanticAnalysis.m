@@ -193,10 +193,6 @@ LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of th
 FindMostImportantSentences::usage = "FindMostImportantSentences[sentences : ( _String | {_String ..} ), nTop_Integer : 5, opts : OptionsPattern[]] \
 finds the most important sentences in a text or a list of sentences.";
 
-DocumentTermSSparseMatrix::usage = "SSparseMatrix adapter function to DocumentTermMatrix.";
-
-WeightTermsOfSSparseMatrix::usage = "SSparseMatrix adapter function to WeightTerms.";
-
 Begin["`Private`"];
 
 Needs["MathematicaForPredictionUtilities`"];
@@ -238,51 +234,6 @@ Clear[LSAMonTakeMatrix, LSAMonTakeWeightedMatrix];
 LSAMonTakeMatrix = LSAMonTakeDocumentTermMatrix;
 
 LSAMonTakeWeightedMatrix = LSAMonTakeWeightedDocumentTermMatrix;
-
-(**************************************************************)
-(* Adapter functions                                          *)
-(**************************************************************)
-
-Clear[DocumentTermSSparseMatrix];
-
-DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_}, opts : OptionsPattern[] ] :=
-    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, opts ];
-
-DocumentTermSSparseMatrix[
-  docs : ( Association[ (_ -> _String) ...] | Association[ (_ -> {_String...}) ... ] ),
-  {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
-  opts : OptionsPattern[]] :=
-    Block[{docIDs, docTermMat, terms},
-
-      docIDs = ToString /@ Keys[docs];
-
-      {docTermMat, terms} = DocumentTermMatrix[ Values[docs], { stemmingRules, stopWords}, opts];
-
-      ToSSparseMatrix[ docTermMat, "RowNames" -> docIDs, "ColumnNames" -> terms ]
-    ];
-
-(*------------------------------------------------------------*)
-(* Also can be used in SMRMon. *)
-
-Clear[WeightTermsOfSSparseMatrix];
-
-WeightTermsOfSSparseMatrix[ smat_SSparseMatrix ] := WeightTermsOfSSparseMatrix[ smat, "IDF", "None", "Cosine"];
-
-WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeights_Association, localWeightFunction_, normalizerFunction_ ] :=
-    Block[{vals},
-      vals = Lookup[ globalWeights, #, 1.] & /@ ColumnNames[smat];
-      WeightTermsOfSSparseMatrix[ smat, Normal[vals], localWeightFunction, normalizerFunction ]
-    ];
-
-WeightTermsOfSSparseMatrix[ smat_SSparseMatrix, globalWeightFunction_, localWeightFunction_, normalizerFunction_ ] :=
-    Block[{},
-      ToSSparseMatrix[
-        WeightTerms[SparseArray[smat], globalWeightFunction, localWeightFunction, normalizerFunction],
-        "RowNames" -> RowNames[smat],
-        "ColumnNames" -> ColumnNames[smat]
-      ]
-    ];
-
 
 (**************************************************************)
 (* Get texts                                                  *)
@@ -894,7 +845,7 @@ LSAMonEchoTopicsTable[__][___] :=
 
 Clear[LSAMonRepresentDocumentTagsByTopics];
 
-Options[LSAMonRepresentDocumentTagsByTopics] = { "ComputeTopicRepresentation" -> True, "AssignAutomaticTopicNames" -> True };
+Options[LSAMonRepresentDocumentTagsByTopics] = { "ComputeTopicRepresentation" -> True, "PreserveTagsOrder" -> True };
 
 LSAMonRepresentDocumentTagsByTopics[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -904,10 +855,10 @@ LSAMonRepresentDocumentTagsByTopics[][xs_, context_] :=
     LSAMonRepresentDocumentTagsByTopics[Automatic, "ComputeTopicRepresentation" -> True][xs, context];
 
 LSAMonRepresentDocumentTagsByTopics[tags : (Automatic | _List), opts : OptionsPattern[]][xs_, context_] :=
-    Block[{computeTopicRepresentationQ, assignAutomaticTopicNamesQ, ctTags, W, H, docTopicIndices, ctMat },
+    Block[{computeTopicRepresentationQ, preserveTagsOrderQ, ctTags, W, H, docTopicIndices, ctMat },
 
-      computeTopicRepresentationQ = OptionValue[LSAMonRepresentDocumentTagsByTopics, "ComputeTopicRepresentation"];
-      assignAutomaticTopicNamesQ = OptionValue[LSAMonRepresentDocumentTagsByTopics, "AssignAutomaticTopicNames"];
+      computeTopicRepresentationQ = TrueQ[ OptionValue[LSAMonRepresentDocumentTagsByTopics, "ComputeTopicRepresentation"] ];
+      preserveTagsOrderQ = TrueQ[ OptionValue[LSAMonRepresentDocumentTagsByTopics, "PreserveTagsOrder"] ];
 
       If[ ! ( KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"] ),
         Echo["No document-term matrix factorization is computed.", "LSAMonRepresentDocumentTagsByTopics:"];
@@ -960,11 +911,12 @@ LSAMonRepresentDocumentTagsByTopics[tags : (Automatic | _List), opts : OptionsPa
       (* Note that CrossTabulate is going to sort the matrix rows. *)
       (* The matrix rows correspond to the union of the tags. *)
       ctMat = CrossTabulate`CrossTabulate[ Flatten[MapThread[Thread[{#1, #2}] &, {ctTags, docTopicIndices}], 1]];
+      ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ];
+      ctMat = ToSSparseMatrix[ ctMat ];
 
       (* This should be done better. *)
-      If[ assignAutomaticTopicNamesQ,
-        ctMat = Join[ ctMat, <| "ColumnNames" -> context["automaticTopicNames"][[ ctMat["ColumnNames"] ]] |> ];
-        ctMat = ToSSparseMatrix[ ctMat ];
+      If[ preserveTagsOrderQ,
+        ctMat = ctMat[[ DeleteDuplicates[ctTags], All ]]
       ];
 
       LSAMonUnit[ ctMat, Join[ context, <| "docTopicIndices" -> docTopicIndices |> ] ]
