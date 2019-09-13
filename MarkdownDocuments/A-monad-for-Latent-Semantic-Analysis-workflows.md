@@ -932,7 +932,7 @@ Since the monad `LSAMon` is a DSL it is natural to test it with a large number o
 For the `LSAMon` DSL the sentences are `LSAMon` pipelines. The package 
 ["MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m), 
 [[AAp9](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m)], 
-has functions for generation of QRMon random pipelines and running them as verification tests. 
+has functions for generation of `LSAMon` random pipelines and running them as verification tests. 
 A short example follows.
 
 Generate pipelines:
@@ -945,14 +945,7 @@ Generate pipelines:
 
 Here is a sample of the generated pipelines:
 
-    (*Block[{DoubleLongRightArrow,pipelines=RandomSample[pipelines,6]},\
-    Clear[DoubleLongRightArrow];
-    pipelines=pipelines/.{_TemporalData->"tsData",_?MatrixQ->\
-    "distData"};
-    GridTableForm[Map[List@ToString[DoubleLongRightArrow@@#,FormatType\
-    ->StandardForm]&,pipelines],TableHeadings->{"pipeline"}]
-    ]
-    AutoCollapse[]*)
+![LSAMon-Unit-tests-random-pipelines-sample-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Unit-tests-random-pipelines-sample-table.png)
 
 Here we run the pipelines as unit tests:
 
@@ -971,7 +964,7 @@ Currently the actual test messages are expected.)
 
 ### Dimension reduction extensions
 
-It would be nice to extend the Dimension reduction functionalities of LSAMon to include other algorithms like 
+It would be nice to extend the Dimension reduction functionalities of `LSAMon` to include other algorithms like 
 [Independent Component Analysis (ICA)](https://en.wikipedia.org/wiki/Independent_component_analysis), [Wk5]. 
 Ideally with `LSAMon` we can do comparisons between SVD, NNMF, and ICA like the image de-nosing based comparison explained in [AA8].
 
