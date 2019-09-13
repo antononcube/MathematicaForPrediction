@@ -10,19 +10,43 @@ September 2019
 
 In this document we describe the design and implementation of a (software programming) monad, [Wk1], for [Latent Semantic Analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis) workflows specification and execution. The design and implementation are done with Mathematica / Wolfram Language (WL).
 
-**What is Latent Semantic Analysis (LSA)? :** A statistical method (or a technique) for finding relationships in natural language texts that is based on the so called [Distributional hypothesis](https://en.wikipedia.org/wiki/Distributional_semantics), [Wk2, Wk3]. (The Distributional hypothesis can be simply stated as "linguistic items with similar distributions have similar meanings"; for insightful philosophical and scientific discussion see [MS1].) LSA can be seen as the application of [Dimensionality reduction](https://en.wikipedia.org/wiki/Dimensionality_reduction) techniques over matrices derived with the [Vector space model](https://en.wikipedia.org/wiki/Vector_space_model).
+**What is Latent Semantic Analysis (LSA)? :** A statistical method (or a technique) for finding relationships in natural language texts that is based on the so called 
+[Distributional hypothesis](https://en.wikipedia.org/wiki/Distributional_semantics), [Wk2, Wk3]. 
+(The Distributional hypothesis can be simply stated as "linguistic items with similar distributions have similar meanings"; 
+for an insightful philosophical and scientific discussion see [MS1].) 
+LSA can be seen as the application of 
+[Dimensionality reduction](https://en.wikipedia.org/wiki/Dimensionality_reduction) 
+techniques over matrices derived with the 
+[Vector space model](https://en.wikipedia.org/wiki/Vector_space_model).
 
-The goal of the monad design is to make the specification of LSA workflows (relatively) easy, straightforward, by following a certain main scenario and specifying variations over that scenario.
+The goal of the monad design is to make the specification of LSA workflows (relatively) easy and straightforward 
+by following a certain main scenario and specifying variations over that scenario.
 
-The monad is named `LSAMon` and it is based on the State monad package ["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], the document-term matrix making package ["DocumentTermMatrixConstruction.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m), [AAp4, AA2], the Non-Negative Matrix Factorization (NNMF) package ["NonNegativeMatrixFactorization.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AAp5, AA2], and the package "SSparseMatrix.m", [AAp2, AA5], that provides matrix objects with named rows and columns.
+The monad is named `LSAMon` and it is based on the State monad package 
+["StateMonadCodeGenerator.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), 
+[[AAp1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/StateMonadCodeGenerator.m), 
+[AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], 
+the document-term matrix making package 
+["DocumentTermMatrixConstruction.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/DocumentTermMatrixConstruction.m), [AAp4, AA2], 
+the Non-Negative Matrix Factorization (NNMF) package 
+["NonNegativeMatrixFactorization.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m), [AAp5, AA2], 
+and the package 
+["SSparseMatrix.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/SSparseMatrix.m), [AAp2, AA5], 
+that provides matrix objects with named rows and columns.
 
 The data for this document is obtained from WL's repository and it is manipulated into a certain ready-to-utilize form (and uploaded to GitHub.)
 
-The monadic programming design is used as a [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). The LSAMon monad can be also seen as a [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) for the specification and programming of machine learning classification workflows.  
+The monadic programming design is used as a 
+[Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). 
+The LSAMon monad can be also seen as a 
+[Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) 
+for the specification and programming of machine learning classification workflows.  
 
 Here is an example of using the `LSAMon` monad over a collection of documents that consists of 233 US state of union speeches.
 
+![LSAMon-Introduction-pipeline](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Introduction-pipeline.png)
 
+![LSAMon-Introduction-pipeline-echos](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Introduction-pipeline-echos.png)
 
 The table above is produced with the package ["MonadicTracing.m"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [[AAp2](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicTracing.m), [AA1](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md)], and some of the explanations below also utilize that package.
 
