@@ -38,7 +38,7 @@ The data for this document is obtained from WL's repository and it is manipulate
 
 The monadic programming design is used as a 
 [Software Design Pattern](https://en.wikipedia.org/wiki/Software_design_pattern). 
-The LSAMon monad can be also seen as a 
+The `LSAMon` monad can be also seen as a 
 [Domain Specific Language](https://en.wikipedia.org/wiki/Domain-specific_language) (DSL) 
 for the specification and programming of machine learning classification workflows.  
 
@@ -52,9 +52,12 @@ The table above is produced with the package ["MonadicTracing.m"](https://github
 
 As it was mentioned above the monad `LSAMon` can be seen as a DSL. Because of this the monad pipelines made with `LSAMon` are sometimes called "specifications".
 
-**Remark:** With "*term*" we mean "a word, a word stem, or other type of token". 
+**Remark:** In this document with "*term*" we mean "a word, a word stem, or other type of token." 
 
-**Remark:** LSA and Latent Semantic Indexing (LSI) are considered more or less to be synonyms. I think that "latent semantic analysis" sounds more universal and that "latent semantic indexing" as a name refers to a specific Information Retrieval technique. Below we refer to "LSI functions" like "IDF" and "TF-IDF" that are applied within the generic LSA workflow.
+**Remark:** LSA and Latent Semantic Indexing (LSI) are considered more or less to be synonyms. 
+I think that "latent semantic analysis" sounds more universal and that "latent semantic indexing" 
+as a name refers to a specific Information Retrieval technique. 
+Below we refer to "LSI functions" like "IDF" and "TF-IDF" that are applied within the generic LSA workflow.
 
 ### Contents description
 
@@ -66,7 +69,7 @@ The document has the following structure.
 
    + The sections "Design consideration" and "Monad design" provide motivation and design decisions rationale.
 
-   + The sections "LSAMon overview" and "Monad elements" provide technical descriptions needed to utilize the `LSAMon` monad .
+   + The sections "LSAMon overview", "Monad elements", and "The utilization of SSparseMatrix objects" provide technical descriptions needed to utilize the `LSAMon` monad .  
 
       + (Using a fair amount of examples.)
 
@@ -964,6 +967,25 @@ From the test report results we see that a dozen tests failed with messages, all
 (The message failures, of course, have to be examined -- some bugs were found in that way. 
 Currently the actual test messages are expected.)
 
+## Future plans
+
+### Dimension reduction extensions
+
+It would be nice to extend the Dimension reduction functionalities of LSAMon to include other algorithms like 
+[Independent Component Analysis (ICA)](https://en.wikipedia.org/wiki/Independent_component_analysis), [Wk5]. 
+Ideally with `LSAMon` we can do comparisons between SVD, NNMF, and ICA like the image de-nosing based comparison explained in [AA8].
+
+Another direction is to utilize Neural Networks for the topic extraction and making of statistical thesauri.
+
+### Conversational agent
+
+Since `LSAMon` is a DSL it can be relatively easily interfaced with a natural language interface.
+
+Here is an example of natural language commands parsed into LSA code using the package [AAp13].
+
+![LSAMon-Future-directions-parsed-LSA-commands-table](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/A-monad-for-Latent-Semantic-Analysis-workflows/LSAMon-Future-directions-parsed-LSA-commands-table.png)
+
+
 ## Implementation notes
 
 The implementation methodology of the `LSAMon` monad packages [AAp3, AAp9] followed the methodology created 
@@ -998,14 +1020,23 @@ of natural language commands specifications given to a specialized conversationa
  
 [AAp9] Anton Antonov, [Monadic Latent Semantic Analysis random pipelines Mathematica unit tests](https://github.com/antononcube/MathematicaForPrediction/blob/master/UnitTests/MonadicLatentSemanticAnalysisRandomPipelinesUnitTests.m), (2019), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction).
 
-[AAp10] Anton Antonov, [Monadic contextual classification Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m), (2017), [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction). 
+[AAp10] Anton Antonov, [Monadic contextual classification Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicContextualClassification.m), 
+(2017), 
+[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction). 
 
-### ConverationalAgents Packages
+[AAp11] Anton Antonov, [Heatmap plot Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HeatmapPlot.m),
+(2017), 
+[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction). 
+  
+[AAp12] Anton Antonov,  
+[Independent Component Analysis Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/IndependentComponentAnalysis.m),
+[MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction). 
 
-[AAp10] Anton Antonov, [Time series workflows grammar in EBNF](https://github.com/antononcube/ConversationalAgents/blob/master/EBNF/TimeSeriesWorkflowsGrammar.m), (2018), [ConversationalAgents at GitHub](https://github.com/antononcube/ConversationalAgents), [https://github.com/antononcube/ConversationalAgents](https://github.com/antononcube/ConversationalAgents).
-
-[AAp11] Anton Antonov, [QRMon translator Mathematica package](https://github.com/antononcube/ConversationalAgents/blob/master/Projects/TimeSeriesWorkflowsAgent/Mathematica/QRMonTranslator.m),(2018), [ConversationalAgents at GitHub](https://github.com/antononcube/ConversationalAgents), [https://github.com/antononcube/ConversationalAgents](https://github.com/antononcube/ConversationalAgents).
-
+[AAp13] Anton Antonov, 
+[Latent semantic analysis workflows grammar in EBNF](https://github.com/antononcube/ConversationalAgents/blob/master/EBNF/English/Mathematica/LatentSemanticAnalysisWorkflowsGrammar.m ),
+(2018), 
+[ConverasationalAgents at GitHub](https://github.com/antononcube/ConversationalAgents).
+  
 ### MathematicaForPrediction articles
 
 [AA1] Anton Antonov, ["Monad code generation and extension"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/Monad-code-generation-and-extension.md), (2017),  [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)*, *[https://github.com/antononcube/MathematicaForPrediction](https://github.com/antononcube/MathematicaForPrediction).
@@ -1019,6 +1050,10 @@ of natural language commands specifications given to a specialized conversationa
 [AA5] Anton Antonov, ["RSparseMatrix for sparse matrices with named rows and columns"](https://mathematicaforprediction.wordpress.com/2015/10/08/rsparsematrix-for-sparse-matrices-with-named-rows-and-columns/), (2015), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
 
 [AA6] Anton Antonov, ["A monad for classification workflows"](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/),  (2018), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
+
+[AA7] Anton Antonov, ["Independent component analysis for multidimensional signals"](https://mathematicaforprediction.wordpress.com/2016/05/23/independent-component-analysis-for-multidimensional-signals/ ), (2016), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
+  
+[AA8] Anton Antonov, ["Comparison of PCA, NNMF, and ICA over image de-noising"](https://mathematicaforprediction.wordpress.com/2016/05/26/comparison-of-pca-nnmf-and-ica-over-image-de-noising/), (2016), [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com).
 
 ### Other
 
