@@ -53,12 +53,19 @@
 
       ts = FinancialData[Entity["Financial", "^SPX"], {{2015, 1, 1}, Date[]}];
 
-      QRMonUnit[ts]⟹
-        QRMonFindAnomaliesByResiduals[ 0.25, "RelativeErrors" -> False, "OutlierIdentifier" -> HampelIdentifierParameters ]⟹
-        QRMonPlotAnomaliesByResiduals[ ImageSize -> Large ]⟹
-        QRMonEchoValue;
+      qrObj =
+        QRMonUnit[ts]⟹
+          QRMonEchoDataSummary⟹
+          QRMonQuantileRegression[100, 0.5]⟹
+          QRMonDateListPlot⟹
+          QRMonFindAnomaliesByResiduals["RelativeErrors" -> False, "OutlierIdentifier" -> SPLUSQuartileIdentifierParameters]⟹
+          QRMonEchoFunctionValue[RecordsSummary];
 
+      DateListPlot[{ts, qrObj⟹QRMonTakeValue}, Joined -> {True, False}, PlotStyle -> {Gray, {Red, PointSize[0.01]}}]
 
+   # Future plans
+
+   It would be nice the data and anomalies plot to be part of the monadic pipeline.
 
    Anton Antonov
    Windermere, Florida, USA
