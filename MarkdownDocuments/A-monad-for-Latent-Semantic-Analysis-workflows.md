@@ -248,7 +248,7 @@ Let us list the desired properties of the monad.
 
    + The text data supplied to the monad can be: (i) a list of strings, or (ii) an association with string values.
 
-   + The monad uses the Linear vector spaces model .
+   + The monad uses the Linear vector space model .
 
    + The document-term frequency matrix can be created after removing stop words and/or word stemming.
 
@@ -256,7 +256,7 @@ Let us list the desired properties of the monad.
 
    + The monad can do dimension reduction with SVD and NNMF and corresponding matrix factors are retrievable with monad functions.
 
-   + Documents (or query strings) external to the monad are easily mapped into monad's Linear vector space of terms and the Linear vector space of topics.
+   + Documents (or query strings) external to the monad are easily mapped into monad's Linear vector space of terms and Linear vector space of topics.
 
    + The monad allows of cursory examination and summarization of the data.
 
@@ -276,6 +276,8 @@ The main `LSAMon` operations implicitly put in the context or utilize from the c
    + document-term matrix, 
 
    + the factors obtained by matrix factorization algorithms,
+   
+   + LSI weight functions specifications,
 
    + extracted topics.
 
