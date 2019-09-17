@@ -1109,6 +1109,6 @@ of natural language commands specifications given to a specialized conversationa
 
 [MB1] Michael W. Berry & Murray Browne, Understanding Search Engines: Mathematical Modeling and Text Retrieval, 2nd. ed., 2005, SIAM. ISBN-13: 978-0898715811.
 
-[MS1] Magnus Sahlgren, ["The Distributional Hypothesis"](http://soda.swedish-ict.se/3941/1/sahlgren.distr-hypo.pdf), (2008), Rivista di Linguistica. 20 (1): 33\[Dash]53.
+[MS1] Magnus Sahlgren, ["The Distributional Hypothesis"](http://www.diva-portal.org/smash/get/diva2:1041938/FULLTEXT01.pdf), (2008), Rivista di Linguistica. 20 (1): 33\[Dash]53.
 
 [PS1] Patrick Scheibe, [Mathematica (Wolfram Language) support for IntelliJ IDE](https://github.com/halirutan/Mathematica-IntelliJ-Plugin)A, (2013-2018), [Mathematica-IntelliJ-Plugin at GitHub](https://github.com/halirutan/Mathematica-IntelliJ-Plugin).
