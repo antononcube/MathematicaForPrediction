@@ -1,8 +1,11 @@
 
+(This README is OBSOLETE; see the Markdown one: https://github.com/antononcube/MathematicaForPrediction/blob/master/README.md . )
 
-This open source project is for Mathematica implementations of machine learning algorithms that are used or can be used for prediction and personalization systems. (For prediction and facilitation of the behaviour of users, customers, clients, etc.) 
+This open source project is for Mathematica implementations of machine learning algorithms that are used or can be used for prediction and personalization systems.
+(For prediction and facilitation of the behaviour of users, customers, clients, etc.)
 
-The algorithms implementations are given in Mathematica package files ("*.m"). Explanations or presentations about the algorithms are given in Mathematica notebook files ("*.nb").
+The algorithms implementations are given in Mathematica package files ("*.m").
+Explanations or presentations about the algorithms are given in Mathematica notebook files ("*.nb").
 
 The original set of algorithms is:
 1. k-means and bisecting k-means;
