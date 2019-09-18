@@ -267,8 +267,6 @@ Let us list the desired properties of the monad.
 
    + It is easy to tabulate extracted topics and related statistical thesauri.
 
-   + It is easy to specify and apply re-weighting functions for the entries of the document-term contingency matrices.
-
 The `LSAMon` components and their interactions are fairly simple.
 
 The main `LSAMon` operations implicitly put in the context or utilize from the context the following objects: 
