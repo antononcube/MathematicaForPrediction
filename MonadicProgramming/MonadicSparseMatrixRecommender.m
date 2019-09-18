@@ -218,6 +218,8 @@ SMRMonMetadataProofs::usage = "Metadata proofs for a recommended item and a prof
 
 SMRMonHistoryProofs::usage = "History proofs for a recommended item and scored history items.";
 
+SMRMonEchoDataSummary::usage = "Echoes summary of the dataset.";
+
 Begin["`Private`"];
 
 
@@ -237,27 +239,21 @@ Needs["OutlierIdentifiers`"];
 
 GenerateStateMonadCode[ "MonadicSparseMatrixRecommender`SMRMon", "FailureSymbol" -> $SMRMonFailure, "StringContextNames" -> False ];
 
+GenerateMonadAccessors[
+  "MonadicSparseMatrixRecommender`SMRMon",
+  {"data", "M", "matrices", "itemNames", "tags", "tagTypeWeights", "timeSeriesMatrix" },
+  "FailureSymbol" -> $SMRMonFailure ];
+
 
 (**************************************************************)
 (* Setters / getters                                          *)
 (**************************************************************)
 
-Clear[SMRMonSetItemNames];
-
-SMRMonSetItemNames[$SMRMonFailure] := $SMRMonFailure;
-
 (* Here we can/have to have a correctness check. It is one of the advantages to SSparseMatrix. *)
 (*SMRMonSetItemNames[names_][xs_, context_Association] :=*)
 (*SMRMonUnit[ xs, Join[context, <|"itemNames"->names|>] ];*)
 
-Clear[SMRMonTakeTagTypeWeights];
-SMRMonTakeTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeTagTypeWeights[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeTagTypeWeights[xs_, context_] := SMRMonTakeTagTypeWeights[][xs, context];
-SMRMonTakeTagTypeWeights[][xs_, context_Association] := Lookup[context, "tagTypeWeights"];
-SMRMonTakeTagTypeWeights[__][___] := $SMRMonFailure;
-
-Clear[SMRMonTakeTagTypes]
+Clear[SMRMonTakeTagTypes];
 SMRMonTakeTagTypes[$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeTagTypes[][$SMRMonFailure] := $SMRMonFailure;
 SMRMonTakeTagTypes[xs_, context_Association] := SMRMonTakeTagTypes[][xs, context];
@@ -265,36 +261,7 @@ SMRMonTakeTagTypes[][xs_, context_Association] := Keys[Lookup[context, "matrices
 SMRMonTakeTagTypes[__][___] := $SMRMonFailure;
 
 Clear[SMRMonTakeMatrix];
-SMRMonTakeMatrix[$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeMatrix[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeMatrix[xs_, context_Association] := SMRMonTakeMatrix[][xs, context];
-SMRMonTakeMatrix[][xs_, context_Association] := Lookup[context, "M", $SMRMonFailure];
-SMRMonTakeMatrix[__][___] := $SMRMonFailure;
-
-
-Clear[SMRMonTakeMatrices];
-SMRMonTakeMatrices[$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeMatrices[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeMatrices[xs_, context_] := SMRMonTakeMatrices[][xs, context];
-SMRMonTakeMatrices[][xs_, context_Association] := Lookup[context, "matrices", $SMRMonFailure];
-SMRMonTakeMatrices[__][___] := $SMRMonFailure;
-
-
-Clear[SMRMonTakeItemNames];
-SMRMonTakeItemNames[$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeItemNames[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeItemNames[xs_, context_] := SMRMonTakeItemNames[][xs, context];
-SMRMonTakeItemNames[][xs_, context_Association] := Lookup[context, "itemNames", $SMRMonFailure];
-SMRMonTakeItemNames[__][___] := $SMRMonFailure;
-
-
-Clear[SMRMonTakeTags];
-SMRMonTakeTags[$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeTags[][$SMRMonFailure] := $SMRMonFailure;
-SMRMonTakeTags[xs_, context_Association] := SMRMonTakeTags[][xs, context];
-SMRMonTakeTags[][xs_, context_Association] := Lookup[context, "tags", $SMRMonFailure];
-SMRMonTakeTags[__][___] := $SMRMonFailure;
-
+SMRMonTakeMatrix = SMRMonTakeM;
 
 Clear[SMRMonTakeMatrixDataset];
 SMRMonTakeMatrixDataset[$SMRMonFailure] := $SMRMonFailure;
@@ -316,14 +283,6 @@ SMRMonTakeMatrixDataset[][xs_, context_Association] :=
       ]
     ];
 SMRMonTakeMatrixDataset[__][___] := $SMRMonFailure;
-
-
-Clear[SMRMonSetTimeSeriesMatrix];
-SMRMonSetTimeSeriesMatrix[$SMRMonFailure] := $SMRMonFailure;
-SMRMonSetTimeSeriesMatrix[][___] := $SMRMonFailure;
-SMRMonSetTimeSeriesMatrix[xs_, context_] := $SMRMonFailure;
-SMRMonSetTimeSeriesMatrix[smat_?SSparseMatrixQ][xs_, context_] := SMRMonUnit[ xs, Join[ context, <|"timeSeriesMatrix" -> smat|> ] ];
-SMRMonSetTimeSeriesMatrix[__][___] := $SMRMonFailure;
 
 
 (**************************************************************)
@@ -718,6 +677,33 @@ SMRMonCreateFromLongForm[___][__] :=
             "The optional second argument is expected to be of the form : " <>
             "{ itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String } .",
         "SMRMonCreateFromLongForm:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonEchoDataSummary                                      *)
+(**************************************************************)
+
+Clear[SMRMonEchoDataSummary];
+
+SMRMonEchoDataSummary[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonEchoDataSummary[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonEchoDataSummary[xs_, context_Association] := SMRMonEchoDataSummary[][xs, context];
+
+SMRMonEchoDataSummary[][xs_, context_Association] :=
+    Block[{},
+      If[ TrueQ[ SMRMonTakeData[xs,context] === $SMRMonFailure ],
+        $SMRMonFailure,
+        SMRMonBind[ SMRMonUnit[xs, context], SMRMonEchoFunctionContext[ "data summary:", RecordsSummary[#data] & ] ]
+      ]
+    ];
+
+SMRMonEchoDataSummary[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "SMRMonEchoDataSummary:"];
       $SMRMonFailure
     ];
 
