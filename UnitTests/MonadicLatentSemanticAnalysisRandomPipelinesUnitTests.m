@@ -100,21 +100,30 @@ Begin["`Private`"];
 Needs["MathematicaForPredictionUtilities`"];
 Needs["MonadicLatentSemanticAnalysis`"];
 
-ClearAll[MakeDistributionData, MakeLSAMonRandomPipelines, TestRunLSAMonPipelines];
+ClearAll[MakeLSAMonTestData, MakeLSAMonRandomPipelines, TestRunLSAMonPipelines];
 
 MakeLSAMonTestData[] :=
-    Block[{ textHamlet, aHamlet, aStateOfUnionSpeeches },
+    Block[{ textHamlet, aHamlet, aStateOfUnionSpeeches, url, str, filename},
+
+
       textHamlet = ToString /@ Flatten[Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Hamlet.csv"]];
       aHamlet = ToAutomaticKeysAssociation[textHamlet];
 
-      aStateOfUnionSpeeches = Association[Import["/Volumes/Macintosh HD/Users/antonov/MathematicaVsR/Data/MathematicaVsR-Data-StateOfUnionSpeeches.JSON"]];
+      aStateOfUnionSpeeches = Association[Import["https://github.com/antononcube/MathematicaVsR/raw/master/Data/MathematicaVsR-Data-StateOfUnionSpeeches.JSON.zip"]];
+
+      (* Using the MSE answer https://mathematica.stackexchange.com/a/114625/34008 .*)
+      url = "https://github.com/antononcube/MathematicaVsR/raw/master/Data/MathematicaVsR-Data-StateOfUnionSpeeches.JSON.zip";
+      str = Import[url, "String"];
+      filename = First @ Import[StringToStream[str], "ZIP"];
+      aStateOfUnionSpeeches = Association @ ImportString[Import[StringToStream[str], {"ZIP", filename, "String"}], "JSON"];
+
 
       { aHamlet, RandomSample[ aStateOfUnionSpeeches, 20 ] }
     ];
 
 MakeLSAMonRandomPipelines[n_Integer] :=
     Block[{n1, n2},
-      n1 = Floor[3/4 * n];
+      n1 = Floor[3 / 4 * n];
       n2 = (n - n1);
       MakeLSAMonRandomPipelines[{n1, n2}]
     ];
@@ -151,10 +160,10 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
         LSAMonApplyTermWeightFunctions[],
         LSAMonApplyTermWeightFunctions["IDF"],
         LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-        LSAMonApplyTermWeightFunctions["NormalizerFunction"->"Cosine"],
-        LSAMonApplyTermWeightFunctions["GlobalWeightFunction"->"IDF"],
-        LSAMonApplyTermWeightFunctions["LocalWeightFunction"->"Binary"],
-        LSAMonApplyTermWeightFunctions["LocalWeightFunction"->"BlahBlah"]
+        LSAMonApplyTermWeightFunctions["NormalizerFunction" -> "Cosine"],
+        LSAMonApplyTermWeightFunctions["GlobalWeightFunction" -> "IDF"],
+        LSAMonApplyTermWeightFunctions["LocalWeightFunction" -> "Binary"],
+        LSAMonApplyTermWeightFunctions["LocalWeightFunction" -> "BlahBlah"]
       };
 
       stage6 = {
@@ -170,7 +179,7 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
       };
 
       stage7 = {
-        LSAMonExtractStatisticalThesaurus[{"life","countri"},12],
+        LSAMonExtractStatisticalThesaurus[{"life", "countri"}, 12],
         LSAMonMakeTopicsTable,
         LSAMonFindMostImportantDocuments
       };
@@ -178,13 +187,13 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
       stage8 = {
         LSAMonEchoTopicsTable,
         LSAMonEchoStatisticalThesaurus,
-        LSAMonEchoStatisticalThesaurus["Words"->{"health", "friend"}],
+        LSAMonEchoStatisticalThesaurus["Words" -> {"health", "friend"}],
         LSAMonTakeValue
       };
 
       allStages = Map[ {1, 1} -> # &, {stage1, stage2, stage3, stage4, stage5, stage6, stage7, stage8} ];
 
-      allStages2 = {{1, 1} -> stage1, {1,2} -> stage2, {0, 1} -> stage3, {1, 1} -> stage5, {1, 1} -> stage6 };
+      allStages2 = {{1, 1} -> stage1, {1, 2} -> stage2, {0, 1} -> stage3, {1, 1} -> stage5, {1, 1} -> stage6 };
 
       pipelines =
           Table[Join @@ Map[RandomChoice[#[[2]], RandomInteger[#[[1]]]] &, allStages], {n}];
@@ -196,9 +205,9 @@ MakeLSAMonRandomPipelines[ {aHamlet_Association, aStateOfUnionSpeeches_Associati
       pipelines
     ];
 
-Options[TestRunLSAMonPipelines] = {"Echo"->True};
+Options[TestRunLSAMonPipelines] = {"Echo" -> True};
 
-TestRunLSAMonPipelines[ pipelines_, opts:OptionsPattern[] ] :=
+TestRunLSAMonPipelines[ pipelines_, opts : OptionsPattern[] ] :=
     Block[{echoQ, testRes, testPatt},
 
       echoQ = TrueQ[OptionValue[TestRunLSAMonPipelines, "Echo"]];
