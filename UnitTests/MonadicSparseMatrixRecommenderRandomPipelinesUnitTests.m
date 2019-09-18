@@ -116,9 +116,7 @@ MakeSMRMonRandomPipelines[ n_Integer ] :=
     MakeSMRMonRandomPipelines[ MakeSMRMonTestData[], n ];
 
 MakeSMRMonRandomPipelines[ {dfTitanic_Dataset, dfMushroom_Dataset}, n_Integer ] :=
-    Module[{stopWords, stage1, stage2, stage3, stage4, stage5, stage6, allStages, pipelines},
-
-      stopWords = Complement[ DictionaryLookup["*"], DeleteStopwords[DictionaryLookup["*"]] ];
+    Module[{stage1, stage2, stage3, stage4, stage5, stage6, allStages, pipelines},
 
       stage1 = {SMRMonUnit[], SMRMonUnit[dfTitanic], SMRMonUnit[dfMushroom]};
 
@@ -132,15 +130,17 @@ MakeSMRMonRandomPipelines[ {dfTitanic_Dataset, dfMushroom_Dataset}, n_Integer ] 
 
       stage3 = {
         SMRMonEchoDataSummary,
-        SMRMonEchoFunctionContext[ Dimensions /@ #matrices& ]
+        SMRMonEchoFunctionContext[ Dimensions /@ #matrices& ],
+        SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+        SMRMonApplyTermWeightFunctions
       };
 
       stage4 = {
         SMRMonRecommend,
         SMRMonRecommend[ Normal @ RandomSample[ dfTitanic[All, "id"], 12] ],
         SMRMonRecommend[ Normal @ RandomSample[ dfMushroom[All, "id"], 12] ],
-        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 12], RandomRead[{0,1}, 12] ] ],
-        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 12], RandomRead[{0,1}, 12] ] ],
+        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 7], RandomReal[{0,1}, 7] ] ],
+        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 6], RandomReal[{0,1}, 6] ] ],
         SMRMonRecommendByProfile[ {"male", "died"} ],
         SMRMonRecommendByProfile[ AssociationThread[ {"male", "died"}, { 1, 0.1 } ] ],
         SMRMonRecommendByProfile[ {"brown", "foul"} ],
