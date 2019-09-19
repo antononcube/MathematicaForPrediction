@@ -523,7 +523,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
       (* Restrictions *)
       docTermMat = SparseArray[ context["documentTermMatrix"] ];
 
-      documentsPerTerm = Total /@ Transpose[UnitStep[Abs[docTermMat]]];
+      documentsPerTerm = Total /@ Transpose[Unitize[docTermMat]];
       pos = Flatten[Position[documentsPerTerm, s_?NumberQ /; s >= nMinDocumentsPerTerm]];
 
       M1 = SparseArray[ context["weightedDocumentTermMatrix"][[All, pos]] ];
@@ -1172,7 +1172,7 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
         If[ !SSparseMatrixQ[smat],
           smat = None,
           (*ELSE*)
-          smat = UnitStep[Abs[SparseArray[smat]]];
+          smat = Unitize[SparseArray[smat]];
         ]
       ];
 
@@ -1249,7 +1249,7 @@ LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :
       dOpts = FilterRules[ Join[{opts}, {PerformanceGoal -> "Speed", PlotRange -> All, PlotTheme -> "Detailed", ImageSize -> 300}], Options[Histogram] ];
 
       smat = context["documentTermMatrix"];
-      smat = UnitStep[Abs[SparseArray[smat]]];
+      smat = Unitize[SparseArray[smat]];
 
       If[ NumberQ[logBase],
         logFunc = N[Log[logBase, #]]&;

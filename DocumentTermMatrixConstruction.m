@@ -213,11 +213,11 @@ ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
         docTermMat,
 
         funcName == "Binary",
-        (* This does not assume that the non-zero elements of docTermMat are greater than zero. *)
-        UnitStep[Abs[docTermMat]],
+        (* This assumes that the non-zero elements of docTermMat are greater than zero. *)
+        Unitize[docTermMat],
 
         funcName == "Log" || funcName == "Logarithmic",
-        Log[ UnitStep[Abs[docTermMat]] + docTermMat ],
+        Log[ UnitStep[docTermMat] + docTermMat ],
 
         True,
         Message[ApplyLocalTermFunction::unfunc];
@@ -239,7 +239,7 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
       Which[
         funcName == "IDF",
         mat = SparseArray[docTermMat];
-        mat = UnitStep[Abs[mat]];
+        mat = Unitize[mat];
         globalWeights = Total[mat, {1}];
         globalWeights = Log[ Dimensions[mat][[1]] / (1.0 + globalWeights)];
         globalWeights = Clip[ globalWeights, {0, Max[globalWeights]} ],
@@ -247,7 +247,7 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
         funcName == "GFIDF",
         mat = SparseArray[docTermMat];
         freqSums = Total[mat, {1}];
-        mat = UnitStep[Abs[mat]];
+        mat = Unitize[mat];
         globalWeights = Total[mat, {1}];
         globalWeights = globalWeights /. { 0. -> 1. };
         globalWeights = N[freqSums / globalWeights],
