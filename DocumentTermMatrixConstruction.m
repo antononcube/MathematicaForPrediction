@@ -206,7 +206,7 @@ The known local weight function names are \
 \"Binary\", \"Log\", \"Logarithmic\" (same as \"Log\"), \"None\", \"TermFrequency\" (same as \"None\").";
 
 ApplyLocalTermFunction[ docTermMat_?MatrixQ, funcName_String] :=
-    Block[{arules},
+    Block[{},
 
       Which[
         funcName == "TermFrequency" || funcName == "None",
