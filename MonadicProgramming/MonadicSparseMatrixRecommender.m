@@ -220,6 +220,10 @@ SMRMonHistoryProofs::usage = "History proofs for a recommended item and scored h
 
 SMRMonEchoDataSummary::usage = "Echoes summary of the dataset.";
 
+SMRMonGetProperty::usage = "Get a recommender property.";
+
+SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
+
 Begin["`Private`"];
 
 
@@ -241,9 +245,14 @@ GenerateStateMonadCode[ "MonadicSparseMatrixRecommender`SMRMon", "FailureSymbol"
 
 GenerateMonadAccessors[
   "MonadicSparseMatrixRecommender`SMRMon",
-  {"data", "M", "matrices", "itemNames", "tags", "tagTypeWeights", "timeSeriesMatrix" },
+  {"data", "M", "M01", "matrices", "itemNames", "tags", "tagTypeWeights", "timeSeriesMatrix" },
   "FailureSymbol" -> $SMRMonFailure ];
 
+GenerateMonadAccessors[
+  "MonadicSparseMatrixRecommender`SMRMon",
+  {"M", "M01"},
+  "DecapitalizeElementName" -> False,
+  "FailureSymbol" -> $SMRMonFailure ];
 
 (**************************************************************)
 (* Setters / getters                                          *)
@@ -668,7 +677,7 @@ SMRMonCreateFromLongForm[ds_Dataset, { itemColumnName_String, tagTypeColumnName_
       ];
 
       SMRMonCreate[smats][xs, context]
-];
+    ];
 
 SMRMonCreateFromLongForm[___][__] :=
     Block[{},
@@ -695,7 +704,7 @@ SMRMonEchoDataSummary[xs_, context_Association] := SMRMonEchoDataSummary[][xs, c
 
 SMRMonEchoDataSummary[][xs_, context_Association] :=
     Block[{},
-      If[ TrueQ[ SMRMonTakeData[xs,context] === $SMRMonFailure ],
+      If[ TrueQ[ SMRMonTakeData[xs, context] === $SMRMonFailure ],
         $SMRMonFailure,
         SMRMonBind[ SMRMonUnit[xs, context], SMRMonEchoFunctionContext[ "data summary:", RecordsSummary[#data] & ] ]
       ]
@@ -704,6 +713,120 @@ SMRMonEchoDataSummary[][xs_, context_Association] :=
 SMRMonEchoDataSummary[___][__] :=
     Block[{},
       Echo["No arguments are expected.", "SMRMonEchoDataSummary:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonGetProperty                                          *)
+(**************************************************************)
+
+Clear[SMRMonGetProperty];
+
+SMRMonGetProperty[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetProperty[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetProperty[xs_, context_Association] := SMRMonGetProperty[None][xs, context];
+
+SMRMonGetProperty[ property_String ][xs_, context_Association] :=
+    Block[{res, cms},
+
+      res =
+          Which[
+            ToLowerCase[property] == ToLowerCase["TagTypes"],
+            SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeTagTypes],
+
+            ToLowerCase[property] == ToLowerCase["TagTypeRanges"],
+            cms = ColumnsCount /@ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeMatrices];
+            AssociationThread[ Keys[cms], Rest[ FoldList[{#1[[2]] + 1, #1[[2]] + #2} &, {0, 0}, Values[cms]] ] ],
+
+            ToLowerCase[property] == ToLowerCase["ItemColumnName"],
+            SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeItemColumnName],
+
+            MemberQ[ ToLowerCase[ {"Matrix", "M"} ], ToLowerCase[property] ],
+            SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM],
+
+            MemberQ[ ToLowerCase[ {"IncidenceMatrix", "M01"} ], ToLowerCase[property] ],
+            SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM01],
+
+            MemberQ[ ToLowerCase[ {"Matrices", "SubMatrices", "SubMatrixes", "ContingencyMatrices", "ContingencyMatrixes"} ], ToLowerCase[property] ],
+            SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeMatrices],
+
+            ToLowerCase[property] == ToLowerCase["Properties"],
+            { "Matrix", "IncidenceMatrix", "SubMatrices", "Properties" },
+
+            True,
+            Echo[ "Unknown property specification.", "SMRMonGetProperty:"];
+            Return[$SMRMonFailure]
+          ];
+
+      SMRMonUnit[ res, context ]
+    ];
+
+SMRMonGetProperty[___][__] :=
+    Block[{},
+      Echo["One string argument is expected.", "SMRMonGetProperty:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonGetMatrixProperty                                    *)
+(**************************************************************)
+
+Clear[SMRMonGetMatrixProperty];
+
+SMRMonGetMatrixProperty[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetMatrixProperty[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetMatrixProperty[xs_, context_Association] := SMRMonGetMatrixProperty[None][xs, context];
+
+SMRMonGetMatrixProperty[ property_String ][xs_, context_Association] :=
+    Block[{res},
+
+      res =
+          Which[
+            MemberQ[ ToLowerCase[ {"Tags", "Columns"} ], ToLowerCase[property] ],
+            ColumnNames[ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM] ],
+
+            ToLowerCase[property] == ToLowerCase["Rows"],
+            RowNames[ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM] ],
+
+            MemberQ[ ToLowerCase[ {"NumberOfColumns", "ColumnsCount"} ], ToLowerCase[property] ],
+            ColumnsCount[ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM] ],
+
+            MemberQ[ ToLowerCase[ {"NumberOfRows", "ColumnsRows"} ], ToLowerCase[property] ],
+            RowsCount[ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM] ],
+
+            MemberQ[ ToLowerCase[ {"Dimensions", "Dim"} ], ToLowerCase[property] ],
+            Dimensions[ SparseArray[ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM] ] ],
+
+            ToLowerCase[property] == ToLowerCase["Density"],
+            SparseArray[ SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeM] ]["Density"],
+
+            MemberQ[ ToLowerCase[ {"TagTypeWeights", "TagTypeSignificanceFactors"} ], ToLowerCase[property] ],
+            SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeTagTypeWeights],
+
+            ToLowerCase[property] == ToLowerCase["Properties"],
+            { "Tags", "Columns", "Rows",
+               "NumberOfColumns", "NumberOfRows",
+               "Dim", "Dimensions", "Density",
+               "TagTypeWeights", "TagTypeSignificanceFactors",
+               "Properties" },
+
+            True,
+            Echo[ "Unknown property specification.", "SMRMonGetMatrixProperty:"];
+            Return[$SMRMonFailure]
+          ];
+
+      SMRMonUnit[ res, context ]
+    ];
+
+SMRMonGetMatrixProperty[___][__] :=
+    Block[{},
+      Echo["One string argument is expected.", "SMRMonGetMatrixProperty:"];
       $SMRMonFailure
     ];
 
@@ -914,7 +1037,7 @@ SMRMonRecommend[ history : Association[ (_Integer -> _?NumberQ) ... ], nRes_Inte
 SMRMonRecommend[ itemIndices : {_Integer...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ itemIndices, ConstantArray[1, Length[itemIndices]], nRes, opts][xs, context];
 
-SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes:(_Integer|All), opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{removeHistoryQ, itemNamesQ, normalizeQ, vectorResultQ, vec, filterIDs = All,
       filterInds, smat, fmat, recs, recsInds, recsVals, ordInds, rowNames},
 
@@ -958,7 +1081,7 @@ SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes
       If[ vectorResultQ,
 
         If[ IntegerQ[ nRes ],
-          recsInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1;;nRes ]];
+          recsInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1 ;; nRes ]];
           vec = SparseArray[ Thread[ recsInds -> vec[[recsInds]] ], RowsCount[context["M"]] ];
         ];
 
@@ -973,8 +1096,8 @@ SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes
 
       recs = Most[ArrayRules[vec]];
 
-      recsInds = Flatten[recs[[All,1]]];
-      recsVals = recs[[All,2]];
+      recsInds = Flatten[recs[[All, 1]]];
+      recsVals = recs[[All, 2]];
 
       ordInds = Reverse[ Ordering[ recsVals ] ];
 
@@ -1062,7 +1185,7 @@ SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : 
       SMRMonRecommendByProfile[p[[1]], nRes, opts][xs, context]
     ];
 
-SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[profileVec_SparseArray, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{itemNamesQ, normalizeQ, vectorResultQ, vec, smat, recs, recsInds, recsVals, ordInds, filterIDs, filterInds, rowNames, fmat},
 
       itemNamesQ = TrueQ[OptionValue[SMRMonRecommendByProfile, "ItemNames"]];
@@ -1103,7 +1226,7 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : Opt
       If[ vectorResultQ,
 
         If[ IntegerQ[ nRes ],
-          resInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1;;nRes ]];
+          resInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1 ;; nRes ]];
           vec = SparseArray[ Thread[ resInds -> vec[[resInds]] ], RowsCount[context["M"]] ];
         ];
 
@@ -1114,8 +1237,8 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes:(_Integer|All), opts : Opt
       recs = Most[ArrayRules[vec]];
 
       (*  recs = KeyMap[ First, recs ]; *)
-      recsInds = Flatten[recs[[All,1]]];
-      recsVals = recs[[All,2]];
+      recsInds = Flatten[recs[[All, 1]]];
+      recsVals = recs[[All, 2]];
 
       ordInds = Reverse[ Ordering[ recsVals ] ];
 
@@ -1723,7 +1846,7 @@ SMRMonClassifyOriginal[tagType_String, profile_Association, opts : OptionsPatter
 
       expectedProperties = { "Decision", "Probabilities", "Properties" };
       If[ ! MemberQ[ expectedProperties, property ],
-        Echo["The value of the option \"Property\" is expected to be one of "<> ToString[expectedProperties] <> ".", "SMRMonClassifyOriginal:"];
+        Echo["The value of the option \"Property\" is expected to be one of " <> ToString[expectedProperties] <> ".", "SMRMonClassifyOriginal:"];
         Return[$SMRMonFailure]
       ];
 
@@ -1874,7 +1997,7 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
 
       expectedProperties = { "Decision", "Probabilities", "Properties" };
       If[ ! MemberQ[ expectedProperties, property ],
-        Echo["The value of the option \"Property\" is expected to be one of "<> ToString[expectedProperties] <> ".", "SMRMonClassify:"];
+        Echo["The value of the option \"Property\" is expected to be one of " <> ToString[expectedProperties] <> ".", "SMRMonClassify:"];
         Return[$SMRMonFailure]
       ];
 
