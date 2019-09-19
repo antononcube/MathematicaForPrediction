@@ -669,7 +669,11 @@ GenerateMonadSetter[monadName_String, elementName_String, opts : OptionsPattern[
       MStateSetter[xs_, context_] := MStateFailureSymbol;
       MStateSetter[arg_?AtomQ][xs_, context_] := MStateUnit[ xs, Join[ context, <|dElementName -> arg|> ] ];
       MStateSetter[arg_List][xs_, context_] := MStateUnit[ xs, Join[ context, <|dElementName -> arg|> ] ];
-      MStateSetter[args__][xs_, context_] := MStateSetter[{args}][xs, context];
+      MStateSetter[args__][xs_, context_] :=
+          If[ Length[{args}] > 1,
+            MStateSetter[{args}][xs, context],
+            MStateUnit[ xs, Join[ context, <|dElementName -> args|> ] ]
+          ];
       MStateSetter[__][___] := MStateFailureSymbol;
 
       MStateSetter::usage = "Assigns the argument to the key \"" <> dElementName <> "\" in the monad context."
