@@ -167,7 +167,8 @@ SMRMonRecommendByProfile::usage = "Recommends items based on profile.";
 SMRMonRecommendByCorrelation::usage = "Recommends items based on a correlation matrix. \
 (The context value for the key \"timeSeriesMatrix\" should have the same dimensions and row names as the recommendation matrix.)";
 
-SMRMonToProfileVector::usage = "Makes a profile vector from an argument that is a list of tags or an Association object.";
+SMRMonToProfileVector::usage = "SMRMonToProfileVector[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
+makes a profile vector from an argument that is a list of tags or an association of scored indices or scored tags.";
 
 SMRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument.";
 
@@ -223,6 +224,9 @@ SMRMonEchoDataSummary::usage = "Echoes summary of the dataset.";
 SMRMonGetProperty::usage = "Get a recommender property.";
 
 SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
+
+SMRMonFilterMatrix::usage = "SMRMonFilterMatrix[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
+applies a profile filter to the rows of the recommendation matrix.";
 
 Begin["`Private`"];
 
@@ -811,10 +815,10 @@ SMRMonGetMatrixProperty[ property_String ][xs_, context_Association] :=
 
             ToLowerCase[property] == ToLowerCase["Properties"],
             { "Tags", "Columns", "Rows",
-               "NumberOfColumns", "NumberOfRows",
-               "Dim", "Dimensions", "Density",
-               "TagTypeWeights", "TagTypeSignificanceFactors",
-               "Properties" },
+              "NumberOfColumns", "NumberOfRows",
+              "Dim", "Dimensions", "Density",
+              "TagTypeWeights", "TagTypeSignificanceFactors",
+              "Properties" },
 
             True,
             Echo[ "Unknown property specification.", "SMRMonGetMatrixProperty:"];
@@ -827,6 +831,71 @@ SMRMonGetMatrixProperty[ property_String ][xs_, context_Association] :=
 SMRMonGetMatrixProperty[___][__] :=
     Block[{},
       Echo["One string argument is expected.", "SMRMonGetMatrixProperty:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonFilterMatrix                                         *)
+(**************************************************************)
+
+Clear[SMRMonFilterMatrix];
+
+SyntaxInformation[SMRMonFilterMatrix] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
+
+Options[SMRMonFilterMatrix] = { "FilterType" -> "Union" };
+
+SMRMonFilterMatrix[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonFilterMatrix[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonFilterMatrix[xs_, context_Association] := SMRMonFilterMatrix[None][xs, context];
+
+SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ filterType, pvec, svec, rowInds },
+
+      filterType = OptionValue[ SMRMonFilterMatrix, "FilterType" ];
+
+      pvec = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToProfileVector[profile], SMRMonTakeValue } ];
+      If[ TrueQ[ pvec === $SMRMonFailure ],
+        Echo["Cannot make a profile vector.", "SMRMonFilterMatrix:"];
+        Return[$SMRMonFailure]
+      ];
+
+      pvec = Unitize[pvec];
+
+      Which[
+        StringQ[filterType] && ToLowerCase[filterType] == "union",
+        svec = context["M"] . pvec,
+
+        StringQ[filterType] && ToLowerCase[filterType] == "intersection",
+        (* The call to SparseArray is 98% likely redundant. *)
+        svec = SparseArray[ Unitize[ Unitize[SparseArray[context["M"]]] . pvec - Length[profile] ] ],
+
+        True,
+        Echo["The value of the option \"FilterType\" should be either \"Union\" or \"Intersection\".", "SMRMonFilterMatrix:"];
+        Return[$SMRMonFailure]
+      ];
+
+      rowInds = Flatten[ Most[ ArrayRules[svec] ][[All, 1]] ];
+
+      (* I do not see a benefit of using the monadic solution instead of the direct one. *)
+      (*
+      Fold[
+        SMRMonBind,
+        SMRMonUnit[ xs, context ],
+        {
+          SMRMonSetM[ context["M"][[ rowInds, All ]] ],
+          SMRMonSetM01[ context["M01"][[ rowInds, All ]] ]
+        }
+      ]
+      *)
+      SMRMonUnit[xs, Join[ context, <| "M" -> context["M"][[ rowInds, All ]], "M01" -> context["M01"][[ rowInds, All ]] |> ] ]
+    ];
+
+SMRMonFilterMatrix[___][__] :=
+    Block[{},
+      Echo["The expected signature is SMRMonFilterMatrix[ profile : ( {_String ..} | Association[ (_String -> _?NumberQ) .. ] ) ] .", "SMRMonFilterMatrix:"];
       $SMRMonFailure
     ];
 
@@ -1566,15 +1635,46 @@ SMRMonToProfileVector[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonToProfileVector[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonToProfileVector[ scoredTags : Association[ (_Integer -> _?NumberQ)..] ][xs_, context_Association] :=
+SMRMonToProfileVector[ prof : ( { _String ..} | { _Integer .. } ) ][xs_, context_Association] :=
+    SMRMonToProfileVector[ AssociationThread[prof -> 1.] ][xs, context];
+
+SMRMonToProfileVector[ scoredInds : Association[ (_Integer -> _?NumberQ) .. ] ][xs_, context_Association] :=
     Block[{},
-      SMRMonUnit[ SparseArray[ Normal@scoredTags, ColumnsCount[context["M"]] ], context]
+
+      If[ ! KeyExistsQ[context, "M"],
+        Echo["Cannot find recommendation matrix, \"M\".", "SMRMonToProfileVector:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! Apply[ And, Map[ 0 < # <= ColumnsCount[context["M"]] &, Keys[scoredInds] ] ],
+        Echo["Not all index keys are valid recommendation matrix column indices.", "SMRMonToProfileVector:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonUnit[ SparseArray[ Normal @ scoredInds, ColumnsCount[context["M"]] ], context]
     ];
 
-SMRMonToProfileVector[ scoredTags : Association[ (_String -> _?NumberQ)..] ][xs_, context_Association] :=
-    SMRMonToProfileVector[ KeyMap[ context["tags"][#]&, scoredTags] ][xs, context];
+SMRMonToProfileVector[ scoredTags : Association[ (_String -> _?NumberQ) .. ] ][xs_, context_Association] :=
+    Block[{},
 
-SMRMonToProfileVector[___][__] := $SMRMonFailure;
+      If[ ! KeyExistsQ[context, "M"],
+        Echo["Cannot find recommendation matrix, \"M\".", "SMRMonToProfileVector:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ !SMRMonScoredTagsQ[scoredTags, context],
+        Echo["Not all tags are valid recommendation matrix column names.", "SMRMonToProfileVector:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonToProfileVector[ KeyMap[ ColumnNamesAssociation[context["M"]][#]&, scoredTags] ][xs, context]
+    ];
+
+SMRMonToProfileVector[args___][__] :=
+    Block[{},
+      Echo[ "Called with " <> ToString[{args}], "SMRMonToProfileVector:" ];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
