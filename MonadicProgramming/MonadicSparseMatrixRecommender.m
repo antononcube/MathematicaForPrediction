@@ -444,10 +444,10 @@ NumericalColumnToSSparseMatrix[dsArg_Dataset, idColumnName_, varColumnName_] :=
 
 Clear[SMRMonCreate];
 
-(*SyntaxInformation[SMRMonCreate] = {"ArgumentsPattern" -> {_., _., OptionsPattern[]}};*)
-
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
+
+SyntaxInformation[SMRMonCreate] = { "ArgumentsPattern" -> { ___, ___, OptionsPattern[] } };
 
 Options[SMRMonCreate] =
     {
@@ -549,6 +549,8 @@ SMRMonCreate[___][__] :=
 
 Clear[SMRMonCreateFromWideForm];
 
+SyntaxInformation[SMRMonCreateFromWideForm] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+
 Options[SMRMonCreateFromWideForm] =
     {
       "AddTagTypesToColumnNames" -> False,
@@ -623,7 +625,7 @@ SMRMonCreateFromWideForm[___][__] :=
     Block[{},
       Echo[
         "The first argument is expected to be a Dataset object. " <>
-            "The optional second argument is expected to be a column name in that Dataset.",
+            "The second argument is expected to be a column name in that Dataset.",
         "SMRMonCreateFromWideForm:"];
       $SMRMonFailure
     ];
@@ -634,6 +636,8 @@ SMRMonCreateFromWideForm[___][__] :=
 (**************************************************************)
 
 Clear[SMRMonCreateFromLongForm];
+
+SyntaxInformation[SMRMonCreateFromLongForm] = { "ArgumentsPattern" -> { _, ___, OptionsPattern[] } };
 
 Options[SMRMonCreateFromLongForm] =
     {
@@ -687,7 +691,7 @@ SMRMonCreateFromLongForm[___][__] :=
     Block[{},
       Echo[
         "The first argument is expected to be a Dataset object. " <>
-            "The optional second argument is expected to be of the form : " <>
+            "The optional second argument is expected to be a list four strings : " <>
             "{ itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String } .",
         "SMRMonCreateFromLongForm:"];
       $SMRMonFailure
@@ -699,6 +703,8 @@ SMRMonCreateFromLongForm[___][__] :=
 (**************************************************************)
 
 Clear[SMRMonEchoDataSummary];
+
+SyntaxInformation[SMRMonEchoDataSummary] = { "ArgumentsPattern" -> {} };
 
 SMRMonEchoDataSummary[$SMRMonFailure] := $SMRMonFailure;
 
@@ -726,6 +732,8 @@ SMRMonEchoDataSummary[___][__] :=
 (**************************************************************)
 
 Clear[SMRMonGetProperty];
+
+SyntaxInformation[SMRMonGetProperty] = { "ArgumentsPattern" -> {_} };
 
 SMRMonGetProperty[$SMRMonFailure] := $SMRMonFailure;
 
@@ -780,6 +788,8 @@ SMRMonGetProperty[___][__] :=
 (**************************************************************)
 
 Clear[SMRMonGetMatrixProperty];
+
+SyntaxInformation[SMRMonGetMatrixProperty] = { "ArgumentsPattern" -> {_} };
 
 SMRMonGetMatrixProperty[$SMRMonFailure] := $SMRMonFailure;
 
@@ -906,6 +916,8 @@ SMRMonFilterMatrix[___][__] :=
 
 Clear[SMRMonApplyLocalWeightFunction];
 
+SyntaxInformation[SMRMonApplyLocalWeightFunction] = { "ArgumentsPattern" -> {_} };
+
 SMRMonApplyLocalWeightFunction[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonApplyLocalWeightFunction[][xs_, context_Association] := $SMRMonFailure;
@@ -941,6 +953,8 @@ SMRMonApplyLocalWeightFunction[___][__] := $SMRMonFailure;
 (**************************************************************)
 
 Clear[SMRMonApplyGlobalWeightFunction];
+
+SyntaxInformation[SMRMonApplyGlobalWeightFunction] = { "ArgumentsPattern" -> {_} };
 
 SMRMonApplyGlobalWeightFunction[$SMRMonFailure] := $SMRMonFailure;
 
@@ -981,6 +995,8 @@ SMRMonApplyGlobalWeightFunction[___][__] := $SMRMonFailure;
 
 Clear[SMRMonApplyNormalizationFunction];
 
+SyntaxInformation[SMRMonApplyNormalizationFunction] = { "ArgumentsPattern" -> {_} };
+
 SMRMonApplyNormalizationFunction[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonApplyNormalizationFunction[][xs_, context_Association] := $SMRMonFailure;
@@ -1016,13 +1032,15 @@ SMRMonApplyNormalizationFunction[___][__] := $SMRMonFailure;
 
 Clear[SMRMonApplyTermWeightFunctions];
 
+SyntaxInformation[SMRMonApplyTermWeightFunctions] = { "ArgumentsPattern" -> { ___, ___, ___ } };
+
 SMRMonApplyTermWeightFunctions[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonApplyTermWeightFunctions[xs_, context_Association] := SMRMonApplyTermWeightFunctions[][xs, context];
 
 SMRMonApplyTermWeightFunctions[][xs_, context_Association] := SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"][xs, context];
 
-SMRMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_String, normalizerFunction_String][xs_, context_Association] :=
+SMRMonApplyTermWeightFunctions[globalWeightFunction_String : "IDF", localWeightFunction_String : "None", normalizerFunction_String : "Cosine"][xs_, context_Association] :=
     Block[{mat, smats},
 
       If[!KeyExistsQ[context, "matrices"],
@@ -1074,6 +1092,8 @@ GetFilterIDs[context_Association, callerFunctionName_String] :=
     ];
 
 Clear[SMRMonRecommend];
+
+SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
 
 Options[SMRMonRecommend] = {"RemoveHistory" -> True, "ItemNames" -> True, "Normalize" -> True, "VectorResult" -> False };
 
@@ -1209,6 +1229,8 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 
 Clear[SMRMonRecommendByProfile];
 
+SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, ___, ___, OptionsPattern[] } };
+
 Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "IgnoreUnknownTags" -> False, "VectorResult" -> False };
 
 SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
@@ -1295,8 +1317,8 @@ SMRMonRecommendByProfile[profileVec_SparseArray, nRes : (_Integer | All), opts :
       If[ vectorResultQ,
 
         If[ IntegerQ[ nRes ],
-          resInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1 ;; nRes ]];
-          vec = SparseArray[ Thread[ resInds -> vec[[resInds]] ], RowsCount[context["M"]] ];
+          recsInds = Reverse[ Ordering[ Normal[vec] ] ][[ 1 ;; Min[nRes, Length[vec]] ]];
+          vec = SparseArray[ Thread[ recsInds -> vec[[recsInds]] ], RowsCount[context["M"]] ];
         ];
 
         Return[ SMRMonUnit[ vec, context ] ]
@@ -1402,6 +1424,8 @@ SMRMonRecommendByCorrelation[___][__] := $SMRMonFailure;
 
 Clear[SMRMonToItemsDataset];
 
+SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, ___ } };
+
 SMRMonToItemsDataset[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonToItemsDataset[xs_, context_Association] := SMRMonToItemsDataset[xs][xs, context];
@@ -1440,6 +1464,8 @@ SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 (**************************************************************)
 
 Clear[SMRMonJoinAcross];
+
+SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, ___, OptionsPattern[] } };
 
 Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "AsDataset" -> True };
 
@@ -1540,6 +1566,8 @@ SMRMonJoinAcross[__][___] :=
 
 Clear[SMRMonProfile];
 
+SyntaxInformation[SMRMonProfile] = { "ArgumentsPattern" -> { _, ___, OptionsPattern[] } };
+
 Options[SMRMonProfile] = {"TagNames" -> True};
 
 SMRMonProfile[$SMRMonFailure] := $SMRMonFailure;
@@ -1631,6 +1659,8 @@ SMRMonProfile[___][__] :=
 
 Clear[SMRMonToProfileVector];
 
+SyntaxInformation[SMRMonToProfileVector] = { "ArgumentsPattern" -> {_} };
+
 SMRMonToProfileVector[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonToProfileVector[xs_, context_Association] := $SMRMonFailure;
@@ -1683,6 +1713,8 @@ SMRMonToProfileVector[args___][__] :=
 
 Clear[SMRMonSetTagTypeWeights];
 
+SyntaxInformation[SMRMonSetTagTypeWeights] = { "ArgumentsPattern" -> { _, ___ } };
+
 SMRMonSetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonSetTagTypeWeights[xs_, context_Association] := $SMRMonFailure;
@@ -1732,6 +1764,8 @@ SMRMonSetTagTypeWeights[___][__] :=
 
 Clear[SMRMonSetTagWeights];
 
+SyntaxInformation[SMRMonSetTagWeights] = { "ArgumentsPattern" -> { _, ___ } };
+
 SMRMonSetTagWeights[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonSetTagWeights[xs_, context_Association] := $SMRMonFailure;
@@ -1775,6 +1809,8 @@ SMRMonSetTagWeights[___][__] :=
 (**************************************************************)
 
 Clear[SMRMonJoin];
+
+SyntaxInformation[SMRMonJoin] = { "ArgumentsPattern" -> { _, ___, ___, ___ } };
 
 SMRMonJoin[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1852,6 +1888,8 @@ SMRMonJoin[___][__] :=
 (**************************************************************)
 
 Clear[SMRMonRowBind];
+
+SyntaxInformation[SMRMonRowBind] = { "ArgumentsPattern" -> {_} };
 
 SMRMonRowBind[$SMRMonFailure] := $SMRMonFailure;
 
@@ -2049,6 +2087,8 @@ SMRMonClassifyOriginal[___][__] :=
 
 Clear[SMRMonClassify];
 
+SyntaxInformation[SMRMonClassify] = { "ArgumentsPattern" -> {___, ___, OptionsPattern[] } };
+
 Options[SMRMonClassify] = {
   "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
   "NumberOfNearestNeighbors" -> Automatic, "NumberOfResults" -> All,
@@ -2151,29 +2191,35 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
         Return[$SMRMonFailure]
       ];
 
-      If[ votingQ,
-        clMat01 = SparseArray[clMat];
-        t = Most[ArrayRules[clMat]]; t[[All, 2]] = 1.;
-        clMat01 = SparseArray[t, Dimensions[clMat]];
-        clMat = ToSSparseMatrix[ clMat01, "RowNames" -> RowNames[clMat], "ColumnNames" -> ColumnNames[clMat] ];
-        recs = SparseArray[ Thread[ Flatten[First /@ Most[ArrayRules[recs]]] -> 1. ], Length[recs] ];
-      ];
-
-      (* Finally the "classification" computation follows. *)
-      s = recs . SparseArray[ clMat ];
-
-      If[ Max[s] > 0, s = s / Max[s] ];
-
-      If[ dropZeroScoredLabelsQ,
-        resInds = Range[Length[s]];
-        resInds = Pick[resInds, UnitStep[-s], 0];
-        resInds = resInds[[ Reverse[ Ordering[ Normal @ s[[resInds]] ] ] ]],
-
+      If[ Total[recs] == 0,
+        (* This can happen if the columns corresponding to the given profile tags have only 0's. *)
+        res = <| Indeterminate -> 1 |>,
         (* ELSE  *)
-        resInds = Reverse[ Ordering[ Normal[s] ] ]
-      ];
 
-      res = AssociationThread[ ColumnNames[clMat][[resInds]], Normal[s[[resInds]]] ];
+        If[ votingQ,
+          clMat01 = SparseArray[clMat];
+          t = Most[ArrayRules[clMat]]; t[[All, 2]] = 1.;
+          clMat01 = SparseArray[t, Dimensions[clMat]];
+          clMat = ToSSparseMatrix[ clMat01, "RowNames" -> RowNames[clMat], "ColumnNames" -> ColumnNames[clMat] ];
+          recs = SparseArray[ Thread[ Flatten[First /@ Most[ArrayRules[recs]]] -> 1. ], Length[recs] ];
+        ];
+
+        (* Finally the "classification" computation follows. *)
+        s = recs . SparseArray[ clMat ];
+
+        If[ Max[s] > 0, s = s / Max[s] ];
+
+        If[ dropZeroScoredLabelsQ,
+          resInds = Range[Length[s]];
+          resInds = Pick[resInds, UnitStep[-s], 0];
+          resInds = resInds[[ Reverse[ Ordering[ Normal @ s[[resInds]] ] ] ]],
+
+          (* ELSE  *)
+          resInds = Reverse[ Ordering[ Normal[s] ] ]
+        ];
+
+        res = AssociationThread[ ColumnNames[clMat][[resInds]], Normal[s[[resInds]]] ];
+      ];
 
       res =
           Which[
@@ -2205,6 +2251,8 @@ SMRMonClassify[___][__] :=
 (*=========================================================*)
 
 Clear[SMRMonMetadataProofs];
+
+SyntaxInformation[SMRMonMetadataProofs] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
 
 Options[SMRMonMetadataProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
@@ -2271,6 +2319,8 @@ SMRMonMetadataProofs[___][__] :=
 (*=========================================================*)
 
 Clear[SMRMonHistoryProofs];
+
+SyntaxInformation[SMRMonHistoryProofs] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
 
 Options[SMRMonHistoryProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
