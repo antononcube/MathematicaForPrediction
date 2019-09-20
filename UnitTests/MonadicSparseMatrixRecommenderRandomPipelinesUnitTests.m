@@ -137,22 +137,27 @@ MakeSMRMonRandomPipelines[ {dfTitanic_Dataset, dfMushroom_Dataset}, n_Integer ] 
 
       stage4 = {
         SMRMonRecommend,
-        SMRMonRecommend[ Normal @ RandomSample[ dfTitanic[All, "id"], 12] ],
-        SMRMonRecommend[ Normal @ RandomSample[ dfMushroom[All, "id"], 12] ],
-        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 7], RandomReal[{0,1}, 7] ] ],
-        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 6], RandomReal[{0,1}, 6] ] ],
+        SMRMonRecommend[ Normal @ RandomSample[ dfTitanic[All, "id"], 12 ] ],
+        SMRMonRecommend[ Normal @ RandomSample[ dfMushroom[All, "id"], 12 ] ],
+        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 7], RandomReal[{0, 1}, 7] ] ],
+        SMRMonRecommend[ AssociationThread[ Normal @ RandomSample[ dfMushroom[All, "id"], 6], RandomReal[{0, 1}, 6] ] ],
         SMRMonRecommendByProfile[ {"male", "died"} ],
         SMRMonRecommendByProfile[ AssociationThread[ {"male", "died"}, { 1, 0.1 } ] ],
         SMRMonRecommendByProfile[ {"brown", "foul"} ],
-        SMRMonRecommendByProfile[ AssociationThread[ {"brown", "foul"}, { 1, 0.1 } ] ]
+        SMRMonRecommendByProfile[ AssociationThread[ {"brown", "foul"}, { 1, 0.1 } ] ],
+        SMRMonClassify[ "passengerSurvival", {"male", "1st"}],
+        SMRMonClassify[ "passengerSurvival", {"blah-blah", "1st"}],
+        SMRMonClassify[ "passengerSurvival", {"male", "1st"}, "NumberOfNearestNeighbors" -> 10^6],
+        SMRMonClassify[ "passengerSex", {"died", "1st"}],
+        SMRMonClassify[ "passengerGender", {"died", "1st"}]
       };
 
       stage5 = {
         SMRMonEchoValue,
         SMRMonJoinAcross[ dfTitanic, "id" ],
         SMRMonJoinAcross[ dfMushroom, "id" ],
-        SMRMonJoinAcross[ dfTitanic, "id", "AsDataset" ->False ],
-        SMRMonJoinAcross[ dfMushroom, "id", "AsDataset" ->False ]
+        SMRMonJoinAcross[ dfTitanic, "id", "AsDataset" -> False ],
+        SMRMonJoinAcross[ dfMushroom, "id", "AsDataset" -> False ]
       };
 
       stage6 = {
@@ -167,9 +172,9 @@ MakeSMRMonRandomPipelines[ {dfTitanic_Dataset, dfMushroom_Dataset}, n_Integer ] 
       pipelines
     ];
 
-Options[TestRunSMRMonPipelines] = {"Echo"->True};
+Options[TestRunSMRMonPipelines] = {"Echo" -> True};
 
-TestRunSMRMonPipelines[ pipelines_, opts:OptionsPattern[] ] :=
+TestRunSMRMonPipelines[ pipelines_, opts : OptionsPattern[] ] :=
     Block[{echoQ, testRes, testPatt},
 
       echoQ = TrueQ[OptionValue[TestRunSMRMonPipelines, "Echo"]];
