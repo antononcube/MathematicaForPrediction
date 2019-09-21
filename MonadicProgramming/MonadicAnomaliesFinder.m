@@ -106,6 +106,8 @@ Needs["OutlierIdentifiers`"];
 
 Clear[QRMonFindAnomaliesByResiduals];
 
+SyntaxInformation[QRMonFindAnomaliesByResiduals] = { "ArgumentsPattern" -> { OptionsPattern[] } };
+
 Options[QRMonFindAnomaliesByResiduals] = { "Threshold" -> None, "OutlierIdentifier" -> HampelIdentifierParameters, "RelativeErrors" -> False };
 
 QRMonFindAnomaliesByResiduals[$QRMonFailure] := $QRMonFailure;

@@ -118,6 +118,8 @@ Needs["MonadicQuantileRegression`"];
 
 Clear[QRMonFindChowTestLocalMaxima];
 
+SyntaxInformation[QRMonFindChowTestLocalMaxima] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
+
 Options[QRMonFindChowTestLocalMaxima] = { "Knots" -> 12, "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 15, "EchoPlots" -> False };
 
 Options[QRMonFindChowTestLocalMaxima] =
@@ -209,6 +211,8 @@ VectorOfRegressorPointsQ[___] := False;
 
 
 Clear[QRMonPlotStructuralBreakSplits];
+
+SyntaxInformation[QRMonPlotStructuralBreakSplits] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
 
 Options[QRMonPlotStructuralBreakSplits] = { "LeftPartColor" -> Gray, "RightPartColor" -> Red, "DateListPlot" -> False, "Echo" -> True };
 

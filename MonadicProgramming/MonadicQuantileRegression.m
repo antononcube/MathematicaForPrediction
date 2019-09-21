@@ -229,6 +229,9 @@ GenerateMonadAccessors[
 
 (* This is has to be re-implemented because of the use of QRMonGetData. *)
 ClearAll[QRMonTakeData];
+
+SyntaxInformation[QRMonGetData] = { "ArgumentsPattern" -> { } };
+
 QRMonTakeData[$QRMonFailure] := $QRMonFailure;
 QRMonTakeData[][$QRMonFailure] := $QRMonFailure;
 QRMonTakeData[xs_, context_] := QRMonTakeData[][xs, context];
@@ -269,6 +272,8 @@ DataToNormalForm[data_] :=
     ];
 
 Clear[QRMonGetData];
+
+SyntaxInformation[QRMonGetData] = { "ArgumentsPattern" -> { } };
 
 QRMonGetData[$QRMonFailure] := $QRMonFailure;
 
@@ -316,6 +321,8 @@ QRMonGetData[___][xs_, context_Association] := $QRMonFailure;
 
 Clear[QRMonEchoDataSummary];
 
+SyntaxInformation[QRMonEchoDataSummary] = { "ArgumentsPattern" -> { } };
+
 QRMonEchoDataSummary[$QRMonFailure] := $QRMonFailure;
 
 QRMonEchoDataSummary[xs_, context_] := QRMonEchoDataSummary[][xs, context];
@@ -331,6 +338,8 @@ QRMonEchoDataSummary[___][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[QRMonDeleteMissing];
+
+SyntaxInformation[QRMonDeleteMissing] = { "ArgumentsPattern" -> { } };
 
 QRMonDeleteMissing[$QRMonFailure] := $QRMonFailure;
 
@@ -357,6 +366,8 @@ QRMonDeleteMissing[___][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[QRMonRescale];
+
+SyntaxInformation[QRMonRescale] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[QRMonRescale] = {Axes -> {True, False}};
 
@@ -405,15 +416,17 @@ QRMonRescale[___][__] := $QRMonFailure;
 
 Clear[QRMonLeastSquaresFit];
 
+SyntaxInformation[QRMonLeastSquaresFit] = { "ArgumentsPattern" -> { _, _. } };
+
 QRMonLeastSquaresFit[$QRMonFailure] := $QRMonFailure;
 
 QRMonLeastSquaresFit[xs_, context_Association] := $QRMonFailure;
 
-QRMonLeastSquaresFit[n_Integer, opts:OptionsPattern[]][xs_, context_] :=
+QRMonLeastSquaresFit[n_Integer][xs_, context_] :=
     QRMonLeastSquaresFit[{ n, {-0.95, 0.95} }, opts][xs, context];
 
 (* This signature is not that needed for LeastSquaresFit, it is implemented for symmetry with QuantileRegressionFit . *)
-QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, opts:OptionsPattern[]][xs_, context_] :=
+QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }][xs_, context_] :=
     Fold[
       QRMonBind,
       QRMonUnit[xs, context],
@@ -421,7 +434,7 @@ QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, opts:OptionsPatt
         QRMonLeastSquaresFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], r]], {i, 0, n}], x, opts][##]&}
     ];
 
-QRMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
+QRMonLeastSquaresFit[funcs_List][xs_, context_] :=
     Block[{var},
 
       var =
@@ -436,7 +449,7 @@ QRMonLeastSquaresFit[funcs_List, opts:OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
-QRMonLeastSquaresFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+QRMonLeastSquaresFit[funcs_List, var_Symbol][xs_, context_] :=
     Block[{data, qFunc},
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
@@ -465,6 +478,8 @@ QRMonFit = QRMonLeastSquaresFit;
 (**************************************************************)
 
 Clear[QRMonQuantileRegression];
+
+SyntaxInformation[QRMonQuantileRegression] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
 
 Options[QRMonQuantileRegression] =
     Join[
@@ -553,6 +568,8 @@ QRMonRegression = QRMonQuantileRegression;
 (**************************************************************)
 
 Clear[QRMonQuantileRegressionFit];
+
+SyntaxInformation[QRMonQuantileRegressionFit] = { "ArgumentsPattern" -> { _., _., _., OptionsPattern[] } };
 
 Options[QRMonQuantileRegressionFit] =
     Join[
@@ -741,6 +758,8 @@ QRMonNetRegression[___][__] :=
 
 Clear[QRMonEvaluate];
 
+SyntaxInformation[QRMonEvaluate] = { "ArgumentsPattern" -> {_} };
+
 QRMonEvaluate[$QRMonFailure] := $QRMonFailure;
 
 QRMonEvaluate[xs_, context_Association] := $QRMonFailure;
@@ -769,6 +788,8 @@ QRMonEvaluate[___][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[QRMonPlot];
+
+SyntaxInformation[QRMonPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
 Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
 
@@ -830,6 +851,8 @@ QRMonPlot[__][__] := $QRMonFailure;
 
 Clear[QRMonDateListPlot];
 
+SyntaxInformation[QRMonDateListPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
+
 Options[QRMonDateListPlot] = Options[QRMonPlot];
 
 QRMonDateListPlot[$QRMonFailure] := $QRMonFailure;
@@ -846,6 +869,8 @@ QRMonDateListPlot[__][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[QRMonErrors];
+
+SyntaxInformation[QRMonErrors] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
 Options[QRMonErrors] = { "RelativeErrors" -> True };
 
@@ -881,7 +906,9 @@ QRMonErrors[__][__] := $QRMonFailure;
 
 Clear[QRMonErrorPlots];
 
-Options[QRMonErrorPlots] = Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False, "RelativeErrors" -> True}, Options[ListPlot] ];
+SyntaxInformation[QRMonErrorPlots] = { "ArgumentsPattern" -> {OptionsPattern[]} };
+
+Options[QRMonErrorPlots] = Join[ {"Echo"->True, "DateListPlot"->False, "RelativeErrors" -> True}, Options[ListPlot] ];
 
 QRMonErrorPlots[$QRMonFailure] := $QRMonFailure;
 
@@ -938,6 +965,8 @@ CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts :
 
 Clear[QRMonConditionalCDF];
 
+SyntaxInformation[QRMonConditionalCDF] = { "ArgumentsPattern" -> {_} };
+
 QRMonConditionalCDF[$QRMonFailure] := $QRMonFailure;
 
 QRMonConditionalCDF[__][$QRMonFailure] := $QRMonFailure;
@@ -968,6 +997,8 @@ QRMonConditionalCDF[___][___] :=
 (**************************************************************)
 
 Clear[QRMonConditionalCDFPlot];
+
+SyntaxInformation[QRMonConditionalCDFPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
 Options[QRMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
 
@@ -1086,6 +1117,8 @@ QRMonOutliersFirst[__][__] :=
 
 Clear[QRMonOutliers];
 
+SyntaxInformation[QRMonOutliers] = { "ArgumentsPattern" -> {} };
+
 QRMonOutliers[$QRMonFailure] := $QRMonFailure;
 
 QRMonOutliers[__][$QRMonFailure] := $QRMonFailure;
@@ -1146,6 +1179,8 @@ QRMonOutliers[__][__] :=
 (**************************************************************)
 
 Clear[QRMonOutliersPlot];
+
+SyntaxInformation[QRMonOutliersPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
 Options[QRMonOutliersPlot] := Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
 
@@ -1218,6 +1253,8 @@ QRMonOutliersPlot[___][__] := $QRMonFailure;
 
 Clear[QRMonPickPathPoints];
 
+SyntaxInformation[QRMonPickPathPoints] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
+
 Options[QRMonPickPathPoints] = { "PickAboveThreshold" -> False };
 
 QRMonPickPathPoints[$QRMonFailure] := $QRMonFailure;
@@ -1257,6 +1294,8 @@ QRMonPickPathPoints[___][__] :=
 (**************************************************************)
 
 Clear[QRMonSeparate];
+
+SyntaxInformation[QRMonSeparate] = { "ArgumentsPattern" -> {_., OptionsPattern[]} };
 
 Options[QRMonSeparate] = { "Cumulative"->True, "Fractions"->False };
 
@@ -1332,6 +1371,8 @@ QRMonSeparate[___][__] := $QRMonFailure;
 
 Clear[QRMonSeparateToFractions];
 
+SyntaxInformation[QRMonSeparateToFractions] = { "ArgumentsPattern" -> {_., OptionsPattern[]} };
+
 Options[QRMonSeparateToFractions] = {"Cumulative"->False};
 
 QRMonSeparateToFractions[$QRMonFailure] := $QRMonFailure;
@@ -1381,6 +1422,8 @@ FindQRRange[{x_, y_}, funcs_List] :=
 
 Clear[QRMonBandsSequence];
 
+SyntaxInformation[QRMonBandsSequence] = { "ArgumentsPattern" -> {} };
+
 QRMonBandsSequence[$QRMonFailure] := $QRMonFailure;
 
 QRMonBandsSequence[___][$QRMonFailure] := $QRMonFailure;
@@ -1419,6 +1462,8 @@ QRMonBandsSequence[__][__] :=
 (**************************************************************)
 
 Clear[QRMonGridSequence];
+
+SyntaxInformation[QRMonGridSequence] = { "ArgumentsPattern" -> { _. } };
 
 QRMonGridSequence[$QRMonFailure] := $QRMonFailure;
 
@@ -1502,6 +1547,8 @@ QRMonGridSequence[___][__] :=
 
 Clear[QRMonMovingAverage];
 
+SyntaxInformation[QRMonMovingAverage] = { "ArgumentsPattern" -> {_} };
+
 QRMonMovingAverage[$QRMonFailure] := $QRMonFailure;
 
 QRMonMovingAverage[___][$QRMonFailure] := $QRMonFailure;
@@ -1524,6 +1571,8 @@ QRMonMovingAverage[___][__] := $QRMonFailure;
 
 Clear[QRMonMovingMedian];
 
+SyntaxInformation[QRMonMovingMedian] = { "ArgumentsPattern" -> {_} };
+
 QRMonMovingMedian[$QRMonFailure] := $QRMonFailure;
 
 QRMonMovingMedian[___][$QRMonFailure] := $QRMonFailure;
@@ -1545,6 +1594,8 @@ QRMonMovingMedian[___][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[QRMonMovingMap];
+
+SyntaxInformation[QRMonMovingMap] = { "ArgumentsPattern" -> {_, _} };
 
 QRMonMovingMap[$QRMonFailure] := $QRMonFailure;
 
@@ -1570,6 +1621,8 @@ QRMonMovingMap[___][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[QRMonSimulate];
+
+SyntaxInformation[QRMonSimulate] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
 QRMonSimulate[$QRMonFailure] := $QRMonFailure;
 
@@ -1634,6 +1687,8 @@ QRMonSimulate[___][__] :=
 *)
 
 Clear[QRMonLocalExtrema];
+
+SyntaxInformation[QRMonLocalExtrema] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[QRMonLocalExtrema] = { "NearestWithOutliers" -> False, "NumberOfProximityPoints" -> 50 };
 
@@ -1722,6 +1777,8 @@ QRMonFindLocalExtrema = QRMonLocalExtrema;
 
 Clear[ChowTestStatistic];
 
+SyntaxInformation[ChowTestStatistic] = { "ArgumentsPattern" -> { _, _, ___, ___ } };
+
 ChowTestStatistic::empfuncs = "A non empty list of functions is expected.";
 ChowTestStatistic::novar = "The specified variable is not a symbol.";
 ChowTestStatistic::nofuncsvar = "The specified variable should be found in the functions list.";
@@ -1786,6 +1843,8 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
 
 
 Clear[QRMonChowTestStatistic];
+
+SyntaxInformation[QRMonChowTestStatistic] = { "ArgumentsPattern" -> { _, ___, ___ } };
 
 QRMonChowTestStatistic[$QRMonFailure] := $QRMonFailure;
 
