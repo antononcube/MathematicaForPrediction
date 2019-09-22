@@ -90,19 +90,24 @@ If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
 
 BeginPackage["MonadicAnomaliesFinder`"];
 
-QRMonFindAnomaliesByResiduals::usage = "QRMonFindAnomaliesByResiduals[] \
+QRMonFindAnomaliesByResiduals::usage = "QRMonFindAnomaliesByResiduals[ opts:OptionsPattern[] ] \
 finds structural breaks in the data using the Chow Test. \
 It takes as options the options of QRMonQuantileRegression, QRMonFindLocalExtrema, and QRMonPlot.";
 
+SMRMonFindAnomalies::usage = "SMRMonFindAnomalies[ opts:OptionsPattern[] ] \
+finds rows of the recommendation matrix that are anomalies.";
+
 Begin["`Private`"];
 
-Needs["MonadicQuantileRegression`"];
 Needs["OutlierIdentifiers`"];
+Needs["MonadicQuantileRegression`"];
+Needs["MonadicSparseMatrixRecommender`"];
+Needs["SSparseMatrix`"];
+
 
 (**************************************************************)
 (* Find point anomalies using approximation residuals         *)
 (**************************************************************)
-
 
 Clear[QRMonFindAnomaliesByResiduals];
 
@@ -163,9 +168,77 @@ QRMonFindAnomaliesByResiduals[___][xs_, context_Association] :=
 
 
 (**************************************************************)
-(* Plot anomalies                                             *)
+(* Find anomalies by nearest neighbors                        *)
 (**************************************************************)
 
+Clear[SMRMonFindAnomalies];
+
+SyntaxInformation[SMRMonFindAnomalies] = { "ArgumentsPattern" -> { OptionsPattern[] } };
+
+Options[SMRMonFindAnomalies] = {
+  "NumberOfNearestNeighbors" -> 10,
+  "OutlierIdentifier" -> (BottomOutliers @* SPLUSQuartileIdentifierParameters),
+  "RadiusFunction" -> Mean,
+  "SSparseMatrixResult" -> True
+};
+
+SMRMonFindAnomalies[$QRMonFailure] := $QRMonFailure;
+
+SMRMonFindAnomalies[xs_, context_Association] := SMRMonFindAnomalies[ Automatic ][xs, context];
+
+SMRMonFindAnomalies[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ nns, outFunc, radiusFunc, smatResultQ, recs, outlierInds },
+
+      nns = OptionValue[ SMRMonFindAnomalies, "NumberOfNearestNeighbors" ];
+      outFunc = OptionValue[ SMRMonFindAnomalies, "OutlierIdentifier" ];
+      radiusFunc = OptionValue[ SMRMonFindAnomalies, "RadiusFunction" ];
+      smatResultQ = TrueQ[OptionValue[ SMRMonFindAnomalies, "SSparseMatrixResult" ]];
+
+      If[ ! (IntegerQ[nns] && nns > 0),
+        Echo[
+          "The value of the options \"NumberOfNearestNeighbors\" is expected to be a positive integer.",
+          "SMRMonFindAnomalies:"
+        ];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ !KeyExistsQ[context, "M"],
+        Echo["Cannot find a recommendation matrix.", "SMRMonFindAnomalies:"];
+        Return[$SMRMonFailure]
+      ];
+
+      recs =
+          Association[
+            Map[
+              # -> Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommendByHistory[#, nns], SMRMonTakeValue} ]&,
+              RowNames[context["M"]]
+            ]
+          ];
+
+      recs = Map[ radiusFunc@*Values, recs ];
+
+      outlierInds = OutlierPosition[ Values[recs], outFunc ];
+
+      Which[
+        Length[outlierInds] == 0,
+        SMRMonUnit[{}, context],
+
+        !smatResultQ,
+        SMRMonUnit[ outlierInds, context ],
+
+        True,
+        SMRMonUnit[ context["M"][[ outlierInds, All ]], context ]
+      ]
+    ];
+
+SMRMonFindAnomalies[___][xs_, context_Association] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonFindAnomalies[ opts:OptionsPattern[] ].",
+        "SMRMonFindAnomalies:"
+      ];
+      $SMRMonFailure
+    ];
 
 End[]; (* `Private` *)
 
