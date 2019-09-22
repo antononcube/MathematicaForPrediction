@@ -83,6 +83,12 @@ If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
 ];
 
+If[Length[DownValues[MonadicQuantileRegression`SMRMonUnit]] == 0,
+  Echo["MonadicSparseMatrixRecommender.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"]
+];
+
+
 (**************************************************************)
 (* Package definition                                         *)
 (**************************************************************)
@@ -177,7 +183,7 @@ SyntaxInformation[SMRMonFindAnomalies] = { "ArgumentsPattern" -> { _., OptionsPa
 
 Options[SMRMonFindAnomalies] = {
   "NumberOfNearestNeighbors" -> 10,
-  "OutlierIdentifier" -> SPLUSQuartileIdentifierParameters,
+  "OutlierIdentifier" -> (BottomOutliers @* SPLUSQuartileIdentifierParameters),
   "RadiusFunction" -> Mean,
   "Property" -> "SSparseMatrix"
 };
@@ -187,10 +193,10 @@ SMRMonFindAnomalies[$QRMonFailure] := $QRMonFailure;
 SMRMonFindAnomalies[xs_, context_Association] := SMRMonFindAnomalies[][xs, context];
 
 SMRMonFindAnomalies[ opts : OptionsPattern[] ][xs_, context_Association] :=
-    SMRMonFindAnomalies[ Automatic, Options[SMRMonFindAnomalies] ][xs, context];
+    SMRMonFindAnomalies[ Automatic, opts ][xs, context];
 
 SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{ nns, outFunc, radiusFunc, prop, smat, recs, outlierInds, outlierThresholds },
+    Block[{ nns, outFunc, radiusFunc, newContext, prop, smat, recs, outlierInds, outlierThresholds },
 
       nns = OptionValue[ SMRMonFindAnomalies, "NumberOfNearestNeighbors" ];
       outFunc = OptionValue[ SMRMonFindAnomalies, "OutlierIdentifier" ];
@@ -226,6 +232,7 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
             ],
 
         SSparseMatrixQ[smat] && ColumnsCount[smat] == ColumnsCount[context["M"]],
+        nns = Lookup[ context, "numberOfNearestNeighbors" ];
         recs =
             Association[
               Map[
@@ -242,38 +249,46 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         Return[$SMRMonFailure]
       ];
 
+      If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
+        radiusFunc = context["radiusFunction"]
+      ];
+
       recs = Map[ radiusFunc@*Values, recs ];
 
-      If[ KeyExistsQ[context, "outlierThresholds"],
+      If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
 
+        radiusFunc = context["radiusFunction"];
         outlierThresholds = context["outlierThresholds"],
+
         (* ELSE *)
-        outlierInds = OutlierPosition[ Values[recs], BottomOutliers @* outFunc ];
+        outlierInds = OutlierPosition[ Values[recs], outFunc ];
         outlierThresholds = outFunc[ Values[recs] ]
       ];
 
-      If[ !TrueQ[smat === Automatic],
-        With[ {th = BottomOutliers[outlierThresholds]},
+      If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
+        With[ {th = outlierThresholds},
           outlierInds = OutlierPosition[ Values[recs], th& ]
         ]
       ];
 
+      newContext = Join[ context, <| "outlierThresholds" -> outlierThresholds, "radiusFunction" -> radiusFunc, "numberOfNearestNeighbors" -> nns |>];
+
       Which[
         Length[outlierInds] == 0,
-        SMRMonUnit[{}, context],
+        SMRMonUnit[{}, newContext],
 
         ToLowerCase["Properties"] == ToLowerCase[prop],
         Echo["The properties are \"SSparseMatrix\", \"RowNames\", \"OutlierThresholds\", \"Properties\".", "SMRMonFindAnomalies:"];
-        SMRMonUnit[ {"SSparseMatrix", "RowNames", "Properties"}, context ],
+        SMRMonUnit[ {"SSparseMatrix", "RowNames", "Properties"}, newContext ],
 
         MemberQ[ ToLowerCase[{ "RowNames", "Indices" }], ToLowerCase[prop] ],
-        SMRMonUnit[ outlierInds, context ],
+        SMRMonUnit[ outlierInds, newContext ],
 
         MemberQ[ ToLowerCase[{ "Thresholds", "OutlierThresholds" }], ToLowerCase[prop] ],
-        SMRMonUnit[ outlierThresholds, context ],
+        SMRMonUnit[ outlierThresholds, newContext ],
 
         True,
-        SMRMonUnit[ context["M"][[ outlierInds, All ]], Append[ context, "outlierThresholds" -> outlierThresholds ] ]
+        SMRMonUnit[ context["M"][[ outlierInds, All ]], newContext ]
       ]
     ];
 
