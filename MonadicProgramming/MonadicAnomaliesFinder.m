@@ -188,7 +188,7 @@ Options[SMRMonFindAnomalies] = {
   "Property" -> "SSparseMatrix"
 };
 
-SMRMonFindAnomalies[$QRMonFailure] := $SMRMonFailure;
+SMRMonFindAnomalies[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonFindAnomalies[xs_, context_Association] := SMRMonFindAnomalies[][xs, context];
 
