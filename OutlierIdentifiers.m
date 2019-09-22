@@ -79,7 +79,7 @@
 *)
 
 
-BeginPackage["OutlierIdentifiers`"]
+BeginPackage["OutlierIdentifiers`"];
 
 HampelIdentifierParameters::usage = "Returns Hampel identifier parameters {L,U} for a list of numbers."
 
@@ -107,9 +107,9 @@ ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPl
 
 ColorPlotOutliers::usage = "ColorPlotOutliers[oid___] makes a function for coloring the outliers in list point plots."
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Clear[HampelIdentifierParameters]
+Clear[HampelIdentifierParameters];
 HampelIdentifierParameters[data:{_?NumberQ...}]:=
   Block[{x0=Median[data],md},
     md=1.4826*Median[Abs[data-x0]];
@@ -117,7 +117,7 @@ HampelIdentifierParameters[data:{_?NumberQ...}]:=
   ];
 
 
-Clear[QuartileIdentifierParameters]
+Clear[QuartileIdentifierParameters];
 QuartileIdentifierParameters[data:{_?NumberQ...}]:=
   Block[{xL,xU,x0},
     {xL,x0,xU}=Quantile[data,{1/4,1/2,3/4}];
@@ -125,7 +125,7 @@ QuartileIdentifierParameters[data:{_?NumberQ...}]:=
    ];
 
 
-Clear[SPLUSQuartileIdentifierParameters]
+Clear[SPLUSQuartileIdentifierParameters];
 SPLUSQuartileIdentifierParameters[data:{_?NumberQ...}]:=
   Block[{xL,xU},
     If[Length[data]<=4,Return[{Min[data],Max[data]}]];
@@ -156,11 +156,11 @@ TopOutliers[{xL_,xU_}]:={-Infinity,xU};
 BottomOutliers[{xL_,xU_}]:={xL,Infinity};
 
 
-Clear[HampelIdentifier]
+Clear[HampelIdentifier];
 HampelIdentifier[data__]:=OutlierIdentifier[data,HampelIdentifierParameters];
 
 
-Clear[OutlierPosition]
+Clear[OutlierPosition];
 OutlierPosition[data:{_?NumberQ...},outlierIdentifier_:HampelIdentifierParameters]:=
   Block[{cls,t},
     cls=OutlierIdentifier[data,outlierIdentifier];
@@ -190,6 +190,6 @@ ColorPlotOutliers[] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPos
 ColorPlotOutliers[oid_] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]], oid]]]]}} &;
 
 
-End[]
+End[];
 
-EndPackage[]
+EndPackage[];
