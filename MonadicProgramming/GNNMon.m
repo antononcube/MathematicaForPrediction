@@ -51,7 +51,7 @@
 
    That classification functionality can be also used to find outliers in a set points.
 
-   # Usage examples
+   # Usage example
 
     Block[{n = 30}, SeedRandom[343];
       points = 
@@ -114,22 +114,22 @@ If[Length[DownValues[OutlierIdentifiers`OutlierIdentifier]] == 0,
 BeginPackage["GNNMon`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-$GNNMonFailure = "Failure symbol for GNNMon.";
+$GNNMonFailure::usage = "Failure symbol for GNNMon.";
 
 GNNMonGetData::usage = "GNNMonGetData[] gets monad's points.";
 
-GNNMonMakeNearestFunction::usage = "GNNMonMakeNearestFunction[opts] makes the Nearest function";
+GNNMonMakeNearestFunction::usage = "GNNMonMakeNearestFunction[opts] makes the Nearest function.";
 
-GNNMonComputeThresholds::usage = "GNNMonComputeThresholds[ nTopNNs_Integer, radiusFunc_:Mean ] computes \
-the proximity thresholds using nTopNNs nearest neighbors and aggregating with radiusFunc.";
+GNNMonComputeThresholds::usage = "GNNMonComputeThresholds[ nTopNNs_Integer, aggrFunc_:Mean ] computes \
+the proximity thresholds using nTopNNs nearest neighbors and aggregating with aggrFunc.";
 
 GNNMonFindNearest::usage = "GNNMonFindNearest[ pnt_?VectorQ, nTopNNs_Integer ] finds nTopNNs of monad's points \
 that are nearest to pnt.";
 
-GNNMonClassify::usage = "GNNMonClassify[ pnts : { _?VectorQ | _?MatrixQ }, opts ] classifies to True elements of pnts
+GNNMonClassify::usage = "GNNMonClassify[ pnts : { _?VectorQ | _?MatrixQ | Automatic }, opts ] classifies to True elements of pnts
 that are considered close enough to monad's points.";
 
-GNNMonFindAnomalies::usage = "GNNMonFindAnomalies[ pnts : { _?VectorQ | _?MatrixQ }, opts ] finds anomalies \
+GNNMonFindAnomalies::usage = "GNNMonFindAnomalies[ pnts : { _?VectorQ | _?MatrixQ | Automatic }, opts ] finds anomalies \
 of pnts according to monad's points.";
 
 GNNMonRescale::usage = "GNNMonRescale non-monadic rescaling.";
@@ -152,7 +152,7 @@ GenerateStateMonadCode[ "GNNMon`GNNMon", "FailureSymbol" -> $GNNMonFailure, "Str
 GenerateMonadAccessors[
   "GNNMon`GNNMon",
   { "data", "nearestFunction", "distanceFunction", "numberOfNNs", "nearestNeighborDistances",
-    "RadiusFunction", "radius", "lowerThreshold", "UpperThreshold" },
+    "aggregationFunction", "radius", "lowerThreshold", "UpperThreshold" },
   "FailureSymbol" -> $GNNMonFailure ];
 
 
@@ -180,15 +180,18 @@ GNNMonGetData[$GNNMonFailure] := $GNNMonFailure;
 GNNMonGetData[][xs_, context_] := GNNMonGetData[xs, context];
 
 GNNMonGetData[xs_, context_] :=
-    Block[{data},
+    Block[{},
 
       Which[
 
         KeyExistsQ[context, "data"] && MatrixQ[context["data"], NumericQ],
-        GNNMonUnit[ context["data"], context],
+        GNNMonUnit[ context["data"], context ],
+
+        MatrixQ[xs, NumericQ] && TrueQ[ Head[xs] === SparseArray ],
+        GNNMonUnit[ N @ Normal[xs], context ],
 
         MatrixQ[xs, NumericQ],
-        GNNMonUnit[xs, context],
+        GNNMonUnit[ N @ xs, context],
 
         True,
         Echo["Cannot find data.", "GetData:"];
@@ -224,11 +227,11 @@ Clear[GNNMonMakeNearestFunction];
 
 SyntaxInformation[GNNMonMakeNearestFunction] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
-Options[GNNMonMakeNearestFunction] = Options[Nearest];
+Options[GNNMonMakeNearestFunction] = { DistanceFunction -> EuclideanDistance };
 
 GNNMonMakeNearestFunction[$GNNMonFailure] := $GNNMonFailure;
 
-GNNMonMakeNearestFunction[xs_, context_Association] := GNNMonFindAnomalies[][xs, context];
+GNNMonMakeNearestFunction[xs_, context_Association] := GNNMonMakeNearestFunction[ Options[GNNMonMakeNearestFunction] ][xs, context];
 
 GNNMonMakeNearestFunction[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{data, distFunc, nf},
@@ -262,16 +265,17 @@ ClearAll[GNNMonComputeThresholds];
 
 SyntaxInformation[GNNMonComputeThresholds] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
-Options[GNNMonComputeThresholds] = { "OutlierIdentifier" -> HampelIdentifierParameters };
+Options[GNNMonComputeThresholds] = { "OutlierIdentifier" -> HampelIdentifierParameters, "AggregationFunction" -> Mean };
 
 GNNMonComputeThresholds[$GNNMonFailure] := $GNNMonFailure;
 
-GNNMonComputeThresholds[xs_, context_Association] := $GNNMonFailure ;;
+GNNMonComputeThresholds[xs_, context_Association] := $GNNMonFailure;
 
-    GNNMonComputeThresholds[ nTopNNs_Integer, radiusFunc_ : Mean, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{outFunc, data, nf, distFunc, nns, means, ths},
+GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{outFunc, aggrFunc, data, nf, distFunc, nns, means, ths},
 
       outFunc = OptionValue[ GNNMonComputeThresholds, "OutlierIdentifier" ];
+      aggrFunc = OptionValue[ GNNMonComputeThresholds, "AggregationFunction" ];
 
       data = GNNMonTakeData[xs, context];
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
@@ -283,16 +287,16 @@ GNNMonComputeThresholds[xs_, context_Association] := $GNNMonFailure ;;
 
       nns = Association @ Map[# -> nf[ data[[#]], nTopNNs ] &, Range[Length[data]] ];
 
-      means = Association @ KeyValueMap[ Function[{k, v}, k -> radiusFunc[Map[distFunc[data[[k]], data[[#]]] &, Complement[v, {k}]]]], nns];
+      means = Association @ KeyValueMap[ Function[{k, v}, k -> aggrFunc[Map[distFunc[data[[k]], data[[#]]] &, Complement[v, {k}]]]], nns];
 
-      ths = outFunc[ Values[means] ];
+      ths = outFunc[ N @ Values[means] ];
 
       GNNMonUnit[ xs,
         Join[context, <|
           "nearestNeighborDistances" -> nns,
           "numberOfNNs" -> nTopNNs,
-          "radius" -> radiusFunc[ Values[means] ],
-          "radiusFunction" -> radiusFunc,
+          "radius" -> aggrFunc[ Values[means] ],
+          "aggregationFunction" -> aggrFunc,
           "lowerThreshold" -> ths[[1]],
           "upperThreshold" -> ths[[2]] |> ] ]
     ];
@@ -300,7 +304,7 @@ GNNMonComputeThresholds[xs_, context_Association] := $GNNMonFailure ;;
 GNNMonComputeThresholds[___][xs_, context_Association] :=
     Block[{},
       Echo[
-        "The expected signature is GNNMonComputeThresholds[ nTopNNs_Integer, radiusFunc_Mean, opts:OptionsPattern[] ].",
+        "The expected signature is GNNMonComputeThresholds[ nTopNNs_Integer, aggrFunc_Mean, opts:OptionsPattern[] ].",
         "GNNMonComputeThresholds:"
       ];
       $GNNMonFailure
@@ -371,9 +375,9 @@ Options[GNNMonClassify] = { "UpperThresholdFactor" -> 1 };
 
 GNNMonClassify[$GNNMonFailure] := $GNNMonFailure;
 
-GNNMonClassify[xs_, context_Association] := $GNNMonFailure ;
+GNNMonClassify[xs_, context_Association] := GNNMonClassify[][xs, context];
 
-GNNMonClassify[ ][xs_, context_Association] :=
+GNNMonClassify[][xs_, context_Association] :=
     GNNMonClassify[ Automatic, "Decision", Options[GNNMonClassify] ][xs, context];
 
 GNNMonClassify[ prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
@@ -400,9 +404,9 @@ GNNMonClassify[ point_?VectorQ, prop_String : "Decision", opts : OptionsPattern[
     GNNMonClassify[ {point}, opts ][xs, context];
 
 GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{factor, data, nf, distFunc, nTopNNs, radiusFunc, upperThreshold, res, knownProperties},
+    Block[{factor, data, nf, distFunc, nTopNNs, aggrFunc, upperThreshold, res, knownProperties},
 
-      knownProperties = {"Decision", "Probabilities", "Properties"};
+      knownProperties = { "Decision", "Distances", "Probabilities", "Properties"};
 
       factor = OptionValue[GNNMonClassify, "UpperThresholdFactor" ];
       If[ ! ( NumberQ[ factor ] && factor > 0 ),
@@ -422,7 +426,7 @@ GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern
       nTopNNs = GNNMonTakeNumberOfNNs[xs, context];
       If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
-      radiusFunc = GNNMonTakeRadiusFunction[xs, context];
+      aggrFunc = GNNMonTakeAggregationFunction[xs, context];
       If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       upperThreshold = GNNMonTakeUpperThreshold[xs, context];
@@ -431,16 +435,17 @@ GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern
       res = Association[ MapIndexed[ #2[[1]] -> nf[#, nTopNNs]&, points] ];
 
       res = Association @
-          KeyValueMap[ Function[{k, v}, k -> radiusFunc[ Map[ distFunc[ points[[k]], data[[#]] ] &, v ] ] ], res];
-
-      res = Map[ # <= upperThreshold * factor &, res ];
+          KeyValueMap[ Function[{k, v}, k -> aggrFunc[ Map[ distFunc[ points[[k]], data[[#]] ] &, v ] ] ], res];
 
       Which[
-        MemberQ[ ToLowerCase[{ "Probabilities" }], ToLowerCase[prop]],
-        Echo["Probabilities of belonging is not implemented yet.", "GNNMonClassify:"];
+        MemberQ[ ToLowerCase[{ "Decision" }], ToLowerCase[prop]],
+        res = Map[ # <= upperThreshold * factor &, res ],
+
+        MemberQ[ ToLowerCase[{ "Distances", "AggregatedDistances" }], ToLowerCase[prop]],
         Nothing,
 
-        MemberQ[ ToLowerCase[{ "Decision" }], ToLowerCase[prop]],
+        MemberQ[ ToLowerCase[{ "Probabilities" }], ToLowerCase[prop]],
+        Echo["Probabilities of belonging is not implemented yet.", "GNNMonClassify:"];
         Nothing,
 
         ToLowerCase[prop] == "properties",
@@ -478,7 +483,9 @@ Options[GNNMonFindAnomalies] = { "UpperThresholdFactor" -> 1 };
 
 GNNMonFindAnomalies[$GNNMonFailure] := $GNNMonFailure;
 
-GNNMonFindAnomalies[xs_, context_Association] := $GNNMonFailure ;
+GNNMonFindAnomalies[xs_, context_Association] := GNNMonFindAnomalies[][xs, context];
+
+GNNMonFindAnomalies[][xs_, context_Association] := GNNMonFindAnomalies[ Options[GNNMonFindAnomalies] ][xs, context];
 
 GNNMonFindAnomalies[ opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonFindAnomalies[ Automatic, "Anomalies", opts ][xs, context];
@@ -495,7 +502,7 @@ GNNMonFindAnomalies[ points : ( _?MatrixQ | Automatic ), prop_String : "Anomalie
       If[ TrueQ[ res === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       Which[
-        TrueQ[points === Automatic] &&  MemberQ[ ToLowerCase[{ "Anomalies" }], ToLowerCase[prop]],
+        TrueQ[points === Automatic] && MemberQ[ ToLowerCase[{ "Anomalies" }], ToLowerCase[prop]],
         (* It assumed GNNMonClassify failed if !KeyExistsQ[context,"data"] *)
         res = Pick[context["data"], Not /@ Values[res]],
 
@@ -509,7 +516,7 @@ GNNMonFindAnomalies[ points : ( _?MatrixQ | Automatic ), prop_String : "Anomalie
         res = Not /@ res,
 
         ToLowerCase[prop] == "properties",
-        Echo[ knownProperties, "GNNMonClassify:"];
+        Echo[ knownProperties, "GNNMonFindAnomalies:"];
         res = knownProperties,
 
         True,
