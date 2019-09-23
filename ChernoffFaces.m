@@ -159,32 +159,32 @@
 
 (* Created by Mathematica Plugin for IntelliJ IDEA *)
 
-BeginPackage["ChernoffFaces`"]
+BeginPackage["ChernoffFaces`"];
 
-ChernoffFace::usage = "ChernoffFace[pars_Association,opts] plots a Gernoff face specified by pars. The options \
-paramerter opts is passed to Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names."
+ChernoffFace::usage = "ChernoffFace[pars_Association,opts] plots a Chernoff face specified by pars. The options \
+paramerter opts is passed to Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names.";
 
 ChernoffFacePartsParameters::usage := "ChernoffFacePartsParameters[] returns only those parameter associations \
-taken by ChernoffFace the keys of which specify face parts placement, rotation, and sizes."
+taken by ChernoffFace the keys of which specify face parts placement, rotation, and sizes.";
 
-VariablesRescale::usage = "VariablesRescale[data, opts] standardizes and rescales the columns of the data."
+VariablesRescale::usage = "VariablesRescale[data, opts] standardizes and rescales the columns of the data.";
 
 PrototypeDeviationsRescale::usage = "PrototypeDeviationsRescale[prototype, data] standardizes and rescales \
-the columns of the data assuming prototype is the most normal (central) row of data."
+the columns of the data assuming prototype is the most normal (central) row of data.";
 
 ChernoffFaceAutoColored::usage = "ChernoffFaceAutoColored[vec_?VectorQ, colorFunc_, opts_] calls ChernoffFace \
 with automatically computed colors for the face parts using a specified color function. \
 If the vector has less than 2 elements the face color is determined by the first element. \
 If the vector has more than 2 elements the face color is determined by the mean of the first and second elements. \
-(more...)"
+(more...)";
 
-ChernoffFaceRecordsSummary::usage = "RecordsSummary of data with Chernoff faces. (The data is not rescaled.)"
+ChernoffFaceRecordsSummary::usage = "RecordsSummary of data with Chernoff faces. (The data is not rescaled.)";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 Options[VariablesRescale] = {
   "StandardizingFunction" -> ( Standardize[#, Mean, StandardDeviation] &),
-  "RescaleRangeFunction" -> MinMax }
+  "RescaleRangeFunction" -> MinMax };
 VariablesRescale[ data_, opts:OptionsPattern[] ] :=
     Block[{ stFunc, rangeFunc },
       stFunc = OptionValue[ "StandardizingFunction" ];
@@ -228,12 +228,12 @@ DefaultChernoffFaceParameters[] := <|
   "NoseColor" -> Automatic, "MouthColor" -> Black, "EyeBallColor" -> White,
   "MakeSymmetric" -> True|>;
 
-Clear[ChernoffFacePartsParameters]
+Clear[ChernoffFacePartsParameters];
 ChernoffFacePartsParameters[] :=
     Pick[ChernoffFace["Properties"],
       Not /@ StringMatchQ[Keys[ChernoffFace["Properties"]], ___ ~~ ("Color" | "Symmetric")]];
 
-Clear[MakeSymmetricChernoffFaceParameters]
+Clear[MakeSymmetricChernoffFaceParameters];
 MakeSymmetricChernoffFaceParameters[pars_Association, defaultPars : (_Association | {}) : {}] :=
     Block[{symPairs, res},
       symPairs = {
@@ -256,7 +256,7 @@ MakeSymmetricChernoffFaceParameters[pars_Association, defaultPars : (_Associatio
       ]
     ];
 
-Clear[ChernoffFace]
+Clear[ChernoffFace];
 
 ChernoffFace::pars = "The first argument is expected to be an association or a list of real numbers."
 
@@ -365,7 +365,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
 ChernoffFace[___] := (Message[ChernoffFace::pars]; $Failed);
 
 
-Clear[ChernoffFaceAutoColored]
+Clear[ChernoffFaceAutoColored];
 
 ChernoffFaceAutoColored[vec_?VectorQ, opts : OptionsPattern[]] :=
     ChernoffFaceAutoColored[vec, ColorData["Pastel"], opts];
@@ -392,7 +392,7 @@ ChernoffFaceAutoColored[vec_?VectorQ, cdf_ColorDataFunction, opts : OptionsPatte
 
 
 (* Find the median and quartile faces (used to help interpretation.) *)
-ClearAll[ChernoffFaceRecordsSummary]
+ClearAll[ChernoffFaceRecordsSummary];
 Options[ChernoffFaceRecordsSummary] = { ImageSize -> 100};
 ChernoffFaceRecordsSummary[rdata_, cdf:(_ColorDataFunction|None|_String|_Integer), opts : OptionsPattern[]] :=
     Block[{faceImageSize, cdfLocal, qvals, cfFunc,
@@ -426,6 +426,6 @@ ChernoffFaceRecordsSummary[rdata_, cdf:(_ColorDataFunction|None|_String|_Integer
       <| "QuantileChernoffFaces"->quantileFaces, "RangeChernoffFaces"->rangeFaces |>
     ];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
