@@ -83,7 +83,7 @@ If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
 ];
 
-If[Length[DownValues[MonadicQuantileRegression`SMRMonUnit]] == 0,
+If[Length[DownValues[MonadicSparseMatrixRecommender`SMRMonUnit]] == 0,
   Echo["MonadicSparseMatrixRecommender.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"]
 ];
