@@ -37,11 +37,43 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2019-09-22 *)
 
-(* :Package Version: 0.1 *)
-(* :Mathematica Version: 12 *)
+(* :Package Version: 0.9 *)
+(* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2019 Anton Antonov *)
-(* :Keywords: *)
-(* :Discussion: *)
+(* :Keywords: nearest neighbors, anomaly detection, outliers, monad *)
+(* :Discussion:
+
+   # In brief
+
+   The primary motivation for making this Geometric Nearest Neighbors (GNN) software monad
+   (GNNMon) is the implementation of a simple Nearest Neighbors (NN's) classifier that tells
+   does a point belong to a set of points.
+
+   That classification functionality can be also used to find outliers in a set points.
+
+   # Usage examples
+
+      gnnObj =
+        GNNMonUnit[points]⟹
+          GNNMonMakeNearestFunction[DistanceFunction -> EuclideanDistance]⟹
+          GNNMonComputeThresholds[10, Mean, OutlierIdentifier -> SPLUSQuartileIdentifierParameters]⟹
+          GNNMonEchoFunctionContext[ListPlot[#data, PlotRange -> All] &];
+
+      anomalies =
+        gnnObj⟹
+         GNNMonFindAnomalies[ newPoints, "Anomalies", "UpperThresholdFactor" -> 2]⟹
+         GNNMonTakeValue;
+
+      ListPlot[{newPoints, anomalies}, PlotRange -> All,
+        PlotStyle -> {{Gray}, {Red, PointSize[0.01]}}, ImageSize -> Large, PlotTheme -> "Detailed"]
+
+
+
+   Anton Antonov
+   Florida, USA
+   2019-09-22
+   
+*)
 
 (**************************************************************)
 (* Importing packages (if needed)                             *)
@@ -74,15 +106,24 @@ BeginPackage["GNNMon`"];
 
 $GNNMonFailure = "Failure symbol for GNNMon.";
 
-GNNMonGetData::usage = "GNNMonGetData";
+GNNMonGetData::usage = "GNNMonGetData[] gets monad's points.";
 
-GNNMonMakeNearestFunction::usage = "GNNMonMakeNearestFunction";
+GNNMonMakeNearestFunction::usage = "GNNMonMakeNearestFunction[opts] makes the Nearest function";
 
-GNNMonComputeThresholds::usage = "GNNMonComputeThresholds";
+GNNMonComputeThresholds::usage = "GNNMonComputeThresholds[ nTopNNs_Integer, radiusFunc_:Mean ] computes \
+the proximity thresholds using nTopNNs nearest neighbors and aggregating with radiusFunc.";
 
-GNNMonFindNearest::usage = "GNNMonFindNearest";
+GNNMonFindNearest::usage = "GNNMonFindNearest[ pnt_?VectorQ, nTopNNs_Integer ] finds nTopNNs of monad's points \
+that are nearest to pnt.";
 
-GNNMonClassify::usage = "GNNMonClassify";
+GNNMonClassify::usage = "GNNMonClassify[ pnts : { _?VectorQ | _?MatrixQ }, opts ] classifies to True elements of pnts
+that are considered close enough to monad's points.";
+
+GNNMonFindAnomalies::usage = "GNNMonFindAnomalies[ pnts : { _?VectorQ | _?MatrixQ }, opts ] finds anomalies \
+of pnts according to monad's points.";
+
+GNNMonRescale::usage = "GNNMonRescale non-monadic rescaling.";
+
 
 Begin["`Private`"];
 
@@ -147,6 +188,22 @@ GNNMonGetData[xs_, context_] :=
     ];
 
 GNNMonGetData[___][xs_, context_Association] := $GNNMonFailure;
+
+
+(**************************************************************)
+(* Find distance from a point to matrix rows                  *)
+(**************************************************************)
+(* Non-monadic at this point. *)
+
+Clear[GNNMonRescale];
+
+GNNMonRescale[points_?MatrixQ] := GNNMonRescale[points, MinMax /@ Transpose[points]];
+
+GNNMonRescale[points_?MatrixQ, mms_?MatrixQ] :=
+    Block[{},
+      Transpose@
+          MapThread[Rescale[#1, #2, {0, 1}] &, {Transpose[points], mms}]
+    ] /; Dimensions[points][[2]] == Dimensions[mms][[1]] && Dimensions[mms][[2]] == 2;
 
 
 (**************************************************************)
@@ -300,12 +357,23 @@ Clear[GNNMonClassify];
 
 SyntaxInformation[GNNMonClassify] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
+Options[GNNMonClassify] = { "UpperThresholdFactor" -> 1 };
+
 GNNMonClassify[$GNNMonFailure] := $GNNMonFailure;
 
-GNNMonClassify[xs_, context_Association] := $GNNMonFailure ;;
+GNNMonClassify[xs_, context_Association] := $GNNMonFailure ;
 
-    GNNMonClassify[ points_?MatrixQ ][xs_, context_Association] :=
-    Block[{data, nf, distFunc, nTopNNs, radiusFunc, upperThreshold, res},
+GNNMonClassify[ point_?VectorQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
+    GNNMonClassify[ {point}, opts ][xs, context];
+
+GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{factor, data, nf, distFunc, nTopNNs, radiusFunc, upperThreshold, res},
+
+      factor = OptionValue[GNNMonClassify, "UpperThresholdFactor" ];
+      If[ ! ( NumberQ[ factor ] && factor > 0 ),
+        Echo["The value of the option \"UpperThresholdFactor\" is expected to be a positive number.", "GNNMonClassify:"];
+        Return[$GNNMonFailure]
+      ];
 
       data = GNNMonBind[ GNNMonGetData[xs, context], GNNMonTakeValue ];
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
@@ -330,20 +398,91 @@ GNNMonClassify[xs_, context_Association] := $GNNMonFailure ;;
       res = Association @
           KeyValueMap[ Function[{k, v}, k -> radiusFunc[ Map[ distFunc[ points[[k]], data[[#]] ] &, v ] ] ], res];
 
-      res = Map[ # <= upperThreshold&, res ];
+      res = Map[ # <= upperThreshold * factor &, res ];
+
+      Which[
+        MemberQ[ ToLowerCase[{ "Probabilities" }], ToLowerCase[prop]],
+        Echo["Probabilities of belonging is not implemented yet.", "GNNMonClassify:"];
+        Nothing,
+
+        MemberQ[ ToLowerCase[{ "Decision" }], ToLowerCase[prop]],
+        Nothing,
+
+        ToLowerCase[prop] == "properties",
+        Echo[ {"Decision", "Probabilities", "Properties"}, "GNNMonClassify:"];
+        res = {"Decision", "Probabilities", "Properties"},
+
+        True,
+        Echo["Unknown property.", "GNNMonFindNearest:"];
+        Return[$GNNMonFailure]
+      ];
 
       GNNMonUnit[ res, context ]
     ];
 
-GNNMonFindNearest[___][xs_, context_Association] :=
+GNNMonClassify[___][xs_, context_Association] :=
     Block[{},
       Echo[
-        "The expected signature is GNNMonFindNearest[ point_?VectorQ, nTopNNs_Integer, prop_String : \"Values\" ].",
-        "GNNMonFindNearest:"
+        "The expected signature is GNNMonClassify[ points_?MatrixQ, prop_String : \"Values\" ].",
+        "GNNMonClassify:"
       ];
       $GNNMonFailure
     ];
 
+
+(**************************************************************)
+(* Anomalies finder                                           *)
+(**************************************************************)
+
+Clear[GNNMonFindAnomalies];
+
+SyntaxInformation[GNNMonFindAnomalies] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+
+Options[GNNMonFindAnomalies] = { "UpperThresholdFactor" -> 1 };
+
+GNNMonFindAnomalies[$GNNMonFailure] := $GNNMonFailure;
+
+GNNMonFindAnomalies[xs_, context_Association] := $GNNMonFailure ;
+
+GNNMonFindAnomalies[ point_?VectorQ, prop_String : "Anomalies", opts : OptionsPattern[] ][xs_, context_Association] :=
+    GNNMonFindAnomalies[ {point}, opts ][xs, context];
+
+GNNMonFindAnomalies[ points_?MatrixQ, prop_String : "Anomalies", opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{res},
+
+      res = Fold[ GNNMonBind, GNNMonUnit[xs, context], {GNNMonClassify[points, "Decision", opts ], GNNMonTakeValue } ];
+      If[ TrueQ[ res === $GNNMonFailure ], Return[$GNNMonFailure] ];
+
+      Which[
+        MemberQ[ ToLowerCase[{ "Anomalies" }], ToLowerCase[prop]],
+        res = Pick[points, Not /@ Values[res]],
+
+        MemberQ[ ToLowerCase[{ "AnomalyPositions" }], ToLowerCase[prop]],
+        res = Pick[Keys[res], Not /@ Values[res]],
+
+        MemberQ[ ToLowerCase[{ "Decision" }], ToLowerCase[prop]],
+        res = Not /@ res,
+
+        ToLowerCase[prop] == "properties",
+        Echo[ {"Anomalies", "AnomalyPositions", "Decision", "Properties"}, "GNNMonClassify:"];
+        res = {"Anomalies", "AnomalyPositions", "Decision", "Properties"},
+
+        True,
+        Echo["Unknown property.", "GNNMonFindNearest:"];
+        Return[$GNNMonFailure]
+      ];
+
+      GNNMonUnit[ res, context ]
+    ];
+
+GNNMonFindAnomalies[___][xs_, context_Association] :=
+    Block[{},
+      Echo[
+        "The expected signature is GNNMonFindAnomalies[ points_?MatrixQ, prop_String : \"Values\" ].",
+        "GNNMonFindAnomalies:"
+      ];
+      $GNNMonFailure
+    ];
 
 End[]; (* `Private` *)
 
