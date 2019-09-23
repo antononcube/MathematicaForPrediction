@@ -363,11 +363,33 @@ GNNMonClassify[$GNNMonFailure] := $GNNMonFailure;
 
 GNNMonClassify[xs_, context_Association] := $GNNMonFailure ;
 
+GNNMonClassify[ prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
+    GNNMonClassify[ Automatic, prop, opts][xs, context];
+
+GNNMonClassify[ Automatic, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{data, points},
+
+      data = GNNMonTakeData[xs, context];
+      If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
+
+      Which[
+        MatrixQ[xs, NumericQ] && Dimensions[xs][[2]] == Dimensions[data][[2]],
+        points = xs,
+
+        True,
+        points = data
+      ];
+
+      GNNMonClassify[ points, prop, opts][xs, context]
+    ];
+
 GNNMonClassify[ point_?VectorQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonClassify[ {point}, opts ][xs, context];
 
 GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{factor, data, nf, distFunc, nTopNNs, radiusFunc, upperThreshold, res},
+    Block[{factor, data, nf, distFunc, nTopNNs, radiusFunc, upperThreshold, res, knownProperties},
+
+      knownProperties = {"Decision", "Probabilities", "Properties"};
 
       factor = OptionValue[GNNMonClassify, "UpperThresholdFactor" ];
       If[ ! ( NumberQ[ factor ] && factor > 0 ),
@@ -409,11 +431,12 @@ GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern
         Nothing,
 
         ToLowerCase[prop] == "properties",
-        Echo[ {"Decision", "Probabilities", "Properties"}, "GNNMonClassify:"];
-        res = {"Decision", "Probabilities", "Properties"},
+        Echo[ knownProperties, "GNNMonClassify:"];
+        res = knownProperties,
 
         True,
-        Echo["Unknown property.", "GNNMonFindNearest:"];
+        Echo["Unknown property. The second argument should be one of " <> ToString[knownProperties] <> ".",
+          "GNNMonClassify:"];
         Return[$GNNMonFailure]
       ];
 
@@ -423,7 +446,7 @@ GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern
 GNNMonClassify[___][xs_, context_Association] :=
     Block[{},
       Echo[
-        "The expected signature is GNNMonClassify[ points_?MatrixQ, prop_String : \"Values\" ].",
+        "The expected signature is GNNMonClassify[ points : ( _?VectorQ | _?MatrixQ | Automatic ), prop_String : \"Decision\" ].",
         "GNNMonClassify:"
       ];
       $GNNMonFailure
@@ -434,7 +457,7 @@ GNNMonClassify[___][xs_, context_Association] :=
 (* Anomalies finder                                           *)
 (**************************************************************)
 
-Clear[GNNMonFindAnomalies];
+ClearAll[GNNMonFindAnomalies];
 
 SyntaxInformation[GNNMonFindAnomalies] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
@@ -447,13 +470,19 @@ GNNMonFindAnomalies[xs_, context_Association] := $GNNMonFailure ;
 GNNMonFindAnomalies[ point_?VectorQ, prop_String : "Anomalies", opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonFindAnomalies[ {point}, opts ][xs, context];
 
-GNNMonFindAnomalies[ points_?MatrixQ, prop_String : "Anomalies", opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{res},
+GNNMonFindAnomalies[ points : ( _?MatrixQ | Automatic ), prop_String : "Anomalies", opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{res, knownProperties},
+
+      knownProperties = {"Anomalies", "AnomalyPositions", "Decision", "Properties"};
 
       res = Fold[ GNNMonBind, GNNMonUnit[xs, context], {GNNMonClassify[points, "Decision", opts ], GNNMonTakeValue } ];
       If[ TrueQ[ res === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       Which[
+        TrueQ[points === Automatic] &&  MemberQ[ ToLowerCase[{ "Anomalies" }], ToLowerCase[prop]],
+        (* It assumed GNNMonClassify failed if !KeyExistsQ[context,"data"] *)
+        res = Pick[context["data"], Not /@ Values[res]],
+
         MemberQ[ ToLowerCase[{ "Anomalies" }], ToLowerCase[prop]],
         res = Pick[points, Not /@ Values[res]],
 
@@ -464,11 +493,12 @@ GNNMonFindAnomalies[ points_?MatrixQ, prop_String : "Anomalies", opts : OptionsP
         res = Not /@ res,
 
         ToLowerCase[prop] == "properties",
-        Echo[ {"Anomalies", "AnomalyPositions", "Decision", "Properties"}, "GNNMonClassify:"];
-        res = {"Anomalies", "AnomalyPositions", "Decision", "Properties"},
+        Echo[ knownProperties, "GNNMonClassify:"];
+        res = knownProperties,
 
         True,
-        Echo["Unknown property.", "GNNMonFindNearest:"];
+        Echo["Unknown property. The second argument should be one of " <> ToString[knownProperties] <> ".",
+          "GNNMonFindAnomalies:"];
         Return[$GNNMonFailure]
       ];
 
@@ -478,7 +508,7 @@ GNNMonFindAnomalies[ points_?MatrixQ, prop_String : "Anomalies", opts : OptionsP
 GNNMonFindAnomalies[___][xs_, context_Association] :=
     Block[{},
       Echo[
-        "The expected signature is GNNMonFindAnomalies[ points_?MatrixQ, prop_String : \"Values\" ].",
+        "The expected signature is GNNMonFindAnomalies[ points : ( _?VectorQ | _?MatrixQ | Automatic ), prop_String : \"Anomalies\" ].",
         "GNNMonFindAnomalies:"
       ];
       $GNNMonFailure
