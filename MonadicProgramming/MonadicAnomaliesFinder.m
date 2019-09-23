@@ -184,7 +184,7 @@ SyntaxInformation[SMRMonFindAnomalies] = { "ArgumentsPattern" -> { _., OptionsPa
 Options[SMRMonFindAnomalies] = {
   "NumberOfNearestNeighbors" -> 10,
   "OutlierIdentifier" -> (BottomOutliers @* SPLUSQuartileIdentifierParameters),
-  "RadiusFunction" -> Mean,
+  "AggregationFunction" -> Mean,
   "Property" -> "SSparseMatrix"
 };
 
@@ -196,11 +196,15 @@ SMRMonFindAnomalies[ opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonFindAnomalies[ Automatic, opts ][xs, context];
 
 SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{ nns, outFunc, radiusFunc, newContext, prop, smat, recs, outlierInds, outlierThresholds },
+    Block[{ nns, outFunc, aggrFunc, newContext, prop, smat, recs, outlierInds, outlierThresholds, knownProperties },
+
+      (* Preliminary assignments. *)
+
+      knownProperties = { "SSparseMatrix", "RowNames", "OutlierThresholds", "Properties" };
 
       nns = OptionValue[ SMRMonFindAnomalies, "NumberOfNearestNeighbors" ];
       outFunc = OptionValue[ SMRMonFindAnomalies, "OutlierIdentifier" ];
-      radiusFunc = OptionValue[ SMRMonFindAnomalies, "RadiusFunction" ];
+      aggrFunc = OptionValue[ SMRMonFindAnomalies, "AggregationFunction" ];
       prop = OptionValue[ SMRMonFindAnomalies, "Property" ];
 
       If[ ! (IntegerQ[nns] && nns > 0),
@@ -216,11 +220,14 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         Return[$SMRMonFailure]
       ];
 
+      (* If arg is a standard matrix make it an SSparseMatrix. *)
       smat = arg;
       If[ MatrixQ[arg, NumberQ],
         smat = ToSSparseMatrix[ SparseArray[arg], "RowNames" -> Map[ToString, Range[Length[arg]]] ]
       ];
 
+      (* Compute the Cosine/Dot distances to the rows of monad's matrix. *)
+      (* If arg/smat is Automatic use monad's matrix. *)
       Which[
         smat === Automatic,
         recs =
@@ -232,7 +239,7 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
             ],
 
         SSparseMatrixQ[smat] && ColumnsCount[smat] == ColumnsCount[context["M"]],
-        nns = Lookup[ context, "numberOfNearestNeighbors" ];
+        nns = Lookup[ context, "numberOfNNs" ];
         recs =
             Association[
               Map[
@@ -249,37 +256,40 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         Return[$SMRMonFailure]
       ];
 
+      (* If smat is not Automatic and the outliers thresholds are already in the context
+         then this means with have "trained" already. *)
       If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
-        radiusFunc = context["radiusFunction"]
+        aggrFunc = context["aggregationFunction"]
       ];
 
-      recs = Map[ radiusFunc@*Values, recs ];
+      (* Aggregate *)
+      recs = Map[ aggrFunc@*Values, recs ];
+      (* Probably not a good hack, but for now produces expected results. *)
+      (* Takes care of Mean[{}] and similar cases. *)
+      recs = If[ !NumericQ[#], 0., #]& /@ recs;
 
+      (* If smat is not Automatic and the outliers thresholds are already in the context then use them. *)
+      (* If smat is Automatic then (re-)compute the outlier thresholds. *)
       If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
 
-        radiusFunc = context["radiusFunction"];
-        outlierThresholds = context["outlierThresholds"],
-
-        (* ELSE *)
-        outlierInds = OutlierPosition[ Values[recs], outFunc ];
-        outlierThresholds = outFunc[ Values[recs] ]
-      ];
-
-      If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
+        aggrFunc = context["aggregationFunction"];
+        outlierThresholds = context["outlierThresholds"];
         With[ {th = outlierThresholds},
           outlierInds = OutlierPosition[ Values[recs], th& ]
-        ]
+        ],
+        (* ELSE *)
+
+        outlierThresholds = outFunc[ Values[recs] ];
+        outlierInds = OutlierPosition[ Values[recs], outFunc ]
       ];
 
-      newContext = Join[ context, <| "outlierThresholds" -> outlierThresholds, "radiusFunction" -> radiusFunc, "numberOfNearestNeighbors" -> nns |>];
+      (* The updated context. *)
+      newContext = Join[ context, <| "outlierThresholds" -> outlierThresholds, "aggregationFunction" -> aggrFunc, "numberOfNNs" -> nns |>];
 
+      (* Return result according to the "Property" option. *)
       Which[
         Length[outlierInds] == 0,
         SMRMonUnit[{}, newContext],
-
-        ToLowerCase["Properties"] == ToLowerCase[prop],
-        Echo["The properties are \"SSparseMatrix\", \"RowNames\", \"OutlierThresholds\", \"Properties\".", "SMRMonFindAnomalies:"];
-        SMRMonUnit[ {"SSparseMatrix", "RowNames", "Properties"}, newContext ],
 
         MemberQ[ ToLowerCase[{ "RowNames", "Indices" }], ToLowerCase[prop] ],
         SMRMonUnit[ outlierInds, newContext ],
@@ -287,8 +297,16 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         MemberQ[ ToLowerCase[{ "Thresholds", "OutlierThresholds" }], ToLowerCase[prop] ],
         SMRMonUnit[ outlierThresholds, newContext ],
 
+        ToLowerCase["Properties"] == ToLowerCase[prop],
+        Echo[ knownProperties, "SMRMonFindAnomalies:"];
+        SMRMonUnit[ knownProperties, newContext ],
+
+        ToLowerCase["SSparseMatrix"] == ToLowerCase[prop],
+        SMRMonUnit[ context["M"][[ outlierInds, All ]], newContext ],
+
         True,
-        SMRMonUnit[ context["M"][[ outlierInds, All ]], newContext ]
+        Echo[ "Unknown property. The property should be one of : " <> ToString[knownProperties] <> ".", "SMRMonFindAnomalies:"];
+        Return[$SMRMonFailure]
       ]
     ];
 
