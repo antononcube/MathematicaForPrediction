@@ -477,7 +477,7 @@ LSAMonExtractTopics[ opts : OptionsPattern[] ][xs_, context_] :=
 
 LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{method, nMinDocumentsPerTerm, nInitializingDocuments,
-      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, nnmfOpts, automaticTopicNames },
+      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, nnmfOpts, terms, automaticTopicNames },
 
       method = OptionValue[ LSAMonExtractTopics, Method ];
 
@@ -571,9 +571,10 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         Return[$LSAMonFailure]
       ];
 
+      terms = ColumnNames[context["documentTermMatrix"]];
       automaticTopicNames =
           Table[
-            StringJoin[Riffle[BasisVectorInterpretation[Normal@H[[ind]], 3, context["terms"][[pos]]][[All, 2]], "-"]],
+            StringJoin[Riffle[BasisVectorInterpretation[Normal@H[[ind]], 3, terms[[pos]]][[All, 2]], "-"]],
             {ind, 1, Dimensions[W][[2]]}];
 
       If[ ! DuplicateFreeQ[automaticTopicNames],
@@ -583,7 +584,11 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
       W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["documentTermMatrix"]], "ColumnNames" -> automaticTopicNames ];
       H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> automaticTopicNames, "ColumnNames" -> ColumnNames[context["documentTermMatrix"]][[pos]] ];
 
-      LSAMonUnit[xs, Join[context, <|"W" -> W, "H" -> H, "topicColumnPositions" -> pos, "automaticTopicNames" -> automaticTopicNames, "method" -> method |>]]
+      LSAMonUnit[xs,
+        Join[context, <|
+          "W" -> W, "H" -> H, "topicColumnPositions" -> pos,
+          "automaticTopicNames" -> automaticTopicNames, "terms" -> terms,
+          "method" -> method |>]]
 
     ];
 
