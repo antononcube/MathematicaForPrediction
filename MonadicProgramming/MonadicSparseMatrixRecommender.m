@@ -214,10 +214,10 @@ SMRMonTakeTagTypes::usage = "Takes the tag-types.";
 
 SMRMonTakeMatrixDataset::usage = "Take the Dataset object corresponding to the recommendation matrix.";
 
-SMRMonMetadataProofs::usage = "Metadata proofs for a recommended item and a profile. \
+SMRMonProveByMetadata::usage = "Metadata proofs for a recommended item and a profile. \
 (Tags from item's profile that are found in the given profile.)";
 
-SMRMonHistoryProofs::usage = "History proofs for a recommended item and scored history items.";
+SMRMonProveByHistory::usage = "History proofs for a recommended item and scored history items.";
 
 SMRMonEchoDataSummary::usage = "Echoes summary of the dataset.";
 
@@ -465,6 +465,9 @@ SMRMonCreate[][xs_, context_Association] := SMRMonCreate[Options[SMRMonCreate]][
 
 SMRMonCreate[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Which[
+      MatrixQ[xs, NumberQ],
+      SMRMonCreate[ xs, opts ][xs, context],
+
       MatchQ[xs, _SSparseMatrix] || MatchQ[xs, Association[ (_ -> _SSparseMatrix) ..] ],
       SMRMonCreate[ xs, opts ][xs, context],
 
@@ -474,9 +477,23 @@ SMRMonCreate[ opts : OptionsPattern[] ][xs_, context_Association] :=
       AssociationQ[xs] && KeyExistsQ[xs, "data"] && KeyExistsQ[xs, "itemColumnName"],
       SMRMonCreate[ xs["data"], xs["itemColumnName"], opts ][xs, context],
 
+      AssociationQ[xs] && KeyExistsQ[xs, "data"],
+      SMRMonCreate[ xs["data"], First @ Normal @ Keys @ xs["data"][[1]], opts ][xs, context],
+
+      TrueQ[ Head[xs] === Dataset ],
+      SMRMonCreate[ xs, First @ Normal @ Keys @ xs[[1]], opts ][xs, context],
+
       True,
       SMRMonCreate["Fail"][xs, context]
     ];
+
+SMRMonCreate[ mat_?MatrixQ, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{smat},
+
+      smat = ToSSparseMatrix[SparseArray[mat], "RowNames" -> ToString /@ Range[Length[mat]]];
+
+      SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context]
+] /; MatrixQ[ mat, NumberQ ];
 
 SMRMonCreate[ smat_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
@@ -533,7 +550,7 @@ SMRMonCreate[ds_Dataset, { itemColumnName_String, tagTypeColumnName_String, tagC
 SMRMonCreate[___][__] :=
     Block[{},
       Echo[
-        "The first argument is expected to be a Dataset or an Association of SSparseMatrix objects. " <>
+        "The first argument is expected to be a Dataset, a matrix, a SSparseMatrix object, or an association of SSparseMatrix objects. " <>
             "If the first argument is a Dataset a second argument is expected. " <>
             "That second argument should be an item ID column name in that Dataset (wide form) " <>
             "or a list of four strings specifying the column names that correspond to item ID, tag type, tag, weight. " <>
@@ -853,7 +870,7 @@ Clear[SMRMonFilterMatrix];
 
 SyntaxInformation[SMRMonFilterMatrix] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
 
-Options[SMRMonFilterMatrix] = { "FilterType" -> "Union" };
+Options[SMRMonFilterMatrix] = { "Type" -> "Union" };
 
 SMRMonFilterMatrix[$SMRMonFailure] := $SMRMonFailure;
 
@@ -864,7 +881,7 @@ SMRMonFilterMatrix[xs_, context_Association] := SMRMonFilterMatrix[None][xs, con
 SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ filterType, pvec, svec, rowInds },
 
-      filterType = OptionValue[ SMRMonFilterMatrix, "FilterType" ];
+      filterType = OptionValue[ SMRMonFilterMatrix, "Type" ];
 
       pvec = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToProfileVector[profile], SMRMonTakeValue } ];
       If[ TrueQ[ pvec === $SMRMonFailure ],
@@ -883,7 +900,7 @@ SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, conte
         svec = SparseArray[ Unitize[ Unitize[SparseArray[context["M"]]] . pvec - Length[profile] ] ],
 
         True,
-        Echo["The value of the option \"FilterType\" should be either \"Union\" or \"Intersection\".", "SMRMonFilterMatrix:"];
+        Echo["The value of the option \"Type\" should be either \"Union\" or \"Intersection\".", "SMRMonFilterMatrix:"];
         Return[$SMRMonFailure]
       ];
 
@@ -2250,27 +2267,27 @@ SMRMonClassify[___][__] :=
 (* Metadata Proofs                                         *)
 (*=========================================================*)
 
-Clear[SMRMonMetadataProofs];
+Clear[SMRMonProveByMetadata];
 
-SyntaxInformation[SMRMonMetadataProofs] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
+SyntaxInformation[SMRMonProveByMetadata] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
 
-Options[SMRMonMetadataProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByMetadata] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
-SMRMonMetadataProofs[$SMRMonFailure] := $SMRMonFailure;
+SMRMonProveByMetadata[$SMRMonFailure] := $SMRMonFailure;
 
-SMRMonMetadataProofs[xs_, context_Association] := $SMRMonFailure;
+SMRMonProveByMetadata[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonMetadataProofs[][xs_, context_Association] := $SMRMonFailure;
+SMRMonProveByMetadata[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonMetadataProofs[ profile_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
+SMRMonProveByMetadata[ profile_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{scores, oiFunc, normalizeQ, res},
 
-      oiFunc = OptionValue[SMRMonMetadataProofs, "OutlierIdentifierParameters"];
-      normalizeQ = TrueQ[ OptionValue[SMRMonMetadataProofs, "Normalize"] ];
+      oiFunc = OptionValue[SMRMonProveByMetadata, "OutlierIdentifierParameters"];
+      normalizeQ = TrueQ[ OptionValue[SMRMonProveByMetadata, "Normalize"] ];
 
       (* Check that the argument profile is a profile according to the monad object. *)
       If[ ! ScoredTagsQ[ profile, context ],
-        Echo[ "The first argument is not a profile (an association of scored tags) in the monad object.", "SMRMonMetadataProofs:"];
+        Echo[ "The first argument is not a profile (an association of scored tags) in the monad object.", "SMRMonProveByMetadata:"];
         Return[$SMRMonFailure]
       ];
 
@@ -2292,10 +2309,10 @@ SMRMonMetadataProofs[ profile_Association, itemName_String, opts : OptionsPatter
       SMRMonUnit[ <|itemName -> ReverseSort[res] |>, context ]
     ];
 
-SMRMonMetadataProofs[ profile_Association, itemNames : {_String..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+SMRMonProveByMetadata[ profile_Association, itemNames : {_String..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{res},
 
-      res = Map[ Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonMetadataProofs[ profile, #, opts ], SMRMonTakeValue } ]& , itemNames ];
+      res = Map[ Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonProveByMetadata[ profile, #, opts ], SMRMonTakeValue } ]& , itemNames ];
 
       If[ !FreeQ[res, $SMRMonFailure],
         Return[$SMRMonFailure]
@@ -2304,11 +2321,11 @@ SMRMonMetadataProofs[ profile_Association, itemNames : {_String..}, opts : Optio
       SMRMonUnit[ Join @@ res, context ]
     ];
 
-SMRMonMetadataProofs[___][__] :=
+SMRMonProveByMetadata[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonMetadataProofs[profile_Association, itemNames:( _String | {_String..} ), opts___] .",
-        "SMRMonMetadataProofs:"];
+        "The expected signature is SMRMonProveByMetadata[profile_Association, itemNames:( _String | {_String..} ), opts___] .",
+        "SMRMonProveByMetadata:"];
       $SMRMonFailure
     ];
 
@@ -2318,27 +2335,27 @@ SMRMonMetadataProofs[___][__] :=
 (* History  Proofs                                         *)
 (*=========================================================*)
 
-Clear[SMRMonHistoryProofs];
+Clear[SMRMonProveByHistory];
 
-SyntaxInformation[SMRMonHistoryProofs] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
+SyntaxInformation[SMRMonProveByHistory] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
 
-Options[SMRMonHistoryProofs] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByHistory] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
-SMRMonHistoryProofs[$SMRMonFailure] := $SMRMonFailure;
+SMRMonProveByHistory[$SMRMonFailure] := $SMRMonFailure;
 
-SMRMonHistoryProofs[xs_, context_Association] := $SMRMonFailure;
+SMRMonProveByHistory[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonHistoryProofs[][xs_, context_Association] := $SMRMonFailure;
+SMRMonProveByHistory[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonHistoryProofs[ history_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
+SMRMonProveByHistory[ history_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{ oiFunc, normalizeQ, scores, maxScore, res},
 
-      oiFunc = OptionValue[SMRMonMetadataProofs, "OutlierIdentifierParameters"];
-      normalizeQ = TrueQ[ OptionValue[SMRMonMetadataProofs, "Normalize"] ];
+      oiFunc = OptionValue[SMRMonProveByMetadata, "OutlierIdentifierParameters"];
+      normalizeQ = TrueQ[ OptionValue[SMRMonProveByMetadata, "Normalize"] ];
 
       (* Check that the argument profile is a profile according to the monad object. *)
       If[ ! ScoredItemsQ[ history, context ],
-        Echo[ "The first argument is not an association of scored items in the monad object.", "SMRMonHistoryProofs:"];
+        Echo[ "The first argument is not an association of scored items in the monad object.", "SMRMonProveByHistory:"];
         Return[$SMRMonFailure]
       ];
 
@@ -2366,10 +2383,10 @@ SMRMonHistoryProofs[ history_Association, itemName_String, opts : OptionsPattern
       SMRMonUnit[ <| itemName -> ReverseSort[res] |>, context ]
     ];
 
-SMRMonHistoryProofs[ history_Association, itemNames : {_String..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+SMRMonProveByHistory[ history_Association, itemNames : {_String..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{res},
 
-      res = Map[ Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonHistoryProofs[ history, #, opts ], SMRMonTakeValue } ]& , itemNames ];
+      res = Map[ Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonProveByHistory[ history, #, opts ], SMRMonTakeValue } ]& , itemNames ];
 
       If[ !FreeQ[res, $SMRMonFailure],
         Return[$SMRMonFailure]
@@ -2378,11 +2395,11 @@ SMRMonHistoryProofs[ history_Association, itemNames : {_String..}, opts : Option
       SMRMonUnit[ Join @@ res, context ]
     ];
 
-SMRMonHistoryProofs[___][__] :=
+SMRMonProveByHistory[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonHistoryProofs[history_Association, itemName : ( _String | {_String..} ), opts___] .",
-        "SMRMonHistoryProofs:"];
+        "The expected signature is SMRMonProveByHistory[history_Association, itemName : ( _String | {_String..} ), opts___] .",
+        "SMRMonProveByHistory:"];
       $SMRMonFailure
     ];
 
