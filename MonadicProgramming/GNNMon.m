@@ -53,19 +53,29 @@
 
    # Usage examples
 
-      gnnObj =
-        GNNMonUnit[points]⟹
-          GNNMonMakeNearestFunction[DistanceFunction -> EuclideanDistance]⟹
-          GNNMonComputeThresholds[10, Mean, OutlierIdentifier -> SPLUSQuartileIdentifierParameters]⟹
-          GNNMonEchoFunctionContext[ListPlot[#data, PlotRange -> All] &];
+    Block[{n = 30}, SeedRandom[343];
+      points = 
+       Transpose[{RandomVariate[NormalDistribution[0, 5], n], RandomVariate[NormalDistribution[12, 3], n]}]
+    ];
+    
+    gnnObj =
+      GNNMonUnit[points]⟹
+       GNNMonMakeNearestFunction[DistanceFunction -> EuclideanDistance]⟹
+       GNNMonComputeThresholds[10, Mean, OutlierIdentifier -> SPLUSQuartileIdentifierParameters];
 
-      anomalies =
-        gnnObj⟹
-         GNNMonFindAnomalies[ newPoints, "Anomalies", "UpperThresholdFactor" -> 2]⟹
-         GNNMonTakeValue;
+    newPoints = {{-6, 2.5}, {4.5, 16}};
 
-      ListPlot[{newPoints, anomalies}, PlotRange -> All,
-        PlotStyle -> {{Gray}, {Red, PointSize[0.01]}}, ImageSize -> Large, PlotTheme -> "Detailed"]
+    doesNotBelong =
+      gnnObj⟹
+       GNNMonFindAnomalies[newPoints, "UpperThresholdFactor" -> 1]⟹
+       GNNMonTakeValue
+
+    (* {{-6, 2.5}} *)
+
+    ListPlot[<|"Original points" -> points, "\"Does not belong\"" -> newAnomalies, "New points" -> newPoints|>,
+     PlotRange -> All, 
+     PlotStyle -> {{GrayLevel[0.6]}, {Pink, PointSize[0.022]}, {Blue, PointSize[0.01]}},
+     ImageSize -> Large, PlotTheme -> "Detailed"]
 
 
 
@@ -355,13 +365,16 @@ GNNMonFindNearest[___][xs_, context_Association] :=
 
 Clear[GNNMonClassify];
 
-SyntaxInformation[GNNMonClassify] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+SyntaxInformation[GNNMonClassify] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
 
 Options[GNNMonClassify] = { "UpperThresholdFactor" -> 1 };
 
 GNNMonClassify[$GNNMonFailure] := $GNNMonFailure;
 
 GNNMonClassify[xs_, context_Association] := $GNNMonFailure ;
+
+GNNMonClassify[ ][xs_, context_Association] :=
+    GNNMonClassify[ Automatic, "Decision", Options[GNNMonClassify] ][xs, context];
 
 GNNMonClassify[ prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonClassify[ Automatic, prop, opts][xs, context];
@@ -459,13 +472,16 @@ GNNMonClassify[___][xs_, context_Association] :=
 
 ClearAll[GNNMonFindAnomalies];
 
-SyntaxInformation[GNNMonFindAnomalies] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+SyntaxInformation[GNNMonFindAnomalies] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
 
 Options[GNNMonFindAnomalies] = { "UpperThresholdFactor" -> 1 };
 
 GNNMonFindAnomalies[$GNNMonFailure] := $GNNMonFailure;
 
 GNNMonFindAnomalies[xs_, context_Association] := $GNNMonFailure ;
+
+GNNMonFindAnomalies[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    GNNMonFindAnomalies[ Automatic, "Anomalies", opts ][xs, context];
 
 GNNMonFindAnomalies[ point_?VectorQ, prop_String : "Anomalies", opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonFindAnomalies[ {point}, opts ][xs, context];
