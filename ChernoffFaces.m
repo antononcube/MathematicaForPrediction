@@ -162,7 +162,7 @@
 BeginPackage["ChernoffFaces`"];
 
 ChernoffFace::usage = "ChernoffFace[pars_Association,opts] plots a Chernoff face specified by pars. The options \
-paramerter opts is passed to Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names.";
+parameter opts is passed to Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names.";
 
 ChernoffFacePartsParameters::usage := "ChernoffFacePartsParameters[] returns only those parameter associations \
 taken by ChernoffFace the keys of which specify face parts placement, rotation, and sizes.";
