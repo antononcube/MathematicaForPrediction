@@ -186,8 +186,8 @@ GNNMonGetData[xs_, context_Association] :=
         MatrixQ[xs, NumericQ],
         GNNMonUnit[ AssociationThread[ Range[Length[xs]] -> N[xs] ], context],
 
-        SSparseMatrixQ[xs, NumericQ],
-        GNNMonUnit[ AssociationThread[ RowNames[xs] -> N[SparseArray[xs]] ], context],
+        SSparseMatrixQ[xs],
+        GNNMonUnit[ AssociationThread[ RowNames[xs] -> Normal[N[SparseArray[xs]]] ], context],
 
         DataAssociationQ[ xs ],
         GNNMonUnit[xs, context],
