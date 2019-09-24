@@ -129,56 +129,60 @@ QRMonGetData::usage = "Get time series path data.";
 
 QRMonTakeData::usage = "Takes the time series path data.";
 
-QRMonEchoDataSummary::usage = "Echoes a summary of the data.";
+QRMonEchoDataSummary::usage = "QRMonEchoDataSummary[] echoes a summary of the data.";
 
-QRMonDeleteMissing::usage = "Deletes records with missing data.";
+QRMonDeleteMissing::usage = "QRMonDeleteMissing[] deletes records with missing data.";
 
-QRMonRescale::usage = "Rescales the data.";
+QRMonRescale::usage = "QRMonRescale[Axes->{_,_}] rescales the data.";
 
-QRMonLeastSquaresFit::usage = "Linear regression fit for the data in the pipeline or the context \
-using specified functions to fit.";
+QRMonLeastSquaresFit::usage = "QRMonLeastSquaresFit[ funcs : ( _List | _Integer ) ] does a Linear regression fit \
+for the data in the pipeline or the context using specified functions to fit.";
 
 QRMonFit::usage = "Same as QRMonLinearRegressionFit.";
 
-QRMonQuantileRegression::usage = "Quantile regression for the data in the pipeline or the context.";
+QRMonQuantileRegression::usage = "QRMonQuantileRegression[knots: ( _Integer | _?VectorQ ), probs_?VectorQ, opts___] \
+does Quantile Regression for the data in the pipeline or the context.";
 
-QRMonRegression::usage = "Quantile regression for the data in the pipeline or the context. \
-(Same as QRMonQuantileRegression.)";
+QRMonRegression::usage = "Same as QRMonQuantileRegression.";
 
-QRMonQuantileRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
-using specified functions to fit.";
+QRMonQuantileRegressionFit::usage = "QRMonLinearRegressionFit[ funcs : ( _List | _Integer), probs_?VectorQ ] does a \
+Quantile regression fit using specified functions to fit and probabilities. An integer funcs specifies \
+a ChebyshevT polynomials basis.";
 
-QRMonRegressionFit::usage = "Quantile regression fit for the data in the pipeline or the context \
-using specified functions to fit. (Same as QRMonQuantileRegressionFit.)";
+QRMonRegressionFit::usage = "Same as QRMonQuantileRegressionFit.";
 
 QRMonNetRegression::usage = "Regression using a neural network.";
 
-QRMonEvaluate::usage = "Evaluates the regression functions over a number or a list of numbers.";
+QRMonEvaluate::usage = "QRMonEvaluate[points_?VectorQ] evaluates the regression functions over a number \
+or a list of numbers.";
 
-QRMonPlot::usage = "Plots the data points or the data points together with the found regression curves.";
+QRMonPlot::usage = "QRMonPlot[opts___] plots the data points or the data points together with the found regression curves.";
 
-QRMonDateListPlot::usage = "Plots the data points or the data points together with the found regression curves.";
+QRMonDateListPlot::usage = "QRMonDateListPlot[opts___] plots the data points or the data points together with the found regression curves.";
 
-QRMonErrors::usage = "Relative approximation errors for each regression quantile.";
+QRMonErrors::usage = "QRMonErrors[opts___] finds relative or absolute approximation errors for each regression quantile.";
 
-QRMonErrorPlots::usage = "Plots relative approximation errors for each regression quantile.";
+QRMonErrorPlots::usage = "QRMonErrorPlots[opts___] plots relative approximation errors for each regression quantile.";
 
-QRMonConditionalCDF::usage = "Finds conditional CDF approximations for specified points.";
+QRMonConditionalCDF::usage = "QRMonConditionalCDF[points_?VectorQ] finds conditional CDF approximations for specified points.";
 
-QRMonConditionalCDFPlot::usage = "Plots approximations of conditional CDF.";
+QRMonConditionalCDFPlot::usage = "QRMonConditionalCDFPlot[ points_., opts] plots approximations of conditional CDF. \
+If the points are not specified the pipeline value is used if it is an association of CDF's.";
 
-QRMonOutliers::usage = "Find the outliers in the data.";
+QRMonOutliers::usage = "QRMonOutliers[] finds the outliers in the data.";
 
-QRMonOutliersPlot::usage = "Plot the outliers in the data. Finds them first if not already in the context.";
+QRMonOutliersPlot::usage = "QRMonOutliersPlot[opts___] plots the outliers in the data. \
+Finds them first if not already in the context.";
 
-QRMonPickPathPoints::usage = "Pick points close to the regression functions using a specified threshold. \
-With option setting \"PickAboveThreshold\"->True the points picked are away from the regression functions.";
+QRMonPickPathPoints::usage = "QRMonPickPathPoints[th_?NumberQ, opts___] picks points close to the regression functions \
+using a specified threshold. \
+With the option setting \"PickAboveThreshold\"->True the points picked are away from the regression functions.";
 
-QRMonSeparate::usage = "Separate the argument by the regression functions in the context. \
+QRMonSeparate::usage = "QRMonSeparate[data_, opts___] separates the argument by the regression functions in the context. \
 If no argument is given the data in the monad object is separated.";
 
-QRMonSeparateToFractions::usage = "Separate the argument by the regression functions in the context \
-and find the corresponding fractions. \
+QRMonSeparateToFractions::usage = "QRMonSeparateToFractions[data_, opts___] separates the argument by the regression functions \
+in the context and find the corresponding fractions. \
 If no argument is given the data in the monad object is separated.";
 
 QRMonBandsSequence::usage = "Maps the time series values into a sequence of band indices derived from the regression quantiles.";
@@ -1006,9 +1010,12 @@ QRMonConditionalCDFPlot[$QRMonFailure] := $QRMonFailure;
 
 QRMonConditionalCDFPlot[__][$QRMonFailure] := $QRMonFailure;
 
-QRMonConditionalCDFPlot[xs_, context_Association] := QRMonConditionalCDFPlot[][xs, context];
+QRMonConditionalCDFPlot[xs_, context_Association] := QRMonConditionalCDFPlot[ Options[QRMonConditionalCDFPlot] ][xs, context];
 
-QRMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
+QRMonConditionalCDFPlot[ points_?VectorQ, opts:OptionsPattern[]][xs_, context_] :=
+    Fold[ QRMonBind, QRMonUnit[xs, context], {QRMonConditionalCDF[points], QRMonConditionalCDFPlot[opts]}];
+
+QRMonConditionalCDFPlot[ opts:OptionsPattern[] ][xs_, context_] :=
     Block[{funcs, res, plotOpts},
 
       Which[
@@ -1017,7 +1024,8 @@ QRMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
         funcs = xs,
 
         True,
-        funcs = Fold[ QRMonBind, QRMonUnit[xs, context], {QRMonConditionalCDF, QRMonTakeValue}]
+        Echo["The pipeline value is not an association of conditional CDF's.", "QRMonConditionalCDFPlot:"];
+        Return[$QRMonFailure]
       ];
 
       If[ TrueQ[funcs === $QRMonFailure], Return[$QRMonFailure] ];
@@ -1031,8 +1039,8 @@ QRMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
                     Evaluate[plotOpts],
                     PlotRange -> {All, All}, PlotLegends -> False,
                     PlotTheme -> "Scientific",
-                    PlotLabel -> Row[{"CDF at x-value:", Spacer[2], #1}],
-                    FrameLabel -> {"y-value", "Probability"},
+                    PlotLabel -> Row[{"CDF at regressor value:", Spacer[2], #1}],
+                    FrameLabel -> {"regressand", "Probability"},
                     ImageSize -> Small
                   ] &, funcs];
 
@@ -1045,7 +1053,10 @@ QRMonConditionalCDFPlot[opts:OptionsPattern[]][xs_, context_]:=
 
 QRMonConditionalCDFPlot[__][__] :=
     Block[{},
-      Echo["Options are expected as arguments. (Plot options or \"Echo\"->(True|False).)", "QRMonConditionalCDFPlot:"];
+      Echo[
+        "Regressor points are expected as an argument and options. (Plot options or \"Echo\"->(True|False).)",
+        "QRMonConditionalCDFPlot:"
+      ];
       $QRMonFailure
     ];
 
@@ -1305,9 +1316,9 @@ QRMonSeparate[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonSeparate[xs_, context_Association] := QRMonSeparate[][xs, context];
 
-QRMonSeparate[][xs_, context_Association] := QRMonSeparate[xs][xs, context];
+QRMonSeparate[][xs_, context_Association] := QRMonSeparate[Automatic][xs, context];
 
-QRMonSeparate[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparate[xs,opts][xs, context];
+QRMonSeparate[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparate[Automatic, opts][xs, context];
 
 QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
     Block[{data, indGroups, pointGroups, cumulativeQ, fractionsQ},
@@ -1315,7 +1326,11 @@ QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
       cumulativeQ = TrueQ[ OptionValue[ QRMonSeparate, "Cumulative" ] ];
       fractionsQ = TrueQ[ OptionValue[ QRMonSeparate, "Fractions" ] ];
 
-      data = Fold[ QRMonBind, QRMonUnit[dataArg], {QRMonGetData, QRMonTakeValue}];
+      If[ TrueQ[dataArg === Automatic],
+        data = Fold[ QRMonBind, QRMonUnit[xs, context], {QRMonGetData, QRMonTakeValue}],
+        (* ELSE *)
+        data = Fold[ QRMonBind, QRMonUnit[dataArg], {QRMonGetData, QRMonTakeValue}]
+      ];
 
       If[ TrueQ[data === $QRMonFailure ],
         Return[$QRMonFailure]
@@ -1381,9 +1396,9 @@ QRMonSeparateToFractions[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonSeparateToFractions[xs_, context_Association] := QRMonSeparateToFractions[][xs, context];
 
-QRMonSeparateToFractions[][xs_, context_Association] := QRMonSeparateToFractions[xs][xs, context];
+QRMonSeparateToFractions[][xs_, context_Association] := QRMonSeparateToFractions[Automatic][xs, context];
 
-QRMonSeparateToFractions[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparateToFractions[xs, opts][xs, context];
+QRMonSeparateToFractions[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparateToFractions[Automatic, opts][xs, context];
 
 QRMonSeparateToFractions[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
     Block[{cumulativeQ},
