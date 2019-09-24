@@ -136,15 +136,21 @@
 
 BeginPackage["QuantileRegression`"]
 
-QuantileRegressionFit::usage = "QuantileRegressionFit[data,funs,var,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations of the functions funs of the variable var."
+QuantileRegressionFit::usage = "QuantileRegressionFit[data,funs,var,qs] finds the regression quantiles corresponding \
+to the quantiles qs for a list of data as linear combinations of the functions funs of the variable var.";
 
-QuantileRegression::usage = "QuantileRegression[data,ks_List,qs] finds the regression quantiles corresponding to the quantiles qs for a list of data as linear combinations of splines generated over the knots ks. With the signature QuantileRegression[data,n_Integer,qs] n equally spaced knots are generated. The order of the splines is specified with the option InterpolationOrder."
+QuantileRegression::usage = "QuantileRegression[data,ks_List,qs] finds the regression quantiles corresponding \
+to the quantiles qs for a list of data as linear combinations of splines generated over the knots ks. \
+With the signature QuantileRegression[data,n_Integer,qs] n equally spaced knots are generated. \
+The order of the splines is specified with the option InterpolationOrder.";
 
-QuantileEnvelope::usage = "QuantileEnvelope[data_?MatrixQ,qs:(_?NumberQ|{_?NumberQ..}),ndir_Integer] experimental implementation of quantile envelopes points finding."
+QuantileEnvelope::usage = "QuantileEnvelope[data_?MatrixQ,qs:(_?NumberQ|{_?NumberQ..}),ndir_Integer] \
+experimental implementation of quantile envelopes points finding.";
 
-QuantileEnvelopeRegion::usage = "QuantileEnvelopeRegion[data_?MatrixQ,q_?NumberQ,ndir_Integer] experimental implementation of 2D or 3D quantile envelope region finding."
+QuantileEnvelopeRegion::usage = "QuantileEnvelopeRegion[data_?MatrixQ,q_?NumberQ,ndir_Integer] \
+experimental implementation of 2D or 3D quantile envelope region finding.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 (************************************************************)
 (* QuantileRegressionFit                                    *)
@@ -492,7 +498,7 @@ QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : 
 
 QuantileEnvelopeRegion::qemat = "The first argument is expected to be a numeric two or three column data matrix.";
 
-Clear[QuantileEnvelopeRegion]
+Clear[QuantileEnvelopeRegion];
 QuantileEnvelopeRegion[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_Integer] :=
   Which[
     Dimensions[points][[2]] == 2, QuantileEnvelopeRegion2D[points, quantile, numberOfDirections ],
@@ -501,7 +507,7 @@ QuantileEnvelopeRegion[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_In
     Message[QuantileEnvelopeRegion::qemat]; $Failed
   ];
 
-Clear[QuantileEnvelopeRegion2D]
+Clear[QuantileEnvelopeRegion2D];
 QuantileEnvelopeRegion2D[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_Integer] :=
     Block[{nd = numberOfDirections, dirs, rmats, qDirPoints, qRegion},
       dirs =
@@ -517,7 +523,7 @@ QuantileEnvelopeRegion2D[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_
     ] /; Dimensions[points][[2]] == 2 && 0 < quantile <= 1;
 
 
-Clear[QuantileEnvelopeRegion3D]
+Clear[QuantileEnvelopeRegion3D];
 QuantileEnvelopeRegion3D[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_Integer] :=
     Block[{nd = numberOfDirections, dirs, rmats, qDirPoints, qRegion},
       dirs =
@@ -535,6 +541,6 @@ QuantileEnvelopeRegion3D[points_?MatrixQ, quantile_?NumberQ, numberOfDirections_
       qRegion
     ] /; Dimensions[points][[2]] == 3 && 0 < quantile <= 1;
 	   
-End[]
+End[];
 
 EndPackage[]
