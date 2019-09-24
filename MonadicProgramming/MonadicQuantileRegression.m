@@ -427,7 +427,7 @@ QRMonLeastSquaresFit[$QRMonFailure] := $QRMonFailure;
 QRMonLeastSquaresFit[xs_, context_Association] := $QRMonFailure;
 
 QRMonLeastSquaresFit[n_Integer][xs_, context_] :=
-    QRMonLeastSquaresFit[{ n, {-0.95, 0.95} }, opts][xs, context];
+    QRMonLeastSquaresFit[{ n, {-0.95, 0.95} }][xs, context];
 
 (* This signature is not that needed for LeastSquaresFit, it is implemented for symmetry with QuantileRegressionFit . *)
 QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }][xs_, context_] :=
@@ -449,7 +449,7 @@ QRMonLeastSquaresFit[funcs_List][xs_, context_] :=
       If[ Length[var] == 0,
         $QRMonFailure,
       (*ELSE*)
-        QRMonLeastSquaresFit[funcs, First[var], opts][xs, context]
+        QRMonLeastSquaresFit[funcs, First[var]][xs, context]
       ]
     ];
 
