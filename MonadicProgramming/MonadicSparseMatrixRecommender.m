@@ -1730,20 +1730,24 @@ SMRMonToProfileVector[args___][__] :=
 
 Clear[SMRMonSetTagTypeWeights];
 
-SyntaxInformation[SMRMonSetTagTypeWeights] = { "ArgumentsPattern" -> { _, ___ } };
+SyntaxInformation[SMRMonSetTagTypeWeights] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+
+Options[SMRMonSetTagTypeWeights] = { "CompactAfterColumnBind" -> True };
 
 SMRMonSetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonSetTagTypeWeights[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonSetTagTypeWeights[ defaultValue_?NumberQ ][xs_, context_Association] :=
-    SMRMonSetTagTypeWeights[ <||>, defaultValue][xs, context];
+SMRMonSetTagTypeWeights[ defaultValue_?NumberQ, opts: OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonSetTagTypeWeights[ <||>, defaultValue, opts ][xs, context];
 
-SMRMonSetTagTypeWeights[ scoredTagTypes_Association ][xs_, context_Association] :=
-    SMRMonSetTagTypeWeights[ scoredTagTypes, 1][xs, context];
+SMRMonSetTagTypeWeights[ scoredTagTypes_Association, opts: OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonSetTagTypeWeights[ scoredTagTypes, 1., opts ][xs, context];
 
-SMRMonSetTagTypeWeights[ scoredTagTypesArg : Association[ (_String -> _?NumberQ)...], defaultValue_?NumberQ ][xs_, context_Association] :=
-    Block[{ scoredTagTypes = scoredTagTypesArg, smats, mat},
+SMRMonSetTagTypeWeights[ scoredTagTypesArg : Association[ (_String -> _?NumberQ)...], defaultValue_?NumberQ, opts: OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ scoredTagTypes = scoredTagTypesArg, compactQ, smats, mat},
+
+      compactQ = TrueQ[ OptionValue[ SMRMonSetTagTypeWeights, "CompactAfterColumnBind" ] ];
 
       If[!KeyExistsQ[context, "matrices"],
         Echo["Cannot find the recommendation sub-matrices. (The context key \"matrices\".)", "SMRMonSetTagTypeWeights:"];
@@ -1760,6 +1764,10 @@ SMRMonSetTagTypeWeights[ scoredTagTypesArg : Association[ (_String -> _?NumberQ)
       smats = Association[KeyValueMap[ #1 -> scoredTagTypes[#1] * #2 &, context["matrices"]]];
 
       mat = ColumnBind[ Values[smats] ];
+
+      If[ compactQ,
+        mat = ToSSparseMatrix[ SparseArray[SparseArray[mat]], "RowNames" -> RowNames[mat], "ColumnNames" -> ColumnNames[mat] ]
+      ];
 
       SMRMonUnit[xs, Join[ context, <| "M" -> mat, "TagTypeWeights" -> scoredTagTypes |> ]]
 
