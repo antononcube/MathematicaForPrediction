@@ -200,7 +200,7 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
 
       (* Preliminary assignments. *)
 
-      knownProperties = { "SSparseMatrix", "RowNames", "OutlierThresholds", "Properties" };
+      knownProperties = { "Distances", "SSparseMatrix", "RowNames", "OutlierThresholds", "Properties" };
 
       nns = OptionValue[ SMRMonFindAnomalies, "NumberOfNearestNeighbors" ];
       outFunc = OptionValue[ SMRMonFindAnomalies, "OutlierIdentifier" ];
@@ -290,6 +290,9 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
       Which[
         Length[outlierInds] == 0,
         SMRMonUnit[{}, newContext],
+
+        MemberQ[ ToLowerCase[{ "Distances", "AggregatedDistances" }], ToLowerCase[prop] ],
+        SMRMonUnit[ recs, newContext ],
 
         MemberQ[ ToLowerCase[{ "RowNames", "Indices" }], ToLowerCase[prop] ],
         SMRMonUnit[ outlierInds, newContext ],
