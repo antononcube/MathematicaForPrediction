@@ -1,5 +1,5 @@
 (*
-    MathematicaForPrediction utilities
+    MathematicaForPrediction utilities Mathematica package
     Copyright (C) 2014-2016  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -115,7 +115,12 @@ KurtosisUpperBound[vec_?VectorQ] :=
 KurtosisUpperBound[d_, n_Integer] :=
     Block[{}, 1 / 2 (n - 3) / (n - 2) (CentralMoment[d, 3] / StandardDeviation[d]^3)^2 + n / 2];
 
-Clear[ClassificationSuccessTableForm]
+
+(*===========================================================*)
+(* ClassificationSuccessTableForm                            *)
+(*===========================================================*)
+
+Clear[ClassificationSuccessTableForm];
 ClassificationSuccessTableForm[ctRules_] :=
     Block[{labels = Union[ctRules[[All, 1, 1]]]},
       TableForm[
@@ -125,7 +130,7 @@ ClassificationSuccessTableForm[ctRules_] :=
         TableHeadings -> {labels, {True, False}}]
     ];
 
-Clear[ClassificationSuccessGrid]
+Clear[ClassificationSuccessGrid];
 ClassificationSuccessGrid[ctRules_] :=
     Block[{labels = Union[ctRules[[All, 1, 1]]], gridData},
       gridData =
@@ -137,6 +142,11 @@ ClassificationSuccessGrid[ctRules_] :=
         Dividers -> {{2 -> GrayLevel[0.5]}, {2 -> GrayLevel[0.5]}},
         Spacings -> {2, Automatic}]
     ];
+
+
+(*===========================================================*)
+(* DataRulesForClassifyQ                                     *)
+(*===========================================================*)
 
 Clear[DataRulesForClassifyQ];
 DataRulesForClassifyQ[data_] := MatchQ[data, {Rule[_?AtomQ, _] ..}] || DataArrayRulesForClassifyQ[data];
@@ -177,6 +187,21 @@ CategoricalVectorSummary[dvec_, maxTallies_Integer : 7] :=
       Join[ r, missingRows ]
     ] /; VectorQ[dvec];
 
+Clear[DateObjectVectorSummary];
+DateObjectVectorSummary[dvec_, args___] :=
+    Block[{r, cm, ndvec = dvec},
+      ndvec = DeleteMissing[dvec];
+      If[Length[ndvec] == 0,
+        r = {},
+        (*ELSE*)
+        r = NumericVectorSummary[AbsoluteTime /@ ndvec, args];
+        r[[All, 2]] = DateObject /@ r[[All, 2]]
+      ];
+      cm = Count[dvec, Missing[___]];
+      If[TrueQ[cm > 0], Append[r, {"Missing[___]", cm}], r]
+    ] /; VectorQ[DeleteMissing[dvec], DateObjectQ];
+
+
 Clear[DataColumnsSummary];
 (* The option Thread->False is just for compatibility with RecordsSummary. *)
 Options[DataColumnsSummary] = {"MaxTallies" -> 7, "NumberedColumns" -> True, Thread -> False};
@@ -188,22 +213,38 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
     Block[{columnTypes, columnNames = columnNamesArg,
       maxTallies = OptionValue[DataColumnsSummary, "MaxTallies"],
       numberedColumnsQ = TrueQ[OptionValue[DataColumnsSummary, "NumberedColumns"]]},
+
       If[numberedColumnsQ,
         columnNames = MapIndexed[ToString[#2[[1]]] <> " " <> ToString[#1] &, columnNames]
       ];
-      columnTypes = Map[If[VectorQ[DeleteMissing[#], NumberQ], Number, Symbol] &, dataColumns];
+
+      columnTypes =
+          Map[
+            Which[
+              VectorQ[DeleteMissing[#], NumberQ], Number,
+              VectorQ[DeleteMissing[#], DateObjectQ], DateObject,
+              True, Symbol
+            ] &,
+            dataColumns];
+
       MapThread[
         Column[{
           Style[#1, Blue, FontFamily -> "Times"],
-          If[TrueQ[#2 === Number],
-            Grid[NumericVectorSummary[#3], Alignment -> Left],
-            Grid[CategoricalVectorSummary[#3, maxTallies],
-              Alignment -> Left]
-          ]}] &, {columnNames, columnTypes, dataColumns}, 1]
+
+          Switch[#2,
+            Number, Grid[NumericVectorSummary[#3], Alignment -> Left],
+
+            DateObject, Grid[DateObjectVectorSummary[#3], Alignment -> Left],
+
+            Symbol, Grid[CategoricalVectorSummary[#3, maxTallies], Alignment -> Left]
+          ]
+        }] &,
+        {columnNames, columnTypes, dataColumns}, 1]
+
     ] /; Length[dataColumns] == Length[columnNamesArg];
 
 RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2, \
-or a dataset that can be converted to such a full array.";
+a dataset that can be converted to such a full array, an association, or a list of rules.";
 
 Clear[RecordsSummary];
 
@@ -239,6 +280,9 @@ RecordsSummary[dataRecords_, opts : OptionsPattern[]] :=
 
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], columnNames, opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
+
+RecordsSummary[dataRecords_?AssociationQ, args___] :=
+    RecordsSummary[Normal[dataRecords], args];
 
 RecordsSummary[dataRecords_?DataRulesForClassifyQ, varNames_Rule, opts : OptionsPattern[]] :=
     Block[{newArgs = {opts}},
@@ -341,7 +385,7 @@ is expected to be equal to the number of numerical columns of the first argument
 
 Options[ToCategoricalColumns] = { "QuantileBreaks" -> False };
 
-ToCategoricalColumns[data_?ArrayQ, breaks_List : Range[0, 1, 0.1], opts:OptionsPattern[] ] :=
+ToCategoricalColumns[data_?ArrayQ, breaks_List : Range[0, 1, 0.1], opts : OptionsPattern[] ] :=
     Block[{inds, imFuncs, res, quantileBreaksQ},
 
       quantileBreaksQ = TrueQ[ OptionValue[ ToCategoricalColumns, "QuantileBreaks" ] ];
@@ -375,7 +419,7 @@ ToCategoricalColumns[data_?ArrayQ, breaks_List : Range[0, 1, 0.1], opts:OptionsP
       res
     ] /; Length[Dimensions[data]] == 2;
 
-ToCategoricalColumns[ds_Dataset, breaks_List : Range[0, 1, 0.1], opts:OptionsPattern[] ] :=
+ToCategoricalColumns[ds_Dataset, breaks_List : Range[0, 1, 0.1], opts : OptionsPattern[] ] :=
     Block[{aNumColsQ, numCols, imFuncs, quantileBreaksQ},
 
       quantileBreaksQ = TrueQ[ OptionValue[ ToCategoricalColumns, "QuantileBreaks" ] ];
