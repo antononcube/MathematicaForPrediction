@@ -54,7 +54,8 @@ CategoricalVectorSummary::usage = "Summary of a categorical vector.";
 
 DataColumnsSummary::usage = "Summary of a list of data columns.";
 
-RecordsSummary::usage = "Summary of dataset or a list of records that form a full two dimensional array.";
+RecordsSummary::usage = "Summarizes datasets, lists, or associations that can be transformed into \
+full two dimensional arrays. (I.e. lists of records.)";
 
 GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimics TableForm by using Grid \
 (and producing fancier outlook).";
@@ -243,14 +244,22 @@ DataColumnsSummary[dataColumns_, columnNamesArg_, opts : OptionsPattern[]] :=
 
     ] /; Length[dataColumns] == Length[columnNamesArg];
 
-RecordsSummary::arrdepth = "The first argument is expected to be a full array of depth 1 or 2, \
+RecordsSummary::args = "The first argument is expected to be a full array of depth 1 or 2, \
 a dataset that can be converted to such a full array, an association, or a list of rules.";
+
+RecordsSummary::igncols = "When the first argument is a dataset the second, column names argument is ignored.";
 
 Clear[RecordsSummary];
 
 SyntaxInformation[RecordsSummary] = {"ArgumentsPattern" -> {_, _., OptionsPattern[]}};
 
 RecordsSummary[{}, ___] := {};
+
+RecordsSummary[dataRecords_Dataset, dummy_List, opts : OptionsPattern[] ] :=
+    Block[{},
+      Message[RecordsSummary::igncols];
+      RecordsSummary[dataRecords, opts]
+    ];
 
 RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ] :=
     Block[{row1, colKeys, records},
@@ -305,7 +314,7 @@ RecordsSummary[dataRecords_, args___ ] :=
 
 RecordsSummary[a_Association, args___] := Map[ RecordsSummary[#, args]&, a];
 
-RecordsSummary[___] := (Message[RecordsSummary::arrdepth];$Failed);
+RecordsSummary[___] := (Message[RecordsSummary::args];$Failed);
 
 
 (*===========================================================*)
