@@ -50,7 +50,8 @@
 BeginTestSection["RecordsSummary-Unit-Tests"];
 
 VerificationTest[(* 1 *)
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"];
+(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"];*)
+  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MathematicaForPredictionUtilities.m"];
   Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] > 0
   ,
   True
@@ -78,7 +79,8 @@ VerificationTest[(* 2 *)
 
 VerificationTest[(* 3 *)
   dsMixedDataWithMissing = dsMixedData[All, {"num2" -> (If[# > 2, Missing[], #] &), "char1" -> (If[ToCharacterCode[#][[1]] > 76, Missing[], #] &)}];
-  Head[dsMixedDataWithMissing] === Dataset
+  dsMixedDataWithNamedRows = Dataset[ AssociationThread[ Range[Dimensions[dsMixedData][[1]]] -> Normal[dsMixedData] ] ];
+  Head[dsMixedDataWithMissing] === Dataset && Head[dsMixedDataWithNamedRows] === Dataset
   ,
   True
   ,
@@ -142,6 +144,16 @@ VerificationTest[(* 10 *)
 ];
 
 VerificationTest[(* 11 *)
+  MatchQ[RecordsSummary[dsMixedData, Range[4]], {_Column..} ]
+  ,
+  True
+  ,
+  RecordsSummary::igncols
+  ,
+  TestID -> "Dataset-MixedData-3"
+];
+
+VerificationTest[(* 12 *)
   res = RecordsSummary[dsMixedDataWithMissing];
   MatchQ[res, {_Column ..}] &&
   Count[dsMixedDataWithMissing, _Missing, Infinity ] ==
@@ -150,48 +162,56 @@ VerificationTest[(* 11 *)
   TestID -> "Dataset-MixedDataWithMissing-1"
 ];
 
-VerificationTest[(* 12 *)
+VerificationTest[(* 13 *)
   MatchQ[RecordsSummary[aImages], {_Column}],
   True,
   TestID -> "Association-Images-1"
 ];
 
-VerificationTest[(* 13 *)
+VerificationTest[(* 14 *)
   MatchQ[RecordsSummary[aImages, Thread->True], Rule[{_Column}, {_Column}] ],
   True,
   TestID -> "Association-Images-2"
 ];
 
 
-VerificationTest[(* 14 *)
+VerificationTest[(* 15 *)
   MatchQ[RecordsSummary[aMixed, Thread->False], {_Column} ],
   True,
   TestID -> "Association-Mixed-1"
 ];
 
-VerificationTest[(* 15 *)
+VerificationTest[(* 16 *)
   MatchQ[RecordsSummary[aMixed, Thread->True], Rule[{_Column}, {_Column}] ],
   True,
   TestID -> "Association-Mixed-2"
 ];
 
-VerificationTest[(* 16 *)
+VerificationTest[(* 17 *)
   MatchQ[RecordsSummary[dsNonFullArray], $Failed ]
   ,
   True
   ,
-  RecordsSummary::arrdepth
+  RecordsSummary::args
   ,
   TestID -> "Dataset-NonFullArray-1"
 ];
 
-
-VerificationTest[(* 16 *)
+VerificationTest[(* 18 *)
   MatchQ[RecordsSummary[dsNonFullArray[All, {"c"->HoldForm}]], {_Column..} ]
   ,
   True
   ,
   TestID -> "Dataset-NonFullArray-2"
 ];
+
+VerificationTest[(* 19 *)
+  MatchQ[RecordsSummary[dsMixedDataWithNamedRows], {_Column..} ]
+  ,
+  True
+  ,
+  TestID -> "Dataset-WithNamedRows-1"
+];
+
 
 EndTestSection[]
