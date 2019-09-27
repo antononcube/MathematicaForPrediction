@@ -533,6 +533,27 @@ SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPa
       ]
     ];
 
+SMRMonCreate[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{itemVarName, keys},
+
+      keys = Normal @ Keys @ ds[[1]];
+
+      Which[
+        MemberQ[ ToLowerCase[keys], "id" ],
+        itemVarName = keys[[ First @ Flatten @ Position[ ToLowerCase[keys], "id" ] ]],
+
+        MemberQ[ ToLowerCase[keys], "item" ],
+        itemVarName = keys[[ First @ Flatten @ Position[ ToLowerCase[keys], "item" ] ]],
+
+        True,
+        itemVarName = First @ Normal @ Keys @ ds[[1]];
+      ];
+
+      Echo[ "Heuristically picking the ID column to be \"" <> itemVarName <> "\".", "SMRMonCreate:" ];
+
+      SMRMonCreate[ds, itemVarName, opts][xs, context]
+    ];
+
 SMRMonCreate[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{ },
       SMRMonCreateFromWideForm[ds, itemVarName, opts][xs, context]
@@ -1441,7 +1462,7 @@ SMRMonRecommendByCorrelation[___][__] := $SMRMonFailure;
 
 Clear[SMRMonToItemsDataset];
 
-SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, ___ } };
+SyntaxInformation[SMRMonToItemsDataset] = { "ArgumentsPattern" -> { _. } };
 
 SMRMonToItemsDataset[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1482,7 +1503,7 @@ SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 
 Clear[SMRMonJoinAcross];
 
-SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, ___, OptionsPattern[] } };
+SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
 Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "AsDataset" -> True };
 
@@ -1491,6 +1512,27 @@ SMRMonJoinAcross[$SMRMonFailure] := $SMRMonFailure;
 SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonJoinAcross[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonJoinAcross[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{byColName, keys},
+
+      keys = Normal @ Keys @ ds[[1]];
+
+      Which[
+        MemberQ[ ToLowerCase[keys], "id" ],
+        byColName = keys[[ First @ Flatten @ Position[ ToLowerCase[keys], "id" ] ]],
+
+        MemberQ[ ToLowerCase[keys], "item" ],
+        byColName = keys[[ First @ Flatten @ Position[ ToLowerCase[keys], "item" ] ]],
+
+        True,
+        byColName = First @ Normal @ Keys @ ds[[1]];
+      ];
+
+      Echo[ "Heuristically picking the joining column to be \"" <> byColName <> "\".", "SMRMonJoinAcross:" ];
+
+      SMRMonJoinAcross[ds, byColName, opts][xs, context]
+    ];
 
 SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{ds = dsArg, dropQ, dsRecs, res},
@@ -1569,7 +1611,7 @@ SMRMonJoinAcross[__][___] :=
     Block[{},
       Echo[
         "The first argument is expected to be an Association or a Dataset. " <>
-            "If the first argument is a Dataset then the second argument is expected to be a column name to do the joining with.",
+            "If the first argument is a Dataset then the second argument is expected to be a column name to join with.",
         "SMRMonJoinAcross:"];
       $SMRMonFailure
     ];
@@ -2124,13 +2166,13 @@ SMRMonClassify[$SMRMonFailure] := $SMRMonFailure;
 
 (*SMRMonClassifyOriginal[xs_, context_Association] := (Print["here"];$SMRMonFailure);*)
 
-SMRMonClassify[][xs_, context_Association] := SMRMonClassifyOriginal[None][xs, context];
+SMRMonClassify[][xs_, context_Association] := SMRMonClassify[None][xs, context];
 
 SMRMonClassify[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{tagType, profile},
 
-      tagType = OptionValue[SMRMonClassifyOriginal, "TagType"];
-      profile = OptionValue[SMRMonClassifyOriginal, "Profile"];
+      tagType = OptionValue[SMRMonClassify, "TagType"];
+      profile = OptionValue[SMRMonClassify, "Profile"];
 
       If[ ! StringQ[ tagType ],
         Echo["The value of the option \"TagType\" is expected to be a string.", "SMRMonClassifyOriginal:"];
