@@ -50,7 +50,8 @@
 BeginTestSection["RecordsSummary-Unit-Tests"];
 
 VerificationTest[(* 1 *)
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"];
+(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"];*)
+  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MathematicaForPredictionUtilities.m"];
   Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] > 0
   ,
   True
@@ -212,5 +213,30 @@ VerificationTest[(* 19 *)
   TestID -> "Dataset-WithNamedRows-1"
 ];
 
+VerificationTest[(* 20 *)
+  MatchQ[RecordsSummary[matMixedData[[All,2]], "2nd" ], {_Column} ]
+  ,
+  True
+  ,
+  TestID -> "Vector-specified-column-name-1"
+];
+
+VerificationTest[(* 21 *)
+  MatchQ[RecordsSummary[matMixedData, RandomWord["KnownWords", Dimensions[matMixedData][[2]] ] ], {_Column..} ]
+  ,
+  True
+  ,
+  TestID -> "Array-specified-column-names-1"
+];
+
+VerificationTest[(* 21 *)
+  MatchQ[RecordsSummary[dsMixedData, RandomWord["KnownWords", Dimensions[dsMixedData][[2]] ] ], {_Column..} ]
+  ,
+  True
+  ,
+  RecordsSummary::igncols
+  ,
+  TestID -> "Dataset-specified-column-names-1"
+];
 
 EndTestSection[]
