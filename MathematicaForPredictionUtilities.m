@@ -287,6 +287,9 @@ RecordsSummary[dataRecords_Dataset, opts : OptionsPattern[] ] :=
 RecordsSummary[dataRecords_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
 
+RecordsSummary[dataRecords_, columnNames_?AtomQ, opts : OptionsPattern[]] :=
+    RecordsSummary[dataRecords, {columnNames}, opts];
+
 RecordsSummary[dataRecords_, columnNames_, opts : OptionsPattern[]] :=
     DataColumnsSummary[Transpose[dataRecords], columnNames, opts] /; ( ArrayQ[dataRecords] && ArrayDepth[dataRecords] == 2 );
 
