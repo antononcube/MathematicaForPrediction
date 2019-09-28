@@ -1,4 +1,3 @@
-
 (*
     Cross tabulation implementation in Mathematica
     Copyright (C) 2017  Anton Antonov
@@ -80,31 +79,39 @@
 
 *)
 
-BeginPackage["CrossTabulate`"]
+BeginPackage["CrossTabulate`"];
 
 CrossTensorate::usage = "Finds the contingency co-occurrence values for multiple columns of a matrix \
 using a formula specification. The first argument is the formula with the form \
-Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ..."
+Count == cn1 + cn2 + ... or cn0 == cn1 + cn2 + ...";
 
 CrossTensorateSplit::usage = "Splits the result of CrossTensorate along a variable. The result can be \
-shown with MatrixPlot."
+shown with MatrixPlot.";
 
-ToAssociationTrie::usage = "Converts a result of CrossTabulate or CrossTensorate into a nested Association. (A trie.)"
+ToAssociationTrie::usage = "Converts a result of CrossTabulate or CrossTensorate into a nested Association. (A trie.)";
 
-CrossTabulate::usage = "Finds the contingency co-occurrence values in a matrix (2D array). The result can be \
-shown with MatrixPlot."
+CrossTabulate::usage = "CrossTabulate[mat] finds the contingency table (of co-occurrence values) \
+for the matrix argument mat that has two or three columns. \
+If mat has three columns then the third column is expected to be a numerical vector. \
+The result is an association by default; with the option setting \"Sparse\"->False the result a dataset. \
+The result can be shown with MatrixPlot.";
 
 CrossTabulationMatrixQ::usage = "Gives True if the argument is an Association with keys \
-\"SparseMatrix\", \"RowNames\", and \"ColumnNames\"."
+\"SparseMatrix\", \"RowNames\", and \"ColumnNames\".";
 
-xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`."
+xtabsViaRLink::usage = "Calling R's function xtabs {stats} via RLink`.";
 
-FromRXTabsForm::usage = "Transforms RObject result of xtabsViaRLink into an association."
+FromRXTabsForm::usage = "Transforms RObject result of xtabsViaRLink into an association.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
+(*===========================================================*)
+(* CrossTensorate                                            *)
+(*===========================================================*)
 
-Clear[CrossTensorate]
+Clear[CrossTensorate];
+
+SyntaxInformation[CrossTabulate] = {"Arguments" -> {_, _, _.}};
 
 SetAttributes[CrossTensorate, HoldFirst];
 
@@ -116,38 +123,46 @@ CrossTensorate::wargs = "Wrong arguments.";
 CrossTensorate::mcnames = "Not all formula column names are found in the column names specified by \
 the third argument.";
 
-CrossTensorate[formula_Equal, data_Dataset, columnNames_: Automatic ] :=
+CrossTensorate[formula_Equal, data_Dataset, columnNames_ : Automatic ] :=
     Block[{colKeys},
+
       colKeys = Normal[ data[[1]] ];
+
       Which[
-        MatchQ[colKeys, _Association] && TrueQ[columnNames===Automatic],
+        MatchQ[colKeys, _Association] && TrueQ[columnNames === Automatic],
         CrossTensorate[ formula, Normal[data[All, Values]], Keys[colKeys] ],
+
         MatchQ[colKeys, _Association],
         CrossTensorate[ formula, Normal[data[All, Values]], columnNames ],
+
         True,
         CrossTensorate[ formula, Normal[data], columnNames ]
       ]
-    ]/; Length[Dimensions[data]]==2;
+    ] /; Length[Dimensions[data]] == 2;
 
-CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
+CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_ : Automatic] :=
     Block[{aColumnNames, idRules, formulaLHS, formulaRHS, t},
 
       Which[
         TrueQ[columnNames === Automatic],
         aColumnNames =
             AssociationThread[Range[Dimensions[data][[2]]] -> Range[Dimensions[data][[2]]]],
+
         ListQ[columnNames] && Length[columnNames] == Dimensions[data][[2]],
         aColumnNames = AssociationThread[columnNames -> Range[Dimensions[data][[2]]]],
+
         AssociationQ[columnNames],
         aColumnNames = columnNames,
+
         True,
-        Message[CrossTensorate::wcnames]; Return[{}]
+        Message[CrossTensorate::wcnames];
+        Return[{}]
       ];
 
       aColumnNames =
-          Join[ aColumnNames, AssociationThread[Range[Dimensions[data][[2]]]->Range[Dimensions[data][[2]]]] ];
+          Join[ aColumnNames, AssociationThread[Range[Dimensions[data][[2]]] -> Range[Dimensions[data][[2]]]] ];
 
-      formulaLHS = Hold[formula][[1,1]];
+      formulaLHS = Hold[formula][[1, 1]];
 
       If[! TrueQ[formulaLHS === Count], formulaLHS = aColumnNames[formulaLHS]];
 
@@ -159,26 +174,39 @@ CrossTensorate[formula_Equal, data_?MatrixQ, columnNames_: Automatic] :=
 
       formulaRHS = aColumnNames /@ formulaRHS;
       idRules = Table[(t = Union[data[[All, i]]];Dispatch@Thread[t -> Range[Length[t]]]), {i, formulaRHS}];
+
       Which[
         TrueQ[formulaLHS === Count],
-        t = SparseArray[
-          Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
-            Tally[data[[All, formulaRHS]]]]],
+        t = SparseArray @
+            Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &, Tally[data[[All, formulaRHS]]]],
+
         IntegerQ[formulaLHS],
-        t = SparseArray[
-          Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
-            Map[{#[[1, 1 ;; -2]], Total[#[[All, -1]]]} &,
-              GatherBy[data[[All, Append[formulaRHS, formulaLHS]]], Most]]]],
+        t = SparseArray @
+          Map[
+            MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
+            Map[
+              {#[[1, 1 ;; -2]], Total[#[[All, -1]]]} &,
+              GatherBy[data[[All, Append[formulaRHS, formulaLHS]]], Most]]
+          ],
+
         True,
         Message[CrossTensorate::wargs]; Return[{}]
       ];
+
       Join[<|"XTABTensor" -> t|>, AssociationThread[ Keys[aColumnNames][[formulaRHS]] -> Map[Normal[#][[All, 1]] &, idRules]]]
     ] /; (AssociationQ[columnNames] || ListQ[columnNames] || TrueQ[columnNames === Automatic]);
 
 
-ClearAll[CrossTensorateSplit]
+(*===========================================================*)
+(* CrossTensorateSplit                                       *)
+(*===========================================================*)
+
+ClearAll[CrossTensorateSplit];
+
 CrossTensorateSplit::nvar = "The second argument is expected to be a key in the first.";
+
 CrossTensorateSplit[varName_] := CrossTensorateSplit[#, varName] &;
+
 CrossTensorateSplit[xtens_Association, varName_] :=
     Block[{aVars = KeyDrop[xtens, "XTABTensor"], varInd, perm},
       If[! (MemberQ[Keys[xtens], varName] && (varName != "XTABTensor")),
@@ -194,11 +222,15 @@ CrossTensorateSplit[xtens_Association, varName_] :=
     ];
 
 
-Clear[ToAssociationTrie]
+(*===========================================================*)
+(* ToAssociationTrie                                         *)
+(*===========================================================*)
+
+Clear[ToAssociationTrie];
 
 ToAssociationTrie[ct_] :=
     Block[{},
-      ToAssociationTrie[ <|"XTABTensor"->ct["SparseMatrix"], 1->ct["RowNames"], 2->ct["ColumnNames"]|> ]
+      ToAssociationTrie[ <|"XTABTensor" -> ct["SparseMatrix"], 1 -> ct["RowNames"], 2 -> ct["ColumnNames"]|> ]
     ] /; AssociationQ[ct] && Length[ Intersection[ Keys[ct], {"SparseMatrix", "RowNames", "ColumnNames"} ] ] == 3;
 
 ToAssociationTrie[ct_] :=
@@ -214,50 +246,78 @@ ToAssociationTrie[ct_] :=
     ] /; MatchQ[ct, Association["XTABTensor" -> _, __]];
 
 
-Clear[CrossTabulate]
+(*===========================================================*)
+(* CrossTabulate                                             *)
+(*===========================================================*)
+
+Clear[CrossTabulate];
+
+SyntaxInformation[CrossTabulate] = {"Arguments" -> {_, OptionsPattern[]}};
+
+Options[CrossTabulate] = {"Sparse" -> False};
 
 CrossTabulate::narr = "The first argument is expected to be an array with two or three columns.
-If present the third column is expected to be numerical."
+If present the third column is expected to be numerical.";
 
-CrossTabulate[ data_Dataset ] :=
+CrossTabulate[ data_Dataset, opts: OptionsPattern[] ] :=
     Block[{colKeys},
       colKeys = Normal[ data[[1]] ];
       If[ MatchQ[colKeys, _Association],
-        CrossTabulate[ Normal[data[All, Values]] ],
-        CrossTabulate[ Normal[data] ]
+        CrossTabulate[ Normal[data[All, Values]], opts ],
+        CrossTabulate[ Normal[data], opts ]
       ]
-    ]/; Length[Dimensions[data]]==2;
+    ] /; Length[Dimensions[data]] == 2;
 
-CrossTabulate[ arr_?MatrixQ ] :=
-    Block[{idRules,t},
-      idRules = Table[(t=Union[arr[[All,i]]];Dispatch@Thread[t->Range[Length[t]]]), {i,Min[2,Dimensions[arr][[2]]]}];
+CrossTabulate[ arr_?MatrixQ, opts: OptionsPattern[] ] :=
+    Block[{idRules, t},
+
+      idRules = Table[(t = Union[arr[[All, i]]]; Dispatch@Thread[t -> Range[Length[t]]]), {i, Min[2, Dimensions[arr][[2]]]}];
+
       Which[
-        Dimensions[arr][[2]]==2,
-        t = { SparseArray[ Map[MapThread[Replace,{#[[1]],idRules}] -> #[[2]] &, Tally[arr]]],
-          Normal[#][[All,1]]&/@idRules},
-        Dimensions[arr][[2]]==3 && VectorQ[arr[[All,3]],NumericQ],
-        t = { SparseArray[
-          Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &,
-            Map[{#[[1, 1 ;; 2]], Total[#[[All, 3]]]} &, GatherBy[arr, Most]]]],
-          Normal[#][[All,1]]&/@idRules},
+        Dimensions[arr][[2]] == 2,
+        t = {
+          SparseArray[ Map[ MapThread[ Replace, {#[[1]], idRules}] -> #[[2]] &, Tally[arr]]],
+          Normal[#][[All, 1]]& /@ idRules
+        },
+
+        Dimensions[arr][[2]] == 3 && VectorQ[DeleteMissing[arr[[All, 3]]], NumericQ],
+        t = {
+          SparseArray[Map[MapThread[Replace, {#[[1]], idRules}] -> #[[2]] &, Map[{#[[1, 1 ;; 2]], Total[#[[All, 3]]]} &, GatherBy[arr, Most]]]],
+          Normal[#][[All, 1]]& /@ idRules
+        },
+
         True,
         Message[CrossTabulate::narr];
         Return[{}]
       ];
-      <| "SparseMatrix" -> t[[1]], "RowNames" -> t[[2,1]], "ColumnNames" -> t[[2,2]] |>
+
+      If[ TrueQ[ OptionValue[CrossTabulate, "Sparse"] ],
+        <| "SparseMatrix" -> t[[1]], "RowNames" -> t[[2, 1]], "ColumnNames" -> t[[2, 2]] |>,
+        (* ELSE *)
+        Dataset@AssociationThread[t[[2, 1]], AssociationThread[t[[2, 2]], #] & /@ Normal[t[[1]]]]
+      ]
     ];
 
-Clear[CrossTabulationMatrixQ]
+
+(*===========================================================*)
+(* CrossTabulationMatrixQ                                    *)
+(*===========================================================*)
+
+Clear[CrossTabulationMatrixQ];
 
 CrossTabulationMatrixQ[arg_Association] :=
-    Length[Intersection[Keys[arg],{"SparseMatrix", "RowNames", "ColumnNames"}]] == 3 &&
-        MatrixQ[arg["SparseMatrix"]];
+    Length[Intersection[Keys[arg], {"SparseMatrix", "RowNames", "ColumnNames"}]] == 3 && MatrixQ[arg["SparseMatrix"]];
 
 CrossTabulationMatrixQ[___] := False;
 
+
+(*===========================================================*)
+(* xtabsViaRLink                                             *)
+(*===========================================================*)
+
 Clear[xtabsViaRLink];
 xtabsViaRLink::norlink = "R is not installed.";
-xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse:(False|True):False] :=
+xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse : (False | True) : False] :=
     Block[{},
       If[Length[DownValues[RLink`REvaluate]] == 0,
         Message[xtabsViaRLink::norlink];
@@ -266,22 +326,27 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse:(
       RLink`RSet["data", Transpose[data]];
       If[ RLink`REvaluate["class(data)"][[1]] == "matrix",
         RLink`REvaluate["dataDF <- as.data.frame( t(data), stringsAsFactors=F )"],
-      (*RLink`REvaluate["dataDF <- do.call( rbind.data.frame, data )"]*)
-      (*RLink`REvaluate["dataDF <- data.frame( matrix( unlist(data), nrow = " <> ToString[Length[data]] <> ", byrow = T), stringsAsFactors=FALSE)"]*)
+        (*RLink`REvaluate["dataDF <- do.call( rbind.data.frame, data )"]*)
+        (*RLink`REvaluate["dataDF <- data.frame( matrix( unlist(data), nrow = " <> ToString[Length[data]] <> ", byrow = T), stringsAsFactors=FALSE)"]*)
         RLink`REvaluate["dataDF <- as.data.frame( data, srtingsAsFactors=F )"]
       ]
-      RLink`RSet["columnNames", columnNames];
+          RLink`RSet["columnNames", columnNames];
       RLink`REvaluate["names(dataDF)<-columnNames"];
-      RLink`REvaluate["xtabs(" <> formula <> ", dataDF, sparse = " <> If[sparse,"T","F"] <> ")"]
+      RLink`REvaluate["xtabs(" <> formula <> ", dataDF, sparse = " <> If[sparse, "T", "F"] <> ")"]
     ];
 
 Clear[FromRXTabsForm];
-FromRXTabsForm[rres_RLink`RObject]:=
+FromRXTabsForm[rres_RLink`RObject] :=
     Block[{},
       <|"SparseMatrix" -> rres[[1]],
         "RowNames" -> ("dimnames" /. rres[[2, 3]])[[1, 1]],
         "ColumnNames" -> ("dimnames" /. rres[[2, 3]])[[1, 2]]|>
     ] /; (! FreeQ[rres, {"xtabs", "table"}, Infinity]);
+
+
+(*===========================================================*)
+(* UpValues                                                  *)
+(*===========================================================*)
 
 Unprotect[Association];
 
@@ -294,11 +359,11 @@ MatrixPlot[
       Append[{opts}, FrameLabel -> {{Keys[x][[2]], None}, {Keys[x][[3]], None}}]] & @@ x);
 
 
-Transpose[x_Association /; (KeyExistsQ[x, "SparseMatrix"] || KeyExistsQ[x, "XTABTensor"]),args___] ^:=
+Transpose[x_Association /; (KeyExistsQ[x, "SparseMatrix"] || KeyExistsQ[x, "XTABTensor"]), args___] ^:=
     Block[{assoc = x},
       If[ KeyExistsQ[x, "SparseMatrix"],
-        assoc["SparseMatrix"] = Transpose[x["SparseMatrix"],args],
-        assoc["XTABTensor"] = Transpose[x["XTABTensor"],args]
+        assoc["SparseMatrix"] = Transpose[x["SparseMatrix"], args],
+        assoc["XTABTensor"] = Transpose[x["XTABTensor"], args]
       ];
       assoc["ColumnNames"] = x["RowNames"];
       assoc["RowNames"] = x["ColumnNames"];
@@ -308,6 +373,6 @@ Transpose[x_Association /; (KeyExistsQ[x, "SparseMatrix"] || KeyExistsQ[x, "XTAB
 
 Protect[Association];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
