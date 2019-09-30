@@ -86,14 +86,14 @@
 
 *)
 
-BeginPackage["Soundex`"]
+BeginPackage["Soundex`"];
 
-Soundex::usage = "Soundex[word] finds the Soundex phonetic index of a given string."
+Soundex::usage = "Soundex[word] finds the Soundex phonetic index of a given string.";
 
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-ClearAll[Soundex]
+ClearAll[Soundex];
 Soundex[word_String] :=
     Block[{sword = ToLowerCase[word], f, res},
     (*1*)
@@ -124,6 +124,6 @@ Soundex[word_String] :=
       res
     ];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
