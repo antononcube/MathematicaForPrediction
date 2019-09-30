@@ -111,9 +111,9 @@ gives an association with event records data."
 
 Begin["`Private`"];
 
-Needs["DataReshape`"]
+Needs["DataReshape`"];
 
-Clear[WeatherEventRecords]
+Clear[WeatherEventRecords];
 
 WeatherEventRecords[
   citiesSpec_: {{_String, _String}..},
