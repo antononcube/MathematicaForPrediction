@@ -199,24 +199,24 @@
   2018-04-29: Updated the package to use the re-implementation of TriesWithFrequencies.m through Association.
 *)
 
-BeginPackage["MosaicPlot`"]
+BeginPackage["MosaicPlot`"];
 
 MosaicPlot::usage = "MosaicPlot[rarr] makes a mosaic plot that summarizes the conditional probabilities of categorical \
 values co-occurrence in a list of records of the same length (a full array or dataset). MosaicPlot has options for \
 adjusting the gap between the rectangles, the style of the labels, the rotation of the labels, and from which side to \
-start the rectangle splitting. MosaicPlot also takes all the options of Graphics."
+start the rectangle splitting. MosaicPlot also takes all the options of Graphics.";
 
 MosaicPlotTooltipTable::usage = "MosaicPlotTriePathTable[triePath:{{catVal_?AtomQ,prob_?NumberQ}..}] makes a table \
-of conditional probabilities from a trie path (suitable to be the second argument of Tooltip.)"
+of conditional probabilities from a trie path (suitable to be the second argument of Tooltip.)";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 
 If[Length[DownValues[TriesWithFrequencies`TrieMerge]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"]
 ];
 
-Clear[TrieUniqueRecords]
+Clear[TrieUniqueRecords];
 TrieUniqueRecords[data_?ArrayQ] :=
     Block[{uniqCVals, zeroRecs, res},
       uniqCVals = Table[Union[data[[All, i]]], {i, Dimensions[data][[2]]}];
@@ -225,11 +225,11 @@ TrieUniqueRecords[data_?ArrayQ] :=
       Replace[res, x_Association :> Join[x, <|TriesWithFrequencies`$TrieValue -> 0|>], Infinity]
     ];
 
-Clear[TrieAddMissingValues]
+Clear[TrieAddMissingValues];
 TrieAddMissingValues[trie_?TriesWithFrequencies`TrieQ, data_?ArrayQ] :=
     TriesWithFrequencies`TrieMerge[trie, TrieUniqueRecords[data]];
 
-Clear[TrieSortNodes]
+Clear[TrieSortNodes];
 TrieSortNodes[trie_?TriesWithFrequencies`TrieQ] :=
     Replace[trie, x_Association :> Sort[x], Infinity];
 
@@ -238,7 +238,7 @@ TrieSortNodes[trie_] :=
       Join[{trie[[1]]}, TrieSortNodes /@ SortBy[Rest[trie], #[[1, 1]] &]]
     ];
 
-Clear[TriePruneNumericalLevel]
+Clear[TriePruneNumericalLevel];
 
 TriePruneNumericalLevel[trie_?TriesWithFrequencies`TrieQ, pruneLevel_Integer] :=
     Association@TriePruneNumericalLevel[First@Normal@trie, pruneLevel, 1];
@@ -265,7 +265,7 @@ TriePruneNumericalLevel[trie_?TriesWithFrequencies`TrieRuleQ, pruneLevel_Integer
       ]
     ];
 
-Clear[RectanglePartition]
+Clear[RectanglePartition];
 Options[RectanglePartition] = {"Gap" -> 0.01, "ZeroWidth" -> 0.001, "SortNodes" -> False};
 RectanglePartition[trie_,
   Rectangle[{x0_?NumberQ, y0_?NumberQ}, {x1_?NumberQ, y1_?NumberQ}],
@@ -304,7 +304,7 @@ TrieMosaicRec[trie_, r_Rectangle, axis : ("x" | "y"), gap_?NumberQ, zwidth_?Numb
 *)
 
 
-Clear[MosaicPlotTooltipTable, MakeTooltipTable]
+Clear[MosaicPlotTooltipTable, MakeTooltipTable];
 MosaicPlotTooltipTable[triePath_] := MakeTooltipTable[triePath];
 MakeTooltipTable[triePath_] :=
     Block[{t},
@@ -332,7 +332,7 @@ MakeTooltipTable[triePath_] :=
 SIDEChangeRules = {Left -> Top, Top -> Right, Right -> Bottom, Bottom -> Left};
 SIDEToCoordinateRules = {Left -> 0, Right -> 1, Top -> 1, Bottom -> 0};
 
-Clear[TrieMosaicRec]
+Clear[TrieMosaicRec];
 TrieMosaicRec[trie_, triePath_, posPath_, r_Rectangle,
   axis : ("x" | "y"), side : (Top | Bottom | Left | Right),
   gap_?NumberQ, gapFactor_?NumberQ,
@@ -384,7 +384,7 @@ MosaicPlot::nlr = "The value of the option \"LabelRotation\" should be a pair of
 MosaicPlot::ncr = "The value of the option ColorRules should be a list of rules of the form columnIndex->color.\
  If coloring for only one column index is specified its rule can be of the form colorIndex->{color1,color2,...} .";
 
-Clear[MosaicPlot]
+Clear[MosaicPlot];
 Options[MosaicPlot] =
     Join[{"ColumnNames" -> None, "ColumnNamesOffset"->0.05, "Gap" -> 0.02, "GapFactor" -> 0.5,
       "ZeroProbability" -> 0.001, "FirstAxis" -> "y",
@@ -526,6 +526,6 @@ MosaicPlot[dataRecords_, opts : OptionsPattern[]] :=
 
 MosaicPlot[___] := Block[{}, Message[MosaicPlot::nargs]; {}];
 
-End[]
+End[];
 
 EndPackage[]
