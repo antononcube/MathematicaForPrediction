@@ -72,7 +72,9 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, opts : OptionsPattern[]] :
     ParallelCoordinatesPlot[data, colNames, MinMax /@ Transpose[data], opts];
 
 ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : OptionsPattern[]] :=
-    Block[{divisions, data2, grBase, grid, xs, n = 5, c = 0.05, pstyle},
+    Block[{pstyle, horizontalQ, divisions, data2, grBase, grid, xs, n = 5, c = 0.05, dirFunc = Identity },
+
+      horizontalQ = ! TrueQ[ MemberQ[ {"Vertical", "FromAbove"}, OptionValue[ParallelCoordinatesPlot, Direction] ] ];
 
       pstyle = OptionValue[ParallelCoordinatesPlot, PlotStyle];
       If[ TrueQ[pstyle === Automatic], pstyle = Nothing ];
@@ -81,17 +83,24 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
       data2 = Transpose[MapThread[Rescale[#1, #2, {0, 1}] &, {Transpose[data], MinMax /@ divisions}]];
       xs = Range[Length[data[[1]]]];
 (*      grBase = ListLinePlot[data2, opts, Axes -> False];*)
-      grBase = Graphics[ { Sequence @@ Flatten[{pstyle}], Line[Transpose[{Range[Length[data2[[1]]]], #1}]]& /@ data2}, FilterRules[{opts}, Options[Graphics]], Axes -> False ];
+
+      dirFunc = If[ horizontalQ, Identity, Reverse];
+
+      grBase = Graphics[ { Sequence @@ Flatten[{pstyle}], Line[ dirFunc /@ Transpose[{Range[Length[data2[[1]]]], #1}]]& /@ data2}, FilterRules[{opts}, Options[Graphics]], Axes -> False ];
+
       grid =
           Graphics[{
-            Line[{{#, 0}, {#, 1}}] & /@ xs,
+            Line[ dirFunc /@ {{#, 0}, {#, 1}}] & /@ xs,
             MapThread[
               Function[{x, ds},
-                MapThread[{Line[{{x - c, #2}, {x + c, #2}}],
-                  Text[#1, {x - c, #2}, {2, 0}]} &, {N@ds, Rescale[ds]}]
+                MapThread[{Line[dirFunc /@ {{x - c, #2}, {x + c, #2}}],
+                  Text[#1, dirFunc @ {x - c, #2}, dirFunc @ {2, 0}]} &, {N@ds, Rescale[ds]}]
               ],
               {xs, divisions}],
-            MapThread[Text[#2, {#1, 0}, {0, 3}] &, {xs, colNames}]
+            If[ horizontalQ,
+              MapThread[Text[#2, {#1, 0}, {Center, 3}] &, {xs, colNames}],
+              MapThread[Text[#2, {-0.1, #1}, {Right, Center}] &, {xs, colNames}],
+            ]
           }];
       Show[grBase, grid]
     ] /; MatrixQ[data, NumberQ] && MatrixQ[minMaxes, NumberQ] && Dimensions[minMaxes] == {Dimensions[data][[2]], 2};
@@ -132,7 +141,7 @@ ParallelCoordinatesPlot[aData_Association, colNames_List, opts : OptionsPattern[
               #1[[All, axesOrder]],
               colNames[[axesOrder]],
               minMaxes[[axesOrder]],
-              PlotStyle -> #2, FilterRules[{opts}, Options[ListLinePlot]]] &,
+              PlotStyle -> #2, opts] &,
             {Values@aData, cols}
           ];
       Legended[Show[grs], LineLegend[cols, Keys[aData]]]
