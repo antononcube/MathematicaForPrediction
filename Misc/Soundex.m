@@ -61,7 +61,7 @@
 
       1. Save the first letter. Remove all occurrences of 'h' and 'w' except first letter.
 
-      2. Replace all consonants (include the first letter) with digits as follows:
+      2. Replace all consonants (including the first letter) with digits as follows:
 
           b, f, p, v → 1
           c, g, j, k, q, s, x, z → 2
@@ -72,12 +72,12 @@
 
       3. Replace all adjacent same digits with one digit.
 
-      4. Remove all occurrences of a, e, i, o, u, y except first letter.
+      4. Remove all occurrences of a, e, i, o, u, y except the first letter.
 
-      5. If first symbol is a digit replace it with letter saved on step 1.
+      5. If the first symbol is a digit replace it with the letter saved on step 1.
 
-      6. Append 3 zeros if result contains less than 3 digits.
-         Remove all except first letter and 3 digits after it.
+      6. Append 3 zeros if the result contains less than 3 digits.
+         Remove all characters except the first letter and 3 digits after it.
 
 
     # References
@@ -93,7 +93,7 @@ Soundex::usage = "Soundex[word] finds the Soundex phonetic index of a given stri
 
 Begin["`Private`"];
 
-ClearAll[Soundex];
+Clear[Soundex];
 Soundex[word_String] :=
     Block[{sword = ToLowerCase[word], f, res},
     (*1*)
