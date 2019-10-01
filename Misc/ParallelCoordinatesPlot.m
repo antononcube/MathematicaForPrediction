@@ -58,7 +58,11 @@ ParallelCoordinatesPlot::args = "The expected arguments are association, column 
 ParallelCoordinatesPlot::copt = "The value of the option \"Colors\" is expected to be an \
 association with keys that correspond to the keys of the first argument.";
 
-Options[ParallelCoordinatesPlot] = Join[{"Colors" -> Automatic, "AxesOrder" -> Automatic}, Options[ListLinePlot]];
+Options[ParallelCoordinatesPlot] =
+    Join[
+      {"Colors" -> Automatic, "AxesOrder" -> Automatic, Direction-> "Horizontal", PlotStyle -> Automatic},
+      Options[Graphics]
+    ];
 
 ParallelCoordinatesPlot[data_?MatrixQ, opts : OptionsPattern[]] :=
     ParallelCoordinatesPlot[data, Range[Length[data[[1]]]],
@@ -68,11 +72,16 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, opts : OptionsPattern[]] :
     ParallelCoordinatesPlot[data, colNames, MinMax /@ Transpose[data], opts];
 
 ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : OptionsPattern[]] :=
-    Block[{divisions, data2, grBase, grid, xs, n = 5, c = 0.1},
+    Block[{divisions, data2, grBase, grid, xs, n = 5, c = 0.05, pstyle},
+
+      pstyle = OptionValue[ParallelCoordinatesPlot, PlotStyle];
+      If[ TrueQ[pstyle === Automatic], pstyle = Nothing ];
+
       divisions = FindDivisions[#, n] & /@ minMaxes;
       data2 = Transpose[MapThread[Rescale[#1, #2, {0, 1}] &, {Transpose[data], MinMax /@ divisions}]];
       xs = Range[Length[data[[1]]]];
-      grBase = ListLinePlot[data2, opts, Axes -> False, GridLines -> {Range[Length[data[[1]]]], None}];
+(*      grBase = ListLinePlot[data2, opts, Axes -> False];*)
+      grBase = Graphics[ { Sequence @@ Flatten[{pstyle}], Line[Transpose[{Range[Length[data2[[1]]]], #1}]]& /@ data2}, FilterRules[{opts}, Options[Graphics]], Axes -> False ];
       grid =
           Graphics[{
             Line[{{#, 0}, {#, 1}}] & /@ xs,
@@ -119,12 +128,14 @@ ParallelCoordinatesPlot[aData_Association, colNames_List, opts : OptionsPattern[
       minMaxes = MinMax /@ Transpose[Join @@ Values[aData]];
       grs =
           MapThread[
-            ParallelCoordinatesPlot[#1[[All, axesOrder]],
-              colNames[[axesOrder]], minMaxes[[axesOrder]],
+            ParallelCoordinatesPlot[
+              #1[[All, axesOrder]],
+              colNames[[axesOrder]],
+              minMaxes[[axesOrder]],
               PlotStyle -> #2, FilterRules[{opts}, Options[ListLinePlot]]] &,
             {Values@aData, cols}
           ];
-      Legended[Show[grs], SwatchLegend[cols, Keys[aData]]]
+      Legended[Show[grs], LineLegend[cols, Keys[aData]]]
     ] /; MatrixQ[Join @@ Values[aData], NumberQ];
 
 ParallelCoordinatesPlot[___] :=
