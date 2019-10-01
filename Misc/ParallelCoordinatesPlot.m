@@ -53,10 +53,17 @@ Begin["`Private`"];
 
 Clear[ParallelCoordinatesPlot];
 
-ParallelCoordinatesPlot::args = "The expected arguments are association, column names, and minmax pairs.";
+ParallelCoordinatesPlot::args = "The expected arguments are \
+(1) a matrix or an association of matrices, \
+(2) column names, and \
+(3) minmax pairs. \
+The number of the column names should agree with the number of columns in the first argument.";
 
-ParallelCoordinatesPlot::copt = "The value of the option \"Colors\" is expected to be an \
-association with keys that correspond to the keys of the first argument.";
+ParallelCoordinatesPlot::copt = "The value of the option \"Colors\" is expected to be \
+an association with keys that correspond to the keys of the first argument, or Automatic, or Random.";
+
+ParallelCoordinatesPlot::aopt = "The value of the option \"AxesOrder\" is expected to be \
+a list of indexes with the same length as the number of columns in the first argument, or Automatic, or Random.";
 
 Options[ParallelCoordinatesPlot] =
     Join[
@@ -99,7 +106,7 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
               {xs, divisions}],
             If[ horizontalQ,
               MapThread[Text[#2, {#1, 0}, {Center, 3}] &, {xs, colNames}],
-              MapThread[Text[#2, {-0.1, #1}, {Right, Center}] &, {xs, colNames}],
+              MapThread[Text[#2, {-0.1, #1}, {Right, Center}] &, {xs, colNames}]
             ]
           }];
       Show[grBase, grid]
@@ -131,7 +138,11 @@ ParallelCoordinatesPlot[aData_Association, colNames_List, opts : OptionsPattern[
         axesOrder = Range[Dimensions[aData[[1]]][[2]]],
 
         TrueQ[axesOrder === Random],
-        axesOrder = RandomSample[Range[Dimensions[aData[[1]]][[2]]]]
+        axesOrder = RandomSample[Range[Dimensions[aData[[1]]][[2]]]],
+
+        !( VectorQ[axesOrder, IntegerQ] && Length[axesOrder] == Dimensions[aData[[1]]][[2]] && Range[Length[axesOrder]] == Sort[axesOrder] ),
+        Message[ParallelCoordinatesPlot::aopt];
+        Return[$Failed];
       ];
 
       minMaxes = MinMax /@ Transpose[Join @@ Values[aData]];
