@@ -180,108 +180,108 @@ If[Length[DownValues[OutlierIdentifiers`HampelIdentifierParameters]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["MonadicContextualClassification`"]
+BeginPackage["MonadicContextualClassification`"];
 
-$ClConFailure::usage = "Failure symbol for the monad ClCon."
+$ClConFailure::usage = "Failure symbol for the monad ClCon.";
 
-ClConSplitData::usage = "ClConSplitData[fr_?NumberQ] splits the pipeline value into training and test parts. "
+ClConSplitData::usage = "ClConSplitData[fr_?NumberQ] splits the pipeline value into training and test parts. ";
 
 ClConRecoverData::usage = "ClConRecoverData joins split data from context or the current pipeline value into the pipeline value. \
-The Association values of \"trainingData\", \"testData\", \"validationData\" are combined/joined into one."
+The Association values of \"trainingData\", \"testData\", \"validationData\" are combined/joined into one.";
 
 ClConMakeClassifier::usage = "ClConMakeClassifier[methodSpec_?MethodSpecQ] makes a classifier with the specified method \
 Using Association values of \"trainingData\", \"testData\", \"validationData\". \
 The obtained classifier object is put as the result pipeline value; also in the context under the key \"classifier\". \
 The Association values of \"trainingData\", \"testData\", \"validationData\" are put in the context too, if taken from \
-the current pipeline value. "
+the current pipeline value. ";
 
-ClConTrainClassifier::usage = "Synonym of ClConMakeClassifier."
+ClConTrainClassifier::usage = "Synonym of ClConMakeClassifier.";
 
 ClConClassifierMeasurements::usage = "ClConClassifierMeasurements[measures : (_String | {_String ..})] \
-computes the specified measurements for the classifier in the context. (Does not modify the context.)"
+computes the specified measurements for the classifier in the context. (Does not modify the context.)";
 
 ClConClassifierMeasurementsByThreshold::usage = "ClConClassifierMeasurementsByThreshold[measures : (_String | {_String ..}), clLbl->th_?NumberQ] \
 computes the specified measurements for the classifier in the context \
 using the threshold th for the specified class label clLbl. \
-(Does not modify the context.)"
+(Does not modify the context.)";
 
 ClConAccuracyByVariableShuffling::usage = "ClConAccuracyByVariableShuffling[opts : OptionsPattern[]] computes \
-the variable importance. (Does not modify the context.)"
+the variable importance. (Does not modify the context.)";
 
 ClConSummarizeData::usage = "Summarizes the data in long form. Does not modify the context. \
-Echoes the result with the default option values."
+Echoes the result with the default option values.";
 
-ClConEchoDataSummary::usage = "Echoes results of data summarization."
+ClConEchoDataSummary::usage = "Echoes results of data summarization.";
 
 ClConSummarizeDataLongForm::usage = "Summarizes the data in long form. Does not modify the context. \
-Does not echo the result."
+Does not echo the result.";
 
 ClConToNormalClassifierData::usage = "Non-monadic function. Converts data of different forms into record-label rules. \
-I.e. in the form { (rec:{___}->lbl_)..} ."
+I.e. in the form { (rec:{___}->lbl_)..} .";
 
-ClConSetData::usage = "Sets the data argument to be the pipeline value. (Synonym of ClConSetValue.)"
+ClConSetData::usage = "Sets the data argument to be the pipeline value. (Synonym of ClConSetValue.)";
 
-ClConSetTrainingData::usage = "Sets the training data in the context. Does not change the pipeline value."
+ClConSetTrainingData::usage = "Sets the training data in the context. Does not change the pipeline value.";
 
-ClConSetTestData::usage = "Sets the test data in the context. Does not change the pipeline value."
+ClConSetTestData::usage = "Sets the test data in the context. Does not change the pipeline value.";
 
-ClConSetValidationData::usage = "Sets the validation data in the context. Does not change the pipeline value."
+ClConSetValidationData::usage = "Sets the validation data in the context. Does not change the pipeline value.";
 
-ClConSetClassifier::usage = "Sets the classifier in the context. Does not change the pipeline value."
+ClConSetClassifier::usage = "Sets the classifier in the context. Does not change the pipeline value.";
 
-ClConSetVariableNames::usage = "Sets the variable names in the context. Does not change the pipeline value."
+ClConSetVariableNames::usage = "Sets the variable names in the context. Does not change the pipeline value.";
 
-ClConTakeTrainingData::usage = "Takes the training data in the context."
+ClConTakeTrainingData::usage = "Takes the training data in the context.";
 
-ClConTakeTestData::usage = "Takes the test data in the context."
+ClConTakeTestData::usage = "Takes the test data in the context.";
 
-ClConTakeValidationData::usage = "Takes the validation data in the context."
+ClConTakeValidationData::usage = "Takes the validation data in the context.";
 
-ClConTakeData::usage = "Recovers the data and gives it as a non-monadic value."
+ClConTakeData::usage = "Recovers the data and gives it as a non-monadic value.";
 
-ClConTakeClassifier::usage = "Gives the classifier as non-monadic value."
+ClConTakeClassifier::usage = "Gives the classifier as non-monadic value.";
 
-ClConTakeROCData::usage = "Gives the ROC data as non-monadic value."
+ClConTakeROCData::usage = "Gives the ROC data as non-monadic value.";
 
-ClConTakeVariableNames::usage = "Finds the variable names and returns them as a non-monadic value."
+ClConTakeVariableNames::usage = "Finds the variable names and returns them as a non-monadic value.";
 
-ClConGetVariableNames::usage = "Finds the variable names and puts them as the pipeline value. Does not modify the context."
+ClConGetVariableNames::usage = "Finds the variable names and puts them as the pipeline value. Does not modify the context.";
 
-ClConEchoVariableNames::usage = "Finds and echoes the variable names. Does not modify the context."
+ClConEchoVariableNames::usage = "Finds and echoes the variable names. Does not modify the context.";
 
 ClConROCData::usage = "Computes the ROC data using the classifier and test data in the context. \
-The obtained ROC data is put as the result pipeline value; also in the context under the key \"rocData\"."
+The obtained ROC data is put as the result pipeline value; also in the context under the key \"rocData\".";
 
-ClConROCPlot::usage = "Makes a ROC plot and echoes it. The result pipeline value is the plot."
+ClConROCPlot::usage = "Makes a ROC plot and echoes it. The result pipeline value is the plot.";
 
-ClConROCListLinePlot::usage = "Makes ListLinePlot over specified ROC functions and echoes it. The result pipeline value is the plot."
+ClConROCListLinePlot::usage = "Makes ListLinePlot over specified ROC functions and echoes it. The result pipeline value is the plot.";
 
-ClConSuggestROCThresholds::usage = "Suggest thresholds based on ROC data."
+ClConSuggestROCThresholds::usage = "Suggest thresholds based on ROC data.";
 
 ClConAssignVariableNames::usage = "Puts a value for \"variableNames\" in the context in correspondence to \"trainingData\" in the context. \
-If an empty list is given the variable names are automatically derived."
+If an empty list is given the variable names are automatically derived.";
 
-ClConOutlierPosition::usage = "Find outlier positions in the data."
+ClConOutlierPosition::usage = "Find outlier positions in the data.";
 
 (*ClConFindOutliersPerClassLabel::usage = "Find outlier positions in the data per class label."*)
 
 (*ClConDropOutliersPerClassLabel::usage = "Find and from outliers in the data per class label."*)
 
 ClConReduceDimension::usage = "Applies dimension reduction with SVD. \
-(If the non-label parts of the training data and test data can be converted numerical matrices.)"
+(If the non-label parts of the training data and test data can be converted numerical matrices.)";
 
 (*ClConDeleteMissing::usage = "Deletes records with missing data values."*)
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Needs["MathematicaForPredictionUtilities`"]
-Needs["StateMonadCodeGenerator`"]
-Needs["ClassifierEnsembles`"]
-Needs["ROCFunctions`"]
-Needs["VariableImportanceByClassifiers`"]
-Needs["CrossTabulate`"]
-Needs["SSparseMatrix`"]
-Needs["OutlierIdentifiers`"]
+Needs["MathematicaForPredictionUtilities`"];
+Needs["StateMonadCodeGenerator`"];
+Needs["ClassifierEnsembles`"];
+Needs["ROCFunctions`"];
+Needs["VariableImportanceByClassifiers`"];
+Needs["CrossTabulate`"];
+Needs["SSparseMatrix`"];
+Needs["OutlierIdentifiers`"];
 
 (* The definitions are made to have a prefix "ClCon" . *)
 
@@ -291,7 +291,7 @@ Needs["OutlierIdentifiers`"]
 
 (* Generate base functions of ClCon monad (ClassifierWithContext) *)
 
-GenerateStateMonadCode["MonadicContextualClassification`ClCon", "FailureSymbol" -> $ClConFailure]
+GenerateStateMonadCode["MonadicContextualClassification`ClCon", "FailureSymbol" -> $ClConFailure];
 
 (**************************************************************)
 (* Infix operators                                            *)
@@ -304,7 +304,7 @@ GenerateStateMonadCode["MonadicContextualClassification`ClCon", "FailureSymbol" 
 (* General functions                                          *)
 (**************************************************************)
 
-Clear[ClConToNormalClassifierData]
+Clear[ClConToNormalClassifierData];
 
 Options[ClConToNormalClassifierData] = {"DeleteMissing"->True, "ClassLabelColumn" -> Automatic };
 
@@ -356,7 +356,7 @@ ClConToNormalClassifierData[ data_?MatrixQ, opts:OptionsPattern[] ] :=
 (**************************************************************)
 (* Data splitting and recovery functions                      *)
 (**************************************************************)
-Clear[ClConSplitData]
+Clear[ClConSplitData];
 
 (* This function does not respect specified label column yet. *)
 Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
@@ -412,7 +412,7 @@ ClConSplitData[___][xs_, context_Association] :=
     ];
 
 
-Clear[ClConRecoverData]
+Clear[ClConRecoverData];
 
 ClConRecoverData[$ClConFailure] := $ClConFailure;
 
@@ -446,7 +446,7 @@ ClConRecoverData[xs_, context_Association] :=
 
 Clear["ClConSet*Data", "ClConTake*Data", ClConTakeClassifier, ClConTakeClassLabelIndex, ClConTakeVariableNames];
 
-Clear[ClConSetData]
+Clear[ClConSetData];
 ClConSetData = ClConSetValue;
 
 ClConSetTrainingData[___][$ClConFailure] := $ClConFailure;
@@ -555,7 +555,7 @@ ClConTakeVariableNames[xs_, context_Association] :=
 (* Dealing with variable names                                *)
 (**************************************************************)
 
-Clear[DatasetWithColumnNamesQ]
+Clear[DatasetWithColumnNamesQ];
 DatasetWithColumnNamesQ[ds_Dataset] :=
     FreeQ[ Normal[ds[1, Keys]], _Missing ];
 DatasetWithColumnNamesQ[___] := False;
@@ -604,7 +604,7 @@ ClConEchoVariableNames[xs_, context_Association] :=
       ]
     ];
 
-Clear[ClConAssignVariableNames]
+Clear[ClConAssignVariableNames];
 
 ClConAssignVariableNames[$ClConFailure] := $ClConFailure;
 ClConAssignVariableNames[][$ClConFailure] := $ClConFailure;
@@ -660,7 +660,7 @@ ClConAssignVariableNames[___][xs_, context_Association] :=
 (* ClConSummarizeData                                       *)
 (************************************************************)
 
-Clear[GetData]
+Clear[GetData];
 GetData[xs_, context_] :=
     Block[{},
       Which[
@@ -714,7 +714,7 @@ ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
           TrueQ[ type != "LongForm"],
       (*ctData = ClConToNormalClassifierData /@ ctData;*)
       (*res = RecordsSummary[#, Thread->True, DeleteCases[{opts},"Type"->_]]& /@ ctData;*)
-        res = RecordsSummary[#, rsOpts, Thread->True]& /@ ctData;
+        res = RecordsSummary[#, Sequence @@ Append[rsOpts, Thread->True]]& /@ ctData;
         If[ TrueQ[OptionValue["Echo"]],
           ClConBind[ ClConUnit[ Normal@res, context], ClConEchoFunctionValue["summaries:", Identity] ],
           ClConUnit[ Normal@res, context]
@@ -921,14 +921,14 @@ ClConMakeClassifier[___][xs_, context_Association] :=
     ];
 
 
-Clear[ClConTrainClassifier]
+Clear[ClConTrainClassifier];
 ClConTrainClassifier = ClConMakeClassifier;
 
 
 (************************************************************)
 (* ClConClassifierMeasurements                              *)
 (************************************************************)
-CleaAll[ClConClassifierMeasurements]
+CleaAll[ClConClassifierMeasurements];
 
 Options[ClConClassifierMeasurements] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
@@ -997,7 +997,7 @@ ClConClassifierMeasurements[___][xs_, context_Association] :=
 (************************************************************)
 (* ClConClassifierMeasurementsByThreshold                   *)
 (************************************************************)
-CleaAll[ClConClassifierMeasurementsByThreshold]
+CleaAll[ClConClassifierMeasurementsByThreshold];
 
 Options[ClConClassifierMeasurementsByThreshold] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
@@ -1046,7 +1046,7 @@ ClConClassifierMeasurementsByThreshold[___][xs_, context_Association] :=
 (* Meaning the classifier is repeatedly called over a test set. *)
 (* Note that there is an *Echo* version. This prompts as possible computation optimization. *)
 
-Clear[ClConROCData]
+Clear[ClConROCData];
 
 Options[ClConROCData] = { "ROCRange" -> Automatic, "ClassLabels" -> All };
 
@@ -1254,7 +1254,7 @@ ClConROCListLinePlot[___][xs_,context_Association] :=
 (************************************************************)
 (* ClConSuggestROCThresholds                                *)
 (************************************************************)
-Clear[ClConSuggestROCThresholds]
+Clear[ClConSuggestROCThresholds];
 
 Options[ClConSuggestROCThresholds] = Options[ROCData];
 
@@ -1348,7 +1348,7 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
 (* ClConReduceDimension                                     *)
 (************************************************************)
 
-Clear[ClConReduceDimension]
+Clear[ClConReduceDimension];
 
 Options[ClConReduceDimension] = { "Echo" -> True };
 
@@ -1453,7 +1453,7 @@ ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
 (************************************************************)
 (* ClConOutlierPosition                                     *)
 (************************************************************)
-Clear[ClConOutlierPosition, ClConDataOutlierPosition]
+Clear[ClConOutlierPosition, ClConDataOutlierPosition];
 
 Options[ClConOutlierPosition] = {
   "CentralItemFunction" -> Mean,
@@ -1562,7 +1562,7 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 (************************************************************)
 (* ClConFindOutliersPerClassLabel                                *)
 (************************************************************)
-Clear[ClConFindOutliersPerClassLabel]
+Clear[ClConFindOutliersPerClassLabel];
 
 Options[ClConFindOutliersPerClassLabel] = {
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
@@ -1615,7 +1615,7 @@ ClConFindOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
   4. That dataset is returned as monad pipeline value.
 *)
 
-Clear[ClConDropOutliersPerClassLabel]
+Clear[ClConDropOutliersPerClassLabel];
 
 Options[ClConDropOutliersPerClassLabel] = Options[ClConFindOutliersPerClassLabel];
 
@@ -1650,7 +1650,7 @@ ClConDropOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
 (************************************************************)
 (* ClConOutliersOperationsProcessing                        *)
 (************************************************************)
-Clear[ClConOutliersOperationsProcessing]
+Clear[ClConOutliersOperationsProcessing];
 
 Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClassLabel];
 
@@ -1724,6 +1724,6 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
       ClConUnit[res, context]
     ];
 
-End[]  (*`Private`*)
+End[]; (*`Private`*)
 
 EndPackage[]
