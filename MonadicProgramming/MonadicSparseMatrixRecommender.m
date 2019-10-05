@@ -447,7 +447,7 @@ Clear[SMRMonCreate];
 (*SMRMonCreate::rneq = "The row names of SSparseMatrix objects are not the same."*)
 (*SMRMonCreate::niid = "The specified item variable name is not one of the column names of the dataset."*)
 
-SyntaxInformation[SMRMonCreate] = { "ArgumentsPattern" -> { ___, ___, OptionsPattern[] } };
+SyntaxInformation[SMRMonCreate] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
 
 Options[SMRMonCreate] =
     {
