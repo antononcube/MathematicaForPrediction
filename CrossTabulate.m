@@ -254,7 +254,7 @@ Clear[CrossTabulate];
 
 SyntaxInformation[CrossTabulate] = {"Arguments" -> {_, OptionsPattern[]}};
 
-Options[CrossTabulate] = {"Sparse" -> False};
+Options[CrossTabulate] = {"Sparse" -> True};
 
 CrossTabulate::narr = "The first argument is expected to be an array with two or three columns.
 If present the third column is expected to be numerical.";
@@ -329,8 +329,8 @@ xtabsViaRLink[data_?ArrayQ, columnNames : {_String ..}, formula_String, sparse :
         (*RLink`REvaluate["dataDF <- do.call( rbind.data.frame, data )"]*)
         (*RLink`REvaluate["dataDF <- data.frame( matrix( unlist(data), nrow = " <> ToString[Length[data]] <> ", byrow = T), stringsAsFactors=FALSE)"]*)
         RLink`REvaluate["dataDF <- as.data.frame( data, srtingsAsFactors=F )"]
-      ]
-          RLink`RSet["columnNames", columnNames];
+      ];
+      RLink`RSet["columnNames", columnNames];
       RLink`REvaluate["names(dataDF)<-columnNames"];
       RLink`REvaluate["xtabs(" <> formula <> ", dataDF, sparse = " <> If[sparse, "T", "F"] <> ")"]
     ];
