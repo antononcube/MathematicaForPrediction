@@ -439,7 +439,7 @@ NumericalColumnToSSparseMatrix[dsArg_Dataset, idColumnName_, varColumnName_] :=
       ds = dsArg[All, {idColumnName, varColumnName}][All, Join[#, <|"Variable" -> varColumnName|>]&];
       ds = Query[ReplaceAll[Missing[] -> 0], All][ds];
 
-      ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}] ]
+      ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}], "Sparse"->True ]
     ];
 
 Clear[SMRMonCreate];
@@ -626,7 +626,7 @@ SMRMonCreateFromWideForm[ds_Dataset, itemVarName_String, opts : OptionsPattern[]
 
       If[ numericalColumnsAsCategoricalQ,
         (* This is intentionally separated from the 'else' code in order to avoid the redundant call to NumericalColumns. *)
-        smats = Table[ v -> ToSSparseMatrix[ CrossTabulate[ds[All, {idName, v}]]], {v, Complement[ tagTypeNames, {idName} ]}],
+        smats = Table[ v -> ToSSparseMatrix[ CrossTabulate[ds[All, {idName, v}], "Sparse" -> True ]], {v, Complement[ tagTypeNames, {idName} ]}],
 
         (*ELSE*)
 
@@ -639,7 +639,7 @@ SMRMonCreateFromWideForm[ds_Dataset, itemVarName_String, opts : OptionsPattern[]
                 (*ELSE*)
                 ds2 = ds[All, {idName, v}];
                 ds2 = ds2[ Select[ FreeQ[#, missingValuesPattern]& ] ];
-                v -> ToSSparseMatrix[ CrossTabulate[ds2] ]
+                v -> ToSSparseMatrix[ CrossTabulate[ds2, "Sparse"->True] ]
               ], {v, Complement[ tagTypeNames, {idName} ]}];
       ];
 
@@ -709,7 +709,7 @@ SMRMonCreateFromLongForm[ds_Dataset, { itemColumnName_String, tagTypeColumnName_
 
       tagTypeNames = Union[ Normal[ ds[All, tagTypeColumnName] ] ];
 
-      smats = Association @ Map[Function[{tt}, tt -> ToSSparseMatrix @ CrossTabulate[ ds[ Select[#TagType == tt &], {itemColumnName, tagColumnName, weightColumnName}] ] ], tagTypeNames];
+      smats = Association @ Map[Function[{tt}, tt -> ToSSparseMatrix @ CrossTabulate[ ds[ Select[#TagType == tt &], {itemColumnName, tagColumnName, weightColumnName}], "Sparse"->True]  ], tagTypeNames];
 
       If[addTagTypesToColumnNamesQ,
 
