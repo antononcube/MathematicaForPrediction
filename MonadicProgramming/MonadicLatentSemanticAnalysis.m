@@ -1060,7 +1060,7 @@ LSAMonRepresentByTopics[ query_?QueryPatternQ, opts : OptionsPattern[] ][xs_, co
     ];
 
 LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
-    Block[{ applyTermWeightFuncsQ, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
+    Block[{ mat = matArg, matNew = None, W, H, invH },
 
       mat = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonRepresentByTerms[ mat, FilterRules[{opts}, Options[LSAMonRepresentByTerms]]], LSAMonTakeValue }];
       If[ TrueQ[mat === $LSAMonFailure], Return[$LSAMonFailure] ];
