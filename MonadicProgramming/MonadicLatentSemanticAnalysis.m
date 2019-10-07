@@ -1038,8 +1038,6 @@ LSAMonRepresentByTerms[__][___] :=
 
 Clear[LSAMonRepresentByTopics];
 
-(*Options[LSAMonRepresentByTopics] = { "NumberOfNearestNeighbors" -> 4 };*)
-
 Options[LSAMonRepresentByTopics] = { "ApplyTermWeightFunctions" -> True };
 
 LSAMonRepresentByTopics[___][$LSAMonFailure] := $LSAMonFailure;
@@ -1064,62 +1062,24 @@ LSAMonRepresentByTopics[ query_?QueryPatternQ, opts : OptionsPattern[] ][xs_, co
 LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{ applyTermWeightFuncsQ, mat = matArg, matNew = None, W, H, invH, nf, inds, approxVec },
 
-      applyTermWeightFuncsQ = TrueQ[ OptionValue[ LSAMonRepresentByTopics, "ApplyTermWeightFunctions" ] ];
-
-      (* nns = OptionValue[ LSAMonRepresentByTopics, "NumberOfNearestNeighbors" ];
-
-      If[ ! ( IntegerQ[nns] && nns > 0 ),
-        Echo["The value of the option \"NumberOfNearestNeighbors\" is expected to be a positive integer.", "LSAMonRepresentByTopics:"];
-        Return[$LSAMonFailure]
-      ];
-      *)
-
-      If[ ! ( KeyExistsQ[context, "documentTermMatrix"] && KeyExistsQ[context, "W"] ),
-        Echo["No document-term matrix factorization is computed.", "LSAMonRepresentByTopics:"];
-        Return[$LSAMonFailure]
-      ];
-
-      If[ applyTermWeightFuncsQ,
-        mat = WeightTermsOfSSparseMatrix[ mat, context["globalWeights"], context["localWeightFunction"], context["normalizerFunction"] ]
-      ];
-
-      mat = ImposeColumnNames[ mat, ColumnNames[ context["H"] ] ];
-
-      If[ Max[Abs[ColumnSums[mat]]] == 0,
-        Echo["The terms of the argument cannot be found in the topics matrix factor (H).", "LSAMonRepresentByTopics:"];
-        Return[$LSAMonFailure]
-      ];
+      mat = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonRepresentByTerms[ mat, FilterRules[{opts}, Options[LSAMonRepresentByTerms]]], LSAMonTakeValue }];
+      If[ TrueQ[mat === $LSAMonFailure], Return[$LSAMonFailure] ];
 
       {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
-      If[ context["method"] == "NNMF",
+      mat = ImposeColumnNames[ mat, ColumnNames[ context["H"] ] ];
 
+      Which[
+
+        context["method"] == "NNMF",
         invH = PseudoInverse[H];
+        matNew = Map[ # . invH &, SparseArray[mat] ],
 
-        (*
-        nf = Nearest[ Normal[W] -> Range[Dimensions[W][[1]]] ];
-        matNew =
-            Map[
-              Function[{vec},
-                inds = nf[ Normal[vec . invH], nns ];
-                approxVec = Total[ W[[inds]] ];
-                approxVec / Norm[approxVec]
-              ],
-              SparseArray[mat]
-            ];
-        *)
-
-        matNew = Map[ # . invH &, SparseArray[mat] ];
-      ];
-
-      If[ context["method"] == "SVD",
-
+        context["method"] == "SVD",
         (* We are using Map in order to prevent too much memory usage. *)
-        (*  matNew = Map[ Transpose[H] . ( H . # )&, SparseArray[mat] ];*)
-        matNew = Map[ H . # &, SparseArray[mat] ];
-      ];
+        matNew = Map[ H . # &, SparseArray[mat] ],
 
-      If[ TrueQ[ matNew === None ],
+        True,
         Echo["Unknown value of the context member \"method\".", "LSAMonRepresentByTopics:"];
         Return[$LSAMonFailure]
       ];
