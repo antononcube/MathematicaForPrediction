@@ -115,27 +115,27 @@ TODO:
     This file was created by Mathematica Plugin for IntelliJ IDEA.
 *)
 
-BeginPackage["IndependentComponentAnalysis`"]
+BeginPackage["IndependentComponentAnalysis`"];
 
 
 IndependentComponentAnalysis::usage = "IndependentComponentsAnalysis[ X_?MatrixQ, k_Integer ] \
-independent components analysis (factorization) over the matrix X for k number of components."
+independent components analysis (factorization) over the matrix X for k number of components.";
 
 FastICA::usage = "FastICA[X_?MatrixQ, k_Integer, opts___] applies the algorithm FastICA to X in order to find \
-k independent components. Returs an association with the corresponding matrix names as keys."
+k independent components. Returs an association with the corresponding matrix names as keys.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Clear[IndependentComponentAnalysis, FastICA]
+Clear[IndependentComponentAnalysis, FastICA];
 
 IndependentComponentAnalysis::nomat = "A matrix is expected as a first argument.";
 IndependentComponentAnalysis::noint = "An integer no greater than the number of columns of the matrix is expected \
 as a second argument.";
-IndependentComponentAnalysis::nometh = "Uknknown method.";
+IndependentComponentAnalysis::nometh = "Unknown method.";
 
 FastICA::nomat = "A matrix is expected as a first argument.";
 FastICA::noint = "An integer no greater than the number of columns of the matrix is expected as a second argument.";
-FastICA::unmat = "The unmixing matrix option value should be Automatic or a square matrix corresponding \
+FastICA::unmat = "The un-mixing matrix option value should be Automatic or a square matrix corresponding \
 to the number of components.";
 
 Options[IndependentComponentAnalysis] = { Method -> "FastICA", MaxSteps -> 200, PrecisionGoal -> 6 };
@@ -271,7 +271,7 @@ FastICA[ X_?MatrixQ, k_Integer, opts : OptionsPattern[] ] :=
     ];
 
 
-Clear[ICADeflation]
+Clear[ICADeflation];
 ICADeflation[ X_?MatrixQ, ncomp_Integer, wInitMat_?MatrixQ, func_, pgoal_?NumberQ, alpha_?NumberQ, maxSteps_Integer ] :=
     Block[{n, m, w, w1, W, g, gp, t, k, nStep=0,
            wx, gwx, gwxMat, xgwxMat, gpwx, v1, v2, wd },
@@ -343,6 +343,6 @@ ICADeflation[ X_?MatrixQ, ncomp_Integer, wInitMat_?MatrixQ, func_, pgoal_?Number
       W
     ];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
