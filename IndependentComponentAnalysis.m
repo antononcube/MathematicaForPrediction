@@ -122,7 +122,7 @@ IndependentComponentAnalysis::usage = "IndependentComponentsAnalysis[ X_?MatrixQ
 independent components analysis (factorization) over the matrix X for k number of components.";
 
 FastICA::usage = "FastICA[X_?MatrixQ, k_Integer, opts___] applies the algorithm FastICA to X in order to find \
-k independent components. Returs an association with the corresponding matrix names as keys.";
+k independent components. Returns an association with the corresponding matrix names as keys.";
 
 Begin["`Private`"];
 
