@@ -129,12 +129,13 @@ Begin["`Private`"];
 Clear[IndependentComponentAnalysis, FastICA];
 
 IndependentComponentAnalysis::nomat = "A matrix is expected as a first argument.";
-IndependentComponentAnalysis::noint = "An integer no greater than the number of columns of the matrix is expected \
-as a second argument.";
+IndependentComponentAnalysis::noint = "A positive integer no greater than the number of columns of the matrix \
+is expected as a second argument.";
 IndependentComponentAnalysis::nometh = "Unknown method.";
 
 FastICA::nomat = "A matrix is expected as a first argument.";
-FastICA::noint = "An integer no greater than the number of columns of the matrix is expected as a second argument.";
+FastICA::noint = "A positive integer no greater than the number of columns of the matrix \
+is expected as a second argument.";
 FastICA::unmat = "The un-mixing matrix option value should be Automatic or a square matrix corresponding \
 to the number of components.";
 
@@ -148,7 +149,7 @@ IndependentComponentAnalysis[ X_, k_, opts : OptionsPattern[] ] :=
         Return[$Failed]
       ];
 
-      If[ !IntegerQ[k] || k > Dimensions[X][[2]] ,
+      If[ !IntegerQ[k] || !( 1 <= k <= Dimensions[X][[2]] ),
         Message[IndependentComponentAnalysis::noint];
         Return[$Failed]
       ];
