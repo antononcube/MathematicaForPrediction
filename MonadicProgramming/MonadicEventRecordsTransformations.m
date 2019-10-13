@@ -97,89 +97,89 @@ If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
 BeginPackage["MonadicEventRecordsTransformations`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-$ERTMonFailure::usage = "Failure symbol for the monad ERTMon."
+$ERTMonFailure::usage = "Failure symbol for the monad ERTMon.";
 
 ERTMonSetComputationSpecification::usage = "Assigns the argument to the key \"compSpec\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+(The rest of the monad context is unchanged.)";
 
 ERTMonSetEventRecords::usage = "Assigns the argument to the key \"eventRecords\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+(The rest of the monad context is unchanged.)";
 
 ERTMonSetEntityAttributes::usage = "Assigns the argument to the key \"entityData\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+(The rest of the monad context is unchanged.)";
 
 ERTMonSetVariableOutlierBoundaries::usage = "Assigns the argument to the key \"variableOutlierBoundaries\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+(The rest of the monad context is unchanged.)";
 
 ERTMonSetNormalizationValues::usage = "Assigns the argument to the key \"normalizationValues\" in the monad context. \
-(The rest of the monad context is unchanged.)"
+(The rest of the monad context is unchanged.)";
 
-ERTMonTakeComputationSpecification::usage = "Gives the value of the key \"compSpec\" from the monad context."
+ERTMonTakeComputationSpecification::usage = "Gives the value of the key \"compSpec\" from the monad context.";
 
-ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context."
+ERTMonTakeEventRecords::usage = "Gives the value of the key \"eventRecords\" from the monad context.";
 
-ERTMonTakeEntityAttributes::usage = "Gives the value of the key \"entityData\" from the monad context."
+ERTMonTakeEntityAttributes::usage = "Gives the value of the key \"entityData\" from the monad context.";
 
-ERTMonTakeEntityVariableRecordGroups::usage = "Gives the value of the key \"entityVariableRecordGroups\" from the monad context."
+ERTMonTakeEntityVariableRecordGroups::usage = "Gives the value of the key \"entityVariableRecordGroups\" from the monad context.";
 
-ERTMonTakeTimeSeries::usage = "Gives the value of the key \"timeSeries\" from the monad context."
+ERTMonTakeTimeSeries::usage = "Gives the value of the key \"timeSeries\" from the monad context.";
 
-ERTMonTakeVariableOutlierBoundaries::usage = "Gives the value of the key \"variableOutlierBoundaries\" from the monad context."
+ERTMonTakeVariableOutlierBoundaries::usage = "Gives the value of the key \"variableOutlierBoundaries\" from the monad context.";
 
-ERTMonTakeNormalizationValues::usage = "Gives the value of the key \"normalizationValues\" from the monad context."
+ERTMonTakeNormalizationValues::usage = "Gives the value of the key \"normalizationValues\" from the monad context.";
 
-ERTMonTakeContingencyMatrices::usage = "Gives the value of the key \"contingencyMatrices\" from the monad context."
+ERTMonTakeContingencyMatrices::usage = "Gives the value of the key \"contingencyMatrices\" from the monad context.";
 
-ERTMonTakeContingencyMatrix::usage = "Gives the contingency matrix corresponding to transformed event records."
+ERTMonTakeContingencyMatrix::usage = "Gives the contingency matrix corresponding to transformed event records.";
 
-ERTMonReadData::usage = "Reads data from specified files or directory."
+ERTMonReadData::usage = "Reads data from specified files or directory.";
 
-ERTMonEchoDataSummary::usage = "Echoes a summary of the data."
+ERTMonEchoDataSummary::usage = "Echoes a summary of the data.";
 
-ERTMonRemapEntitiesByGroups::usage = "Remaps entity ID's to group ID's."
+ERTMonRemapEntitiesByGroups::usage = "Remaps entity ID's to group ID's.";
 
 ERTMonGroupEntityVariableRecords::usage = "Groups entity-variable records. \
-Only the variables in the specification are used."
+Only the variables in the specification are used.";
 
 ERTMonEntityVariableGroupsToTimeSeries::usage = "Converts the groups of entity-variable records into time series \
 and aligns them according to the argument (a time point.) \
-The derived time series are stored in the context under the key \"timeSeries\"."
+The derived time series are stored in the context under the key \"timeSeries\".";
 
-ERTMonToTimeSeries::usage = "Same as ERTMonEntityVariableGroupsToTimeSeries."
+ERTMonToTimeSeries::usage = "Same as ERTMonEntityVariableGroupsToTimeSeries.";
 
-ERTMonAggregateTimeSeries::usage = "Aggregates the event records time series according to the specification."
+ERTMonAggregateTimeSeries::usage = "Aggregates the event records time series according to the specification.";
 
-ERTMonNormalize::usage = "Normalizes the time series according to the computation specification."
+ERTMonNormalize::usage = "Normalizes the time series according to the computation specification.";
 
 ERTMonApplyTimeSeriesFunction::usage = "Applies a specified function to the time series in the context. \
-(The result is given as a pipeline values, the value of \"timeSeries\" is not changed.)"
+(The result is given as a pipeline values, the value of \"timeSeries\" is not changed.)";
 
-ERTMonComputeVariableStatistic::usage = "Computes a statistics for each variable in the entity-variable record groups."
+ERTMonComputeVariableStatistic::usage = "Computes a statistics for each variable in the entity-variable record groups.";
 
-ERTMonFindVariableOutlierBoundaries::usage = "Finds outlier boundaries for each variable in the entity-variable record groups."
+ERTMonFindVariableOutlierBoundaries::usage = "Finds outlier boundaries for each variable in the entity-variable record groups.";
 
 ERTMonFindNormalizationValue::usage = "Finds the normalization value for specified entity ID, variable, scope, normalization function. \
-If the option \"Reuse\" is given True the normalization value is taken from the context, key \"normalizationValues\"."
+If the option \"Reuse\" is given True the normalization value is taken from the context, key \"normalizationValues\".";
 
-ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series."
+ERTMonMakeContingencyMatrices::usage = "Make contingency matrices for the time series.";
 
-ERTMonMakeContingencyMatrix::usage = "Column bind the contingency matrices created with ERTMonMakeContingencyMatrices."
+ERTMonMakeContingencyMatrix::usage = "Column bind the contingency matrices created with ERTMonMakeContingencyMatrices.";
 
 ERTMonProcessComputationSpecification::usage = "Process computations specifications. \
-The argument can be a file name string, a matrix, or a dataset."
+The argument can be a file name string, a matrix, or a dataset.";
 
 ProcessComputationSpecification::usage = "Process computations specifications. \
-The argument can be a file name string, a matrix, or a dataset."
+The argument can be a file name string, a matrix, or a dataset.";
 
-EmptyComputationSpecificationRow::usage = "Gives empty computation specification row."
+EmptyComputationSpecificationRow::usage = "Gives empty computation specification row.";
 
 Begin["`Private`"];
 
-Needs["MathematicaForPredictionUtilities`"]
-Needs["StateMonadCodeGenerator`"]
-Needs["CrossTabulate`"]
-Needs["SSparseMatrix`"]
-Needs["OutlierIdentifiers`"]
+Needs["MathematicaForPredictionUtilities`"];
+Needs["StateMonadCodeGenerator`"];
+Needs["CrossTabulate`"];
+Needs["SSparseMatrix`"];
+Needs["OutlierIdentifiers`"];
 
 
 (**************************************************************)
@@ -188,14 +188,14 @@ Needs["OutlierIdentifiers`"]
 
 (* Generate base functions of LSAMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "MonadicEventRecordsTransformations`ERTMon", "FailureSymbol" -> $ERTMonFailure, "StringContextNames" -> False ]
+GenerateStateMonadCode[ "MonadicEventRecordsTransformations`ERTMon", "FailureSymbol" -> $ERTMonFailure, "StringContextNames" -> False ];
 
 
 (**************************************************************)
 (* Ingestion of transformation specifications                 *)
 (**************************************************************)
 
-Clear[GetAssociation]
+Clear[GetAssociation];
 GetAssociation[compSpec_Dataset, colName_] := Normal[compSpec[All, colName]];
 
 Clear[ProcessComputationSpecification]
@@ -241,11 +241,11 @@ aAggregationFunctionSpec = <|
   "Count"->Length, "None"->Identity,
   "OutliersCount"->OutliersCount, "OutliersFraction"->OutliersFraction |>;
 
-ClearAll[OutliersCount]
+ClearAll[OutliersCount];
 OutliersCount[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
     Length[Select[vec, # < lower || upper < #&]];
 
-ClearAll[OutliersFraction]
+ClearAll[OutliersFraction];
 OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
     Length[Select[vec, # < lower || upper < #&]] / Length[vec];
 
@@ -254,7 +254,7 @@ OutliersFraction[vec:{_?NumberQ..}, {lower_?NumberQ, upper_?NumberQ}] :=
 (* Remap entities by groups                                   *)
 (**************************************************************)
 
-ClearAll[ERTMonRemapEntitiesByGroups]
+ClearAll[ERTMonRemapEntitiesByGroups];
 
 ERTMonRemapEntitiesByGroups[$ERTMonFailure] := $ERTMonFailure;
 ERTMonRemapEntitiesByGroups[][___] := $ERTMonFailure;
@@ -290,7 +290,7 @@ compSpecRowKeys = {"Variable", "Explanation",
   "MaxHistoryLength", "AggregationIntervalLength", "AggregationFunction",
   "NormalizationScope", "NormalizationFunction"};
 
-Clear[EmptyComputationSpecificationRow]
+Clear[EmptyComputationSpecificationRow];
 EmptyComputationSpecificationRow[] =
     Association[{"Variable" -> Missing[], "Explanation" -> "",
       "MaxHistoryLength" -> 3600, "AggregationIntervalLength" -> 60, "AggregationFunction" -> "Mean",
@@ -301,7 +301,7 @@ EmptyComputationSpecificationRow[] =
 (* Setters and takers                                         *)
 (**************************************************************)
 
-ClearAll[ERTMonSetComputationSpecification]
+ClearAll[ERTMonSetComputationSpecification];
 ERTMonSetComputationSpecification[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetComputationSpecification[][___] := $ERTMonFailure;
 ERTMonSetComputationSpecification[xs_, context_] := $ERTMonFailure;
@@ -309,7 +309,7 @@ ERTMonSetComputationSpecification[ds_Dataset][xs_, context_] := ERTMonUnit[ xs, 
 ERTMonSetComputationSpecification[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeComputationSpecification]
+ClearAll[ERTMonTakeComputationSpecification];
 ERTMonTakeComputationSpecification[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeComputationSpecification[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeComputationSpecification[xs_, context_] := ERTMonTakeComputationSpecification[][xs, context];
@@ -317,7 +317,7 @@ ERTMonTakeComputationSpecification[][xs_, context_] := context["computationSpeci
 ERTMonTakeComputationSpecification[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonSetEventRecords]
+ClearAll[ERTMonSetEventRecords];
 ERTMonSetEventRecords[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetEventRecords[][___] := $ERTMonFailure;
 ERTMonSetEventRecords[xs_, context_Association] := $ERTMonFailure;
@@ -347,7 +347,7 @@ ERTMonSetEventRecords[__][___] :=
     ];
 
 
-ClearAll[ERTMonTakeEventRecords]
+ClearAll[ERTMonTakeEventRecords];
 ERTMonTakeEventRecords[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEventRecords[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEventRecords[xs_, context_] := ERTMonTakeEventRecords[][xs, context];
@@ -355,7 +355,7 @@ ERTMonTakeEventRecords[][xs_, context_] := Lookup[ context, "eventRecords", $ERT
 ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonSetEntityAttributes]
+ClearAll[ERTMonSetEntityAttributes];
 ERTMonSetEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetEntityAttributes[][___] := $ERTMonFailure;
 ERTMonSetEntityAttributes[xs_, context_Association] := $ERTMonFailure;
@@ -383,7 +383,7 @@ ERTMonSetEntityAttributes[___][___] :=
       $ERTMonFailure
     ];
 
-ClearAll[ERTMonTakeEntityAttributes]
+ClearAll[ERTMonTakeEntityAttributes];
 ERTMonTakeEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityAttributes[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityAttributes[xs_, context_] := ERTMonTakeEntityAttributes[][xs, context];
@@ -391,7 +391,7 @@ ERTMonTakeEntityAttributes[][xs_, context_] := Lookup[ context, "entityAttribute
 ERTMonTakeEntityAttributes[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeEntityVariableRecordGroups]
+ClearAll[ERTMonTakeEntityVariableRecordGroups];
 ERTMonTakeEntityVariableRecordGroups[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityVariableRecordGroups[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeEntityVariableRecordGroups[xs_, context_] := ERTMonTakeEntityVariableRecordGroups[][xs, context];
@@ -399,7 +399,7 @@ ERTMonTakeEntityVariableRecordGroups[][xs_, context_] := Lookup[ context, "entit
 ERTMonTakeEntityVariableRecordGroups[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeTimeSeries]
+ClearAll[ERTMonTakeTimeSeries];
 ERTMonTakeTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeTimeSeries[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeTimeSeries[xs_, context_] := ERTMonTakeTimeSeries[][xs, context];
@@ -407,7 +407,7 @@ ERTMonTakeTimeSeries[][xs_, context_] := context["timeSeries"];
 ERTMonTakeTimeSeries[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonSetVariableOutlierBoundaries]
+ClearAll[ERTMonSetVariableOutlierBoundaries];
 ERTMonSetVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetVariableOutlierBoundaries[][___] := $ERTMonFailure;
 ERTMonSetVariableOutlierBoundaries[xs_, context_] := $ERTMonFailure;
@@ -415,7 +415,7 @@ ERTMonSetVariableOutlierBoundaries[data_Association][xs_, context_] := ERTMonUni
 ERTMonSetVariableOutlierBoundaries[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeVariableOutlierBoundaries]
+ClearAll[ERTMonTakeVariableOutlierBoundaries];
 ERTMonTakeVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeVariableOutlierBoundaries[xs_, context_] := ERTMonTakeVariableOutlierBoundaries[][xs, context];
@@ -423,14 +423,14 @@ ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := Lookup[ context, "variab
 ERTMonTakeVariableOutlierBoundaries[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonSetNormalizationValues]
+ClearAll[ERTMonSetNormalizationValues];
 ERTMonSetNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
 ERTMonSetNormalizationValues[][___] := $ERTMonFailure;
 ERTMonSetNormalizationValues[xs_, context_Association] := $ERTMonFailure;
 ERTMonSetNormalizationValues[arg_Association][xs_, context_Association] := ERTMonUnit[ xs, Join[context, <|"normalizationValues"->arg|>] ];
 ERTMonSetNormalizationValues[__][___] := $ERTMonFailure;
 
-ClearAll[ERTMonTakeNormalizationValues]
+ClearAll[ERTMonTakeNormalizationValues];
 ERTMonTakeNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeNormalizationValues[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeNormalizationValues[xs_, context_] := ERTMonTakeNormalizationValues[][xs, context];
@@ -438,7 +438,7 @@ ERTMonTakeNormalizationValues[][xs_, context_] := Lookup[ context, "normalizatio
 ERTMonTakeNormalizationValues[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeContingencyMatrices]
+ClearAll[ERTMonTakeContingencyMatrices];
 ERTMonTakeContingencyMatrices[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrices[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrices[xs_, context_] := ERTMonTakeContingencyMatrices[][xs, context];
@@ -446,7 +446,7 @@ ERTMonTakeContingencyMatrices[][xs_, context_] := Lookup[ context, "contingencyM
 ERTMonTakeContingencyMatrices[__][___] := $ERTMonFailure;
 
 
-ClearAll[ERTMonTakeContingencyMatrix]
+ClearAll[ERTMonTakeContingencyMatrix];
 ERTMonTakeContingencyMatrix[$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrix[][$ERTMonFailure] := $ERTMonFailure;
 ERTMonTakeContingencyMatrix[xs_, context_] := ERTMonTakeContingencyMatrix[][xs, context];
@@ -465,7 +465,7 @@ Options[ERTMonReadData] = {"UseHeuristics"->False};
 
 ERTMonReadData[$ERTMonFailure] := $ERTMonFailure;
 
-ERTMonReadData[xs_, context_Association] := $ERTMonFailure
+ERTMonReadData[xs_, context_Association] := $ERTMonFailure;
 
 ERTMonReadData[dirName_String, opts:OptionsPattern[]][xs_, context_] :=
     Block[{},
@@ -561,7 +561,7 @@ ERTMonReadData[___][__] := $ERTMonFailure;
 (* ProcessComputationalSpecification                         *)
 (**************************************************************)
 
-ClearAll[ERTMonProcessComputationSpecification]
+ClearAll[ERTMonProcessComputationSpecification];
 
 ERTMonProcessComputationSpecification[ arg:(_String|_?MatrixQ|_Dataset) ][xs_, context_Association] :=
     Block[{res},
@@ -605,7 +605,7 @@ ERTMonEchoDataSummary[___][__] := $ERTMonFailure;
 (* Find variable distributions                                *)
 (**************************************************************)
 
-ClearAll[ERTMonComputeVariableStatistic]
+ClearAll[ERTMonComputeVariableStatistic];
 
 ERTMonComputeVariableStatistic[$ERTMonFailure] := $ERTMonFailure;
 
@@ -647,7 +647,7 @@ ERTMonComputeVariableStatistic[___][__] :=
 (* Find variable outliers                                     *)
 (**************************************************************)
 
-ClearAll[ERTMonFindVariableOutlierBoundaries]
+ClearAll[ERTMonFindVariableOutlierBoundaries];
 
 ERTMonFindVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
 
@@ -686,10 +686,10 @@ ERTMonFindVariableOutlierBoundaries[___][__] :=
 
 
 (**************************************************************)
-(* Event records entity-variable groups                     *)
+(* Event records entity-variable groups                       *)
 (**************************************************************)
 
-ClearAll[ERTMonGroupEntityVariableRecords]
+ClearAll[ERTMonGroupEntityVariableRecords];
 
 ERTMonGroupEntityVariableRecords[$ERTMonFailure] := $ERTMonFailure;
 
@@ -724,10 +724,10 @@ ERTMonGroupEntityVariableRecords[___][__] :=
 
 
 (**************************************************************)
-(* Entity-variable records groups to time series             *)
+(* Entity-variable records groups to time series              *)
 (**************************************************************)
 
-ClearAll[ERTMonEntityVariableGroupsToTimeSeries]
+ClearAll[ERTMonEntityVariableGroupsToTimeSeries];
 
 ERTMonEntityVariableGroupsToTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 
@@ -796,7 +796,7 @@ ERTMonEntityVariableGroupsToTimeSeries[___][__] :=
     ];
 
 
-ClearAll[ERTMonToTimeSeries]
+ClearAll[ERTMonToTimeSeries];
 
 ERTMonToTimeSeries = ERTMonEntityVariableGroupsToTimeSeries;
 
@@ -805,7 +805,7 @@ ERTMonToTimeSeries = ERTMonEntityVariableGroupsToTimeSeries;
 (* Apply time series function                                 *)
 (**************************************************************)
 
-ClearAll[ERTMonApplyTimeSeriesFunction]
+ClearAll[ERTMonApplyTimeSeriesFunction];
 
 ERTMonApplyTimeSeriesFunction[$ERTMonFailure] := $ERTMonFailure;
 
@@ -835,7 +835,7 @@ ERTMonApplyTimeSeriesFunction[___][__] :=
 (* Time series aggregation                                    *)
 (**************************************************************)
 
-Clear[AggregateBySpec]
+Clear[AggregateBySpec];
 AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctionSpec_Association] :=
     Block[{ts, timeWindowSpec, tsFirstTimes, tsLastTimes},
 
@@ -878,7 +878,7 @@ AggregateBySpec[timeSeries_Association, specRow_Association, aAggregationFunctio
       ts
     ];
 
-ClearAll[ERTMonAggregateTimeSeries]
+ClearAll[ERTMonAggregateTimeSeries];
 
 ERTMonAggregateTimeSeries[$ERTMonFailure] := $ERTMonFailure;
 
@@ -933,7 +933,7 @@ ERTMonAggregateTimeSeries[___][__] :=
 (**************************************************************)
 
 (* Exposed as a package function for testing purposes. *)
-ClearAll[ERTMonFindNormalizationValue]
+ClearAll[ERTMonFindNormalizationValue];
 
 Options[ERTMonFindNormalizationValue] = { "Reuse"->False, "Append"->False };
 
@@ -1041,7 +1041,7 @@ ERTMonFindNormalizationValue[args___][__] :=
 (* Normalize by specification                                 *)
 (**************************************************************)
 
-ClearAll[ERTMonNormalize]
+ClearAll[ERTMonNormalize];
 
 Options[ERTMonNormalize] = { "Reuse" -> False };
 
@@ -1114,7 +1114,7 @@ ERTMonNormalize[___][__] :=
 (* Make contingency matrices                                  *)
 (**************************************************************)
 
-ClearAll[ERTMonMakeContingencyMatrices]
+ClearAll[ERTMonMakeContingencyMatrices];
 
 Options[ERTMonMakeContingencyMatrices] = { "SameRowNames" -> True, "ColumnNamesPrefixes" -> None };
 
@@ -1200,7 +1200,7 @@ ERTMonMakeContingencyMatrices[___][__] :=
 (* Make contingency matrix                                    *)
 (**************************************************************)
 
-ClearAll[ERTMonMakeContingencyMatrix]
+ClearAll[ERTMonMakeContingencyMatrix];
 
 Options[ERTMonMakeContingencyMatrix] = { "ColumnNamesPrefixes" -> Automatic };
 
