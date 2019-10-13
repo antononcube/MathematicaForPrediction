@@ -1267,7 +1267,7 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 
 Clear[SMRMonRecommendByProfile];
 
-SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, ___, ___, OptionsPattern[] } };
+SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, _., _., OptionsPattern[] } };
 
 Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "IgnoreUnknownTags" -> False, "VectorResult" -> False };
 
@@ -1406,12 +1406,14 @@ SMRMonRecommendByProfile[___][__] :=
 
 Clear[SMRMonRecommendByCorrelation];
 
+SyntaxInformation[SMRMonRecommendByCorrelation] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+
 Options[SMRMonRecommendByCorrelation] = { Method -> Correlation, "SMRNumberOfRecommendations" -> 200 };
 
 SMRMonRecommendByCorrelation[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{recs, corRecs, smrNRecs, methodFunc, corMat},
+    Block[{recs, corRecs, smrNRecs, methodFunc, expectedFuncs, corMat},
 
       methodFunc = OptionValue[ SMRMonRecommendByCorrelation, Method ];
 
@@ -1444,6 +1446,12 @@ SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts : Option
       corMat = context["timeSeriesMatrix"][[Keys[recs], All]];
 
       (* TO DO: methodFunc is expected to be one of {Correlation, SpearmanRho, KendallTau, Dot} *)
+      expectedFuncs = {Correlation, SpearmanRho, KendallTau, Dot};
+      If[ !MemberQ[expectedFuncs, methodFunc],
+        Echo[ "The value of the option Method is expected to be one of " <> ToString[expectedFuncs]<> "."];
+        Return[$SMRMonFailure]
+      ];
+
       corRecs = Flatten @ methodFunc[ Transpose[SparseArray[corMat]], Transpose[{searchVector}] ];
 
       corRecs = AssociationThread[ RowNames[corMat], corRecs];
@@ -1625,9 +1633,9 @@ SMRMonJoinAcross[__][___] :=
 
 Clear[SMRMonProfile];
 
-SyntaxInformation[SMRMonProfile] = { "ArgumentsPattern" -> { _, ___, OptionsPattern[] } };
+SyntaxInformation[SMRMonProfile] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
-Options[SMRMonProfile] = {"TagNames" -> True};
+Options[SMRMonProfile] = {"TagNames" -> True, "VectorResult" -> False };
 
 SMRMonProfile[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1664,7 +1672,7 @@ SMRMonProfile[ itemIndices : {_Integer...}, opts : OptionsPattern[]][xs_, contex
     SMRMonProfile[ itemIndices, ConstantArray[1, Length[itemIndices]], opts][xs, context];
 
 SMRMonProfile[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{vec, smat, prof, tagNamesQ, columnNames},
+    Block[{vec, smat, prof, tagNamesQ, vectorResultQ, columnNames},
 
       If[Length[itemIndices],
         Echo["Empty history as an argument.", "SMRMonProfile:"];
@@ -1672,6 +1680,7 @@ SMRMonProfile[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, opts :
       ];
 
       tagNamesQ = TrueQ[OptionValue[SMRMonProfile, "TagNames"]];
+      vectorResultQ = TrueQ[OptionValue[SMRMonProfile, "VectorResult"]];
 
       If[!KeyExistsQ[context, "M"],
         Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonProfile:"];
@@ -1685,6 +1694,10 @@ SMRMonProfile[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, opts :
 
       (*2*)
       vec = vec.smat;
+
+      If[ vectorResultQ,
+        Return[ SMRMonUnit[vec, context] ]
+      ];
 
       (*3 and 4 and 5*)
 
