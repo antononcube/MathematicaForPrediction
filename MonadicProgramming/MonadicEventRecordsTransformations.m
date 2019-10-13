@@ -198,7 +198,7 @@ GenerateStateMonadCode[ "MonadicEventRecordsTransformations`ERTMon", "FailureSym
 Clear[GetAssociation];
 GetAssociation[compSpec_Dataset, colName_] := Normal[compSpec[All, colName]];
 
-Clear[ProcessComputationSpecification]
+Clear[ProcessComputationSpecification];
 ProcessComputationSpecification[fname_String] :=
     ProcessComputationSpecification[DeleteCases[Import[fname, "CSV"], {}]];
 
@@ -333,7 +333,7 @@ ERTMonSetEventRecords[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
       If[ Dimensions[data][[2]] == Length[colNames] &&
           Length[Intersection[colNames, expectedColumnNames]] == Length[expectedColumnNames],
 
-        pos = Flatten @ Map[ Position[expectedColumnNames, #]&, expectedColumnNames];
+        pos = Flatten @ Map[ Position[colNames, #]&, expectedColumnNames];
 
         ds = Dataset[ data[[All, pos]] ];
 
@@ -385,7 +385,7 @@ ERTMonSetEntityAttributes[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
       If[ Dimensions[data][[2]] == Length[colNames] &&
           Length[Intersection[colNames, expectedColumnNames]] == Length[expectedColumnNames],
 
-        pos = Flatten @ Map[ Position[expectedColumnNames, #]&, expectedColumnNames];
+        pos = Flatten @ Map[ Position[colNames, #]&, expectedColumnNames];
 
         ds = Dataset[ data[[All, pos]] ];
 
