@@ -190,6 +190,27 @@ Needs["OutlierIdentifiers`"];
 
 GenerateStateMonadCode[ "MonadicEventRecordsTransformations`ERTMon", "FailureSymbol" -> $ERTMonFailure, "StringContextNames" -> False ];
 
+GenerateMonadAccessors[
+  "MonadicEventRecordsTransformations`ERTMon",
+  { {"eventRecords", "entityAttributes", "computationSpecification", "entityVariableRecordGroups",
+     "timeSeries", "variableOutlierBoundaries", "normalizationValues", "contingencyMatrices" } },
+  "FailureSymbol" -> $SMRMonFailure ];
+
+
+(**************************************************************)
+(* Empty computation specification                            *)
+(**************************************************************)
+
+compSpecRowKeys = {"Variable", "Explanation",
+  "MaxHistoryLength", "AggregationIntervalLength", "AggregationFunction",
+  "NormalizationScope", "NormalizationFunction"};
+
+Clear[EmptyComputationSpecificationRow];
+EmptyComputationSpecificationRow[] =
+    Association[{"Variable" -> Missing[], "Explanation" -> "",
+      "MaxHistoryLength" -> 3600, "AggregationIntervalLength" -> 60, "AggregationFunction" -> "Mean",
+      "NormalizationScope" -> "Entity", "NormalizationFunction" -> "None"}];
+
 
 (**************************************************************)
 (* Ingestion of transformation specifications                 *)
@@ -214,13 +235,21 @@ ProcessComputationSpecification[ds_Dataset] :=
     ];
 
 ProcessComputationSpecification[compSpecArg_?MatrixQ] :=
-    Block[{compSpec = compSpecArg, compSpecColumnNames, rowIDs},
+    Block[{compSpec = compSpecArg, compSpecColumnNames, expectedColumnNames, rowIDs},
+
       compSpecColumnNames = First[compSpec];
       compSpecColumnNames =
           Map[
             StringJoin@StringReplace[StringReplace[#, WordBoundary ~~ x_ :> ToUpperCase[x]], " " -> ""] &,
             compSpecColumnNames
           ];
+
+      expectedColumnNames = compSpecRowKeys;
+      If[ ! Length[Intersection[compSpecColumnNames, expectedColumnNames]] == Length[expectedColumnNames],
+        Echo["The computation specification is expected to have the columns: " <> ToString[expectedColumnNames] <> "." ];
+        Return[$ERTMonFailure]
+      ];
+
       compSpec = Select[Rest[compSpec], Length[#] > 0 &];
       compSpec =
           Dataset[compSpec][All,
@@ -280,21 +309,6 @@ ERTMonRemapEntitiesByGroups[ aEntityGroups : Association[ (_String -> {_String..
     ];
 
 ERTMonRemapEntitiesByGroups[___][__] := $ERTMonFailure;
-
-
-(**************************************************************)
-(* Empty computation specification                            *)
-(**************************************************************)
-
-compSpecRowKeys = {"Variable", "Explanation",
-  "MaxHistoryLength", "AggregationIntervalLength", "AggregationFunction",
-  "NormalizationScope", "NormalizationFunction"};
-
-Clear[EmptyComputationSpecificationRow];
-EmptyComputationSpecificationRow[] =
-    Association[{"Variable" -> Missing[], "Explanation" -> "",
-      "MaxHistoryLength" -> 3600, "AggregationIntervalLength" -> 60, "AggregationFunction" -> "Mean",
-      "NormalizationScope" -> "Entity", "NormalizationFunction" -> "None"}];
 
 
 (**************************************************************)
@@ -412,67 +426,6 @@ ERTMonSetEntityAttributes[___][___] :=
       $ERTMonFailure
     ];
 
-ClearAll[ERTMonTakeEntityAttributes];
-ERTMonTakeEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEntityAttributes[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEntityAttributes[xs_, context_] := ERTMonTakeEntityAttributes[][xs, context];
-ERTMonTakeEntityAttributes[][xs_, context_] := Lookup[ context, "entityAttributes", $ERTMonFailure ];
-ERTMonTakeEntityAttributes[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonTakeEntityVariableRecordGroups];
-ERTMonTakeEntityVariableRecordGroups[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEntityVariableRecordGroups[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEntityVariableRecordGroups[xs_, context_] := ERTMonTakeEntityVariableRecordGroups[][xs, context];
-ERTMonTakeEntityVariableRecordGroups[][xs_, context_] := Lookup[ context, "entityVariableRecordGroups", $ERTMonFailure ];
-ERTMonTakeEntityVariableRecordGroups[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonTakeTimeSeries];
-ERTMonTakeTimeSeries[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeTimeSeries[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeTimeSeries[xs_, context_] := ERTMonTakeTimeSeries[][xs, context];
-ERTMonTakeTimeSeries[][xs_, context_] := context["timeSeries"];
-ERTMonTakeTimeSeries[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonSetVariableOutlierBoundaries];
-ERTMonSetVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetVariableOutlierBoundaries[][___] := $ERTMonFailure;
-ERTMonSetVariableOutlierBoundaries[xs_, context_] := $ERTMonFailure;
-ERTMonSetVariableOutlierBoundaries[data_Association][xs_, context_] := ERTMonUnit[ xs, Join[ context, <|"variableOutlierBoundaries"->data|> ] ];
-ERTMonSetVariableOutlierBoundaries[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonTakeVariableOutlierBoundaries];
-ERTMonTakeVariableOutlierBoundaries[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeVariableOutlierBoundaries[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeVariableOutlierBoundaries[xs_, context_] := ERTMonTakeVariableOutlierBoundaries[][xs, context];
-ERTMonTakeVariableOutlierBoundaries[][xs_, context_] := Lookup[ context, "variableOutlierBoundaries", $ERTMonFailure ];
-ERTMonTakeVariableOutlierBoundaries[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonSetNormalizationValues];
-ERTMonSetNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
-ERTMonSetNormalizationValues[][___] := $ERTMonFailure;
-ERTMonSetNormalizationValues[xs_, context_Association] := $ERTMonFailure;
-ERTMonSetNormalizationValues[arg_Association][xs_, context_Association] := ERTMonUnit[ xs, Join[context, <|"normalizationValues"->arg|>] ];
-ERTMonSetNormalizationValues[__][___] := $ERTMonFailure;
-
-ClearAll[ERTMonTakeNormalizationValues];
-ERTMonTakeNormalizationValues[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeNormalizationValues[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeNormalizationValues[xs_, context_] := ERTMonTakeNormalizationValues[][xs, context];
-ERTMonTakeNormalizationValues[][xs_, context_] := Lookup[ context, "normalizationValues", $ERTMonFailure ];
-ERTMonTakeNormalizationValues[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonTakeContingencyMatrices];
-ERTMonTakeContingencyMatrices[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeContingencyMatrices[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeContingencyMatrices[xs_, context_] := ERTMonTakeContingencyMatrices[][xs, context];
-ERTMonTakeContingencyMatrices[][xs_, context_] := Lookup[ context, "contingencyMatrices", $ERTMonFailure ];
-ERTMonTakeContingencyMatrices[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonTakeContingencyMatrix];
