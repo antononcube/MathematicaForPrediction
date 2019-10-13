@@ -318,22 +318,36 @@ ERTMonTakeComputationSpecification[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonSetEventRecords];
+
 ERTMonSetEventRecords[$ERTMonFailure] := $ERTMonFailure;
+
 ERTMonSetEventRecords[][___] := $ERTMonFailure;
+
 ERTMonSetEventRecords[xs_, context_Association] := $ERTMonFailure;
+
 ERTMonSetEventRecords[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
-    Block[{ds},
+    Block[{expectedColumnNames, pos, ds},
+
+      expectedColumnNames = {"EntityID", "LocationID", "ObservationTime", "Variable", "Value"};
+
       If[ Dimensions[data][[2]] == Length[colNames] &&
-          Length[Intersection[colNames, {"EntityID", "LocationID", "ObservationTime", "Variable", "Value"}]] == 5,
-        ds = Dataset[data];
-        ds = Dataset[ds[All, AssociationThread[{"EntityID", "LocationID", "ObservationTime", "Variable", "Value"}, #] &]];
+          Length[Intersection[colNames, expectedColumnNames]] == Length[expectedColumnNames],
+
+        pos = Flatten @ Map[ Position[expectedColumnNames, #]&, expectedColumnNames];
+
+        ds = Dataset[ data[[All, pos]] ];
+
+        ds = Dataset[ds[All, AssociationThread[expectedColumnNames, #] &]];
         ERTMonUnit[ xs, Join[ context, <|"eventRecords"->ds|> ] ],
+
         (*ELSE*)
         ERTMonSetEventRecords[""][]
       ]
     ];
+
 ERTMonSetEventRecords[data_Dataset][xs_, context_] :=
     ERTMonSetEventRecords[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
+
 ERTMonSetEventRecords[__][___] :=
     Block[{},
       Echo[
@@ -356,22 +370,37 @@ ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
 
 
 ClearAll[ERTMonSetEntityAttributes];
+
 ERTMonSetEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
+
 ERTMonSetEntityAttributes[][___] := $ERTMonFailure;
+
 ERTMonSetEntityAttributes[xs_, context_Association] := $ERTMonFailure;
+
 ERTMonSetEntityAttributes[data_?MatrixQ, colNames_?VectorQ][xs_, context_] :=
-    Block[{ds},
+    Block[{expectedColumnNames, pos, ds},
+
+      expectedColumnNames = {"EntityID", "Attribute", "Value"};
+
       If[ Dimensions[data][[2]] == Length[colNames] &&
-          Length[Intersection[colNames, {"EntityID", "Attribute", "Value"}]] == 3,
-        ds = Dataset[data];
-        ds = Dataset[ds[All, AssociationThread[{"EntityID", "Attribute", "Value"}, #] &]];
+          Length[Intersection[colNames, expectedColumnNames]] == Length[expectedColumnNames],
+
+        pos = Flatten @ Map[ Position[expectedColumnNames, #]&, expectedColumnNames];
+
+        ds = Dataset[ data[[All, pos]] ];
+
+        ds = Dataset[ds[All, AssociationThread[expectedColumnNames, #] &]];
+
         ERTMonUnit[ xs, Join[ context, <|"entityAttributes"->ds|> ] ],
+
         (*ELSE*)
         ERTMonSetEntityAttributes[""][]
       ]
     ];
+
 ERTMonSetEntityAttributes[data_Dataset][xs_, context_] :=
     ERTMonSetEntityAttributes[ Normal@data[All, Values], Normal@Keys[data[1]] ][xs, context];
+
 ERTMonSetEntityAttributes[___][___] :=
     Block[{},
       Echo[
@@ -593,8 +622,7 @@ ERTMonEchoDataSummary[][xs_, context_] :=
       "Data summary:",
       Association[
         Map[
-          # -> RecordsSummary[context[#]]&,
-          {"eventRecords", "entityAttributes"}]
+          # -> RecordsSummary[context[#]]&, {"eventRecords", "entityAttributes"}]
       ]&
     ][xs, context];
 
