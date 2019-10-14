@@ -70,12 +70,12 @@
 BeginPackage["DataReshape`"];
 
 ToLongForm::usage = "ToLongForm[ds_Dataset, idColumns_, valueColumns_] \
-converts the dataset ds into long form. The resulting dataset has the columns idColumns and \
-the columns \"Variable\" and \"Value\" derived from valueColumns."
+converts the dataset ds into long form. The result dataset has the columns idColumns and \
+the columns \"Variable\" and \"Value\" derived from valueColumns.";
 
 ToWideForm::usage = "ToWideForm[ds_Dataset, idColumns_, variableColumn_, valueColumns_] \
-converts the dataset ds into wide form. The resulting dataset has columns that are unique values of variableColumn and \
-with values that are the corresponding values of valueColumn."
+converts the dataset ds into wide form. The result dataset has columns that are unique values of \
+variableColumn and with values that are the corresponding values of valueColumn.";
 
 
 Begin["`Private`"];
@@ -84,7 +84,7 @@ Begin["`Private`"];
 (* Utilities                                               *)
 (***********************************************************)
 
-Clear[ColumnSpecQ]
+Clear[ColumnSpecQ];
 
 ColumnSpecQ[x_] := IntegerQ[x] || StringQ[x] || MatchQ[x, Key[__]];
 
@@ -93,7 +93,7 @@ ColumnSpecQ[x_] := IntegerQ[x] || StringQ[x] || MatchQ[x, Key[__]];
 (* ToLongForm                                              *)
 (***********************************************************)
 
-Clear[ToLongForm]
+Clear[ToLongForm];
 
 ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumn_?ColumnSpecQ] := ToLongForm[ds, {idColumn}, {valueColumn}];
 
