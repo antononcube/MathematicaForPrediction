@@ -191,7 +191,7 @@ ToLongForm[ds_Dataset, "RowID", valueColumns_List] :=
     ];
 
 ToLongForm::args = "The first argument is expected to be a dataset; \
-the rest of the arguments are expected to be columns specifications."
+the rest of the arguments are expected to be columns specifications.";
 
 ToLongForm[___] :=
     Block[{},
