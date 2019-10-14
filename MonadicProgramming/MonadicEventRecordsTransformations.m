@@ -192,9 +192,9 @@ GenerateStateMonadCode[ "MonadicEventRecordsTransformations`ERTMon", "FailureSym
 
 GenerateMonadAccessors[
   "MonadicEventRecordsTransformations`ERTMon",
-  { {"eventRecords", "entityAttributes", "computationSpecification", "entityVariableRecordGroups",
-     "timeSeries", "variableOutlierBoundaries", "normalizationValues", "contingencyMatrices" } },
-  "FailureSymbol" -> $SMRMonFailure ];
+  {"eventRecords", "entityAttributes", "computationSpecification", "entityVariableRecordGroups",
+     "timeSeries", "variableOutlierBoundaries", "normalizationValues", "contingencyMatrices" },
+  "FailureSymbol" -> $ERTMonFailure ];
 
 
 (**************************************************************)
@@ -375,15 +375,7 @@ ERTMonSetEventRecords[__][___] :=
     ];
 
 
-ClearAll[ERTMonTakeEventRecords];
-ERTMonTakeEventRecords[$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEventRecords[][$ERTMonFailure] := $ERTMonFailure;
-ERTMonTakeEventRecords[xs_, context_] := ERTMonTakeEventRecords[][xs, context];
-ERTMonTakeEventRecords[][xs_, context_] := Lookup[ context, "eventRecords", $ERTMonFailure ];
-ERTMonTakeEventRecords[__][___] := $ERTMonFailure;
-
-
-ClearAll[ERTMonSetEntityAttributes];
+Clear[ERTMonSetEntityAttributes];
 
 ERTMonSetEntityAttributes[$ERTMonFailure] := $ERTMonFailure;
 
