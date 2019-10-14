@@ -224,8 +224,8 @@ DefaultChernoffFaceParameters[] := <|
   "MouthTwist" -> 0.5, "MouthWidth" -> 0.5,
   "RightEyebrowTrim" -> 0.5, "RightEyebrowRaising" -> 0.5,
   "RightEyebrowSlant" -> 0.5, "RightIris" -> 0.5,
-  "FaceColor" -> White, "IrisColor" -> GrayLevel[0.85],
-  "NoseColor" -> Automatic, "MouthColor" -> Black, "EyeBallColor" -> White,
+  "FaceColor" -> Automatic, "IrisColor" -> Automatic,
+  "NoseColor" -> Automatic, "MouthColor" -> Automatic, "EyeBallColor" -> Automatic,
   "MakeSymmetric" -> True|>;
 
 Clear[ChernoffFacePartsParameters];
@@ -258,7 +258,13 @@ MakeSymmetricChernoffFaceParameters[pars_Association, defaultPars : (_Associatio
 
 Clear[ChernoffFace];
 
-ChernoffFace::pars = "The first argument is expected to be an association or a list of real numbers."
+SyntaxInformation[ChernoffFace] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
+
+Options[ChernoffFace] = Join[ {ColorFunction->None}, Options[Graphics] ];
+
+ChernoffFace::pars = "The first argument is expected to be an association or a list of real numbers.";
+ChernoffFace::colfunc = "The value of the option ColorFunction is expected to have the form ColorDataFunction[___] \
+or be one of None or Automatic.";
 
 ChernoffFace["Properties"] := DefaultChernoffFaceParameters[];
 ChernoffFace["FacePartsProperties"] := ChernoffFacePartsParameters[];
@@ -282,7 +288,8 @@ ChernoffFace[vec_?(VectorQ[#,NumberQ]&), opts:OptionsPattern[]] :=
 
 ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
     Block[{pars = parsArg,
-      forheadPts, forheadTh, gr, faceLength, eyesVerticalPos,
+      cdf, colorParts,
+      foreheadPts, forheadTh, faceLength, eyesVerticalPos,
       rightIrisOffset, leftIrisOffset,
       eyebrRaiseLeft, eyebrRaiseRight, eyebrSlantLeft, eyebrSlantRight,
       eyebrLeftTrim, eyebrRightTrim, eyeSize, eyesSlant, leftEye,
@@ -290,12 +297,37 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       noseLength, mouthWidth, a, b, c, faceColor, eyeBallsColor,
       irisColor, noseColor, mouthColor,
       makeSymmetric},
+
+      cdf = OptionValue[ChernoffFace, ColorFunction];
+      If[ ! ( TrueQ[cdf === None] || TrueQ[cdf === Automatic] || TrueQ[ Head[cdf]===ColorDataFunction] ),
+        Message[ChernoffFace::colfunc];
+        Return[$Failed]
+      ];
+
+      If[ cdf === Automatic, cdf = ColorData["Pastel"] ];
+
       makeSymmetric = Lookup[pars, "MakeSymmetric", True];
       pars =
           If[TrueQ[makeSymmetric],
             MakeSymmetricChernoffFaceParameters[pars, ChernoffFace["Properties"]],
             Merge[{pars, ChernoffFace["Properties"]}, First]
           ];
+
+      colorParts = KeyTake[ pars, {"FaceColor", "IrisColor", "NoseColor", "MouthColor", "EyeBallColor" } ];
+      colorParts = Select[colorParts, !TrueQ[ # === Automatic]& ];
+
+      Which[
+        cdf === None,
+        pars =
+            Join[ pars,
+              <| "FaceColor" -> White, "IrisColor" -> GrayLevel[0.85], "NoseColor" -> Automatic, "MouthColor" -> Black, "EyeBallColor" -> White |> ],
+
+        True,
+        pars = Join[ pars, ChernoffFaceAutoColors[pars, cdf]]
+      ];
+
+      pars = Join[pars, colorParts];
+
       forheadTh = 2*Round@Rescale[pars["ForeheadShape"], {0, 1}, {2, 15}];
       faceLength = Rescale[pars["FaceLength"], {0, 1}, {2, 3}];
       eyesVerticalPos = Rescale[pars["EyesVerticalPosition"], {0, 1}, {0.2, 0.6}];
@@ -322,9 +354,9 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
       If[ TrueQ[noseColor === Automatic],
         noseColor = If[ TrueQ[faceColor == White], White, Darker[faceColor] ]
       ];
-      (*forheadPts={{-1,0},{-1+0.3forheadTh,1.2},{1-0.3forheadTh,1.2},{1,0}};*)
-      (*{Thick,BSplineCurve[forheadPts,SplineWeights\[Rule]({1,3,3,1}/8)]},*)
-      forheadPts = Table[{x, (1 - x^forheadTh)*faceLength*eyesVerticalPos}, {x, Range[-1, 1, 0.05]}];
+      (*foreheadPts={{-1,0},{-1+0.3forheadTh,1.2},{1-0.3forheadTh,1.2},{1,0}};*)
+      (*{Thick,BSplineCurve[foreheadPts,SplineWeights\[Rule]({1,3,3,1}/8)]},*)
+      foreheadPts = Table[{x, (1 - x^forheadTh)*faceLength*eyesVerticalPos}, {x, Range[-1, 1, 0.05]}];
       leftEye =
           {{eyeBallsColor, Disk[{-0.5, 0}, eyeSize {0.4, 0.2}]}, {Thick,
             Gray, Circle[{-0.5, 0}, eyeSize {0.4, 0.2}]},
@@ -338,7 +370,7 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
             {Black, Disk[{rightIrisOffset, 0.02}, eyeSize 0.05, {0, 2 Pi}]}
           };
       Graphics[{
-        {EdgeForm[None], FaceForm[faceColor], Polygon[forheadPts], Thick, Black, Line[forheadPts]},
+        {EdgeForm[None], FaceForm[faceColor], Polygon[foreheadPts], Thick, Black, Line[foreheadPts]},
         {faceColor,
           Disk[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
         {Thick, Circle[{0, 0}, {1, faceLength (1 - eyesVerticalPos)}, {Pi, 2 Pi}]},
@@ -358,21 +390,29 @@ ChernoffFace[parsArg_Association, opts : OptionsPattern[]] :=
             Polygon[{{0.012, 0}, {-0.012, 0}, {-0.1, -noseLength}, {0.1, -noseLength}}]},
           {Thick, Black, Line[{{0.012, 0}, {-0.012, 0}, {-0.1, -noseLength}, {0.1, -noseLength}}]}
         ], {mouthColor, Thickness[0.02],
-          Line[Table[{x, a x^2 + b x + c}, {x, -mouthWidth/2, mouthWidth/2, 0.01}]]}}, opts, PlotRange -> All,
-        AspectRatio -> Automatic]
+          Line[Table[{x, a x^2 + b x + c}, {x, -mouthWidth/2, mouthWidth/2, 0.01}]]}},
+        FilterRules[{opts}, Options[Graphics]], PlotRange -> All, AspectRatio -> Automatic]
     ];
 
 ChernoffFace[___] := (Message[ChernoffFace::pars]; $Failed);
 
 
-Clear[ChernoffFaceAutoColored];
+(************************************************************)
+(* ChernoffFaceAutoColors                                   *)
+(************************************************************)
 
-ChernoffFaceAutoColored[vec_?VectorQ, opts : OptionsPattern[]] :=
-    ChernoffFaceAutoColored[vec, ColorData["Pastel"], opts];
+Clear[ChernoffFaceAutoColors];
 
-ChernoffFaceAutoColored[vec_?VectorQ, cdf_ColorDataFunction, opts : OptionsPattern[]] :=
-    Block[{asc},
-      asc = AssociationThread[Take[Keys[ChernoffFace["FacePartsProperties"]], UpTo[Length[vec]]] -> vec];
+ChernoffFaceAutoColors[asc_Association, cdf_ColorDataFunction] :=
+    Block[{vec, priorityKeys},
+      priorityKeys = {"FaceLength", "ForeheadShape", "EyesVerticalPosition", "EyeSize", "EyeSlant", "LeftEyebrowSlant", "LeftIris"};
+      vec = Values @ KeyTake[asc, priorityKeys];
+      Join[ asc, ChernoffFaceAutoColors[vec, cdf] ]
+    ];
+
+ChernoffFaceAutoColors[vec_?VectorQ, cdf_ColorDataFunction] :=
+    Block[{asc = <||>},
+
       Which[
         Length[vec] == 1,
         asc = Join[asc, <|"FaceColor" -> cdf[vec[[1]]]|>],
@@ -387,9 +427,30 @@ ChernoffFaceAutoColored[vec_?VectorQ, cdf_ColorDataFunction, opts : OptionsPatte
           "IrisColor" -> cdf[Mean@vec[[4 ;; 6]]],
           "NoseColor" -> cdf[Mean@vec[[7 ;; -1]]]|>]
       ];
-      ChernoffFace[asc, opts]
+
+      Join[ asc, <| "EyeBallColor" -> White |> ]
     ];
 
+
+(************************************************************)
+(* ChernoffFaceAutoColored                                  *)
+(************************************************************)
+
+Clear[ChernoffFaceAutoColored];
+
+ChernoffFaceAutoColored[vec_ : ( _?VectorQ | _Association ), opts : OptionsPattern[]] :=
+    ChernoffFaceAutoColored[vec, ColorData["Pastel"], opts];
+
+ChernoffFaceAutoColored[vec : ( _?VectorQ | _Association ), cdf_ColorDataFunction, opts : OptionsPattern[]] :=
+    Block[{asc},
+      asc = AssociationThread[Take[Keys[ChernoffFace["FacePartsProperties"]], UpTo[Length[vec]]] -> vec];
+      ChernoffFace[ Join[ asc, ChernoffFaceAutoColors[vec, cdf] ], opts]
+    ];
+
+
+(************************************************************)
+(* ChernoffFaceRecordsSummary                               *)
+(************************************************************)
 
 (* Find the median and quartile faces (used to help interpretation.) *)
 ClearAll[ChernoffFaceRecordsSummary];
@@ -425,6 +486,7 @@ ChernoffFaceRecordsSummary[rdata_, cdf:(_ColorDataFunction|None|_String|_Integer
 
       <| "QuantileChernoffFaces"->quantileFaces, "RangeChernoffFaces"->rangeFaces |>
     ];
+
 
 End[]; (* `Private` *)
 
