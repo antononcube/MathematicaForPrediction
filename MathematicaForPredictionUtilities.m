@@ -67,7 +67,7 @@ The argument data is expected to be a numerical a vector or a list of numerical 
 IntervalMappingFunction::usage = "IntervalMappingFunction[boundaries] makes a piece-wise function for mapping of \
 a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1].";
 
-ToCategoricalColumns::usage = "ToCategoricalColumns[data_?ArrayQ, qs_: Range[0, 1, 0.2]] \
+ToCategoricalColumns::usage = "ToCategoricalColumns[data_?ArrayQ, breaks_: Range[0, 1, 0.1]] \
 converts the numerical columns of an array to categorical. (Using IntervalMappingFunction.)";
 
 VariableDependenceGrid::usage = "VariableDependenceGrid[data_?MatrixQ,columnNames,opts] makes a grid with \
