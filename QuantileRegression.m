@@ -134,7 +134,7 @@
 
 *)
 
-BeginPackage["QuantileRegression`"]
+BeginPackage["QuantileRegression`"];
 
 QuantileRegressionFit::usage = "QuantileRegressionFit[data,funs,var,qs] finds the regression quantiles corresponding \
 to the quantiles qs for a list of data as linear combinations of the functions funs of the variable var.";
@@ -164,14 +164,17 @@ QuantileRegressionFit::"nvar" = "The third argument is expected to be a symbol."
 
 QuantileRegressionFit::"nqntls" = "The fourth argument is expected to be a list of numbers representing quantiles.";
 
-QuantileRegressionFit::"nmeth" = "The value of the method option is expected to be LinearProgramming, Minimize, NMinimize or a list with LinearProgramming, Minimize, or NMinimize as a first element.";
+QuantileRegressionFit::"nmeth" = "The value of the method option is expected to be \
+LinearProgramming, Minimize, NMinimize or a list with LinearProgramming, Minimize, or NMinimize as a first element.";
 
 QuantileRegressionFit::"mmslow" = "With the method Minimize the computations can be very slow for large data sets.";
 
-QuantileRegressionFit::"nargs" = "Four arguments are expected."
+QuantileRegressionFit::"nargs" = "Four arguments are expected.";
 
-Clear[QuantileRegressionFit]
+Clear[QuantileRegressionFit];
+
 Options[QuantileRegressionFit] = {Method -> LinearProgramming};
+
 QuantileRegressionFit[data_, funcs_, var_?AtomQ, qs_, opts : OptionsPattern[]] :=
   Block[{mOptVal},
    (*This check should not be applied because the first function can be a constant.*)
@@ -207,7 +210,8 @@ QuantileRegressionFit[___]:=
     {}
   ];
 
-Clear[LPQuantileRegressionFit]
+Clear[LPQuantileRegressionFit];
+
 LPQuantileRegressionFit[dataArg_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..}, opts : OptionsPattern[]] := 
   Block[{data = dataArg, yMedian = 0, yFactor = 1, yShift = 0, mat, n = Dimensions[dataArg][[1]], pfuncs, c, t, qrSolutions},
     If[Min[data[[All, 2]]] < 0,
@@ -239,7 +243,8 @@ LPQuantileRegressionFit[dataArg_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..
    ];
 
 
-Clear[MinimizeQuantileRegressionFit]
+Clear[MinimizeQuantileRegressionFit];
+
 MinimizeQuantileRegressionFit[methodFunc_, data_?MatrixQ, funcs_, var_Symbol, qs : {_?NumberQ ..}, opts : OptionsPattern[]] :=  
   Block[{minFunc, Tilted, QRModel, b, bvars, qrSolutions},
    
@@ -266,27 +271,35 @@ MinimizeQuantileRegressionFit[methodFunc_, data_?MatrixQ, funcs_, var_Symbol, qs
 (* QuantileRegression                                       *)
 (************************************************************)
 
+Clear[QuantileRegression];
+
+SyntaxInformation[QuantileRegression] = { "ArgumentsPattern" -> { _., _, _, OptionsPattern[] } };
+
 QuantileRegression::"nmat" = "The first argument is expected to be a matrix of numbers with two columns.";
 
-QuantileRegression::"knord" = "The specified knots `1` and interpolation order `2` produce no B-Spline basis functions. The expression n - i - 2 should be non-negative, where n is the number of knots and i is the interpolation order."
+QuantileRegression::"knord" = "The specified knots `1` and interpolation order `2` produce no B-Spline basis functions. \
+The expression n - i - 2 should be non-negative, where n is the number of knots and i is the interpolation order.";
 
-QuantileRegression::"zerob" = "The specified knots `1` and interpolation order `2` produced a list of zeroes instead of a list of B-Spline basis functions."
+QuantileRegression::"zerob" = "The specified knots `1` and interpolation order `2` produced a list of zeroes instead of a list of B-Spline basis functions.";
 
-QuantileRegression::"knspec" = "The knots specification (for using B-splines) has to be an integer or a list of numbers."
+QuantileRegression::"knspec" = "The knots specification (for using B-splines) has to be an integer or a list of numbers.";
 
 QuantileRegression::"nqntls" = "The third argument is expected to be a list of numbers representing quantiles.";
 
-QuantileRegression::"nmeth" = "The value of the method option is expected to be LinearProgramming, Minimize, NMinimize or a list with LinearProgramming, Minimize, or NMinimize as a first element.";
+QuantileRegression::"nmeth" = "The value of the method option is expected to be \
+LinearProgramming, Minimize, NMinimize or a list with LinearProgramming, Minimize, or NMinimize as a first element.";
 
-QuantileRegression::"norder" = "The value of the option InterpolationOrder is expected to be a non-negative integer."
+QuantileRegression::"norder" = "The value of the option InterpolationOrder is expected to be a non-negative integer.";
 
-QuantileRegression::"nargs" = "Three arguments are expected."
+QuantileRegression::"nargs" = "Three arguments are expected.";
 
 QuantileRegression::"mmslow" = "With the method Minimize the computations can be very slow for large data sets.";
 
 Options[QuantileRegression] = {InterpolationOrder -> 3, Method -> LinearProgramming};
+
 QuantileRegression[data_, knots_, qs_, opts : OptionsPattern[]] :=
   Block[{mOptVal, intOrdOptVal},
+
    Which[
     ! ( MatrixQ[data,NumericQ] && Dimensions[data][[2]] >= 2 ),
     Message[QuantileRegression::"nmat"]; Return[{}],
@@ -295,8 +308,10 @@ QuantileRegression[data_, knots_, qs_, opts : OptionsPattern[]] :=
     ! VectorQ[qs, NumericQ[#] && 0 <= # <= 1 &],
     Message[QuantileRegression::"nqntls"]; Return[{}]
    ];
+
    mOptVal = OptionValue[QuantileRegression, Method];
    intOrdOptVal = OptionValue[QuantileRegression, InterpolationOrder];
+
    Which[
     !( IntegerQ[intOrdOptVal] && intOrdOptVal >= 0 ),
     Message[QuantileRegression::"norder"]; Return[{}],
@@ -319,9 +334,11 @@ QuantileRegression[___]:=
     {}
   ];
 
-Clear[LPSplineQuantileRegression]
+Clear[LPSplineQuantileRegression];
+
 LPSplineQuantileRegression[data_?MatrixQ, npieces_Integer, order_Integer, qs : {_?NumberQ ..}, opts : OptionsPattern[]] :=
   LPSplineQuantileRegression[data, Rescale[Range[0, 1, 1/npieces], {0, 1}, {Min[data[[All, 1]]], Max[data[[All, 1]]]}], order, qs, opts];
+
 LPSplineQuantileRegression[dataArg_?MatrixQ, knotsArg : {_?NumberQ ..}, order_Integer, qs : {_?NumberQ ..}, opts : OptionsPattern[]] := 
   Block[{data = dataArg, knots = Sort[knotsArg], yMedian = 0, yFactor = 1, yShift = 0, bvars, n = Dimensions[dataArg][[1]], pfuncs, c, t, qrSolutions, mat},
 
@@ -373,9 +390,11 @@ LPSplineQuantileRegression[dataArg_?MatrixQ, knotsArg : {_?NumberQ ..}, order_In
    ]
   ];
 
-Clear[MinimizeSplineQuantileRegression]
+Clear[MinimizeSplineQuantileRegression];
+
 MinimizeSplineQuantileRegression[methodFunc_, data_?MatrixQ, npieces_Integer, order_Integer, qs : {_?NumberQ ..}, opts : OptionsPattern[]] :=
   MinimizeSplineQuantileRegression[methodFunc, data, Rescale[Range[0, 1, 1/npieces], {0, 1}, {Min[data[[All, 1]]], Max[data[[All, 1]]]}], order, qs, opts];
+
 MinimizeSplineQuantileRegression[methodFunc_, dataArg_?MatrixQ, knotsArg : {_?NumberQ ..}, order_Integer, qs : {_?NumberQ ..}, opts : OptionsPattern[]] := 
   Block[{data = dataArg, knots = Sort[knotsArg], bvars, n = Dimensions[dataArg][[1]], pfuncs, b, c, t, Tilted, QRModel, qrSolutions, minFunc},
 
@@ -427,9 +446,11 @@ QuantileEnvelope::qemat = "The first argument is expected to be a numeric two co
 QuantileEnvelope::qeqs = "The second argument is expected to be a number or a list of numbers between 0 and 1.";
 QuantileEnvelope::qen = "The third argument is expected to be an integer greater than 2.";
 
-Clear[QuantileEnvelope]
+Clear[QuantileEnvelope];
+
 Options[QuantileEnvelope] =
     {"Tangents" -> True, "StandardizingShiftFunction" -> Mean, "StandardizingScaleFunction" -> InterquartileRange };
+
 QuantileEnvelope[data_, qs_, n_, opts : OptionsPattern[]] :=
   Block[{},
    If[! MatrixQ[data, NumberQ],
@@ -447,9 +468,12 @@ QuantileEnvelope[data_, qs_, n_, opts : OptionsPattern[]] :=
    QuantileEnvelopeSimple[data, qs, n, opts]
   ];
 
-Clear[QuantileEnvelopeSimple]
+Clear[QuantileEnvelopeSimple];
+
 Options[QuantileEnvelopeSimple] = Options[QuantileEnvelope];
+
 QuantileEnvelopeSimple[data_?MatrixQ, q_?NumberQ, n_Integer, opts : OptionsPattern[]] := QuantileEnvelopeSimple[data, {q}, n, opts];
+
 QuantileEnvelopeSimple[dataArg_?MatrixQ, qs : {_?NumberQ ..}, n_Integer, opts : OptionsPattern[]] :=
   Block[{data = dataArg, center, scale, rmat, rmats, qfuncs, x1, x2, y1, rqfuncs, intPoints, t,
     tangentsQ, sdShiftFunc, sdScaleFunc},
