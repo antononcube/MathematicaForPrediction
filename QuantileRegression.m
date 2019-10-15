@@ -156,7 +156,8 @@ Begin["`Private`"];
 (* QuantileRegressionFit                                    *)
 (************************************************************)
 
-QuantileRegressionFit::"nmat" = "The first argument is expected to be a matrix of numbers with two columns.";
+QuantileRegressionFit::"nmat" = "The first argument is expected to be a matrix of numbers with two columns, \
+a numeric vector, or a time series.";
 
 QuantileRegressionFit::"fvlen" = "The second argument is expected to be list of functions to be fitted with at least one element.";
 
