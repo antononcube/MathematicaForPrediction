@@ -300,6 +300,9 @@ Options[QuantileRegression] = {InterpolationOrder -> 3, Method -> LinearProgramm
 QuantileRegression[data_?VectorQ, knots_, probs_, opts : OptionsPattern[]] :=
     QuantileRegression[ Transpose[{ Range[Length[data]], data}], knots, probs, opts];
 
+QuantileRegression[data : (_TimeSeries | _TemporalData), knots_, probs_, opts : OptionsPattern[]] :=
+    QuantileRegression[ QuantityMagnitude[data["Path"]], knots, probs, opts];
+
 QuantileRegression[data_, knots_, probsArg_, opts : OptionsPattern[]] :=
     Block[{mOptVal, intOrdOptVal, probs = Flatten @ List @ probsArg},
 
