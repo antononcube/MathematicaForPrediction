@@ -181,6 +181,9 @@ LSAMonDocumentCollectionQ::usage = "Gives True if the argument is a text collect
 
 LSAMonExtractTopics::usage = "Extract topics.";
 
+LSAMonNormalizeMatrixProduct::usage = "LSAMonNormalizeMatrixProduct[ Normalized -> (Left|Right) ] \
+normalize the matrix factors.";
+
 LSAMonRepresentDocumentTagsByTopics::usage = "Find the topic representation corresponding to a list of tags. \
 Each monad document is expected to have a tag. One tag might correspond to multiple documents.";
 
@@ -1094,6 +1097,59 @@ LSAMonRepresentByTopics[__][___] :=
       Echo[
         "The expected signature is LSAMonRepresentByTopics[ mat_SSparseMatrix | _String | {_String ..} | {{_String ..} ..} ] .",
         "LSAMonRepresentByTopics:"];
+      $LSAMonFailure
+    ];
+
+(*------------------------------------------------------------*)
+(* Matrix product normalization                               *)
+(*------------------------------------------------------------*)
+
+Clear[LSAMonNormalizeMatrixProduct];
+
+Options[LSAMonNormalizeMatrixProduct] = { Normalized -> Right };
+
+LSAMonNormalizeMatrixProduct[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonNormalizeMatrixProduct[xs_, context_Association] := LSAMonNormalizeMatrixProduct[][xs, context];
+
+LSAMonNormalizeMatrixProduct[][xs_, context_Association] := LSAMonNormalizeMatrixProduct[Normalized -> Right][xs, context];
+
+LSAMonNormalizeMatrixProduct[opts : OptionsPattern[]][xs_, context_] :=
+    Block[{normalized, W, H},
+
+      normalized = OptionValue[ LSAMonNormalizeMatrixProduct, Normalized];
+
+      W = LSAMonTakeW[xs, context];
+      H = LSAMonTakeH[xs, context];
+
+      If[ TrueQ[ W === $LSAMonFailure ] || TrueQ[ H === $LSAMonFailure ],
+        Return[$LSAMonFailure]
+      ];
+
+      Which[
+        TrueQ[ normalized === Left ],
+        {W, H} = LeftNormalizeMatrixProduct[ SparseArray[W], SparseArray[H] ],
+
+        TrueQ[ normalized === Right ],
+        {W, H} = RightNormalizeMatrixProduct[ SparseArray[W], SparseArray[H] ],
+
+        True,
+        Return[LSAMonNormalizeMatrixProduct[None][xs, context]]
+      ];
+
+      W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["W"]], "ColumnNames" -> ColumnNames[context["W"]] ];
+
+      H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> RowNames[context["H"]], "ColumnNames" -> ColumnNames[context["H"]] ];
+
+      LSAMonUnit[xs, Join[ context, <| "W" -> W, "H" -> H |>] ]
+
+    ];
+
+LSAMonNormalizeMatrixProduct[__][___] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonNormalizeMatrixProduct[ Normalized -> (Left | Right) ] .",
+        "LSAMonNormalizeMatrixProduct:"];
       $LSAMonFailure
     ];
 
