@@ -1240,7 +1240,7 @@ LSAMonEchoDocumentsStatistics[__][___] :=
 
 
 (*------------------------------------------------------------*)
-(* Documents-term matrix statistics                            *)
+(* Documents-term matrix statistics                           *)
 (*------------------------------------------------------------*)
 
 Clear[LSAMonEchoDocumentTermMatrixStatistics];
