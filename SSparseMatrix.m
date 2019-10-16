@@ -427,7 +427,10 @@ MatrixForm[SSparseMatrix[obj_], args___] ^:=
 MatrixPlot[SSparseMatrix[obj_], args___] ^:=
     MatrixPlot[obj["SparseMatrix"], args];
 
-(*Sums*)
+
+(*------------------------------------------------------------*)
+(* Sums                                                       *)
+(*------------------------------------------------------------*)
 
 RowSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"], {2}];
 
@@ -437,15 +440,29 @@ ColumnSums[SSparseMatrix[obj_]] := Total[obj["SparseMatrix"]];
 
 ColumnSumsAssociation[smat_SSparseMatrix] := AssociationThread[ColumnNames[smat], ColumnSums[smat]];
 
+Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
+
+
+(*------------------------------------------------------------*)
+(* Clip & Unitize                                             *)
+(*------------------------------------------------------------*)
+
 Clip[SSparseMatrix[objArg_], args___] ^:=
     Block[{obj=objArg},
       obj["SparseMatrix"] = Clip[ obj["SparseMatrix"], args];
       SSparseMatrix[obj]
     ];
 
-Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
+Unitize[SSparseMatrix[objArg_]] ^:=
+    Block[{obj=objArg},
+      obj["SparseMatrix"] = Unitize[ obj["SparseMatrix"] ];
+      SSparseMatrix[obj]
+    ];
 
-(*Dot product*)
+
+(*------------------------------------------------------------*)
+(* Dot product                                                *)
+(*------------------------------------------------------------*)
 
 (*Note that here we do not have to define the behavior for Dot[r1,r2,r3,r4,\[Ellipsis]] .*)
 
@@ -472,7 +489,10 @@ Dot[x_, SSparseMatrix[obj_]] ^:=
         "DimensionNames" -> {"1", DimensionNames[SSparseMatrix[obj]][[2]]}]
     ];
 
-(* Arithmetic operators *)
+
+(*------------------------------------------------------------*)
+(* Arithmetic operators                                       *)
+(*------------------------------------------------------------*)
 
 (*Here we need to have an option to respect or to ignore the row names and column names.*)
 
@@ -521,7 +541,10 @@ Plus[x_, rmat1_SSparseMatrix] ^:=
       "ColumnNames" -> ColumnNames[rmat1],
       "DimensionNames" -> DimensionNames[rmat1]];
 
-(* Part *)
+
+(*------------------------------------------------------------*)
+(* Part                                                       *)
+(*------------------------------------------------------------*)
 
 (*Part[SSparseMatrix[obj_], s1:(_Integer | {_Integer..} | _Span ) ] ^:= Part[obj["SparseMatrix"], s1, All];*)
 
@@ -562,7 +585,10 @@ Part[SSparseMatrix[obj_], s1_, s2_] ^:=
       ]
     ];
 
-(* RowBind, ColumnBind *)
+
+(*------------------------------------------------------------*)
+(* RowBind, ColumnBind                                        *)
+(*------------------------------------------------------------*)
 
 (* Here we need to have an option to respect or to ignore the row names and column names for RowBind and ColumnBind respectively.
 
@@ -641,6 +667,10 @@ ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
     ];
 
 
+(*------------------------------------------------------------*)
+(* Imposing row and column names                              *)
+(*------------------------------------------------------------*)
+
 Clear[ImposeRowNames, ImposeColumnNames];
 
 ImposeRowNames[rmat_SSparseMatrix, rowNames : {_String ..}] :=
@@ -672,7 +702,11 @@ ImposeColumnNames[rmat_SSparseMatrix, colNames : {_String ..} | Association[(_St
     Transpose[ImposeRowNames[Transpose[rmat], colNames]];
 
 
-Clear[SSparseMatrixToTriplets]
+(*------------------------------------------------------------*)
+(* Matrix to triplets                                         *)
+(*------------------------------------------------------------*)
+
+Clear[SSparseMatrixToTriplets];
 SSparseMatrixToTriplets[ rsmat_SSparseMatrix ] :=
     Block[{t},
       t = Most[ArrayRules[rsmat]];
@@ -689,7 +723,10 @@ New functions for SSparseMatrix objects have to be added into the do-not-decorat
 Note that this decoration is very aggressive and it might have un-forseen effects.
 *)
 
-(* Format *)
+
+(*------------------------------------------------------------*)
+(* Format                                                     *)
+(*------------------------------------------------------------*)
 
 Format[SSparseMatrix[obj_]] := obj["SparseMatrix"];
 
