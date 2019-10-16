@@ -1513,7 +1513,7 @@ Clear[SMRMonJoinAcross];
 
 SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
-Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "AsDataset" -> True };
+Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "DatasetResult" -> True };
 
 SMRMonJoinAcross[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1581,7 +1581,7 @@ SMRMonJoinAcross[ dataName_String -> asc_Association, opts : OptionsPattern[]][x
 
       dsQ = TrueQ[ DatasetWithScoredItemsQ[xs, context] ];
 
-      datasetQ = TrueQ[ OptionValue["AsDataset"] ] || dsQ ;
+      datasetQ = TrueQ[ OptionValue["DatasetResult"] ] || dsQ ;
 
       (* The assumption is that the monad value xs is recommendations result. *)
       (* I.e. an association of with item names as keys and real numbers as values. *)
@@ -1609,8 +1609,14 @@ SMRMonJoinAcross[ dataName_String -> asc_Association, opts : OptionsPattern[]][x
         SMRMonUnit[ dsRecs[ All, Join[ #, <| dataName -> asc[#Item] |>]& ], context ],
         (* ELSE *)
 
+        dsRecs =
+            KeyValueMap[
+              If[ AssociationQ[ asc[#1] ],
+                Prepend[ asc[#1], "RecommendationScore" -> #2 ],
+                <| "RecommendationScore" -> #2, dataName -> asc[#1] |>
+              ]&,
+              xs ];
 
-        dsRecs = KeyValueMap[ Prepend[ asc[#1], "RecommendationScore" -> #2 ]&, xs ];
         SMRMonUnit[ dsRecs, context ]
       ]
     ];
