@@ -1254,11 +1254,9 @@ LSAMonEchoDocumentTermMatrixStatistics[xs_, context_Association] := LSAMonEchoDo
 LSAMonEchoDocumentTermMatrixStatistics[][xs_, context_Association] := LSAMonEchoDocumentTermMatrixStatistics[ImageSize -> 300][xs, context];
 
 LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{logBase, logFunc, logInsert, texts, dOpts, smat},
+    Block[{logBase, logFunc, logInsert, dOpts, smat},
 
       logBase = OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "LogBase"];
-
-      texts = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonGetDocuments, LSAMonTakeValue} ];
 
       If[ TrueQ[ texts === $LSAMonFailure], Return[$LSAMonFailure] ];
 
