@@ -1770,7 +1770,7 @@ SMRMonToProfileVector[ scoredTags : Association[ (_String -> _?NumberQ) .. ] ][x
         Return[$SMRMonFailure]
       ];
 
-      If[ !SMRMonScoredTagsQ[scoredTags, context],
+      If[ !ScoredTagsQ[scoredTags, context],
         Echo["Not all tags are valid recommendation matrix column names.", "SMRMonToProfileVector:"];
         Return[$SMRMonFailure]
       ];
@@ -2338,7 +2338,7 @@ SMRMonClassify[___][__] :=
 
 Clear[SMRMonProveByMetadata];
 
-SyntaxInformation[SMRMonProveByMetadata] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
+SyntaxInformation[SMRMonProveByMetadata] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
 Options[SMRMonProveByMetadata] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
@@ -2390,6 +2390,15 @@ SMRMonProveByMetadata[ profile_Association, itemNames : {_String..}, opts : Opti
       SMRMonUnit[ Join @@ res, context ]
     ];
 
+SMRMonProveByMetadata[ itemNames : ( _String | {_String..} ), opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{},
+      If[ ScoredTagsQ[xs, context],
+        SMRMonProveByMetadata[xs, itemNames, opts][xs, context],
+        (* ELSE *)
+        SMRMonProveByMetadata[None][xs, context]
+      ]
+    ];
+
 SMRMonProveByMetadata[___][__] :=
     Block[{},
       Echo[
@@ -2406,7 +2415,7 @@ SMRMonProveByMetadata[___][__] :=
 
 Clear[SMRMonProveByHistory];
 
-SyntaxInformation[SMRMonProveByHistory] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
+SyntaxInformation[SMRMonProveByHistory] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
 Options[SMRMonProveByHistory] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
@@ -2462,6 +2471,15 @@ SMRMonProveByHistory[ history_Association, itemNames : {_String..}, opts : Optio
       ];
 
       SMRMonUnit[ Join @@ res, context ]
+    ];
+
+SMRMonProveByHistory[ itemNames : ( _String | {_String..} ), opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{},
+      If[ ScoredItemsQ[xs, context],
+        SMRMonProveByHistory[xs, itemNames, opts][xs, context],
+        (* ELSE *)
+        SMRMonProveByHistory[None][xs, context]
+      ]
     ];
 
 SMRMonProveByHistory[___][__] :=
