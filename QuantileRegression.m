@@ -176,30 +176,46 @@ Clear[QuantileRegressionFit];
 
 Options[QuantileRegressionFit] = {Method -> LinearProgramming};
 
+QuantileRegressionFit[data_?VectorQ, knots_, probs_, opts : OptionsPattern[]] :=
+    QuantileRegressionFit[ Transpose[{ Range[Length[data]], data}], knots, probs, opts];
+
+QuantileRegressionFit[data : (_TimeSeries | _TemporalData), knots_, probs_, opts : OptionsPattern[]] :=
+    QuantileRegressionFit[ QuantityMagnitude[data["Path"]], knots, probs, opts];
+
 QuantileRegressionFit[data_, funcs_, var_?AtomQ, probs_, opts : OptionsPattern[]] :=
     Block[{mOptVal},
+
       (*This check should not be applied because the first function can be a constant.*)
       (*!Apply[And,Map[!FreeQ[#,var]&,funcs]],Message[QuantileRegressionFit::\"fvfree\"],*)
       Which[
         ! ( MatrixQ[data, NumericQ] && Dimensions[data][[2]] >= 2 ),
         Message[QuantileRegressionFit::"nmat"]; Return[{}],
+
         Length[funcs] < 1,
         Message[QuantileRegressionFit::"fvlen"]; Return[{}],
+
         Head[var] =!= Symbol,
         Message[QuantileRegressionFit::"nvar"]; Return[{}],
+
         ! VectorQ[probs, NumericQ[#] && 0 <= # <= 1 &],
         Message[QuantileRegressionFit::"nprobs"]; Return[{}]
       ];
+
       mOptVal = OptionValue[QuantileRegressionFit, Method];
+
       Which[
         TrueQ[mOptVal === LinearProgramming],
         LPQuantileRegressionFit[data, funcs, var, probs],
+
         ListQ[mOptVal] && TrueQ[mOptVal[[1]] === LinearProgramming],
         LPQuantileRegressionFit[data, funcs, var, probs, Rest[mOptVal]],
+
         TrueQ[mOptVal === Minimize || mOptVal === NMinimize],
         MinimizeQuantileRegressionFit[mOptVal, data, funcs, var, probs],
+
         ListQ[mOptVal] && TrueQ[mOptVal[[1]] === Minimize || mOptVal[[1]] === NMinimize],
         MinimizeQuantileRegressionFit[mOptVal[[1]], data, funcs, var, probs, Rest[mOptVal]],
+
         True,
         Message[QuantileRegressionFit::"nmeth"]; Return[{}]
       ]
