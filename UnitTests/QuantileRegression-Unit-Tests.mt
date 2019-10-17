@@ -176,7 +176,7 @@ VerificationTest[(* 10 *)
 
 
 VerificationTest[(* 11 *)
-  qFuncs = QuantileRegressionFit[distData[[All,2]], {1, x, Exp[-x^2]}, x, probs];
+  qFuncs = QuantileRegressionFit[distData[[All,2]], {1, x, x^2}, x, probs];
   ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12]
   ,
   True
@@ -186,7 +186,7 @@ VerificationTest[(* 11 *)
 
 
 VerificationTest[(* 12 *)
-  qFuncs = QuantileRegressionFit[finData, {1, x, Exp[-x^2]}, x, probs];
+  qFuncs = QuantileRegressionFit[finData, {1, x, x^2}, x, probs];
   ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12]
   ,
   True
