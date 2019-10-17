@@ -87,7 +87,7 @@
         LSAMonExtractStatisticalThesaurus[{"arms", "banking", "economy", "education", "freedom", "tariff", "welfare"}, 6]⟹
         LSAMonRetrieveFromContext["statisticalThesaurus"]⟹
         LSAMonEchoValue⟹
-        LSAMonEchoStatisticalThesaurus[];
+        LSAMonEchoStatisticalThesaurusTable[];
 
   # References
 
@@ -159,7 +159,10 @@ LSAMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries 
 
 LSAMonInterpretBasisVector::usage = "Interpret the a specified basis vector.";
 
-LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries for a specified list of words.";
+LSAMonEchoStatisticalThesaurusTable::usage = "Echo the statistical thesaurus entries for a specified list of words.";
+
+LSAMonEchoStatisticalThesaurus::usage = "Echo the statistical thesaurus entries for a specified list of words. \
+Synonym of LSAMonEchoStatisticalThesaurusTable.";
 
 LSAMonEchoDocumentsStatistics::usage = "Echo statistics for the text collection.";
 
@@ -600,7 +603,7 @@ LSAMonExtractTopics[___][__] :=
       Echo[
         "The expected signature is LSAMonExtractTopics[ nTopics_Integer, opts___] .",
         "LSAMonExtractTopics::"];
-      $LSAMonFailure;
+      $LSAMonFailure
     ];
 
 LSAMonTopicExtraction = LSAMonExtractTopics;
@@ -642,8 +645,12 @@ LSAMonExtractStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Associ
       LSAMonExtractStatisticalThesaurus[ words, numberOfNNs ][xs, context]
     ];
 
+LSAMonExtractStatisticalThesaurus[word_String, numberOfNNs_Integer][xs_, context_Association] :=
+    LSAMonExtractStatisticalThesaurus[{word}, numberOfNNs][xs, context];
+
 LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_Association] :=
-    Block[{W, H, HNF, thRes},
+  Block[{W, H, HNF, thRes},
+
       Which[
         KeyExistsQ[context, "H"] && KeyExistsQ[context, "W"],
 
@@ -652,10 +659,11 @@ LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_
         HNF = Nearest[Range[Dimensions[H][[2]]], DistanceFunction -> (Norm[H[[All, #1]] - H[[All, #2]]] &)];
 
         thRes =
-            Map[{#, NearestWords[HNF, #,
-              context["terms"][[context["topicColumnPositions"]]], {},
-              numberOfNNs]} &,
-              Sort[words]];
+            Association[
+              Map[
+                # -> NearestWords[HNF, #, ColumnNames[context["H"]], {}, numberOfNNs] &,
+                Sort[words]]
+            ];
 
         LSAMonUnit[thRes, Join[context, <|"statisticalThesaurus" -> thRes|>]],
 
@@ -670,7 +678,7 @@ LSAMonExtractStatisticalThesaurus[___][__] :=
       Echo[
         "The expected signature is LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer] .",
         "LSAMonExtractStatisticalThesaurus::"];
-      $LSAMonFailure;
+      $LSAMonFailure
     ];
 
 
@@ -678,29 +686,29 @@ LSAMonExtractStatisticalThesaurus[___][__] :=
 (* Echo statistical thesaurus                                 *)
 (*------------------------------------------------------------*)
 
-Clear[LSAMonEchoStatisticalThesaurus];
+Clear[LSAMonEchoStatisticalThesaurusTable];
 
-Options[LSAMonEchoStatisticalThesaurus] = Options[LSAMonExtractStatisticalThesaurus];
+Options[LSAMonEchoStatisticalThesaurusTable] = Options[LSAMonExtractStatisticalThesaurus];
 
-LSAMonEchoStatisticalThesaurus[___][$LSAMonFailure] := $LSAMonFailure;
+LSAMonEchoStatisticalThesaurusTable[___][$LSAMonFailure] := $LSAMonFailure;
 
-LSAMonEchoStatisticalThesaurus[xs_, context_Association] := LSAMonEchoStatisticalThesaurus[][xs, context];
+LSAMonEchoStatisticalThesaurusTable[xs_, context_Association] := LSAMonEchoStatisticalThesaurusTable[][xs, context];
 
-LSAMonEchoStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Association] :=
+LSAMonEchoStatisticalThesaurusTable[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{words},
 
-      words = OptionValue[ LSAMonEchoStatisticalThesaurus, "Words" ];
+      words = OptionValue[ LSAMonEchoStatisticalThesaurusTable, "Words" ];
 
       Which[
 
         !TrueQ[ words === None ],
-        Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonExtractStatisticalThesaurus[opts], LSAMonEchoStatisticalThesaurus } ],
+        Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonExtractStatisticalThesaurus[opts], LSAMonEchoStatisticalThesaurusTable } ],
 
         TrueQ[ words === None ] && KeyExistsQ[context, "statisticalThesaurus"],
         Echo[
             Grid[
               Prepend[
-                context["statisticalThesaurus"],
+                List @@@ Normal[ context["statisticalThesaurus"] ],
                 Style[#, Blue, FontFamily -> "Times"] & /@ {"term", "statistical thesaurus entries"}],
               Dividers -> All, Alignment -> Left,
               Spacings -> {Automatic, 0.75}],
@@ -709,16 +717,21 @@ LSAMonEchoStatisticalThesaurus[ opts : OptionsPattern[] ][xs_, context_Associati
         LSAMonUnit[xs, context],
 
         True  ,
-        Echo["No statistical thesaurus is computed.", "LSAMonEchoStatisticalThesaurus:"];
+        Echo["No statistical thesaurus is computed.", "LSAMonEchoStatisticalThesaurusTable:"];
         $LSAMonFailure
       ]
     ];
 
-LSAMonEchoStatisticalThesaurus[___][__] :=
+LSAMonEchoStatisticalThesaurusTable[___][__] :=
     Block[{},
-      Echo["No arguments are expected.", "LSAMonEchoStatisticalThesaurus:"];
-      $LSAMonFailure;
+      Echo["No arguments are expected.", "LSAMonEchoStatisticalThesaurusTable:"];
+      $LSAMonFailure
     ];
+
+
+Clear[LSAMonEchoStatisticalThesaurus];
+
+LSAMonEchoStatisticalThesaurus = LSAMonEchoStatisticalThesaurusTable;
 
 
 (*------------------------------------------------------------*)
@@ -755,7 +768,7 @@ LSAMonInterpretBasisVector[___][__] :=
       Echo[
         "The expected arguments are LSAMonInterpretBasisVector[vectorIndices:(_Integer|{_Integer..}), opts___] .",
         "LSAMonInterpretBasisVector:"];
-      $LSAMonFailure;
+      $LSAMonFailure
     ];
 
 
@@ -1504,7 +1517,7 @@ LSAMonFindMostImportantDocuments[___][__] :=
       Echo[
         "The expected signature is LSAMonFindMostImportantDocuments[topN_Integer, opts___] .",
         "LSAMonFindMostImportantDocuments::"];
-      $LSAMonFailure;
+      $LSAMonFailure
     ];
 
 
