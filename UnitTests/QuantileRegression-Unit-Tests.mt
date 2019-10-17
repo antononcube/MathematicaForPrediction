@@ -63,7 +63,8 @@ VerificationTest[(* 1 *)
 
 VerificationTest[(* 2 *)
   distData = Table[{x, Exp[-x^2] + RandomVariate[NormalDistribution[0, .15]]}, {x, -3, 3, .2}];
-  MatrixQ[distData, NumberQ]
+  distData2 = Table[{x, Exp[-x^2] + RandomVariate[NormalDistribution[0, .15]]}, {x, -3, 3, .02}];
+  MatrixQ[distData, NumberQ] && MatrixQ[distData2, NumberQ]
   ,
   True
   ,
@@ -167,7 +168,7 @@ VerificationTest[(* 9 *)
 
 VerificationTest[(* 10 *)
   qFuncs = QuantileRegressionFit[distData, {1, x, Exp[-x^2]}, x, probs];
-  ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12]
+  ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12, NumberQ]
   ,
   True
   ,
@@ -176,8 +177,8 @@ VerificationTest[(* 10 *)
 
 
 VerificationTest[(* 11 *)
-  qFuncs = QuantileRegressionFit[distData[[All,2]], {1, x, x^2}, x, probs];
-  ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12]
+  qFuncs = QuantileRegressionFit[distData[[All, 2]], {1, x, x^2}, x, probs];
+  ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12, NumberQ]
   ,
   True
   ,
@@ -187,7 +188,7 @@ VerificationTest[(* 11 *)
 
 VerificationTest[(* 12 *)
   qFuncs = QuantileRegressionFit[finData, {1, x, x^2}, x, probs];
-  ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12]
+  ListQ[qFuncs] && Length[qFuncs] == Length[probs] && VectorQ[qFuncs /. x -> 12, NumberQ]
   ,
   True
   ,
@@ -232,6 +233,30 @@ VerificationTest[(* 16 *)
   True
   ,
   TestID -> "QuantileRegression-Method-4"
+];
+
+
+VerificationTest[(* 17 *)
+  qFuncs = QuantileRegression[distData2, 6, probs];
+  sepPointsFractions =
+      Map[Function[{f}, Length[Select[distData2, #[[2]] < f[#[[1]]] &]] / Length[distData2] // N], qFuncs];
+  Norm[sepPointsFractions - probs, Infinity] <= 0.03
+  ,
+  True
+  ,
+  TestID -> "QuantileRegression-Separation-1"
+];
+
+
+VerificationTest[(* 17 *)
+  qFuncs = QuantileRegressionFit[distData2, Table[Cos[x i], {i, 0, 16}], x, probs];
+  sepPointsFractions =
+      Map[Function[{f}, Length[Select[distData2, #[[2]] < (f /. x -> #[[1]]) &]] / Length[distData2] // N], qFuncs];
+  Norm[sepPointsFractions - probs, Infinity] <= 0.03
+  ,
+  True
+  ,
+  TestID -> "QuantileRegressionFit-Separation-1"
 ];
 
 
