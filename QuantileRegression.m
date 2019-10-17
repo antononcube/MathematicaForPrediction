@@ -176,14 +176,14 @@ Clear[QuantileRegressionFit];
 
 Options[QuantileRegressionFit] = {Method -> LinearProgramming};
 
-QuantileRegressionFit[data_?VectorQ, knots_, probs_, opts : OptionsPattern[]] :=
-    QuantileRegressionFit[ Transpose[{ Range[Length[data]], data}], knots, probs, opts];
+QuantileRegressionFit[data_?VectorQ, funcs_, var_?AtomQ, probs_, opts : OptionsPattern[]] :=
+    QuantileRegressionFit[ Transpose[{ Range[Length[data]], data}], funcs, var, probs, opts];
 
-QuantileRegressionFit[data : (_TimeSeries | _TemporalData), knots_, probs_, opts : OptionsPattern[]] :=
-    QuantileRegressionFit[ QuantityMagnitude[data["Path"]], knots, probs, opts];
+QuantileRegressionFit[data : (_TimeSeries | _TemporalData), funcs_, var_?AtomQ, probs_, opts : OptionsPattern[]] :=
+    QuantileRegressionFit[ QuantityMagnitude[data["Path"]], funcs, var, probs, opts];
 
-QuantileRegressionFit[data_, funcs_, var_?AtomQ, probs_, opts : OptionsPattern[]] :=
-    Block[{mOptVal},
+QuantileRegressionFit[data_, funcs_, var_?AtomQ, probsArg_, opts : OptionsPattern[]] :=
+    Block[{mOptVal, probs = Flatten @ List @ probsArg},
 
       (*This check should not be applied because the first function can be a constant.*)
       (*!Apply[And,Map[!FreeQ[#,var]&,funcs]],Message[QuantileRegressionFit::\"fvfree\"],*)
