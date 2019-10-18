@@ -1804,7 +1804,7 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
 ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List: {1, x}, var_: x].";
 
 ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List : {1, x}, var_: x] :=
-    Block[{data1, data2, S, S1, S2, k, fm, res},
+    Block[{data1, data2, S, S1, S2, k, ff, res},
 
       If[Length[funcs] == 0,
         Message[ChowTestStatistic::empfuncs];
@@ -1823,7 +1823,13 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
 
       k = Count[Developer`SymbolQ /@ funcs, True];
 
-      res = Fit[data, funcs, var, "FitResiduals"];
+      If[ $VersionNumber >= 12,
+        res = Fit[data, funcs, var, "FitResiduals"],
+        (* ELSE *)
+        ff = Fit[data, funcs, var];
+        res = MapThread[(ff /. var -> #1) - #2 &, Transpose[data] ]
+      ];
+
       S = res.res;
 
       Map[
