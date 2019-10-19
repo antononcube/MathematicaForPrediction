@@ -173,7 +173,7 @@ ChowTestStatistic[data : {{_?NumericQ, _?NumericQ} ..}, splitPoints : {_?Numeric
 
 
 ChowTestStatistic[data1 : {{_?NumericQ, _?NumericQ} ..}, data2 : {{_?NumericQ, _?NumericQ} ..}, funcs_List : {1, x}, var_: x] :=
-    Block[{data, S, S1, S2, k, res},
+    Block[{S, S1, S2, k, res},
 
       If[Length[funcs] == 0,
         Message[ChowTestStatistic::empfuncs];
