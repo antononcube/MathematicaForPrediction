@@ -88,9 +88,9 @@
 BeginPackage["ChowTestStatistic`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-ChowTestStatistic::usage = "ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : ({_?NumberQ..} | _?NumberQ), funcs_: {1, x}, var_: x] \
-computes the Chow test statistic for identifying structural breaks in time series.\n\
-ChowTestStatistic[data1, data2, funcs, var] computes the Chow test statistic for two datasets.";
+ChowTestStatistic::usage = "ChowTestStatistic[data : {{_?NumericQ, _?NumericQ} ..}, splitPoints : ({_?NumericQ..} | _?NumericQ), funcs_: {1, x}, var_: x] \
+computes the Chow test statistic for identifying structural breaks in lists of numerical pairs.\n\
+ChowTestStatistic[data1, data2, funcs, var] computes the Chow test statistic for two lists of numerical pairs.";
 
 Begin["`Private`"];
 
@@ -101,12 +101,12 @@ ChowTestStatistic::novar = "The specified variable is not a symbol.";
 ChowTestStatistic::nofuncsvar = "The specified variable should be found in the functions list.";
 ChowTestStatistic::empdata = "The split point `1` produced an empty split dataset.";
 ChowTestStatistic::expargs = "The implemented signatures are:\n\
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_List: {1, x}, var_: x],\n\
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List: {1, x}, var_: x], and\n\
-ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List: {1, x}, var_: x].";
+ChowTestStatistic[data : {{_?NumericQ, _?NumericQ} ..}, splitPoint_?NumericQ, funcs_List: {1, x}, var_: x],\n\
+ChowTestStatistic[data : {{_?NumericQ, _?NumericQ} ..}, splitPoints : {_?NumericQ ..}, funcs_List: {1, x}, var_: x], and\n\
+ChowTestStatistic[data1 : {{_?NumericQ, _?NumericQ} ..}, data2 : {{_?NumericQ, _?NumericQ} ..}, funcs_List: {1, x}, var_: x].";
 
 
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs_List : {1, x}, var_: x] :=
+ChowTestStatistic[data : {{_?NumericQ, _?NumericQ} ..}, splitPoint_?NumericQ, funcs_List : {1, x}, var_: x] :=
     Block[{res},
 
       res = ChowTestStatistic[ data, {splitPoint}, funcs, var];
@@ -118,8 +118,8 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs
     ];
 
 
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List : {1, x}, var_: x] :=
-    Block[{data1, data2, S, S1, S2, k, fm, res},
+ChowTestStatistic[data : {{_?NumericQ, _?NumericQ} ..}, splitPoints : {_?NumericQ ..}, funcs_List : {1, x}, var_: x] :=
+    Block[{data1, data2, S, S1, S2, k, res},
 
       If[Length[funcs] == 0,
         Message[ChowTestStatistic::empfuncs];
@@ -172,8 +172,8 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
     ];
 
 
-ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List : {1, x}, var_: x] :=
-    Block[{data, S, S1, S2, k, fm, res},
+ChowTestStatistic[data1 : {{_?NumericQ, _?NumericQ} ..}, data2 : {{_?NumericQ, _?NumericQ} ..}, funcs_List : {1, x}, var_: x] :=
+    Block[{data, S, S1, S2, k, res},
 
       If[Length[funcs] == 0,
         Message[ChowTestStatistic::empfuncs];
