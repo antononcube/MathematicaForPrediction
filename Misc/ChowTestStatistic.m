@@ -90,11 +90,11 @@ BeginPackage["ChowTestStatistic`"];
 
 ChowTestStatistic::usage = "ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : ({_?NumberQ..} | _?NumberQ), funcs_: {1, x}, var_: x] \
 computes the Chow test statistic for identifying structural breaks in time series.\n\
-ChowTestStatistic[data1, data2, funcs, var] computes the Chow test statistic for two datasets."
+ChowTestStatistic[data1, data2, funcs, var] computes the Chow test statistic for two datasets.";
 
 Begin["`Private`"];
 
-Clear[ChowTestStatistic]
+Clear[ChowTestStatistic];
 
 ChowTestStatistic::empfuncs = "A non empty list of functions is expected.";
 ChowTestStatistic::novar = "The specified variable is not a symbol.";
