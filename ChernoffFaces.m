@@ -267,6 +267,7 @@ ChernoffFace::colfunc = "The value of the option ColorFunction is expected to ha
 or be one of None or Automatic.";
 
 ChernoffFace["Properties"] := DefaultChernoffFaceParameters[];
+ChernoffFace["FaceParts"] := ChernoffFacePartsParameters[];
 ChernoffFace["FacePartsProperties"] := ChernoffFacePartsParameters[];
 
 ChernoffFace[ opts:OptionsPattern[] ] :=
