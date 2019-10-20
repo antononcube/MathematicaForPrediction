@@ -195,4 +195,22 @@ VerificationTest[(* 12 *)
 ];
 
 
+VerificationTest[(* 13 *)
+  MatrixQ[ VariablesRescale[data], NumberQ ]
+  ,
+  True
+  ,
+  TestID -> "VariablesRescale-1"
+];
+
+
+VerificationTest[(* 14 *)
+  Apply[ And, Flatten @ Map[ 0<= # <= 1&, VariablesRescale[ RandomReal[{-100,100}, {100, 17}] ], {-1} ] ]
+  ,
+  True
+  ,
+  TestID -> "VariablesRescale-2"
+];
+
+
 EndTestSection[]
