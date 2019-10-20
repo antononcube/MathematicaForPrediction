@@ -99,6 +99,24 @@ VerificationTest[(* 4 *)
 
 
 VerificationTest[(* 5 *)
+  Head /@ Table[ChernoffFace[ColorFunction -> Automatic, ImageSize -> Tiny], 36]
+  ,
+  Table[Graphics, 36]
+  ,
+  TestID -> "ColorFunction-2"
+];
+
+
+VerificationTest[(* 6 *)
+  Head /@ Table[ChernoffFace[ColorFunction -> None, ImageSize -> Tiny], 36]
+  ,
+  Table[Graphics, 36]
+  ,
+  TestID -> "ColorFunction-3"
+];
+
+
+VerificationTest[(* 7 *)
   Head /@ Map[ ChernoffFace, data]
   ,
   Table[Graphics, Length[data]]
@@ -107,7 +125,7 @@ VerificationTest[(* 5 *)
 ];
 
 
-VerificationTest[(* 6 *)
+VerificationTest[(* 8 *)
   Head /@ Map[ ChernoffFace[#, ColorFunction -> Automatic, ImageSize -> Tiny]&, data]
   ,
   Table[Graphics, Length[data]]
@@ -116,7 +134,7 @@ VerificationTest[(* 6 *)
 ];
 
 
-VerificationTest[(* 7 *)
+VerificationTest[(* 9 *)
   Head /@ Map[ ChernoffFace[#, ColorFunction -> ColorData["BrightBands"]] &, VariablesRescale[data]]
   ,
   Table[Graphics, Length[data]]
@@ -125,13 +143,13 @@ VerificationTest[(* 7 *)
 ];
 
 
-VerificationTest[(* 8 *)
+VerificationTest[(* 10 *)
   k = Length[data[[1]]];
   Head /@
       Map[
         ChernoffFace[
           Append[
-            AssociationThread[Take[Keys@ChernoffFace["FacePartsProperties"], k] -> Take[#, k], "MakeSymmetric" -> False],
+            AssociationThread[Take[Keys @ ChernoffFace["FacePartsProperties"], k] -> Take[#, k], "MakeSymmetric" -> False],
             ColorFunction -> ColorData["BrightBands"]
           ]
         ]&,
@@ -144,7 +162,7 @@ VerificationTest[(* 8 *)
 ];
 
 
-VerificationTest[(* 9 *)
+VerificationTest[(* 11 *)
   KeySort @ ChernoffFace["Properties"]
   ,
   <|"EyeBallColor" -> Automatic, "EyeSize" -> 0.5, "EyeSlant" -> 0.5,
@@ -162,7 +180,7 @@ VerificationTest[(* 9 *)
 ];
 
 
-VerificationTest[(* 10 *)
+VerificationTest[(* 12 *)
   KeySort@ChernoffFace["FacePartsProperties"]
   ,
   <|"EyeSize" -> 0.5, "EyeSlant" -> 0.5, "EyesVerticalPosition" -> 0.5,
