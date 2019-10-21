@@ -499,8 +499,8 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
       ];
 
       nMinDocumentsPerTerm = OptionValue[ LSAMonExtractTopics, "MinNumberOfDocumentsPerTerm" ];
-      If[ ! ( IntegerQ[ nMinDocumentsPerTerm ] && nMinDocumentsPerTerm > 0 ),
-        Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a positive integer.", "LSAMonExtractTopics:"];
+      If[ ! ( IntegerQ[ nMinDocumentsPerTerm ] && nMinDocumentsPerTerm >= 0 ),
+        Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a non-negative integer.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
