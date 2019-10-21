@@ -132,6 +132,11 @@ If[Length[DownValues[NonNegativeMatrixFactorization`GDCLS]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/NonNegativeMatrixFactorization.m"]
 ];
 
+If[Length[DownValues[IndependentComponentAnalysis`IndependentComponentAnalysis]] == 0,
+  Echo["IndependentComponentAnalysis.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/IndependentComponentAnalysis.m"]
+];
+
 If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Echo["CrossTabulate.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
@@ -212,6 +217,7 @@ Needs["StateMonadCodeGenerator`"];
 Needs["SSparseMatrix`"];
 Needs["DocumentTermMatrixConstruction`"];
 Needs["NonNegativeMatrixFactorization`"];
+Needs["IndependentComponentAnalysis`"];
 Needs["CrossTabulate`"];
 Needs["OutlierIdentifiers`"];
 
@@ -564,8 +570,10 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       If[ TrueQ[ MemberQ[ ToLowerCase[ { "NNMF", "NMF", "NonNegativeMatrixFactorization" } ], method ] ], method = "NNMF" ];
 
-      If[ !MemberQ[ {"SVD", "NNMF"}, method ],
-        Echo["The value of the option Method is expected to be \"SVD\" or \"NNMF\".", "LSAMonExtractTopics:"];
+      If[ TrueQ[ MemberQ[ ToLowerCase[ { "IndependentComponentAnalysis", "ICA" } ], method ] ], method = "ICA" ];
+
+      If[ !MemberQ[ {"SVD", "NNMF", "ICA"}, method ],
+        Echo["The value of the option Method is expected to be \"SVD\", \"NNMF\", or \"ICA\".", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -607,8 +615,9 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       (* Factorization *)
       Which[
-        method == "NNMF" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
+
         (* Non-negative matrix factorization *)
+        method == "NNMF" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
 
         {k, p} = {nTopics, nInitializingDocuments};
         {m, n} = Dimensions[M1];
@@ -633,8 +642,8 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
         {W, H} = GDCLSGlobal[M1, W, H, Evaluate[ nnmfOpts ] ],
 
-        method == "SVD" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
         (* Singular Value Decomposition *)
+        method == "SVD" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
 
         {U, S, V} = SingularValueDecomposition[ M1, nTopics, DeleteCases[ FilterRules[ {opts}, Options[SingularValueDecomposition] ], Method -> _ ]];
 
@@ -647,6 +656,20 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         Echo["Cannot find a weighted document-term matrix.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure],
 
+        (* Independent Component Analysis *)
+        method == "ICA" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
+
+        {H, W} = IndependentComponentAnalysis[ Transpose[M1], nTopics, DeleteCases[ FilterRules[ {opts}, Options[IndependentComponentAnalysis] ], Method -> _ ]];
+
+        (* Re-fit the result to monad's data interpretation. *)
+        W = Transpose[SparseArray[W]];
+        H = Transpose[SparseArray[H]],
+
+        !KeyExistsQ[context, "weightedDocumentTermMatrix"],
+        Echo["Cannot find a weighted document-term matrix.", "LSAMonExtractTopics:"];
+        Return[$LSAMonFailure],
+
+        (* No matrix. *)
         True,
         Echo["The weighted document-term matrix is not a SSparseMatrix object.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
@@ -1167,6 +1190,10 @@ LSAMonRepresentByTopics[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, co
         matNew = Map[ # . invH &, SparseArray[mat] ],
 
         context["method"] == "SVD",
+        (* We are using Map in order to prevent too much memory usage. *)
+        matNew = Map[ H . # &, SparseArray[mat] ],
+
+        context["method"] == "ICA",
         (* We are using Map in order to prevent too much memory usage. *)
         matNew = Map[ H . # &, SparseArray[mat] ],
 
