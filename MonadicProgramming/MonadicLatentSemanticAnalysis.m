@@ -605,11 +605,25 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         ]
       ];
 
+      If[ nMinDocumentsPerTerm > RowsCount[context["weightedDocumentTermMatrix"]],
+        Echo[
+          "The value of the option \"MinDocumentsPerTerm\" is expected not to be larger than the number of rows of the weighted document-term matrix.",
+          "LSAMonExtractTopics:"];
+        Return[$LSAMonFailure]
+      ];
+
       (* Restrictions *)
       docTermMat = Unitize[ SparseArray[ context["weightedDocumentTermMatrix"] ] ];
 
       documentsPerTerm = Total /@ Transpose[docTermMat];
       pos = Flatten[Position[documentsPerTerm, s_?NumberQ /; s >= nMinDocumentsPerTerm]];
+
+      If[ Length[pos] == 0,
+        Echo[
+          "The value of the option \"MinDocumentsPerTerm\" produced an empty selection of terms (columns of the weighted document-term matrix.)",
+          "LSAMonExtractTopics:"];
+        Return[$LSAMonFailure]
+      ];
 
       M1 = SparseArray[ context["weightedDocumentTermMatrix"][[All, pos]] ];
 
