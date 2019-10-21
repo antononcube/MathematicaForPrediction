@@ -1089,17 +1089,17 @@ LSAMonRepresentByTerms[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, con
 
       applyTermWeightFuncsQ = TrueQ[ OptionValue[ LSAMonRepresentByTerms, "ApplyTermWeightFunctions" ] ];
 
-      If[ ! KeyExistsQ[context, "documentTermMatrix"],
-        Echo["No document-term matrix.", "LSAMonRepresentByTerms:"];
+      If[ ! KeyExistsQ[context, "weightedDocumentTermMatrix"],
+        Echo["No weighted document-term matrix.", "LSAMonRepresentByTerms:"];
         Return[$LSAMonFailure]
       ];
 
-      mat = ImposeColumnNames[ mat, ColumnNames[ context["documentTermMatrix"] ] ];
+      mat = ImposeColumnNames[ mat, ColumnNames[ context["weightedDocumentTermMatrix"] ] ];
 
       If[ applyTermWeightFuncsQ,
         If[ ! Apply[ And, KeyExistsQ[context, #]& /@ { "globalWeights", "localWeightFunction", "normalizerFunction" } ],
           Echo[
-            "If the option \"ApplyTermWeightFunctions\" is set to True" <>
+            "If the option \"ApplyTermWeightFunctions\" is set to True " <>
                 "then the monad context is expected to have the elements \"globalWeights\", \"localWeightFunction\", \"normalizerFunction\".",
             "LSAMonRepresentByTerms:"];
           Return[$LSAMonFailure]
@@ -1108,7 +1108,7 @@ LSAMonRepresentByTerms[ matArg_SSparseMatrix, opts : OptionsPattern[] ][xs_, con
       ];
 
       If[ Max[Abs[ColumnSums[mat]]] == 0,
-        Echo["The terms of the argument cannot be found in the document-term matrix.", "LSAMonRepresentByTerms:"];
+        Echo["The terms of the argument cannot be found in the weighted document-term matrix.", "LSAMonRepresentByTerms:"];
       ];
 
       LSAMonUnit[ mat, context ]
@@ -1143,7 +1143,7 @@ LSAMonRepresentByTopics[ query_String, opts : OptionsPattern[] ][xs_, context_] 
 LSAMonRepresentByTopics[ query_?QueryPatternQ, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{qmat},
 
-      qmat = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonRepresentByTerms[query], LSAMonTakeValue}];
+      qmat = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonRepresentByTerms[query, FilterRules[{opts}, Options[LSAMonRepresentByTerms]]], LSAMonTakeValue}];
 
       If[ TrueQ[qmat === $LSAMonFailure], Return[$LSAMonFailure] ];
 
