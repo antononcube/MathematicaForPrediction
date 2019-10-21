@@ -263,7 +263,7 @@ VerificationTest[ (* 13 *)
         LSAMonTakeValue
       }
     ],
-    { { _String, { _String .. } } .. }
+    <| (_String -> { _String .. }) .. |>
   ]
   ,
   True
@@ -395,6 +395,55 @@ VerificationTest[ (* 25 *)
   ,
   TestID -> "Take-StemmingRules-1"
 ];
+
+
+(*************************************************************)
+(* Topic extraction with external matrices                   *)
+(*************************************************************)
+
+VerificationTest[ (* 26 *)
+  lsaObj4 =
+      Fold[
+        LSAMonBind,
+        LSAMonUnit[],
+        {
+          LSAMonSetDocumentTermMatrix[ LSAMonBind[ lsaObj3, LSAMonTakeDocumentTermMatrix] ],
+          LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonMakeTopicsTable
+        }
+      ];
+
+  Sort@Keys[LSAMonBind[ lsaObj4, LSAMonTakeContext] ]
+  ,
+  Sort@{"automaticTopicNames", "documentTermMatrix", "globalWeightFunction",
+    "globalWeights", "H", "localWeightFunction", "method",
+    "normalizerFunction", "terms", "topicColumnPositions", "topicsTable",
+    "W", "weightedDocumentTermMatrix"}
+  ,
+  TestID -> "Topic-extraction-5"
+];
+
+
+VerificationTest[ (* 27 *)
+  lsaObj4 =
+      Fold[
+        LSAMonBind,
+        LSAMonUnit[],
+        {
+          LSAMonSetWeightedDocumentTermMatrix[ LSAMonBind[ lsaObj3, LSAMonTakeWeightedDocumentTermMatrix] ],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonMakeTopicsTable
+        }
+      ];
+
+  Sort@Keys[LSAMonBind[ lsaObj4, LSAMonTakeContext] ]
+  ,
+  Sort@{"automaticTopicNames", "H", "method", "terms", "topicColumnPositions", "topicsTable", "W", "weightedDocumentTermMatrix"}
+  ,
+  TestID -> "Topic-extraction-6"
+];
+
 
 
 EndTestSection[]
