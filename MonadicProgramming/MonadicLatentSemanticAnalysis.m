@@ -414,7 +414,7 @@ LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_
     Block[{wDocTermMat, globalWeights, aSpec },
 
       Which[
-        KeyExistsQ[context, "documentTermMatrix"],
+        KeyExistsQ[context, "documentTermMatrix"] && SSparseMatrixQ[context["documentTermMatrix"]],
 
         globalWeights =
             AssociationThread[
@@ -428,8 +428,12 @@ LSAMonApplyTermWeightFunctions[globalWeightFunction_String, localWeightFunction_
 
         LSAMonUnit[xs, Join[context, <|"weightedDocumentTermMatrix" -> wDocTermMat, "globalWeights" -> globalWeights |>, aSpec]],
 
-        True,
+        !KeyExistsQ[context, "documentTermMatrix"],
         Echo["No document-term matrix.", "LSAMonApplyTermWeightFunctions:"];
+        $LSAMonFailure,
+
+        True,
+        Echo["The document-term matrix is not a SSparseMatrix object.", "LSAMonApplyTermWeightFunctions:"];
         $LSAMonFailure
       ]
 
@@ -527,9 +531,9 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
       ];
 
       (* Restrictions *)
-      docTermMat = SparseArray[ context["documentTermMatrix"] ];
+      docTermMat = Unitize[ SparseArray[ context["weightedDocumentTermMatrix"] ] ];
 
-      documentsPerTerm = Total /@ Transpose[Unitize[docTermMat]];
+      documentsPerTerm = Total /@ Transpose[docTermMat];
       pos = Flatten[Position[documentsPerTerm, s_?NumberQ /; s >= nMinDocumentsPerTerm]];
 
       M1 = SparseArray[ context["weightedDocumentTermMatrix"][[All, pos]] ];
@@ -572,8 +576,12 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         H = Transpose[V];
         H = S . H,
 
+        !KeyExistsQ[context, "weightedDocumentTermMatrix"],
+        Echo["Cannot find a weighted document-term matrix.", "LSAMonExtractTopics:"];
+        Return[$LSAMonFailure],
+
         True,
-        Echo["Cannot find a document-term matrix.", "LSAMonExtractTopics:"];
+        Echo["The weighted document-term matrix is not a SSparseMatrix object.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
