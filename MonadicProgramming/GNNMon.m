@@ -305,7 +305,7 @@ GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context
 GNNMonComputeThresholds[___][xs_, context_Association] :=
     Block[{},
       Echo[
-        "The expected signature is GNNMonComputeThresholds[ nTopNNs_Integer, aggrFunc_Mean, opts:OptionsPattern[] ].",
+        "The expected signature is GNNMonComputeThresholds[ nTopNNs_Integer, opts:OptionsPattern[] ].",
         "GNNMonComputeThresholds:"
       ];
       $GNNMonFailure
