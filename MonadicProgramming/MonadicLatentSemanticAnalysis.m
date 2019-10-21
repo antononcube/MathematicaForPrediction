@@ -247,6 +247,73 @@ LSAMonTakeMatrix = LSAMonTakeDocumentTermMatrix;
 
 LSAMonTakeWeightedMatrix = LSAMonTakeWeightedDocumentTermMatrix;
 
+
+(**************************************************************)
+(* Set document-term matrix                                   *)
+(**************************************************************)
+
+(* Here we change the definition made with GenerateMonadAccessors. *)
+Clear[LSAMonSetDocumentTermMatrix];
+
+LSAMonSetDocumentTermMatrix[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonSetDocumentTermMatrix[][xs_, context_] := $LSAMonFailure;
+
+LSAMonSetDocumentTermMatrix[ smat_SSparseMatrix ][xs_, context_Association] :=
+    LSAMonUnit[ xs, Join[ context, <| "documentTermMatrix" -> smat |> ] ];
+
+LSAMonSetDocumentTermMatrix[ mat_?MatrixQ ][xs_, context_] :=
+    Block[{smat},
+      smat =
+          ToSSparseMatrix[
+            SparseArray[mat],
+            "RowNames" -> Map[ToString, Range[Dimensions[mat][[1]]]],
+            "ColumnNames" -> Map[ToString, Range[Dimensions[mat][[2]]]]
+          ];
+
+      LSAMonSetDocumentTermMatrix[smat][xs, context]
+    ];
+
+LSAMonSetDocumentTermMatrix[___][xs_, context_Association] :=
+    Block[{},
+      Echo[ "The argument is expected to be a matrix or a SSparseMatrix object.", "LSAMonSetDocumentTermMatrix:"];
+      $LSAMonFailure
+    ];
+
+
+(**************************************************************)
+(* Set document-term matrix                                   *)
+(**************************************************************)
+
+(* Here we change the definition made with GenerateMonadAccessors. *)
+Clear[LSAMonSetWeightedDocumentTermMatrix];
+
+LSAMonSetWeightedDocumentTermMatrix[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonSetWeightedDocumentTermMatrix[][xs_, context_] := $LSAMonFailure;
+
+LSAMonSetWeightedDocumentTermMatrix[ smat_SSparseMatrix ][xs_, context_Association] :=
+    LSAMonUnit[ xs, Join[ context, <| "weightedDocumentTermMatrix" -> smat |> ] ];
+
+LSAMonSetWeightedDocumentTermMatrix[ mat_?MatrixQ ][xs_, context_] :=
+    Block[{smat},
+      smat =
+          ToSSparseMatrix[
+            SparseArray[mat],
+            "RowNames" -> Map[ToString, Range[Dimensions[mat][[1]]]],
+            "ColumnNames" -> Map[ToString, Range[Dimensions[mat][[2]]]]
+          ];
+
+      LSAMonSetWeightedDocumentTermMatrix[smat][xs, context]
+    ];
+
+LSAMonSetWeightedDocumentTermMatrix[___][xs_, context_Association] :=
+    Block[{},
+      Echo[ "The argument is expected to be a matrix or a SSparseMatrix object.", "LSAMonSetWeightedDocumentTermMatrix:"];
+      $LSAMonFailure
+    ];
+
+
 (**************************************************************)
 (* Get texts                                                  *)
 (**************************************************************)
@@ -585,7 +652,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         Return[$LSAMonFailure]
       ];
 
-      terms = ColumnNames[context["documentTermMatrix"]];
+      terms = ColumnNames[context["weightedDocumentTermMatrix"]];
       automaticTopicNames =
           Table[
             StringJoin[Riffle[BasisVectorInterpretation[Normal@H[[ind]], 3, terms[[pos]]][[All, 2]], "-"]],
@@ -595,8 +662,8 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         automaticTopicNames = MapIndexed[ #1 <> "-" <> ToString[#2]&, automaticTopicNames ];
       ];
 
-      W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["documentTermMatrix"]], "ColumnNames" -> automaticTopicNames ];
-      H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> automaticTopicNames, "ColumnNames" -> ColumnNames[context["documentTermMatrix"]][[pos]] ];
+      W = ToSSparseMatrix[ SparseArray[W], "RowNames" -> RowNames[context["weightedDocumentTermMatrix"]], "ColumnNames" -> automaticTopicNames ];
+      H = ToSSparseMatrix[ SparseArray[H], "RowNames" -> automaticTopicNames, "ColumnNames" -> ColumnNames[context["weightedDocumentTermMatrix"]][[pos]] ];
 
       LSAMonUnit[xs,
         Join[context, <|
@@ -657,7 +724,7 @@ LSAMonExtractStatisticalThesaurus[word_String, numberOfNNs_Integer][xs_, context
     LSAMonExtractStatisticalThesaurus[{word}, numberOfNNs][xs, context];
 
 LSAMonExtractStatisticalThesaurus[words : {_String ..}, numberOfNNs_Integer][xs_, context_Association] :=
-  Block[{W, H, HNF, thRes},
+    Block[{W, H, HNF, thRes},
 
       Which[
         KeyExistsQ[context, "H"] && KeyExistsQ[context, "W"],
@@ -714,12 +781,12 @@ LSAMonEchoStatisticalThesaurusTable[ opts : OptionsPattern[] ][xs_, context_Asso
 
         TrueQ[ words === None ] && KeyExistsQ[context, "statisticalThesaurus"],
         Echo[
-            Grid[
-              Prepend[
-                List @@@ Normal[ context["statisticalThesaurus"] ],
-                Style[#, Blue, FontFamily -> "Times"] & /@ {"term", "statistical thesaurus entries"}],
-              Dividers -> All, Alignment -> Left,
-              Spacings -> {Automatic, 0.75}],
+          Grid[
+            Prepend[
+              List @@@ Normal[ context["statisticalThesaurus"] ],
+              Style[#, Blue, FontFamily -> "Times"] & /@ {"term", "statistical thesaurus entries"}],
+            Dividers -> All, Alignment -> Left,
+            Spacings -> {Automatic, 0.75}],
           "statistical thesaurus:"
         ];
         LSAMonUnit[xs, context],
@@ -854,13 +921,13 @@ LSAMonEchoTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
 
       Echo[
         Magnify[#, mFactor] & @
-          If[ TrueQ[numberOfTableColumns === Automatic],
-            Multicolumn[
-              ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], tOpts],
-            (* ELSE *)
-            Multicolumn[
-              ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns, tOpts]
-          ],
+            If[ TrueQ[numberOfTableColumns === Automatic],
+              Multicolumn[
+                ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], tOpts],
+              (* ELSE *)
+              Multicolumn[
+                ColumnForm /@ Transpose[{Style[#, Red] & /@ Range[k], topicsTbl}], numberOfTableColumns, tOpts]
+            ],
         "topics table:"
       ];
 
@@ -1071,7 +1138,7 @@ LSAMonRepresentByTopics[xs_, context_Association] := $LSAMonFailure;
 LSAMonRepresentByTopics[][xs_, context_] := $LSAMonFailure;
 
 LSAMonRepresentByTopics[ query_String, opts : OptionsPattern[] ][xs_, context_] :=
-      LSAMonRepresentByTopics[ {query}, opts][xs, context];
+    LSAMonRepresentByTopics[ {query}, opts][xs, context];
 
 LSAMonRepresentByTopics[ query_?QueryPatternQ, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{qmat},
