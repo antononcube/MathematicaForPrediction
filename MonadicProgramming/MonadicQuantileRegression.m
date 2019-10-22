@@ -1004,7 +1004,7 @@ Clear[QRMonConditionalCDFPlot];
 
 SyntaxInformation[QRMonConditionalCDFPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
-Options[QRMonConditionalCDFPlot] := Prepend[ Options[Plot], "Echo"->True ];
+Options[QRMonConditionalCDFPlot] := Join[ {"Echo"->True, "QuantileGridLines" -> True}, Options[Plot] ];
 
 QRMonConditionalCDFPlot[$QRMonFailure] := $QRMonFailure;
 
@@ -1012,11 +1012,16 @@ QRMonConditionalCDFPlot[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonConditionalCDFPlot[xs_, context_Association] := QRMonConditionalCDFPlot[ Options[QRMonConditionalCDFPlot] ][xs, context];
 
+QRMonConditionalCDFPlot[ point_?NumericQ, opts:OptionsPattern[]][xs_, context_] :=
+    QRMonConditionalCDFPlot[ {point}, opts][xs, context];
+
 QRMonConditionalCDFPlot[ points_?VectorQ, opts:OptionsPattern[]][xs_, context_] :=
     Fold[ QRMonBind, QRMonUnit[xs, context], {QRMonConditionalCDF[points], QRMonConditionalCDFPlot[opts]}];
 
 QRMonConditionalCDFPlot[ opts:OptionsPattern[] ][xs_, context_] :=
-    Block[{funcs, res, plotOpts},
+    Block[{funcs, res, plotOpts, quantileGridLinesQ},
+
+      quantileGridLinesQ = TrueQ[ OptionValue[QRMonConditionalCDFPlot, "QuantileGridLines"] ];
 
       Which[
 
@@ -1030,18 +1035,26 @@ QRMonConditionalCDFPlot[ opts:OptionsPattern[] ][xs_, context_] :=
 
       If[ TrueQ[funcs === $QRMonFailure], Return[$QRMonFailure] ];
 
-      plotOpts = Sequence @@ DeleteCases[{opts}, HoldPattern["Echo"->_] ];
+      plotOpts = FilterRules[ {opts}, Options[Plot]];
+
+      (*  Epilog -> { MapThread[ Callout[{#1,0}, #2]&, { #["Coordinates"][[1]], Select[Keys[context["regressionFunctions"]], NumberQ]} ]} *)
 
       res =
           Association@
               KeyValueMap[#1 ->
                   Plot[#2[x], Prepend[First[#2["Domain"]], x],
                     Evaluate[plotOpts],
+                    Evaluate[If[ quantileGridLinesQ, GridLines -> { #2["Coordinates"][[1]], None}, {}]],
                     PlotRange -> {All, All}, PlotLegends -> False,
                     PlotTheme -> "Scientific",
                     PlotLabel -> Row[{"CDF at regressor value:", Spacer[2], #1}],
                     FrameLabel -> {"regressand", "Probability"},
-                    ImageSize -> Small
+                    ImageSize -> Small,
+                    FrameTicks ->
+                        {
+                          {Automatic, Automatic},
+                          {Automatic, If[ quantileGridLinesQ, MapThread[ {#1, #2}&, { #2["Coordinates"][[1]], Select[Keys[context["regressionFunctions"]], NumberQ]} ], Automatic]}
+                        }
                   ] &, funcs];
 
       If[ TrueQ[OptionValue[QRMonConditionalCDFPlot, "Echo"]],
@@ -1054,7 +1067,7 @@ QRMonConditionalCDFPlot[ opts:OptionsPattern[] ][xs_, context_] :=
 QRMonConditionalCDFPlot[__][__] :=
     Block[{},
       Echo[
-        "Regressor points are expected as an argument and options. (Plot options or \"Echo\"->(True|False).)",
+        "Regressor points are expected as an argument and options. (Plot options or \"Echo\"->(True|False),  \"QuantileGridLines\"->(True|False).)",
         "QRMonConditionalCDFPlot:"
       ];
       $QRMonFailure
