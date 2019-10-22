@@ -691,10 +691,13 @@ SMRMonCreateFromLongForm[xs_, context_Association] := $SMRMonFailure;
 SMRMonCreateFromLongForm[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonCreateFromLongForm[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] :=
-    SMRMonCreateFromLongForm[ds, { "Item", "TagType", "Tag", "Weight" }, opts ][xs, context];
+    Block[{defaultColumnNames = { "Item", "TagType", "Tag", "Weight" } },
+      Echo["Assuming the long form column names are " <> ToString[defaultColumnNames] <> "."];
+      SMRMonCreateFromLongForm[ds, defaultColumnNames, opts ][xs, context]
+    ];
 
 SMRMonCreateFromLongForm[ds_Dataset, { itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String }, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{ tagTypeNames, smats, allRowNames,
+    Block[{ tagTypeNames, smats,
       addTagTypesToColumnNamesQ, tagValueSeparator, missingValuesPattern},
 
       addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreateFromLongForm, "AddTagTypesToColumnNames"]];
@@ -703,7 +706,10 @@ SMRMonCreateFromLongForm[ds_Dataset, { itemColumnName_String, tagTypeColumnName_
 
 
       If[ Length[ Intersection[ Normal @ Keys @ ds[[1]], {itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName}  ] ] != 4,
-        Echo["Not all of the specified column names are column names in the dataset.", "SMRMonCreateFromLongForm:"];
+        Echo[
+          "Not all of the specified column names are column names in the dataset. " <>
+          "The expected dataset column names are:" <> ToString[ {itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName} ] <> ".",
+          "SMRMonCreateFromLongForm:"];
         Return[$Failed]
       ];
 
