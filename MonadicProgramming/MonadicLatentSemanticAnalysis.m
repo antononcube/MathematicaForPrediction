@@ -607,7 +607,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       If[ nMinDocumentsPerTerm > RowsCount[context["weightedDocumentTermMatrix"]],
         Echo[
-          "The value of the option \"MinDocumentsPerTerm\" is expected not to be larger than the number of rows of the weighted document-term matrix.",
+          "The value of the option \"MinDocumentsPerTerm\" is expected not to be greater than the number of rows of the weighted document-term matrix.",
           "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
