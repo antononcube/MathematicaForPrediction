@@ -404,7 +404,7 @@ JavaTrieJSONRootToLeafPaths[jTr_?JavaObjectQ] :=
     Map[{"key", "value"} /. # &,
       ImportString[TrieFunctions`pathsToJSON[TrieFunctions`rootToLeafPaths[jTr]], "JSON"], {2}];
 
-Clear[JavaTrieRootToLeafPaths]
+Clear[JavaTrieRootToLeafPaths];
 JavaTrieRootToLeafPaths[jTr_?JavaObjectQ] :=
     Block[{pathsObj, keyPaths, valuePaths},
       pathsObj = JLink`ReturnAsJavaObject[ TrieFunctions`rootToLeafPaths[ jTr ] ];
