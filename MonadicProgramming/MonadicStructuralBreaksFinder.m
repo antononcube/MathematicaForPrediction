@@ -115,7 +115,6 @@ Needs["MonadicQuantileRegression`"];
 (* Find Chow Test local maxima                                *)
 (**************************************************************)
 
-
 Clear[QRMonFindChowTestLocalMaxima];
 
 SyntaxInformation[QRMonFindChowTestLocalMaxima] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
@@ -191,7 +190,7 @@ QRMonFindChowTestLocalMaxima[ points : ( { _?NumberQ.. } | Automatic ), fitFuncs
 QRMonFindChowTestLocalMaxima[___][xs_, context_Association] :=
     Block[{},
       Echo["The first argument is expected to be a list of points;" <>
-          "the second argument is expected to be a list of fit functions",
+          "the second argument is expected to be a list of fit functions.",
         "QRMonFindChowTestLocalMaxima:"
       ];
       $QRMonFailure
@@ -315,7 +314,7 @@ QRMonPlotStructuralBreakSplits[ splitPointsArg : ( { _?NumberQ.. } | Automatic )
 QRMonPlotStructuralBreakSplits[___][xs_, context_Association] :=
     Block[{},
       Echo["The first argument is expected to be a list of points;" <>
-          "the second argument is expected to be a list of fit functions",
+          "the second argument is expected to be a list of fit functions.",
         "QRMonPlotStructuralBreakSplits:"
       ];
       $QRMonFailure
