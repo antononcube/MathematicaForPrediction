@@ -516,7 +516,7 @@ TrieGetWords[ tr_?TrieQ, word_List ] :=
       {},
 
       TrieKeyExistsQ[tr, word],
-      Map[ Join[Most[word], #]&, TrieRootToLeafPathRules[TrieSubTrie[tr, word]][[All, 1]] ],
+      Map[ Join[Most[word], #]&, Keys @ TrieRootToLeafPathRules[TrieSubTrie[tr, word]] ],
 
       True,
       {}
