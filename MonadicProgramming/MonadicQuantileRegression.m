@@ -435,7 +435,7 @@ QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }][xs_, context_] :
       QRMonBind,
       QRMonUnit[xs, context],
       {QRMonGetData,
-        QRMonLeastSquaresFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], r]], {i, 0, n}], x, opts][##]&}
+        QRMonLeastSquaresFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], r]], {i, 0, n}], x][##]&}
     ];
 
 QRMonLeastSquaresFit[funcs_List][xs_, context_] :=
@@ -1150,7 +1150,7 @@ QRMonOutliers[__][$QRMonFailure] := $QRMonFailure;
 QRMonOutliers[xs_, context_Association] := QRMonOutliers[][xs, context];
 
 QRMonOutliers[][xs_, context_] :=
-    Block[{knots, fn, tq, bq, tfunc, bfunc, outliers, data},
+    Block[{fn, tq, bq, tfunc, bfunc, outliers, data},
 
       If[ !( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"], "mean"]] > 0 ),
         Echo["Calculate (top and bottom) regression quantiles first.", "QRMonOutliers:"];
