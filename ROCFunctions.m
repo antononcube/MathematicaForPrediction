@@ -365,7 +365,7 @@ ROCSpecQ[arg_] :=
 ROCPlot[ aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
     ROCPlot[ "FPR", "TPR", Automatic, aROCs, opts];
 
-ROCPlot[ parVals:{_?NumericQ..}, aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
+ROCPlot[ parVals_List, aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
     ROCPlot[ "FPR", "TPR", parVals, aROCs, opts];
 
 ROCPlot[ xFuncName_String, yFuncName_String, aROCs_?ROCSpecQ, opts:OptionsPattern[]] :=
@@ -373,13 +373,13 @@ ROCPlot[ xFuncName_String, yFuncName_String, aROCs_?ROCSpecQ, opts:OptionsPatter
 
 ROCPlot[
   xFuncName_String, yFuncName_String,
-  parValsArg : (Automatic | {_?NumericQ..}),
+  parValsArg : (Automatic | {_?NumericQ..} | _List),
   aROCs : {{_?ROCAssociationQ..}..}, opts : OptionsPattern[]] :=
       ROCPlot[ xFuncName, yFuncName, parValsArg, AssociationThread[ Range[Length[aROCs]], aROCs], opts ];
 
 ROCPlot[
   xFuncName_String, yFuncName_String,
-  parValsArg : (Automatic | {_?NumericQ..}),
+  parValsArg : (Automatic | {_?NumericQ..} | _List),
   aROCs : Association[ (_->{_?ROCAssociationQ..}) .. ], opts : OptionsPattern[]] :=
       Block[{rocCurveColorFunc, cls, grs},
 
@@ -395,7 +395,7 @@ ROCPlot[
 
 ROCPlot[
   xFuncName_String, yFuncName_String,
-  parValsArg : (Automatic | {_?NumericQ..}),
+  parValsArg : (Automatic | {_?NumericQ..} | _List),
   aROCs : {_?ROCAssociationQ..}, opts : OptionsPattern[]] :=
     Block[{xFunc, yFunc, psize, rocc, pt, pc, pj, rocpcf, points, parVals=parValsArg, pred},
 
@@ -410,10 +410,10 @@ ROCPlot[
       points = Map[Through[{xFunc,yFunc}[#1]] &, aROCs];
 
       If[TrueQ[parVals===Automatic], parVals = Map[#["ROCParameter"]&,aROCs] ];
-      If[ !VectorQ[parVals,NumericQ],
+      (*If[ !VectorQ[parVals,NumericQ],
         Message[ROCPlot::apv];
         Return[$Failed]
-      ];
+      ];*)
 
       pred = Map[VectorQ[#,NumericQ]&, points ];
       points = Pick[points, pred];
@@ -466,7 +466,7 @@ ROCPlot[
     ] /; Length[parValsArg] == Length[aROCs] || TrueQ[parValsArg===Automatic];
 
 
-Clear[ROCValues]
+Clear[ROCValues];
 
 ROCValues::nrng = "The range argument is expected to be a list of numbers between 0 and 1."
 
@@ -542,7 +542,7 @@ ToClassifyROCCurvePlot[gr_] :=
 (*
 Modified/productized version of kglr's MSE answer: https://mathematica.stackexchange.com/a/200221/34008 .
 *)
-Clear[ConfusionMatrixPlot]
+Clear[ConfusionMatrixPlot];
 Options[ConfusionMatrixPlot] = Join[ { "Normalize" -> False }, Options[MatrixPlot] ];
 ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {yesLabel_, noLabel_}: {"True", "False"}, opts:OptionsPattern[] ] :=
    Block[{mat, refMat, n},
