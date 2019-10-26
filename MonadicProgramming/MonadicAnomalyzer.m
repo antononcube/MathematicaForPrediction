@@ -63,6 +63,8 @@ QRMonAnomalyze::usage = "QRMonAnomalyze[opts] adds or places anomalies into the 
 QRMonPlaceOutliers::usage = "QRMonPlaceOutliers[n, opts] adds or places n outliers into the data of the monad. \
 QRMonPlaceOutliers[ {nb, nt}, opts] adds or places nb bottom outliers and nt top outliers into the data of the monad.";
 
+QRMonComponentsPartition::usage = "QRMonComponentsPartition[n, opts] partitions the data of the monad into n components.";
+
 Begin["`Private`"];
 
 Needs["MonadicQuantileRegression`"];
@@ -140,12 +142,12 @@ QRMonPlaceOutliers[ opts : OptionsPattern[] ][xs_, context_Association] :=
       nPointsBottom = OptionValue[ QRMonPlaceOutliers, "NumberOfBottomOutliers" ];
       nPointsTop = OptionValue[ QRMonPlaceOutliers, "NumberOfBottomTop" ];
 
-      If[ !( NumericQ[nPointsBottom] && nPointsBottom >= 0 ),
+      If[ !( IntegerQ[nPointsBottom] && nPointsBottom >= 0 ),
         Echo["The value of the option \"NumberOfBottomOutliers\" is expected to be a non-negative integer.", "QRMonPlaceOutliers:"];
         Return[$QRMonFailure];
       ];
 
-      If[ !( NumericQ[nPointsTop] && nPointsTop >= 0 ),
+      If[ !( IntegerQ[nPointsTop] && nPointsTop >= 0 ),
         Echo["The value of the option \"NumberOfBottomTop\" is expected to be a non-negative integer.", "QRMonPlaceOutliers:"];
         Return[$QRMonFailure];
       ];
@@ -215,6 +217,80 @@ QRMonPlaceOutliers[___][xs_, context_Association] :=
       ];
       $QRMonFailure
     ];
+
+
+(**************************************************************)
+(* Components partition                                       *)
+(**************************************************************)
+
+Clear[QRMonComponentsPartition];
+
+SyntaxInformation[QRMonComponentsPartition] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
+
+Options[QRMonComponentsPartition] =
+    {
+      "NumberOfComponents" -> Automatic,
+      "FirstFactor" -> Automatic, "Offset" -> Automatic
+    };
+
+QRMonComponentsPartition[$QRMonFailure] := $QRMonFailure;
+
+QRMonComponentsPartition[xs_, context_Association] := QRMonComponentsPartition[][xs, context];
+
+QRMonComponentsPartition[][xs_, context_Association] := QRMonComponentsPartition[ {5, 5}, Options[QRMonPlaceOutliers] ][xs, context];
+
+QRMonComponentsPartition[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ nComponents },
+
+      nComponents = OptionValue[ QRMonComponentsPartition, "NumberOfComponents" ];
+
+      If[ !( IntegerQ[nComponents] && nComponents > 0 ),
+        Echo["The value of the option \"nComponents\" is expected to be a positive integer.", "QRMonComponentsPartition:"];
+        Return[$QRMonFailure];
+      ];
+
+      QRMonComponentsPartition[ nComponents, opts ][xs, context]
+    ];
+
+QRMonComponentsPartition[ nComponents_?IntegerQ, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{factor, offset, res, comps, data},
+
+      factor = OptionValue[ QRMonComponentsPartition, "FirstFactor" ];
+      offset = OptionValue[ QRMonComponentsPartition, "Offset" ];
+
+      If[ !( NumericQ[factor] || TrueQ[factor == Automatic] ),
+        Echo["The value of the option \"FirstFactor\" is expected to be 1, -1, or Automatic.", "QRMonComponentsPartition:"];
+        Return[$QRMonFailure];
+      ];
+
+      If[ !( NumericQ[offset] && offset >= 0 || TrueQ[offset == Automatic]),
+        Echo["The value of the option \"Offset\" is expected to be a non-negative real or Automatic.", "QRMonComponentsPartition:"];
+        Return[$QRMonFailure];
+      ];
+
+      data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
+      If[ TrueQ[data === $QRMonFailure], Return[$QRMonFailure] ];
+
+      comps = Partition[ data, Floor[ Length[data] / nComponents ] ];
+
+      If[ TrueQ[factor === Automatic], factor = 1. ];
+      factor = Sign[factor];
+
+      data = Join @@ MapThread[ Transpose @ { #1[[All, 1]], #1[[All, 2]] + #2 * offset }&, { comps, factor * Table[ (-1)^i, {i, Length[comps]}] }];
+
+      QRMonUnit[ <| |>, Join[ context, <| "data" -> data |> ] ]
+
+    ] /; nComponents > 0;
+
+QRMonComponentsPartition[___][xs_, context_Association] :=
+    Block[{},
+      Echo[
+        "QRMonComponentsPartition[n, opts] partition the data of the monad into n components.",
+        "QRMonComponentsPartition:"
+      ];
+      $QRMonFailure
+    ];
+
 
 End[]; (* `Private` *)
 
