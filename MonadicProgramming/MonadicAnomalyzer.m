@@ -237,23 +237,25 @@ QRMonComponentsPartition[$QRMonFailure] := $QRMonFailure;
 
 QRMonComponentsPartition[xs_, context_Association] := QRMonComponentsPartition[][xs, context];
 
-QRMonComponentsPartition[][xs_, context_Association] := QRMonComponentsPartition[ {5, 5}, Options[QRMonPlaceOutliers] ][xs, context];
+QRMonComponentsPartition[][xs_, context_Association] := QRMonComponentsPartition[ 5, Options[QRMonPlaceOutliers] ][xs, context];
 
 QRMonComponentsPartition[ opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ nComponents },
 
       nComponents = OptionValue[ QRMonComponentsPartition, "NumberOfComponents" ];
 
-      If[ !( IntegerQ[nComponents] && nComponents > 0 ),
-        Echo["The value of the option \"nComponents\" is expected to be a positive integer.", "QRMonComponentsPartition:"];
+      If[ !( IntegerQ[nComponents] && nComponents > 0 || TrueQ[ nComponents === Automatic ] ),
+        Echo["The value of the option \"nComponents\" is expected to be a positive integer or Automatic.", "QRMonComponentsPartition:"];
         Return[$QRMonFailure];
       ];
+
+      If[ TrueQ[nComponents === Automatic], nComponents = 5 ];
 
       QRMonComponentsPartition[ nComponents, opts ][xs, context]
     ];
 
 QRMonComponentsPartition[ nComponents_?IntegerQ, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{factor, offset, res, comps, data},
+    Block[{factor, offset, comps, data},
 
       factor = OptionValue[ QRMonComponentsPartition, "FirstFactor" ];
       offset = OptionValue[ QRMonComponentsPartition, "Offset" ];
@@ -271,14 +273,15 @@ QRMonComponentsPartition[ nComponents_?IntegerQ, opts : OptionsPattern[] ][xs_, 
       data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
       If[ TrueQ[data === $QRMonFailure], Return[$QRMonFailure] ];
 
-      comps = Partition[ data, Floor[ Length[data] / nComponents ] ];
+      comps = Partition[ SortBy[data, #[[1]]& ], Floor[ Length[data] / nComponents ] ];
 
       If[ TrueQ[factor === Automatic], factor = 1. ];
       factor = Sign[factor];
 
-      data = Join @@ MapThread[ Transpose @ { #1[[All, 1]], #1[[All, 2]] + #2 * offset }&, { comps, factor * Table[ (-1)^i, {i, Length[comps]}] }];
+      comps = MapThread[ Transpose @ { #1[[All, 1]], #1[[All, 2]] + #2 * offset }&, { comps, factor * Table[ (-1)^i, {i, Length[comps]}] }];
+      data = Join @@ comps;
 
-      QRMonUnit[ <| |>, Join[ context, <| "data" -> data |> ] ]
+      QRMonUnit[ comps, Join[ context, <| "data" -> data |> ] ]
 
     ] /; nComponents > 0;
 
@@ -290,6 +293,57 @@ QRMonComponentsPartition[___][xs_, context_Association] :=
       ];
       $QRMonFailure
     ];
+
+
+(**************************************************************)
+(* Change conditional variance                                *)
+(**************************************************************)
+
+Clear[QRMonChangeConditionalVariance];
+
+SyntaxInformation[QRMonChangeConditionalVariance] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
+
+Options[QRMonChangeConditionalVariance] =
+    {
+      "Points" -> Automatic, "Radius" -> Automatic,
+      "Factor" -> Automatic, "AggregateFunction" -> Median
+    };
+
+QRMonChangeConditionalVariance[$QRMonFailure] := $QRMonFailure;
+
+QRMonChangeConditionalVariance[xs_, context_Association] := QRMonChangeConditionalVariance[][xs, context];
+
+QRMonChangeConditionalVariance[][xs_, context_Association] := QRMonChangeConditionalVariance[ Options[QRMonPlaceOutliers] ][xs, context];
+
+QRMonChangeConditionalVariance[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ nComponents },
+
+      nComponents = OptionValue[ QRMonComponentsPartition, "NumberOfComponents" ];
+
+      If[ !( IntegerQ[nComponents] && nComponents > 0 ),
+        Echo["The value of the option \"nComponents\" is expected to be a positive integer.", "QRMonComponentsPartition:"];
+        Return[$QRMonFailure];
+      ];
+
+      QRMonChangeConditionalVariance[ nComponents, opts ][xs, context]
+    ];
+
+QRMonChangeConditionalVariance[ points_?VectorQ, radius_?NumberQ, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{},
+
+      QRMonUnit[ None, Join[ context, <| "data" -> data |> ] ]
+
+    ] /; nComponents > 0;
+
+QRMonComponentsPartition[___][xs_, context_Association] :=
+    Block[{},
+      Echo[
+        "QRMonChangeConditionalVariance[points, radius, opts] changes the variance of the data the specified points and using the specified radius.",
+        "QRMonChangeConditionalVariance:"
+      ];
+      $QRMonFailure
+    ];
+
 
 
 End[]; (* `Private` *)
