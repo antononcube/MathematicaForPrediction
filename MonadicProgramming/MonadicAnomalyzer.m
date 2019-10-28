@@ -230,7 +230,7 @@ SyntaxInformation[QRMonComponentsPartition] = { "ArgumentsPattern" -> { _., Opti
 Options[QRMonComponentsPartition] =
     {
       "NumberOfComponents" -> Automatic,
-      "FirstFactor" -> Automatic, "Offset" -> Automatic
+      "FactorRange" -> Automatic, "OffsetRange" -> Automatic, "AlternateSigns" -> True
     };
 
 QRMonComponentsPartition[$QRMonFailure] := $QRMonFailure;
@@ -255,40 +255,66 @@ QRMonComponentsPartition[ opts : OptionsPattern[] ][xs_, context_Association] :=
     ];
 
 QRMonComponentsPartition[ nComponents_?IntegerQ, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{factor, offset, comps, data},
+    Block[{factorRange, offsetRange, alternateSigns, data, factors, offsets},
 
-      factor = OptionValue[ QRMonComponentsPartition, "FirstFactor" ];
-      offset = OptionValue[ QRMonComponentsPartition, "Offset" ];
+      factorRange = OptionValue[ QRMonComponentsPartition, "FactorRange" ];
+      offsetRange = OptionValue[ QRMonComponentsPartition, "OffsetRange" ];
+      alternateSigns = TrueQ[ OptionValue[ QRMonComponentsPartition, "AlternateSigns" ] ];
 
-      If[ !( NumericQ[factor] || TrueQ[factor == Automatic] ),
-        Echo["The value of the option \"FirstFactor\" is expected to be 1, -1, or Automatic.", "QRMonComponentsPartition:"];
+      If[ !( VectorQ[factorRange, NumericQ] || TrueQ[factorRange == Automatic] || TrueQ[factorRange == None] ),
+        Echo["The value of the option \"FactorRange\" is expected to be a pair of numbers, Automatic.", "QRMonComponentsPartition:"];
         Return[$QRMonFailure];
       ];
 
-      If[ !( NumericQ[offset] && offset >= 0 || TrueQ[offset == Automatic]),
-        Echo["The value of the option \"Offset\" is expected to be a non-negative real or Automatic.", "QRMonComponentsPartition:"];
+      If[ !( VectorQ[factorRange, NumericQ] || TrueQ[offsetRange == Automatic]),
+        Echo["The value of the option \"OffsetRange\" is expected to be a pair of numbers, Automatic.", "QRMonComponentsPartition:"];
         Return[$QRMonFailure];
       ];
 
       data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
       If[ TrueQ[data === $QRMonFailure], Return[$QRMonFailure] ];
 
+      If[ TrueQ[factorRange === Automatic], factorRange = {1, 1,5} ];
+      If[ TrueQ[offsetRange === Automatic], offsetRange = {1, 3} * Mean[data[[All,2]]] ];
+
+      If[ alternateSigns,
+        factors = Table[ (-1)^i, {i,nComponents}] * RandomReal[factorRange, nComponents];
+        offsets = Table[ (-1)^i, {i,nComponents}] * RandomReal[offsetRange, nComponents],
+        (* ELSE *)
+        factors = RandomReal[factorRange, nComponents];
+        offsets = RandomReal[offsetRange, nComponents]
+      ];
+
+      QRMonComponentsPartition[ Transpose[ {factors, offsets}], opts ][xs, context]
+    ] /; nComponents > 0;
+
+
+QRMonComponentsPartition[ factorOffsetPairs : { {_?NumericQ, _?NumericQ} .. }, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{comps, data, nComponents = Length[factorOffsetPairs]},
+
+      data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
+      If[ TrueQ[data === $QRMonFailure], Return[$QRMonFailure] ];
+
       comps = Partition[ SortBy[data, #[[1]]& ], Floor[ Length[data] / nComponents ] ];
 
-      If[ TrueQ[factor === Automatic], factor = 1. ];
-      factor = Sign[factor];
+      comps =
+          MapThread[
+            Transpose @ { #1[[All, 1]], Rescale[ #1[[All, 2]], MinMax[#1[[All, 2]]], #2 * MinMax[#1[[All, 2]]] ] + #3 }&,
+            { comps, factorOffsetPairs[[All,1]],  factorOffsetPairs[[All,2]] }
+          ];
 
-      comps = MapThread[ Transpose @ { #1[[All, 1]], #1[[All, 2]] + #2 * offset }&, { comps, factor * Table[ (-1)^i, {i, Length[comps]}] }];
       data = Join @@ comps;
 
       QRMonUnit[ comps, Join[ context, <| "data" -> data |> ] ]
 
-    ] /; nComponents > 0;
+    ];
 
 QRMonComponentsPartition[___][xs_, context_Association] :=
     Block[{},
       Echo[
-        "QRMonComponentsPartition[n, opts] partition the data of the monad into n components.",
+        "QRMonComponentsPartition[k, opts] partitions the data of the monad into k components." <>
+        "QRMonComponentsPartition[ { {f1, off1} ... {fK, offK}}, opts] partitions the data of the monad into K components \
+         using the specified factors and offsets.",
         "QRMonComponentsPartition:"
       ];
       $QRMonFailure
@@ -335,7 +361,7 @@ QRMonChangeConditionalVariance[ points_?VectorQ, radius_?NumberQ, opts : Options
 
     ] /; nComponents > 0;
 
-QRMonComponentsPartition[___][xs_, context_Association] :=
+QRMonChangeConditionalVariance[___][xs_, context_Association] :=
     Block[{},
       Echo[
         "QRMonChangeConditionalVariance[points, radius, opts] changes the variance of the data the specified points and using the specified radius.",
