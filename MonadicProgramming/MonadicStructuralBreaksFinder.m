@@ -104,6 +104,11 @@ QRMonFindChowTestLocalMaxima::usage = "QRMonFindChowTestLocalMaxima[points : ( {
 finds structural breaks in the data using the Chow Test. \
 It takes as options the options of QRMonQuantileRegression, QRMonFindLocalExtrema, and QRMonPlot.";
 
+QRMonFindStructuralBreaks::usage = "QRMonFindStructuralBreaks[points : ( { _?NumberQ.. } | Automatic ), fitFuncs_, opts___] \
+finds structural breaks in the data using the Chow Test. \
+It takes as options the options of QRMonQuantileRegression, QRMonFindLocalExtrema, and QRMonPlot. \
+A synonym of QRMonFindChowTestLocalMaxima.";
+
 QRMonPlotStructuralBreakSplits::usage = "QRMonPlotStructuralBreakSplits[ points, fitFuncs, opts___] \
 makes a list of plots of structural break splits.";
 
@@ -195,6 +200,9 @@ QRMonFindChowTestLocalMaxima[___][xs_, context_Association] :=
       ];
       $QRMonFailure
     ];
+
+Clear[QRMonFindStructuralBreaks];
+QRMonFindStructuralBreaks = QRMonFindChowTestLocalMaxima;
 
 
 (**************************************************************)
