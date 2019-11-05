@@ -62,32 +62,45 @@
    results of AprioriApplication.
 *)
 
-BeginPackage["AprioriAlgorithm`"]
+BeginPackage["AprioriAlgorithm`"];
 
-AprioriApplication::usage = "AprioriApplication[setOfItemSets,minProb,opts] returns a list of three elements: association sets with indexes, item to indexes rules, and indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) ."
+AprioriApplication::usage = "AprioriApplication[setOfItemSets,minProb,opts] returns a list of three elements: \
+association sets with indexes, item to indexes rules, and indexes to item rules. \
+The association sets appear in setOfItemSets with frequency that is at least minProb. \
+AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) .";
 
-AprioriApplicationOriginal::usage = "AprioriApplicationOriginal[setOfItemSets,minProb,opts] returns a list of three elements: association sets with indexes, item to indexes rules, and indexes to item rules. The association sets appear in setOfItemSets with frequency that is at least minProb. AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) . This is the original, slower version of AprioriApplication."
+AprioriApplicationOriginal::usage = "AprioriApplicationOriginal[setOfItemSets,minProb,opts] returns a list of three elements: \
+association sets with indexes, item to indexes rules, and indexes to item rules. \
+The association sets appear in setOfItemSets with frequency that is at least minProb. \
+AprioriApplication takes the option \"MaxNumberOfItems\" -> (All | _Integer) . \
+This is the original, slower version of AprioriApplication.";
 
-AprioriSparseArrayRepresentation::usage = "AprioriSparseArrayRepresentation[setOfItemSets] returns a list of three elements: (1) a 0-1 matrix M (a list of sparse arrays) for which M[[i,j]]==1 if the i-th item belongs to setOfItemSets[[j]], (2) item to indexes rules, and (3) indexes to item rules."
+AprioriSparseArrayRepresentation::usage = "AprioriSparseArrayRepresentation[setOfItemSets] returns a list of three elements: \
+(1) a 0-1 matrix M (a list of sparse arrays) for which M[[i,j]]==1 if the i-th item belongs to setOfItemSets[[j]], \
+(2) item to indexes rules, and (3) indexes to item rules.";
 
-AssociationRules::usage = "AssociationRules[setOfItemSets,assocItemSet,minConfidence] finds the possible association rules for assocItemSet using setOfItemSets that have confidence at least minConfidence and calculates for each of the rules the measures: Support, Confidence, Lift, Leverage, and Conviction. AssociationRules[setOfItemSets,assocItemSets,minConfidence,minSupport] takes the association sets from assocItemSets that have support at least minSupport and finds the association rules for them."
+AssociationRules::usage = "AssociationRules[setOfItemSets,assocItemSet,minConfidence] finds the possible association rules \
+for assocItemSet using setOfItemSets that have confidence at least minConfidence and calculates for each of the rules the measures: \
+Support, Confidence, Lift, Leverage, and Conviction. AssociationRules[setOfItemSets,assocItemSets,minConfidence,minSupport] \
+takes the association sets from assocItemSets that have support at least minSupport and finds the association rules for them.";
 
-Support::usage = "Support[setOfItemSets, itemSet] gives the fraction of the sets in setOfItemSets that contain itemSet."
+Support::usage = "Support[setOfItemSets, itemSet] gives the fraction of the sets in setOfItemSets that contain itemSet.";
 
-QuantileReplacementFunc::usage = "QuantileReplacementFunc[qBoundaries] makes a piece-wise function for mapping of a real value to the enumerated intervals Partition[Join[{-Infinity}, qBoundaries, {Infinity}], 2, 1]."
+QuantileReplacementFunc::usage = "QuantileReplacementFunc[qBoundaries] makes a piece-wise function \
+for mapping of a real value to the enumerated intervals Partition[Join[{-Infinity}, qBoundaries, {Infinity}], 2, 1].";
 
-RymonTree::usage = "RymonTree[numberOfItems] gives the Rymon tree for numberOfItems."
+RymonTree::usage = "RymonTree[numberOfItems] gives the Rymon tree for numberOfItems.";
 
-TreeToRules::usage = "TreeToRules[tree] returns rules for the argument tree that can be used in GraphPlot."
+TreeToRules::usage = "TreeToRules[tree] returns rules for the argument tree that can be used in GraphPlot.";
 
 ItemRules::usage = "ItemRules[setOfItemSets, frequentSetsOfIDs, itemToIDRules, idToItemRules, itemSpec, minConfidence, minSupport, nAssocItems] \
-finds rules for a specified item or list if items using the baskets data and the result of AprioriApplication."
+finds rules for a specified item or list if items using the baskets data and the result of AprioriApplication.";
 
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 (* Rymon tree *)
-Clear[RymonTree, RymonChildren]
+Clear[RymonTree, RymonChildren];
 RymonChildren[set : {_Integer ...}, m_Integer, n_Integer] :=
   Block[{},
    If[m < n,
@@ -113,7 +126,7 @@ RymonTree[n_Integer] :=
 
 (* Convert to rules *)
 
-Clear[TreeToRules]
+Clear[TreeToRules];
 TreeToRules[tree_] :=
   Which[
    tree === {}, {},
@@ -172,7 +185,7 @@ AprioriAlgorithmOriginal[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPa
 (* AprioriAlgorithmOriginal *)
 (* These two functions provide the sparse array implementation. *)
 
-Clear[AprioriAlgorithm]
+Clear[AprioriAlgorithm];
 
 (* I overloaded the non-sparse array Support definition with this one because Support is provided as package function. *) 
 Support[Tcolumns : {_SparseArray ..}, s : {_Integer ..}] :=
@@ -209,7 +222,7 @@ AprioriAlgorithm[Tcolumns : {_SparseArray ...}, Mu_?NumberQ, opts : OptionsPatte
 (* For the basket given as an argument is calculated and returned:
 Confidence, Lift, Leverage, Conviction, Condition, Implication *)
 
-Clear[AssociationRules]
+Clear[AssociationRules];
 AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), basketArg : {_Integer ...}, confidence_?NumberQ] :=
   Block[{basket = Sort[basketArg], basketSupport, antecedents, consequents, t},
    basketSupport = N[Support[T, basket]];
@@ -265,7 +278,7 @@ AprioriApplicationOriginal[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsP
 (* This definition is almost the same as the original one above. I don't see the point having the two 
   definitions accessed through an option value, so I kept the definitions separated. *)
 
-Clear[AprioriSparseArrayRepresentation]
+Clear[AprioriSparseArrayRepresentation];
 AprioriSparseArrayRepresentation[itemLists : {_List ...}] :=
   Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs, arrayRules, Tcolumns},
    uniqueItems = Union[Flatten[itemLists]];
@@ -290,9 +303,9 @@ AprioriApplication[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]
      Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
     ] /; 0 < Mu < 1;
 
-(* Supporting Defintions *)
+(* Supporting Definitions *)
 
-Clear[QuantileReplacementFunc]
+Clear[QuantileReplacementFunc];
 QuantileReplacementFunc[qBoundaries : {_?NumberQ ...}] :=
   Block[{XXX, t = Partition[Join[{-\[Infinity]}, qBoundaries, {\[Infinity]}], 2, 1]},
    Function[
