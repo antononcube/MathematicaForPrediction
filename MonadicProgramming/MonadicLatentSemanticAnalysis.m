@@ -868,11 +868,11 @@ LSAMonInterpretBasisVector[vectorIndices : (_Integer | {_Integer..}), opts : Opt
             Normal @ H[[ Flatten @ {vectorIndices} ]]
           ];
 
-      If[ !MatchQ[res, {{{_?NumberQ, _String}..}..}],
-        $LSAMonFailure,
-        LSAMonUnit[ res, context ]
-      ]
+      If[ !MatchQ[res, {{{_?NumberQ, _String}..}..}], Return[$LSAMonFailure] ];
 
+      res = Map[ Association[ Rule @@@ (Reverse /@ #) ]&, res ];
+
+      LSAMonUnit[ res, context ]
     ];
 
 LSAMonInterpretBasisVector[___][__] :=
@@ -905,8 +905,8 @@ LSAMonMakeTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
 
       topicsTbl =
           Table[
-            TableForm[{NumberForm[#[[1]] / t[[1, 1]], {4, 3}], #[[2]]} & /@ t],
-            {t, First @ LSAMonInterpretBasisVector[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
+            TableForm[{NumberForm[#[[2]] / t[[1, 2]], {4, 3}], #[[1]]} & /@ t],
+            {t, Normal @ First @ LSAMonInterpretBasisVector[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
 
       LSAMonUnit[ topicsTbl, Join[ context, <| "topicsTable" -> topicsTbl|> ] ]
     ];
