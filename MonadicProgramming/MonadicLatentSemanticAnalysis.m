@@ -181,6 +181,8 @@ LSAMonMakeDocumentTermMatrix::usage = "Make the document-term matrix.";
 
 LSAMonMakeGraph::usage = "Make a graph of the document-term, document-document, or term-term relationships.";
 
+LSAMonMakeBipartiteGraphMatrix::usage = "Make a bi-partite graph matrix.";
+
 LSAMonFindMostImportantDocuments::usage = "Find the most important texts in the text collection.";
 
 LSAMonExtractStatisticalThesaurus::usage = "Extract the statistical thesaurus for specified list of words.";
@@ -1439,17 +1441,23 @@ LSAMonEchoDocumentTermMatrixStatistics[__][___] :=
 
 Clear[LSAMonMakeGraph];
 
-Options[LSAMonMakeGraph] = { "Weighted" -> True, "Type" -> "Bipartite", "RemoveLoops" -> True };
+Options[LSAMonMakeGraph] = { "Weighted" -> True, "Type" -> "Bipartite", "RemoveLoops" -> True, "MatrixResult" -> False };
 
 LSAMonMakeGraph[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonMakeGraph[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonMakeGraph[xs_, context_Association] := LSAMonMakeGraph[Options[LSAMonMakeGraph]][xs, context];
+
 LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{weightedQ, type, am, res, knownGrTypes, removeLoopsQ },
+    Block[{weightedQ, matrixResultQ, type, am, res, knownGrTypes, removeLoopsQ },
 
       weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
 
       type = OptionValue[LSAMonMakeGraph, "Type"];
 
       removeLoopsQ = TrueQ[OptionValue[LSAMonMakeGraph, "RemoveLoops"]];
+      matrixResultQ = TrueQ[OptionValue[LSAMonMakeGraph, "MatrixResult"]];
 
       knownGrTypes = { "Bipartite", "DocumentDocument", "TermTerm", "Document", "Term" };
       If[ !MemberQ[knownGrTypes, type],
@@ -1496,7 +1504,8 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
         am = am . Transpose[am];
         If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = AdjacencyGraph[Unitize[am]],
+        am = Unitize[am];
+        res = AdjacencyGraph[am],
 
         weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
@@ -1508,17 +1517,79 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         !weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
         If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = AdjacencyGraph[Unitize[am]];
+        am = Unitize[am];
+        res = AdjacencyGraph[am];
 
       ];
 
-      LSAMonUnit[res, context]
-
+      If[ matrixResultQ,
+        LSAMonUnit[am, context],
+        LSAMonUnit[res, context]
+      ]
     ];
 
 LSAMonMakeGraph[__][___] :=
     Block[{},
       Echo["No arguments, just options are expected.", "LSAMonMakeGraph:"];
+      $LSAMonFailure
+    ];
+
+
+(*------------------------------------------------------------*)
+(* Find most important texts                                  *)
+(*------------------------------------------------------------*)
+
+Clear[LSAMonMakeBipartiteGraphMatrix];
+
+Options[LSAMonMakeBipartiteGraphMatrix] = {  "Weighted" -> True, "Prefix" -> False, "RemoveLoops" -> True };
+
+LSAMonMakeBipartiteGraphMatrix[___][$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonMakeBipartiteGraphMatrix[$LSAMonFailure] := $LSAMonFailure;
+
+LSAMonMakeBipartiteGraphMatrix[xs_, context_Association] :=
+    LSAMonMakeBipartiteGraphMatrix[Options[LSAMonMakeBipartiteGraphMatrix]][xs, context];
+
+LSAMonMakeBipartiteGraphMatrix[opts : OptionsPattern[]][xs_, context_] :=
+    Block[{ am, weightedQ, rcNames, removeLoopsQ, prefixQ },
+
+      weightedQ = TrueQ[OptionValue[LSAMonMakeBipartiteGraphMatrix, "Weighted"]];
+      removeLoopsQ = TrueQ[OptionValue[LSAMonMakeBipartiteGraphMatrix, "RemoveLoops"]];
+      prefixQ = TrueQ[OptionValue[LSAMonMakeBipartiteGraphMatrix, "Prefix"]];
+
+      Which[
+        MatrixQ[xs],
+        am = xs,
+
+        KeyExistsQ[context, "weightedDocumentTermMatrix"],
+        am = context["weightedDocumentTermMatrix"],
+
+        KeyExistsQ[context, "documentTermMatrix"],
+        am = context["documentTermMatrix"],
+
+        True,
+        Echo["Make a document-term matrix first.", "LSAMonMakeBipartiteGraphMatrix:"];
+        Return[$LSAMonFailure]
+      ];
+
+      If[ prefixQ || Length[ Intersection[RowNames[am], ColumnNames[am]] ] > 0,
+        rcNames = Join[ Map[ "hub:" <> #&, RowNames[am] ], Map[ "item:" <> #&, ColumnNames[am] ] ],
+        (* ELSE *)
+        rcNames = Join[ RowNames[am], ColumnNames[am] ]
+      ];
+
+      am = SparseArray[ ArrayFlatten[{{0., SparseArray[am]}, {Transpose[SparseArray[am]], 0.}}] ];
+
+      If[ weightedQ, am = Unitize[am] ];
+
+      am = ToSSparseMatrix[ am, "RowNames" -> rcNames, "ColumnNames" -> rcNames ];
+
+      LSAMonUnit[am, context]
+    ];
+
+LSAMonMakeBipartiteGraphMatrix[__][___] :=
+    Block[{},
+      Echo["No arguments, just options are expected.", "LSAMonMakeBipartiteGraphMatrix:"];
       $LSAMonFailure
     ];
 
