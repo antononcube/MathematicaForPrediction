@@ -161,8 +161,11 @@
 
 BeginPackage["ChernoffFaces`"];
 
-ChernoffFace::usage = "ChernoffFace[pars_Association,opts] plots a Chernoff face specified by pars. The options \
-opts are passed to Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names.";
+ChernoffFace::usage = "ChernoffFace[pars_Association,opts] plots a Chernoff face specified by pars.\n \
+ChernoffFace[vec_?VectorQ,opts] plots a Chernoff face for a numeric vector by face parts implication.\n \
+ChernoffFace[data : ( {_Association..| | _?MatrixQ ), opts] rescales the columns of the full array that \
+corresponds to the argument data and gives a list of Chernoff faces.\n \
+ChernoffFace takes all options of Graphics. Use ChernoffFace[\"Properties\"] to see the parameter names.";
 
 ChernoffFacePartsParameters::usage := "ChernoffFacePartsParameters[] returns only those parameter associations \
 taken by ChernoffFace the keys of which specify face parts placement, rotation, and sizes.";
