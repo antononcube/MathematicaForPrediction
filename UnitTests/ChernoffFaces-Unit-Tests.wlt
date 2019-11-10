@@ -213,4 +213,66 @@ VerificationTest[(* 14 *)
 ];
 
 
+VerificationTest[(* 15 *)
+  Head /@ Table[ChernoffFace["MakeSymmetric" -> True], 36]
+  ,
+  Table[Graphics, 36]
+  ,
+  TestID -> "MakeSymmetric-1"
+];
+
+
+VerificationTest[(* 16 *)
+  Head /@ Table[ChernoffFace["MakeSymmetric" -> False], 36]
+  ,
+  Table[Graphics, 36]
+  ,
+  TestID -> "MakeSymmetric-2"
+];
+
+
+VerificationTest[(* 17 *)
+  SeedRandom[23];
+  rmat = RandomVariate[SkewNormalDistribution[0, 3, 0.1], {25, 10}];
+  res = ChernoffFace[ rmat, "Summary" ];
+  MatchQ[ res, Association[ (_String -> { _Graphics ..}) ..] ]
+  ,
+  True
+  ,
+  TestID -> "Summary-1"
+];
+
+
+VerificationTest[(* 18 *)
+  res = ChernoffFace[ rmat[[1]], "Summary" ];
+  res === $Failed
+  ,
+  True
+  ,
+  {ChernoffFace::sarg}
+  ,
+  TestID -> "Summary-2"
+];
+
+
+VerificationTest[(* 19 *)
+  ascs = {<|"ForeheadShape" -> 0.219738, "EyeSize" -> 3.3445,
+    "LeftEyebrowSlant" -> 0.740124,
+    "NoseLength" -> 3.57202|>, <|"ForeheadShape" -> 0.277967,
+    "EyeSize" -> 2.99418, "LeftEyebrowSlant" -> 1.32757,
+    "NoseLength" -> 5.06625|>, <|"ForeheadShape" -> -1.27702,
+    "EyeSize" -> 3.4797, "LeftEyebrowSlant" -> 4.36544,
+    "NoseLength" -> -0.251473|>, <|"ForeheadShape" -> 2.83725,
+    "EyeSize" -> 0.725232, "LeftEyebrowSlant" -> -0.284936,
+    "NoseLength" -> -1.72739|>, <|"ForeheadShape" -> 0.796431,
+    "EyeSize" -> 0.0763072, "LeftEyebrowSlant" -> 2.5892,
+    "NoseLength" -> 7.22182|>};
+  Head /@ ChernoffFace[ascs]
+  ,
+  Table[Graphics, Length[ascs]]
+  ,
+  TestID -> "List-of-associations-1"
+];
+
+
 EndTestSection[]
