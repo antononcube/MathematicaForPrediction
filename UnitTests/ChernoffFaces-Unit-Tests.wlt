@@ -139,7 +139,7 @@ VerificationTest[(* 9 *)
   ,
   Table[Graphics, Length[data]]
   ,
-  TestID -> "NumericMatrix-ColorFunction-1"
+  TestID -> "NumericMatrix-rowwise-ColorFunction-1"
 ];
 
 
@@ -158,7 +158,7 @@ VerificationTest[(* 10 *)
   ,
   Table[Graphics, Length[data]]
   ,
-  TestID -> "NumericMatrix-ColorFunction-2"
+  TestID -> "NumericMatrix-rowwise-ColorFunction-2"
 ];
 
 
@@ -272,6 +272,28 @@ VerificationTest[(* 19 *)
   Table[Graphics, Length[ascs]]
   ,
   TestID -> "List-of-associations-1"
+];
+
+
+VerificationTest[(* 20 *)
+  Head /@ ChernoffFace[data, ColorFunction -> ColorData["BrightBands"]]
+  ,
+  Table[Graphics, Length[data]]
+  ,
+  TestID -> "NumericMatrix-ColorFunction-1"
+];
+
+
+VerificationTest[(* 21 *)
+  gr1 = Map[ ChernoffFace[#, ColorFunction -> ColorData["BrightBands"]] &, VariablesRescale[data]];
+  gr2 = ChernoffFace[data, ColorFunction -> ColorData["BrightBands"]];
+(*  imgDists = MapThread[ImageDistance, {gr1, gr2}];*)
+(*  Max[imgDists] <= 10^(-12)*)
+  gr1 == gr2
+  ,
+  True
+  ,
+  TestID -> "NumericMatrix-ColorFunction-2"
 ];
 
 
