@@ -182,6 +182,10 @@ ChernoffFaceRecordsSummary::usage = "RecordsSummary of data with Chernoff faces.
 
 Begin["`Private`"];
 
+(************************************************************)
+(* Variables rescale                                        *)
+(************************************************************)
+
 Clear[VariablesRescale];
 
 Options[VariablesRescale] = {
@@ -195,7 +199,9 @@ VariablesRescale[ data_, opts:OptionsPattern[] ] :=
       Transpose @ Map[ Clip[ Rescale[ #, rangeFunc[#], {0,1}], {0,1} ]&, stFunc /@ Transpose[data] ]
     ] /; MatrixQ[data, NumberQ];
 
+
 Clear[PrototypeDeviationsRescale];
+
 PrototypeDeviationsRescale[prototypeItem_, items_] :=
     Block[{},
       (* If QuartileDeviation the {0,3} range is the same as the upper bound obtained from
@@ -204,6 +210,11 @@ PrototypeDeviationsRescale[prototypeItem_, items_] :=
         Clip[Rescale[Standardize[#, 0 &, StandardDeviation], {0, 3}, {0.5, 1}], {0, 1}] &,
         Transpose@Map[# - prototypeItem &, items]]
     ];
+
+
+(************************************************************)
+(* ChernoffFace Parameters                                  *)
+(************************************************************)
 
 (* This was the initial development ordering (in case need for debugging.) *)
 (*DefaultChernoffFaceParameters[] := <|"ForeheadShape" -> 0.5,*)
@@ -236,28 +247,47 @@ ChernoffFacePartsParameters[] :=
     Pick[ChernoffFace["Properties"],
       Not /@ StringMatchQ[Keys[ChernoffFace["Properties"]], ___ ~~ ("Color" | "Symmetric")]];
 
+
+(************************************************************)
+(* MakeSymmetricChernoffFaceParameters                      *)
+(************************************************************)
+
 Clear[MakeSymmetricChernoffFaceParameters];
+
 MakeSymmetricChernoffFaceParameters[pars_Association, defaultPars : (_Association | {}) : {}] :=
     Block[{symPairs, res},
+
       symPairs = {
         {"LeftEyebrowTrim", "RightEyebrowTrim", # &},
         {"LeftEyebrowRaising", "RightEyebrowRaising", # &},
         {"LeftEyebrowSlant", "RightEyebrowSlant", # &},
         {"LeftIris", "RightIris", 1 - # &}};
+
       res = Association @@
           Fold[
             Which[
               KeyExistsQ[pars, #2[[1]]] && ! KeyExistsQ[pars, #2[[2]]],
               Append[#1, #2[[2]] -> #2[[3]][pars[#2[[1]]]]],
+
               ! KeyExistsQ[pars, #2[[1]]] && KeyExistsQ[pars, #2[[2]]],
               Append[#1, #2[[1]] -> #2[[3]][pars[#2[[2]]]]],
+
               True, #1
-            ] &, {}, symPairs];
+            ] &,
+            {},
+            symPairs
+          ];
+
       If[defaultPars === {},
         Merge[{pars, res}, First],
         Merge[{pars, res, defaultPars}, First]
       ]
     ];
+
+
+(************************************************************)
+(* ChernoffFace                                             *)
+(************************************************************)
 
 Clear[ChernoffFace];
 
@@ -440,7 +470,7 @@ Clear[AssociationRecordsRescale];
 Options[AssociationRecordsRescale] = Options[VariablesRescale];
 AssociationRecordsRescale[parsArgs : { _Association .. }, opts:OptionsPattern[]]:=
     Block[{rdata},
-      rdata = Map[ KeyTake[#, ChernoffFace["Properties"] ]&, parsArgs];
+      rdata = Map[ KeyTake[#, Keys@ChernoffFace["Properties"] ]&, parsArgs];
       If[ (Equal @@ Map[Keys, rdata]) && MatrixQ[Values /@ rdata],
         rdata = Map[ AssociationThread[Keys[rdata][[1]], #]&, VariablesRescale[ Values /@ rdata, FilterRules[{opts}, Options[VariablesRescale]] ]]
       ];
