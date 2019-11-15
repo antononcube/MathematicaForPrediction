@@ -78,9 +78,9 @@
       (* Run the main processing pipeline. *)
       res =
         LSAMonUnit[texts]⟹
-        LSAMonMakeDocumentTermMatrix[{}, stopWords]⟹
+        LSAMonMakeDocumentTermMatrix[{}, Automatic]⟹
         LSAMonApplyTermWeightFunctions[]⟹
-        LSAMonExtractTopics[5, 60, 12, "MaxSteps" -> 6, "PrintProfilingInfo" -> True];
+        LSAMonExtractTopics["MinNumberOfDocumentsPerTerm" -> 5, "NumberOfTopics" -> 20, Method -> "NNMF", "MaxSteps" -> 6, "PrintProfilingInfo" -> True];
 
       (* Show statistical thesaurus in two different ways. *)
       res⟹
