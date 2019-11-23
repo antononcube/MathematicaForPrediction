@@ -52,11 +52,11 @@
 
    Here we find the outliers using the HampelIdentifierParameters function:
 
-      OutlierIdentifier[pnts, HampelIdentifierParameters]
+      OutlierIdentify[pnts, HampelIdentifierParameters]
 
    Here we find the top outliers only:
 
-      OutlierIdentifier[pnts, TopOutliers @* HampelIdentifierParameters]
+      OutlierIdentify[pnts, TopOutliers @* HampelIdentifierParameters]
 
       (* {7.68192, 8.47235, <<9>>, 6.57855, 6.96975} *)
 
@@ -81,109 +81,119 @@
 
 BeginPackage["OutlierIdentifiers`"];
 
-HampelIdentifierParameters::usage = "Returns Hampel identifier parameters {L,U} for a list of numbers."
+HampelIdentifierParameters::usage = "Returns Hampel identifier parameters {L,U} for a list of numbers.";
 
-QuartileIdentifierParameters::usage = "Returns quartile identifier parameters {L,U} for a list of numbers."
+QuartileIdentifierParameters::usage = "Returns quartile identifier parameters {L,U} for a list of numbers.";
 
-SPLUSQuartileIdentifierParameters::usage = "Returns SPLUS quartile identifier parameters {L,U} for a list of numbers."
+SPLUSQuartileIdentifierParameters::usage = "Returns SPLUS quartile identifier parameters {L,U} for a list of numbers.";
 
-OutlierIdentifier::usage = "OutlierIdentifier[dataArg:{_?NumberQ..},olParams] applies outlier identifier parameters
-olParams to a list of numbers dataArg."
+OutlierIdentify::usage = "OutlierIdentify[data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], olParams] \
+applies outlier identifier parameters olParams to a list of numbers dataArg.";
 
-OutlierIdentifierLess::usage = "OutlierIdentifierLess[dataArg:{_?NumberQ..},olParams] applies outlier identifier \
-parameters olParams to a list of numbers dataArg and takes the outliers with smallest values."
+OutlierIdentifier::usage = "Synonym of OutlierIdentify.";
 
-TopOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {-Infinity,U}."
+OutlierIdentifyLess::usage = "OutlierIdentifyLess[ data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], olParams] \
+applies outlier identifier parameters olParams to a list of numbers dataArg and takes the outliers with smallest values.";
 
-BottomOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {L,Infinity}."
+TopOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {-Infinity,U}.";
 
-HampelIdentifier::usage = "Shortcut for OutlierIdentifier[#,HampelIdentifierParameters]& ."
+BottomOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {L,Infinity}.";
+
+HampelIdentifier::usage = "Shortcut for OutlierIdentify[#,HampelIdentifierParameters]& .";
 
 OutlierPosition::usage = "OutlierPosition[dataArg:{_?NumberQ...},olParams] gives the positions of the outliers \
 in dataArg using the outlier identifier parameters olParams. Top and bottom outliers can be found with
-TopOutliers@*olParams and BottomOutliers@*olParams respectively."
+TopOutliers@*olParams and BottomOutliers@*olParams respectively.";
 
-ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPlot."
+ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPlot.";
 
-ColorPlotOutliers::usage = "ColorPlotOutliers[oid___] makes a function for coloring the outliers in list point plots."
+ColorPlotOutliers::usage = "ColorPlotOutliers[oid___] makes a function for coloring the outliers in list point plots.";
 
 Begin["`Private`"];
 
 Clear[HampelIdentifierParameters];
-HampelIdentifierParameters[data:{_?NumberQ...}]:=
-  Block[{x0=Median[data],md},
-    md=1.4826*Median[Abs[data-x0]];
-    {x0-md,x0+md}
-  ];
+HampelIdentifierParameters[data : {_?NumberQ...}] :=
+    Block[{x0 = Median[data], md},
+      md = 1.4826 * Median[Abs[data - x0]];
+      {x0 - md, x0 + md}
+    ];
 
 
 Clear[QuartileIdentifierParameters];
-QuartileIdentifierParameters[data:{_?NumberQ...}]:=
-  Block[{xL,xU,x0},
-    {xL,x0,xU}=Quantile[data,{1/4,1/2,3/4}];
-    {x0-(xU-xL),x0+(xU-xL)}
-   ];
+QuartileIdentifierParameters[data : {_?NumberQ...}] :=
+    Block[{xL, xU, x0},
+      {xL, x0, xU} = Quantile[data, {1 / 4, 1 / 2, 3 / 4}];
+      {x0 - (xU - xL), x0 + (xU - xL)}
+    ];
 
 
 Clear[SPLUSQuartileIdentifierParameters];
-SPLUSQuartileIdentifierParameters[data:{_?NumberQ...}]:=
-  Block[{xL,xU},
-    If[Length[data]<=4,Return[{Min[data],Max[data]}]];
-    {xL,xU}=Quantile[data,{1/4,3/4}];
-    {xL-1.5(xU-xL),xU+1.5(xU-xL)}
-  ];
+SPLUSQuartileIdentifierParameters[data : {_?NumberQ...}] :=
+    Block[{xL, xU},
+      If[Length[data] <= 4, Return[{Min[data], Max[data]}]];
+      {xL, xU} = Quantile[data, {1 / 4, 3 / 4}];
+      {xL - 1.5(xU - xL), xU + 1.5(xU - xL)}
+    ];
+
+
+Clear[TopOutliers, BottomOutliers];
+TopOutliers[{xL_, xU_}] := {-Infinity, xU};
+BottomOutliers[{xL_, xU_}] := {xL, Infinity};
 
 
 (***********::Section:: ***********)
 (* Identifiers                    *)
 
 
-Clear[OutlierIdentifier,OutlierIdentifierLess];
-OutlierIdentifier[data:{_?NumberQ...},outlierIdentifierParameters_]:=
-  Block[{xL,xU},
-    {xL,xU}=outlierIdentifierParameters[data];
-    Select[data,#<xL||xU<#&]
-  ];
+Clear[OutlierIdentify, OutlierIdentifyLess];
+OutlierIdentify[data : {_?NumberQ...}, outlierIdentifierParameters_ : HampelIdentifierParameters ] :=
+    Block[{xL, xU},
+      {xL, xU} = outlierIdentifierParameters[data];
+      Select[data, # < xL || xU < #&]
+    ];
 
-OutlierIdentifierLess[data:{_?NumberQ...},outlierIdentifierParameters_]:=
-  Block[{xL,xU},
-    {xL,xU}=outlierIdentifierParameters[data];
-    Select[data,#<xL&]
-  ];
+OutlierIdentify[ data : Association[ (_ -> _?NumberQ) ..], outlierIdentifierParameters_ : HampelIdentifierParameters ] :=
+    KeyTake[ data, OutlierPosition[data, outlierIdentifierParameters] ];
 
+OutlierIdentifyLess[data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], outlierIdentifierParameters_ : HampelIdentifierParameters ] :=
+    OutlierIdentify[ data, BottomOutliers @* outlierIdentifierParameters ];
 
-TopOutliers[{xL_,xU_}]:={-Infinity,xU};
-BottomOutliers[{xL_,xU_}]:={xL,Infinity};
 
 
 Clear[HampelIdentifier];
-HampelIdentifier[data__]:=OutlierIdentifier[data,HampelIdentifierParameters];
+HampelIdentifier[data__] := OutlierIdentify[data, HampelIdentifierParameters];
 
 
 Clear[OutlierPosition];
-OutlierPosition[data:{_?NumberQ...},outlierIdentifier_:HampelIdentifierParameters]:=
-  Block[{cls,t},
-    cls=OutlierIdentifier[data,outlierIdentifier];
-    t=Select[Transpose[{data,Range[Length[data]]}],MemberQ[cls,#[[1]]]&];
-    If[t==={},{},t[[All,2]]]
-  ];
+OutlierPosition[data : {_?NumberQ...}, outlierIdentifier_ : HampelIdentifierParameters] :=
+    Block[{cls, t},
+      cls = OutlierIdentify[data, outlierIdentifier];
+      t = Select[Transpose[{data, Range[Length[data]]}], MemberQ[cls, #[[1]]]&];
+      If[t === {}, {}, t[[All, 2]]]
+    ];
+
+OutlierPosition[data : Association[ (_ -> _?NumberQ) ... ], outlierIdentifier_ : HampelIdentifierParameters ] :=
+    Block[{pos},
+      pos = OutlierPosition[ Values[data], outlierIdentifier];
+      If[ pos === {}, {}, Keys[data][[pos]] ]
+    ];
 
 
 (*********** ::Section:: ***********)
 (*Plot definitions*)
 
 Clear[ListPlotOutliers];
-Options[ListPlotOutliers]={PlotStyle->{PointSize[0.015]},PlotRange->All,ImageSize->300};
-ListPlotOutliers[ds_,outlierParameters_,optsArg___]:=
-  Block[{outliers,opts=optsArg,positionedOutliers},
-    If[!OptionQ[{opts}],opts=Options[ListPlotOutliers]];
-    outliers=OutlierIdentifier[ds,outlierParameters];
-    If[outliers==={},
-      ListPlot[Transpose[{Range[Length[ds]],ds}],opts],
-      positionedOutliers=Select[Transpose[{Range[Length[ds]],ds}],MemberQ[outliers,#[[2]]]&];
-      ListPlot[{Transpose[{Range[Length[ds]],ds}],positionedOutliers},opts]
-    ]
-  ];
+Options[ListPlotOutliers] = {PlotStyle -> {PointSize[0.015]}, PlotRange -> All, ImageSize -> 300};
+ListPlotOutliers[ds_, outlierParameters_, optsArg___] :=
+    Block[{outliers, opts = optsArg, positionedOutliers},
+      If[!OptionQ[{opts}], opts = Options[ListPlotOutliers]];
+      outliers = OutlierIdentify[ds, outlierParameters];
+      If[outliers === {},
+        ListPlot[Transpose[{Range[Length[ds]], ds}], opts],
+        positionedOutliers = Select[Transpose[{Range[Length[ds]], ds}], MemberQ[outliers, #[[2]]]&];
+        ListPlot[{Transpose[{Range[Length[ds]], ds}], positionedOutliers}, opts]
+      ]
+    ];
 
 ClearAll[ColorPlotOutliers]
 ColorPlotOutliers[] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]]]]]]}} &;
