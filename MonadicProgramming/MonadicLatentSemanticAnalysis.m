@@ -857,30 +857,38 @@ Clear[LSAMonInterpretBasisVector];
 Options[LSAMonInterpretBasisVector] = { "NumberOfTerms" -> 12 };
 
 LSAMonInterpretBasisVector[___][$LSAMonFailure] := $LSAMonFailure;
-LSAMonInterpretBasisVector[vectorIndices : (_Integer | {_Integer..}), opts : OptionsPattern[] ][xs_, context_] :=
-    Block[{W, H, res, numberOfTerms},
+LSAMonInterpretBasisVector[vectorIndicesArg : ( All | _Integer | {_Integer..}), opts : OptionsPattern[] ][xs_, context_] :=
+    Block[{W, H, res, numberOfTerms, vectorIndices = vectorIndicesArg},
+
+      If[ !TrueQ[vectorIndices === All], vectorIndices =  Flatten @ {vectorIndicesArg} ];
 
       numberOfTerms = OptionValue[LSAMonInterpretBasisVector, "NumberOfTerms"];
+
+      If[ !( KeyExistsQ[context, "W"] && KeyExistsQ["H"] ),
+        Echo["Cannot find matrix factors.", "LSAMonInterpretBasisVector:"];
+        Return[$LSAMonFailure]
+      ];
 
       {W, H} = RightNormalizeMatrixProduct[ SparseArray[context["W"]], SparseArray[context["H"]] ];
 
       res =
           Map[
             BasisVectorInterpretation[#, numberOfTerms, ColumnNames[context["H"]] ]&,
-            Normal @ H[[ Flatten @ {vectorIndices} ]]
+            Normal @ H[[ vectorIndices ]]
           ];
 
       If[ !MatchQ[res, {{{_?NumberQ, _String}..}..}], Return[$LSAMonFailure] ];
 
       res = Map[ Association[ Rule @@@ (Reverse /@ #) ]&, res ];
 
+      res = AssociationThread[ RowNames[context["H"]][[ vectorIndices ]], res ];
       LSAMonUnit[ res, context ]
     ];
 
 LSAMonInterpretBasisVector[___][__] :=
     Block[{},
       Echo[
-        "The expected arguments are LSAMonInterpretBasisVector[vectorIndices:(_Integer|{_Integer..}), opts___] .",
+        "The expected arguments are LSAMonInterpretBasisVector[vectorIndices:(All|_Integer|{_Integer..}), opts___] .",
         "LSAMonInterpretBasisVector:"];
       $LSAMonFailure
     ];
@@ -908,7 +916,7 @@ LSAMonMakeTopicsTable[opts : OptionsPattern[]][xs_, context_] :=
       topicsTbl =
           Table[
             TableForm[{NumberForm[#[[2]] / t[[1, 2]], {4, 3}], #[[1]]} & /@ t],
-            {t, Normal @ First @ LSAMonInterpretBasisVector[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
+            {t, Normal @ Values @ First @ LSAMonInterpretBasisVector[Range[k], "NumberOfTerms" -> numberOfTerms][xs, context] }];
 
       LSAMonUnit[ topicsTbl, Join[ context, <| "topicsTable" -> topicsTbl|> ] ]
     ];
