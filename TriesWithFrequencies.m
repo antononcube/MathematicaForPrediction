@@ -562,19 +562,33 @@ Clear[TrieRootToLeafPathProbabilityRules];
 TrieRootToLeafPathProbabilityRules[tr_?TrieQ] :=
     ReverseSort @ Association @ Map[ #[[All, 1]] -> Apply[Times, #[[All, 2]]] &, TrieRootToLeafPaths[tr] ];
 
-Clear[TrieGetWords];
-TrieGetWords[ tr_?TrieQ, word_List ] :=
-    Which[
-      Length[word] == 0,
-      {},
 
-      TrieKeyExistsQ[tr, word],
+(************************************************************)
+(* TrieGetWords                                             *)
+(************************************************************)
+
+Clear[TrieGetWords];
+
+TrieGetWords::args = "The first of argument is expected to be a trie, the second argument is expected to be a list or All";
+
+TrieGetWords[ tr_?TrieQ, word : ( _List | All ) : All ] :=
+    Which[
+
+      TrueQ[word === All] || ListQ[word] && Length[word] == 0,
+      Map[ Join, Keys @ TrieRootToLeafPathRules[tr] ],
+
+      ListQ[word] || TrieKeyExistsQ[tr, word],
       Map[ Join[Most[word], #]&, Keys @ TrieRootToLeafPathRules[TrieSubTrie[tr, word]] ],
 
       True,
       {}
     ];
 
+TrieGetWords[___] :=
+    Block[{},
+      Message[TrieGetWords::args];
+      $Failed
+    ];
 
 (************************************************************)
 (* TriePrune                                                *)
@@ -703,7 +717,7 @@ TrieParetoFractionRemove::pfrac = "The second argument is expected to be a numbe
 
 SyntaxInformation[TrieParetoFractionRemove] = { "ArgumentsPattern" -> {_, _, OptionsPattern[]} };
 
-Options[TrieParetoFractionRemove] = {"Postfix" -> Anonymous, "RemoveBottomElements" -> False};
+Options[TrieParetoFractionRemove] = {"Postfix" -> Anonymous, "RemoveBottomElements" -> True};
 
 TrieParetoFractionRemove[ tr_?TrieQ, paretoFraction_?NumberQ, opts : OptionsPattern[] ] :=
     Block[{postfix, removeBottomElementsQ},
