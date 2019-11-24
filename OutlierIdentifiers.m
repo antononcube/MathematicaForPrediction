@@ -81,29 +81,29 @@
 
 BeginPackage["OutlierIdentifiers`"];
 
-HampelIdentifierParameters::usage = "Returns Hampel identifier parameters {L,U} for a list of numbers.";
+HampelIdentifierParameters::usage = "Returns Hampel outlier identifier parameters {L,U} for a list of numbers.";
 
-QuartileIdentifierParameters::usage = "Returns quartile identifier parameters {L,U} for a list of numbers.";
+QuartileIdentifierParameters::usage = "Returns quartile outlier identifier parameters {L,U} for a list of numbers.";
 
-SPLUSQuartileIdentifierParameters::usage = "Returns SPLUS quartile identifier parameters {L,U} for a list of numbers.";
+SPLUSQuartileIdentifierParameters::usage = "Returns SPLUS quartile outlier identifier parameters {L,U} for a list of numbers.";
 
-OutlierIdentify::usage = "OutlierIdentify[data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], olParams] \
-applies outlier identifier parameters olParams to a list of numbers dataArg.";
+OutlierIdentify::usage = "OutlierIdentify[data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], pars] \
+applies outlier identifier parameters pars to a list of numbers dataArg.";
 
 OutlierIdentifier::usage = "Synonym of OutlierIdentify.";
 
-OutlierIdentifyLess::usage = "OutlierIdentifyLess[ data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], olParams] \
-applies outlier identifier parameters olParams to a list of numbers dataArg and takes the outliers with smallest values.";
+OutlierIdentifyLess::usage = "OutlierIdentifyLess[ data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], pars] \
+applies outlier identifier parameters pars to a list of numbers data and takes the outliers with smallest values.";
 
 TopOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {-Infinity,U}.";
 
 BottomOutliers::usage = "Changes the parameters {L,U} of an outlier identifier to {L,Infinity}.";
 
-HampelIdentifier::usage = "Shortcut for OutlierIdentify[#,HampelIdentifierParameters]& .";
+HampelIdentifier::usage = "Shortcut for OutlierIdentify[#, HampelIdentifierParameters]& .";
 
-OutlierPosition::usage = "OutlierPosition[dataArg:{_?NumberQ...},olParams] gives the positions of the outliers \
-in dataArg using the outlier identifier parameters olParams. Top and bottom outliers can be found with
-TopOutliers@*olParams and BottomOutliers@*olParams respectively.";
+OutlierPosition::usage = "OutlierPosition[ data : {_?NumberQ...}, pars] gives the positions of the outliers \
+in data using the outlier identifier parameters pars. Top and bottom outliers can be found with
+TopOutliers @* pars and BottomOutliers @* pars respectively.";
 
 ListPlotOutliers::usage = "Plots a list of numbers and its outliers using ListPlot.";
 
@@ -158,6 +158,9 @@ OutlierIdentify[ data : Association[ (_ -> _?NumberQ) ..], outlierIdentifierPara
 OutlierIdentifyLess[data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], outlierIdentifierParameters_ : HampelIdentifierParameters ] :=
     OutlierIdentify[ data, BottomOutliers @* outlierIdentifierParameters ];
 
+
+Clear[OutlierIdentifier];
+OutlierIdentifier = OutlierIdentify;
 
 
 Clear[HampelIdentifier];
