@@ -132,13 +132,20 @@ TrieGetWords::usage = "TrieGetWords[ tr_, sw_List ] gives a list words in tr tha
 
 TrieRemove::usage = "TrieRemove removes a \"word\" from a trie.";
 
-TrieThresholdRemove::usage = "TrieThresholdRemove[tr_, th_, opts] removes nodes that have values below (or above) \
+TrieThresholdRemove::usage = "TrieThresholdRemove[tr_, th_?NumberQ, opts] removes nodes that have values below \
 a specified threshold. \
 If the value postfixVal of the option \"Postfix\" is different than NULL or None then \
-the dropped nodes are replaced with postfixVal -> removedTotal,
-where removedTotal is the total of the values of the dropped nodes.";
+the dropped nodes are replaced with postfixVal -> removedTotal, \
+where removedTotal is the total of the values of the dropped nodes. \
+If the option \"BelowThreshold\" is to False, the nodes with values above the threshold are removed";
 
-TrieThresholdRemove::usage = "Synonym of TrieThresholdRemove.";
+TrieParetoFractionRemove::usage = "TrieParetoFractionRemove[tr_, fr_?NumberQ, opts] removes nodes that have values
+below the thresholds derived by the specified Pareto principle fraction. \
+If the value postfixVal of the option \"Postfix\" is different than NULL or None then \
+the dropped nodes are replaced with postfixVal -> removedTotal, \
+where removedTotal is the total of the values of the dropped nodes. \
+If the option \"RemoveBottomElements\" is to False, \
+the nodes with Pareto values below the derived thresholds are removed.";
 
 TrieHasCompleteMatchQ::usage = "TrieHasCompleteMatchQ[ tr_, sw_List ] finds does a fraction \
 of the list sw is a complete match in the trie tr.";
@@ -651,7 +658,7 @@ SyntaxInformation[TrieThresholdRemove] = { "ArgumentsPattern" -> {_, _, OptionsP
 
 Options[TrieThresholdRemove] = {"Postfix" -> Anonymous, "BelowThreshold" -> True};
 
-TrieThresholdRemove[ tr_?TrieQ, threshold_?NumberQ, opts:OptionsPattern[] ]:=
+TrieThresholdRemove[ tr_?TrieQ, threshold_?NumberQ, opts : OptionsPattern[] ] :=
     Block[{postfix, belowThresholdQ},
 
       postfix = OptionValue[TrieThresholdRemove, "Postfix"];
@@ -676,11 +683,7 @@ ThresholdRemove[tr_?TrieRuleQ, threshold_?NumberQ, postfix_, belowThresholdQ : (
 
       If[! (TrueQ[postfix === None] || TrueQ[postfix === Null]) && Length[resChildren] < Length[tr[[2]]] - 1,
 
-        If[ belowThresholdQ,
-          removeSum = Total[Map[#[$TrieValue] &, Select[KeyDrop[tr[[2]], $TrieValue], #[$TrieValue] < threshold &]]],
-          (* ELSE *)
-          removeSum = Total[Map[#[$TrieValue] &, Select[KeyDrop[tr[[2]], $TrieValue], #[$TrieValue] > threshold &]]]
-        ];
+        removeSum = Total @ Map[ #[$TrieValue] &, KeyDrop[tr[[2]], Prepend[ Keys[resChildren], $TrieValue] ] ];
 
         resChildren = Append[resChildren, postfix -> <|$TrieValue -> removeSum|>]
       ];
@@ -696,16 +699,60 @@ ThresholdRemove[tr_?TrieRuleQ, threshold_?NumberQ, postfix_, belowThresholdQ : (
 
 Clear[TrieParetoFractionRemove];
 
-Options[TrieParetoFractionRemove] = { "RemoveBottomElements" -> True, "Postfix" -> Anonymous };
+TrieParetoFractionRemove::pfrac = "The second argument is expected to be a number between 0 and 1.";
 
-TrieParetoFractionRemove[ trie_?TrieQ, paretoFraction_?NumberQ : 0.8, opts : OptionsPattern[] ] :=
-    Block[{ removeBottomElementQ },
+SyntaxInformation[TrieParetoFractionRemove] = { "ArgumentsPattern" -> {_, _, OptionsPattern[]} };
 
-      removeBottomElementQ = TrueQ[OptionValue[TrieParetoFractionRemove, "RemoveBottomElements"]];
+Options[TrieParetoFractionRemove] = {"Postfix" -> Anonymous, "RemoveBottomElements" -> False};
 
+TrieParetoFractionRemove[ tr_?TrieQ, paretoFraction_?NumberQ, opts : OptionsPattern[] ] :=
+    Block[{postfix, removeBottomElementsQ},
+
+      postfix = OptionValue[TrieParetoFractionRemove, "Postfix"];
+      removeBottomElementsQ = TrueQ[OptionValue[TrieParetoFractionRemove, "RemoveBottomElements"]];
+
+      If[ !( 0 <= paretoFraction <= 1),
+        Message[TrieParetoFractionRemove::pfrac];
+        Return[$Failed]
+      ];
+
+      TrieMap[ tr, ParetoThresholdRemove[#, paretoFraction, postfix, removeBottomElementsQ] &, None]
     ];
 
-(*TrieParetoFractionRemoveRec[ trie]*)
+
+(* Essentially the same as ThresholdRemove, except here we have accumulation and threshold calculation. *)
+Clear[ParetoThresholdRemove];
+
+ParetoThresholdRemove[tr_?TrieRuleQ, paretoFraction_?NumberQ, postfix_, removeBottomElementsQ : (True | False) ] :=
+    Block[{children, acc, threshold, resChildren, removeSum},
+
+      children = KeyDrop[ tr[[2]], $TrieValue ];
+
+      If[Length[children] == 0, Return[tr]];
+
+      children = Reverse[ SortBy[ children, #[$TrieValue]& ] ];
+
+      acc = Accumulate[ Values @ Map[ #[$TrieValue]&, children ] ];
+      acc = AssociationThread[ Keys[children], acc ];
+
+      threshold = paretoFraction * Last[acc];
+
+      If[ removeBottomElementsQ,
+        resChildren = KeyTake[ children, Keys @ Select[ acc, # <= threshold &] ],
+        (* ELSE *)
+        resChildren = KeyTake[ children, Keys @ Select[ acc, # >= threshold &] ]
+      ];
+
+      If[! (TrueQ[postfix === None] || TrueQ[postfix === Null]) && Length[resChildren] < Length[tr[[2]]] - 1,
+
+        removeSum = Total @ Map[ #[$TrieValue] &, KeyDrop[tr[[2]], Prepend[ Keys[resChildren], $TrieValue] ] ];
+
+        resChildren = Append[resChildren, postfix -> <|$TrieValue -> removeSum|>]
+      ];
+
+      tr[[1]] -> Join[KeyTake[tr[[2]], $TrieValue], resChildren]
+    ];
+
 
 (************************************************************)
 (* Trie conversion related functions                        *)
@@ -765,7 +812,7 @@ TrieToListTrie[tr_?TrieRuleQ] :=
 (************************************************************)
 
 ClearAll[TrieComparisonGrid];
-SetAttributes[TrieComparisonGrid, HoldAll]
+SetAttributes[TrieComparisonGrid, HoldAll];
 Options[TrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision" -> 3}];
 TrieComparisonGrid[trs_List, opts : OptionsPattern[]] :=
     Block[{graphOpts, gridOpts, nfp},
