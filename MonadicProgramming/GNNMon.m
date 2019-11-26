@@ -289,9 +289,7 @@ GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context
       nfd = GNNMonTakeNearestIndexDistanceFunction[xs, context];
       If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
-
       (* Using nfd in order to speed-up the computations. *)
-
       nns = Map[ nfd[ #, nTopNNs + 1 ] &, Values[data] ];
 
       means =
@@ -303,6 +301,7 @@ GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context
       ths = outFunc[ N @ Values[means] ];
 
       nns = Join @@ MapIndexed[ Flatten /@ Thread[{#2[[1]], #1}] &, nns ];
+
       nns[[All, 1]] = Keys[ data ][[ nns[[All , 1]] ]];
       nns[[All, 2]] = Keys[ data ][[ nns[[All, 2]] ]];
       nnsMat = MakeSSparseMatrix[ nns ];
@@ -414,7 +413,7 @@ GNNMonClassify[ point_?VectorQ, prop_String : "Decision", opts : OptionsPattern[
 GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonClassify[ AssociationThread[ Range[Length[points]] -> points ], prop, opts ][xs, context];
 
-GNNMonClassify[ points_?AssociationQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
+GNNMonClassify[ points_?DataAssociationQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{factor, data, nfd, distFunc, nTopNNs, aggrFunc, upperThreshold, res, knownProperties},
 
       knownProperties = { "Decision", "Distances", "Probabilities", "Properties"};
@@ -597,8 +596,10 @@ GNNMonComputeProximityMatrix[ n_Integer, opts : OptionsPattern[] ][xs_, context_
 
       proxMat = SparseArray[Join[arules, Table[{i, i} -> 1, {i, Dimensions[smat][[1]]}]], Dimensions[smat]];
 
+      proxMat = ToSSparseMatrix[ proxMat, "RowNames"->RowNames[nnsMat], "ColumnNames"->ColumnNames[nnsMat]];
+
       GNNMonUnit[ proxMat, context ]
-    ]/; n > 1;
+    ];
 
 GNNMonComputeProximityMatrix[___][xs_, context_Association] :=
     Block[{},
