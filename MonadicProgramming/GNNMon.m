@@ -152,7 +152,9 @@ GenerateStateMonadCode[ "GNNMon`GNNMon", "FailureSymbol" -> $GNNMonFailure, "Str
 
 GenerateMonadAccessors[
   "GNNMon`GNNMon",
-  { "data", "nearestFunction", "distanceFunction", "numberOfNNs", "nearestNeighborDistances",
+  { "data",
+    "nearestFunction", "nearestIndexDistanceFunction", "distanceFunction",
+    "numberOfNNs", "nearestNeighborDistances",
     "aggregationFunction", "radius", "lowerThreshold", "UpperThreshold" },
   "FailureSymbol" -> $GNNMonFailure ];
 
@@ -233,7 +235,7 @@ GNNMonMakeNearestFunction[$GNNMonFailure] := $GNNMonFailure;
 GNNMonMakeNearestFunction[xs_, context_Association] := GNNMonMakeNearestFunction[ Options[GNNMonMakeNearestFunction] ][xs, context];
 
 GNNMonMakeNearestFunction[ opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{data, distFunc, nf},
+    Block[{data, distFunc, nf, nfd},
 
       distFunc = OptionValue[ GNNMonMakeNearestFunction, DistanceFunction ];
 
@@ -244,7 +246,9 @@ GNNMonMakeNearestFunction[ opts : OptionsPattern[] ][xs_, context_Association] :
 
       nf = Nearest[ data, DistanceFunction -> distFunc ];
 
-      GNNMonUnit[ xs, Join[context, <| "data" -> data, "nearestFunction" -> nf, "distanceFunction" -> distFunc |> ] ]
+      nfd = Nearest[ Values[data] -> {"Index", "Distance"}, DistanceFunction -> distFunc ];
+
+      GNNMonUnit[ xs, Join[context, <| "data" -> data, "nearestFunction" -> nf, "nearestIndexDistanceFunction" -> nfd, "distanceFunction" -> distFunc |> ] ]
     ];
 
 GNNMonMakeNearestFunction[___][xs_, context_Association] :=
@@ -271,7 +275,7 @@ GNNMonComputeThresholds[$GNNMonFailure] := $GNNMonFailure;
 GNNMonComputeThresholds[xs_, context_Association] := $GNNMonFailure;
 
 GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{outFunc, aggrFunc, data, nf, distFunc, nns, means, ths},
+    Block[{outFunc, aggrFunc, data, nfd, distFunc, nns, means, ths},
 
       outFunc = OptionValue[ GNNMonComputeThresholds, "OutlierIdentifier" ];
       aggrFunc = OptionValue[ GNNMonComputeThresholds, "AggregationFunction" ];
@@ -279,16 +283,19 @@ GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context
       data = GNNMonTakeData[xs, context];
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
-      nf = GNNMonTakeNearestFunction[xs, context];
+      nfd = GNNMonTakeNearestIndexDistanceFunction[xs, context];
       If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
-      distFunc = GNNMonTakeDistanceFunction[xs, context];
 
-      nns = Map[ nf[ #, nTopNNs ] &, data ];
+      (* Using nfd in order to speed-up the computations. *)
+
+      nns = Map[ nfd[ #, nTopNNs+1 ] &, Values[data] ];
 
       means =
           Association @
-              KeyValueMap[ Function[{k, v}, k -> aggrFunc[Map[distFunc[data[[k]], data[[#]]] &, Complement[v, {k}]]]], nns];
+              MapIndexed[ Function[{v, ind}, ind[[1]] -> aggrFunc[ DeleteCases[ v[[All,2]], {ind[[1]], _} ] ] ], nns];
+
+      means = AssociationThread[ Keys[data][[ Keys[means] ]], Values[means] ];
 
       ths = outFunc[ N @ Values[means] ];
 
@@ -399,8 +406,8 @@ GNNMonClassify[ point_?VectorQ, prop_String : "Decision", opts : OptionsPattern[
 GNNMonClassify[ points_?MatrixQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
     GNNMonClassify[ AssociationThread[ Range[Length[points]] -> points ], prop, opts ][xs, context];
 
-GNNMonClassify[ points_?DataAssociationQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{factor, data, nf, distFunc, nTopNNs, aggrFunc, upperThreshold, res, knownProperties},
+GNNMonClassify[ points_?AssociationQ, prop_String : "Decision", opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{factor, data, nfd, distFunc, nTopNNs, aggrFunc, upperThreshold, res, knownProperties},
 
       knownProperties = { "Decision", "Distances", "Probabilities", "Properties"};
 
@@ -413,7 +420,7 @@ GNNMonClassify[ points_?DataAssociationQ, prop_String : "Decision", opts : Optio
       data = Fold[ GNNMonBind, GNNMonUnit[xs, context], { GNNMonGetData, GNNMonTakeValue } ];
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
-      nf = GNNMonTakeNearestFunction[xs, context];
+      nfd = GNNMonTakeNearestIndexDistanceFunction[xs, context];
       If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       distFunc = GNNMonTakeDistanceFunction[xs, context];
@@ -428,10 +435,12 @@ GNNMonClassify[ points_?DataAssociationQ, prop_String : "Decision", opts : Optio
       upperThreshold = GNNMonTakeUpperThreshold[xs, context];
       If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
-      res = Map[ nf[#, nTopNNs]&, points];
+      res = Map[ nfd[ #, nTopNNs ] &, Values[points] ];
 
       res = Association @
-          KeyValueMap[ Function[{k, v}, k -> aggrFunc[ Map[ distFunc[ points[[k]], data[[#]] ] &, v ] ] ], res];
+          MapIndexed[ Function[{v, ind}, ind[[1]] -> aggrFunc[ v[[All,2]] ] ], res];
+
+      res = AssociationThread[ Keys[points][[ Keys[res] ]], Values[res] ];
 
       Which[
         MemberQ[ ToLowerCase[{ "Decision" }], ToLowerCase[prop]],
