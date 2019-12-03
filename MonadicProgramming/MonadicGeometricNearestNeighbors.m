@@ -32,8 +32,8 @@
 *)
 (* Created by the Wolfram Language Plugin for IntelliJ, see http://wlplugin.halirutan.de/ *)
 
-(* :Title: GNNMon *)
-(* :Context: GNNMon` *)
+(* :Title: MonadicGeometricNearestNeighbors *)
+(* :Context: MonadicGeometricNearestNeighbors` *)
 (* :Author: Anton Antonov *)
 (* :Date: 2019-09-22 *)
 
@@ -111,7 +111,7 @@ If[Length[DownValues[OutlierIdentifiers`OutlierIdentifier]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["GNNMon`"];
+BeginPackage["MonadicGeometricNearestNeighbors`"];
 (* Exported symbols added here with SymbolName::usage *)
 
 $GNNMonFailure::usage = "Failure symbol for GNNMon.";
@@ -150,10 +150,10 @@ Needs["SSparseMatrix`"];
 
 (* Generate base functions of GNNMon monad (through StMon.) *)
 
-GenerateStateMonadCode[ "GNNMon`GNNMon", "FailureSymbol" -> $GNNMonFailure, "StringContextNames" -> False ];
+GenerateStateMonadCode[ "MonadicGeometricNearestNeighbors`GNNMon", "FailureSymbol" -> $GNNMonFailure, "StringContextNames" -> False ];
 
 GenerateMonadAccessors[
-  "GNNMon`GNNMon",
+  "MonadicGeometricNearestNeighbors`GNNMon",
   { "data",
     "nearestFunction", "nearestIndexDistanceFunction", "distanceFunction",
     "numberOfNNs", "nearestNeighborDistances",
