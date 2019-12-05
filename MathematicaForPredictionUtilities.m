@@ -41,6 +41,11 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
+If[Length[DownValues[ParetoPrincipleAdherence`ParetoPrinciplePlot]] == 0,
+  Echo["ParetoPrincipleAdherence.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ParetoPrincipleAdherence.m"]
+];
+
 
 BeginPackage["MathematicaForPredictionUtilities`"];
 
@@ -60,9 +65,7 @@ full two dimensional arrays. (I.e. lists of records.)";
 GridTableForm::usage = "GridTableForm[listOfList, TableHeadings->headings] mimics TableForm by using Grid \
 (and producing fancier outlook).";
 
-ParetoLawPlot::usage = "ParetoLawPlot[data,opts] makes a list plot for the manifestation of the Pareto law. \
-It has the same signature and options as ListPlot. \
-The argument data is expected to be a numerical a vector or a list of numerical vectors.";
+ParetoLawPlot::usage = "Synonym of ParetoPrinciplePlot.";
 
 IntervalMappingFunction::usage = "IntervalMappingFunction[boundaries] makes a piece-wise function for mapping of \
 a real value to the enumerated intervals Partition[Join[{-Infinity}, boundaries, {Infinity}], 2, 1].";
@@ -99,6 +102,7 @@ Begin["`Private`"];
 
 Needs["MosaicPlot`"];
 Needs["CrossTabulate`"];
+Needs["ParetoPrinciplePlot`"];
 
 
 (*===========================================================*)
@@ -358,18 +362,7 @@ GridTableForm[data_, opts : OptionsPattern[]] :=
 (*===========================================================*)
 
 Clear[ParetoLawPlot];
-Options[ParetoLawPlot] = Options[ListPlot];
-ParetoLawPlot[dataVec : {_?NumberQ ..}, opts : OptionsPattern[]] := ParetoLawPlot[{Tooltip[dataVec, 1]}, opts];
-ParetoLawPlot[dataVecs : {{_?NumberQ ..} ..}, opts : OptionsPattern[]] :=
-    ParetoLawPlot[MapThread[Tooltip, {dataVecs, Range[Length[dataVecs]]}], opts];
-ParetoLawPlot[dataVecs : {Tooltip[{_?NumberQ ..}, _] ..}, opts : OptionsPattern[]] :=
-    Block[{t, mc = 0.5},
-      t = Map[ Tooltip[(Accumulate[#] / Total[#] &)[SortBy[#[[1]], -# &]], #[[2]]] &, dataVecs];
-      ListPlot[t, opts, PlotRange -> All,
-        GridLines -> {Length[t[[1, 1]]] Range[0.1, mc, 0.1], {0.8}},
-        Frame -> True,
-        FrameTicks -> {{Automatic, Automatic}, {Automatic, Table[{Length[t[[1, 1]]] c, ToString[Round[100 c]] <> "%"}, {c, Range[0.1, mc, 0.1]}]}}]
-    ];
+ParetoLawPlot = ParetoPrincipleAdherence`ParetoPrinciplePlot;
 
 
 (*===========================================================*)
