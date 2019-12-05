@@ -102,7 +102,7 @@ Begin["`Private`"];
 
 Needs["MosaicPlot`"];
 Needs["CrossTabulate`"];
-Needs["ParetoPrinciplePlot`"];
+Needs["ParetoPrincipleAdherence`"];
 
 
 (*===========================================================*)
