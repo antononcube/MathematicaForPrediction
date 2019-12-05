@@ -572,18 +572,31 @@ GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
 (***********************************************************)
 
 Clear[ImportCSVToDataset];
-Options[ImportCSVToDataset] = {"RowNames" -> False, "ColumnNames" -> True};
+
+Options[ImportCSVToDataset] = Join[ {"RowNames" -> False, "ColumnNames" -> True}, Options[Import] ];
+
 ImportCSVToDataset[fname_String, opts : OptionsPattern[]] :=
+    ImportCSVToDataset[fname, Automatic, opts];
+
+ImportCSVToDataset[fname_String, format : (_String | Automatic), opts : OptionsPattern[]] :=
     Block[{data},
-      data = Import[fname];
+
+      If[ TrueQ[format === Automatic],
+        data = Import[fname, FilterRules[{opts}, Options[Import]] ],
+        (* ELSE *)
+        data = Import[fname, format, FilterRules[{opts}, Options[Import]] ]
+      ];
+
       If[OptionValue["ColumnNames"],
         data = Dataset[Dataset[Rest[data]][All, AssociationThread[First[data], #] &]],
         (*ELSE*)
         data = Dataset[data]
       ];
+
       If[OptionValue["RowNames"],
         data = Dataset[AssociationThread[Normal[data[All, First]], Normal[data[All, Rest]]]]
       ];
+
       data
     ];
 
