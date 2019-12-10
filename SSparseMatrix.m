@@ -449,7 +449,7 @@ Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
 
 Clip[SSparseMatrix[objArg_], args___] ^:=
     Block[{obj=objArg},
-      obj["SparseMatrix"] = Clip[ obj["SparseMatrix"], args];
+      obj["SparseMatrix"] = SparseArray[Clip[ obj["SparseMatrix"], args]];
       SSparseMatrix[obj]
     ];
 
