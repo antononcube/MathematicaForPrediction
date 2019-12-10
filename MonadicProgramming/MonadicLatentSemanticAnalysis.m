@@ -640,7 +640,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         M1 = Transpose[M1];
         M1 = Map[# &, M1];
         H = ConstantArray[0, {k, n}];
-        W = Table[Total[RandomSample[M1, p]], {k}];
+        W = Table[Total[RandomSample[M1, UpTo[p]]], {k}];
         Do[
           W[[i]] = W[[i]] / Norm[W[[i]]];
           , {i, 1, Length[W]}];
