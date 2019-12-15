@@ -1451,7 +1451,9 @@ LSAMonEchoDocumentTermMatrixStatistics[__][___] :=
 
 Clear[LSAMonMakeGraph];
 
-Options[LSAMonMakeGraph] = { "Weighted" -> True, "Type" -> "Bipartite", "RemoveLoops" -> True, "MatrixResult" -> False };
+SyntaxInformation[LSAMonMakeGraph] = { "ArgumentsPattern" -> { OptionsPattern[] } };
+
+Options[LSAMonMakeGraph] = { "Weighted" -> True, "Type" -> "Bipartite", "RemoveLoops" -> True, "MatrixResult" -> False, "Thresholds" -> {0.1, 1} };
 
 LSAMonMakeGraph[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -1460,7 +1462,8 @@ LSAMonMakeGraph[$LSAMonFailure] := $LSAMonFailure;
 LSAMonMakeGraph[xs_, context_Association] := LSAMonMakeGraph[Options[LSAMonMakeGraph]][xs, context];
 
 LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{weightedQ, matrixResultQ, type, am, arules, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
+    Block[{weightedQ, matrixResultQ, type, thresholds,
+      am, arules, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
 
       weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
 
@@ -1475,6 +1478,20 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         Return[$LSAMonFailure]
       ];
 
+      type =
+          Switch[
+            type,
+            "Document", "DocumentDocument",
+            "Term", "TermTerm",
+            _, type
+          ];
+
+      thresholds = OptionValue[LSAMonMakeGraph, "Thresholds"];
+      If[ !( VectorQ[thresholds, NumericQ] && Length[thresholds] == 2 ),
+        Echo[ "The value of the option \"Thresholds\" is expected to be a list of two numeric values (to be given to Clip.)", "LSAMonMakeGraph:"];
+        Return[$LSAMonFailure]
+      ];
+
       Which[
         MatrixQ[xs],
         am = xs,
@@ -1482,8 +1499,11 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         SSparseMatrixQ[xs],
         am = xs,
 
-        KeyExistsQ[context, "W"],
+        KeyExistsQ[context, "W"] && type == "DocumentDocument",
         am = context["W"],
+
+        KeyExistsQ[context, "H"] && type == "TermTerm",
+        am = context["H"],
 
         KeyExistsQ[context, "weightedDocumentTermMatrix"],
         am = context["weightedDocumentTermMatrix"],
@@ -1501,6 +1521,8 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         colNames = ColumnNames[am];
       ];
 
+      am = Clip[ am, thresholds, {0, 1}];
+
       (* Note that this takes the SparseArray object of a SSparseMatrix object. *)
       am = SparseArray[am];
 
@@ -1515,7 +1537,7 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         am = SparseArray[ArrayFlatten[{{0, am}, {Transpose[am], 0}}]];
         res = AdjacencyGraph[am, DirectedEdges -> True],
 
-        weightedQ && ( type == "DocumentDocument" || type == "Document" ),
+        weightedQ && type == "DocumentDocument",
         am = am . Transpose[am];
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1 / Norm[#1]] &, Transpose[am]]]];
         arules = Append[Most[ArrayRules[am]], {_, _} -> Infinity];
@@ -1526,13 +1548,13 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         (* res = WeightedAdjacencyGraph[am, DirectedEdges -> True ], *)
         res = Graph[ Map[ Property[ DirectedEdge @@ #[[1]], EdgeWeight -> #[[2]] ]&, Most[arules] ] ],
 
-        !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
+        !weightedQ && type == "DocumentDocument",
         am = am . Transpose[am];
         If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
         am = Unitize[am];
         res = AdjacencyGraph[am],
 
-        weightedQ && ( type == "TermTerm" || type == "Term" ),
+        weightedQ && type == "TermTerm",
         am = Transpose[am] . am;
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1 / Norm[#1]] &, Transpose[am]]]];
         arules = Append[Most[ArrayRules[am]], {_, _} -> Infinity];
@@ -1542,7 +1564,7 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         am = SparseArray[ arules, Dimensions[am] ];
         res = WeightedAdjacencyGraph[am, DirectedEdges -> True],
 
-        !weightedQ && ( type == "TermTerm" || type == "Term" ),
+        !weightedQ && type == "TermTerm",
         am = Transpose[am] . am;
         If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
         am = Unitize[am];
@@ -1556,9 +1578,9 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
             Which[
               type == "Bipartite", Join[ rowNames, colNames],
 
-              type == "DocumentDocument" || type == "Document", rowNames,
+              type == "DocumentDocument", rowNames,
 
-              type == "TermTerm" || type == "Term", colNames
+              type == "TermTerm", colNames
             ];
 
         If[ matrixResultQ,
