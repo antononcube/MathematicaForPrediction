@@ -860,7 +860,7 @@ LSAMonInterpretBasisVector[___][$LSAMonFailure] := $LSAMonFailure;
 LSAMonInterpretBasisVector[vectorIndicesArg : ( All | _Integer | {_Integer..}), opts : OptionsPattern[] ][xs_, context_] :=
     Block[{W, H, res, numberOfTerms, vectorIndices = vectorIndicesArg},
 
-      If[ !TrueQ[vectorIndices === All], vectorIndices =  Flatten @ {vectorIndicesArg} ];
+      If[ !TrueQ[vectorIndices === All], vectorIndices = Flatten @ {vectorIndicesArg} ];
 
       numberOfTerms = OptionValue[LSAMonInterpretBasisVector, "NumberOfTerms"];
 
@@ -1245,6 +1245,8 @@ LSAMonRepresentByTopics[__][___] :=
 
 Clear[LSAMonNormalizeMatrixProduct];
 
+SyntaxInformation[LSAMonNormalizeMatrixProduct] = { "ArgumentsPattern" -> { OptionsPattern[] } };
+
 Options[LSAMonNormalizeMatrixProduct] = { Normalized -> Right };
 
 LSAMonNormalizeMatrixProduct[___][$LSAMonFailure] := $LSAMonFailure;
@@ -1458,7 +1460,7 @@ LSAMonMakeGraph[$LSAMonFailure] := $LSAMonFailure;
 LSAMonMakeGraph[xs_, context_Association] := LSAMonMakeGraph[Options[LSAMonMakeGraph]][xs, context];
 
 LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{weightedQ, matrixResultQ, type, am, res, knownGrTypes, removeLoopsQ },
+    Block[{weightedQ, matrixResultQ, type, am, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
 
       weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
 
@@ -1477,6 +1479,12 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         MatrixQ[xs],
         am = xs,
 
+        SSparseMatrixQ[xs],
+        am = xs,
+
+        KeyExistsQ[context, "W"],
+        am = context["W"],
+
         KeyExistsQ[context, "weightedDocumentTermMatrix"],
         am = context["weightedDocumentTermMatrix"],
 
@@ -1484,8 +1492,13 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         am = context["documentTermMatrix"],
 
         True,
-        Echo["Make a document-term matrix first.", "LSAMonMakeGraph:"];
+        Echo["Cannot find a document-topic matrix or a document-term matrix.", "LSAMonMakeGraph:"];
         Return[$LSAMonFailure]
+      ];
+
+      If[ SSparseMatrixQ[am],
+        rowNames = RowNames[am];
+        colNames = ColumnNames[am];
       ];
 
       (* Note that this takes the SparseArray object of a SSparseMatrix object. *)
@@ -1530,8 +1543,28 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
 
       ];
 
+      If[ VectorQ[rowNames],
+
+        vertexNames =
+            Which[
+              type == "Bipartite", Join[ rowNames, colNames],
+
+              type == "DocumentDocument" || type == "Document", rowNames,
+
+              type == "TermTerm" || type == "Term", colNames
+            ];
+
+        If[ matrixResultQ,
+          am = ToSSparseMatrix[ am, "RowNames" -> vertexNames, "ColumnNames" -> vertexNames ],
+          (* ELSE *)
+          res = Graph[ EdgeList[res] /. Thread[Range[Length[vertexNames]] -> vertexNames] ];
+        ];
+
+      ];
+
       If[ matrixResultQ,
         LSAMonUnit[am, context],
+        (* ELSE *)
         LSAMonUnit[res, context]
       ]
     ];
