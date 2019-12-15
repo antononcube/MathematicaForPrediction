@@ -1460,7 +1460,7 @@ LSAMonMakeGraph[$LSAMonFailure] := $LSAMonFailure;
 LSAMonMakeGraph[xs_, context_Association] := LSAMonMakeGraph[Options[LSAMonMakeGraph]][xs, context];
 
 LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{weightedQ, matrixResultQ, type, am, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
+    Block[{weightedQ, matrixResultQ, type, am, arules, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
 
       weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
 
@@ -1518,9 +1518,13 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         weightedQ && ( type == "DocumentDocument" || type == "Document" ),
         am = am . Transpose[am];
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1 / Norm[#1]] &, Transpose[am]]]];
-        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = WeightedAdjacencyGraph[am],
+        arules = Append[Most[ArrayRules[am]], {_, _} -> Infinity];
+        If[removeLoopsQ,
+          arules = DeleteCases[ arules, HoldPattern[ {x_, x_} -> _] ];
+        ];
+        am = SparseArray[ arules, Dimensions[am] ];
+        (* res = WeightedAdjacencyGraph[am, DirectedEdges -> True ], *)
+        res = Graph[ Map[ Property[ DirectedEdge @@ #[[1]], EdgeWeight -> #[[2]] ]&, Most[arules] ] ],
 
         !weightedQ && ( type == "DocumentDocument" || type == "Document" ),
         am = am . Transpose[am];
@@ -1531,9 +1535,12 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
         weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
         am = Transpose[SparseArray[Map[If[Norm[#1] == 0, #1, #1 / Norm[#1]] &, Transpose[am]]]];
-        am = SparseArray[ Append[Most[ArrayRules[am]], {_, _} -> Infinity], Dimensions[am] ];
-        If[removeLoopsQ, am = am - DiagonalMatrix[Diagonal[am]]];
-        res = WeightedAdjacencyGraph[am],
+        arules = Append[Most[ArrayRules[am]], {_, _} -> Infinity];
+        If[removeLoopsQ,
+          arules = DeleteCases[ arules, HoldPattern[ {x_, x_} -> _] ];
+        ];
+        am = SparseArray[ arules, Dimensions[am] ];
+        res = WeightedAdjacencyGraph[am, DirectedEdges -> True],
 
         !weightedQ && ( type == "TermTerm" || type == "Term" ),
         am = Transpose[am] . am;
