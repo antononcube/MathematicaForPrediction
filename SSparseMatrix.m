@@ -444,12 +444,12 @@ Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
 
 
 (*------------------------------------------------------------*)
-(* Rescale & Clip & Unitize                                   *)
+(* Abs & Clip & N & Rescale& Unitize                          *)
 (*------------------------------------------------------------*)
 
-Rescale[SSparseMatrix[objArg_], args___] ^:=
+Abs[SSparseMatrix[objArg_]] ^:=
     Block[{obj=objArg},
-      obj["SparseMatrix"] = SparseArray[Rescale[ obj["SparseMatrix"], args]];
+      obj["SparseMatrix"] = SparseArray[Abs[ obj["SparseMatrix"]]];
       SSparseMatrix[obj]
     ];
 
@@ -459,17 +459,24 @@ Clip[SSparseMatrix[objArg_], args___] ^:=
       SSparseMatrix[obj]
     ];
 
+N[SSparseMatrix[objArg_]] ^:=
+    Block[{obj=objArg},
+      obj["SparseMatrix"] = SparseArray[N[ obj["SparseMatrix"] ]];
+      SSparseMatrix[obj]
+    ];
+
+Rescale[SSparseMatrix[objArg_], args___] ^:=
+    Block[{obj=objArg},
+      obj["SparseMatrix"] = SparseArray[Rescale[ obj["SparseMatrix"], args]];
+      SSparseMatrix[obj]
+    ];
+
 Unitize[SSparseMatrix[objArg_]] ^:=
     Block[{obj=objArg},
       obj["SparseMatrix"] = SparseArray[Unitize[ obj["SparseMatrix"] ]];
       SSparseMatrix[obj]
     ];
 
-N[SSparseMatrix[objArg_]] ^:=
-    Block[{obj=objArg},
-      obj["SparseMatrix"] = SparseArray[N[ obj["SparseMatrix"] ]];
-      SSparseMatrix[obj]
-    ];
 
 
 (*------------------------------------------------------------*)
