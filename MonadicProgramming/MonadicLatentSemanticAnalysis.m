@@ -127,7 +127,7 @@ If[Length[DownValues[DocumentTermMatrixConstruction`DocumentTermMatrix]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DocumentTermMatrixConstruction.m"]
 ];
 
-If[Length[DownValues[NonNegativeMatrixFactorization`GDCLS]] == 0,
+If[Length[DownValues[NonNegativeMatrixFactorization`NonNegativeMatrixFactorization]] == 0,
   Echo["NonNegativeMatrixFactorization.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/NonNegativeMatrixFactorization.m"]
 ];
@@ -532,7 +532,7 @@ Clear[LSAMonExtractTopics];
 Options[LSAMonExtractTopics] =
     Join[
       { "NumberOfTopics" -> None, Method -> "NNMF", "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
-      Options[GDCLSGlobal]
+      Options[NonNegativeMatrixFactorizationGlobal]
     ];
 
 LSAMonExtractTopics[___][$LSAMonFailure] := $LSAMonFailure;
@@ -651,12 +651,12 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         W = SparseArray[W];
         H = SparseArray[H];
 
-        nnmfOpts = FilterRules[ {opts}, Options[GDCLSGlobal] ];
+        nnmfOpts = FilterRules[ {opts}, Options[NonNegativeMatrixFactorizationGlobal] ];
         If[ TrueQ[ ("MaxSteps" /. nnmfOpts) === Automatic ],
           nnmfOpts = Prepend[ nnmfOpts, "MaxSteps" -> 12 ];
         ];
 
-        {W, H} = GDCLSGlobal[M1, W, H, Evaluate[ nnmfOpts ] ],
+        {W, H} = NonNegativeMatrixFactorizationGlobal[M1, W, H, Evaluate[ nnmfOpts ] ],
 
         (* Singular Value Decomposition *)
         method == "SVD" && KeyExistsQ[context, "weightedDocumentTermMatrix"] && SSparseMatrixQ[context["weightedDocumentTermMatrix"]],
@@ -1465,7 +1465,7 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
     Block[{weightedQ, matrixResultQ, type, thresholds,
       am, arules, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
 
-      weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
+      weightedQ = TrueQ[OptionValue[LSAMonMakeDraph, "Weighted"]];
 
       type = OptionValue[LSAMonMakeGraph, "Type"];
 
