@@ -20,11 +20,12 @@ Questions:
     5. What advice do you have for staying current with the advancing systems in this field?
 
 
-Q1: What types of data would you say are the most challenging to collect, manage, and clean? Why?
-Q2: You mentioned you were a developer for many years. Are you still programming as a data scientist?
-Q3: What is the very first step you take when cleaning an enormous data set.
-Q4: Do you use one "master tool " to clean your data sets? or go-between serval ones?
-Q5: what percent of your work day would you say is learning compared to doing daily tasks?
+    Q1: What types of data would you say are the most challenging to collect, manage, and clean? Why?
+    Q2: You mentioned you were a developer for many years. Are you still programming as a data scientist?
+    Q3: What is the very first step you take when cleaning an enormous data set.
+    Q4: Do you use one "master tool " to clean your data sets? or go-between serval ones?
+    Q5: what percent of your work day would you say is learning compared to doing daily tasks?
+
     1. Python as many believe is a springboard into other programming languages and convenient for beginners in programming due to it being easier to learn compared to many other languages. Why do you prefer RStudio than Python?
     2. In other to be successful data analytics, what are the most important skill sets needed?
     3. In the hiring process, most organizations look out for experienced people or at least someone from a healthcare background. How can a fresh graduate with no healthcare background or sufficient experience tap into the informatics field?
@@ -41,7 +42,7 @@ Q5: what percent of your work day would you say is learning compared to doing da
     3. What skills does an individual require in order to be a success at data analytics?
     4. In as much as a tool such as python is conceptualized as a springboard that is highly valuable in language programming particularly to those not conversant with it, what other reasons people prefer it over RStudio.
     5. The informatics seem to be favoring people with knowledge about it, how can the healthcare then accommodate those without the same knowledge?
-References
+
 My 5 questions for Anton:
     1. I’ve read that R has a steep learning curve for beginning programmers and coders, what kind of advice would you have for someone who is new and starting off with R and computer programming altogether to overcome this learning curve?  
     2. You mentioned you had a background working with recommendation engines such as the one on Netflix before working in healthcare, Has this helped you in the healthcare side of your career? Have you used or created anything similar to a recommendation engine in healthcare?
@@ -71,13 +72,17 @@ My 5 questions for Anton:
     5. Do you have advice for students interested in analytics but unsure of how to prepare for that career path?
 
 
-Questions: 1. Could you perhaps use another example to explain how you determined the most important variable? 2. When has the R Notebook HTML version been most helpful? 3. What kind of experience is essential for entry-level data scientist positions? 4. The Mosaic plot seemed similar to something that could be designed in Tableau, does R Studio have many different graphical inserts to plot data? 5. Are there certain journals you read to stay current on data-driven science?
+Questions: 1. Could you perhaps use another example to explain how you determined the most important variable?
+    2. When has the R Notebook HTML version been most helpful?
+    3. What kind of experience is essential for entry-level data scientist positions?
+    4. The Mosaic plot seemed similar to something that could be designed in Tableau, does R Studio have many different graphical inserts to plot data?
+    5. Are there certain journals you read to stay current on data-driven science?
 
-1. As you know many programming languages, what other programming languages would you recommend learning after R?
-2. How long do you think it will take to be 90% proficient in R programming language? Assume: a person works 7 hours a day in an R environment.
-3. What are your thoughts of a clinician who knows R very well? Is it more effective in analyzing data since he or she has a clinical background?
-4. What is a data scientist final destination? (from your point of view) or What do you see data scientists in 2040?
-5. What is your most satisfied moment as a data scientist?
+    1. As you know many programming languages, what other programming languages would you recommend learning after R?
+    2. How long do you think it will take to be 90% proficient in R programming language? Assume: a person works 7 hours a day in an R environment.
+    3. What are your thoughts of a clinician who knows R very well? Is it more effective in analyzing data since he or she has a clinical background?
+    4. What is a data scientist final destination? (from your point of view) or What do you see data scientists in 2040?
+    5. What is your most satisfied moment as a data scientist?
 
 
     1. What’s the best method to learn to present the data in physicians’ perspective if I don’t have a clinical background?
