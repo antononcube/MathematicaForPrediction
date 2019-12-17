@@ -444,7 +444,7 @@ Total[SSparseMatrix[obj_], args___] ^:= Total[obj["SparseMatrix"], args];
 
 
 (*------------------------------------------------------------*)
-(* Abs & Clip & N & Rescale& Unitize                          *)
+(* Abs & Clip & N & Rescale & Unitize                         *)
 (*------------------------------------------------------------*)
 
 Abs[SSparseMatrix[objArg_]] ^:=
