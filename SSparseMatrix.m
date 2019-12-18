@@ -455,13 +455,13 @@ Abs[SSparseMatrix[objArg_]] ^:=
 
 Clip[SSparseMatrix[objArg_], args___] ^:=
     Block[{obj=objArg},
-      obj["SparseMatrix"] = SparseArray[Clip[ obj["SparseMatrix"], args]];
+      obj["SparseMatrix"] = SparseArray[Clip[ obj["SparseMatrix"], args ]];
       SSparseMatrix[obj]
     ];
 
-N[SSparseMatrix[objArg_]] ^:=
+N[SSparseMatrix[objArg_], args___] ^:=
     Block[{obj=objArg},
-      obj["SparseMatrix"] = SparseArray[N[ obj["SparseMatrix"] ]];
+      obj["SparseMatrix"] = SparseArray[N[ obj["SparseMatrix"], args ]];
       SSparseMatrix[obj]
     ];
 
