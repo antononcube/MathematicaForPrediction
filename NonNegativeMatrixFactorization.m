@@ -215,9 +215,16 @@ NonNegativeMatrixFactorization[V_?MatrixQ, k_?IntegerQ, opts : OptionsPattern[]]
 
 Clear[NonNegativeMatrixFactorizationGlobal];
 
+SyntaxInformation[NonNegativeMatrixFactorizationGlobal] = { "ArgumentsPattern" -> { _, _, _, OptionsPattern[] } };
+
+NonNegativeMatrixFactorizationGlobal::ndim = "The second argument is expected to be a positive integer";
+
 NonNegativeMatrixFactorizationGlobal::nmsteps = "The value of the option MaxSteps is expected to be a positive integer";
 
-NonNegativeMatrixFactorizationGlobal::npreal = "The value of the option `1` is expected to be a positive real number or Automatic.";
+NonNegativeMatrixFactorizationGlobal::npreal = "The value of the option `1` is expected to be a positive real number or Automatic";
+
+NonNegativeMatrixFactorizationGlobal::nnorm = "The value of the option Normalization is expected to be one of \
+Left, Right, True, False, None, or Automatic.";
 
 Options[NonNegativeMatrixFactorizationGlobal] = Options[NonNegativeMatrixFactorization];
 
@@ -225,40 +232,48 @@ SetAttributes[NonNegativeMatrixFactorizationGlobal, HoldAll];
 
 NonNegativeMatrixFactorizationGlobal[V_, W_, H_, opts : OptionsPattern[]] :=
     Block[{t, fls, A, k, T, m, n, b, diffNorm, normV, nSteps = 0,
-      nonnegQ, maxSteps, eps, lbd, pgoal, PRINT},
+      nonnegQ, normalization, maxSteps, eps, lbd, pgoal, PRINT},
 
-      nonnegQ = TrueQ[OptionValue[NonNegativeMatrixFactorizationGlobal, "NonNegative"]];
-      maxSteps = OptionValue[NonNegativeMatrixFactorizationGlobal, MaxSteps];
       eps = OptionValue[NonNegativeMatrixFactorizationGlobal, "Epsilon"];
+      maxSteps = OptionValue[NonNegativeMatrixFactorizationGlobal, MaxSteps];
+      nonnegQ = TrueQ[OptionValue[NonNegativeMatrixFactorizationGlobal, "NonNegative"]];
+      normalization = OptionValue[NonNegativeMatrixFactorizationGlobal, "Normalization"];
+      pgoal = OptionValue[NonNegativeMatrixFactorizationGlobal, PrecisionGoal];
       lbd = OptionValue[NonNegativeMatrixFactorizationGlobal, "RegularizationParameter"];
       pgoal = OptionValue[NonNegativeMatrixFactorizationGlobal, PrecisionGoal];
-      PRINT = If[TrueQ[OptionValue[NonNegativeMatrixFactorizationGlobal, "PrintProfilingInfo"]], Print, None];
+      PRINT = If[TrueQ[OptionValue[NonNegativeMatrixFactorizationGlobal, "ProfilingPrints"]], Print, None];
 
-      If[ !( IntegerQ[maxSteps] && maxSteps > 0 ),
+      If[! (IntegerQ[k] && k > 0),
+        Message[NonNegativeMatrixFactorizationGlobal::ndim];
+        Return[$Failed];
+      ];
+
+      If[! (IntegerQ[maxSteps] && maxSteps > 0),
         Message[NonNegativeMatrixFactorizationGlobal::nmsteps];
         Return[$Failed];
       ];
 
-      If[ TrueQ[eps === Automatic], eps = 10^-6. ];
+      If[TrueQ[eps === Automatic], eps = 10^-6.];
 
-      If[ !( NumericQ[eps] && eps > 0 ),
+      If[! (NumericQ[eps] && eps > 0),
         Message[NonNegativeMatrixFactorizationGlobal::npreal, "Epsilon"];
         Return[$Failed];
       ];
 
-      If[ TrueQ[lbd === Automatic], lbd = 0.01 ];
+      If[TrueQ[lbd === Automatic], lbd = 0.01];
 
-      If[ !( NumericQ[lbd] && lbd > 0 ),
+      If[! (NumericQ[lbd] && lbd > 0),
         Message[NonNegativeMatrixFactorizationGlobal::npreal, "RegularizationParameter"];
         Return[$Failed];
       ];
 
-      If[ TrueQ[pgoal === Automatic], pgoal = 4 ];
+      If[TrueQ[pgoal === Automatic], pgoal = 4];
 
-      If[ !( NumericQ[pgoal] && pgoal > 0 ),
+      If[! (NumericQ[pgoal] && pgoal > 0),
         Message[NonNegativeMatrixFactorizationGlobal::npreal, "PrecisionGoal"];
         Return[$Failed];
       ];
+
 
       {m, n} = Dimensions[V];
       k = Dimensions[H][[1]];
