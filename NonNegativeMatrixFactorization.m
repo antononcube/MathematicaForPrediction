@@ -217,8 +217,6 @@ Clear[NonNegativeMatrixFactorizationGlobal];
 
 SyntaxInformation[NonNegativeMatrixFactorizationGlobal] = { "ArgumentsPattern" -> { _, _, _, OptionsPattern[] } };
 
-NonNegativeMatrixFactorizationGlobal::ndim = "The second argument is expected to be a positive integer";
-
 NonNegativeMatrixFactorizationGlobal::nmsteps = "The value of the option MaxSteps is expected to be a positive integer";
 
 NonNegativeMatrixFactorizationGlobal::npreal = "The value of the option `1` is expected to be a positive real number or Automatic";
@@ -242,11 +240,6 @@ NonNegativeMatrixFactorizationGlobal[V_, W_, H_, opts : OptionsPattern[]] :=
       lbd = OptionValue[NonNegativeMatrixFactorizationGlobal, "RegularizationParameter"];
       pgoal = OptionValue[NonNegativeMatrixFactorizationGlobal, PrecisionGoal];
       PRINT = If[TrueQ[OptionValue[NonNegativeMatrixFactorizationGlobal, "ProfilingPrints"]], Print, None];
-
-      If[! (IntegerQ[k] && k > 0),
-        Message[NonNegativeMatrixFactorizationGlobal::ndim];
-        Return[$Failed];
-      ];
 
       If[! (IntegerQ[maxSteps] && maxSteps > 0),
         Message[NonNegativeMatrixFactorizationGlobal::nmsteps];
