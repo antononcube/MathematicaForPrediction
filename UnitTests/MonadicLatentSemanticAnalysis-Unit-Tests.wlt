@@ -193,7 +193,7 @@ VerificationTest[ (* 9 *)
         LSAMonBind,
         lsaObj,
         {
-          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "ProfilingPrints" -> False],
           LSAMonMakeTopicsTable
         }
       ];
@@ -227,7 +227,7 @@ VerificationTest[ (* 11 *)
         {
           LSAMonMakeDocumentTermMatrix[{}, Automatic],
           LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "ProfilingPrints" -> False],
           LSAMonMakeTopicsTable
         }
       ];
@@ -409,7 +409,7 @@ VerificationTest[ (* 26 *)
         {
           LSAMonSetDocumentTermMatrix[ LSAMonBind[ lsaObj3, LSAMonTakeDocumentTermMatrix] ],
           LSAMonApplyTermWeightFunctions["IDF", "None", "Cosine"],
-          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "ProfilingPrints" -> False],
           LSAMonMakeTopicsTable
         }
       ];
@@ -432,7 +432,7 @@ VerificationTest[ (* 27 *)
         LSAMonUnit[],
         {
           LSAMonSetWeightedDocumentTermMatrix[ LSAMonBind[ lsaObj3, LSAMonTakeWeightedDocumentTermMatrix] ],
-          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "PrintProfilingInfo" -> False],
+          LSAMonExtractTopics[12, "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, "MaxSteps" -> 12, "ProfilingPrints" -> False],
           LSAMonMakeTopicsTable
         }
       ];
