@@ -86,20 +86,20 @@ Begin["`Private`"];
 (***********************************************************)
 
 
-Clear[NonnegativeMatrixFactorization];
+Clear[NonNegativeMatrixFactorization];
 
-SyntaxInformation[NonnegativeMatrixFactorization] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+SyntaxInformation[NonNegativeMatrixFactorization] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
 
-NonnegativeMatrixFactorization::ndim = "The second argument is expected to be a positive integer";
+NonNegativeMatrixFactorization::ndim = "The second argument is expected to be a positive integer";
 
-NonnegativeMatrixFactorization::nmsteps = "The value of the option MaxSteps is expected to be a positive integer";
+NonNegativeMatrixFactorization::nmsteps = "The value of the option MaxSteps is expected to be a positive integer";
 
-NonnegativeMatrixFactorization::npreal = "The value of the option `1` is expected to be a positive real number or Automatic";
+NonNegativeMatrixFactorization::npreal = "The value of the option `1` is expected to be a positive real number or Automatic";
 
-NonnegativeMatrixFactorization::nnorm = "The value of the option Normalization is expected to be one of \
+NonNegativeMatrixFactorization::nnorm = "The value of the option Normalization is expected to be one of \
 Left, Right, True, False, None, or Automatic.";
 
-Options[NonnegativeMatrixFactorization] = {
+Options[NonNegativeMatrixFactorization] = {
   "Epsilon" -> 10^-6.,
   MaxSteps -> 200,
   "NonNegative" -> True,
@@ -109,47 +109,47 @@ Options[NonnegativeMatrixFactorization] = {
   "RegularizationParameter" -> 0.01
 };
 
-NonnegativeMatrixFactorization[V_?MatrixQ, k_?IntegerQ, opts : OptionsPattern[]] :=
+NonNegativeMatrixFactorization[V_?MatrixQ, k_?IntegerQ, opts : OptionsPattern[]] :=
     Block[{t, fls, A, W, H, T, m, n, b, diffNorm, normV, nSteps = 0,
       nonnegQ, normalization, maxSteps, eps, lbd, pgoal, PRINT},
 
-      eps = OptionValue[NonnegativeMatrixFactorization, "Epsilon"];
-      maxSteps = OptionValue[NonnegativeMatrixFactorization, MaxSteps];
-      nonnegQ = TrueQ[OptionValue[NonnegativeMatrixFactorization, "NonNegative"]];
-      normalization = OptionValue[NonnegativeMatrixFactorization, "Normalization"];
-      pgoal = OptionValue[NonnegativeMatrixFactorization, PrecisionGoal];
-      lbd = OptionValue[NonnegativeMatrixFactorization, "RegularizationParameter"];
-      pgoal = OptionValue[NonnegativeMatrixFactorization, PrecisionGoal];
-      PRINT = If[TrueQ[OptionValue[NonnegativeMatrixFactorization, "ProfilingPrints"]], Print, None];
+      eps = OptionValue[NonNegativeMatrixFactorization, "Epsilon"];
+      maxSteps = OptionValue[NonNegativeMatrixFactorization, MaxSteps];
+      nonnegQ = TrueQ[OptionValue[NonNegativeMatrixFactorization, "NonNegative"]];
+      normalization = OptionValue[NonNegativeMatrixFactorization, "Normalization"];
+      pgoal = OptionValue[NonNegativeMatrixFactorization, PrecisionGoal];
+      lbd = OptionValue[NonNegativeMatrixFactorization, "RegularizationParameter"];
+      pgoal = OptionValue[NonNegativeMatrixFactorization, PrecisionGoal];
+      PRINT = If[TrueQ[OptionValue[NonNegativeMatrixFactorization, "ProfilingPrints"]], Print, None];
 
       If[! (IntegerQ[k] && k > 0),
-        Message[NonnegativeMatrixFactorization::ndim];
+        Message[NonNegativeMatrixFactorization::ndim];
         Return[$Failed];
       ];
 
       If[! (IntegerQ[maxSteps] && maxSteps > 0),
-        Message[NonnegativeMatrixFactorization::nmsteps];
+        Message[NonNegativeMatrixFactorization::nmsteps];
         Return[$Failed];
       ];
 
       If[TrueQ[eps === Automatic], eps = 10^-6.];
 
       If[! (NumericQ[eps] && eps > 0),
-        Message[NonnegativeMatrixFactorization::npreal, "Epsilon"];
+        Message[NonNegativeMatrixFactorization::npreal, "Epsilon"];
         Return[$Failed];
       ];
 
       If[TrueQ[lbd === Automatic], lbd = 0.01];
 
       If[! (NumericQ[lbd] && lbd > 0),
-        Message[NonnegativeMatrixFactorization::npreal, "RegularizationParameter"];
+        Message[NonNegativeMatrixFactorization::npreal, "RegularizationParameter"];
         Return[$Failed];
       ];
 
       If[TrueQ[pgoal === Automatic], pgoal = 4];
 
       If[! (NumericQ[pgoal] && pgoal > 0),
-        Message[NonnegativeMatrixFactorization::npreal, "PrecisionGoal"];
+        Message[NonNegativeMatrixFactorization::npreal, "PrecisionGoal"];
         Return[$Failed];
       ];
 
@@ -202,7 +202,7 @@ NonnegativeMatrixFactorization[V_?MatrixQ, k_?IntegerQ, opts : OptionsPattern[]]
         {W, H} = RightNormalizeMatrixProduct[W, H],
 
         ! MemberQ[{False, None}, normalization],
-        Message[NonnegativeMatrixFactorization::nnorm];
+        Message[NonNegativeMatrixFactorization::nnorm];
       ];
 
       {W, H}
