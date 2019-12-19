@@ -1465,7 +1465,7 @@ LSAMonMakeGraph[opts : OptionsPattern[]][xs_, context_] :=
     Block[{weightedQ, matrixResultQ, type, thresholds,
       am, arules, res, knownGrTypes, removeLoopsQ, rowNames = None, colNames = None, vertexNames },
 
-      weightedQ = TrueQ[OptionValue[LSAMonMakeDraph, "Weighted"]];
+      weightedQ = TrueQ[OptionValue[LSAMonMakeGraph, "Weighted"]];
 
       type = OptionValue[LSAMonMakeGraph, "Type"];
 
