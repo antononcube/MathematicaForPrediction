@@ -222,6 +222,7 @@ Needs["NonNegativeMatrixFactorization`"];
 Needs["IndependentComponentAnalysis`"];
 Needs["CrossTabulate`"];
 Needs["OutlierIdentifiers`"];
+Needs["ParetoPrincipleAdherence`"];
 
 
 (**************************************************************)
@@ -1386,7 +1387,7 @@ LSAMonEchoDocumentsStatistics[__][___] :=
 
 Clear[LSAMonEchoDocumentTermMatrixStatistics];
 
-Options[LSAMonEchoDocumentTermMatrixStatistics] = Join[ {"LogBase" -> None}, Options[Histogram] ];
+Options[LSAMonEchoDocumentTermMatrixStatistics] = Join[ {"LogBase" -> None, "ParetoPrinciplePlots" -> False }, Options[Histogram] ];
 
 LSAMonEchoDocumentTermMatrixStatistics[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -1395,9 +1396,11 @@ LSAMonEchoDocumentTermMatrixStatistics[xs_, context_Association] := LSAMonEchoDo
 LSAMonEchoDocumentTermMatrixStatistics[][xs_, context_Association] := LSAMonEchoDocumentTermMatrixStatistics[ImageSize -> 300][xs, context];
 
 LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{logBase, logFunc, logInsert, dOpts, smat},
+    Block[{logBase, paretoQ, logFunc, logInsert, dOpts, smat},
 
       logBase = OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "LogBase"];
+
+      paretoQ = TrueQ[ OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "ParetoPrinciplePlots"] ];
 
       If[ TrueQ[ texts === $LSAMonFailure], Return[$LSAMonFailure] ];
 
@@ -1422,15 +1425,23 @@ LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :
       Echo[
         Grid[{
           {
-            Row[{"Dimensions:", Dimensions[smat]}],
-            Row[{"Density:", SparseArray[smat]["Density"]}],
+            Row[{"Dimensions:", Spacer[3], Dimensions[smat]}],
+            Row[{"Density:", Spacer[3], SparseArray[smat]["Density"]}],
             SpanFromLeft
           },
           {
             Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts],
             Histogram[ logFunc[ Total[Transpose[smat]] ], PlotLabel -> Capitalize[logInsert] <> " terms per document", FrameLabel -> {"Terms", "Documents"}, dOpts],
             Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]
-          }
+          },
+          If[ paretoQ,
+            {
+              ParetoPrinciplePlot[ ColumnSums[ context["documentTermMatrix"] ], FrameLabel -> {"Terms", "Occurrences"}, dOpts ],
+              ParetoPrinciplePlot[ Total[smat], FrameLabel -> {"Terms", "Documents"}, dOpts ],
+              ParetoPrinciplePlot[ Total[Transpose[smat]], FrameLabel -> {"Documents", "Terms"}, dOpts ]
+            },
+            Nothing
+          ]
         }],
         "Context value \"documentTermMatrix\":"
       ];
