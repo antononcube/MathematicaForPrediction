@@ -77,6 +77,11 @@ ToWideForm::usage = "ToWideForm[ds_Dataset, idColumns_, variableColumn_, valueCo
 converts the dataset ds into wide form. The result dataset has columns that are unique values of \
 variableColumn and with values that are the corresponding values of valueColumn.";
 
+RecordsToLongForm::usage = "RecordsToLongForm[records: Association[(_ -> _Association) ..]] \
+converts an association of associations into long form dataset.";
+
+RecordsToWideForm::usage = "RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] \
+convert a list of associations into wide form using a specified aggregation function.";
 
 Begin["`Private`"];
 
@@ -201,7 +206,10 @@ ToLongForm[___] :=
 
 (* This an "internal" function. It is assumed that all records have the same keys. *)
 (* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
-RecordsToLongForm[records: Association[(_ -> _Association) ..]] :=
+RecordsToLongForm[records: Association[(_?AtomQ -> _Association) ..]] :=
+    RecordsToLongForm[ KeyMap[ <|"RowKey"->#|>&, records ] ];
+
+RecordsToLongForm[records: Association[(_Association -> _Association) ..]] :=
     Block[{res},
       res =
           KeyValueMap[
