@@ -206,7 +206,11 @@ ToLongForm[___] :=
 
 (* This an "internal" function. It is assumed that all records have the same keys. *)
 (* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
-RecordsToLongForm[records: Association[(_?AtomQ -> _Association) ..]] :=
+Clear[RecordsToLongForm];
+
+NotAssociationQ[x_] := Not[AssociationQ[x]];
+
+RecordsToLongForm[records: Association[( _?NotAssociationQ -> _Association) ..]] :=
     RecordsToLongForm[ KeyMap[ <|"RowKey"->#|>&, records ] ];
 
 RecordsToLongForm[records: Association[(_Association -> _Association) ..]] :=
