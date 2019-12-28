@@ -329,31 +329,119 @@ RecordsSummary[___] := (Message[RecordsSummary::args];$Failed);
 (*===========================================================*)
 
 Clear[GridTableForm];
-Options[GridTableForm] = Join[ {TableHeadings -> None}, Options[Grid] ];
-GridTableForm[data_, opts : OptionsPattern[]] :=
-    Block[{gridData, gridHeadings, dataVecQ = False},
-      gridHeadings = OptionValue[GridTableForm, TableHeadings];
+
+GridTableForm::nargs = "The first argument is expected to be a list or an association.";
+GridTableForm::nthr = "The value of the option \"TableHeadings\" is expected to be a list, Automatic, or None.";
+
+SyntaxInformation[GridTableForm] = {"ArgumentsPattern" -> {_, OptionsPattern[]}};
+
+Options[GridTableForm] =
+    Join[{
+      "TableHeadings" -> Automatic,
+      "TableHeadingsStyle" -> {Blue, FontFamily -> "Times"},
+      "RowBackground" -> {White, GrayLevel[0.96]}},
+      Options[Grid]
+    ];
+
+GridTableForm[data_Association, opts : OptionsPattern[]] :=
+    GridTableForm[Values[data], opts, "TableHeadings" -> Keys[data]];
+
+GridTableForm[data_List, opts : OptionsPattern[]] :=
+    Block[{headingsStyle, contrastingColorsPair, rowNames, gridHeadings,
+      gridData, dataVecQ = False},
+
+      headingsStyle = OptionValue[GridTableForm, "TableHeadingsStyle"];
+      contrastingColorsPair = OptionValue[GridTableForm, "RowBackground"];
+      gridHeadings = OptionValue[GridTableForm, "TableHeadings"];
+
+      If[AtomQ[contrastingColorsPair] || TrueQ[Head[contrastingColorsPair] === RGBColor],
+        contrastingColorsPair = {contrastingColorsPair, contrastingColorsPair}
+      ];
+
       gridData = data;
-      If[VectorQ[data], dataVecQ = True; gridData = List@data ];
+
+      If[VectorQ[data],
+        dataVecQ = True;
+        gridData = List@data
+      ];
+
+      (* Headings *)
+      Which[
+        TrueQ[gridHeadings === None],
+        {rowNames, gridHeadings} = {Automatic, Automatic},
+
+        TrueQ[gridHeadings === Automatic],
+        {rowNames, gridHeadings} = {Automatic, Automatic},
+
+        MatchQ[gridHeadings, {_List | None | Automatic, _List | None | Automatic}],
+        rowNames = gridHeadings[[1]];
+        gridHeadings = gridHeadings[[2]],
+
+        ListQ[gridHeadings],
+        rowNames = Automatic,
+
+        True,
+        {rowNames, gridHeadings} = {Automatic, Automatic}
+      ];
+
+      If[TrueQ[rowNames === Automatic] || TrueQ[rowNames === None],
+        rowNames = Range[Length[gridData]]
+      ];
+
+      Which[
+        Length[rowNames] < Length[gridData],
+        rowNames =
+            Join[rowNames, Table[SpanFromAbove, Length[gridData] - Length[rowNames]]],
+
+        Length[rowNames] > Length[gridData],
+        rowNames = Take[rowNames, Length[gridData]]
+      ];
+
       gridData = Map[Join[#, Table["", {Max[Length /@ gridData] - Length[#]}]] &, gridData];
-      gridData = MapIndexed[Prepend[#1, #2[[1]]] &, gridData];
-      If[gridHeadings === None || ! ListQ[gridHeadings],
+      gridData = MapThread[Prepend, {gridData, rowNames}];
+
+      Which[
+        TrueQ[gridHeadings === None] || TrueQ[gridHeadings === Automatic],
         gridHeadings = Join[{"#"}, Range[1, Length[gridData[[1]]] - 1]],
-        (*ELSE*)
-        gridHeadings = Join[{"#"}, gridHeadings];
+
+        ListQ[gridHeadings],
+        gridHeadings = Join[{"#"}, gridHeadings],
+
+        True,
+        Message[GridTableForm::nthr];
+        gridHeadings = Join[{"#"}, Range[1, Length[gridData[[1]]] - 1]]
       ];
-      gridHeadings = Map[Style[#, Blue, FontFamily -> "Times"] &, gridHeadings];
-      If[Length[gridHeadings] < Length[gridData[[1]]],
-        gridHeadings = Append[gridHeadings, SpanFromLeft];
+
+      gridHeadings = Map[Style[#, Sequence @@ Flatten[{headingsStyle}]] &, gridHeadings];
+
+      Which[
+        Length[gridHeadings] < Length[gridData[[1]]],
+        gridHeadings = Append[gridHeadings, SpanFromLeft],
+
+        Length[gridHeadings] > Length[gridData[[1]]],
+        gridHeadings = Take[gridHeadings, Length[gridData[[1]]]]
       ];
+
+      (* Final grid data *)
       gridData = Prepend[gridData, gridHeadings];
-      (*If[dataVecQ, gridData = Transpose[gridData] ];*)
+
       Grid[gridData,
-        DeleteCases[ {opts}, (TableHeadings -> _)],
+        FilterRules[{opts}, Options[Grid]],
         Alignment -> Left,
         Dividers -> {Join[{1 -> Black, 2 -> Black},
-          Thread[Range[3, Length[gridData[[2]]] + 1] -> GrayLevel[0.8]], {Length[gridData[[2]]] + 1 -> Black}], {True, True, {False}, True}},
-        Background -> {Automatic, Flatten[Table[{White, GrayLevel[0.96]}, {Length[gridData] / 2}]]}]
+          Thread[Range[3, Length[gridData[[2]]] + 1] ->
+              GrayLevel[0.8]], {Length[gridData[[2]]] + 1 -> Black}], {True,
+          True, {False}, True}},
+        Background -> {Automatic,
+          If[EvenQ[Length[gridData]], #, Append[#, contrastingColorsPair[[1]]]] &@
+              Flatten[Table[contrastingColorsPair, {Length[gridData] / 2}]]}
+      ]
+    ];
+
+GridTableForm[___] :=
+    Block[{},
+      Message[GridTableForm::nargs];
+      $Failed
     ];
 
 
