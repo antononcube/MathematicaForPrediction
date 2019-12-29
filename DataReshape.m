@@ -78,10 +78,10 @@ converts the dataset ds into wide form. The result dataset has columns that are 
 variableColumn and with values that are the corresponding values of valueColumn.";
 
 RecordsToLongForm::usage = "RecordsToLongForm[records: Association[(_ -> _Association) ..]] \
-converts an association of associations into long form dataset.";
+converts an association of associations into a long form dataset.";
 
 RecordsToWideForm::usage = "RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] \
-convert a list of associations into wide form using a specified aggregation function.";
+converts a list of associations into a wide form dataset using a specified aggregation function.";
 
 Begin["`Private`"];
 
@@ -99,6 +99,8 @@ ColumnSpecQ[x_] := IntegerQ[x] || StringQ[x] || MatchQ[x, Key[__]];
 (***********************************************************)
 
 Clear[ToLongForm];
+
+ToLongForm[ds_Association] := RecordsToLongForm[ds];
 
 ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumn_?ColumnSpecQ] := ToLongForm[ds, {idColumn}, {valueColumn}];
 
@@ -195,8 +197,9 @@ ToLongForm[ds_Dataset, "RowID", valueColumns_List] :=
       ToLongForm[ds, 0, Flatten[Position[keys,#]& /@ valueColumns] ]
     ];
 
-ToLongForm::args = "The first argument is expected to be a dataset; \
-the rest of the arguments are expected to be columns specifications.";
+ToLongForm::args = "The first argument is expected to be an association or a dataset. \
+If the first argument is an association then no other arguments are expected. \
+If the first argument is a dataset then the rest of the arguments are expected to be columns specifications.";
 
 ToLongForm[___] :=
     Block[{},
@@ -204,12 +207,14 @@ ToLongForm[___] :=
       $Failed
     ];
 
-(* This an "internal" function. It is assumed that all records have the same keys. *)
-(* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
-Clear[RecordsToLongForm];
 
+(* RecordsToLongForm is an "internal" function. It is assumed that all records have the same keys. *)
+(* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
+
+Clear[NotAssociationQ];
 NotAssociationQ[x_] := Not[AssociationQ[x]];
 
+Clear[RecordsToLongForm];
 RecordsToLongForm[records: Association[( _?NotAssociationQ -> _Association) ..]] :=
     RecordsToLongForm[ KeyMap[ <|"RowKey"->#|>&, records ] ];
 
@@ -331,4 +336,4 @@ RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] :=
 
 End[]; (* `Private` *)
 
-EndPackage[]
+EndPackage[];
