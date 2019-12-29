@@ -370,8 +370,12 @@ GridTableForm[data_List, opts : OptionsPattern[]] :=
         TrueQ[gridHeadings === None],
         {rowNames, gridHeadings} = {Automatic, Automatic},
 
+
         TrueQ[gridHeadings === Automatic],
         {rowNames, gridHeadings} = {Automatic, Automatic},
+
+        MatchQ[gridHeadings, {_List| Automatic | None}],
+        {rowNames, gridHeadings} = {gridHeadings[[1]], Automatic},
 
         MatchQ[gridHeadings, {_List | None | Automatic, _List | None | Automatic}],
         rowNames = gridHeadings[[1]];
@@ -390,8 +394,7 @@ GridTableForm[data_List, opts : OptionsPattern[]] :=
 
       Which[
         Length[rowNames] < Length[gridData],
-        rowNames =
-            Join[rowNames, Table[SpanFromAbove, Length[gridData] - Length[rowNames]]],
+        rowNames = Join[rowNames, Table[SpanFromAbove, Length[gridData] - Length[rowNames]]],
 
         Length[rowNames] > Length[gridData],
         rowNames = Take[rowNames, Length[gridData]]
