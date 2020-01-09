@@ -72,7 +72,7 @@
 
     (* {{-6, 2.5}} *)
 
-    ListPlot[<|"Original points" -> points, "\"Does not belong\"" -> newAnomalies, "New points" -> newPoints|>,
+    ListPlot[<|"Original points" -> points, "\"Does not belong\"" -> doesNotBelong, "New points" -> newPoints|>,
      PlotRange -> All, 
      PlotStyle -> {{GrayLevel[0.6]}, {Pink, PointSize[0.022]}, {Blue, PointSize[0.01]}},
      ImageSize -> Large, PlotTheme -> "Detailed"]
