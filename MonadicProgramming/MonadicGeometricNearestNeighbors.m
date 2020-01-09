@@ -287,7 +287,7 @@ GNNMonComputeThresholds[ nTopNNs_Integer, opts : OptionsPattern[] ][xs_, context
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       nfd = GNNMonTakeNearestIndexDistanceFunction[xs, context];
-      If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
+      If[ TrueQ[ nfd === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       (* Using nfd in order to speed-up the computations. *)
       nns = Map[ nfd[ #, nTopNNs + 1 ] &, Values[data] ];
@@ -336,9 +336,9 @@ SyntaxInformation[GNNMonFindNearest] = { "ArgumentsPattern" -> { _, _., OptionsP
 
 GNNMonFindNearest[$GNNMonFailure] := $GNNMonFailure;
 
-GNNMonFindNearest[xs_, context_Association] := $GNNMonFailure ;;
+GNNMonFindNearest[xs_, context_Association] := $GNNMonFailure ;
 
-    GNNMonFindNearest[ point_?VectorQ, nTopNNs_Integer, prop_String : "Values" ][xs_, context_Association] :=
+GNNMonFindNearest[ point_?VectorQ, nTopNNs_Integer, prop_String : "Values" ][xs_, context_Association] :=
     Block[{data, nf, nns},
 
       data = Fold[ GNNMonBind, GNNMonUnit[xs, context], { GNNMonGetData, GNNMonTakeValue } ];
@@ -428,19 +428,19 @@ GNNMonClassify[ points_?DataAssociationQ, prop_String : "Decision", opts : Optio
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       nfd = GNNMonTakeNearestIndexDistanceFunction[xs, context];
-      If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
+      If[ TrueQ[ nfd === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       distFunc = GNNMonTakeDistanceFunction[xs, context];
-      If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
+      If[ TrueQ[ distFunc === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       nTopNNs = GNNMonTakeNumberOfNNs[xs, context];
-      If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
+      If[ TrueQ[ nTopNNs === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       aggrFunc = GNNMonTakeAggregationFunction[xs, context];
-      If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
+      If[ TrueQ[ aggrFunc === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       upperThreshold = GNNMonTakeUpperThreshold[xs, context];
-      If[ TrueQ[ nf === $GNNMonFailure ], Return[$GNNMonFailure] ];
+      If[ TrueQ[ upperThreshold === $GNNMonFailure ], Return[$GNNMonFailure] ];
 
       res = Map[ nfd[ #, nTopNNs ] &, Values[points] ];
 
@@ -596,7 +596,7 @@ GNNMonComputeProximityMatrix[ n_Integer, opts : OptionsPattern[] ][xs_, context_
 
       proxMat = SparseArray[Join[arules, Table[{i, i} -> 1, {i, Dimensions[smat][[1]]}]], Dimensions[smat]];
 
-      proxMat = ToSSparseMatrix[ proxMat, "RowNames"->RowNames[nnsMat], "ColumnNames"->ColumnNames[nnsMat]];
+      proxMat = ToSSparseMatrix[ proxMat, "RowNames" -> RowNames[nnsMat], "ColumnNames" -> ColumnNames[nnsMat]];
 
       GNNMonUnit[ proxMat, context ]
     ];
