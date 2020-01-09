@@ -621,7 +621,9 @@ VariableDependenceGrid[data_?MatrixQ, columnNamesArg_, opts : OptionsPattern[]] 
 (***********************************************************)
 
 ClearAll[GridOfCodeAndComments];
+
 Options[GridOfCodeAndComments] = {"GridFunction" -> (Grid[#, Alignment -> Left] &)};
+
 GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
     Block[{grData, codeLines, comPat, gridFunc},
       gridFunc = OptionValue["GridFunction"];
@@ -684,9 +686,15 @@ ImportCSVToDataset[fname_String, format : (_String | Automatic), opts : OptionsP
       data
     ];
 
+(***********************************************************)
+(* DatasetColumnNumericQ                                   *)
+(***********************************************************)
+
 (* The pattern handling is not general enough: it is only for strings. *)
 Clear[DatasetColumnNumericQ];
+
 Options[DatasetColumnNumericQ] = { "NotAvailablePattern" -> ( "" | "NA" | "Null" | "None"), IgnoreCase -> True};
+
 DatasetColumnNumericQ[data_Dataset, opts : OptionsPattern[]] :=
     Block[{naPattern = OptionValue["NotAvailablePattern"], ignoreCase = OptionValue[IgnoreCase]},
       Transpose[data][All, VectorQ[DeleteCases[DeleteMissing[#], (x_String /; StringMatchQ[x, naPattern, IgnoreCase -> ignoreCase])], NumericQ] &]
