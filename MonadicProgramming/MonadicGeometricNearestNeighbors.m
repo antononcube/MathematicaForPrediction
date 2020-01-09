@@ -61,7 +61,7 @@
     gnnObj =
       GNNMonUnit[points]⟹
        GNNMonMakeNearestFunction[DistanceFunction -> EuclideanDistance]⟹
-       GNNMonComputeThresholds[10, Mean, OutlierIdentifier -> SPLUSQuartileIdentifierParameters];
+       GNNMonComputeThresholds[10, "AggregationFunction" -> Mean, "OutlierIdentifier" -> SPLUSQuartileIdentifierParameters];
 
     newPoints = {{-6, 2.5}, {4.5, 16}};
 
