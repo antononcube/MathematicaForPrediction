@@ -228,6 +228,8 @@ SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
 SMRMonFilterMatrix::usage = "SMRMonFilterMatrix[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 applies a profile filter to the rows of the recommendation matrix.";
 
+SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] compute the Top-K for specified data and K's."
+
 Begin["`Private`"];
 
 
@@ -1076,13 +1078,42 @@ SMRMonApplyNormalizationFunction[___][__] := $SMRMonFailure;
 
 Clear[SMRMonApplyTermWeightFunctions];
 
-SyntaxInformation[SMRMonApplyTermWeightFunctions] = { "ArgumentsPattern" -> { ___, ___, ___ } };
+SyntaxInformation[SMRMonApplyTermWeightFunctions] = { "ArgumentsPattern" -> { _., _., _., OptionsPattern[] } };
+
+Options[SMRMonApplyTermWeightFunctions] = { "GlobalWeightFunction" -> "IDF", "LocalWeightFunction" -> "None", "NormalizerFunction" -> "Cosine" };
 
 SMRMonApplyTermWeightFunctions[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonApplyTermWeightFunctions[___][$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonApplyTermWeightFunctions[xs_, context_Association] := SMRMonApplyTermWeightFunctions[][xs, context];
 
 SMRMonApplyTermWeightFunctions[][xs_, context_Association] := SMRMonApplyTermWeightFunctions["IDF", "None", "Cosine"][xs, context];
+
+SMRMonApplyTermWeightFunctions[ opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ termFuncs, val },
+
+      termFuncs =
+          Table[
+            (
+              val = OptionValue[ SMRMonApplyTermWeightFunctions, funcName ];
+
+              If[ ! StringQ[val],
+                Echo[
+                  "The value of the option \"" <> funcName <> "\" is expected to be a string.",
+                  "SMRMonApplyTermWeightFunctions:"
+                ];
+                Return[$SMRMonFailure]
+              ];
+
+              val
+            ),
+            { funcName, { "GlobalWeightFunction", "LocalWeightFunction", "NormalizerFunction" } }
+          ];
+
+      SMRMonApplyTermWeightFunctions[ Sequence @@ termFuncs ][xs, context]
+    ];
+
 
 SMRMonApplyTermWeightFunctions[globalWeightFunction_String : "IDF", localWeightFunction_String : "None", normalizerFunction_String : "Cosine"][xs_, context_Association] :=
     Block[{mat, smats},
@@ -1273,7 +1304,7 @@ SMRMonRecommendByHistory = SMRMonRecommend;
 
 Clear[SMRMonRecommendByProfile];
 
-SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, _., _., OptionsPattern[] } };
+SyntaxInformation[SMRMonRecommendByProfile] = { "ArgumentsPattern" -> { _, _., _., OptionsPattern[] } };
 
 Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "IgnoreUnknownTags" -> False, "VectorResult" -> False };
 
@@ -1301,6 +1332,9 @@ SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ.
 
       SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
     ] /; Length[profileInds] == Length[profileScores];
+
+SMRMonRecommendByProfile[tagsArg : (_Association | _List), opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommendByProfile[tagsArg, 12, opts][xs, context];
 
 SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{tags = tagsArg, p},
@@ -2493,6 +2527,92 @@ SMRMonProveByHistory[___][__] :=
       Echo[
         "The expected signature is SMRMonProveByHistory[history_Association, itemName : ( _String | {_String..} ), opts___] .",
         "SMRMonProveByHistory:"];
+      $SMRMonFailure
+    ];
+
+
+(*=========================================================*)
+(* Compute Top-K statistic                                 *)
+(*=========================================================*)
+
+Clear[SMRMonComputeTopK];
+
+SyntaxInformation[SMRMonComputeTopK] = { "ArgumentsPattern" -> {_, _, OptionsPattern[] } };
+
+Options[SMRMonComputeTopK] = { "Type" -> "Fraction" };
+
+SMRMonComputeTopK[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonComputeTopK[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonComputeTopK[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonComputeTopK[ testData_Association, ksArg:{_IntegerQ..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{ ks=ksArg, type, expectedTypes, aTopK, recs, topKStat, expectedRecs },
+
+      type = OptionValue[SMRMonComputeTopK, "Type"];
+
+      If[ ! ( MatchQ[ Association[ ( _String -> _String ) .. ], testData ] || MatchQ[ Association[ ( _String -> {_String..} ) .. ], testData ] ),
+        Echo[ "The first argument is expected to be an association of search ID and expected results rules.", "SMRMonComputeTopK:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ ! ( VectorQ[ ks, NumberQ ] && Apply[ And, Map[ # > 0&, ks] ] ),
+        Echo[ "The second argument is expected to be list of positive integers.", "SMRMonComputeTopK:"];
+        Return[$SMRMonFailure]
+      ];
+
+      expectedTypes = { "Fraction", "Count", "Incidence", "Binary" };
+      If[ ! ( StringQ[type] && MemberQ[ ToLowerCase[expectedTypes], ToLowerCase[type] ] ),
+        Echo[ "The value of the option \"Type\" is expected to be one of:" <> ToString[expectedTypes[[1;;-2]]] <> "." , "SMRMonComputeTopK:"];
+        Return[$SMRMonFailure]
+      ];
+
+      ks = Sort[ks];
+      type = ToLowerCase[type];
+
+      aTopK =
+          Association @ Map[
+            Function[{searchID},
+
+            (* Recommendations *)
+            recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommend[searchID, Max[ks] ], SMRMonTakeValue } ];
+
+            (* Top-K of the key over the specified ks. *)
+
+            expectedRecs = Flatten[{testData[searchID]}];
+
+            Which[
+
+              MemberQ[ { "binary", "incidence" }, type ],
+              topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] > 0&, ks],
+
+              type == "count",
+              topKStat = Map[ Length @ Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]&, ks],
+
+              type == "fraction",
+              topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] / Length[expectedRecs] &, ks],
+
+              True,
+              (* Should not happen. *)
+              Return[$SMRMonFailure]
+            ];
+
+            searchID -> topKStat
+
+            ],
+            Keys[testData]
+          ];
+
+      SMRMonUnit[ aTopK, context ]
+
+    ];
+
+SMRMonComputeTopK[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonComputeTopK[ testData : Association[ ( _String -> {_String..} ) .. ], ks : {_?IntegerQ..}, opts___] .",
+        "SMRMonComputeTopK:"];
       $SMRMonFailure
     ];
 
