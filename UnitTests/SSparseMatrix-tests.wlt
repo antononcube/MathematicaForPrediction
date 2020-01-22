@@ -45,17 +45,17 @@
 
 *)
 
-BeginTestSection["SSparseMatrixTests"]
+BeginTestSection["SSparseMatrixTests"];
 
 VerificationTest[(* 1 *)
 	CompoundExpression[
-		Get["~/MathematicaForPrediction/SSparseMatrix.m"],
+		Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"],
 		Greater[Length[DownValues[SSparseMatrix`RowNames]], 0]]
 	,
 	True	
 	,
 	TestID->"LoadPackage"
-]
+];
 
 VerificationTest[(* 2 *)
 	CompoundExpression[Set[mat, SparseArray[List[Rule[List[1, 1], 1], Rule[List[2, 2], 2], Rule[List[4, 3], 3], Rule[List[1, 4], 4], Rule[List[3, 5], 2]]]], Null]
@@ -63,7 +63,7 @@ VerificationTest[(* 2 *)
 	Null	
 	,
 	TestID->"mat"
-]
+];
 
 VerificationTest[(* 3 *)
 	CompoundExpression[Set[mat2, SparseArray[List[Rule[List[1, 1], 1], Rule[List[2, 2], 2], Rule[List[4, 3], 3], Rule[List[1, 3], 4]]]], Null]
@@ -71,7 +71,7 @@ VerificationTest[(* 3 *)
 	Null	
 	,
 	TestID->"mat2"
-]
+];
 
 VerificationTest[(* 4 *)
 	Set[rmat, MakeSSparseMatrix[List[Rule[List[1, 1], 1], Rule[List[2, 2], 2], Rule[List[4, 3], 3], Rule[List[1, 4], 4], Rule[List[3, 5], 2]], Rule["ColumnNames", List["a", "b", "c", "d", "e"]], Rule["RowNames", List["A", "B", "C", "D"]], Rule["DimensionNames", List["U", "V"]]]]
@@ -79,7 +79,7 @@ VerificationTest[(* 4 *)
 	SSparseMatrix[Association[Rule["SparseMatrix", SparseArray[Automatic, List[4, 5], 0, List[1, List[List[0, 2, 3, 4, 5], List[List[1], List[4], List[2], List[5], List[3]]], List[1, 4, 2, 2, 3]]]], Rule["RowNames", Association[Rule["A", 1], Rule["B", 2], Rule["C", 3], Rule["D", 4]]], Rule["ColumnNames", Association[Rule["a", 1], Rule["b", 2], Rule["c", 3], Rule["d", 4], Rule["e", 5]]], Rule["DimensionNames", Association[Rule["U", 1], Rule["V", 2]]]]]	
 	,
 	TestID->"rmat"
-]
+];
 
 VerificationTest[(* 5 *)
 	Equal[SparseArray[rmat], mat]
@@ -87,7 +87,7 @@ VerificationTest[(* 5 *)
 	True	
 	,
 	TestID->"rmat-SparseArray"
-]
+];
 
 VerificationTest[(* 6 *)
 	DimensionNames[rmat]
@@ -95,7 +95,7 @@ VerificationTest[(* 6 *)
 	List["U", "V"]	
 	,
 	TestID->"DimensionNames-1"
-]
+];
 
 VerificationTest[(* 7 *)
 	RowNames[rmat]
@@ -103,7 +103,7 @@ VerificationTest[(* 7 *)
 	List["A", "B", "C", "D"]	
 	,
 	TestID->"RowNames-1"
-]
+];
 
 VerificationTest[(* 8 *)
 	ColumnNames[rmat]
@@ -111,7 +111,7 @@ VerificationTest[(* 8 *)
 	List["a", "b", "c", "d", "e"]	
 	,
 	TestID->"ColumnNames-1"
-]
+];
 
 VerificationTest[(* 9 *)
 	CompoundExpression[Set[rmat2, rmat], Null]
@@ -119,7 +119,7 @@ VerificationTest[(* 9 *)
 	Null	
 	,
 	TestID->"rmat2"
-]
+];
 
 VerificationTest[(* 10 *)
 	CompoundExpression[
@@ -131,7 +131,7 @@ VerificationTest[(* 10 *)
 	True	
 	,
 	TestID->"SetColumnNames-1"
-]
+];
 
 VerificationTest[(* 11 *)
 	CompoundExpression[
@@ -142,7 +142,7 @@ VerificationTest[(* 11 *)
 	True	
 	,
 	TestID->"SetRowNames-2"
-]
+];
 
 VerificationTest[(* 12 *)
 	DimensionNames[Transpose[rmat]]
@@ -150,7 +150,7 @@ VerificationTest[(* 12 *)
 	List["V", "U"]	
 	,
 	TestID->"DimensionNames-1"
-]
+];
 
 VerificationTest[(* 13 *)
 	Total[rmat, 2]
@@ -158,7 +158,7 @@ VerificationTest[(* 13 *)
 	12	
 	,
 	TestID->"Total-1"
-]
+];
 
 VerificationTest[(* 14 *)
 	RowSums[rmat]
@@ -166,7 +166,7 @@ VerificationTest[(* 14 *)
 	List[5, 2, 2, 3]	
 	,
 	TestID->"RowSums-1"
-]
+];
 
 VerificationTest[(* 15 *)
 	ColumnSums[rmat]
@@ -174,7 +174,7 @@ VerificationTest[(* 15 *)
 	List[1, 2, 3, 4, 2]	
 	,
 	TestID->"ColumnSums-1"
-]
+];
 
 VerificationTest[(* 16 *)
 	Transpose[Part[rmat, List[1], All]]
@@ -182,7 +182,7 @@ VerificationTest[(* 16 *)
 	SSparseMatrix`SSparseMatrix[Association[Rule["SparseMatrix", SparseArray[Automatic, List[5, 1], 0, List[1, List[List[0, 1, 1, 1, 2, 2], List[List[1], List[1]]], List[1, 4]]]], Rule["RowNames", Association[Rule["a", 1], Rule["b", 2], Rule["c", 3], Rule["d", 4], Rule["e", 5]]], Rule["ColumnNames", Association[Rule["A", 1]]], Rule["DimensionNames", Association[Rule["V", 2], Rule["U", 1]]]]]	
 	,
 	TestID->"Transpose=1"
-]
+];
 
 VerificationTest[(* 17 *)
 	Dot[rmat, Transpose[Part[rmat, List[1], All]]]
@@ -199,7 +199,7 @@ VerificationTest[(* 17 *)
 	{SSparseMatrix::dnsame}
 	,
 	TestID->"Dot-matrix-vector-1"
-]
+];
 
 VerificationTest[(* 18 *)
 	Normal[SparseArray[Dot[rmat, Transpose[Part[rmat, List[1], All]]]]]
@@ -209,7 +209,7 @@ VerificationTest[(* 18 *)
 	{SSparseMatrix::dnsame}
 	,
 	TestID->"Dot-matrix-vector-2"
-]
+];
 
 VerificationTest[(* 19 *)
 	Equal[SparseArray[Dot[rmat, Transpose[Part[rmat, List[1], All]]]], Dot[SparseArray[rmat], Transpose[SparseArray[Part[rmat, List[1], All]]]]]
@@ -219,7 +219,7 @@ VerificationTest[(* 19 *)
 	{SSparseMatrix::dnsame}
 	,
 	TestID->"Dot-matrix-vector-3"
-]
+];
 
 VerificationTest[(* 20 *)
 	Equal[SparseArray[Dot[rmat, Part[rmat, 1, All]]], Dot[SparseArray[rmat], Part[rmat, 1, All]]]
@@ -227,7 +227,7 @@ VerificationTest[(* 20 *)
 	True
 	,
 	TestID->"Dot-matrix-vector-4"
-]
+];
 
 VerificationTest[(* 21 *)
 	Equal[SparseArray[Dot[rmat, Transpose[mat]]], Dot[SparseArray[rmat], Transpose[mat]]]
@@ -235,7 +235,7 @@ VerificationTest[(* 21 *)
 	True	
 	,
 	TestID->"Dot-matrix-matrix-1"
-]
+];
 
 VerificationTest[(* 22 *)
 	Equal[SparseArray[Dot[Transpose[mat], rmat]], Dot[Transpose[mat], SparseArray[rmat]]]
@@ -243,7 +243,7 @@ VerificationTest[(* 22 *)
 	True	
 	,
 	TestID->"Dot-matrix-matrix-2"
-]
+];
 
 VerificationTest[(* 23 *)
 	CompoundExpression[Set[rmat2, ToSSparseMatrix[SparseArray[RandomInteger[List[0, 4], List[ColumnsCount[rmat], RowsCount[rmat]]]]]], Equal[SparseArray[Dot[rmat, rmat2, rmat]], Dot[SparseArray[rmat], SparseArray[rmat2], SparseArray[rmat]]]]
@@ -251,7 +251,7 @@ VerificationTest[(* 23 *)
 	True	
 	,
 	TestID->"Dot-matrix-matrix-matrix-1"
-]
+];
 
 VerificationTest[(* 24 *)
 	RowNames[Dot[rmat, rmat2, rmat]]
@@ -259,7 +259,7 @@ VerificationTest[(* 24 *)
 	RowNames[rmat]	
 	,
 	TestID->"Dot-matrix-matrix-matrix-2"
-]
+];
 
 VerificationTest[(* 25 *)
 	ColumnNames[Dot[rmat, rmat2, rmat]]
@@ -267,7 +267,7 @@ VerificationTest[(* 25 *)
 	ColumnNames[rmat]	
 	,
 	TestID->"Dot-matrix-matrix-matrix-3"
-]
+];
 
 VerificationTest[(* 26 *)
 	SparseArray[Plus[rmat, 1]]
@@ -275,7 +275,7 @@ VerificationTest[(* 26 *)
 	Plus[SparseArray[rmat], 1]	
 	,
 	TestID->"Plus-1"
-]
+];
 
 VerificationTest[(* 27 *)
 	SparseArray[Plus[rmat, -2]]
@@ -283,7 +283,7 @@ VerificationTest[(* 27 *)
 	Plus[SparseArray[rmat], -2]	
 	,
 	TestID->"Plus-2"
-]
+];
 
 VerificationTest[(* 28 *)
 	SparseArray[Times[rmat, 10]]
@@ -291,7 +291,7 @@ VerificationTest[(* 28 *)
 	Times[SparseArray[rmat], 10]	
 	,
 	TestID->"Times-1"
-]
+];
 
 VerificationTest[(* 29 *)
 	SparseArray[Plus[Times[10, rmat], Times[2.33`, rmat]]]
@@ -299,7 +299,7 @@ VerificationTest[(* 29 *)
 	Plus[Times[10, SparseArray[rmat]], Times[2.33`, SparseArray[rmat]]]	
 	,
 	TestID->"Arithmetic-1"
-]
+];
 
 VerificationTest[(* 30 *)
 	Plus[rmat, Transpose[rmat2]]
@@ -307,7 +307,7 @@ VerificationTest[(* 30 *)
 	Plus[ToSSparseMatrix[SparseArray[rmat]], Transpose[rmat2]]	
 	,
 	TestID->"MatrixSum-1"
-]
+];
 
 VerificationTest[(* 31 *)
 	List[Part[rmat, "A"], Head[Part[rmat, "A"]]]
@@ -315,7 +315,7 @@ VerificationTest[(* 31 *)
 	List[Part[SparseArray[rmat], 1], SparseArray]	
 	,
 	TestID->"Part-1"
-]
+];
 
 VerificationTest[(* 32 *)
 	List[Part[rmat, All, "a"], Head[Part[rmat, All, "a"]]]
@@ -323,7 +323,7 @@ VerificationTest[(* 32 *)
 	List[Part[SparseArray[rmat], All, 1], SparseArray]	
 	,
 	TestID->"Part-2"
-]
+];
 
 VerificationTest[(* 33 *)
 	CompoundExpression[Set[t1, MakeSSparseMatrix[SparseArray[Part[rmat, List["A"]]], Rule["RowNames", List["A"]], Rule["ColumnNames", ColumnNames[rmat]]]], List[Equal[SparseArray[Part[rmat, List["A"]]], SparseArray[t1]], Equal[RowNames[Part[rmat, List["A"]]], RowNames[t1]], Equal[ColumnNames[Part[rmat, List["A"]]], ColumnNames[t1]]]]
@@ -331,7 +331,7 @@ VerificationTest[(* 33 *)
 	List[True, True, True]	
 	,
 	TestID->"Part-3"
-]
+];
 
 VerificationTest[(* 34 *)
 	Part[rmat, "A", All]
@@ -339,7 +339,7 @@ VerificationTest[(* 34 *)
 	Part[rmat, "A"]	
 	,
 	TestID->"Part-4"
-]
+];
 
 VerificationTest[(* 35 *)
 	Part[rmat, "A", "d"]
@@ -347,7 +347,7 @@ VerificationTest[(* 35 *)
 	Part[SparseArray[rmat], 1, 4]	
 	,
 	TestID->"Part-5"
-]
+];
 
 VerificationTest[(* 36 *)
 	Part[rmat, List["C", "D", "A", "B"]]
@@ -355,15 +355,15 @@ VerificationTest[(* 36 *)
 	Part[rmat, List[3, 4, 1, 2], All]	
 	,
 	TestID->"PermutationPart-1"
-]
+];
 
 VerificationTest[(* 37 *)
 	Part[rmat, List["C", "D", "A", "B"]]
 	,
-	Part[rmat, List[3, 4, 1, 2]]	
+	Part[rmat, List[3, 4, 1, 2]]
 	,
 	TestID->"PermutationPart-2"
-]
+];
 
 VerificationTest[(* 38 *)
 	SparseArray[Part[rmat, List["C", "D", "A", "B"]]]
@@ -371,7 +371,7 @@ VerificationTest[(* 38 *)
 	Part[SparseArray[rmat], List[3, 4, 1, 2]]	
 	,
 	TestID->"PermutationPart-3"
-]
+];
 
 VerificationTest[(* 39 *)
 	SparseArray[Part[rmat, List["C", "D", "A", "B"], List["c", "d", "e", "a", "b"]]]
@@ -379,7 +379,7 @@ VerificationTest[(* 39 *)
 	Part[SparseArray[rmat], List[3, 4, 1, 2], List[3, 4, 5, 1, 2]]	
 	,
 	TestID->"PermutationPart-4"
-]
+];
 
 VerificationTest[(* 40 *)
 	Equal[Part[rmat, List["B", "C"], List["a", "b"]], Part[rmat, Span[2, 3], Span[1, 2]]]
@@ -387,7 +387,7 @@ VerificationTest[(* 40 *)
 	True	
 	,
 	TestID->"PartSubset-1"
-]
+];
 
 VerificationTest[(* 41 *)
 	Equal[rmat, Part[rmat, All, All]]
@@ -395,7 +395,7 @@ VerificationTest[(* 41 *)
 	True	
 	,
 	TestID->"PartSubset-2"
-]
+];
 
 VerificationTest[(* 42 *)
 	CompoundExpression[Set[rmat2, ToSSparseMatrix[rmat, Rule["RowNames", Map[Function[StringJoin["s.", Slot[1]]], RowNames[rmat]]]]], Set[rmat3, ToSSparseMatrix[rmat, Rule["ColumnNames", Map[Function[StringJoin["t.", Slot[1]]], ColumnNames[rmat]]]]], Null]
@@ -403,7 +403,7 @@ VerificationTest[(* 42 *)
 	Null	
 	,
 	TestID->"BindingMatrices-0"
-]
+];
 
 VerificationTest[(* 43 *)
 	CompoundExpression[Set[t, Normal[SparseArray[rmat]]], Set[res, MakeSSparseMatrix[SparseArray[Join[t, t]], Rule["RowNames", Join[Map[Function[StringJoin[Slot[1], ".1"]], RowNames[rmat]], Map[Function[StringJoin[Slot[1], ".2"]], RowNames[rmat]]]], Rule["ColumnNames", ColumnNames[rmat]]]], Set[res2, RowBind[rmat, rmat]], List[Equal[SparseArray[res], SparseArray[res2]], Equal[RowNames[res], RowNames[res2]], Equal[ColumnNames[res], ColumnNames[res2]]]]
@@ -411,7 +411,7 @@ VerificationTest[(* 43 *)
 	List[True, True, True]	
 	,
 	TestID->"RowBind-1"
-]
+];
 
 VerificationTest[(* 44 *)
 	CompoundExpression[Set[t, Normal[SparseArray[rmat]]], Set[res, MakeSSparseMatrix[SparseArray[Join[t, t]], Rule["RowNames", Join[RowNames[rmat], RowNames[rmat2]]], Rule["ColumnNames", ColumnNames[rmat]]]], Set[res2, RowBind[rmat, rmat2]], List[Equal[SparseArray[res], SparseArray[res2]], Equal[RowNames[res], RowNames[res2]], Equal[ColumnNames[res], ColumnNames[res2]]]]
@@ -419,7 +419,7 @@ VerificationTest[(* 44 *)
 	List[True, True, True]	
 	,
 	TestID->"RowBind-2"
-]
+];
 
 VerificationTest[(* 45 *)
 	CompoundExpression[
@@ -434,7 +434,7 @@ VerificationTest[(* 45 *)
 	List[True, True, True]	
 	,
 	TestID->"ColumnBind-1"
-]
+];
 
 VerificationTest[(* 46 *)
 	CompoundExpression[
@@ -450,7 +450,7 @@ VerificationTest[(* 46 *)
 	List[True, True, True]	
 	,
 	TestID->"ColumnBind-2"
-]
+];
 
 
 VerificationTest[(* 47 *)
@@ -477,7 +477,7 @@ VerificationTest[(* 47 *)
 	True,
 
 	TestID->"ImposeRowNames-1"
-]
+];
 
 
 VerificationTest[(* 48 *)
@@ -505,7 +505,7 @@ VerificationTest[(* 48 *)
 	True,
 
 	TestID->"ImposeColumnNames-1"
-]
+];
 
 
 VerificationTest[(* 49 *)
@@ -517,7 +517,9 @@ VerificationTest[(* 49 *)
 				"RowNames" ->
 						Map["A" <> ToString[#] &, Range[Dimensions[smatProf][[1]]]],
 				"ColumnNames" ->
-						Map["b" <> ToString[#] &, Range[Dimensions[smatProf][[2]]]]];
+						Map["b" <> ToString[#] &, Range[Dimensions[smatProf][[2]]]],
+				"DimensionNames" -> {"1", "2"}
+			];
 
 	sres = smatProf.Transpose[smatProf];
 	rres = rmatProf.Transpose[rmatProf];
@@ -529,6 +531,30 @@ VerificationTest[(* 49 *)
 	{SSparseMatrix::dnsame},
 
 	TestID -> "Dimension-names-after-Dot-1"
-]
+];
+
+
+VerificationTest[(* 50 *)
+
+	smatProf = SparseArray[RandomReal[{0, 1}, {200, 120}]];
+
+	rmatProf =
+			ToSSparseMatrix[smatProf,
+				"RowNames" ->
+						Map["A" <> ToString[#] &, Range[Dimensions[smatProf][[1]]]],
+				"ColumnNames" ->
+						Map["b" <> ToString[#] &, Range[Dimensions[smatProf][[2]]]],
+				"DimensionNames" -> None
+			];
+
+	sres = smatProf.Transpose[smatProf];
+	rres = rmatProf.Transpose[rmatProf];
+
+	Norm[sres[[1 ;; 120, 1 ;; 120]] - SparseArray[rres[[1 ;; 120, 1 ;; 120]]]],
+
+	0.,
+
+	TestID -> "Dimension-names-after-Dot-2"
+];
 
 EndTestSection[]
