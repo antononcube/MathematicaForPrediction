@@ -297,7 +297,7 @@ ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
                 AssociationThread[cnames, Range[Dimensions[sarr][[2]]]]],
           "DimensionNames" ->
               If[dnames === None,
-                AssociationThread[{"1", "2"}, {1, 2}],
+                None, (*AssociationThread[{"1", "2"}, {1, 2}], *)
                 AssociationThread[dnames, {1, 2}]
               ]
       |>]
