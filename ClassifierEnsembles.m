@@ -181,7 +181,7 @@ Begin["`Private`"];
 
 Needs["ROCFunctions`"];
 
-Clear[EnsembleClassifier]
+Clear[EnsembleClassifier];
 EnsembleClassifier::nargs =
     "The first argument is expected to match (_String|{_String..}|Automatic). \
 The rest of the arguments are given to Classify.";
@@ -314,31 +314,50 @@ Clear[EnsembleClassifyByThreshold];
 EnsembleClassifyByThreshold::nargs =
     "The first argument is expected to be an Association of classifier IDs to \
 classifier functions. The second argument is expected to be a vector or a \
-matrix. The third argument is expected to be a rule, label->threshold, where \
-threshold is numerical. The fourth argument is expected to be one of \
+matrix. The third argument is expected to be a label-threshold rule or a list of label-threshold rules.
+The specified threshold(s) must be numerical. The fourth argument is expected to be one of \
 \"Votes\" or \"ProbabilitiesMean\".";
 
-EnsembleClassifyByThreshold[cls_Association, record_?VectorQ,
+EnsembleClassifyByThreshold[cls_Association,
+  records : ( _?VectorQ | _?MatrixQ ),
   label_ -> threshold_?NumericQ,
   method_String: "ProbabilitiesMean"] :=
-    Block[{pmeans},
-      If[TrueQ[method == "ProbabilitiesMean"],
-        pmeans = EnsembleClassifierProbabilities[cls, record],
-        pmeans = Join[<|label -> 0|>, EnsembleClassifierVotes[cls, record]]
-      ];
-      If[pmeans[label] >= threshold, label, First@Keys@TakeLargest[ KeyDrop[pmeans,label], 1]]
-    ];
+    EnsembleClassifyByThreshold[ cls, records, {label->threshold}, method ];
 
-EnsembleClassifyByThreshold[cls_Association, records_?MatrixQ,
-  label_ -> threshold_?NumericQ,
+EnsembleClassifyByThreshold[cls_Association,
+  records : ( _?VectorQ | _?MatrixQ ),
+  thresholds : Association[ (_ -> _?NumericQ) ..],
   method_String: "ProbabilitiesMean"] :=
-    Block[{pmeans},
-      If[TrueQ[method == "ProbabilitiesMean"],
+    EnsembleClassifyByThreshold[ cls, records, Normal[thresholds], method ];
+
+EnsembleClassifyByThreshold[cls_Association,
+  records : ( _?VectorQ | _?MatrixQ ),
+  thresholds: { (_ -> _?NumericQ) .. },
+  method_String: "ProbabilitiesMean"] :=
+    Block[{pmeans, code},
+
+      Which[
+        TrueQ[method == "ProbabilitiesMean"],
         pmeans = EnsembleClassifierProbabilities[cls, records],
-        pmeans =
-            Map[Join[<|label -> 0|>, #] &, EnsembleClassifierVotes[cls, records]]
+
+        VectorQ[records],
+        pmeans = Join[AssociationThread[ Keys[thresholds] -> 0 ], EnsembleClassifierVotes[cls, records]],
+
+        True,
+        pmeans = Map[Join[AssociationThread[ Keys[thresholds] -> 0 ], #] &, EnsembleClassifierVotes[cls, records]]
       ];
-      Map[If[#[label] >= threshold, label, First@Keys@TakeLargest[KeyDrop[#,label], 1]] &, pmeans]
+
+      (* Make threshold classification function. *)
+      code =
+          Join[
+            Flatten[ MapThread[ Function[{k,v}, { #[ k ] >= v, k }], Transpose[ List @@@ thresholds ] ] ],
+            { Length[thresholds] < Hold[Length[#]], Hold[First@Keys@TakeLargest[ KeyDrop[#,Keys[thresholds]], 1]] },
+            { True, Hold[First@Keys@TakeLargest[#,1]] }
+          ];
+
+      code = ReleaseHold[Evaluate[Which @@ code]&];
+
+      If[ VectorQ[records], code @ pmeans, code /@ pmeans ]
     ];
 
 EnsembleClassifyByThreshold[___] := (Message[EnsembleClassifyByThreshold::nargs]; $Failed);
