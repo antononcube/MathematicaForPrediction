@@ -143,43 +143,43 @@ If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
 ];
 
-BeginPackage["ClassifierEnsembles`"]
+BeginPackage["ClassifierEnsembles`"];
 
 EnsembleClassifier::usage = "Create an ensemble of classifiers over the same data. \
-Returns an Association of IDs mapped to classifier functions."
+Returns an Association of IDs mapped to classifier functions.";
 
-EnsembleClassifierVotes::usage = "Find votes by a classifier ensemble for a record ora a list of records."
+EnsembleClassifierVotes::usage = "Find votes by a classifier ensemble for a record ora a list of records.";
 
 EnsembleClassifierProbabilities::usage = "Give the averaged probabilities of a classifier ensemble \
-a record or a list of records."
+a record or a list of records.";
 
 EnsembleClassify::usage = "Classify by a classifier ensemble for a record or a list of records. \
-The third argument is one of \"Votes\" or \"ProbabilitiesMean\"."
+The third argument is one of \"Votes\" or \"ProbabilitiesMean\".";
 
 EnsembleClassifyByThreshold::usage = "Classify by a classifier ensemble for a record or a list of records. \
 The third argument is a rule label->threshold. The fourth argument is one of \"Votes\" or \"ProbabilitiesMean\". \
 The specified label is returned if its votes or average probability are higher or equal than \
-the specified threshold."
+the specified threshold.";
 
 ClassifyByThreshold::usage = "A shortcut to calling EnsembleClassifyByThreshold using a classifier function \
-instead of a classifier ensemble."
+instead of a classifier ensemble.";
 
 EnsembleClassifierMeasurements::usage = "EnsembleClassifierMeasurements[ensCF, testData, props] \
 gives measurements corresponding to props when the ensemble of classifiers ensCF is evaluated over testData. \
-(Emulates ClassifierMeasurements for ensembles of classifiers.)"
+(Emulates ClassifierMeasurements for ensembles of classifiers.)";
 
 ResamplingEnsembleClassifier::usage = "ResamplingEnsembleClassifier[{(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..}, data] \
-builds ensemble classifier based on a specification."
+builds ensemble classifier based on a specification.";
 
 EnsembleClassifierROCData::usage = "EnsembleClassifierROCData[ensCF, testData, thRange, targetClasses] \
-returns an association of classifier ensemble ROC data."
+returns an association of classifier ensemble ROC data.";
 
 EnsembleClassifierROCPlots::usage = "EnsembleClassifierROCPlots[ensCF, testData, thRange, targetClasses, opts___] \
-returns an association of classifier ensemble ROC plots."
+returns an association of classifier ensemble ROC plots.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Needs["ROCFunctions`"]
+Needs["ROCFunctions`"];
 
 Clear[EnsembleClassifier]
 EnsembleClassifier::nargs =
@@ -250,7 +250,7 @@ ResamplingEnsembleClassifier[specs:{_Association..}, data_?ClassifierDataQ, args
 (* Ensemble classification functions                          *)
 (**************************************************************)
 
-Clear[EnsembleClassifierVotes]
+Clear[EnsembleClassifierVotes];
 EnsembleClassifierVotes::nargs =
     "The first argument is expected to be an Association of classifier IDs to \
 classifier functions. The second argument is expected to be a vector or a \
@@ -279,7 +279,7 @@ EnsembleClassifierProbabilities[cls_Association, records_?MatrixQ] :=
 EnsembleClassifierProbabilities[___] := (Message[EnsembleClassifierProbabilities::nargs]; $Failed);
 
 
-Clear[EnsembleClassify]
+Clear[EnsembleClassify];
 EnsembleClassify::nargs =
     "The first argument is expected to be an Association of classifier IDs to \
 classifier functions. The second argument is expected to be a vector or a \
@@ -310,7 +310,7 @@ EnsembleClassify[___] := (Message[EnsembleClassify::nargs]; $Failed);
 (* EnsembleClassifyByThreshold                                *)
 (**************************************************************)
 
-Clear[EnsembleClassifyByThreshold]
+Clear[EnsembleClassifyByThreshold];
 EnsembleClassifyByThreshold::nargs =
     "The first argument is expected to be an Association of classifier IDs to \
 classifier functions. The second argument is expected to be a vector or a \
@@ -351,7 +351,7 @@ ClassifyByThreshold[ cf_ClassifierFunction, data:(_?VectorQ|_?MatrixQ), label_ -
 (* Calculating classifier ensemble measurements               *)
 (**************************************************************)
 
-Clear[EnsembleClassifierMeasurements]
+Clear[EnsembleClassifierMeasurements];
 
 EnsembleClassifierMeasurements::nargs =
     "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
@@ -420,7 +420,7 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
 (* Calculating classifier ensemble ROC data and plots         *)
 (**************************************************************)
 
-Clear[EnsembleClassifierROCData]
+Clear[EnsembleClassifierROCData];
 
 EnsembleClassifierROCData::nargs =
     "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
@@ -486,6 +486,6 @@ EnsembleClassifierROCPlots[aCL_Association,
 EnsembleClassifierROCPlots[___] := (Message[EnsembleClassifierROCPlots::nargs]; $Failed);
 
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
