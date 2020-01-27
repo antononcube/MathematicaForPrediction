@@ -138,10 +138,24 @@
       2. Add error message for EnsembleClassifierROCData and EnsembleClassifierROCPlots.
 *)
 
+(**************************************************************)
+(* Importing packages (if needed)                             *)
+(**************************************************************)
+
 If[Length[DownValues[ROCFunctions`ToROCAssociation]] == 0,
   Echo["ROCFunctions.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/ROCFunctions.m"]
 ];
+
+If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
+  Echo["CrossTabulate.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
+];
+
+
+(**************************************************************)
+(* Package definition                                         *)
+(**************************************************************)
 
 BeginPackage["ClassifierEnsembles`"];
 
@@ -171,15 +185,22 @@ gives measurements corresponding to props when the ensemble of classifiers ensCF
 ResamplingEnsembleClassifier::usage = "ResamplingEnsembleClassifier[{(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..}, data] \
 builds ensemble classifier based on a specification.";
 
-EnsembleClassifierROCData::usage = "EnsembleClassifierROCData[ensCF, testData, thRange, targetClasses] \
+EnsembleClassifierROCData::usage = "EnsembleClassifierROCData[ensCF_Association, testData, thRange, targetClasses] \
 returns an association of classifier ensemble ROC data.";
 
 EnsembleClassifierROCPlots::usage = "EnsembleClassifierROCPlots[ensCF, testData, thRange, targetClasses, opts___] \
 returns an association of classifier ensemble ROC plots.";
 
+EnsembleClassifierConfusionMatrix::usage = "EnsembleClassifierConfusionMatrix[ ensCF, testData, spec_, opts]
+computes the confusion matrix for a classifier ensemble and test data. \
+The third argument is expected to be one of \"Votes\" or \"ProbabilitiesMean\".
+If the fourth argument is a label-threshold specification then EnsembleClassifyByThreshold is used.";
+
+
 Begin["`Private`"];
 
 Needs["ROCFunctions`"];
+Needs["CrossTabulate`"];
 
 Clear[EnsembleClassifier];
 EnsembleClassifier::nargs =
@@ -264,7 +285,7 @@ EnsembleClassifierVotes[cls_Association, records_?MatrixQ] :=
 
 EnsembleClassifierVotes[___] := (Message[EnsembleClassifierVotes::nargs]; $Failed);
 
-Clear[EnsembleClassifierProbabilities]
+Clear[EnsembleClassifierProbabilities];
 EnsembleClassifierProbabilities::nargs =
     "The first argument is expected to be an Association of classifier IDs to \
 classifier functions. The second argument is expected to be a vector or a \
@@ -435,6 +456,7 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
       MapThread[If[MemberQ[{"Accuracy", "ACC"}, #1], First@Values[#2], #2] &, {measures, clRes}]
     ];
 
+
 (**************************************************************)
 (* Calculating classifier ensemble ROC data and plots         *)
 (**************************************************************)
@@ -489,7 +511,7 @@ classifier functions. \
 The second argument, the test data, is expected to be a list of record-to-label rules. \
 The optional third argument, the threshold range, is expected to be a list of numbers between 0 and 1. \
 The optional fourth argument, the target classes, is expected to be list of class labels or All. \
-As options the options of ROCFunctions`ROCPlot and Graphics can be given."
+As options the options of ROCFunctions`ROCPlot and Graphics can be given.";
 
 Options[EnsembleClassifierROCPlots] = Options[ROCPlot];
 
@@ -503,6 +525,48 @@ EnsembleClassifierROCPlots[aCL_Association,
     ];
 
 EnsembleClassifierROCPlots[___] := (Message[EnsembleClassifierROCPlots::nargs]; $Failed);
+
+
+(**************************************************************)
+(* Calculating classifier ensemble confusion matrix           *)
+(**************************************************************)
+
+Clear[ThresholdsSpecQ];
+ThresholdsSpecQ[spec_]:= MatchQ[ spec, ( None | {} | (_->_?NumericQ) | { (_->_?NumericQ).. } | Association[ (_->_?NumericQ).. ] )]
+
+Clear[EnsembleClassifierConfusionMatrix];
+
+EnsembleClassifierConfusionMatrix::nargs =
+    "The first argument, the classifier ensemble, is expected to be an Association of classifier IDs to \
+classifier functions. \
+The second argument, the test data, is expected to be a list of record-to-label rules. \
+The third argument, is expected to be one of \"ProbabilitiesMean\" or \"Votes\". \
+The optional fourth argument, is expected to be a label-threshold specification or None.";
+
+Options[EnsembleClassifierConfusionMatrix] = Options[CrossTabulate];
+
+EnsembleClassifierConfusionMatrix[aCL_Association, testData_?ClassifierDataQ, aggrSpec : ("ProbabilitiesMean" | "Votes" ) : "ProbabilitiesMean", opts:OptionsPattern[] ] :=
+    EnsembleClassifierConfusionMatrix[aCL, testData, aggrSpec, None, opts];
+
+EnsembleClassifierConfusionMatrix[
+  aCL_Association,
+  testData_?ClassifierDataQ,
+  aggrSpec : ("ProbabilitiesMean" | "Votes" ),
+  thresholds_?ThresholdsSpecQ,
+  opts:OptionsPattern[] ] :=
+    Block[{lsClassLabels},
+
+      If[ TrueQ[ thresholds === None ] || TrueQ[ thresholds === {} ],
+        lsClassLabels = EnsembleClassify[aCL, testData[[All, 1]], aggrSpec],
+        (* ELSE*)
+        lsClassLabels = EnsembleClassifyByThreshold[aCL, testData[[All, 1]], thresholds]
+      ];
+
+      CrossTabulate[ Transpose[{ testData[[All, 2]], lsClassLabels} ], opts ]
+    ];
+
+
+EnsembleClassifierConfusionMatrix[___] := (Message[EnsembleClassifierConfusionMatrix::nargs]; $Failed);
 
 
 End[]; (* `Private` *)
