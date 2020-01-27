@@ -369,6 +369,8 @@ EnsembleClassifyByThreshold[cls_Association,
       ];
 
       (* Make threshold classification function. *)
+      (* Is this code slow for a large number specified label-threshold rules? *)
+      (* It can be with associations Merge with Subtract and Select instead of Which. *)
       code =
           Join[
             Flatten[ MapThread[ Function[{k,v}, { #[ k ] >= v, k }], Transpose[ List @@@ thresholds ] ] ],
@@ -545,7 +547,11 @@ The optional fourth argument, is expected to be a label-threshold specification 
 
 Options[EnsembleClassifierConfusionMatrix] = Options[CrossTabulate];
 
-EnsembleClassifierConfusionMatrix[aCL_Association, testData_?ClassifierDataQ, aggrSpec : ("ProbabilitiesMean" | "Votes" ) : "ProbabilitiesMean", opts:OptionsPattern[] ] :=
+EnsembleClassifierConfusionMatrix[
+  aCL_Association,
+  testData_?ClassifierDataQ,
+  aggrSpec : ("ProbabilitiesMean" | "Votes" ) : "ProbabilitiesMean",
+  opts:OptionsPattern[] ] :=
     EnsembleClassifierConfusionMatrix[aCL, testData, aggrSpec, None, opts];
 
 EnsembleClassifierConfusionMatrix[
