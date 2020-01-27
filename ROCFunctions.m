@@ -183,19 +183,19 @@
 
 (* Created by Mathematica Plugin for IntelliJ IDEA *)
 
-BeginPackage["ROCFunctions`"]
+BeginPackage["ROCFunctions`"];
 
 ToROCAssociation::usage = "ToROCAssociation[ {trueLabel, falseLabel}, actualLabels, predictedLabels] converts \
 two labels lists (actual and predicted) into an Association that can be used as an argument for the ROC functions. \
-See ROCFunctions ."
+See ROCFunctions .";
 
 ROCAssociationQ::usage = "Verifies that the argument is a valid ROC Association object. \
 A ROC Association object has the keys \
-\"TruePositive\", \"FalsePositive\", \"TrueNegative\", and \"FalseNegative\" ."
+\"TruePositive\", \"FalsePositive\", \"TrueNegative\", and \"FalseNegative\" .";
 
 ROCFunctions::usage = "Gives access to the implement ROC functions.
 It can be used as Thread[ROCFunctions[][rocAssoc]] or Thread[ROCFunctions[{\"TPR\",\"SPC\"}][rocAssoc]] .\
-See ROCFunctions[\"FunctionInterpretations\"] for available functions and their interpretations."
+See ROCFunctions[\"FunctionInterpretations\"] for available functions and their interpretations.";
 
 ROCPlot::usage = "Makes a standard ROC plot for specified parameter list and corresponding ROC Association objects. \
 ROCPlot takes all options of Graphics and additional options for \
@@ -204,28 +204,31 @@ The allowed signatures are: \
 \nROCPlot[ aROCs:{_?ROCAssociationQ..}, opts] \
 \nROCPlot[ parVals:({_?NumericQ..}|Automatic), aROCs:{_?ROCAssociationQ..}, opts] \
 \nROCPlot[ xFuncName_String, yFuncName_String, aROCs:{_?ROCAssociationQ..}, opts] \
-\nROCPlot[ xFuncName_String, yFuncName_String, parVals:({_?NumericQ..}|Automatic), aROCs:{_?ROCAssociationQ..}, opts]"
+\nROCPlot[ xFuncName_String, yFuncName_String, parVals:({_?NumericQ..}|Automatic), aROCs:{_?ROCAssociationQ..}, opts]";
 
 ROCValues::usage = "ROCValues[predictionProbabilities_Dataset, actualLabels_List, thRange_?VectorQ ] \
-computes ROC associations (for ROCPlot)."
+computes ROC associations (for ROCPlot).";
 
-ToClassifyROCCurvePlot::usage = "Changes the style of ROCPlot plots. (Experimental.)"
+ToClassifyROCCurvePlot::usage = "Changes the style of ROCPlot plots. (Experimental.)";
 
 ConfusionMatrixPlot::usage = "ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {yesLabel_, noLabel_}
-plots a confusion matrix based on a ROC association."
+plots a confusion matrix based on a ROC association.";
 
-Begin["`Private`"]
+ConfusionMatrixPlotFrame::usage = "ConfusionMatrixPlotFrame[mat, refMat, rowNames, columnNames, opts]
+frames a given confusion matrix.";
 
-Clear[ToROCAssociation]
+Begin["`Private`"];
+
+Clear[ToROCAssociation];
 
 ToROCAssociation::nalbl = "The the first argument is expected to be list of two atomic elements,
-or a list of an atomic label and a list of atomic labels."
+or a list of an atomic label and a list of atomic labels.";
 
-ToROCAssociation::nvecs = "The the second and third arguments are expected to be vectors of the same length."
+ToROCAssociation::nvecs = "The the second and third arguments are expected to be vectors of the same length.";
 
 ToROCAssociation::sgntrs = "The allowed signatures are one of : \
 \nToROCAssociation[ {trueLabel_?AtomQ, falseLabel:(_?AtomQ|{_?AtomQ..})}, actualLabels_, predictedLabels_ ] , \
-\nToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, apfAssoc_Association] ."
+\nToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, apfAssoc_Association] .";
 
 ToROCAssociation[ {trueLabel_, falseLabel_}, actualLabels_List, predictedLabels_List ] :=
     Block[{ra,localFalseLabel, flRules},
@@ -349,10 +352,10 @@ ROCFunctions[] := Evaluate[ROCFunctions["FunctionsAssociation"]];
 ROCFunctions[fnames:{_String..}] := aROCFunctions/@fnames;
 ROCFunctions[fname_String] := aROCFunctions[fname];
 
-Clear[ROCPlot]
+Clear[ROCPlot];
 
 ROCPlot::apv = "The parameter values are specified as Automatic, but extracting \"ROCParameter\" from the ROC data\
- did not produce a numerical vector."
+ did not produce a numerical vector.";
 
 Options[ROCPlot] =
     Join[ {"ROCPointSize"-> 0.02, "ROCColor"-> Lighter[Blue], "ROCPointColorFunction" -> Automatic,
@@ -468,15 +471,15 @@ ROCPlot[
 
 Clear[ROCValues];
 
-ROCValues::nrng = "The range argument is expected to be a list of numbers between 0 and 1."
+ROCValues::nrng = "The range argument is expected to be a list of numbers between 0 and 1.";
 
 ROCValues::nlen = "The prediction probabilities Dataset object and the actual labels (the first and second arguments) \
-are expected to have equal lengths."
+are expected to have equal lengths.";
 
-ROCValues::nlbl = "The value of \"ClassLabel\" is expected to be one of the columns of the first argument."
+ROCValues::nlbl = "The value of \"ClassLabel\" is expected to be one of the columns of the first argument.";
 
 ROCValues::args = "The arguments are expected to be a predictions probabilities Dataset, \
-a list of actual labels, and threshold range."
+a list of actual labels, and threshold range.";
 
 Options[ROCValues] = {"ClassLabel"->Automatic};
 
@@ -542,10 +545,13 @@ ToClassifyROCCurvePlot[gr_] :=
 (*
 Modified/productized version of kglr's MSE answer: https://mathematica.stackexchange.com/a/200221/34008 .
 *)
+
 Clear[ConfusionMatrixPlot];
+
 Options[ConfusionMatrixPlot] = Join[ { "Normalize" -> False }, Options[MatrixPlot] ];
+
 ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {yesLabel_, noLabel_}: {"True", "False"}, opts:OptionsPattern[] ] :=
-   Block[{mat, refMat, n},
+   Block[{mat, refMat},
 
      mat = { {aROC["FalseNegative"], aROC["TruePositive"]}, {aROC["TrueNegative"], aROC["FalsePositive"]}};
 
@@ -555,18 +561,36 @@ ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames: {yesLabel_, noLabel_}: {
        mat = N[ mat / { aROC["TruePositive"] + aROC["FalseNegative"], aROC["TrueNegative"] + aROC["FalsePositive"]} ];
      ];
 
+     ConfusionMatrixPlotFrame[ mat, refMat, labelNames, labelNames, opts]
+   ];
+
+Clear[ConfusionMatrixPlotFrame];
+
+Options[ConfusionMatrixPlotFrame] = Options[MatrixPlot];
+
+ConfusionMatrixPlotFrame[ mat_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[] ] :=
+    ConfusionMatrixPlotFrame[ mat, mat, rowNames, columnNames, opts ];
+
+ConfusionMatrixPlotFrame[ mat_?MatrixQ, refMat_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[] ] :=
+   Block[{},
+
      MatrixPlot[mat,
        FilterRules[{opts}, Options[MatrixPlot]],
        ColorRules -> {0 -> White},
        Frame -> True,
        FrameLabel -> {"actual", "predicted"},
        FrameTicks ->
-           {{MapIndexed[{#2[[1]], #} &, labelNames], MapIndexed[{#2[[1]], #} &, Total@Transpose@refMat]},
-             {MapIndexed[{#2[[1]], #} &, Total[refMat]], MapIndexed[{#2[[1]], #} &, labelNames]}},
-       ColorFunction -> "Rainbow",
+           {{MapIndexed[{#2[[1]], #} &, rowNames], MapIndexed[{#2[[1]], #} &, Total@Transpose@refMat]},
+             {MapIndexed[{#2[[1]], #} &, Total[refMat]], MapIndexed[{#2[[1]], #} &, columnNames]}},
+(*       ColorFunction -> "Rainbow",*)
        Epilog -> MapIndexed[Text[#, #2 - 1/2] &, Transpose@Reverse@mat, {2}]]
    ];
 
-End[] (* `Private` *)
+ConfusionMatrixPlotFrame[ smat_?AssociationQ, opts:OptionsPattern[] ] :=
+    Block[{},
+      ConfusionMatrixPlotFrame[ Sequence @@ Values[smat], opts]
+    ] /; Sort[Keys[smat]] == Sort[{"SparseMatrix", "RowNames", "ColumnNames"}];
+
+End[]; (* `Private` *)
 
 EndPackage[]
