@@ -45,7 +45,7 @@
 
   # Introduction
 
-    This file (package) provides monad-like implementation for for the following Latent Semantic Analysis (LSA)
+    This file (package) provides a software monad implementation for the following Latent Semantic Analysis (LSA)
     main sequence of steps :
 
       1. ingesting a collection of documents;
@@ -65,8 +65,8 @@
       8. provide different statistics over the document collection.
 
 
-  This monadic implementation is just a wrapper interface to the functions provided by the packages [1,2];
-  those functions described in [3].
+  We can see this monadic implementation as a wrapper interface to the functions provided by the packages [1,2,3];
+  those functions are described in [4].
 
 
   # Usage example
@@ -98,7 +98,10 @@
     [2] Anton Antonov, Implementation of the Non-Negative Matrix Factorization algorithm in Mathematica, (2013),
         https://github.com/antononcube/MathematicaForPrediction/blob/master/NonNegativeMatrixFactorization.m
 
-    [3] Anton Antonov, "Topic and thesaurus extraction from a document collection", (2013),
+    [3] Anton Antonov, Independent Component Analysis Mathematica package, (2016),
+        https://github.com/antononcube/MathematicaForPrediction/blob/master/IndependentComponentAnalysis.m
+
+    [4] Anton Antonov, "Topic and thesaurus extraction from a document collection", (2013),
         MathematicaForPrediction at GitHub.
         https://github.com/antononcube/MathematicaForPrediction/blob/master/Documentation/Topic%20and%20thesaurus%20extraction%20from%20a%20document%20collection.pdf
 
