@@ -194,7 +194,7 @@ LSAMonDocumentCollectionQ::usage = "Gives True if the argument is a text collect
 
 LSAMonExtractTopics::usage = "Extract topics.";
 
-LSAMonNormalizeMatrixProduct::usage = "LSAMonNormalizeMatrixProduct[ Normalized -> (Left|Right) ] \
+LSAMonNormalizeMatrixProduct::usage = "LSAMonNormalizeMatrixProduct[ \"Normalized\" -> (Left|Right) ] \
 normalize the matrix factors.";
 
 LSAMonRepresentDocumentTagsByTopics::usage = "Find the topic representation corresponding to a list of tags. \
@@ -1243,6 +1243,7 @@ LSAMonRepresentByTopics[__][___] :=
       $LSAMonFailure
     ];
 
+
 (*------------------------------------------------------------*)
 (* Matrix product normalization                               *)
 (*------------------------------------------------------------*)
@@ -1251,18 +1252,18 @@ Clear[LSAMonNormalizeMatrixProduct];
 
 SyntaxInformation[LSAMonNormalizeMatrixProduct] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
-Options[LSAMonNormalizeMatrixProduct] = { Normalized -> Right };
+Options[LSAMonNormalizeMatrixProduct] = { "Normalized" -> Right };
 
 LSAMonNormalizeMatrixProduct[___][$LSAMonFailure] := $LSAMonFailure;
 
 LSAMonNormalizeMatrixProduct[xs_, context_Association] := LSAMonNormalizeMatrixProduct[][xs, context];
 
-LSAMonNormalizeMatrixProduct[][xs_, context_Association] := LSAMonNormalizeMatrixProduct[Normalized -> Right][xs, context];
+LSAMonNormalizeMatrixProduct[][xs_, context_Association] := LSAMonNormalizeMatrixProduct[ "Normalized" -> Right][xs, context];
 
 LSAMonNormalizeMatrixProduct[opts : OptionsPattern[]][xs_, context_] :=
     Block[{normalized, W, H},
 
-      normalized = OptionValue[ LSAMonNormalizeMatrixProduct, Normalized];
+      normalized = OptionValue[ LSAMonNormalizeMatrixProduct, "Normalized"];
 
       W = LSAMonTakeW[xs, context];
       H = LSAMonTakeH[xs, context];
@@ -1293,7 +1294,7 @@ LSAMonNormalizeMatrixProduct[opts : OptionsPattern[]][xs_, context_] :=
 LSAMonNormalizeMatrixProduct[__][___] :=
     Block[{},
       Echo[
-        "The expected signature is LSAMonNormalizeMatrixProduct[ Normalized -> (Left | Right) ] .",
+        "The expected signature is LSAMonNormalizeMatrixProduct[ \"Normalized\" -> (Left | Right) ] .",
         "LSAMonNormalizeMatrixProduct:"];
       $LSAMonFailure
     ];
