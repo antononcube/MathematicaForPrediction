@@ -228,7 +228,11 @@ SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
 SMRMonFilterMatrix::usage = "SMRMonFilterMatrix[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 applies a profile filter to the rows of the recommendation matrix.";
 
-SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] compute the Top-K for specified data and K's."
+SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] compute the Top-K for specified data and K's.";
+
+SMRMonImportRecommender::usage = "SMRMonImportRecommender[ dirName_String, suffix_String ] imports a recommender \
+using data files from the specified directory having the specified suffix. \
+This is a non-monadic function; can be used in place of SMRMonUnit[].";
 
 Begin["`Private`"];
 
@@ -2380,13 +2384,22 @@ Clear[SMRMonProveByMetadata];
 
 SyntaxInformation[SMRMonProveByMetadata] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
-Options[SMRMonProveByMetadata] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByMetadata] = { "Profile"-> None, "Item"-> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
 SMRMonProveByMetadata[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonProveByMetadata[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonProveByMetadata[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonProveByMetadata[ opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{profile, item},
+
+      profile = OptionValue[SMRMonProveByMetadata, "Profile"];
+      item = OptionValue[SMRMonProveByMetadata, "Item"];
+
+      SMRMonProveByMetadata[ profile, item, opts][xs, context]
+    ];
 
 SMRMonProveByMetadata[ profile_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{scores, oiFunc, normalizeQ, res},
@@ -2457,13 +2470,22 @@ Clear[SMRMonProveByHistory];
 
 SyntaxInformation[SMRMonProveByHistory] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
-Options[SMRMonProveByHistory] = { "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByHistory] = { "History" -> None, "Item" -> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
 SMRMonProveByHistory[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonProveByHistory[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonProveByHistory[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonProveByHistory[ opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{history, item},
+
+      history = OptionValue[SMRMonProveByHistory, "History"];
+      item = OptionValue[SMRMonProveByHistory, "Item"];
+
+      SMRMonProveByHistory[ history, item, opts][xs, context]
+    ];
 
 SMRMonProveByHistory[ history_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{ oiFunc, normalizeQ, scores, maxScore, res},
@@ -2616,6 +2638,31 @@ SMRMonComputeTopK[___][__] :=
       $SMRMonFailure
     ];
 
+
+(*=========================================================*)
+(* Compute Top-K statistic                                 *)
+(*=========================================================*)
+
+Clear[SMRMonImportRecommender];
+SMRMonImportRecommender[dirName_String, suffix_String] :=
+    Block[{smat, dsTagTypeRanges, dsRowNames, rowNames, dsColumnNames, columnNames, smat2, smats},
+
+      smat = Import[FileNameJoin[{dirName, "SMR-M01-from-" <> suffix <> ".mm"}]];
+
+      dsTagTypeRanges = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-TagTypeRanges-from-" <> suffix <> ".csv"}], "RowNames" -> True];
+
+      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-rownames-from-" <> suffix <> ".csv"}], "RowNames" -> True];
+      rowNames = Normal[dsRowNames[Values, "RowName"]];
+
+      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-colnames-from-" <> suffix <> ".csv"}], "RowNames" -> True];
+      columnNames = Normal[dsColumnNames[Values, "ColumnName"]];
+
+      (* Create SMRMon object *)
+      smat2 = ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames];
+      smats = Map[smat2[[All, #Begin ;; #End]] &, Normal[dsTagTypeRanges]];
+
+      SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ]
+    ];
 
 End[]; (* `Private` *)
 
