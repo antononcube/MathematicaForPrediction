@@ -911,6 +911,9 @@ SMRMonFilterMatrix[][$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonFilterMatrix[xs_, context_Association] := SMRMonFilterMatrix[None][xs, context];
 
+SMRMonFilterMatrix[ profile_Association, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonFilterMatrix[ Keys[profile], opts][xs, context];
+
 SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ filterType, pvec, svec, rowInds },
 
@@ -2384,7 +2387,7 @@ Clear[SMRMonProveByMetadata];
 
 SyntaxInformation[SMRMonProveByMetadata] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
-Options[SMRMonProveByMetadata] = { "Profile"-> None, "Item"-> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByMetadata] = { "Profile"-> None, "Items"-> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
 SMRMonProveByMetadata[$SMRMonFailure] := $SMRMonFailure;
 
@@ -2393,13 +2396,16 @@ SMRMonProveByMetadata[xs_, context_Association] := $SMRMonFailure;
 SMRMonProveByMetadata[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonProveByMetadata[ opts : OptionsPattern[] ][ xs_, context_ ] :=
-    Block[{profile, item},
+    Block[{profile, items},
 
       profile = OptionValue[SMRMonProveByMetadata, "Profile"];
-      item = OptionValue[SMRMonProveByMetadata, "Item"];
+      items = OptionValue[SMRMonProveByMetadata, "Items"];
 
-      SMRMonProveByMetadata[ profile, item, opts][xs, context]
+      SMRMonProveByMetadata[ profile, items, opts][xs, context]
     ];
+
+SMRMonProveByMetadata[ profile_List, items : ( _String | {_String..} ), args___ ][ xs_, context_ ] :=
+    SMRMonProveByMetadata[ AssociationThread[profile, 1.], items, args][xs, context];
 
 SMRMonProveByMetadata[ profile_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{scores, oiFunc, normalizeQ, res},
@@ -2443,6 +2449,9 @@ SMRMonProveByMetadata[ profile_Association, itemNames : {_String..}, opts : Opti
       SMRMonUnit[ Join @@ res, context ]
     ];
 
+SMRMonProveByMetadata[ Automatic, itemNames : ( _String | {_String..} ), opts : OptionsPattern[] ][ xs_, context_ ] :=
+    SMRMonProveByMetadata[ itemNames, opts ][xs, context];
+
 SMRMonProveByMetadata[ itemNames : ( _String | {_String..} ), opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{},
       If[ ScoredTagsQ[xs, context],
@@ -2455,7 +2464,8 @@ SMRMonProveByMetadata[ itemNames : ( _String | {_String..} ), opts : OptionsPatt
 SMRMonProveByMetadata[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonProveByMetadata[profile_Association, itemNames:( _String | {_String..} ), opts___] .",
+        "The expected signature is SMRMonProveByMetadata[profile : (_Association | Automatic), itemNames:( _String | {_String..} ), opts___]. " <>
+            "If profile is Automatic then the pipeline value is expected to be a valid profile.",
         "SMRMonProveByMetadata:"];
       $SMRMonFailure
     ];
@@ -2470,7 +2480,7 @@ Clear[SMRMonProveByHistory];
 
 SyntaxInformation[SMRMonProveByHistory] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
-Options[SMRMonProveByHistory] = { "History" -> None, "Item" -> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByHistory] = { "History" -> None, "Items" -> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
 SMRMonProveByHistory[$SMRMonFailure] := $SMRMonFailure;
 
@@ -2479,13 +2489,16 @@ SMRMonProveByHistory[xs_, context_Association] := $SMRMonFailure;
 SMRMonProveByHistory[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonProveByHistory[ opts : OptionsPattern[] ][ xs_, context_ ] :=
-    Block[{history, item},
+    Block[{history, items},
 
       history = OptionValue[SMRMonProveByHistory, "History"];
-      item = OptionValue[SMRMonProveByHistory, "Item"];
+      items = OptionValue[SMRMonProveByHistory, "Items"];
 
-      SMRMonProveByHistory[ history, item, opts][xs, context]
+      SMRMonProveByHistory[ history, items, opts][xs, context]
     ];
+
+SMRMonProveByHistory[ history_List, items : ( _String | {_String..} ), args___ ][ xs_, context_ ] :=
+    SMRMonProveByHistory[ AssociationThread[history, 1.], items, args][xs, context];
 
 SMRMonProveByHistory[ history_Association, itemName_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{ oiFunc, normalizeQ, scores, maxScore, res},
