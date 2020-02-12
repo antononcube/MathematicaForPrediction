@@ -146,7 +146,7 @@ KMeans::"nmrfr" = "The value of the option `1` is expected to be Automatic or a 
 KMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
 
 KMeans[inputs : {{_?NumberQ ...} ...}, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
-    Block[{eta, precGoal, distFunc, maxSteps, clusters, clustersInds, t,
+    Block[{eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
       j, means, meansOld, meansDiff, nSteps = 0, tol, dMat,
       mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds},
 
@@ -251,15 +251,18 @@ BiSectionalKMeans::"ncls" = "No clusters were obtained; suspecting the specified
 Returning last available clusters.";
 
 BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts___] :=
-    Block[{nt, distFunc, clusterSelectionMethod,
+    Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod,
       clusters, means, sses, sset, s, newMeans,
       newClusters, spos, kInd, clustersToAdd, meansToAdd,
       indexesToDrop = {}, kMeansOpts, kmRes},
 
       (* Options *)
-      nt = OptionValue[ BiSectionalKMeans, "NumberOfTrialBisections"];
-      If[nt === Automatic, nt = 3];
-      If[ !( IntegerQ[nt] && nt > 0 ),
+      distFunc = OptionValue[KMeans, DistanceFunction];
+      If[distFunc === Automatic, distFunc = EuclideanDistance];
+
+      numberOfTrialBisections = OptionValue[ BiSectionalKMeans, "NumberOfTrialBisections"];
+      If[numberOfTrialBisections === Automatic, numberOfTrialBisections = 3];
+      If[ !( IntegerQ[numberOfTrialBisections] && numberOfTrialBisections > 0 ),
         Message[BiSectionalKMeans::"npi", "NumberOfTrialBisections"];
         Return[$Failed];
       ];
@@ -309,7 +312,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts___] :=
               {meansToAdd, clustersToAdd} = {newMeans, newClusters}
             ];
           ],
-          {kt, 1, nt}
+          {kt, 1, numberOfTrialBisections}
         ];
 
         If[Length[clustersToAdd] > 0,
