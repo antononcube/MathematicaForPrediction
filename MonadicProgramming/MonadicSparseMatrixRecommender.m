@@ -914,6 +914,9 @@ SMRMonFilterMatrix[xs_, context_Association] := SMRMonFilterMatrix[None][xs, con
 SMRMonFilterMatrix[ profile_Association, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonFilterMatrix[ Keys[profile], opts][xs, context];
 
+SMRMonFilterMatrix[ profile_String, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonFilterMatrix[ {profile}, opts][xs, context];
+
 SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ filterType, pvec, svec, rowInds },
 
@@ -958,7 +961,7 @@ SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, conte
 
 SMRMonFilterMatrix[___][__] :=
     Block[{},
-      Echo["The expected signature is SMRMonFilterMatrix[ profile : ( {_String ..} | Association[ (_String -> _?NumberQ) .. ] ) ] .", "SMRMonFilterMatrix:"];
+      Echo["The expected signature is SMRMonFilterMatrix[ profile : ( _String | {_String ..} | Association[ (_String -> _?NumberQ) .. ] ) ] .", "SMRMonFilterMatrix:"];
       $SMRMonFailure
     ];
 
@@ -1183,7 +1186,7 @@ SMRMonRecommend[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommend[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{h},
 
       h = KeyMap[ context["itemNames"][#]&, history ];
@@ -1196,16 +1199,16 @@ SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes_Integ
       SMRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
     ];
 
-SMRMonRecommend[ itemName_String, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ itemName_String, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ AssociationThread[{itemName}, 1], nRes, opts][xs, context];
 
-SMRMonRecommend[ itemNames : {_String...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ itemNames : {_String...}, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ AssociationThread[itemNames, 1], nRes, opts][xs, context];
 
-SMRMonRecommend[ history : Association[ (_Integer -> _?NumberQ) ... ], nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ history : Association[ (_Integer -> _?NumberQ) ... ], nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ Keys[history], Values[history], nRes, opts][xs, context];
 
-SMRMonRecommend[ itemIndices : {_Integer...}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ itemIndices : {_Integer...}, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ itemIndices, ConstantArray[1, Length[itemIndices]], nRes, opts][xs, context];
 
 SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
@@ -1295,7 +1298,7 @@ SMRMonRecommend[___][__] :=
     Block[{},
       Echo[
         "The first argument is expected to be an association of scored items. " <>
-            "The second argument is expected to be a positive integer. " <>
+            "The second argument is expected to be a positive integer or All. " <>
             "The items are recommendation matrix row indices or row names. The scores are positive numbers.",
         "SMRMonRecommend:"];
       $SMRMonFailure
@@ -1319,13 +1322,13 @@ SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommendByProfile[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommendByProfile[nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{},
       (* Without verification. *)
       SMRMonRecommendByProfile[xs, nRes, opts][xs, context]
     ];
 
-SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ..}, nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ..}, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{vec, smat},
 
       If[!KeyExistsQ[context, "M"],
@@ -1343,7 +1346,7 @@ SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ.
 SMRMonRecommendByProfile[tagsArg : (_Association | _List), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommendByProfile[tagsArg, 12, opts][xs, context];
 
-SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{tags = tagsArg, p},
 
       If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
@@ -1440,7 +1443,7 @@ SMRMonRecommendByProfile[___][__] :=
     Block[{},
       Echo[
         "The first argument is expected to be an association of scored tags. " <>
-            "The second argument is expected to be a positive integer. " <>
+            "The second argument is expected to be a positive integer or All. " <>
             "The tags are recommendation matrix column names. The scores are positive numbers.",
         "SMRMonRecommendByProfile:"];
       $SMRMonFailure
