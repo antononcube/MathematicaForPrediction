@@ -46,8 +46,8 @@ BeginTestSection["KMeans-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/KMeans.m"],
-    Greater[Length[DownValues[ChernoffFaces`KMeans]], 0]
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],
+    Greater[Length[DownValues[BiSectionalKMeans`KMeans]], 0]
   ]
   ,
   True
@@ -85,7 +85,7 @@ VerificationTest[(* 2 *)
 
   points2D["5clusters"] = RandomSample[points2D["5clusters"]];
 
-  Apply[ And, MatrixQ[#, NumericQ] /@ Values[points2D] ]
+  Apply[ And, MatrixQ[#, NumericQ]& /@ Values[points2D] ]
   ,
   True
   ,
@@ -117,7 +117,7 @@ VerificationTest[(* 3 *)
 
   points3D["4clusters"] = RandomSample[Flatten[pnts, 1]];
 
-  Apply[ And, MatrixQ[#, NumericQ] /@ Values[points3D] ]
+  Apply[ And, MatrixQ[#, NumericQ]& /@ Values[points3D] ]
   ,
   True
   ,
@@ -143,7 +143,7 @@ VerificationTest[(* 4 *)
 
   formulaPoints2D["x^2+Sqrt[y]==1"] = blackVecs2D;
 
-  Apply[ And, MatrixQ[#, NumericQ] /@ Values[formulaPoints2D] ]
+  Apply[ And, MatrixQ[#, NumericQ]& /@ Values[formulaPoints2D] ]
   ,
   True
   ,
@@ -158,13 +158,13 @@ VerificationTest[(* 4 *)
 VerificationTest[
   clsRes = KMeans[points2D["3clusters"], 3];
 
-  AssociationQ[clRes] &&
+  AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
-      Length[clRes["Clusters"]] == 3 &&
-      Apply[ And, MatrixQ[#, NumberQ]& /@ clRes["Clusters"] ] &&
-      VectorQ[ clRes["ClusterLabels"], IntegerQ] &&
-      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clRes["IndexClusters"]]]
+      Length[clsRes["Clusters"]] == 3 &&
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      VectorQ[ clsRes["ClusterLabels"], IntegerQ] &&
+      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
   ,
   True
   ,
@@ -175,13 +175,13 @@ VerificationTest[
 VerificationTest[
   clsRes = KMeans[points2D["3clusters"], 5, "LearningParameter" -> 0.1, MaxSteps -> 10, "MinReassignmentsFraction" -> 0.2];
 
-  AssociationQ[clRes] &&
+  AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
-      Length[clRes["Clusters"]] == 5 &&
-      Apply[ And, MatrixQ[#, NumberQ]& /@ clRes["Clusters"] ] &&
-      VectorQ[ clRes["ClusterLabels"], IntegerQ] &&
-      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clRes["IndexClusters"]]]
+      Length[clsRes["Clusters"]] == 5 &&
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      VectorQ[ clsRes["ClusterLabels"], IntegerQ] &&
+      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
   ,
   True
   ,
@@ -194,7 +194,7 @@ VerificationTest[
 (***********************************************************)
 
 VerificationTest[
-  $Failed === KMeans[points2D["3clusters"]];
+  $Failed === KMeans[points2D["3clusters"]]
   ,
   True
   ,
@@ -205,7 +205,7 @@ VerificationTest[
 
 
 VerificationTest[
-  $Failed === KMeans[RandomReal[1,12], 4];
+  $Failed === KMeans[RandomReal[1,12], 4]
   ,
   True
   ,
@@ -216,7 +216,7 @@ VerificationTest[
 
 
 VerificationTest[
-  $Failed === KMeans[RandomReal[1,{120,3}], -1];
+  $Failed === KMeans[RandomReal[1,{120,3}], -1]
   ,
   True
   ,
