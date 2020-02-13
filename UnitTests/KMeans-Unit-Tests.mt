@@ -189,6 +189,23 @@ VerificationTest[
 ];
 
 
+VerificationTest[
+  clsRes = KMeans[SparseArray[points2D["5clusters"]], 5];
+
+  AssociationQ[clsRes] &&
+      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
+      MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
+      Length[clsRes["Clusters"]] == 5 &&
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      VectorQ[ clsRes["ClusterLabels"], IntegerQ] &&
+      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
+  ,
+  True
+  ,
+  TestID -> "Standard-call-3Ddata-1"
+];
+
+
 (***********************************************************)
 (* Messages for wrong input                                *)
 (***********************************************************)
