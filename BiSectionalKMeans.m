@@ -69,19 +69,28 @@ AverageDistance[cluster_, point_, distFunc_ : EuclideanDistance] := Mean[Map[dis
 
 Silhouette[clusters_, item_, distFunc_] :=
     Block[{a, b, ds, inCluster, pos, inClusterPos},
+
       pos = Position[clusters, item][[1]];
       inCluster = clusters[[Sequence @@ Drop[pos, -1]]];
       inClusterPos = pos[[1]];
+
       a = Mean[Map[distFunc[#, item] &, inCluster]];
+
       If[Length[clusters] > 1,
-        ds = Map[Mean[Map[distFunc[#, item] &, clusters[[#]]]] &,
-          Drop[Range[Length[clusters]], {inClusterPos}]];
+        ds =
+            Map[
+              Mean[Map[distFunc[#, item] &, clusters[[#]]]] &,
+              Drop[Range[Length[clusters]], {inClusterPos}]
+            ];
         b = Min[ds],
+        (*ELSE*)
         b = None
       ];
-      Which[
-        b === None, a,
-        True, (b - a) / Max[a, b]
+
+      If[b === None,
+        a,
+        (*ELSE*)
+        (b - a) / Max[a, b]
       ]
     ];
 
@@ -94,11 +103,11 @@ Silhouette[clusters_, distFunc_] := Mean[Silhouette[clusters, #, distFunc] & /@ 
 
 Clear[SilhouetteTest];
 
-SyntaxInformation[SilhouetteTest] = { "ArgumentsPattern" -> { _, _., _., OptionsPattern[] } };
+SyntaxInformation[SilhouetteTest] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
 Options[SilhouetteTest] = { DistanceFunction -> EuclideanDistance, "NumberOfSamplePoints" -> 60, "Repetitions" -> 4 };
 
-SilhouetteTest[clusters_, samplePoints_Integer : 20, rep_Integer : 4, opts:OptionsPattern[] ] :=
+SilhouetteTest[clusters_, opts : OptionsPattern[] ] :=
     Block[{distFunc, nSamplePoints, nReps},
 
       distFunc = OptionValue[SilhouetteTest, DistanceFunction];
