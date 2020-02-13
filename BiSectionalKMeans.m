@@ -164,7 +164,7 @@ KMeans::"nmrfr" = "The value of the option `1` is expected to be Automatic or a 
 KMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
 
 KMeans[inputs_SparseArray, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
-    KMeans[ Normal[inputs], nseeds_?IntegerQ, opts : OptionsPattern[]];
+    KMeans[ Normal[inputs], nseeds, opts ];
 
 KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
     Block[{eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
@@ -290,7 +290,7 @@ Returning last available clusters.";
 BiSectionalKMeans::"nclf" = "The value of the option `1` is expected to be one of `2`.";
 
 BiSectionalKMeans[data_SparseArray, k_?IntegerQ, opts : OptionsPattern[]] :=
-    KMeans[ Normal[data], k_?IntegerQ, opts : OptionsPattern[]];
+    KMeans[ Normal[data], k, opts ];
 
 BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPattern[]] :=
     Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, expectedMethodNames,
