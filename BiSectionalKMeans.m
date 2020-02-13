@@ -94,9 +94,11 @@ Silhouette[clusters_, distFunc_] := Mean[Silhouette[clusters, #, distFunc] & /@ 
 
 Clear[SilhouetteTest];
 
+SyntaxInformation[SilhouetteTest] = { "ArgumentsPattern" -> { _, _., _., OptionsPattern[] } };
+
 Options[SilhouetteTest] = { DistanceFunction -> EuclideanDistance, "NumberOfSamplePoints" -> 60, "Repetitions" -> 4 };
 
-SilhouetteTest[clusters_, samplePoints_Integer : 20, rep_Integer : 4] :=
+SilhouetteTest[clusters_, samplePoints_Integer : 20, rep_Integer : 4, opts:OptionsPattern[] ] :=
     Block[{distFunc, nSamplePoints, nReps},
 
       distFunc = OptionValue[SilhouetteTest, DistanceFunction];
@@ -137,6 +139,8 @@ Clear[KMeansDataQ];
 KMeansDataQ[ data_ ] := MatrixQ[data, NumericQ];
 
 Clear[KMeans];
+
+SyntaxInformation[KMeans] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
 
 Options[KMeans] = {
   DistanceFunction -> EuclideanDistance, MaxSteps -> 1000, PrecisionGoal -> 6,
@@ -260,6 +264,8 @@ KMeans[___] :=
   https://www.macmillandictionary.com/dictionary/british/fold-in
 *)
 Clear[BiSectionalKMeans];
+
+SyntaxInformation[BiSectionalKMeans] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
 
 Options[BiSectionalKMeans] =
     Join[
