@@ -41,7 +41,12 @@
 (* :Keywords: K-means, Mathematica, Wolfram Language, unit test *)
 (* :Discussion:
 
+   This file has unit tests of the function KMeans implemented in the file:
+
+     https://github.com/antononcube/MathematicaForPrediction/blob/master/BiSectionalKMeans.m
+
 *)
+
 BeginTestSection["KMeans-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
