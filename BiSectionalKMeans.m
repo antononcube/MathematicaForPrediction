@@ -133,6 +133,9 @@ Validity[means_, clusters_, distFunc_] :=
 (* KMeans                                                   *)
 (************************************************************)
 
+Clear[KMeansDataQ];
+KMeansDataQ[ data_ ] := MatrixQ[data, NumericQ];
+
 Clear[KMeans];
 
 Options[KMeans] = {
@@ -140,15 +143,21 @@ Options[KMeans] = {
   "LearningParameter" -> 0.01, "MinReassignmentsFraction" -> 1/200
 };
 
+KMeans::"nargs" = "The first argument is expected to be a numerical matrix, \
+the second argument is expected to be a positive integer.";
 KMeans::"nfrac" = "The value of the option `1` is expected to be Automatic or a real number in the interval [0, 1).";
 KMeans::"npg" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"nmrfr" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
 
-KMeans[inputs : {{_?NumberQ ...} ...}, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
+KMeans[inputs_SparseArray, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
+    KMeans[ Normal[inputs], nseeds_?IntegerQ, opts : OptionsPattern[]];
+
+KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
     Block[{eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
       j, means, meansOld, meansDiff, nSteps = 0, tol, dMat,
-      mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds},
+      mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds,
+      indexClusters},
 
       (* Options *)
       eta = OptionValue[KMeans, "LearningParameter"];
@@ -210,7 +219,7 @@ KMeans[inputs : {{_?NumberQ ...} ...}, nseeds_?IntegerQ, opts : OptionsPattern[]
           (* standard learning with eta *)
           clustersInds =
               ((mvec = dMat[[All, #1]]; j = Position[mvec, Min[mvec]][[1, 1]];
-              means[[j]] = means[[j]] + eta (inputs[[#1]] - means[[j]]); j) &) /@ Range[Length[inputs]],
+              means[[j]] = means[[j]] + eta * (inputs[[#1]] - means[[j]]); j) &) /@ Range[Length[inputs]],
 
           (*ELSE*)
           clustersInds =
@@ -230,7 +239,15 @@ KMeans[inputs : {{_?NumberQ ...} ...}, nseeds_?IntegerQ, opts : OptionsPattern[]
 
       clusters = Map[Pick[inputs, clustersInds /. {# -> True}] &, Range[Length[means]]];
 
-      <| "MeanPoints" -> means, "Clusters" -> clusters |>
+      indexClusters = GroupBy[Transpose[{Range[Length[inputs]], clustersInds}], #[[2]] &, #[[All, 1]] &];
+
+      <| "MeanPoints" -> means, "Clusters" -> clusters, "ClusterLabels" -> clustersInds, "IndexClusters" -> indexClusters |>
+    ]/; nseeds > 0;
+
+KMeans[___] :=
+    Block[{},
+      Message[KMeans::"nargs"];
+      Return[$Failed]
     ];
 
 
@@ -238,58 +255,86 @@ KMeans[inputs : {{_?NumberQ ...} ...}, nseeds_?IntegerQ, opts : OptionsPattern[]
 (* BiSectionalKMeans                                        *)
 (************************************************************)
 
+(* Using the following definition of "fold in".
+  [fold something in/into something]to combine things that were previously separate so they can be dealt with together.
+  https://www.macmillandictionary.com/dictionary/british/fold-in
+*)
 Clear[BiSectionalKMeans];
 
 Options[BiSectionalKMeans] =
     Join[
-      {"NumberOfTrialBisections" -> 3, "ClusterSelection" -> "MaxSquaredError"},
+      {"NumberOfTrialBisections" -> 3, "ClusterSelectionFunction" -> "MaxSquaredError", "FoldIn" -> False },
       Options[KMeans]
     ];
 
+BiSectionalKMeans::"nargs" = "The first argument is expected to be a numerical matrix, \
+the second argument is expected to be a positive integer.";
 BiSectionalKMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
 BiSectionalKMeans::"ncls" = "No clusters were obtained; suspecting the specified divisions are too deep. \
 Returning last available clusters.";
+BiSectionalKMeans::"nclf" = "The value of the option `1` is expected to be one of `2`.";
 
-BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts___] :=
-    Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod,
+BiSectionalKMeans[data_SparseArray, k_?IntegerQ, opts : OptionsPattern[]] :=
+    KMeans[ Normal[data], k_?IntegerQ, opts : OptionsPattern[]];
+
+BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPattern[]] :=
+    Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, expectedMethodNames,
       clusters, means, sses, sset, s, newMeans,
       newClusters, spos, kInd, clustersToAdd, meansToAdd,
-      indexesToDrop = {}, kMeansOpts, kmRes},
+      indexesToDrop = {}, kMeansOpts, kmRes, foldInQ, clustersAcc, meansAcc},
 
       (* Options *)
-      distFunc = OptionValue[KMeans, DistanceFunction];
+      distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
       If[distFunc === Automatic, distFunc = EuclideanDistance];
 
-      numberOfTrialBisections = OptionValue[ BiSectionalKMeans, "NumberOfTrialBisections"];
+      numberOfTrialBisections = OptionValue[BiSectionalKMeans, "NumberOfTrialBisections"];
       If[numberOfTrialBisections === Automatic, numberOfTrialBisections = 3];
       If[ !( IntegerQ[numberOfTrialBisections] && numberOfTrialBisections > 0 ),
         Message[BiSectionalKMeans::"npi", "NumberOfTrialBisections"];
         Return[$Failed];
       ];
 
-      clusterSelectionMethod = "ClusterSelection" /. {opts} /. Options[BiSectionalKMeans];
+      clusterSelectionMethod = OptionValue[BiSectionalKMeans, "ClusterSelectionFunction"];
       If[clusterSelectionMethod === Automatic, clusterSelectionMethod = "MaxSquaredError"];
+
+      expectedMethodNames = {"MaxSize", "MaxLength", "MaxSquaredError"};
+      If[ !MemberQ[ ToLowerCase[expectedMethodNames], ToLowerCase[clusterSelectionMethod] ],
+        Message[BiSectionalKMeans::nclf, "ClusterSelectionFunction", ToString[expectedMethodNames]];
+        Return[$Failed]
+      ];
+
+      foldInQ = TrueQ[OptionValue[ BiSectionalKMeans, "FoldIn" ]];
 
       kMeansOpts = FilterRules[{opts}, Options[KMeans]];
 
       (* initial cluster *)
       clusters = {data};
       means = Mean /@ clusters;
-      sses = {Total[Map[distFunc[means // First, #]^2 &, data]]};
+      If[ foldInQ, clustersAcc = {clusters}; meansAcc = {means}];
+      sses = {Total[Map[distFunc[means[[1]], #]^2 &, data]]};
 
       While[Length[clusters] < k,
 
         (* Select a cluster to bisect. *)
-        If[clusterSelectionMethod == "MaxSquaredError",
+        Which[
+          ToLowerCase[clusterSelectionMethod] == ToLowerCase["MaxSquaredError"],
           spos = First@Flatten@Position[Delete[sses, indexesToDrop], Max[sses]],
-          (*ELSE*)
+
+          MemberQ[ ToLowerCase[{"MaxSize", "MaxLength"}], ToLowerCase[clusterSelectionMethod] ],
           s = Delete[clusters, indexesToDrop];
-          spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]]
+          spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]],
+
+          True,
+          Message[BiSectionalKMeans::nclf, "ClusterSelectionFunction", ToString[expectedMethodNames]];
+          Return[$Failed]
         ];
 
         If[! NumberQ[spos],
           Message[BiSectionalKMeans::"ncls"];
-          Return[<| "MeanPoints" -> means, "Clusters" -> clusters |>];
+          If[ foldInQ,
+            Return[<| "MeanPoints" -> means, "Clusters" -> clustersAcc |>],
+            Return[<| "MeanPoints" -> means, "Clusters" -> clusters |>]
+          ]
         ];
 
         kInd = 0;
@@ -297,20 +342,24 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts___] :=
 
         Do[
           (* Bisect *)
-
           kmRes = KMeans[clusters[[spos]], 2, kMeansOpts];
           newMeans = kmRes["MeanPoints"];
           newClusters = kmRes["Clusters"];
 
           If[Length[newClusters] > 1,
+
             sset =
                 MapThread[
-                  Function[{mn, cl},
-                    Total[Map[distFunc[mn, #]^2 &, cl]]], {newMeans, newClusters}, 1];
+                  Function[{mn, cl}, Total[Map[distFunc[mn, #]^2 &, cl]]],
+                  {newMeans, newClusters},
+                  1
+                ];
+
             If[kt == 1 || Total[sset] < s,
               s = Total[sset];
               {meansToAdd, clustersToAdd} = {newMeans, newClusters}
             ];
+
           ],
           {kt, 1, numberOfTrialBisections}
         ];
@@ -319,16 +368,30 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts___] :=
 
           means = Join[Drop[means, {spos}], meansToAdd];
           clusters = Join[Drop[clusters, {spos}], clustersToAdd];
-          sses = Join[Drop[sses, {spos}], sset],
+          sses = Join[Drop[sses, {spos}], sset];
+
+          If[ foldInQ,
+            AppendTo[clustersAcc, clustersToAdd];
+            AppendTo[meansAcc, meansToAdd];
+          ],
 
           (*ELSE*)
           AppendTo[indexesToDrop, {spos}];
         ];
       ];
 
-      <| "MeanPoints" -> means, "Clusters" -> clusters |>
-    ];
+      If[ foldInQ,
+        <| "MeanPoints" -> meansAcc, "Clusters" -> clustersAcc |>,
+        (*ELSE*)
+        <| "MeanPoints" -> means, "Clusters" -> clusters |>
+      ]
+    ]/; k > 0;
 
+BiSectionalKMeans[___] :=
+    Block[{},
+      Message[BiSectionalKMeans::"nargs"];
+      Return[$Failed]
+    ];
 
 End[]; (* `Private` *)
 
