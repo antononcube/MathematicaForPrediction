@@ -290,7 +290,7 @@ Returning last available clusters.";
 BiSectionalKMeans::"nclf" = "The value of the option `1` is expected to be one of `2`.";
 
 BiSectionalKMeans[data_SparseArray, k_?IntegerQ, opts : OptionsPattern[]] :=
-    KMeans[ Normal[data], k, opts ];
+    BiSectionalKMeans[ Normal[data], k, opts ];
 
 BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPattern[]] :=
     Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, expectedMethodNames,
@@ -358,6 +358,8 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         Do[
           (* Bisect *)
           kmRes = KMeans[clusters[[spos]], 2, kMeansOpts];
+          If[ TrueQ[kmRes === $Failed], Return[$Failed, Block]];
+
           newMeans = kmRes["MeanPoints"];
           newClusters = kmRes["Clusters"];
 
