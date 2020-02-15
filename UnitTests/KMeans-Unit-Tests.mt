@@ -195,12 +195,12 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = KMeans[SparseArray[points2D["5clusters"]], 5];
+  clsRes = KMeans[SparseArray[points3D["4clusters"]], 4];
 
   AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
-      Length[clsRes["Clusters"]] == 5 &&
+      Length[clsRes["Clusters"]] == 4 &&
       Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
       VectorQ[ clsRes["ClusterLabels"], IntegerQ] &&
       AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
@@ -208,6 +208,16 @@ VerificationTest[
   True
   ,
   TestID -> "Standard-call-3Ddata-1"
+];
+
+
+VerificationTest[
+  clsRes = KMeans[SparseArray[points2D["5clusters"]], 5];
+  clsRes["Clusters"] == Map[points2D["5clusters"][[#]]&, Values[KeySort[clsRes["IndexClusters"]]]]
+  ,
+  True
+  ,
+  TestID -> "Index-clusters-2Ddata-1"
 ];
 
 

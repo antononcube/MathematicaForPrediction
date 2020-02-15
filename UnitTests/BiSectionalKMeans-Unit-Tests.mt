@@ -164,10 +164,12 @@ VerificationTest[
   clsRes = BiSectionalKMeans[points2D["3clusters"], 3];
 
   AssociationQ[clsRes] &&
-      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters"}] &&
+      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "HierarchicalTreePaths", "HierarchicalTree", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
       Length[clsRes["Clusters"]] == 3 &&
-      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ]
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      MatchQ[clsRes["HierarchicalTreePaths"], { { _Integer .. } .. }] &&
+      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
   ,
   True
   ,
@@ -179,10 +181,12 @@ VerificationTest[
   clsRes = BiSectionalKMeans[points2D["3clusters"], 5, "LearningParameter" -> 0.1, MaxSteps -> 10, "MinReassignmentsFraction" -> 0.2];
 
   AssociationQ[clsRes] &&
-      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters"}] &&
+      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "HierarchicalTreePaths", "HierarchicalTree", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
       Length[clsRes["Clusters"]] == 5 &&
-      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ]
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      MatchQ[clsRes["HierarchicalTreePaths"], { { _Integer .. } .. }] &&
+      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
   ,
   True
   ,
@@ -191,17 +195,29 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = BiSectionalKMeans[SparseArray[points2D["5clusters"]], 5];
+  clsRes = BiSectionalKMeans[SparseArray[points3D["4clusters"]], 4];
 
   AssociationQ[clsRes] &&
-      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters"}] &&
+      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "HierarchicalTreePaths", "HierarchicalTree", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
-      Length[clsRes["Clusters"]] == 5 &&
-      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ]
+      Length[clsRes["Clusters"]] == 4 &&
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      MatchQ[clsRes["HierarchicalTreePaths"], { { _Integer .. } .. }] &&
+      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
   ,
   True
   ,
   TestID -> "Standard-call-3Ddata-1"
+];
+
+
+VerificationTest[
+  clsRes = BiSectionalKMeans[SparseArray[points2D["5clusters"]], 5];
+  clsRes["Clusters"] == Map[points2D["5clusters"][[#]]&, Values[KeySort[clsRes["IndexClusters"]]]]
+  ,
+  True
+  ,
+  TestID -> "Index-clusters-2Ddata-1"
 ];
 
 
@@ -221,7 +237,7 @@ VerificationTest[
 
 
 VerificationTest[
-  $Failed === BiSectionalKMeans[RandomReal[1,12], 4]
+  $Failed === BiSectionalKMeans[RandomReal[1, 12], 4]
   ,
   True
   ,
@@ -232,7 +248,7 @@ VerificationTest[
 
 
 VerificationTest[
-  $Failed === BiSectionalKMeans[RandomReal[1,{120,3}], -1]
+  $Failed === BiSectionalKMeans[RandomReal[1, {120, 3}], -1]
   ,
   True
   ,
