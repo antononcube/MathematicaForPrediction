@@ -296,7 +296,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
     Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, expectedMethodNames,
       clusters, means, sses, sset, s, newMeans,
       newClusters, spos, kInd, clustersToAdd, meansToAdd,
-      indexesToDrop = {}, kMeansOpts, kmRes, foldInQ, clustersAcc, meansAcc},
+      indexesToDrop = {}, kMeansOpts, kmRes, foldInQ, clustersAcc, meansAcc, hierarchyPaths},
 
       (* Options *)
       distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
@@ -325,8 +325,14 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
       (* initial cluster *)
       clusters = {data};
       means = Mean /@ clusters;
-      If[ foldInQ, clustersAcc = {clusters}; meansAcc = {means}];
+      If[ foldInQ,
+        clustersAcc = {clusters};
+        meansAcc = {means}
+      ];
+
       sses = {Total[Map[distFunc[means[[1]], #]^2 &, data]]};
+
+      hierarchyPaths = {{1}};
 
       While[Length[clusters] < k,
 
@@ -340,15 +346,16 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
           spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]],
 
           True,
+          (* Redundant since the option value check above. Included for completeness. *)
           Message[BiSectionalKMeans::nclf, "ClusterSelectionFunction", ToString[expectedMethodNames]];
           Return[$Failed]
         ];
 
-        If[! NumberQ[spos],
+        If[ !IntegerQ[spos],
           Message[BiSectionalKMeans::"ncls"];
           If[ foldInQ,
-            Return[<| "MeanPoints" -> means, "Clusters" -> clustersAcc |>],
-            Return[<| "MeanPoints" -> means, "Clusters" -> clusters |>]
+            Return[<| "MeanPoints" -> means, "Clusters" -> clustersAcc, "HierarchyPaths" -> hierarchyPaths |>],
+            Return[<| "MeanPoints" -> means, "Clusters" -> clusters, "HierarchyPaths" -> hierarchyPaths |>]
           ]
         ];
 
@@ -386,6 +393,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
           means = Join[Drop[means, {spos}], meansToAdd];
           clusters = Join[Drop[clusters, {spos}], clustersToAdd];
           sses = Join[Drop[sses, {spos}], sset];
+          hierarchyPaths = Join[Drop[hierarchyPaths, {spos}], Thread[ Append[hierarchyPaths[[spos]], {1,2}] ] ];
 
           If[ foldInQ,
             AppendTo[clustersAcc, clustersToAdd];
@@ -398,9 +406,9 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
       ];
 
       If[ foldInQ,
-        <| "MeanPoints" -> meansAcc, "Clusters" -> clustersAcc |>,
+        <| "MeanPoints" -> meansAcc, "Clusters" -> clustersAcc, "HierarchyPaths" -> hierarchyPaths |>,
         (*ELSE*)
-        <| "MeanPoints" -> means, "Clusters" -> clusters |>
+        <| "MeanPoints" -> means, "Clusters" -> clusters, "HierarchyPaths" -> hierarchyPaths |>
       ]
     ]/; k > 0;
 
