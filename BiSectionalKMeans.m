@@ -56,6 +56,8 @@ KMeans::usage = "KMeans[data, k, opts] finds k clusters of data using the K-mean
 
 BiSectionalKMeans::usage = "BiSectionalKMeans[data, k, opts] does hierarchical clustering of data.";
 
+HierarchicalTree::usage = "HierarchicalTree[ {{_Integer..}..} ] makes a hierarchical tree from a list of \
+hierarchical tree pats.";
 
 Begin["`Private`"];
 
@@ -153,7 +155,7 @@ SyntaxInformation[KMeans] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } }
 
 Options[KMeans] = {
   DistanceFunction -> EuclideanDistance, MaxSteps -> 1000, PrecisionGoal -> 6,
-  "LearningParameter" -> 0.01, "MinReassignmentsFraction" -> 1/200
+  "LearningParameter" -> 0.01, "MinReassignmentsFraction" -> 1 / 200
 };
 
 KMeans::"nargs" = "The first argument is expected to be a numerical matrix, \
@@ -255,13 +257,45 @@ KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
       indexClusters = GroupBy[Transpose[{Range[Length[inputs]], clustersInds}], #[[2]] &, #[[All, 1]] &];
 
       <| "MeanPoints" -> means, "Clusters" -> clusters, "ClusterLabels" -> clustersInds, "IndexClusters" -> indexClusters |>
-    ]/; nseeds > 0;
+    ] /; nseeds > 0;
 
 KMeans[___] :=
     Block[{},
       Message[KMeans::"nargs"];
       Return[$Failed]
     ];
+
+
+(************************************************************)
+(* Hierarchical tree                                        *)
+(************************************************************)
+
+Clear[HierarchicalGroupByRec, HierarchicalGroupBy];
+
+HierarchicalGroupByRec[A_List, head_Symbol] :=
+    Block[{zkey, nzkey},
+      zkey = Cases[A, head[{}, _]];
+      nzkey = Cases[A, head[x_List, _] /; Length[x] > 0];
+      If[Length[nzkey] > 0,
+        nzkey =
+            Normal@Values@
+                GroupBy[nzkey, (#[[1, 1]] &) -> (head[Rest[#[[1]]], #[[2]]] &),
+                  With[{h = head}, HierarchicalGroupByRec[#, h]] &]
+      ];
+      Join[zkey, nzkey]
+    ];
+
+HierarchicalGroupBy[A_List, head_Symbol, F_] := HierarchicalGroupByRec[A, head] /. head[{}, x_] :> F[x];
+
+
+Clear[HierarchicalTree];
+
+HierarchicalTree[ aPaths : Association[ ({_Integer..} -> _Integer) .. ] ] :=
+    Module[{Address},
+      First[ HierarchicalGroupBy[ Address @@@ Normal[aPaths], Address, Address ] ] /. {Address[x_]} :> x
+    ];
+
+HierarchicalTree[ paths : { {_Integer..} ..} ] := HierarchicalTree[ AssociationThread[ paths, Range[Length[paths]] ] ];
 
 
 (************************************************************)
@@ -293,10 +327,11 @@ BiSectionalKMeans[data_SparseArray, k_?IntegerQ, opts : OptionsPattern[]] :=
     BiSectionalKMeans[ Normal[data], k, opts ];
 
 BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPattern[]] :=
-    Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, expectedMethodNames,
-      clusters, means, sses, sset, s, newMeans,
-      newClusters, spos, kInd, clustersToAdd, meansToAdd,
-      indexesToDrop = {}, kMeansOpts, kmRes, foldInQ, clustersAcc, meansAcc, hierarchyPaths},
+    Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
+      clusters, means, sses, sset, s, spos, kInd, res, kmRes, indexesToDrop = {},
+      newMeans, newClusters, newIndexClusters,
+      clustersToAdd, meansToAdd, indexClustersToAdd,
+      clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters, aIndexClusters},
 
       (* Options *)
       distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
@@ -332,7 +367,8 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
       sses = {Total[Map[distFunc[means[[1]], #]^2 &, data]]};
 
-      hierarchyPaths = {{1}};
+      hierarchicalTreePaths = {{1}};
+      indexClusters = {Range[Length[data]]};
 
       While[Length[clusters] < k,
 
@@ -353,9 +389,10 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
         If[ !IntegerQ[spos],
           Message[BiSectionalKMeans::"ncls"];
+          res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> aIndexClusters |>;
           If[ foldInQ,
-            Return[<| "MeanPoints" -> means, "Clusters" -> clustersAcc, "HierarchyPaths" -> hierarchyPaths |>],
-            Return[<| "MeanPoints" -> means, "Clusters" -> clusters, "HierarchyPaths" -> hierarchyPaths |>]
+            Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, res ] ],
+            Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, res ] ]
           ]
         ];
 
@@ -369,6 +406,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
           newMeans = kmRes["MeanPoints"];
           newClusters = kmRes["Clusters"];
+          newIndexClusters = kmRes["IndexClusters"];
 
           If[Length[newClusters] > 1,
 
@@ -381,7 +419,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
             If[kt == 1 || Total[sset] < s,
               s = Total[sset];
-              {meansToAdd, clustersToAdd} = {newMeans, newClusters}
+              {meansToAdd, clustersToAdd, indexClustersToAdd} = {newMeans, newClusters, newIndexClusters}
             ];
 
           ],
@@ -393,7 +431,9 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
           means = Join[Drop[means, {spos}], meansToAdd];
           clusters = Join[Drop[clusters, {spos}], clustersToAdd];
           sses = Join[Drop[sses, {spos}], sset];
-          hierarchyPaths = Join[Drop[hierarchyPaths, {spos}], Thread[ Append[hierarchyPaths[[spos]], {1,2}] ] ];
+          hierarchicalTreePaths = Join[Drop[hierarchicalTreePaths, {spos}], Thread[ Append[hierarchicalTreePaths[[spos]], {1, 2}] ] ];
+          indexClusters = Join[Drop[indexClusters, {spos}], Map[ indexClusters[[spos]][[#]]&, {indexClustersToAdd[1], indexClustersToAdd[2]} ]];
+          aIndexClusters = AssociationThread[ Range[Length[indexClusters]] -> indexClusters ];
 
           If[ foldInQ,
             AppendTo[clustersAcc, clustersToAdd];
@@ -405,18 +445,19 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         ];
       ];
 
+      res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> aIndexClusters |>;
       If[ foldInQ,
-        <| "MeanPoints" -> meansAcc, "Clusters" -> clustersAcc, "HierarchyPaths" -> hierarchyPaths |>,
-        (*ELSE*)
-        <| "MeanPoints" -> means, "Clusters" -> clusters, "HierarchyPaths" -> hierarchyPaths |>
+        Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, res ] ],
+        Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, res ] ]
       ]
-    ]/; k > 0;
+    ] /; k > 0;
 
 BiSectionalKMeans[___] :=
     Block[{},
       Message[BiSectionalKMeans::"nargs"];
       Return[$Failed]
     ];
+
 
 End[]; (* `Private` *)
 
