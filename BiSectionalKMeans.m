@@ -278,7 +278,7 @@ SyntaxInformation[BiSectionalKMeans] = { "ArgumentsPattern" -> { _, _, OptionsPa
 
 Options[BiSectionalKMeans] =
     Join[
-      {"NumberOfTrialBisections" -> 3, "ClusterSelectionFunction" -> "MaxSquaredError", "FoldIn" -> False },
+      {"NumberOfTrialBisections" -> 3, "ClusterSelectionMethod" -> "MaxSquaredError", "FoldIn" -> False },
       Options[KMeans]
     ];
 
@@ -309,12 +309,12 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         Return[$Failed];
       ];
 
-      clusterSelectionMethod = OptionValue[BiSectionalKMeans, "ClusterSelectionFunction"];
+      clusterSelectionMethod = OptionValue[BiSectionalKMeans, "ClusterSelectionMethod"];
       If[clusterSelectionMethod === Automatic, clusterSelectionMethod = "MaxSquaredError"];
 
       expectedMethodNames = {"MaxSize", "MaxLength", "MaxSquaredError"};
       If[ !MemberQ[ ToLowerCase[expectedMethodNames], ToLowerCase[clusterSelectionMethod] ],
-        Message[BiSectionalKMeans::nclf, "ClusterSelectionFunction", ToString[expectedMethodNames]];
+        Message[BiSectionalKMeans::nclf, "ClusterSelectionMethod", ToString[expectedMethodNames]];
         Return[$Failed]
       ];
 
@@ -347,7 +347,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
           True,
           (* Redundant since the option value check above. Included for completeness. *)
-          Message[BiSectionalKMeans::nclf, "ClusterSelectionFunction", ToString[expectedMethodNames]];
+          Message[BiSectionalKMeans::nclf, "ClusterSelectionMethod", ToString[expectedMethodNames]];
           Return[$Failed]
         ];
 

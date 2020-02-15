@@ -287,7 +287,7 @@ VerificationTest[
 
 
 VerificationTest[
-  $Failed === BiSectionalKMeans[points2D["3clusters"], 3, "ClusterSelectionFunction" -> BlahBlah ]
+  $Failed === BiSectionalKMeans[points2D["3clusters"], 3, "ClusterSelectionMethod" -> BlahBlah ]
   ,
   True
   ,
