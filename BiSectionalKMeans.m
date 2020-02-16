@@ -164,6 +164,7 @@ KMeans::"nfrac" = "The value of the option `1` is expected to be Automatic or a 
 KMeans::"npg" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"nmrfr" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
+KMeans::"grns" = "The number of requested clusters is larger than the number of data points.";
 
 KMeans[inputs_SparseArray, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
     KMeans[ Normal[inputs], nseeds, opts ];
@@ -209,8 +210,13 @@ KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
 
       minReassignPoints = Length[inputs] * minReassignmentFraction;
 
-      (* Main algorithm *)
+      (* Sanity check *)
+      If[Length[inputs] < nseeds,
+        Message[KMeans::grns];
+        Return[$Failed]
+      ];
 
+      (* Main algorithm *)
       means = RandomSample[inputs, nseeds];
       meansDiff = Infinity;
 
@@ -327,8 +333,8 @@ BiSectionalKMeans[data_SparseArray, k_?IntegerQ, opts : OptionsPattern[]] :=
     BiSectionalKMeans[ Normal[data], k, opts ];
 
 BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPattern[]] :=
-    Block[{numberOfTrialBisections, distFunc, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
-      clusters, means, sses, sset, s, spos, kInd, res, kmRes, indexesToDrop = {},
+    Block[{numberOfTrialBisections, distFunc, maxSteps, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
+      clusters, means, sses, sset, s, spos, kInd, res, kmRes, indexesToDrop = {}, nSteps = 0,
       newMeans, newClusters, newIndexClusters,
       clustersToAdd, meansToAdd, indexClustersToAdd,
       clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters, aIndexClusters},
@@ -336,6 +342,13 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
       (* Options *)
       distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
       If[distFunc === Automatic, distFunc = EuclideanDistance];
+
+      maxSteps = OptionValue[BiSectionalKMeans, MaxSteps];
+      If[maxSteps === Automatic, maxSteps = 100];
+      If[ !( IntegerQ[maxSteps] && maxSteps > 0 ),
+        Message[BiSectionalKMeans::"npi", "MaxSteps"];
+        Return[$Failed];
+      ];
 
       numberOfTrialBisections = OptionValue[BiSectionalKMeans, "NumberOfTrialBisections"];
       If[numberOfTrialBisections === Automatic, numberOfTrialBisections = 3];
@@ -370,21 +383,22 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
       hierarchicalTreePaths = {{1}};
       indexClusters = {Range[Length[data]]};
 
-      While[Length[clusters] < k,
+      While[ Length[clusters] < k && nSteps <= maxSteps,
+
+        nSteps++;
 
         (* Select a cluster to bisect. *)
+        s = Delete[clusters, indexesToDrop];
+
         Which[
+          Length[s] == 0,
+          spos = None,
+
           ToLowerCase[clusterSelectionMethod] == ToLowerCase["MaxSquaredError"],
-          spos = First@Flatten@Position[Delete[sses, indexesToDrop], Max[sses]],
+          spos = First@Flatten@Position[s, Max[s]],
 
           MemberQ[ ToLowerCase[{"MaxSize", "MaxLength"}], ToLowerCase[clusterSelectionMethod] ],
-          s = Delete[clusters, indexesToDrop];
-          spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]],
-
-          True,
-          (* Redundant since the option value check above. Included for completeness. *)
-          Message[BiSectionalKMeans::nclf, "ClusterSelectionMethod", ToString[expectedMethodNames]];
-          Return[$Failed]
+          spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]]
         ];
 
         If[ !IntegerQ[spos],
@@ -399,31 +413,33 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         kInd = 0;
         {meansToAdd, clustersToAdd} = {{}, {}};
 
-        Do[
-          (* Bisect *)
-          kmRes = KMeans[clusters[[spos]], 2, kMeansOpts];
-          If[ TrueQ[kmRes === $Failed], Return[$Failed, Block]];
+        If[ Length[clusters[[spos]]] >= 2,
+          Do[
+            (* Bisect *)
+            kmRes = KMeans[clusters[[spos]], 2, kMeansOpts];
+            If[ TrueQ[kmRes === $Failed], Return[$Failed, Block]];
 
-          newMeans = kmRes["MeanPoints"];
-          newClusters = kmRes["Clusters"];
-          newIndexClusters = kmRes["IndexClusters"];
+            newMeans = kmRes["MeanPoints"];
+            newClusters = kmRes["Clusters"];
+            newIndexClusters = kmRes["IndexClusters"];
 
-          If[Length[newClusters] > 1,
+            If[Length[newClusters] > 1,
 
-            sset =
-                MapThread[
-                  Function[{mn, cl}, Total[Map[distFunc[mn, #]^2 &, cl]]],
-                  {newMeans, newClusters},
-                  1
-                ];
+              sset =
+                  MapThread[
+                    Function[{mn, cl}, Total[Map[distFunc[mn, #]^2 &, cl]]],
+                    {newMeans, newClusters},
+                    1
+                  ];
 
-            If[kt == 1 || Total[sset] < s,
-              s = Total[sset];
-              {meansToAdd, clustersToAdd, indexClustersToAdd} = {newMeans, newClusters, newIndexClusters}
-            ];
+              If[kt == 1 || Total[sset] < s,
+                s = Total[sset];
+                {meansToAdd, clustersToAdd, indexClustersToAdd} = {newMeans, newClusters, newIndexClusters}
+              ];
 
-          ],
-          {kt, 1, numberOfTrialBisections}
+            ],
+            {kt, 1, numberOfTrialBisections}
+          ]
         ];
 
         If[Length[clustersToAdd] > 0,
@@ -441,7 +457,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
           ],
 
           (*ELSE*)
-          AppendTo[indexesToDrop, {spos}];
+          indexesToDrop = Union[Append[indexesToDrop, {spos}]];
         ];
       ];
 
