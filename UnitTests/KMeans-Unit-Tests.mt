@@ -221,6 +221,44 @@ VerificationTest[
 ];
 
 
+VerificationTest[
+  Sort[ KMeans[RandomReal[1,{120,3}], 2, "Properties" ] ] == Sort[ {"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters", "Properties", All} ]
+  ,
+  True
+  ,
+  TestID -> "Properties-1"
+];
+
+
+VerificationTest[
+  Keys[ KMeans[RandomReal[1,{120,3}], 2, All ] ] == Keys[ KMeans[RandomReal[1,{120,3}], 2, {All, "Clusters"} ] ]
+  ,
+  True
+  ,
+  TestID -> "Properties-2"
+];
+
+
+VerificationTest[
+  cls = KMeans[RandomReal[1,{120,3}], 2, "Clusters" ];
+  Apply[ And, MatrixQ[ #, NumberQ ]& /@ cls ]
+  ,
+  True
+  ,
+  TestID -> "Properties-3"
+];
+
+
+VerificationTest[
+  cls = KMeans[RandomReal[1,{120,3}], 2, { "Clusters", "ClusterLabels"} ];
+  AssociationQ[cls] &&  Apply[ And, MatrixQ[ #, NumberQ ]& /@ cls["Clusters"] ] && VectorQ[ cls["ClusterLabels"], IntegerQ ]
+  ,
+  True
+  ,
+  TestID -> "Properties-4"
+];
+
+
 (***********************************************************)
 (* Messages for wrong input                                *)
 (***********************************************************)
@@ -255,6 +293,28 @@ VerificationTest[
   KMeans::nargs
   ,
   TestID -> "Wrong-signature-call-3"
+];
+
+
+VerificationTest[
+  $Failed === KMeans[RandomReal[1,{120,3}], 2, "Blah"]
+  ,
+  True
+  ,
+  KMeans::nprop
+  ,
+  TestID -> "Wrong-signature-call-4"
+];
+
+
+VerificationTest[
+  $Failed === KMeans[RandomReal[1,{120,3}], 2, { "Clusters", "Blah" } ]
+  ,
+  True
+  ,
+  KMeans::nprop
+  ,
+  TestID -> "Wrong-signature-call-5"
 ];
 
 
