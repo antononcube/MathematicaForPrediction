@@ -387,17 +387,12 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
         nSteps++;
 
-        (* Select a cluster to bisect. *)
-        s = Delete[clusters, indexesToDrop];
-
         Which[
-          Length[s] == 0,
-          spos = None,
-
           ToLowerCase[clusterSelectionMethod] == ToLowerCase["MaxSquaredError"],
-          spos = First@Flatten@Position[s, Max[s]],
+          spos = First@Flatten@Position[Delete[sses, indexesToDrop], Max[sses]],
 
           MemberQ[ ToLowerCase[{"MaxSize", "MaxLength"}], ToLowerCase[clusterSelectionMethod] ],
+          s = Delete[clusters, indexesToDrop];
           spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]]
         ];
 
