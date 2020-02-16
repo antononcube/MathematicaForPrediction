@@ -52,7 +52,8 @@ BeginPackage["BiSectionalKMeans`"];
 
 SilhouetteTest::usage = "Compute the Silhouette cluster quality measure";
 
-KMeans::usage = "KMeans[data, k, opts] finds k clusters of data using the K-means clustering algorithm.";
+KMeans::usage = "KMeans[data, k, opts] finds k clusters of data using the K-means clustering algorithm. \
+KMeans[data, k, props, opts] returns the specified properties props of the clustering result.";
 
 BiSectionalKMeans::usage = "BiSectionalKMeans[data, k, opts] does hierarchical clustering of data.";
 
