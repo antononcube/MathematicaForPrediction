@@ -151,7 +151,7 @@ KMeansDataQ[ data_ ] := MatrixQ[data, NumericQ];
 
 Clear[KMeans];
 
-SyntaxInformation[KMeans] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+SyntaxInformation[KMeans] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
 Options[KMeans] = {
   DistanceFunction -> EuclideanDistance, MaxSteps -> 1000, PrecisionGoal -> 6,
@@ -159,21 +159,43 @@ Options[KMeans] = {
 };
 
 KMeans::"nargs" = "The first argument is expected to be a numerical matrix, \
-the second argument is expected to be a positive integer.";
+the second argument is expected to be a positive integer, \
+the third argument is expected to be a string or a list of strings.";
 KMeans::"nfrac" = "The value of the option `1` is expected to be Automatic or a real number in the interval [0, 1).";
 KMeans::"npg" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"nmrfr" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
+KMeans::"nprop" = "The value of the third argument is expected to be one of the values `1` \
+or a list of a subset of those values.";
 KMeans::"grns" = "The number of requested clusters is larger than the number of data points.";
 
-KMeans[inputs_SparseArray, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
-    KMeans[ Normal[inputs], nseeds, opts ];
+KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String|All) ..} ) : All, opts : OptionsPattern[]] :=
+    KMeans[ Normal[inputs], nseeds, propSpec, opts ];
 
-KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
-    Block[{eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
+KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String|All) ..} ): All, opts : OptionsPattern[]] :=
+    Block[{expectedPropNames, propSpec = propSpecArg, eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
       j, means, meansOld, meansDiff, nSteps = 0, tol, dMat,
       mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds,
-      indexClusters},
+      indexClusters, aRes},
+
+      (* Properties *)
+      expectedPropNames = {"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters", "Properties", All};
+      If[ Length[Intersection[ expectedPropNames, Flatten[{propSpec}] ]] < Length[Flatten[{propSpec}]],
+        Message[KMeans::"nprop", ToString[expectedPropNames]];
+        Return[$Failed];
+      ];
+
+      If[ propSpec == "Properties",
+        Return[expectedPropNames]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], All ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], "Properties" ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
 
       (* Options *)
       eta = OptionValue[KMeans, "LearningParameter"];
@@ -262,7 +284,9 @@ KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, opts : OptionsPattern[]] :=
 
       indexClusters = GroupBy[Transpose[{Range[Length[inputs]], clustersInds}], #[[2]] &, #[[All, 1]] &];
 
-      <| "MeanPoints" -> means, "Clusters" -> clusters, "ClusterLabels" -> clustersInds, "IndexClusters" -> indexClusters |>
+      aRes = <| "MeanPoints" -> means, "Clusters" -> clusters, "ClusterLabels" -> clustersInds, "IndexClusters" -> indexClusters |>;
+
+      If[ StringQ[propSpec], aRes[propSpec], KeyTake[aRes, propSpec] ]
     ] /; nseeds > 0;
 
 KMeans[___] :=
