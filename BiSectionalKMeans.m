@@ -170,10 +170,10 @@ KMeans::"nprop" = "The value of the third argument is expected to be one of the 
 or a list of a subset of those values.";
 KMeans::"grns" = "The number of requested clusters is larger than the number of data points.";
 
-KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String|All) ..} ) : All, opts : OptionsPattern[]] :=
+KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : All, opts : OptionsPattern[]] :=
     KMeans[ Normal[inputs], nseeds, propSpec, opts ];
 
-KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String|All) ..} ): All, opts : OptionsPattern[]] :=
+KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : All, opts : OptionsPattern[]] :=
     Block[{expectedPropNames, propSpec = propSpecArg, eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
       j, means, meansOld, meansDiff, nSteps = 0, tol, dMat,
       mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds,
@@ -284,6 +284,7 @@ KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { 
       clusters = Map[Pick[inputs, clustersInds /. {# -> True}] &, Range[Length[means]]];
 
       indexClusters = GroupBy[Transpose[{Range[Length[inputs]], clustersInds}], #[[2]] &, #[[All, 1]] &];
+      indexClusters = indexClusters[#]& /@ Range[Length[indexClusters]];
 
       aRes = <| "MeanPoints" -> means, "Clusters" -> clusters, "ClusterLabels" -> clustersInds, "IndexClusters" -> indexClusters |>;
 
