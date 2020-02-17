@@ -170,10 +170,10 @@ KMeans::"nprop" = "The value of the third argument is expected to be one of the 
 or a list of a subset of those values.";
 KMeans::"grns" = "The number of requested clusters is larger than the number of data points.";
 
-KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : All, opts : OptionsPattern[]] :=
+KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
     KMeans[ Normal[inputs], nseeds, propSpec, opts ];
 
-KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : All, opts : OptionsPattern[]] :=
+KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
     Block[{expectedPropNames, propSpec = propSpecArg, eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
       j, means, meansOld, meansDiff, nSteps = 0, tol, dMat,
       mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds,
@@ -363,7 +363,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
       clusters, means, sses, sset, s, spos, kInd, res, kmRes, indexesToDrop = {}, nSteps = 0,
       newMeans, newClusters, newIndexClusters,
       clustersToAdd, meansToAdd, indexClustersToAdd,
-      clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters, aIndexClusters},
+      clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters},
 
       (* Options *)
       distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
@@ -424,7 +424,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
         If[ !IntegerQ[spos],
           Message[BiSectionalKMeans::"ncls"];
-          res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> aIndexClusters |>;
+          res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> indexClusters |>;
           If[ foldInQ,
             Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, res ] ],
             Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, res ] ]
@@ -437,7 +437,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         If[ Length[clusters[[spos]]] >= 2,
           Do[
             (* Bisect *)
-            kmRes = KMeans[clusters[[spos]], 2, kMeansOpts];
+            kmRes = KMeans[clusters[[spos]], 2, All, kMeansOpts];
             If[ TrueQ[kmRes === $Failed], Return[$Failed, Block]];
 
             newMeans = kmRes["MeanPoints"];
@@ -469,8 +469,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
           clusters = Join[Drop[clusters, {spos}], clustersToAdd];
           sses = Join[Drop[sses, {spos}], sset];
           hierarchicalTreePaths = Join[Drop[hierarchicalTreePaths, {spos}], Thread[ Append[hierarchicalTreePaths[[spos]], {1, 2}] ] ];
-          indexClusters = Join[Drop[indexClusters, {spos}], Map[ indexClusters[[spos]][[#]]&, {indexClustersToAdd[1], indexClustersToAdd[2]} ]];
-          aIndexClusters = AssociationThread[ Range[Length[indexClusters]] -> indexClusters ];
+          indexClusters = Join[Drop[indexClusters, {spos}], Map[ indexClusters[[spos]][[#]]&, {indexClustersToAdd[[1]], indexClustersToAdd[[2]]} ]];
 
           If[ foldInQ,
             AppendTo[clustersAcc, clustersToAdd];
@@ -482,7 +481,7 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         ];
       ];
 
-      res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> aIndexClusters |>;
+      res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> indexClusters |>;
       If[ foldInQ,
         Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, res ] ],
         Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, res ] ]

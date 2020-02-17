@@ -51,7 +51,8 @@ BeginTestSection["KMeans-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],
+(*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],*)
+    Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/BiSectionalKMeans.m"],
     Greater[Length[DownValues[BiSectionalKMeans`KMeans]], 0]
   ]
   ,
@@ -163,13 +164,7 @@ VerificationTest[(* 4 *)
 VerificationTest[
   clsRes = KMeans[points2D["3clusters"], 3];
 
-  AssociationQ[clsRes] &&
-      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
-      MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
-      Length[clsRes["Clusters"]] == 3 &&
-      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
-      VectorQ[ clsRes["ClusterLabels"], IntegerQ ] &&
-      Apply[ And, VectorQ[#, IntegerQ]& /@ clsRes["IndexClusters"] ]
+  ListQ[clsRes] && Length[clsRes] == 3 && Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes ]
   ,
   True
   ,
@@ -178,12 +173,12 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = KMeans[points2D["3clusters"], 5, "LearningParameter" -> 0.1, MaxSteps -> 10, "MinReassignmentsFraction" -> 0.2];
+  clsRes = KMeans[points2D["3clusters"], 3, All];
 
   AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
       MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
-      Length[clsRes["Clusters"]] == 5 &&
+      Length[clsRes["Clusters"]] == 3 &&
       Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
       VectorQ[ clsRes["ClusterLabels"], IntegerQ ] &&
       Apply[ And, VectorQ[#, IntegerQ]& /@ clsRes["IndexClusters"] ]
@@ -195,7 +190,24 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = KMeans[SparseArray[points3D["4clusters"]], 4];
+  clsRes = KMeans[points2D["3clusters"], 5, All, "LearningParameter" -> 0.1, MaxSteps -> 10, "MinReassignmentsFraction" -> 0.2];
+
+  AssociationQ[clsRes] &&
+      Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
+      MatrixQ[ clsRes["MeanPoints"], NumberQ] &&
+      Length[clsRes["Clusters"]] == 5 &&
+      Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
+      VectorQ[ clsRes["ClusterLabels"], IntegerQ ] &&
+      Apply[ And, VectorQ[#, IntegerQ]& /@ clsRes["IndexClusters"] ]
+  ,
+  True
+  ,
+  TestID -> "Standard-call-2Ddata-3"
+];
+
+
+VerificationTest[
+  clsRes = KMeans[SparseArray[points3D["4clusters"]], 4, All];
 
   AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters"}] &&
@@ -212,7 +224,7 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = KMeans[SparseArray[points2D["5clusters"]], 5];
+  clsRes = KMeans[SparseArray[points2D["5clusters"]], 5, {"Clusters", "IndexClusters"}];
   clsRes["Clusters"] == Map[points2D["5clusters"][[#]]&, clsRes["IndexClusters"]]
   ,
   True
