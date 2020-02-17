@@ -51,7 +51,8 @@ BeginTestSection["BiSectionalKMeans-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],
+    (*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],*)
+    Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/BiSectionalKMeans.m"],
     Greater[Length[DownValues[BiSectionalKMeans`BiSectionalKMeans]], 0]
   ]
   ,
@@ -169,7 +170,7 @@ VerificationTest[
       Length[clsRes["Clusters"]] == 3 &&
       Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
       MatchQ[clsRes["HierarchicalTreePaths"], { { _Integer .. } .. }] &&
-      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
+      Apply[ And, VectorQ[#, IntegerQ]& /@ clsRes["IndexClusters"] ]
   ,
   True
   ,
@@ -186,7 +187,7 @@ VerificationTest[
       Length[clsRes["Clusters"]] == 5 &&
       Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
       MatchQ[clsRes["HierarchicalTreePaths"], { { _Integer .. } .. }] &&
-      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
+      Apply[ And, VectorQ[#, IntegerQ]& /@ clsRes["IndexClusters"] ]
   ,
   True
   ,
@@ -203,7 +204,7 @@ VerificationTest[
       Length[clsRes["Clusters"]] == 4 &&
       Apply[ And, MatrixQ[#, NumberQ]& /@ clsRes["Clusters"] ] &&
       MatchQ[clsRes["HierarchicalTreePaths"], { { _Integer .. } .. }] &&
-      AssociationQ[ clsRes["IndexClusters"] ] && Apply[And, VectorQ[#, IntegerQ]& /@ Values[clsRes["IndexClusters"]]]
+      Apply[ And, VectorQ[#, IntegerQ]& /@ clsRes["IndexClusters"] ]
   ,
   True
   ,
@@ -213,7 +214,7 @@ VerificationTest[
 
 VerificationTest[
   clsRes = BiSectionalKMeans[SparseArray[points2D["5clusters"]], 5];
-  clsRes["Clusters"] == Map[points2D["5clusters"][[#]]&, Values[KeySort[clsRes["IndexClusters"]]]]
+  clsRes["Clusters"] == Map[points2D["5clusters"][[#]]&, clsRes["IndexClusters"]]
   ,
   True
   ,
@@ -285,7 +286,7 @@ VerificationTest[
   ,
   True
   ,
-  KMeans::npi
+  BiSectionalKMeans::npi
   ,
   TestID -> "Wrong-option-value-call-3"
 ];
