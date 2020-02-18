@@ -535,7 +535,8 @@ Clear[LSAMonExtractTopics];
 
 Options[LSAMonExtractTopics] =
     Join[
-      { "NumberOfTopics" -> None, Method -> "NNMF", "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12, Tolerance -> 10^-6  },
+      { "NumberOfTopics" -> None, Method -> "NNMF", "MinNumberOfDocumentsPerTerm" -> 10, "NumberOfInitializingDocuments" -> 12,
+        "OrderBySignificance" -> True, Tolerance -> 10^-6  },
       Options[NonNegativeMatrixFactorizationGlobal]
     ];
 
@@ -565,8 +566,9 @@ LSAMonExtractTopics[ opts : OptionsPattern[] ][xs_, context_] :=
     ];
 
 LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :=
-    Block[{method, nMinDocumentsPerTerm, nInitializingDocuments,
-      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V, nnmfOpts, terms, automaticTopicNames },
+    Block[{method, nMinDocumentsPerTerm, nInitializingDocuments, orderBySignificanceQ,
+      docTermMat, documentsPerTerm, pos, W, H, M1, k, p, m, n, U, S, V,
+      nnmfOpts, terms, automaticTopicNames, topicsSFactors},
 
       method = OptionValue[ LSAMonExtractTopics, Method ];
 
@@ -594,6 +596,8 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         Echo["The value of the option \"NumberOfInitializingDocuments\" is expected to be a positive integer.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
+
+      orderBySignificanceQ = TrueQ[OptionValue[ LSAMonExtractTopics, "OrderBySignificance" ]];
 
       If[ !KeyExistsQ[context, "weightedDocumentTermMatrix"],
         Return[
@@ -693,6 +697,16 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         True,
         Echo["The weighted document-term matrix is not a SSparseMatrix object.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
+      ];
+
+      If[ method != "SVD" && orderBySignificanceQ,
+
+        {W, H} = RightNormalizeMatrixProduct[ W, H ];
+        topicsSFactors = Sqrt[ Total[W * W] ];
+
+        W = W[[ All, Reverse[Ordering[topicsSFactors]] ]];
+        H = H[[ Reverse[Ordering[topicsSFactors]], All ]];
+        topicsSFactors = ReverseSort[topicsSFactors];
       ];
 
       terms = ColumnNames[context["weightedDocumentTermMatrix"]];
