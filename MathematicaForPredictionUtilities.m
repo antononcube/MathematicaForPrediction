@@ -659,7 +659,14 @@ GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
 
 Clear[ImportCSVToDataset];
 
-Options[ImportCSVToDataset] = Join[ {"RowNames" -> False, "ColumnNames" -> True}, Options[Import] ];
+lsImportOptions = {
+  "EmptyFields" -> "", "TextDelimiters" -> "\"", CharacterEncoding -> "UTF8ISOLatin1",
+  "CurrencyTokens" -> {{"$", "£", "¥", "\[Euro]"}, {"c", "¢", "p", "F"}},
+  "DateStringFormat" -> None, "FillRows" -> Automatic,
+  "HeaderLines" -> 0, "IgnoreEmptyLines" -> False,
+  "NumberPoint" -> ".", "Numeric" -> Automatic, "SkipLines" -> 0};
+
+Options[ImportCSVToDataset] = Join[ {"RowNames" -> False, "ColumnNames" -> True}, lsImportOptions ];
 
 ImportCSVToDataset[fname_String, opts : OptionsPattern[]] :=
     ImportCSVToDataset[fname, Automatic, opts];
@@ -668,9 +675,9 @@ ImportCSVToDataset[fname_String, format : (_String | Automatic), opts : OptionsP
     Block[{data},
 
       If[ TrueQ[format === Automatic],
-        data = Import[fname, FilterRules[{opts}, Options[Import]] ],
+        data = Import[fname, Automatic, FilterRules[{opts}, lsImportOptions] ],
         (* ELSE *)
-        data = Import[fname, format, FilterRules[{opts}, Options[Import]] ]
+        data = Import[fname, format, FilterRules[{opts}, lsImportOptions] ]
       ];
 
       If[OptionValue["ColumnNames"],
