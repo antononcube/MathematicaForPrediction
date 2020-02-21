@@ -51,8 +51,7 @@ BeginTestSection["BiSectionalKMeans-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    (*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],*)
-    Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/BiSectionalKMeans.m"],
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],
     Greater[Length[DownValues[BiSectionalKMeans`BiSectionalKMeans]], 0]
   ]
   ,
@@ -162,7 +161,7 @@ VerificationTest[(* 4 *)
 (***********************************************************)
 
 VerificationTest[
-  clsRes = BiSectionalKMeans[points2D["3clusters"], 3];
+  clsRes = BiSectionalKMeans[points2D["3clusters"], 3, All];
 
   AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "HierarchicalTreePaths", "HierarchicalTree", "IndexClusters"}] &&
@@ -179,7 +178,7 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = BiSectionalKMeans[points2D["3clusters"], 5, "LearningParameter" -> 0.1, MaxSteps -> 10, "MinReassignmentsFraction" -> 0.2];
+  clsRes = BiSectionalKMeans[points2D["3clusters"], 5, All, "LearningParameter" -> 0.1, MaxSteps -> 10, "MinReassignmentsFraction" -> 0.2];
 
   AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "HierarchicalTreePaths", "HierarchicalTree", "IndexClusters"}] &&
@@ -196,7 +195,7 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = BiSectionalKMeans[SparseArray[points3D["4clusters"]], 4];
+  clsRes = BiSectionalKMeans[SparseArray[points3D["4clusters"]], 4, All];
 
   AssociationQ[clsRes] &&
       Sort[Keys[clsRes]] == Sort[{"MeanPoints", "Clusters", "HierarchicalTreePaths", "HierarchicalTree", "IndexClusters"}] &&
@@ -213,12 +212,57 @@ VerificationTest[
 
 
 VerificationTest[
-  clsRes = BiSectionalKMeans[SparseArray[points2D["5clusters"]], 5];
+  clsRes = BiSectionalKMeans[SparseArray[points2D["5clusters"]], 5, All];
   clsRes["Clusters"] == Map[points2D["5clusters"][[#]]&, clsRes["IndexClusters"]]
   ,
   True
   ,
   TestID -> "Index-clusters-2Ddata-1"
+];
+
+
+(***********************************************************)
+(* Getting properties                                      *)
+(***********************************************************)
+
+VerificationTest[
+  Sort[ BiSectionalKMeans[RandomReal[1, {120, 3}], 2, "Properties" ] ] ==
+      Sort[ {"MeanPoints", "Clusters", "IndexClusters", "HierarchicalTreePaths", "HierarchicalTree", "Properties", All} ]
+  ,
+  True
+  ,
+  TestID -> "Properties-1"
+];
+
+
+VerificationTest[
+  Keys[ BiSectionalKMeans[RandomReal[1, {120, 3}], 2, All ] ] == Keys[ BiSectionalKMeans[RandomReal[1, {120, 3}], 2, {All, "Clusters"} ] ]
+  ,
+  True
+  ,
+  TestID -> "Properties-2"
+];
+
+
+VerificationTest[
+  cls = BiSectionalKMeans[RandomReal[1, {120, 3}], 2, "Clusters" ];
+  Apply[ And, MatrixQ[ #, NumberQ ]& /@ cls ]
+  ,
+  True
+  ,
+  TestID -> "Properties-3"
+];
+
+
+VerificationTest[
+  cls = BiSectionalKMeans[RandomReal[1, {120, 3}], 2, { "Clusters", "ClusterLabels"} ];
+  AssociationQ[cls] && Apply[ And, MatrixQ[ #, NumberQ ]& /@ cls["Clusters"] ] && VectorQ[ cls["ClusterLabels"], IntegerQ ]
+  ,
+  False
+  ,
+  BiSectionalKMeans::nprop
+  ,
+  TestID -> "Properties-4"
 ];
 
 
@@ -315,7 +359,7 @@ VerificationTest[
 
 
 VerificationTest[
-  AssociationQ[ BiSectionalKMeans[points2D["3clusters"], 3, "FoldIn" -> "BlahBlahs" ]]
+  MatchQ[ BiSectionalKMeans[points2D["3clusters"], 3, "FoldIn" -> "BlahBlahs" ], { _List .. }]
   ,
   True
   ,

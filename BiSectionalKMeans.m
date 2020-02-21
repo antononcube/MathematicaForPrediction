@@ -55,7 +55,8 @@ SilhouetteTest::usage = "Compute the Silhouette cluster quality measure";
 KMeans::usage = "KMeans[data, k, opts] finds k clusters of data using the K-means clustering algorithm. \
 KMeans[data, k, props, opts] returns the specified properties props of the clustering result.";
 
-BiSectionalKMeans::usage = "BiSectionalKMeans[data, k, opts] does hierarchical clustering of data.";
+BiSectionalKMeans::usage = "BiSectionalKMeans[data, k, opts] does hierarchical clustering of data. \
+BiSectionalKMeans[data, k, props, opts] returns the specified properties props of the clustering result.";
 
 HierarchicalTree::usage = "HierarchicalTree[ {{_Integer..}..} ] makes a hierarchical tree from a list of \
 hierarchical tree pats.";
@@ -340,7 +341,7 @@ HierarchicalTree[ paths : { {_Integer..} ..} ] := HierarchicalTree[ AssociationT
 *)
 Clear[BiSectionalKMeans];
 
-SyntaxInformation[BiSectionalKMeans] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+SyntaxInformation[BiSectionalKMeans] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
 Options[BiSectionalKMeans] =
     Join[
@@ -354,16 +355,39 @@ BiSectionalKMeans::"npi" = "The value of the option `1` is expected to be Automa
 BiSectionalKMeans::"ncls" = "No clusters were obtained; suspecting the specified divisions are too deep. \
 Returning last available clusters.";
 BiSectionalKMeans::"nclf" = "The value of the option `1` is expected to be one of `2`.";
+BiSectionalKMeans::"nprop" = "The value of the third argument is expected to be one of the values `1` \
+or a list of a subset of those values.";
 
-BiSectionalKMeans[data_SparseArray, k_?IntegerQ, opts : OptionsPattern[]] :=
-    BiSectionalKMeans[ Normal[data], k, opts ];
 
-BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPattern[]] :=
-    Block[{numberOfTrialBisections, distFunc, maxSteps, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
-      clusters, means, sses, sset, s, spos, kInd, res, kmRes, indexesToDrop = {}, nSteps = 0,
+BiSectionalKMeans[data_SparseArray, k_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    BiSectionalKMeans[ Normal[data], k, propSpec, opts ];
+
+BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    Block[{propSpec = propSpecArg, expectedPropNames,
+      numberOfTrialBisections, distFunc, maxSteps, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
+      clusters, means, sses, sset, s, spos, kInd, kmRes, indexesToDrop = {}, nSteps = 0,
       newMeans, newClusters, newIndexClusters,
       clustersToAdd, meansToAdd, indexClustersToAdd,
-      clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters},
+      clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters, aRes},
+
+      (* Properties *)
+      expectedPropNames = {"MeanPoints", "Clusters", "IndexClusters", "HierarchicalTreePaths", "HierarchicalTree", "Properties", All};
+      If[ Length[Intersection[ expectedPropNames, Flatten[{propSpec}] ]] < Length[Flatten[{propSpec}]],
+        Message[BiSectionalKMeans::"nprop", ToString[expectedPropNames]];
+        Return[$Failed];
+      ];
+
+      If[ propSpec == "Properties",
+        Return[expectedPropNames]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], All ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], "Properties" ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
 
       (* Options *)
       distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
@@ -424,11 +448,12 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
 
         If[ !IntegerQ[spos],
           Message[BiSectionalKMeans::"ncls"];
-          res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> indexClusters |>;
+          aRes = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> indexClusters |>;
           If[ foldInQ,
-            Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, res ] ],
-            Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, res ] ]
-          ]
+            aRes = Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, aRes ],
+            aRes = Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, aRes ]
+          ];
+          If[ StringQ[propSpec], aRes[propSpec], KeyTake[aRes, propSpec] ]
         ];
 
         kInd = 0;
@@ -481,11 +506,14 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, opts : OptionsPatte
         ];
       ];
 
-      res = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> indexClusters |>;
+      aRes = <| "HierarchicalTreePaths" -> hierarchicalTreePaths, "HierarchicalTree" -> HierarchicalTree[ hierarchicalTreePaths ], "IndexClusters" -> indexClusters |>;
       If[ foldInQ,
-        Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, res ] ],
-        Return[ Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, res ] ]
-      ]
+        aRes = Join[ <| "MeanPoints" -> means, "Clusters" -> clustersAcc|>, aRes ],
+        aRes = Join[ <| "MeanPoints" -> means, "Clusters" -> clusters |>, aRes ]
+      ];
+
+      If[ StringQ[propSpec], aRes[propSpec], KeyTake[aRes, propSpec] ]
+
     ] /; k > 0;
 
 BiSectionalKMeans[___] :=
