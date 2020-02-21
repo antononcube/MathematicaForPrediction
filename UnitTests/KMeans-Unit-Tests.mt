@@ -51,8 +51,7 @@ BeginTestSection["KMeans-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-(*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],*)
-    Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/BiSectionalKMeans.m"],
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/BiSectionalKMeans.m"],
     Greater[Length[DownValues[BiSectionalKMeans`KMeans]], 0]
   ]
   ,
@@ -232,6 +231,10 @@ VerificationTest[
   TestID -> "Index-clusters-2Ddata-1"
 ];
 
+
+(***********************************************************)
+(* Getting properties                                      *)
+(***********************************************************)
 
 VerificationTest[
   Sort[ KMeans[RandomReal[1, {120, 3}], 2, "Properties" ] ] == Sort[ {"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters", "Properties", All} ]
