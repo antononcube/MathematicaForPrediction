@@ -222,6 +222,65 @@ VerificationTest[
 
 
 (***********************************************************)
+(* Labels signature                                        *)
+(***********************************************************)
+
+VerificationTest[
+  data = points2D["5clusters"];
+  dataWithIDs = LabelVectors[data];
+  clsRes1 = BlockRandom[ BiSectionalKMeans[dataWithIDs, 4, "Clusters"], RandomSeeding -> 12 ];
+  clsRes2 = BlockRandom[ BiSectionalKMeans[data, 4, "IndexClusters"], RandomSeeding -> 12 ];
+
+  clsRes1 == (Keys[dataWithIDs][[#]]& /@ clsRes2)
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-1"
+];
+
+
+VerificationTest[
+  clsRes3 = BlockRandom[ BiSectionalKMeans[ Values[dataWithIDs] -> Keys[dataWithIDs], 4, "Clusters"], RandomSeeding -> 12 ];
+
+  clsRes2 == clsRes2
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-2"
+];
+
+
+VerificationTest[
+  clsRes4 = BiSectionalKMeans[dataWithIDs, 4, "IndexClusters"];
+
+  ListQ[clsRes4] && Apply[ And, ListQ /@ clsRes3 ]
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-3"
+];
+
+
+VerificationTest[
+  BiSectionalKMeans[dataWithIDs, 4, "Properties"] == BiSectionalKMeans[data, 4, "Properties"]
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-4"
+];
+
+
+VerificationTest[
+  clsRes = BiSectionalKMeans[data, 4, {"Clusters", "MeanPoints"}];
+  AssociationQ[clsRes] && Sort[Keys[clsRes]] == Sort[{"Clusters", "MeanPoints"}]
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-5"
+];
+
+
+(***********************************************************)
 (* Getting properties                                      *)
 (***********************************************************)
 

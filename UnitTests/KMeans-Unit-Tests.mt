@@ -156,6 +156,20 @@ VerificationTest[(* 4 *)
 ];
 
 
+VerificationTest[
+  LabelVectors[data_?MatrixQ] :=
+      Block[{ids},
+        ids = Map["id." <> ToString[#] &, Range[Length[data]]];
+        AssociationThread[ids, data]
+      ];
+  AssociationQ[LabelVectors[points3D["4clusters"]]] && MatrixQ[Values[LabelVectors[points3D["4clusters"]]]]
+  ,
+  True
+  ,
+  TestID -> "Labeled-data-1"
+];
+
+
 (***********************************************************)
 (* Clusters                                                *)
 (***********************************************************)
@@ -229,6 +243,65 @@ VerificationTest[
   True
   ,
   TestID -> "Index-clusters-2Ddata-1"
+];
+
+
+(***********************************************************)
+(* Labels signature                                        *)
+(***********************************************************)
+
+VerificationTest[
+  data = points2D["5clusters"];
+  dataWithIDs = LabelVectors[data];
+  clsRes1 = BlockRandom[ KMeans[dataWithIDs, 4, "Clusters"], RandomSeeding -> 12 ];
+  clsRes2 = BlockRandom[ KMeans[data, 4, "IndexClusters"], RandomSeeding -> 12 ];
+
+  clsRes1 == (Keys[dataWithIDs][[#]]& /@ clsRes2)
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-1"
+];
+
+
+VerificationTest[
+  clsRes3 = BlockRandom[ KMeans[ Values[dataWithIDs] -> Keys[dataWithIDs], 4, "Clusters"], RandomSeeding -> 12 ];
+
+  clsRes2 == clsRes2
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-2"
+];
+
+
+VerificationTest[
+  clsRes4 = KMeans[dataWithIDs, 4, "IndexClusters"];
+
+  ListQ[clsRes4] && Apply[ And, ListQ /@ clsRes3 ]
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-3"
+];
+
+
+VerificationTest[
+  KMeans[dataWithIDs, 4, "Properties"] == KMeans[data, 4, "Properties"]
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-4"
+];
+
+
+VerificationTest[
+  clsRes = KMeans[data, 4, {"Clusters", "MeanPoints"}];
+  AssociationQ[clsRes] && Sort[Keys[clsRes]] == Sort[{"Clusters", "MeanPoints"}]
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-5"
 ];
 
 
