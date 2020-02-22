@@ -154,6 +154,33 @@ Validity[means_, clusters_, distFunc_] :=
 Clear[KMeansDataQ];
 KMeansDataQ[ data_ ] := MatrixQ[data, NumericQ];
 
+
+Clear[KMeansPropertiesCheck];
+KMeansPropertiesCheck[ propSpecArg_ ] :=
+    Block[{expectedPropNames, propSpec = propSpecArg},
+
+      expectedPropNames = {"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters", "Properties", All};
+      If[ Length[Intersection[ expectedPropNames, Flatten[{propSpec}] ]] < Length[Flatten[{propSpec}]],
+        Message[KMeans::"nprop", ToString[expectedPropNames]];
+        Return[{False, $Failed}];
+      ];
+
+      If[ TrueQ[propSpec == "Properties"],
+        Return[{False, expectedPropNames}]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], All ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], "Properties" ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
+
+      {True, propSpec}
+    ];
+
+
 Clear[KMeans];
 
 SyntaxInformation[KMeans] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
@@ -171,36 +198,53 @@ KMeans::"npg" = "The value of the option `1` is expected to be Automatic or a po
 KMeans::"nmrfr" = "The value of the option `1` is expected to be Automatic or a positive real number.";
 KMeans::"npi" = "The value of the option `1` is expected to be Automatic or a positive integer.";
 KMeans::"nprop" = "The value of the third argument is expected to be one of the values `1` \
-or a list of a subset of those values.";
+or a subset of those values.";
 KMeans::"grns" = "The number of requested clusters is larger than the number of data points.";
 
 KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
-    KMeans[ Normal[inputs], nseeds, propSpec, opts ];
+    KMeans[ Identity /@ inputs, nseeds, propSpec, opts ] /; MatrixQ[inputs];
+
+KMeans[ inputs_Association, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    KMeans[ Values[inputs] -> Keys[inputs], nseeds, propSpec, opts ];
+
+KMeans[ inputs_List -> labels_List, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    Block[{propSpecRes, propSpec = propSpecArg, res},
+
+      (* Properties *)
+      propSpecRes = KMeansPropertiesCheck[propSpec];
+
+      If[! propSpecRes[[1]],
+        Return[propSpecRes[[2]]]
+      ];
+      propSpec = propSpecRes[[2]];
+
+
+      (* Clustering *)
+      res = KMeans[ inputs, nseeds, DeleteDuplicates[Flatten[Join[ {propSpec}, {"Clusters", "IndexClusters"} ]]], opts ];
+
+      (* Final result *)
+      If[ TrueQ[res === $Failed],
+        $Failed,
+        (*ELSE*)
+        res = Join[ res, <|"Clusters" -> Map[ labels[[#]]&, res["IndexClusters"] ]|> ];
+        If[StringQ[propSpec], res[propSpec], KeyTake[res, propSpec] ]
+      ]
+
+    ] /; Length[inputs] == Length[labels];
 
 KMeans[inputs_?KMeansDataQ, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
-    Block[{expectedPropNames, propSpec = propSpecArg, eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
+    Block[{propSpecRes, propSpec = propSpecArg, eta, precGoal, distFunc, maxSteps, clusters, clustersInds,
       j, means, meansOld, meansDiff, nSteps = 0, tol, dMat,
       mvec, minReassignmentFraction, minReassignPoints, clustersIndsOld, newInds,
       indexClusters, aRes},
 
       (* Properties *)
-      expectedPropNames = {"MeanPoints", "Clusters", "ClusterLabels", "IndexClusters", "Properties", All};
-      If[ Length[Intersection[ expectedPropNames, Flatten[{propSpec}] ]] < Length[Flatten[{propSpec}]],
-        Message[KMeans::"nprop", ToString[expectedPropNames]];
-        Return[$Failed];
-      ];
+      propSpecRes = KMeansPropertiesCheck[propSpec];
 
-      If[ propSpec == "Properties",
-        Return[expectedPropNames]
+      If[! propSpecRes[[1]],
+        Return[propSpecRes[[2]]]
       ];
-
-      If[ MemberQ[ Flatten[{propSpec}], All ],
-        propSpec = Complement[ expectedPropNames, {"Properties", All}]
-      ];
-
-      If[ MemberQ[ Flatten[{propSpec}], "Properties" ],
-        propSpec = Complement[ expectedPropNames, {"Properties", All}]
-      ];
+      propSpec = propSpecRes[[2]];
 
       (* Options *)
       eta = OptionValue[KMeans, "LearningParameter"];
@@ -338,6 +382,31 @@ HierarchicalTree[ paths : { {_Integer..} ..} ] := HierarchicalTree[ AssociationT
 (* BiSectionalKMeans                                        *)
 (************************************************************)
 
+Clear[BiSectionalKMeansPropertiesCheck];
+BiSectionalKMeansPropertiesCheck[ propSpecArg_ ] :=
+    Block[{expectedPropNames, propSpec = propSpecArg},
+
+      expectedPropNames = {"MeanPoints", "Clusters", "IndexClusters", "HierarchicalTreePaths", "HierarchicalTree", "Properties", All};
+      If[ Length[Intersection[ expectedPropNames, Flatten[{propSpec}] ]] < Length[Flatten[{propSpec}]],
+        Message[BiSectionalKMeans::"nprop", ToString[expectedPropNames]];
+        Return[{False, $Failed}];
+      ];
+
+      If[ TrueQ[propSpec == "Properties"],
+        Return[{False, expectedPropNames}]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], All ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
+
+      If[ MemberQ[ Flatten[{propSpec}], "Properties" ],
+        propSpec = Complement[ expectedPropNames, {"Properties", All}]
+      ];
+
+      {True, propSpec}
+    ];
+
 (* Using the following definition of "fold in".
   [fold something in/into something]to combine things that were previously separate so they can be dealt with together.
   https://www.macmillandictionary.com/dictionary/british/fold-in
@@ -359,14 +428,42 @@ BiSectionalKMeans::"ncls" = "No clusters were obtained; suspecting the specified
 Returning last available clusters.";
 BiSectionalKMeans::"nclf" = "The value of the option `1` is expected to be one of `2`.";
 BiSectionalKMeans::"nprop" = "The value of the third argument is expected to be one of the values `1` \
-or a list of a subset of those values.";
+or a subset of those values.";
 
 
 BiSectionalKMeans[data_SparseArray, k_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
-    BiSectionalKMeans[ Normal[data], k, propSpec, opts ];
+    BiSectionalKMeans[ Identity /@ data, k, propSpec, opts ] /; MatrixQ[data];
 
-BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
-    Block[{propSpec = propSpecArg, expectedPropNames,
+BiSectionalKMeans[ inputs_Association, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    BiSectionalKMeans[ Values[inputs] -> Keys[inputs], nseeds, propSpec, opts ];
+
+BiSectionalKMeans[ inputs_List -> labels_List, nseeds_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    Block[{propSpecRes, propSpec = propSpecArg, res},
+
+      (* Properties *)
+      propSpecRes = BiSectionalKMeansPropertiesCheck[propSpec];
+
+      If[! propSpecRes[[1]],
+        Return[propSpecRes[[2]]]
+      ];
+      propSpec = propSpecRes[[2]];
+
+
+      (* Clustering *)
+      res = BiSectionalKMeans[ inputs, nseeds, DeleteDuplicates[Flatten[Join[ {propSpec}, {"Clusters", "IndexClusters"} ]]], opts ];
+
+      (* Final result *)
+      If[ TrueQ[res === $Failed],
+        $Failed,
+        (*ELSE*)
+        res = Join[ res, <|"Clusters" -> Map[ labels[[#]]&, res["IndexClusters"] ]|> ];
+        If[StringQ[propSpec], res[propSpec], KeyTake[res, propSpec] ]
+      ]
+
+    ] /; Length[inputs] == Length[labels];
+
+BiSectionalKMeans[data_?MatrixQ, k_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    Block[{propSpecRes, propSpec = propSpecArg,
       numberOfTrialBisections, distFunc, maxSteps, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
       clusters, means, sses, sset, s, spos, kInd, kmRes, indexesToDrop = {}, nSteps = 0,
       newMeans, newClusters, newIndexClusters,
@@ -374,23 +471,12 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, propSpecArg : ( _St
       clustersAcc, meansAcc, hierarchicalTreePaths, indexClusters, aRes},
 
       (* Properties *)
-      expectedPropNames = {"MeanPoints", "Clusters", "IndexClusters", "HierarchicalTreePaths", "HierarchicalTree", "Properties", All};
-      If[ Length[Intersection[ expectedPropNames, Flatten[{propSpec}] ]] < Length[Flatten[{propSpec}]],
-        Message[BiSectionalKMeans::"nprop", ToString[expectedPropNames]];
-        Return[$Failed];
-      ];
+      propSpecRes = BiSectionalKMeansPropertiesCheck[propSpec];
 
-      If[ propSpec == "Properties",
-        Return[expectedPropNames]
+      If[! propSpecRes[[1]],
+        Return[propSpecRes[[2]]]
       ];
-
-      If[ MemberQ[ Flatten[{propSpec}], All ],
-        propSpec = Complement[ expectedPropNames, {"Properties", All}]
-      ];
-
-      If[ MemberQ[ Flatten[{propSpec}], "Properties" ],
-        propSpec = Complement[ expectedPropNames, {"Properties", All}]
-      ];
+      propSpec = propSpecRes[[2]];
 
       (* Options *)
       distFunc = OptionValue[BiSectionalKMeans, DistanceFunction];
