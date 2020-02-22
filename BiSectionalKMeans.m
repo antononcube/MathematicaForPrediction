@@ -439,11 +439,11 @@ BiSectionalKMeans[data : {{_?NumberQ ...} ...}, k_?IntegerQ, propSpecArg : ( _St
 
         Which[
           ToLowerCase[clusterSelectionMethod] == ToLowerCase["MaxSquaredError"],
-          spos = First@Flatten@Position[Delete[sses, indexesToDrop], Max[sses]],
+          spos = First@Flatten@Position[sses, Max[Delete[sses, indexesToDrop]]],
 
           MemberQ[ ToLowerCase[{"MaxSize", "MaxLength"}], ToLowerCase[clusterSelectionMethod] ],
-          s = Delete[clusters, indexesToDrop];
-          spos = First@Flatten@Position[Length /@ s, Max[Length /@ s]]
+          s = Length /@ clusters;
+          spos = First@Flatten@Position[s, Max[Delete[s, indexesToDrop]]]
         ];
 
         If[ !IntegerQ[spos],
