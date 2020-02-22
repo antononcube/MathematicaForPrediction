@@ -201,8 +201,11 @@ KMeans::"nprop" = "The value of the third argument is expected to be one of the 
 or a subset of those values.";
 KMeans::"grns" = "The number of requested clusters is larger than the number of data points.";
 
+KMeans[inputs_SparseArray -> labels_List, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    KMeans[ (Identity /@ inputs) -> labels, nseeds, propSpec, opts ] /; KMeansDataQ[inputs] && Dimensions[inputs][[1]] == Length[labels];
+
 KMeans[inputs_SparseArray, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
-    KMeans[ Identity /@ inputs, nseeds, propSpec, opts ] /; MatrixQ[inputs];
+    KMeans[ Identity /@ inputs, nseeds, propSpec, opts ] /; KMeansDataQ[inputs];
 
 KMeans[ inputs_Association, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
     KMeans[ Values[inputs] -> Keys[inputs], nseeds, propSpec, opts ];
@@ -217,7 +220,6 @@ KMeans[ inputs_List -> labels_List, nseeds_?IntegerQ, propSpecArg : ( _String | 
         Return[propSpecRes[[2]]]
       ];
       propSpec = propSpecRes[[2]];
-
 
       (* Clustering *)
       res = KMeans[ inputs, nseeds, DeleteDuplicates[Flatten[Join[ {propSpec}, {"Clusters", "IndexClusters"} ]]], opts ];
@@ -430,9 +432,11 @@ BiSectionalKMeans::"nclf" = "The value of the option `1` is expected to be one o
 BiSectionalKMeans::"nprop" = "The value of the third argument is expected to be one of the values `1` \
 or a subset of those values.";
 
+BiSectionalKMeans[data_SparseArray -> labels_List, k_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+    BiSectionalKMeans[ (Identity /@ data) -> labels, k, propSpec, opts ] /; KMeansDataQ[data] && Dimensions[data][[1]] == Length[labels];
 
 BiSectionalKMeans[data_SparseArray, k_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
-    BiSectionalKMeans[ Identity /@ data, k, propSpec, opts ] /; MatrixQ[data];
+    BiSectionalKMeans[ Identity /@ data, k, propSpec, opts ] /; KMeansDataQ[data];
 
 BiSectionalKMeans[ inputs_Association, nseeds_?IntegerQ, propSpec : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
     BiSectionalKMeans[ Values[inputs] -> Keys[inputs], nseeds, propSpec, opts ];
@@ -448,7 +452,6 @@ BiSectionalKMeans[ inputs_List -> labels_List, nseeds_?IntegerQ, propSpecArg : (
       ];
       propSpec = propSpecRes[[2]];
 
-
       (* Clustering *)
       res = BiSectionalKMeans[ inputs, nseeds, DeleteDuplicates[Flatten[Join[ {propSpec}, {"Clusters", "IndexClusters"} ]]], opts ];
 
@@ -462,7 +465,7 @@ BiSectionalKMeans[ inputs_List -> labels_List, nseeds_?IntegerQ, propSpecArg : (
 
     ] /; Length[inputs] == Length[labels];
 
-BiSectionalKMeans[data_?MatrixQ, k_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
+BiSectionalKMeans[data_?KMeansDataQ, k_?IntegerQ, propSpecArg : ( _String | All | { (_String | All) ..} ) : "Clusters", opts : OptionsPattern[]] :=
     Block[{propSpecRes, propSpec = propSpecArg,
       numberOfTrialBisections, distFunc, maxSteps, clusterSelectionMethod, foldInQ, kMeansOpts, expectedMethodNames,
       clusters, means, sses, sset, s, spos, kInd, kmRes, indexesToDrop = {}, nSteps = 0,

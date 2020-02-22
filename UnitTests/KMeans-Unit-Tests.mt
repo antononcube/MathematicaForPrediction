@@ -305,6 +305,18 @@ VerificationTest[
 ];
 
 
+VerificationTest[
+  clsRes1 = BlockRandom[ KMeans[SparseArray[data] -> Keys[dataWithIDs], 4, "Clusters"], RandomSeeding -> 12 ];
+  clsRes2 = BlockRandom[ KMeans[SparseArray[data], 4, "IndexClusters"], RandomSeeding -> 12 ];
+
+  clsRes1 == (Keys[dataWithIDs][[#]]& /@ clsRes2)
+  ,
+  True
+  ,
+  TestID -> "Labeled-vectors-clusters-2Ddata-6"
+];
+
+
 (***********************************************************)
 (* Getting properties                                      *)
 (***********************************************************)
