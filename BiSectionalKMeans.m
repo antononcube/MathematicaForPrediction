@@ -61,6 +61,9 @@ BiSectionalKMeans[data, k, props, opts] returns the specified properties props o
 HierarchicalTree::usage = "HierarchicalTree[ {{_Integer..}..} ] makes a hierarchical tree from a list of \
 hierarchical tree pats.";
 
+ToTreePlotRules::usage = "ToTreePlotRules[tree] gives tree plot rules. \
+ToTreePlotRules[tree, clusters] gives tree plot rules with the bottom indexes replaced with the clusters.";
+
 Begin["`Private`"];
 
 (************************************************************)
@@ -521,6 +524,47 @@ BiSectionalKMeans[___] :=
       Message[BiSectionalKMeans::"nargs"];
       Return[$Failed]
     ];
+
+
+(************************************************************)
+(* ToTreePlotRules                                          *)
+(************************************************************)
+
+Clear[ClusterNodeQ];
+ClusterNodeQ[s_] := Head[s] === ClusterNode;
+
+Clear[ToTreePlotRules, ToTreePlotRulesRec];
+
+Options[ToTreePlotRules] = {"LevelPrefix" -> "level:"};
+
+ToTreePlotRules[tree_List, clusters : {_List ..}, opts : OptionsPattern[]] :=
+    Flatten@
+        ReplaceAll[
+          ToTreePlotRules[tree, opts],
+          (x_ -> ClusterNode[i_Integer]) :> Thread[x -> clusters[[i]]]
+        ];
+
+ToTreePlotRules[tree_List, opts : OptionsPattern[]] :=
+    Block[{prefix = OptionValue[ToTreePlotRules, "LevelPrefix"]},
+      ToTreePlotRulesRec[tree, 0, prefix][[2]]
+    ];
+
+ToTreePlotRulesRec[tree_List, level_Integer, prefix_String] :=
+    Block[{rules, res, id = prefix <> ToString[level]},
+      rules = ToTreePlotRulesRec[#, level + 1, prefix] & /@ tree;
+      res =
+          Join[
+            Union[Flatten[Select[If[ClusterNodeQ[#], #, #[[2]]] & /@ rules, ! ClusterNodeQ[#] &]]],
+            Union[Flatten[Map[id -> # &, If[ClusterNodeQ[#], #, #[[1]]] & /@ rules]]]
+          ];
+      id -> res
+    ];
+
+ToTreePlotRulesRec[tree_Integer, level_Integer, prefix_String] :=
+    Block[{},
+      ClusterNode[tree]
+    ];
+
 
 
 End[]; (* `Private` *)
