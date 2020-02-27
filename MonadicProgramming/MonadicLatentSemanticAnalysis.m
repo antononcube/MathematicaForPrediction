@@ -613,6 +613,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
         Return[$LSAMonFailure]
       ];
 
+      (* No weighted document-term matrix. *)
       If[ !KeyExistsQ[context, "weightedDocumentTermMatrix"],
         Return[
           Fold[
@@ -651,7 +652,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       M1 = SparseArray[ context["weightedDocumentTermMatrix"][[All, pos]] ];
 
-      (* Initial topics to list of term indexes. *)
+      (* Initial topics to lists of term indexes. *)
       If[ ListQ[initialTopics],
 
         initialTopicsIndexes = AssociationThread[ ColumnNames[context["weightedDocumentTermMatrix"]][[pos]], Range[Length[pos]]];
