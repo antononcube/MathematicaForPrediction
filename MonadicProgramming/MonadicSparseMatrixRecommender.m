@@ -1175,25 +1175,33 @@ SMRMonGetTopRecommendations[ spec_, nRes : (_Integer | All), opts : OptionsPatte
       If[ TrueQ[spec === None] || TrueQ[spec === Empty] || TrueQ[spec === {}] || TrueQ[spec === <||>],
 
         (* Of course we can just use xs instead of SMRMonTakeValue[][xs, context] . *)
-        res = SMRMonRecommend[ xs, nRes, FilterRules[{opts}, Options[SMRMonRecommend]] ][xs, context];
+        Block[{Echo = Null&},
+          res = SMRMonRecommend[ xs, nRes, FilterRules[{opts}, Options[SMRMonRecommend]] ][xs, context]
+        ];
 
-        If[ ! TrueQ[res === $SMRMonFailure], Return[res] ];
+        If[ ! ( TrueQ[res === $SMRMonFailure] || Length[res[[1]]] == 0 ), Return[res] ];
 
-        res = SMRMonRecommendByProfile[ xs, nRes, FilterRules[{opts}, Options[SMRMonRecommendByProfile]] ][xs, context];
+        Block[{Echo = Null&},
+          res = SMRMonRecommendByProfile[ xs, nRes, FilterRules[{opts}, Options[SMRMonRecommendByProfile]] ][xs, context]
+        ];
 
         If[ TrueQ[res === $SMRMonFailure],
           Echo[ "The monad object value is not a history or profile specification.", "SMRMonGetTopRecommendations:" ];
         ],
         (* ELSE *)
 
-        res = SMRMonRecommend[ spec, nRes, FilterRules[{opts}, Options[SMRMonRecommend]] ][xs, context];
+        Block[{Echo = Null&},
+          res = SMRMonRecommend[ spec, nRes, FilterRules[{opts}, Options[SMRMonRecommend]] ][xs, context]
+        ];
 
-        If[ ! TrueQ[res === $SMRMonFailure], Return[res] ];
+        If[ ! ( TrueQ[res === $SMRMonFailure] || Length[res[[1]]] == 0 ), Return[res] ];
 
-        res = SMRMonRecommendByProfile[ spec, nRes, FilterRules[{opts}, Options[SMRMonRecommendByProfile]] ][xs, context];
+        Block[{Echo = Null&},
+          res = SMRMonRecommendByProfile[ spec, nRes, FilterRules[{opts}, Options[SMRMonRecommendByProfile]] ][xs, context]
+        ];
 
         If[ TrueQ[res === $SMRMonFailure],
-          Echo[ "The argument spec is not a history or profile specification.", "SMRMonGetTopRecommendations:" ];
+          Echo[ "The first argument is not a history or profile specification.", "SMRMonGetTopRecommendations:" ];
         ]
 
       ];
@@ -1253,8 +1261,12 @@ SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes : (_I
       h = KeyMap[ context["itemNames"][#]&, history ];
       h = KeySelect[ h, IntegerQ ];
 
-      If[ Length[h] < Length[history],
-        Echo["Some of the item names are not known by the recommender.", "SMRMonRecommend:"];
+      Which[
+        Length[h] == 0,
+        Echo["None of the item names is not known by the recommender.", "SMRMonRecommend:"],
+
+        Length[h] < Length[history],
+        Echo["Some of the item names are not known by the recommender.", "SMRMonRecommend:"]
       ];
 
       SMRMonRecommend[ Keys[h], Values[h], nRes, opts][xs, context]
