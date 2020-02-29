@@ -281,6 +281,7 @@ VerificationTest[(* 19 *)
   TestID -> "smrMushroom-recommendations-by-profile-2"
 ];
 
+
 (*---------------------------------------------------------*)
 (* Application of term weights                             *)
 (*---------------------------------------------------------*)
@@ -307,7 +308,7 @@ VerificationTest[(* 20 *)
     SMRMonBind,
     smrTitanic2,
     {
-      SMRMonApplyTermWeightFunctions[ "GlobalWeightFunction"->"IDF", "LocalWeightFunction"->"None", "NormalizerFunction"->"Cosine"],
+      SMRMonApplyTermWeightFunctions[ "GlobalWeightFunction" -> "IDF", "LocalWeightFunction" -> "None", "NormalizerFunction" -> "Cosine"],
       SMRMonRecommend[<|"10" -> 1, "120" -> 0.5|>, 12],
       SMRMonTakeValue
     }
@@ -335,6 +336,11 @@ VerificationTest[(* 21 *)
   ,
   TestID -> "smrTitanic2-apply-term-weights-3"
 ];
+
+
+(*---------------------------------------------------------*)
+(* Proofs                                                  *)
+(*---------------------------------------------------------*)
 
 VerificationTest[(* 22 *)
   proofs1 = Fold[
@@ -401,5 +407,83 @@ VerificationTest[(* 25 *)
   ,
   TestID -> "smrTitanic2-history-proofs-2"
 ];
+
+(*---------------------------------------------------------*)
+(* Get top recommendations                                 *)
+(*---------------------------------------------------------*)
+
+VerificationTest[(* 25 *)
+  recs1 =
+      Fold[
+        SMRMonBind,
+        smrMushroom2,
+        {
+          SMRMonGetTopRecommendations[<|"1" -> 1, "12" -> 0.5|>, 12],
+          SMRMonTakeValue
+        }
+      ];
+
+  recs2 =
+      Fold[
+        SMRMonBind,
+        smrMushroom2,
+        {
+          SMRMonRecommend[<|"1" -> 1, "12" -> 0.5|>, 12],
+          SMRMonTakeValue
+        }
+      ];
+
+  recs1 == recs2
+  ,
+  True
+  ,
+  TestID -> "smrMushroom-get-top-recommendations-1"
+];
+
+
+VerificationTest[(* 26 *)
+  precs1 =
+      Fold[
+        SMRMonBind,
+        smrMushroom,
+        {
+          SMRMonGetTopRecommendations[ {"odor:pungent", "edibility:poisonous"}, 12],
+          SMRMonTakeValue
+        }
+      ];
+
+  precs2 =
+      Fold[
+        SMRMonBind,
+        smrMushroom,
+        {
+          SMRMonRecommendByProfile[ {"odor:pungent", "edibility:poisonous"}, 12],
+          SMRMonTakeValue
+        }
+      ];
+
+  precs1 == precs2
+  ,
+  True
+  ,
+  TestID -> "smrMushroom-get-top-recommendations-2"
+];
+
+
+VerificationTest[(* 27 *)
+  Fold[
+    SMRMonBind,
+    smrMushroom2,
+    {
+      SMRMonGetTopRecommendations[<|"blah1" -> 1, "blah12" -> 0.5|>, 12],
+      SMRMonTakeValue
+    }
+  ]
+  ,
+  $SMRMonFailure
+  ,
+  TestID -> "smrMushroom-get-top-recommendations-3"
+];
+
 
 EndTestSection[]
