@@ -158,6 +158,8 @@ of the contingency matrix.";
 
 SMRMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries of the recommender matrix.";
 
+SMRMonGetTopRecommendations::usage = "Recommend items based on a history or profile specification.";
+
 SMRMonRecommend::usage = "Recommends items based on history.";
 
 SMRMonRecommendByHistory::usage = "Recommends items based on history.";
@@ -445,7 +447,7 @@ NumericalColumnToSSparseMatrix[dsArg_Dataset, idColumnName_, varColumnName_] :=
       ds = dsArg[All, {idColumnName, varColumnName}][All, Join[#, <|"Variable" -> varColumnName|>]&];
       ds = Query[ReplaceAll[Missing[] -> 0], All][ds];
 
-      ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}], "Sparse"->True ]
+      ToSSparseMatrix @ CrossTabulate[ ds[All, {idColumnName, "Variable", varColumnName}], "Sparse" -> True ]
     ];
 
 Clear[SMRMonCreate];
@@ -499,7 +501,7 @@ SMRMonCreate[ mat_?MatrixQ, opts : OptionsPattern[] ][xs_, context_Association] 
       smat = ToSSparseMatrix[SparseArray[mat], "RowNames" -> ToString /@ Range[Length[mat]]];
 
       SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context]
-] /; MatrixQ[ mat, NumberQ ];
+    ] /; MatrixQ[ mat, NumberQ ];
 
 SMRMonCreate[ smat_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
@@ -645,7 +647,7 @@ SMRMonCreateFromWideForm[ds_Dataset, itemVarName_String, opts : OptionsPattern[]
                 (*ELSE*)
                 ds2 = ds[All, {idName, v}];
                 ds2 = ds2[ Select[ FreeQ[#, missingValuesPattern]& ] ];
-                v -> ToSSparseMatrix[ CrossTabulate[ds2, "Sparse"->True] ]
+                v -> ToSSparseMatrix[ CrossTabulate[ds2, "Sparse" -> True] ]
               ], {v, Complement[ tagTypeNames, {idName} ]}];
       ];
 
@@ -714,14 +716,14 @@ SMRMonCreateFromLongForm[ds_Dataset, { itemColumnName_String, tagTypeColumnName_
       If[ Length[ Intersection[ Normal @ Keys @ ds[[1]], {itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName}  ] ] != 4,
         Echo[
           "Not all of the specified column names are column names in the dataset. " <>
-          "The expected dataset column names are:" <> ToString[ {itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName} ] <> ".",
+              "The expected dataset column names are:" <> ToString[ {itemColumnName, tagTypeColumnName, tagColumnName, weightColumnName} ] <> ".",
           "SMRMonCreateFromLongForm:"];
         Return[$Failed]
       ];
 
       tagTypeNames = Union[ Normal[ ds[All, tagTypeColumnName] ] ];
 
-      smats = Association @ Map[Function[{tt}, tt -> ToSSparseMatrix @ CrossTabulate[ ds[ Select[#TagType == tt &], {itemColumnName, tagColumnName, weightColumnName}], "Sparse"->True]  ], tagTypeNames];
+      smats = Association @ Map[Function[{tt}, tt -> ToSSparseMatrix @ CrossTabulate[ ds[ Select[#TagType == tt &], {itemColumnName, tagColumnName, weightColumnName}], "Sparse" -> True]  ], tagTypeNames];
 
       If[addTagTypesToColumnNamesQ,
 
@@ -1151,6 +1153,65 @@ SMRMonApplyTermWeightFunctions[___][__] := $SMRMonFailure;
 
 
 (**************************************************************)
+(* SMRMonGetTopRecommendations                                *)
+(**************************************************************)
+
+Clear[SMRMonGetTopRecommendations];
+
+SyntaxInformation[SMRMonGetTopRecommendations] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+
+Options[SMRMonGetTopRecommendations] = {"RemoveHistory" -> True, "ItemNames" -> True, "IgnoreUnknownTags" -> False, "Normalize" -> True, "VectorResult" -> False };
+
+SMRMonGetTopRecommendations[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetTopRecommendations[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonGetTopRecommendations[ spec_, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonGetTopRecommendations[ spec, 12, opts ][xs, context];
+
+SMRMonGetTopRecommendations[ spec_, nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{res},
+
+      If[ TrueQ[spec === None] || TrueQ[spec === Empty] || TrueQ[spec === {}] || TrueQ[spec === <||>],
+
+        (* Of course we can just use xs instead of SMRMonTakeValue[][xs, context] . *)
+        res = SMRMonRecommend[ xs, nRes, FilterRules[{opts}, Options[SMRMonRecommend]] ][xs, context];
+
+        If[ ! TrueQ[res === $SMRMonFailure], Return[res] ];
+
+        res = SMRMonRecommendByProfile[ xs, nRes, FilterRules[{opts}, Options[SMRMonRecommendByProfile]] ][xs, context];
+
+        If[ TrueQ[res === $SMRMonFailure],
+          Echo[ "The monad object value is not a history or profile specification.", "SMRMonGetTopRecommendations:" ];
+        ],
+        (* ELSE *)
+
+        res = SMRMonRecommend[ spec, nRes, FilterRules[{opts}, Options[SMRMonRecommend]] ][xs, context];
+
+        If[ ! TrueQ[res === $SMRMonFailure], Return[res] ];
+
+        res = SMRMonRecommendByProfile[ spec, nRes, FilterRules[{opts}, Options[SMRMonRecommendByProfile]] ][xs, context];
+
+        If[ TrueQ[res === $SMRMonFailure],
+          Echo[ "The argument spec is not a history or profile specification.", "SMRMonGetTopRecommendations:" ];
+        ]
+
+      ];
+
+      res
+    ];
+
+SMRMonGetTopRecommendations[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be None or an association of scored items or scored tags. " <>
+            "The second argument is expected to be a positive integer or All.",
+        "SMRMonGetTopRecommendations:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
 (* SMRMonRecommend                                            *)
 (**************************************************************)
 
@@ -1498,7 +1559,7 @@ SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts : Option
       (* TO DO: methodFunc is expected to be one of {Correlation, SpearmanRho, KendallTau, Dot} *)
       expectedFuncs = {Correlation, SpearmanRho, KendallTau, Dot};
       If[ !MemberQ[expectedFuncs, methodFunc],
-        Echo[ "The value of the option Method is expected to be one of " <> ToString[expectedFuncs]<> "."];
+        Echo[ "The value of the option Method is expected to be one of " <> ToString[expectedFuncs] <> "."];
         Return[$SMRMonFailure]
       ];
 
@@ -1849,13 +1910,13 @@ SMRMonSetTagTypeWeights[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonSetTagTypeWeights[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonSetTagTypeWeights[ defaultValue_?NumberQ, opts: OptionsPattern[] ][xs_, context_Association] :=
+SMRMonSetTagTypeWeights[ defaultValue_?NumberQ, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonSetTagTypeWeights[ <||>, defaultValue, opts ][xs, context];
 
-SMRMonSetTagTypeWeights[ scoredTagTypes_Association, opts: OptionsPattern[] ][xs_, context_Association] :=
+SMRMonSetTagTypeWeights[ scoredTagTypes_Association, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonSetTagTypeWeights[ scoredTagTypes, 1., opts ][xs, context];
 
-SMRMonSetTagTypeWeights[ scoredTagTypesArg : Association[ (_String -> _?NumberQ)...], defaultValue_?NumberQ, opts: OptionsPattern[] ][xs_, context_Association] :=
+SMRMonSetTagTypeWeights[ scoredTagTypesArg : Association[ (_String -> _?NumberQ)...], defaultValue_?NumberQ, opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{ scoredTagTypes = scoredTagTypesArg, compactQ, smats, mat},
 
       compactQ = TrueQ[ OptionValue[ SMRMonSetTagTypeWeights, "CompactAfterColumnBind" ] ];
@@ -2390,7 +2451,7 @@ Clear[SMRMonProveByMetadata];
 
 SyntaxInformation[SMRMonProveByMetadata] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
-Options[SMRMonProveByMetadata] = { "Profile"-> None, "Items"-> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
+Options[SMRMonProveByMetadata] = { "Profile" -> None, "Items" -> None, "OutlierIdentifierParameters" -> None, "Normalize" -> True };
 
 SMRMonProveByMetadata[$SMRMonFailure] := $SMRMonFailure;
 
@@ -2585,8 +2646,8 @@ SMRMonComputeTopK[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonComputeTopK[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonComputeTopK[ testData_Association, ksArg:{_IntegerQ..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
-    Block[{ ks=ksArg, type, expectedTypes, aTopK, recs, topKStat, expectedRecs },
+SMRMonComputeTopK[ testData_Association, ksArg : {_IntegerQ..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{ ks = ksArg, type, expectedTypes, aTopK, recs, topKStat, expectedRecs },
 
       type = OptionValue[SMRMonComputeTopK, "Type"];
 
@@ -2602,7 +2663,7 @@ SMRMonComputeTopK[ testData_Association, ksArg:{_IntegerQ..}, opts : OptionsPatt
 
       expectedTypes = { "Fraction", "Count", "Incidence", "Binary" };
       If[ ! ( StringQ[type] && MemberQ[ ToLowerCase[expectedTypes], ToLowerCase[type] ] ),
-        Echo[ "The value of the option \"Type\" is expected to be one of:" <> ToString[expectedTypes[[1;;-2]]] <> "." , "SMRMonComputeTopK:"];
+        Echo[ "The value of the option \"Type\" is expected to be one of:" <> ToString[expectedTypes[[1 ;; -2]]] <> "." , "SMRMonComputeTopK:"];
         Return[$SMRMonFailure]
       ];
 
@@ -2613,30 +2674,30 @@ SMRMonComputeTopK[ testData_Association, ksArg:{_IntegerQ..}, opts : OptionsPatt
           Association @ Map[
             Function[{searchID},
 
-            (* Recommendations *)
-            recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommend[searchID, Max[ks] ], SMRMonTakeValue } ];
+              (* Recommendations *)
+              recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommend[searchID, Max[ks] ], SMRMonTakeValue } ];
 
-            (* Top-K of the key over the specified ks. *)
+              (* Top-K of the key over the specified ks. *)
 
-            expectedRecs = Flatten[{testData[searchID]}];
+              expectedRecs = Flatten[{testData[searchID]}];
 
-            Which[
+              Which[
 
-              MemberQ[ { "binary", "incidence" }, type ],
-              topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] > 0&, ks],
+                MemberQ[ { "binary", "incidence" }, type ],
+                topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] > 0&, ks],
 
-              type == "count",
-              topKStat = Map[ Length @ Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]&, ks],
+                type == "count",
+                topKStat = Map[ Length @ Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]&, ks],
 
-              type == "fraction",
-              topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] / Length[expectedRecs] &, ks],
+                type == "fraction",
+                topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] / Length[expectedRecs] &, ks],
 
-              True,
-              (* Should not happen. *)
-              Return[$SMRMonFailure]
-            ];
+                True,
+                (* Should not happen. *)
+                Return[$SMRMonFailure]
+              ];
 
-            searchID -> topKStat
+              searchID -> topKStat
 
             ],
             Keys[testData]
