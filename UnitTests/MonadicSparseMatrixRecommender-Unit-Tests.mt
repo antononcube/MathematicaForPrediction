@@ -51,8 +51,7 @@ BeginTestSection["MonadicSparseMatrixRecommender-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-(*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"],*)
-    Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MonadicProgramming/MonadicSparseMatrixRecommender.m"],
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"],
     Greater[Length[SubValues[MonadicSparseMatrixRecommender`SMRMonCreate]], 0]
   ]
   ,
