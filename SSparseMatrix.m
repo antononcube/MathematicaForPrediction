@@ -327,6 +327,11 @@ ToSSparseMatrix[ds_Dataset, opts : OptionsPattern[]] :=
       ]
     ] /; Length[Dimensions[ds]] == 2;
 
+ToSSparseMatrix[triplets:_?MatrixQ, opts : OptionsPattern[]] :=
+    MakeSSparseMatrix[triplets, Automatic, 0, opts]/; Dimensions[triplets][[2]] == 3;
+
+ToSSparseMatrix[triplets:_?MatrixQ, dims_, val_, opts : OptionsPattern[]] :=
+    MakeSSparseMatrix[triplets, dims, val, opts]/; Dimensions[triplets][[2]] == 3;
 
 ToSSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
     Block[{},
