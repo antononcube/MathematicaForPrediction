@@ -327,9 +327,9 @@ AssociationModule[asc_Association, body_] :=
           h_[L : _Symbol | _String, R_] :>
               With[{sy = Quiet@Symbol@ToString@L},
                 Hold[h[sy, R]] /; Depth[sy] === 1]], {(a_ -> b_) :> (a = b), (a_ :> b_) :> (a := b)}, {1}] /.
-        _[sets__] :> Module[{sets}, body]
+        _[sets__] :> Module[{sets}, body];
 
-ClearAll[GenerateStateMonadCode]
+ClearAll[GenerateStateMonadCode];
 Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol" -> None, "EchoFailingFunction" -> True};
 GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
     With[{
