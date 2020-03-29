@@ -97,20 +97,27 @@ HextileBinDataQ[d_] := (MatrixQ[d] && Dimensions[d][[2]] == 2) || HextileBinData
 
 Clear[HextileCenterBins];
 
-HextileCenterBins[data_?MatrixQ, binSize_] :=
-    HextileCenterBins[data, binSize, MinMax /@ Transpose[data]] /; Dimensions[data][[2]] == 2;
+SyntaxInformation[HextileCenterBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
-HextileCenterBins[data_?MatrixQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :=
+Options[HextileCenterBins] = { "AggregationFunction" -> Total };
+
+HextileCenterBins[data_?MatrixQ, binSize_, opts : OptionsPattern[] ] :=
+    HextileCenterBins[data, binSize, MinMax /@ Transpose[data], opts] /; Dimensions[data][[2]] == 2;
+
+HextileCenterBins[data_?MatrixQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{},
       Association[Rule @@@ Tally[binSize * (NearestHexagon /@ (data / binSize))]]
     ] /; Dimensions[data][[2]] == 2;
 
-HextileCenterBins[data_?HextileBinDataRulesQ, binSize_] :=
-    HextileCenterBins[data, binSize, MinMax /@ Transpose[data[[All, 1]]]];
+HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, opts : OptionsPattern[] ] :=
+    HextileCenterBins[ data, binSize, MinMax /@ Transpose[Keys[data]], opts ];
 
-HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :=
-    Block[{},
-      GroupBy[Map[(binSize * NearestHexagon[#[[1]] / binSize]) -> #[[2]] &, Normal[data]], #[[1]] &, Total[#[[All, 2]]] &]
+HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+    Block[{aggrFunc},
+
+      aggrFunc = OptionValue[HextileCenterBins, "AggregationFunction"];
+
+      GroupBy[Map[(binSize * NearestHexagon[#[[1]] / binSize]) -> #[[2]] &, Normal[data]], #[[1]] &, aggrFunc[#[[All, 2]]] &]
     ];
 
 
@@ -120,12 +127,21 @@ HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_,
 
 Clear[HextileBins];
 
-HextileBins[data_?HextileBinDataQ, binSize_] :=
-    HextileBins[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Normal[data[[All, 1]]]]]];
+SyntaxInformation[HextileBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
-HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :=
+Options[HextileBins] = Options[HextileCenterBins];
+
+HextileBins[data_?HextileBinDataQ, binSize_, opts : OptionsPattern[] ] :=
+    HextileBins[
+      data,
+      binSize,
+      If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Keys[data]]],
+      opts
+    ];
+
+HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{vh = HexagonVertexDistance[binSize]},
-      KeyMap[Trr[vh, #] &, HextileCenterBins[data, binSize]]
+      KeyMap[ Trr[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, opts] ]
     ];
 
 
@@ -135,12 +151,20 @@ HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :
 
 Clear[HextileHistogram];
 
+SyntaxInformation[HextileHistogram] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
+
 Options[HextileHistogram] =
-    Join[{"HistogramType" -> "ColoredPolygons", ColorFunction -> (Opacity[#, Blue] &)},
-      Options[Graphics]];
+    Join[
+      {
+        "AggregationFunction" -> Total,
+        "HistogramType" -> "ColoredPolygons",
+        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, #] &)
+      },
+      Options[Graphics]
+    ];
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[]] :=
-    HextileHistogram[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Normal[data[[All, 1]]]]], opts];
+    HextileHistogram[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Keys[data]]], opts];
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
@@ -151,7 +175,8 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
 
       ptype = OptionValue[HextileHistogram, "HistogramType"];
 
-      tally = List @@@ Normal[HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}]];
+      tally = HextileCenterBins[ data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]] ];
+      tally = List @@@ Normal[tally];
 
       With[{maxTally = Max[Last /@ tally]},
         Graphics[
