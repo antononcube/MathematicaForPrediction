@@ -98,11 +98,10 @@ HextileBinDataQ[d_] := (MatrixQ[d] && Dimensions[d][[2]] == 2) || HextileBinData
 Clear[HextileCenterBins];
 
 HextileCenterBins[data_?MatrixQ, binSize_] :=
-    HextileCenterBins[data, binSize, MinMax /@ Transpose[data]] /;
-        Dimensions[data][[2]] == 2;
+    HextileCenterBins[data, binSize, MinMax /@ Transpose[data]] /; Dimensions[data][[2]] == 2;
 
 HextileCenterBins[data_?MatrixQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :=
-    Module[{tally, vh = HexagonVertexDistance[binSize]},
+    Block[{},
       Association[Rule @@@ Tally[binSize * (NearestHexagon /@ (data / binSize))]]
     ] /; Dimensions[data][[2]] == 2;
 
@@ -110,10 +109,8 @@ HextileCenterBins[data_?HextileBinDataRulesQ, binSize_] :=
     HextileCenterBins[data, binSize, MinMax /@ Transpose[data[[All, 1]]]];
 
 HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :=
-    Block[{tally, vh = HexagonVertexDistance[binSize]},
-      GroupBy[
-        Map[(binSize * NearestHexagon[#[[1]] / binSize]) -> #[[2]] &,
-          Normal[data]], #[[1]] &, Total[#[[All, 2]]] &]
+    Block[{},
+      GroupBy[Map[(binSize * NearestHexagon[#[[1]] / binSize]) -> #[[2]] &, Normal[data]], #[[1]] &, Total[#[[All, 2]]] &]
     ];
 
 
@@ -124,9 +121,7 @@ HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_,
 Clear[HextileBins];
 
 HextileBins[data_?HextileBinDataQ, binSize_] :=
-    HextileBins[data, binSize,
-      If[MatrixQ[data], MinMax /@ Transpose[data],
-        MinMax /@ Transpose[Normal[data[[All, 1]]]]]];
+    HextileBins[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Normal[data[[All, 1]]]]]];
 
 HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :=
     Block[{vh = HexagonVertexDistance[binSize]},
@@ -141,48 +136,50 @@ HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}] :
 Clear[HextileHistogram];
 
 Options[HextileHistogram] =
-    Join[{"HistogramType" -> "ColoredPolygons", ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, #] &)},
+    Join[{"HistogramType" -> "ColoredPolygons", ColorFunction -> (Opacity[#, Blue] &)},
       Options[Graphics]];
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[]] :=
     HextileHistogram[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Normal[data[[All, 1]]]]], opts];
 
-HextileHistogram[data_?HextileBinDataQ,
-  binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}},
-  opts : OptionsPattern[]] :=
+HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
-    Block[{cFunc, ptype, lsHBins, tally, vh = HexagonVertexDistance[binSize]},
+    Block[{cFunc, ptype, tally, vh = HexagonVertexDistance[binSize]},
 
       cFunc = OptionValue[HextileHistogram, ColorFunction];
       If[StringQ[cFunc], cFunc = ColorData[cFunc]];
 
       ptype = OptionValue[HextileHistogram, "HistogramType"];
 
-      tally =
-          List @@@ Normal[
-            HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}]];
+      tally = List @@@ Normal[HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}]];
 
       With[{maxTally = Max[Last /@ tally]},
         Graphics[
           Table[
             Which[
               ptype == 1 || ptype == "ColoredPolygons",
-              Tooltip[{cFunc[Sqrt[Last@tally[[n]] / maxTally]],
-                Trr[vh, First@tally[[n]]]}, Last@tally[[n]]],
+              Tooltip[
+                {cFunc[Sqrt[Last@tally[[n]] / maxTally]], Trr[vh, First@tally[[n]]]},
+                Last@tally[[n]]
+              ],
 
               ptype == 2 || ptype == "ProportionalSideSize",
-              Tooltip[Trr[Last@tally[[n]] / maxTally * vh, First@tally[[n]]],
-                Last@tally[[n]]],
+              Tooltip[
+                Trr[Last@tally[[n]] / maxTally * vh, First@tally[[n]]],
+                Last@tally[[n]]
+              ],
 
               ptype == 3 || ptype == "ProportionalArea",
-              Tooltip[Trr[Sqrt[Last@tally[[n]] / maxTally] * vh, First@tally[[n]]],
-                Last@tally[[n]]]
+              Tooltip[
+                Trr[Sqrt[Last@tally[[n]] / maxTally] * vh, First@tally[[n]]],
+                Last@tally[[n]]
+              ]
 
             ],
             {n, Length@tally}
           ],
-          FilterRules[{opts}, Options[Graphics]], Frame -> True,
-          PlotRange -> {{xmin, xmax}, {ymin, ymax}}, PlotRangeClipping -> True]
+          FilterRules[{opts}, Options[Graphics]],
+          Frame -> True, PlotRange -> {{xmin, xmax}, {ymin, ymax}}, PlotRangeClipping -> True]
       ]
     ];
 
