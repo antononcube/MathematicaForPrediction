@@ -101,7 +101,10 @@ SyntaxInformation[HextileCenterBins] = { "ArgumentsPattern" -> { _, _, _., Optio
 
 Options[HextileCenterBins] = { "AggregationFunction" -> Total };
 
-HextileCenterBins[data_?MatrixQ, binSize_, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?HextileBinDataQ, binSize_, opts : OptionsPattern[] ] :=
+    HextileCenterBins[ data, binSize, Automatic, opts ];
+
+HextileCenterBins[data_?MatrixQ, binSize_, Automatic, opts : OptionsPattern[] ] :=
     HextileCenterBins[data, binSize, MinMax /@ Transpose[data], opts] /; Dimensions[data][[2]] == 2;
 
 HextileCenterBins[data_?MatrixQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
@@ -109,7 +112,7 @@ HextileCenterBins[data_?MatrixQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opt
       Association[Rule @@@ Tally[binSize * (NearestHexagon /@ (data / binSize))]]
     ] /; Dimensions[data][[2]] == 2;
 
-HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, Automatic, opts : OptionsPattern[] ] :=
     HextileCenterBins[ data, binSize, MinMax /@ Transpose[Keys[data]], opts ];
 
 HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
@@ -132,6 +135,9 @@ SyntaxInformation[HextileBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPatt
 Options[HextileBins] = Options[HextileCenterBins];
 
 HextileBins[data_?HextileBinDataQ, binSize_, opts : OptionsPattern[] ] :=
+    HextileBins[data, binSize, Automatic, opts ];
+
+HextileBins[data_?HextileBinDataQ, binSize_, Automatic, opts : OptionsPattern[] ] :=
     HextileBins[
       data,
       binSize,
@@ -164,6 +170,9 @@ Options[HextileHistogram] =
     ];
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[]] :=
+    HextileHistogram[data, binSize, Automatic, opts];
+
+HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[]] :=
     HextileHistogram[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Keys[data]]], opts];
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
