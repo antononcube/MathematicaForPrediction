@@ -1,5 +1,5 @@
 (*
-    Hextiling graph Mathematica package
+    Hextile graph Mathematica package
     Copyright (C) 2015  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -59,7 +59,8 @@ If[Length[DownValues[HextileBins`HextileBins]] == 0,
 BeginPackage["HextileGraph`"];
 
 HextileGraph::usage = "HextileGraph[ aLonLatValue, cellRadius, opts] \
-makes a hexagonal tiling graph for specified data.";
+makes a hexagonal tiling graph for specified data.
+(This is a \"legacy\" function; half of it relies on a undocumented features of GeoHistogram.)";
 
 Begin["`Private`"];
 
