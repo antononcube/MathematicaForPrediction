@@ -53,19 +53,19 @@
      SeedRandom[2129];
      data = RandomVariate[MultinormalDistribution[{10, 10}, 7 IdentityMatrix[2]], 100];
 
-     HextileCenterBins[data, 2]
+     HextileBins[data, 2, "PolygonKeys" -> False]
 
      data2 = Map[# -> RandomInteger[{1, 10}] &, data];
 
-     HextileCenterBins[data2, 2]
+     HextileBins[data2, 2, "PolygonKeys" -> False]
 
      HextileBins[data2, 6]
 
      Show[{HextileHistogram[data, 2, "AggregationFunction" -> Mean, ColorFunction -> (Opacity[#, Blue] &), PlotRange -> All],
-           Graphics[{Red, PointSize[0.01], Point[data], PointSize[0.02], Green,Point[Keys@HextileCenterBins[data, 2]]}]}]
+           Graphics[{Red, PointSize[0.01], Point[data], PointSize[0.02], Green,Point[Keys@HextileBins[data, 2, "PolygonKeys" -> False]]}]}]
 
      Show[{HextileHistogram[data, 3, "HistogramType" -> 3, ColorFunction -> ColorData["TemperatureMap"], PlotRange -> All],
-           Graphics[{Red, PointSize[0.01], Point[data], PointSize[0.02], Green, Point[Keys@HextileCenterBins[data, 3]]}]}]
+           Graphics[{Red, PointSize[0.01], Point[data], PointSize[0.02], Green, Point[Keys@HextileBins[data, 3, "PolygonKeys" -> False]]}]}]
 
 
    # References
