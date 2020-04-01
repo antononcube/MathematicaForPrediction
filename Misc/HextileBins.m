@@ -39,8 +39,43 @@
 (* :Package Version: 0.4 *)
 (* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2020 Anton Antonov *)
-(* :Keywords: *)
-(* :Discussion: *)
+(* :Keywords: Hextile, Hexagon, Binning, Histogram, Polygon, Mathematica, Wolfram Language, WL *)
+(* :Discussion:
+
+   # In brief
+
+   This package provides a few functions for hex-tile binning of 2D data.
+
+   The package functions can have a specified aggregation function applied to binned values.
+
+   # Usage examples
+
+     SeedRandom[2129];
+     data = RandomVariate[MultinormalDistribution[{10, 10}, 7 IdentityMatrix[2]], 100];
+
+     HextileCenterBins[data, 2]
+
+     data2 = Map[# -> RandomInteger[{1, 10}] &, data];
+
+     HextileCenterBins[data2, 2]
+
+     HextileBins[data2, 6]
+
+     Show[{HextileHistogram[data, 2, "AggregationFunction" -> Mean, ColorFunction -> (Opacity[#, Blue] &), PlotRange -> All],
+           Graphics[{Red, PointSize[0.01], Point[data], PointSize[0.02], Green,Point[Keys@HextileCenterBins[data, 2]]}]}]
+
+     Show[{HextileHistogram[data, 3, "HistogramType" -> 3, ColorFunction -> ColorData["TemperatureMap"], PlotRange -> All],
+           Graphics[{Red, PointSize[0.01], Point[data], PointSize[0.02], Green, Point[Keys@HextileCenterBins[data, 3]]}]}]
+
+
+   # References
+
+     Initial ideas / versions of the code in this package can be found in Mathematica Stack Exchange:
+
+       https://mathematica.stackexchange.com/q/28149
+
+
+*)
 
 BeginPackage["HextileBins`"];
 (* Exported symbols added here with SymbolName::usage *)
@@ -77,8 +112,8 @@ NearestHexagon[point : {_?NumberQ, _?NumberQ}] :=
       tile + First@NearestWithinTile[relative]
     ];
 
-Clear[Trr];
-Trr[v_, tr_] := Polygon[TranslationTransform[tr][RotationTransform[Pi / 2][v]]];
+Clear[TransformByVector];
+TransformByVector[v_, tr_] := Polygon[TranslationTransform[tr][RotationTransform[Pi / 2][v]]];
 
 Clear[HexagonVertexDistance];
 HexagonVertexDistance[binSize_?NumberQ] :=
@@ -147,7 +182,7 @@ HextileBins[data_?HextileBinDataQ, binSize_, Automatic, opts : OptionsPattern[] 
 
 HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{vh = HexagonVertexDistance[binSize]},
-      KeyMap[ Trr[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, opts] ]
+      KeyMap[ TransformByVector[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, opts] ]
     ];
 
 
@@ -193,19 +228,19 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
             Which[
               ptype == 1 || ptype == "ColoredPolygons",
               Tooltip[
-                {cFunc[Sqrt[Last@tally[[n]] / maxTally]], Trr[vh, First@tally[[n]]]},
+                {cFunc[Sqrt[Last@tally[[n]] / maxTally]], TransformByVector[vh, First@tally[[n]]]},
                 Last@tally[[n]]
               ],
 
               ptype == 2 || ptype == "ProportionalSideSize",
               Tooltip[
-                Trr[Last@tally[[n]] / maxTally * vh, First@tally[[n]]],
+                TransformByVector[Last@tally[[n]] / maxTally * vh, First@tally[[n]]],
                 Last@tally[[n]]
               ],
 
               ptype == 3 || ptype == "ProportionalArea",
               Tooltip[
-                Trr[Sqrt[Last@tally[[n]] / maxTally] * vh, First@tally[[n]]],
+                TransformByVector[Sqrt[Last@tally[[n]] / maxTally] * vh, First@tally[[n]]],
                 Last@tally[[n]]
               ]
 
