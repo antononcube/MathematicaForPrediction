@@ -80,11 +80,9 @@
 BeginPackage["HextileBins`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-HextileCenterBins::usage = "HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}] returns and association with \
-keys that are hexagon centers.";
-
 HextileBins::usage = "HextileBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}] returns and association with \
-keys that are polygon objects (hexagons.)";
+keys that are polygon objects (hexagons.)
+If the value of the option \"PolygonKeys\" is False the keys of the results are polygon centers.";
 
 HextileHistogram::usage = "HextileHistogram[data, binSize, {{xmin, xmax}, {ymin, ymax}}] makes a hextile histogram";
 
@@ -105,7 +103,7 @@ Clear[TileContaining];
 TileContaining[{x_, y_}] := {Floor[x], Sqrt[3] Floor[y / Sqrt[3]]};
 
 Clear[NearestHexagon];
-NearestHexagon[point : {_?NumberQ, _?NumberQ}] :=
+NearestHexagon[point : {_?NumericQ, _?NumericQ}] :=
     Module[{tile, relative},
       tile = TileContaining[point];
       relative = point - tile;
@@ -116,11 +114,11 @@ Clear[TransformByVector];
 TransformByVector[v_, tr_] := Polygon[TranslationTransform[tr][RotationTransform[Pi / 2][v]]];
 
 Clear[HexagonVertexDistance];
-HexagonVertexDistance[binSize_?NumberQ] :=
+HexagonVertexDistance[binSize_?NumericQ] :=
     binSize * 1.05 * ReferenceHexagon[] / Sqrt[3];
 
 Clear[HextileBinDataRulesQ];
-HextileBinDataRulesQ[d_] := MatchQ[d, (List | Association)[({_?NumberQ, _?NumberQ} -> _?NumberQ) ..]];
+HextileBinDataRulesQ[d_] := MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]];
 
 Clear[HextileBinDataQ];
 HextileBinDataQ[d_] := (MatrixQ[d] && Dimensions[d][[2]] == 2) || HextileBinDataRulesQ[d];
@@ -136,21 +134,21 @@ SyntaxInformation[HextileCenterBins] = { "ArgumentsPattern" -> { _, _, _., Optio
 
 Options[HextileCenterBins] = { "AggregationFunction" -> Total };
 
-HextileCenterBins[data_?HextileBinDataQ, binSize_, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
     HextileCenterBins[ data, binSize, Automatic, opts ];
 
-HextileCenterBins[data_?MatrixQ, binSize_, Automatic, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?MatrixQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
     HextileCenterBins[data, binSize, MinMax /@ Transpose[data], opts] /; Dimensions[data][[2]] == 2;
 
-HextileCenterBins[data_?MatrixQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?MatrixQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{},
       Association[Rule @@@ Tally[binSize * (NearestHexagon /@ (data / binSize))]]
     ] /; Dimensions[data][[2]] == 2;
 
-HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, Automatic, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?HextileBinDataRulesQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
     HextileCenterBins[ data, binSize, MinMax /@ Transpose[Keys[data]], opts ];
 
-HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+HextileCenterBins[data_?HextileBinDataRulesQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{aggrFunc},
 
       aggrFunc = OptionValue[HextileCenterBins, "AggregationFunction"];
@@ -160,19 +158,51 @@ HextileCenterBins[data_?HextileBinDataRulesQ, binSize_, {{xmin_, xmax_}, {ymin_,
 
 
 (*********************************************************)
-(* HextileBin                                            *)
+(* HextilePolygonBins                                    *)
+(*********************************************************)
+
+Clear[HextilePolygonBins];
+
+SyntaxInformation[HextilePolygonBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
+
+Options[HextilePolygonBins] = Options[HextileCenterBins];
+
+HextilePolygonBins[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
+    HextilePolygonBins[data, binSize, Automatic, opts ];
+
+HextilePolygonBins[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
+    HextilePolygonBins[
+      data,
+      binSize,
+      If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Keys[data]]],
+      opts
+    ];
+
+HextilePolygonBins[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+    Block[{vh = HexagonVertexDistance[binSize]},
+      KeyMap[ TransformByVector[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, opts] ]
+    ];
+
+
+(*********************************************************)
+(* HextileBins                                           *)
 (*********************************************************)
 
 Clear[HextileBins];
 
 SyntaxInformation[HextileBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
-Options[HextileBins] = Options[HextileCenterBins];
+HextileBins::"nargs" = "The first argument is expected to be a numerical matrix or \
+an association of 2D coordinates to numeric values. \
+The second argument is expected to be a positive number. \
+The third argument is expected to be a range specification, two pairs of numbers, or Automatic.";
 
-HextileBins[data_?HextileBinDataQ, binSize_, opts : OptionsPattern[] ] :=
+Options[HextileBins] = { "AggregationFunction" -> Total, "PolygonKeys" -> True };
+
+HextileBins[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
     HextileBins[data, binSize, Automatic, opts ];
 
-HextileBins[data_?HextileBinDataQ, binSize_, Automatic, opts : OptionsPattern[] ] :=
+HextileBins[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
     HextileBins[
       data,
       binSize,
@@ -180,9 +210,22 @@ HextileBins[data_?HextileBinDataQ, binSize_, Automatic, opts : OptionsPattern[] 
       opts
     ];
 
-HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
-    Block[{vh = HexagonVertexDistance[binSize]},
-      KeyMap[ TransformByVector[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, opts] ]
+HextileBins[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+    Block[{polygonKeys},
+
+      polygonKeys = OptionValue[HextileBins, "PolygonKeys"];
+
+      If[ BooleanQ[polygonKeys] && !polygonKeys,
+        HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]]],
+        (*ELSE*)
+        HextilePolygonBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextilePolygonBins]]]
+      ]
+    ] /; binSize > 0;
+
+HextileBins[___] :=
+    Block[{},
+      Message[HextileBins::"nargs"];
+      $Failed
     ];
 
 
@@ -193,6 +236,11 @@ HextileBins[data_?HextileBinDataQ, binSize_, {{xmin_, xmax_}, {ymin_, ymax_}}, o
 Clear[HextileHistogram];
 
 SyntaxInformation[HextileHistogram] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
+
+HextileHistogram::"nargs" = "The first argument is expected to be a numerical matrix or \
+an association of 2D coordinates to numeric values. \
+The second argument is expected to be a positive number. \
+The third argument is expected to be a range specification, two pairs of numbers, or Automatic.";
 
 Options[HextileHistogram] =
     Join[
@@ -252,6 +300,12 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
       ]
     ];
 
+
+HextileHistogram[___] :=
+    Block[{},
+      Message[HextileHistogram::"nargs"];
+      $Failed
+    ];
 
 End[]; (* `Private` *)
 
