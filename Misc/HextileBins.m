@@ -1,6 +1,6 @@
 (*
     Hextile bins Mathematica package
-    Copyright (C) 2015  Anton Antonov
+    Copyright (C) 2020  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,11 +80,11 @@
 BeginPackage["HextileBins`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-HextileBins::usage = "HextileBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}] returns and association with \
+HextileBins::usage = "HextileBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}] returns an association with \
 keys that are polygon objects (hexagons.)
-If the value of the option \"PolygonKeys\" is False the keys of the results are polygon centers.";
+If the option \"PolygonKeys\" is set to False then result's keys are hexagon centers.";
 
-HextileHistogram::usage = "HextileHistogram[data, binSize, {{xmin, xmax}, {ymin, ymax}}] makes a hextile histogram";
+HextileHistogram::usage = "HextileHistogram[data, binSize, {{xmin, xmax}, {ymin, ymax}}] makes a hex-tile histogram.";
 
 
 Begin["`Private`"];
