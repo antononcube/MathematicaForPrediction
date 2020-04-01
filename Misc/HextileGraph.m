@@ -39,8 +39,18 @@
 (* :Package Version: 0.8 *)
 (* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2020 Anton Antonov *)
-(* :Keywords: *)
-(* :Discussion: *)
+(* :Keywords: Hextile, Hexagon, Binning, Histogram, Graph, Mathematica, Wolfram Language, WL *)
+(* :Discussion:
+
+   # In brief
+
+   This package has a function that makes graphs that correspond to hex-tile binning.
+
+   Initially the function was made for multi-site SEIR COVID-19 simulations (over Germany and USA.)
+   It is not used in those simulations anymore; the implementation is done for reference and didactic purposes.
+
+
+*)
 
 (**************************************************************)
 (* Importing packages (if needed)                             *)
