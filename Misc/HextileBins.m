@@ -80,9 +80,9 @@
 BeginPackage["HextileBins`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-HextileBins::usage = "HextileBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}] returns an association with \
-keys that are polygon objects (hexagons.)
-If the option \"PolygonKeys\" is set to False then result's keys are hexagon centers.";
+HextileBins::usage = "HextileBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}] bins data into hexagon tiles. \
+Returns and association with keys that are polygon objects.
+If the option \"PolygonKeys\" is set to False then the keys are hexagon centers.";
 
 HextileHistogram::usage = "HextileHistogram[data, binSize, {{xmin, xmax}, {ymin, ymax}}] makes a hex-tile histogram.";
 
