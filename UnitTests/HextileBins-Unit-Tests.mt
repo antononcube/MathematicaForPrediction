@@ -50,8 +50,7 @@ BeginTestSection["HextileBins-Unit-Tests.mt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    (*Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/HextileBins.m"],*)
-    Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/Misc/HextileBins.m"],
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/HextileBins.m"],
     Greater[Length[DownValues[HextileBins`HextileBins]], 0]
   ]
   ,
@@ -215,6 +214,22 @@ VerificationTest[
   True
   ,
   TestID -> "HextileBins-signature-6"
+];
+
+
+(***********************************************************)
+(* Messages                                                *)
+(***********************************************************)
+
+VerificationTest[
+
+  HextileBins[ data2, 2, "OverlapFactor" -> -1 ]
+  ,
+  $Failed
+  ,
+  {HextileBins::"nof"}
+  ,
+  TestID -> "HextileBins-OverlapFactor-wrong-1"
 ];
 
 
