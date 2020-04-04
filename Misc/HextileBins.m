@@ -114,8 +114,8 @@ Clear[TransformByVector];
 TransformByVector[v_, tr_] := Polygon[TranslationTransform[tr][RotationTransform[Pi / 2][v]]];
 
 Clear[HexagonVertexDistance];
-HexagonVertexDistance[binSize_?NumericQ] :=
-    binSize * 1.05 * ReferenceHexagon[] / Sqrt[3];
+HexagonVertexDistance[binSize_?NumericQ, factor_?NumericQ ] :=
+    binSize * factor * ReferenceHexagon[] / Sqrt[3];
 
 Clear[HextileBinDataRulesQ];
 HextileBinDataRulesQ[d_] := MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]];
@@ -165,7 +165,7 @@ Clear[HextilePolygonBins];
 
 SyntaxInformation[HextilePolygonBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
-Options[HextilePolygonBins] = Options[HextileCenterBins];
+Options[HextilePolygonBins] = Join[ {"OverlapFactor" -> 1}, Options[HextileCenterBins] ];
 
 HextilePolygonBins[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
     HextilePolygonBins[data, binSize, Automatic, opts ];
@@ -179,8 +179,13 @@ HextilePolygonBins[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : O
     ];
 
 HextilePolygonBins[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
-    Block[{vh = HexagonVertexDistance[binSize]},
-      KeyMap[ TransformByVector[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, opts] ]
+    Block[{overlapFactor, vh},
+
+      overlapFactor = OptionValue[HextilePolygonBins, "OverlapFactor"];
+
+      vh = HexagonVertexDistance[binSize, overlapFactor];
+
+      KeyMap[ TransformByVector[vh, #] &, HextileCenterBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]]] ]
     ];
 
 
@@ -197,7 +202,9 @@ an association of 2D coordinates to numeric values. \
 The second argument is expected to be a positive number. \
 The third argument is expected to be a range specification, two pairs of numbers, or Automatic.";
 
-Options[HextileBins] = { "AggregationFunction" -> Total, "PolygonKeys" -> True };
+HextileBins::"nof" = "The value of the option \"OverlapFactor\" is expected to be a positive number.";
+
+Options[HextileBins] = { "AggregationFunction" -> Total, "PolygonKeys" -> True, "OverlapFactor" -> 1 };
 
 HextileBins[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
     HextileBins[data, binSize, Automatic, opts ];
@@ -211,7 +218,13 @@ HextileBins[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsP
     ];
 
 HextileBins[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
-    Block[{polygonKeys},
+    Block[{overlapFactor, polygonKeys},
+
+      overlapFactor = OptionValue[HextileBins, "OverlapFactor"];
+      If[ ! ( NumberQ[overlapFactor] && overlapFactor > 0 ),
+        Message[HextileBins::"nof"];
+        Return[$Failed]
+      ];
 
       polygonKeys = OptionValue[HextileBins, "PolygonKeys"];
 
@@ -242,11 +255,14 @@ an association of 2D coordinates to numeric values. \
 The second argument is expected to be a positive number. \
 The third argument is expected to be a range specification, two pairs of numbers, or Automatic.";
 
+HextileHistogram::"nof" = "The value of the option \"OverlapFactor\" is expected to be a positive number.";
+
 Options[HextileHistogram] =
     Join[
       {
         "AggregationFunction" -> Total,
         "HistogramType" -> "ColoredPolygons",
+        "OverlapFactor" -> 1,
         ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, #] &)
       },
       Options[Graphics]
@@ -260,12 +276,20 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : Opt
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
-    Block[{cFunc, ptype, tally, vh = HexagonVertexDistance[binSize]},
+    Block[{cFunc, ptype, overlapFactor, tally, vh},
 
       cFunc = OptionValue[HextileHistogram, ColorFunction];
       If[StringQ[cFunc], cFunc = ColorData[cFunc]];
 
       ptype = OptionValue[HextileHistogram, "HistogramType"];
+
+      overlapFactor = OptionValue[HextileHistogram, "OverlapFactor"];
+      If[ ! ( NumberQ[overlapFactor] && overlapFactor > 0 ),
+        Message[HextileHistogram::"nof"];
+        Return[$Failed]
+      ];
+
+      vh = HexagonVertexDistance[binSize, overlapFactor];
 
       tally = HextileCenterBins[ data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]] ];
       tally = List @@@ Normal[tally];
