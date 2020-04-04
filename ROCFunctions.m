@@ -300,8 +300,17 @@ FOR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FOR, rocs]
 F1[rocAssoc_?ROCAssociationQ] := 2 * PPV[rocAssoc] * TPR[rocAssoc] / ( PPV[rocAssoc] + TPR[rocAssoc] );
 F1[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[F1, rocs];
 
+(*
+Note the addition of the points {0,0} and {1,1}.
+If
+  rps = Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}] ]
+has points {0, p0} and at {1, p1} then after applying Sort and Partition[#,2,1]&
+we will get 0-length intervals and correctly ordered pairs, i.e.
+  { {{0,0}, {0,p0}}, {{0, p0}, _}, ___, {_, {1,p1}}, {{1,p1}, {1,1}} } .
+Hence the trapezoidal formula integration is going to work correctly.
+*)
 AUROC[pROCs:{_?ROCAssociationQ..}] :=
-    Total[Partition[ Sort@Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}], 2, 1]
+    Total[Partition[ Sort @ Join[ { {0,0}, {1,1} }, Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}] ], 2, 1]
         /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1)/2)];
 AUROC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[AUROC, rocs];
 
