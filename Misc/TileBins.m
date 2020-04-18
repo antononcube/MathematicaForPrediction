@@ -34,17 +34,17 @@
 (* :Title: TileBins *)
 (* :Context: TileBins` *)
 (* :Author: Anton Antonov *)
-(* :Date: 2020-03-29 *)
+(* :Date: 2020-04-18 *)
 
 (* :Package Version: 0.4 *)
 (* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2020 Anton Antonov *)
-(* :Keywords: Hextile, Hexagon, Binning, Histogram, Polygon, Mathematica, Wolfram Language, WL *)
+(* :Keywords: Tile, Rectangle, Binning, Histogram, Polygon, Mathematica, Wolfram Language, WL *)
 (* :Discussion:
 
    # In brief
 
-   This package provides a few functions for hex-tile binning of 2D data.
+   This package provides a few functions for rectangular tile binning of 2D data.
 
    The package functions can have a specified aggregation function applied to binned values.
 
