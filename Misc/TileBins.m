@@ -36,8 +36,8 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2020-04-18 *)
 
-(* :Package Version: 0.4 *)
-(* :Mathematica Version: 12.0 *)
+(* :Package Version: 0.6 *)
+(* :Mathematica Version: 12.1 *)
 (* :Copyright: (c) 2020 Anton Antonov *)
 (* :Keywords: Tile, Rectangle, Binning, Histogram, Polygon, Mathematica, Wolfram Language, WL *)
 (* :Discussion:
@@ -107,8 +107,8 @@ Clear[TransformByVector];
 TransformByVector[v_, tr_] := Polygon[TranslationTransform[tr][v]];
 
 Clear[RectangleVertexDistance];
-RectangleVertexDistance[binSize_?NumericQ, factor_?NumericQ ] :=
-    binSize * factor * ReferenceRectangle[];
+RectangleVertexDistance[binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), factor_?NumericQ ] :=
+    Map[ binSize * #&,  factor * ReferenceRectangle[] ];
 
 Clear[TileBinDataRulesQ];
 TileBinDataRulesQ[d_] := MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]];
@@ -118,7 +118,7 @@ TileBinDataQ[d_] := (MatrixQ[d] && Dimensions[d][[2]] == 2) || TileBinDataRulesQ
 
 
 (*********************************************************)
-(* TileOriginBins                                     *)
+(* TileOriginBins                                        *)
 (*********************************************************)
 
 Clear[TileOriginBins];
@@ -127,21 +127,22 @@ SyntaxInformation[TileOriginBins] = { "ArgumentsPattern" -> { _, _, _., OptionsP
 
 Options[TileOriginBins] = { "AggregationFunction" -> Total };
 
-TileOriginBins[data_?TileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
+TileOriginBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), opts : OptionsPattern[] ] :=
     TileOriginBins[ data, binSize, Automatic, opts ];
 
-TileOriginBins[data_?MatrixQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
+TileOriginBins[data_?MatrixQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), Automatic, opts : OptionsPattern[] ] :=
     TileOriginBins[data, binSize, MinMax /@ Transpose[data], opts] /; Dimensions[data][[2]] == 2;
 
-TileOriginBins[data_?MatrixQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
-    Block[{},
-      Association[Rule @@@ Tally[binSize * (NearestRectangle /@ (data / binSize))]]
+TileOriginBins[data_?MatrixQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+    Block[{res},
+      res = Map[ binSize * NearestRectangle[ # / binSize ]&, data ];
+      Association[Rule @@@ Tally[res]]
     ] /; Dimensions[data][[2]] == 2;
 
-TileOriginBins[data_?TileBinDataRulesQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
+TileOriginBins[data_?TileBinDataRulesQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), Automatic, opts : OptionsPattern[] ] :=
     TileOriginBins[ data, binSize, MinMax /@ Transpose[Keys[data]], opts ];
 
-TileOriginBins[data_?TileBinDataRulesQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+TileOriginBins[data_?TileBinDataRulesQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{aggrFunc},
 
       aggrFunc = OptionValue[TileOriginBins, "AggregationFunction"];
@@ -160,10 +161,10 @@ SyntaxInformation[TileCenterBins] = { "ArgumentsPattern" -> { _, _, _., OptionsP
 
 Options[TileCenterBins] = Join[ {"OverlapFactor" -> 1}, Options[TileOriginBins] ];
 
-TileCenterBins[data_?TileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
+TileCenterBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), opts : OptionsPattern[] ] :=
     TileCenterBins[data, binSize, Automatic, opts ];
 
-TileCenterBins[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
+TileCenterBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), Automatic, opts : OptionsPattern[] ] :=
     TilePolygonBins[
       data,
       binSize,
@@ -171,7 +172,7 @@ TileCenterBins[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsP
       opts
     ];
 
-TileCenterBins[data_?TileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+TileCenterBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{overlapFactor, vh},
 
       overlapFactor = OptionValue[TilePolygonBins, "OverlapFactor"];
@@ -197,10 +198,10 @@ SyntaxInformation[TilePolygonBins] = { "ArgumentsPattern" -> { _, _, _., Options
 
 Options[TilePolygonBins] = Join[ {"OverlapFactor" -> 1}, Options[TileOriginBins] ];
 
-TilePolygonBins[data_?TileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
+TilePolygonBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), opts : OptionsPattern[] ] :=
     TilePolygonBins[data, binSize, Automatic, opts ];
 
-TilePolygonBins[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
+TilePolygonBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), Automatic, opts : OptionsPattern[] ] :=
     TilePolygonBins[
       data,
       binSize,
@@ -208,7 +209,7 @@ TilePolygonBins[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : Options
       opts
     ];
 
-TilePolygonBins[data_?TileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+TilePolygonBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{overlapFactor, vh},
 
       overlapFactor = OptionValue[TilePolygonBins, "OverlapFactor"];
@@ -229,17 +230,17 @@ SyntaxInformation[TileBins] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern
 
 TileBins::"nargs" = "The first argument is expected to be a numerical matrix or \
 an association of 2D coordinates to numeric values. \
-The second argument is expected to be a positive number. \
+The second argument is expected to be a positive number or a pair of positive numbers. \
 The third argument is expected to be a range specification, two pairs of numbers, or Automatic.";
 
 TileBins::"nof" = "The value of the option \"OverlapFactor\" is expected to be a positive number.";
 
 Options[TileBins] = { "AggregationFunction" -> Total, "PolygonKeys" -> True, "OverlapFactor" -> 1 };
 
-TileBins[data_?TileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[] ] :=
+TileBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), opts : OptionsPattern[] ] :=
     TileBins[data, binSize, Automatic, opts ];
 
-TileBins[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[] ] :=
+TileBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), Automatic, opts : OptionsPattern[] ] :=
     TileBins[
       data,
       binSize,
@@ -247,7 +248,7 @@ TileBins[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern
       opts
     ];
 
-TileBins[data_?TileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
+TileBins[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[] ] :=
     Block[{overlapFactor, polygonKeys},
 
       overlapFactor = OptionValue[TileBins, "OverlapFactor"];
@@ -263,7 +264,7 @@ TileBins[data_?TileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}
         (*ELSE*)
         TilePolygonBins[data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[TilePolygonBins]]]
       ]
-    ] /; binSize > 0;
+    ] /; Apply[ And, Map[ # > 0 &, Flatten[{binSize}] ] ];
 
 TileBins[___] :=
     Block[{},
@@ -282,7 +283,7 @@ SyntaxInformation[TileHistogram] = { "ArgumentsPattern" -> { _, _, _., OptionsPa
 
 TileHistogram::"nargs" = "The first argument is expected to be a numerical matrix or \
 an association of 2D coordinates to numeric values. \
-The second argument is expected to be a positive number. \
+The second argument is expected to be a positive number or a pair of positive numbers. \
 The third argument is expected to be a range specification, two pairs of numbers, or Automatic.";
 
 TileHistogram::"nof" = "The value of the option \"OverlapFactor\" is expected to be a positive number.";
@@ -298,13 +299,13 @@ Options[TileHistogram] =
       Options[Graphics]
     ];
 
-TileHistogram[data_?TileBinDataQ, binSize_?NumericQ, opts : OptionsPattern[]] :=
+TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), opts : OptionsPattern[]] :=
     TileHistogram[data, binSize, Automatic, opts];
 
-TileHistogram[data_?TileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[]] :=
+TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), Automatic, opts : OptionsPattern[]] :=
     TileHistogram[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Keys[data]]], opts];
 
-TileHistogram[data_?TileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
+TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
     Block[{cFunc, ptype, overlapFactor, tally, vh},
 
