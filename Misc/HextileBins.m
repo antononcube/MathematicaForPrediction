@@ -86,7 +86,6 @@ If the option \"PolygonKeys\" is set to False then the keys are hexagon centers.
 
 HextileHistogram::usage = "HextileHistogram[data, binSize, {{xmin, xmax}, {ymin, ymax}}] makes a hex-tile histogram.";
 
-
 Begin["`Private`"];
 
 (*********************************************************)
