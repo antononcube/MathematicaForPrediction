@@ -1,5 +1,5 @@
 (*
-    Tile Mathematica unit tests
+    Tile Bins Mathematica unit tests
     Copyright (C) 2020  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
