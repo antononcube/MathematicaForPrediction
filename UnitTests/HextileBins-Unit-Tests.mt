@@ -41,7 +41,7 @@
 (* :Keywords: Hextile, Hexagon, Binning, Histogram, Mathematica, Wolfram Language, unit test *)
 (* :Discussion:
 
-   This file has unit tests of the function BiSectionalKMeans implemented in the file:
+   This file has unit tests of the functions HextileBins and HextileHistogram implemented in the file:
 
      https://github.com/antononcube/MathematicaForPrediction/blob/master/Misc/HextileBins.m
 
