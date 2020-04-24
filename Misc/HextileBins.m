@@ -117,7 +117,9 @@ HexagonVertexDistance[binSize_?NumericQ, factor_?NumericQ ] :=
     binSize * factor * ReferenceHexagon[] / Sqrt[3];
 
 Clear[HextileBinDataRulesQ];
-HextileBinDataRulesQ[d_] := MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]];
+HextileBinDataRulesQ[d_] :=
+    MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]] ||
+        MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _) ..]];
 
 Clear[HextileBinDataQ];
 HextileBinDataQ[d_] := (MatrixQ[d] && Dimensions[d][[2]] == 2) || HextileBinDataRulesQ[d];

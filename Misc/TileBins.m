@@ -108,10 +108,12 @@ TransformByVector[v_, tr_] := Polygon[TranslationTransform[tr][v]];
 
 Clear[RectangleVertexDistance];
 RectangleVertexDistance[binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), factor_?NumericQ ] :=
-    Map[ binSize * #&,  factor * ReferenceRectangle[] ];
+    Map[ binSize * #&, factor * ReferenceRectangle[] ];
 
 Clear[TileBinDataRulesQ];
-TileBinDataRulesQ[d_] := MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]];
+TileBinDataRulesQ[d_] :=
+    MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _?NumericQ) ..]] ||
+        MatchQ[d, (List | Association)[({_?NumericQ, _?NumericQ} -> _) ..]];
 
 Clear[TileBinDataQ];
 TileBinDataQ[d_] := (MatrixQ[d] && Dimensions[d][[2]] == 2) || TileBinDataRulesQ[d];
