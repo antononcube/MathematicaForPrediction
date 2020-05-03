@@ -85,6 +85,9 @@ If the option \"PolygonKeys\" is set to False then the keys are rectangle center
 
 TileHistogram::usage = "TileHistogram[data, binSize, {{xmin, xmax}, {ymin, ymax}}] makes a tile histogram.";
 
+TileBinsPlot::usage = "TileBinsPlot[ tileBins_Association ] plots the polygon keys of tileBins \
+and colors them according to the values.";
+
 Begin["`Private`"];
 
 (*********************************************************)
@@ -296,7 +299,7 @@ Options[TileHistogram] =
         "AggregationFunction" -> Total,
         "HistogramType" -> "ColoredPolygons",
         "OverlapFactor" -> 1,
-        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, #] &)
+        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &)
       },
       Options[Graphics]
     ];
@@ -313,6 +316,7 @@ TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?Numer
 
       cFunc = OptionValue[TileHistogram, ColorFunction];
       If[StringQ[cFunc], cFunc = ColorData[cFunc]];
+      If[ TrueQ[cFunc === Automatic], cFunc = (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &) ];
 
       ptype = OptionValue[TileHistogram, "HistogramType"];
 
@@ -333,7 +337,7 @@ TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?Numer
             Which[
               ptype == 1 || ptype == "ColoredPolygons",
               Tooltip[
-                {cFunc[Sqrt[Last@tally[[n]] / maxTally]], TransformByVector[vh, First@tally[[n]]]},
+                {cFunc[Last@tally[[n]] / maxTally], TransformByVector[vh, First@tally[[n]]]},
                 Last@tally[[n]]
               ],
 
@@ -357,12 +361,60 @@ TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?Numer
       ]
     ];
 
-
 TileHistogram[___] :=
     Block[{},
       Message[TileHistogram::"nargs"];
       $Failed
     ];
+
+
+(*********************************************************)
+(* TileHistogramPlot                                     *)
+(*********************************************************)
+
+Clear[TileBinsPlot];
+
+SyntaxInformation[TileBinsPlot] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
+
+TileBinsPlot::"nargs" = "The first argument is expected to be an association with keys that are polygons.";
+
+Options[TileBinsPlot] =
+    Join[
+      {
+        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &)
+      },
+      Options[Graphics]
+    ];
+
+TileBinsPlot[ bins : Association[ (_Polygon -> _?NumericQ) ..], opts : OptionsPattern[] ] :=
+    Block[{cFunc, tally, maxTally},
+
+      cFunc = OptionValue[TileBinsPlot, ColorFunction];
+      If[StringQ[cFunc], cFunc = ColorData[cFunc]];
+      If[ TrueQ[cFunc === Automatic], cFunc = (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &) ];
+
+      tally = List @@@ Normal[bins];
+
+      maxTally = Max[Last /@ tally];
+
+      Graphics[
+        Map[
+          Tooltip[
+            {cFunc[Last[#] / maxTally], First[#]},
+            Last[#]
+          ] &,
+          tally
+        ],
+        FilterRules[{opts}, Options[Graphics]],
+        PlotRange -> All, Frame -> True, PlotRangeClipping -> True]
+    ];
+
+TileBinsPlot[___] :=
+    Block[{},
+      Message[TileBinsPlot::"nargs"];
+      $Failed
+    ];
+
 
 End[]; (* `Private` *)
 
