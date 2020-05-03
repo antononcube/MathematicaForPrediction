@@ -264,7 +264,7 @@ Options[HextileHistogram] =
         "AggregationFunction" -> Total,
         "HistogramType" -> "ColoredPolygons",
         "OverlapFactor" -> 1,
-        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, #] &)
+        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &)
       },
       Options[Graphics]
     ];
@@ -280,7 +280,8 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
     Block[{cFunc, ptype, overlapFactor, tally, vh},
 
       cFunc = OptionValue[HextileHistogram, ColorFunction];
-      If[StringQ[cFunc], cFunc = ColorData[cFunc]];
+      If[ StringQ[cFunc], cFunc = ColorData[cFunc]];
+      If[ TrueQ[cFunc === Automatic], cFunc = (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &) ];
 
       ptype = OptionValue[HextileHistogram, "HistogramType"];
 
@@ -301,7 +302,7 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
             Which[
               ptype == 1 || ptype == "ColoredPolygons",
               Tooltip[
-                {cFunc[Sqrt[Last@tally[[n]] / maxTally]], TransformByVector[vh, First@tally[[n]]]},
+                {cFunc[Last@tally[[n]] / maxTally], TransformByVector[vh, First@tally[[n]]]},
                 Last@tally[[n]]
               ],
 
