@@ -64,7 +64,7 @@ If[Length[DownValues[TileBins`TileBins]] == 0,
 BeginPackage["TilingUtilizationFunctions`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-TileTagging::usage = "TileTagging[ aPoints : Association[ ( id_ -> { _?NumberQ, _?NumberQ} ).. ], cellSize_?NumericQ, ___] \
+TileTagging::usage = "TileTagging[ aPoints : Association[ ( _ -> { _?NumericQ, _?NumericQ} ).. ], cellSize_?NumericQ, ___] \
 produces a tile tagging system for specified 2D points with ID's.";
 
 Begin["`Private`"];
@@ -77,11 +77,15 @@ Needs["TileBins`"];
 (*********************************************************)
 
 Clear[TileTagging];
+
+SyntaxInformation[TileTagging] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+
 Options[TileTagging] = { "TilingFunction" -> HextileBins };
-TileTagging[ aPoints : Association[ ( id_ -> { _?NumberQ, _?NumberQ} ).. ], cellSize_?NumericQ, opts : OptionsPattern[] ] :=
+
+TileTagging[ aPoints : Association[ ( _ -> { _?NumericQ, _?NumericQ } ).. ], cellSize_?NumericQ, opts : OptionsPattern[] ] :=
     Block[{tilingFunc, aTileBins, aTileBinCenters, nf, aCellIDs},
 
-      tilingFunc = OptionValue[TileTagging, "TillingFunction"];
+      tilingFunc = OptionValue[TileTagging, "TilingFunction"];
 
       aTileBins = KeySortBy[tilingFunc[Values@aPoints, cellSize], Mean@*PolygonCoordinates];
 
