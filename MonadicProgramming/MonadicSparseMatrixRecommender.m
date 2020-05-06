@@ -1989,13 +1989,14 @@ SMRMonSetTagWeights[ scoredTagsArg : Association[ (_String -> _?NumberQ)...], de
     Block[{ scoredTags = scoredTagsArg, mat},
 
       If[!KeyExistsQ[context, "M"],
-        Echo["Cannot find the recommendation matrix. (The context key \"matrix\".)", "SMRMonSetTagWeights:"];
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonSetTagWeights:"];
         Return[$SMRMonFailure]
       ];
 
       scoredTags = Join[ AssociationThread[ ColumnNames[context["M"]] -> defaultValue ], scoredTags ];
 
       mat = DiagonalMatrix[ SparseArray[ scoredTags[#]& /@ ColumnNames[context["M"]] ] ];
+      mat = ToSSparseMatrix[mat, "RowNames" -> ColumnNames[context["M"]], "ColumnNames" -> ColumnNames[context["M"]] ];
 
       mat = context["M"] . mat;
 
