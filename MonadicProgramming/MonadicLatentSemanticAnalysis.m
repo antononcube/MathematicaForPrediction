@@ -595,7 +595,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       nMinDocumentsPerTerm = OptionValue[ LSAMonExtractTopics, "MinNumberOfDocumentsPerTerm" ];
       If[ ! ( IntegerQ[ nMinDocumentsPerTerm ] && nMinDocumentsPerTerm >= 0 ),
-        Echo["The value of the option \"MinDocumentsPerTerm\" is expected to be a non-negative integer.", "LSAMonExtractTopics:"];
+        Echo["The value of the option \"MinNumberOfDocumentsPerTerm\" is expected to be a non-negative integer.", "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
 
@@ -632,7 +632,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       If[ nMinDocumentsPerTerm > RowsCount[context["weightedDocumentTermMatrix"]],
         Echo[
-          "The value of the option \"MinDocumentsPerTerm\" is expected not to be greater than the number of rows of the weighted document-term matrix.",
+          "The value of the option \"MinNumberOfDocumentsPerTerm\" is expected not to be greater than the number of rows of the weighted document-term matrix.",
           "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
@@ -645,7 +645,7 @@ LSAMonExtractTopics[ nTopics_Integer, opts : OptionsPattern[] ][xs_, context_] :
 
       If[ Length[pos] == 0,
         Echo[
-          "The value of the option \"MinDocumentsPerTerm\" produced an empty selection of terms (columns of the weighted document-term matrix.)",
+          "The value of the option \"MinNumberOfDocumentsPerTerm\" produced an empty selection of terms (columns of the weighted document-term matrix.)",
           "LSAMonExtractTopics:"];
         Return[$LSAMonFailure]
       ];
