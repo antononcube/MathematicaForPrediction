@@ -73,9 +73,12 @@ ToLongForm::usage = "ToLongForm[ds_Dataset, idColumns_, valueColumns_] \
 converts the dataset ds into long form. The result dataset has the columns idColumns and \
 the columns \"Variable\" and \"Value\" derived from valueColumns.";
 
-ToWideForm::usage = "ToWideForm[ds_Dataset, idColumns_, variableColumn_, valueColumns_] \
+ToWideForm::usage = "ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_] \
 converts the dataset ds into wide form. The result dataset has columns that are unique values of \
-variableColumn and with values that are the corresponding values of valueColumn.";
+variableColumn. The cell values of the result dataset are derived by applying a specified \
+aggregation function over each of the lists of valueColumn values that correspond \
+to unique pairs of {idColumn, variableColumn}. \
+The aggregation function is specified with the option \"AggregationFunction\".";
 
 RecordsToLongForm::usage = "RecordsToLongForm[records: Association[(_ -> _Association) ..]] \
 converts an association of associations into a long form dataset.";
@@ -323,12 +326,13 @@ ToWideForm[___] :=
 
 RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] :=
     Block[{res, colNames},
+
       res = GroupBy[records, {Keys[#][[1]] -> #[[1]], Keys[#][[2]]} &, aggrFunc@Map[Function[{r}, r[Keys[r][[2]]]], #] &];
       res = KeyValueMap[<|#1[[1]], #1[[2]] -> #2|> &, res];
 
       res = Dataset[GroupBy[res, #[[1]] &, Join[Association[#]] &]];
 
-      colNames = Union[Flatten[Values[Normal[res[All, Keys]]]]];
+      colNames = DeleteDuplicates[Flatten[Values[Normal[res[All, Keys]]]]];
 
       res[All, Join[AssociationThread[colNames -> Missing[]], #]& ]
     ];
