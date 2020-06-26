@@ -1160,11 +1160,36 @@ Clear[SMRMonGetTopRecommendations];
 
 SyntaxInformation[SMRMonGetTopRecommendations] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
-Options[SMRMonGetTopRecommendations] = {"RemoveHistory" -> True, "ItemNames" -> True, "IgnoreUnknownTags" -> False, "Normalize" -> True, "VectorResult" -> False };
+Options[SMRMonGetTopRecommendations] = {
+  "Specification" -> None, "NumberOfRecommendations" -> 12,
+  "RemoveHistory" -> True, "ItemNames" -> True, "IgnoreUnknownTags" -> False, "Normalize" -> True, "VectorResult" -> False };
 
 SMRMonGetTopRecommendations[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonGetTopRecommendations[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonGetTopRecommendations[ opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{spec, nrecs},
+
+      spec = OptionValue[SMRMonGetTopRecommendations, "Specification"];
+
+      If[ TrueQ[spec === None] || TrueQ[spec === Automatic],
+        spec = xs
+      ];
+
+      nrecs = OptionValue[SMRMonGetTopRecommendations, "NumberOfRecommendations"];
+
+      If[ TrueQ[nrecs === Automatic], nrecs = 12 ];
+
+      If[ !( IntegerQ[nrecs] && nrecs > 0 || TrueQ[ nrecs === All ]),
+        Echo[
+          "The value of the option \"NumberOfRecommendations\" is expected to be a positive integer or All.",
+          "SMRMonGetTopRecommendations:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonGetTopRecommendations[ spec, nrecs, opts ][xs, context]
+    ];
 
 SMRMonGetTopRecommendations[ spec_, opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonGetTopRecommendations[ spec, 12, opts ][xs, context];
@@ -1247,13 +1272,16 @@ GetFilterIDs[context_Association, callerFunctionName_String] :=
 
 Clear[SMRMonRecommend];
 
-SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
+SyntaxInformation[SMRMonRecommend] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
 Options[SMRMonRecommend] = {"RemoveHistory" -> True, "ItemNames" -> True, "Normalize" -> True, "VectorResult" -> False };
 
 SMRMonRecommend[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommend[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommend[ history, 12, opts][xs, context];
 
 SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{h},
@@ -1394,6 +1422,9 @@ Options[SMRMonRecommendByProfile] = {"ItemNames" -> True, "Normalize" -> True, "
 SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommendByProfile[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonRecommendByProfile[tagsArg : (_Association | _List | {_Integer..}), opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommendByProfile[tagsArg, 12, opts][xs, context];
 
 SMRMonRecommendByProfile[nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{},
