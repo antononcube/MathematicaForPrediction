@@ -254,9 +254,9 @@ QRMonSetNet[][xs_, context_] :=
             ElementwiseLayer[Tanh], LinearLayer[10], BatchNormalizationLayer[],
             ElementwiseLayer[Tanh], LinearLayer[1]},
             "Input" -> 1, "Output" -> "Scalar" ];
-      QRMonUnit[ xs, Join[ context, <|"net"->net|> ] ]
+      QRMonUnit[ xs, Join[ context, <|"net" -> net|> ] ]
     ];
-QRMonSetNet[net_NetChain][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"net"->net|> ] ];
+QRMonSetNet[net_NetChain][xs_, context_] := QRMonUnit[ xs, Join[ context, <|"net" -> net|> ] ];
 QRMonSetNet[__][___] := $QRMonFailure;
 
 
@@ -266,14 +266,73 @@ QRMonSetNet[__][___] := $QRMonFailure;
 
 Clear[DataToNormalForm];
 
-DataToNormalForm[data_] :=
+DataToNormalForm[data_, functionName_String] :=
     Which[
       MatrixQ[data, NumericQ] && Dimensions[data][[2]] == 2,
       data,
 
       VectorQ[data, NumericQ],
-      Transpose[{ Range[Length[data]], data }]
+      Transpose[{ Range[Length[data]], data }],
+
+      TrueQ[ Head[data] === Dataset ],
+      DatasetToNormalForm[data, functionName]
     ];
+
+
+(**************************************************************)
+(* DataToNormalForm                                           *)
+(**************************************************************)
+
+Clear[DatasetToNormalForm];
+
+DatasetToNormalForm[dataArg_Dataset, functionName_String ] :=
+    Block[{data = dataArg, namedRowsQ, expectedColNames, firstRecord, colNames},
+
+      If[ AssociationQ[Normal[data]],
+        namedRowsQ = True;
+        data = data[Values];
+      ];
+
+      expectedColNames = {"Regressor", "Value"};
+
+      firstRecord = Normal[data[1, All]];
+      colNames = If[ AssociationQ[firstRecord], Keys[firstRecord], None ];
+
+      Which[
+        TrueQ[colNames === None] && Dimensions[data][[2]] >= 2,
+        data = Normal @ data[All, {1, 2}],
+
+        Length[ Intersection[ colNames, expectedColNames] ] == 2,
+        data = Normal @ data[All, {"Regressor", "Value"}][Values],
+
+        Length[colNames] >= 2,
+
+        Echo[ "When the data argument is a dataset the expected columns are: " <> Map[ "\"" <> # <> "\""&, ToString[expectedColNames] ], functionName <> ":" ];
+
+        Echo[ "Proceeding by renaming the first column " <> ToString[colNames[[1]]] <>
+            " as \"Regressor\" and renaming the second column " <> ToString[colNames[[2]]] <> " as \"Value\".",
+          functionName <> ":"
+        ];
+
+        data = Normal[data[Values, {1, 2}]],
+
+        True,
+        Echo[ "Cannot use dataset.", functionName <> ":" ];
+        Return[$QRMonFailure]
+      ];
+
+      If[ !MatrixQ[data, NumericQ],
+        Echo[ "The columns of the dataset are expected to be numerical.", functionName <> ":" ];
+        Return[$QRMonFailure]
+      ];
+
+      data
+    ];
+
+
+(**************************************************************)
+(* GetData                                                    *)
+(**************************************************************)
 
 Clear[QRMonGetData];
 
@@ -292,8 +351,15 @@ QRMonGetData[xs_, context_] :=
         QRMonUnit[ context["data"], context],
 
         KeyExistsQ[context, "data"] && VectorQ[context["data"], NumericQ],
-        data = DataToNormalForm[context["data"]];
-        QRMonUnit[ data, Join[context, <| "data"->data |>] ],
+        data = DataToNormalForm[context["data"], "QRMonGetData"];
+        QRMonUnit[ data, Join[context, <| "data" -> data |>] ],
+
+        KeyExistsQ[context, "data"] && TrueQ[ Head[context["data"]] === Dataset ],
+        data = DataToNormalForm[context["data"], "QRMonGetData"];
+        If[ TrueQ[data === $QRMonFailure],
+          $QRMonFailure,
+          QRMonUnit[ SetPrecision[data, Precision[data]], context]
+        ],
 
         KeyExistsQ[context, "data"] && MatchQ[context["data"], (_TimeSeries | _TemporalData)],
         data = context["data"]["Path"] /. Quantity[x_, u_] :> x;
@@ -304,6 +370,13 @@ QRMonGetData[xs_, context_] :=
 
         VectorQ[xs, NumericQ],
         QRMonUnit[ Transpose[{ Range[Length[xs]], xs }], context],
+
+        TrueQ[ Head[xs] === Dataset ],
+        data = DataToNormalForm[xs, "QRMonGetData"];
+        If[ TrueQ[data === $QRMonFailure],
+          $QRMonFailure,
+          QRMonUnit[ SetPrecision[data, Precision[data]], context]
+        ],
 
         MatchQ[xs, (_TimeSeries | _TemporalData)],
         data = xs["Path"] /. Quantity[x_, u_] :> x;
@@ -356,9 +429,9 @@ QRMonDeleteMissing[][xs_, context_] :=
 
       If[ data === $QRMonFailure,
         $QRMonFailure,
-      (*ELSE*)
+        (*ELSE*)
         data = DeleteMissing[data, 1, 2];
-        QRMonUnit[ data, Join[ context, <|"data"->data|>] ]
+        QRMonUnit[ data, Join[ context, <|"data" -> data|>] ]
       ]
     ];
 
@@ -379,7 +452,7 @@ QRMonRescale[$QRMonFailure] := $QRMonFailure;
 
 QRMonRescale[xs_, context_] := QRMonRescale[][xs, context];
 
-QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
+QRMonRescale[opts : OptionsPattern[]][xs_, context_] :=
     Block[{data, axesOpt},
 
       axesOpt = OptionValue[QRMonRescale, Axes];
@@ -391,20 +464,20 @@ QRMonRescale[opts:OptionsPattern[]][xs_, context_] :=
       Which[
         TrueQ[axesOpt] || TrueQ[axesOpt == {True, True}] ||
             TrueQ[ ToLowerCase[axesOpt] == "both" || ToLowerCase[axesOpt] == "path" || axesOpt === All ] ||
-            TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x","y","time"}]] == 2 ] ||
-            TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x","value","time"}]] == 2 ],
+            TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x", "y", "time"}]] == 2 ] ||
+            TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x", "value", "time"}]] == 2 ],
         data = Transpose[Rescale /@ Transpose[data]];
-        QRMonUnit[ data, Join[ context, <|"data"->data|>] ],
+        QRMonUnit[ data, Join[ context, <|"data" -> data|>] ],
 
         TrueQ[ axesOpt == {True, False}] ||
             TrueQ[ axesOpt == "x" || axesOpt == "t"],
-        data = Transpose[{Rescale[data[[All,1]]], data[[All,2]]}];
-        QRMonUnit[ data, Join[ context, <|"data"->data|>] ],
+        data = Transpose[{Rescale[data[[All, 1]]], data[[All, 2]]}];
+        QRMonUnit[ data, Join[ context, <|"data" -> data|>] ],
 
         TrueQ[ axesOpt == {False, True}] ||
             TrueQ[ axesOpt == "y" || axesOpt == "value"],
-        data = Transpose[{data[[All,1]], Rescale[data[[All,2]]]}];
-        QRMonUnit[ data, Join[ context, <|"data"->data|>] ],
+        data = Transpose[{data[[All, 1]], Rescale[data[[All, 2]]]}];
+        QRMonUnit[ data, Join[ context, <|"data" -> data|>] ],
 
         True,
         $QRMonFailure
@@ -430,7 +503,7 @@ QRMonLeastSquaresFit[n_Integer][xs_, context_] :=
     QRMonLeastSquaresFit[{ n, {-0.95, 0.95} }][xs, context];
 
 (* This signature is not that needed for LeastSquaresFit, it is implemented for symmetry with QuantileRegressionFit . *)
-QRMonLeastSquaresFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }][xs_, context_] :=
+QRMonLeastSquaresFit[{ n_Integer, r : {_?NumericQ, _?NumericQ} }][xs_, context_] :=
     Fold[
       QRMonBind,
       QRMonUnit[xs, context],
@@ -448,7 +521,7 @@ QRMonLeastSquaresFit[funcs_List][xs_, context_] :=
 
       If[ Length[var] == 0,
         $QRMonFailure,
-      (*ELSE*)
+        (*ELSE*)
         QRMonLeastSquaresFit[funcs, First[var]][xs, context]
       ]
     ];
@@ -464,7 +537,7 @@ QRMonLeastSquaresFit[funcs_List, var_Symbol][xs_, context_] :=
 
       QRMonUnit[qFunc,
         Join[context,
-          <|"data"->data,
+          <|"data" -> data,
             "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], <| "mean" -> qFunc |> ] |>
         ]
       ]
@@ -487,14 +560,14 @@ SyntaxInformation[QRMonQuantileRegression] = { "ArgumentsPattern" -> { _., _., O
 
 Options[QRMonQuantileRegression] =
     Join[
-      { "Knots"->12, "Probabilities" -> {0.25, 0.5, 0.75} },
+      { "Knots" -> 12, "Probabilities" -> {0.25, 0.5, 0.75} },
       Options[QuantileRegression]
     ];
 
 Options[QRMonQuantileRegression] =
     ReplaceAll[
       Options[QRMonQuantileRegression],
-      HoldPattern[Method->_] -> ( Method -> {LinearProgramming, Method -> "CLP", Tolerance -> 10^(-3)} ) ];
+      HoldPattern[Method -> _] -> ( Method -> {LinearProgramming, Method -> "CLP", Tolerance -> 10^(-3)} ) ];
 
 QRMonQuantileRegression[$QRMonFailure] := $QRMonFailure;
 
@@ -502,7 +575,7 @@ QRMonQuantileRegression[xs_, context_Association] := QRMonQuantileRegression[ Op
 
 QRMonQuantileRegression[][xs_, context_Association] := QRMonQuantileRegression[ Options[QRMonQuantileRegression] ][xs, context];
 
-QRMonQuantileRegression[opts:OptionsPattern[]][xs_, context_Association] :=
+QRMonQuantileRegression[opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{knots, probabilities},
 
       knots = OptionValue[QRMonQuantileRegression, "Knots"];
@@ -528,13 +601,13 @@ QRMonQuantileRegression[opts:OptionsPattern[]][xs_, context_Association] :=
       QRMonQuantileRegression[knots, probabilities, opts][xs, context]
     ];
 
-QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots : (_Integer | {_?NumberQ ..}), opts : OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegression[knots, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), p_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots : (_Integer | {_?NumberQ ..}), p_?NumberQ, opts : OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegression[knots, {p}, opts][xs, context];
 
-QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegression[knots : (_Integer | {_?NumberQ ..}), ps : {_?NumberQ..}, opts : OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
@@ -543,7 +616,7 @@ QRMonQuantileRegression[knots:(_Integer|{_?NumberQ ..}), ps:{_?NumberQ..}, opts:
 
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[ps],
         qFuncs = AssociationThread[ps, qFuncs];
-        QRMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
+        QRMonUnit[qFuncs, Join[context, <|"data" -> data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
         (* ELSE *)
         $QRMonFailure
       ]
@@ -577,14 +650,14 @@ SyntaxInformation[QRMonQuantileRegressionFit] = { "ArgumentsPattern" -> { _., _.
 
 Options[QRMonQuantileRegressionFit] =
     Join[
-      { "Functions" -> 12, "Variable"-> Automatic, "Probabilities" -> {0.25, 0.5, 0.75} },
+      { "Functions" -> 12, "Variable" -> Automatic, "Probabilities" -> {0.25, 0.5, 0.75} },
       Options[QuantileRegressionFit]
     ];
 
 Options[QRMonQuantileRegressionFit] =
     ReplaceAll[
       Options[QRMonQuantileRegressionFit],
-      HoldPattern[Method->_] -> ( Method -> {LinearProgramming, Method -> "CLP"} ) ];
+      HoldPattern[Method -> _] -> ( Method -> {LinearProgramming, Method -> "CLP"} ) ];
 
 QRMonQuantileRegressionFit[$QRMonFailure] := $QRMonFailure;
 
@@ -592,7 +665,7 @@ QRMonQuantileRegressionFit[xs_, context_Association] := QRMonQuantileRegressionF
 
 QRMonQuantileRegressionFit[][xs_, context_Association] := QRMonQuantileRegressionFit[ Options[QRMonQuantileRegressionFit] ][xs, context];
 
-QRMonQuantileRegressionFit[opts:OptionsPattern[]][xs_, context_Association] :=
+QRMonQuantileRegressionFit[opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{funcs, var, probabilities},
 
       funcs = OptionValue[QRMonQuantileRegressionFit, "Functions"];
@@ -631,16 +704,16 @@ QRMonQuantileRegressionFit[opts:OptionsPattern[]][xs_, context_Association] :=
       ]
     ];
 
-QRMonQuantileRegressionFit[funcs:(_List|_Integer), opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs : (_List | _Integer), opts : OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegressionFit[funcs, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRMonQuantileRegressionFit[funcs_List, p_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, p_?NumberQ, opts : OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegressionFit[funcs, {p}, opts][xs, context];
 
 QRMonQuantileRegressionFit[n_Integer, args___][xs_, context_] :=
     QRMonQuantileRegressionFit[{ n, {-0.95, 0.95} }, args][xs, context];
 
-QRMonQuantileRegressionFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, args___][xs_, context_] :=
+QRMonQuantileRegressionFit[{ n_Integer, r : {_?NumericQ, _?NumericQ} }, args___][xs_, context_] :=
     Fold[
       QRMonBind,
       QRMonUnit[xs, context],
@@ -648,10 +721,10 @@ QRMonQuantileRegressionFit[{ n_Integer, r:{_?NumericQ, _?NumericQ} }, args___][x
         QRMonQuantileRegressionFit[Table[ChebyshevT[i, Rescale[x, MinMax[#[[All, 1]]], r]], {i, 0, n}], x, args][##]&}
     ];
 
-QRMonQuantileRegressionFit[funcs_List, ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, ps : {_?NumberQ..}, opts : OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegressionFit[funcs, Automatic, ps, opts][xs, context];
 
-QRMonQuantileRegressionFit[funcs_List, Automatic, ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, Automatic, ps : {_?NumberQ..}, opts : OptionsPattern[]][xs_, context_] :=
     Block[{var},
 
       var =
@@ -666,10 +739,10 @@ QRMonQuantileRegressionFit[funcs_List, Automatic, ps:{_?NumberQ..}, opts:Options
       ]
     ];
 
-QRMonQuantileRegressionFit[funcs_List, var_Symbol, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, var_Symbol, opts : OptionsPattern[]][xs_, context_] :=
     QRMonQuantileRegressionFit[funcs, var, {0.25, 0.5, 0.75}, opts][xs, context];
 
-QRMonQuantileRegressionFit[funcs_List, var_Symbol, ps:{_?NumberQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonQuantileRegressionFit[funcs_List, var_Symbol, ps : {_?NumberQ..}, opts : OptionsPattern[]][xs_, context_] :=
     Block[{data, qFuncs},
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
@@ -679,8 +752,8 @@ QRMonQuantileRegressionFit[funcs_List, var_Symbol, ps:{_?NumberQ..}, opts:Option
       If[ ListQ[qFuncs] && Length[qFuncs] == Length[ps],
         qFuncs = Map[Function[{expr}, Function[Evaluate[expr /. var -> Slot[1]]]], qFuncs];
         qFuncs = AssociationThread[ps, qFuncs];
-        QRMonUnit[qFuncs, Join[context, <|"data"->data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
-      (* ELSE *)
+        QRMonUnit[qFuncs, Join[context, <|"data" -> data, "regressionFunctions" -> Join[ Lookup[context, "regressionFunctions", <||>], qFuncs] |> ] ],
+        (* ELSE *)
         $QRMonFailure
       ]
     ];
@@ -698,7 +771,7 @@ QRMonRegressionFit = QRMonQuantileRegressionFit;
 
 Clear[QRMonNetRegression];
 
-Options[QRMonNetRegression] = Prepend[Options[NetTrain], InterpolationOrder->3];
+Options[QRMonNetRegression] = Prepend[Options[NetTrain], InterpolationOrder -> 3];
 
 QRMonNetRegression[$QRMonFailure] := $QRMonFailure;
 
@@ -706,10 +779,10 @@ QRMonNetRegression[xs_, context_Association] := QRMonNetRegression[][xs, context
 
 QRMonNetRegression[][xs_, context_Association] := QRMonNetRegression[0.75][xs, context];
 
-QRMonNetRegression[opts:OptionsPattern[]][xs_, context_] :=
+QRMonNetRegression[opts : OptionsPattern[]][xs_, context_] :=
     QRMonNetRegression[0.75, opts][xs, context];
 
-QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
+QRMonNetRegression[splitRatio_?NumberQ, opts : OptionsPattern[]][xs_, context_] :=
     Block[{interpolationOrder, data, qFunc, netRegressionPoints, trainingData, testData, trainedNet, lowestVal},
 
       If[ ! KeyExistsQ[context, "net"],
@@ -721,7 +794,7 @@ QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
 
       data = QRMonBind[ QRMonGetData[xs, context], QRMonTakeValue ];
 
-      {trainingData, testData} = TakeDrop[RandomSample[data], Floor[splitRatio*Length[data]]];
+      {trainingData, testData} = TakeDrop[RandomSample[data], Floor[splitRatio * Length[data]]];
       trainingData = Rule @@@ trainingData;
       trainingData[[All, 1]] = List /@ trainingData[[All, 1]];
       testData = Rule @@@ testData;
@@ -731,7 +804,7 @@ QRMonNetRegression[splitRatio_?NumberQ, opts:OptionsPattern[]][xs_, context_] :=
           NetTrain[
             context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"},
             ValidationSet -> testData,
-            DeleteCases[ {opts}, HoldPattern[InterpolationOrder->_] ]
+            DeleteCases[ {opts}, HoldPattern[InterpolationOrder -> _] ]
           ];
 
       netRegressionPoints = Transpose[{data[[All, 1]], trainedNet /@ data[[All, 1]]}];
@@ -780,7 +853,7 @@ QRMonEvaluate[n_?AtomQ][x_, context_] :=
 QRMonEvaluate[arr_List][x_, context_] :=
     If[KeyExistsQ[context, "regressionFunctions"],
       QRMonUnit[ Map[Function[{qf}, Map[qf, arr, {-1}]], context["regressionFunctions"] ], context ],
-    (*ELSE*)
+      (*ELSE*)
       $QRMonFailure
     ];
 
@@ -795,24 +868,24 @@ Clear[QRMonPlot];
 
 SyntaxInformation[QRMonPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
-Options[QRMonPlot] = Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
+Options[QRMonPlot] = Join[ {"Echo" -> True, "DateListPlot" -> False}, Options[ListPlot] ];
 
 QRMonPlot[QRMonPlot] := $QRMonFailure;
 
 QRMonPlot[xs_, context_Association] := QRMonPlot[][xs, context];
 
-QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
+QRMonPlot[opts : OptionsPattern[]][xs_, context_] :=
     Block[{data, res, listPlotFunc = ListPlot, listPlotOpts, plotOpts},
 
       data = QRMonTakeData[xs, context];
 
-      If[data===$QRMonFailure, Return[$QRMonFailure]];
+      If[data === $QRMonFailure, Return[$QRMonFailure]];
 
       If[ TrueQ[OptionValue[QRMonPlot, "DateListPlot"]], listPlotFunc = DateListPlot ];
 
       listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
       plotOpts = Normal @ KeyTake[ {opts}, First /@ Options[Plot]];
-      plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle->_] ];
+      plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle -> _] ];
 
       If[ KeyExistsQ[context, "dataPlotOptions"],
         listPlotOpts = Join[ context["dataPlotOptions"], listPlotOpts];
@@ -822,20 +895,20 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
         plotOpts = Join[ context["regressionFunctionsPlotOptions"], plotOpts];
       ];
 
-      res=
+      res =
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              listPlotFunc[data, listPlotOpts, Joined->False, PlotStyle -> Gray, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"],
+              listPlotFunc[data, listPlotOpts, Joined -> False, PlotStyle -> Gray, PlotRange -> All, ImageSize -> Medium, PlotTheme -> "Scientific"],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 Evaluate[plotOpts],
                 PerformanceGoal -> "Speed",
-                PlotLegends->Keys[context["regressionFunctions"]]
+                PlotLegends -> Keys[context["regressionFunctions"]]
               ]
             }],
 
             True,
-            listPlotFunc[data, listPlotOpts, Joined->False, PlotRange->All, ImageSize->Medium, PlotTheme -> "Scientific"]
+            listPlotFunc[data, listPlotOpts, Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> "Scientific"]
           ];
 
 
@@ -843,7 +916,7 @@ QRMonPlot[opts:OptionsPattern[]][xs_, context_] :=
         Echo[res, "Plot:"];
       ];
 
-      QRMonUnit[res, Join[ context, <|"data"->data|>] ]
+      QRMonUnit[res, Join[ context, <|"data" -> data|>] ]
     ];
 
 QRMonPlot[__][__] := $QRMonFailure;
@@ -861,9 +934,9 @@ Options[QRMonDateListPlot] = Options[QRMonPlot];
 
 QRMonDateListPlot[$QRMonFailure] := $QRMonFailure;
 
-QRMonDateListPlot[xs_, context_Association] := QRMonPlot["DateListPlot"->True][xs, context];
+QRMonDateListPlot[xs_, context_Association] := QRMonPlot["DateListPlot" -> True][xs, context];
 
-QRMonDateListPlot[opts:OptionsPattern[]][xs_, context_] := QRMonPlot["DateListPlot"->True, opts][xs, context];
+QRMonDateListPlot[opts : OptionsPattern[]][xs_, context_] := QRMonPlot["DateListPlot" -> True, opts][xs, context];
 
 QRMonDateListPlot[__][__] := $QRMonFailure;
 
@@ -882,9 +955,9 @@ QRMonErrors[$QRMonFailure] := $QRMonFailure;
 
 QRMonErrors[xs_, context_Association] := QRMonErrors[][xs, context];
 
-QRMonErrors[][xs_, context_] := QRMonErrors["RelativeErrors"->True][xs, context];
+QRMonErrors[][xs_, context_] := QRMonErrors["RelativeErrors" -> True][xs, context];
 
-QRMonErrors[opts:OptionsPattern[]][xs_, context_] :=
+QRMonErrors[opts : OptionsPattern[]][xs_, context_] :=
     Block[{res, relativeErrorsQ},
 
       relativeErrorsQ = TrueQ[OptionValue[QRMonErrors, "RelativeErrors"]];
@@ -893,7 +966,7 @@ QRMonErrors[opts:OptionsPattern[]][xs_, context_] :=
           Association @
               KeyValueMap[
                 Function[{k, f},
-                  k -> Map[ Function[{p}, {p[[1]], (p[[2]] - f[p[[1]]])/ If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ]}], context["data"] ]
+                  k -> Map[ Function[{p}, {p[[1]], (p[[2]] - f[p[[1]]]) / If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ]}], context["data"] ]
                 ],
                 context["regressionFunctions"]
               ];
@@ -912,13 +985,13 @@ Clear[QRMonErrorPlots];
 
 SyntaxInformation[QRMonErrorPlots] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
-Options[QRMonErrorPlots] = Join[ {"Echo"->True, "DateListPlot"->False, "RelativeErrors" -> True}, Options[ListPlot] ];
+Options[QRMonErrorPlots] = Join[ {"Echo" -> True, "DateListPlot" -> False, "RelativeErrors" -> True}, Options[ListPlot] ];
 
 QRMonErrorPlots[$QRMonFailure] := $QRMonFailure;
 
 QRMonErrorPlots[xs_, context_Association] := QRMonErrorPlots[][xs, context];
 
-QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
+QRMonErrorPlots[opts : OptionsPattern[]][xs_, context_] :=
     Block[{res, listPlotFunc = ListPlot, listPlotOpts, relativeErrorsQ},
 
       listPlotFunc = If[ TrueQ[OptionValue[QRMonErrorPlots, "DateListPlot"]], DateListPlot, ListPlot ];
@@ -935,7 +1008,7 @@ QRMonErrorPlots[opts:OptionsPattern[]][xs_, context_] :=
                   listPlotFunc[
                     Map[Function[{p}, {p[[1]], (p[[2]] - f[p[[1]]]) / If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ] }], context["data"] ],
                     listPlotOpts,
-                    Joined->False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
+                    Joined -> False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
             ],
             context["regressionFunctions"]
           ];
@@ -955,16 +1028,16 @@ QRMonErrorPlots[__][__] := $QRMonFailure;
 (**************************************************************)
 
 Clear[CDFEstimate];
-CDFEstimate[qFuncs_Association, t0_, intOrder:_Integer:1] :=
+CDFEstimate[qFuncs_Association, t0_, intOrder : _Integer : 1] :=
     Interpolation[Transpose[{Through[Values[qFuncs][t0]], Keys[qFuncs]}], InterpolationOrder -> intOrder];
 
 Clear[CDFPDFPlot];
-CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs:{_?NumericQ..}, opts : OptionsPattern[]] :=
+CDFPDFPlot[t0_?NumberQ, qCDFInt_InterpolatingFunction, qs : {_?NumericQ..}, opts : OptionsPattern[]] :=
     Block[{},
       Plot[
         {qCDFInt[x], qCDFInt'[x]},
         {x, qCDFInt["Domain"][[1, 1]], qCDFInt["Domain"][[1, 2]]},
-        opts, GridLines->{None, qs}, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
+        opts, GridLines -> {None, qs}, PlotRange -> {0, 1}, Axes -> False, Frame -> True]
     ];
 
 Clear[QRMonConditionalCDF];
@@ -977,11 +1050,11 @@ QRMonConditionalCDF[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonConditionalCDF[t0_?NumberQ][xs_, context_] := QRMonConditionalCDF[{t0}][xs, context];
 
-QRMonConditionalCDF[ts:{_?NumberQ..}][xs_, context_] :=
+QRMonConditionalCDF[ts : {_?NumberQ..}][xs_, context_] :=
     Block[{},
       Which[
         KeyExistsQ[context, "regressionFunctions"],
-        QRMonUnit[ Association[ Map[ #->CDFEstimate[ KeyDrop[context["regressionFunctions"], "mean"], # ] &, ts] ], context ],
+        QRMonUnit[ Association[ Map[ # -> CDFEstimate[ KeyDrop[context["regressionFunctions"], "mean"], # ] &, ts] ], context ],
 
         True,
         Echo["Cannot find regression quantiles.", "QRMonCDFApproximation:"];
@@ -1004,7 +1077,7 @@ Clear[QRMonConditionalCDFPlot];
 
 SyntaxInformation[QRMonConditionalCDFPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
-Options[QRMonConditionalCDFPlot] := Join[ {"Echo"->True, "QuantileGridLines" -> True}, Options[Plot] ];
+Options[QRMonConditionalCDFPlot] := Join[ {"Echo" -> True, "QuantileGridLines" -> True}, Options[Plot] ];
 
 QRMonConditionalCDFPlot[$QRMonFailure] := $QRMonFailure;
 
@@ -1012,13 +1085,13 @@ QRMonConditionalCDFPlot[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonConditionalCDFPlot[xs_, context_Association] := QRMonConditionalCDFPlot[ Options[QRMonConditionalCDFPlot] ][xs, context];
 
-QRMonConditionalCDFPlot[ point_?NumericQ, opts:OptionsPattern[]][xs_, context_] :=
+QRMonConditionalCDFPlot[ point_?NumericQ, opts : OptionsPattern[]][xs_, context_] :=
     QRMonConditionalCDFPlot[ {point}, opts][xs, context];
 
-QRMonConditionalCDFPlot[ points_?VectorQ, opts:OptionsPattern[]][xs_, context_] :=
+QRMonConditionalCDFPlot[ points_?VectorQ, opts : OptionsPattern[]][xs_, context_] :=
     Fold[ QRMonBind, QRMonUnit[xs, context], {QRMonConditionalCDF[points], QRMonConditionalCDFPlot[opts]}];
 
-QRMonConditionalCDFPlot[ opts:OptionsPattern[] ][xs_, context_] :=
+QRMonConditionalCDFPlot[ opts : OptionsPattern[] ][xs_, context_] :=
     Block[{funcs, res, plotOpts, quantileGridLinesQ},
 
       quantileGridLinesQ = TrueQ[ OptionValue[QRMonConditionalCDFPlot, "QuantileGridLines"] ];
@@ -1058,7 +1131,7 @@ QRMonConditionalCDFPlot[ opts:OptionsPattern[] ][xs_, context_] :=
                   ] &, funcs];
 
       If[ TrueQ[OptionValue[QRMonConditionalCDFPlot, "Echo"]],
-        Echo[ res, If[Length[res]==1, "Conditional CDF:", "Conditional CDF's:"] ]
+        Echo[ res, If[Length[res] == 1, "Conditional CDF:", "Conditional CDF's:"] ]
       ];
 
       QRMonUnit[res, context]
@@ -1088,7 +1161,7 @@ QRMonOutliersFirst[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonOutliersFirst[xs_, context_Association] := QRMonOutliersFirst[][xs, context];
 
-QRMonOutliersFirst[opts:OptionsPattern[]][xs_, context_] :=
+QRMonOutliersFirst[opts : OptionsPattern[]][xs_, context_] :=
     Block[{knots, tq, bq, tfunc, bfunc, outliers, data},
 
       knots = OptionValue[ "Knots" ];
@@ -1120,11 +1193,11 @@ QRMonOutliersFirst[opts:OptionsPattern[]][xs_, context_] :=
 
       outliers =
           <| "bottomOutliers" -> Select[data, bfunc[#[[1]]] >= #[[2]]&],
-             "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&] |>;
+            "topOutliers" -> Select[data, tfunc[#[[1]]] <= #[[2]]&] |>;
 
       QRMonUnit[
         outliers,
-        Join[context, <| "data"-> data, "outliers"->outliers, "outlierRegressionFunctions" -> <| bq->bfunc, tq->tfunc|> |> ]
+        Join[context, <| "data" -> data, "outliers" -> outliers, "outlierRegressionFunctions" -> <| bq -> bfunc, tq -> tfunc|> |> ]
       ]
     ];
 
@@ -1187,7 +1260,7 @@ QRMonOutliers[][xs_, context_] :=
 
       QRMonUnit[
         outliers,
-        Join[context, <| "data"-> data, "outliers"->outliers, "outlierRegressionFunctions" -> <| bq->bfunc, tq->tfunc |> |> ]
+        Join[context, <| "data" -> data, "outliers" -> outliers, "outlierRegressionFunctions" -> <| bq -> bfunc, tq -> tfunc |> |> ]
       ]
     ];
 
@@ -1206,7 +1279,7 @@ Clear[QRMonOutliersPlot];
 
 SyntaxInformation[QRMonOutliersPlot] = { "ArgumentsPattern" -> {OptionsPattern[]} };
 
-Options[QRMonOutliersPlot] := Join[ {"Echo"->True, "DateListPlot"->False}, Options[ListPlot] ];
+Options[QRMonOutliersPlot] := Join[ {"Echo" -> True, "DateListPlot" -> False}, Options[ListPlot] ];
 
 QRMonOutliersPlot[$QRMonFailure] := $QRMonFailure;
 
@@ -1214,13 +1287,13 @@ QRMonOutliersPlot[__][$QRMonFailure] := $QRMonFailure;
 
 QRMonOutliersPlot[xs_, context_Association] := QRMonOutliersPlot[][xs, context];
 
-QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
+QRMonOutliersPlot[opts : OptionsPattern[]][xs_, context_] :=
     Block[{unit, listPlotFunc = ListPlot, listPlotOpts, plotOpts, res},
 
       unit =
           If[ KeyExistsQ[context, "outliers"] && KeyExistsQ[context, "outlierRegressionFunctions"],
             QRMonUnit[ xs, context ],
-          (*ELSE*)
+            (*ELSE*)
             QRMonBind[ QRMonUnit[ xs, context ], QRMonOutliers ]
           ];
 
@@ -1228,7 +1301,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
 
       listPlotOpts = Normal @ KeyTake[ {opts}, First /@ Options[listPlotFunc]];
       plotOpts = Normal @ KeyTake[ {opts}, First /@ Options[Plot]];
-      plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle->_] ];
+      plotOpts = DeleteCases[plotOpts, HoldPattern[PlotStyle -> _] ];
 
       If[ KeyExistsQ[context, "dataPlotOptions"],
         listPlotOpts = Join[ context["dataPlotOptions"], listPlotOpts];
@@ -1245,10 +1318,10 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
       res =
           Show[{
 
-            listPlotFunc[Join[{#data}, Values[#outliers]] /. {}->Nothing,
+            listPlotFunc[Join[{#data}, Values[#outliers]] /. {} -> Nothing,
               listPlotOpts,
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
-              Joined->False, PlotRange->All, ImageSize -> Medium, PlotTheme -> "Scientific"
+              Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> "Scientific"
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
@@ -1258,7 +1331,7 @@ QRMonOutliersPlot[opts:OptionsPattern[]][xs_, context_] :=
               (*PlotRange -> {MinMax[#data[[All,1]]], MinMax[#data[[All,2]]]}*)
             ]
 
-          }] & [ QRMonBind[ unit, QRMonTakeContext ] ];
+          }] &[ QRMonBind[ unit, QRMonTakeContext ] ];
 
       If[ TrueQ[OptionValue[QRMonOutliersPlot, "Echo"]],
         Echo[res, "Outliers plot:"]
@@ -1285,7 +1358,7 @@ QRMonPickPathPoints[$QRMonFailure] := $QRMonFailure;
 
 QRMonPickPathPoints[__][$QRMonFailure] := $QRMonFailure;
 
-QRMonPickPathPoints[threshold_?NumberQ, opts:OptionsPattern[] ][xs_, context_] :=
+QRMonPickPathPoints[threshold_?NumberQ, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{data, qFuncs, res, criteriaFunc = LessEqual},
 
       data = QRMonTakeData[xs, context];
@@ -1321,7 +1394,7 @@ Clear[QRMonSeparate];
 
 SyntaxInformation[QRMonSeparate] = { "ArgumentsPattern" -> {_., OptionsPattern[]} };
 
-Options[QRMonSeparate] = { "Cumulative"->True, "Fractions"->False };
+Options[QRMonSeparate] = { "Cumulative" -> True, "Fractions" -> False };
 
 QRMonSeparate[$QRMonFailure] := $QRMonFailure;
 
@@ -1331,9 +1404,9 @@ QRMonSeparate[xs_, context_Association] := QRMonSeparate[][xs, context];
 
 QRMonSeparate[][xs_, context_Association] := QRMonSeparate[Automatic][xs, context];
 
-QRMonSeparate[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparate[Automatic, opts][xs, context];
+QRMonSeparate[opts : OptionsPattern[]][xs_, context_Association] := QRMonSeparate[Automatic, opts][xs, context];
 
-QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
+QRMonSeparate[dataArg_, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{data, indGroups, pointGroups, cumulativeQ, fractionsQ},
 
       cumulativeQ = TrueQ[ OptionValue[ QRMonSeparate, "Cumulative" ] ];
@@ -1359,17 +1432,17 @@ QRMonSeparate[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
 
         pointGroups =
             Association @
-                 KeyValueMap[
-                   Function[{k,f}, k -> Select[ data, #[[2]] <= f[#[[1]]] & ] ],
-                   context["regressionFunctions"]
-                 ],
+                KeyValueMap[
+                  Function[{k, f}, k -> Select[ data, #[[2]] <= f[#[[1]]] & ] ],
+                  context["regressionFunctions"]
+                ],
 
         (*ELSE*)
         (* Find the indices corresponding to data points under each regression function. *)
         indGroups =
             Association @
                 KeyValueMap[
-                  Function[{k,f}, k -> Select[ Range[Length[data]], data[[#,2]] <= f[data[[#,1]]] & ] ],
+                  Function[{k, f}, k -> Select[ Range[Length[data]], data[[#, 2]] <= f[data[[#, 1]]] & ] ],
                   KeyDrop[ context["regressionFunctions"], "mean" ]
                 ];
 
@@ -1401,7 +1474,7 @@ Clear[QRMonSeparateToFractions];
 
 SyntaxInformation[QRMonSeparateToFractions] = { "ArgumentsPattern" -> {_., OptionsPattern[]} };
 
-Options[QRMonSeparateToFractions] = {"Cumulative"->False};
+Options[QRMonSeparateToFractions] = {"Cumulative" -> False};
 
 QRMonSeparateToFractions[$QRMonFailure] := $QRMonFailure;
 
@@ -1411,14 +1484,14 @@ QRMonSeparateToFractions[xs_, context_Association] := QRMonSeparateToFractions[]
 
 QRMonSeparateToFractions[][xs_, context_Association] := QRMonSeparateToFractions[Automatic][xs, context];
 
-QRMonSeparateToFractions[opts:OptionsPattern[]][xs_, context_Association] := QRMonSeparateToFractions[Automatic, opts][xs, context];
+QRMonSeparateToFractions[opts : OptionsPattern[]][xs_, context_Association] := QRMonSeparateToFractions[Automatic, opts][xs, context];
 
-QRMonSeparateToFractions[dataArg_, opts:OptionsPattern[] ][xs_, context_] :=
+QRMonSeparateToFractions[dataArg_, opts : OptionsPattern[] ][xs_, context_] :=
     Block[{cumulativeQ},
 
       cumulativeQ = TrueQ[ OptionValue[ QRMonSeparateToFractions, "Cumulative" ] ];
 
-      QRMonSeparate[ dataArg, "Fractions"->True, "Cumulative" -> cumulativeQ ][xs, context]
+      QRMonSeparate[ dataArg, "Fractions" -> True, "Cumulative" -> cumulativeQ ][xs, context]
     ];
 
 QRMonSeparateToFractions[___][__] := $QRMonFailure;
@@ -1514,7 +1587,7 @@ QRMonGridSequence[Automatic][xs_, context_] :=
 
         KeyExistsQ[context, "regressionFunctions"],
         qvals = Quantile[ data[[All, 2]], Keys[context["regressionFunctions"]] ];
-        QRMonGridSequence[ qvals ][xs, Join[context, <|"data"->data|> ]],
+        QRMonGridSequence[ qvals ][xs, Join[context, <|"data" -> data|> ]],
 
         True,
         Echo["Cannot find quantiles for the values mapping with Automatic grid argument.", "QRMonGridSequence"];
@@ -1535,7 +1608,7 @@ QRMonGridSequence[gridNCells_Integer][xs_, context_] :=
 
         ! TrueQ[data === $QRMonFailure],
         rvals = Rescale[Range[1, gridNCells], {1, gridNCells}, MinMax[data[[All, 2]]]];
-        QRMonGridSequence[ rvals ][xs, Join[context, <|"data"->data|> ]],
+        QRMonGridSequence[ rvals ][xs, Join[context, <|"data" -> data|> ]],
 
         True,
         Echo["Cannot find data.", "QRMonGridSequence"];
@@ -1543,7 +1616,7 @@ QRMonGridSequence[gridNCells_Integer][xs_, context_] :=
       ]
     ];
 
-QRMonGridSequence[grid:{_?NumericQ..}][xs_, context_] :=
+QRMonGridSequence[grid : {_?NumericQ..}][xs_, context_] :=
     Block[{stFunc, states, data},
 
       data = Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonTakeValue }];
@@ -1556,7 +1629,7 @@ QRMonGridSequence[grid:{_?NumericQ..}][xs_, context_] :=
 
         True,
         stFunc = FindIntervalFunc[grid];
-        states = stFunc /@ data[[All,2]];
+        states = stFunc /@ data[[All, 2]];
         QRMonUnit[ states, context ]
       ]
 
@@ -1658,21 +1731,21 @@ QRMonSimulate[___][$QRMonFailure] := $QRMonFailure;
 
 QRMonSimulate[xs_, context_Association ] := $QRMonFailure;
 
-QRMonSimulate[nTimePoints_Integer, opts:OptionsPattern[]][xs_, context_] :=
+QRMonSimulate[nTimePoints_Integer, opts : OptionsPattern[]][xs_, context_] :=
     Block[{r, tPoints},
 
       r = QRMonBind[ QRMonUnit[xs, context], QRMonTakeData ];
-      r = MinMax @ r[[All,1]];
+      r = MinMax @ r[[All, 1]];
 
-      tPoints = Range[ r[[1]], r[[2]], (r[[2]] - r[[1]])/ (nTimePoints-1) ];
+      tPoints = Range[ r[[1]], r[[2]], (r[[2]] - r[[1]]) / (nTimePoints - 1) ];
 
       QRMonSimulate[tPoints, opts][xs, context]
     ];
 
-QRMonSimulate[timePoints:{_?NumericQ..}, opts:OptionsPattern[]][xs_, context_] :=
+QRMonSimulate[timePoints : {_?NumericQ..}, opts : OptionsPattern[]][xs_, context_] :=
     Block[{qValues, qs, tValues, enoughQuantiles },
 
-      If[ ! ( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"],"mean"]] > 1),
+      If[ ! ( KeyExistsQ[context, "regressionFunctions"] && Length[KeyDrop[context["regressionFunctions"], "mean"]] > 1),
         Echo["Compute two or more regression quantiles first.", "QRMonSimulate:"];
         Return[$QRMonFailure]
       ];
@@ -1724,9 +1797,9 @@ QRMonLocalExtrema[$QRMonFailure] = $QRMonFailure;
 
 QRMonLocalExtrema[xs_, context_Association] = QRMonLocalExtrema[][xs, context];
 
-QRMonLocalExtrema[ opts:OptionsPattern[] ][$QRMonFailure] := $QRMonFailure;
+QRMonLocalExtrema[ opts : OptionsPattern[] ][$QRMonFailure] := $QRMonFailure;
 
-QRMonLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
+QRMonLocalExtrema[ opts : OptionsPattern[] ][xs_, context_] :=
     Module[{nearestByOutliersQ, numberOfProximityPoints, data, fn, extrema1, extrema2, minima, maxima, x, signs1, signs2, extremaPoints, nfMax, nfMin },
 
       nearestByOutliersQ = TrueQ[OptionValue[QRMonLocalExtrema, "NearestWithOutliers" ]];
@@ -1748,7 +1821,7 @@ QRMonLocalExtrema[ opts:OptionsPattern[] ][xs_, context_] :=
 
       fn = {fn[[1]], fn[[-1]]};
 
-      data = QRMonTakeData[xs,context];
+      data = QRMonTakeData[xs, context];
 
       (* Step 2 *)
       extrema1 = Reduce[fn[[1]]'[x] == 0, x, Reals];
@@ -1816,7 +1889,7 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoint_?NumberQ, funcs
 ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List: {1, x}, var_: x], and\n\
 ChowTestStatistic[data1 : {{_?NumberQ, _?NumberQ} ..}, data2 : {{_?NumberQ, _?NumberQ} ..}, funcs_List: {1, x}, var_: x].";
 
-ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List : {1, x}, var_: x] :=
+ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ ..}, funcs_List : {1, x}, var_ : x] :=
     Block[{data1, data2, S, S1, S2, k, ff, res},
 
       If[Length[funcs] == 0,
@@ -1866,7 +1939,7 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
                   ],
                   {data1, data2}];
 
-            {sp, ((S - (S1 + S2))/ k)/((S1 + S2)/(Length[data1] + Length[data2] - 2 k)) }
+            {sp, ((S - (S1 + S2)) / k) / ((S1 + S2) / (Length[data1] + Length[data2] - 2 k)) }
           ]
 
         ],
@@ -1888,13 +1961,13 @@ QRMonChowTestStatistic[][xs_, context_] := QRMonChowTestStatistic[Automatic, Aut
 
 QRMonChowTestStatistic[splitPoints_][xs_, context_] := QRMonChowTestStatistic[splitPoints, Automatic, Automatic][xs, context];
 
-QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ), funcs:( Automatic | _List), var_: Automatic][xs_, context_] :=
+QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ), funcs : ( Automatic | _List), var_ : Automatic][xs_, context_] :=
     Block[{data, localSplitPoints = splitPoints, localFuncs = funcs, localVar = var, x, ctStats},
 
       data = QRMonBind[QRMonGetData[xs, context], QRMonTakeValue];
 
-      If[ TrueQ[localFuncs===Automatic],
-        localFuncs = {1,x};
+      If[ TrueQ[localFuncs === Automatic],
+        localFuncs = {1, x};
         localVar = x
       ];
 
@@ -1911,7 +1984,7 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
         localSplitPoints = {localSplitPoints};
       ];
 
-      If[ TrueQ[localVar===Automatic],
+      If[ TrueQ[localVar === Automatic],
         localVar =
             With[{globalQ = Context@# === "Global`" &},
               DeleteDuplicates@Cases[localFuncs, _Symbol?globalQ, Infinity]
@@ -1945,9 +2018,9 @@ QRMonChowTestStatistic[splitPoints : (Automatic | {_?NumericQ ..} | _?NumericQ),
 QRMonChowTestStatistic[args___][__] :=
     Block[{},
       Echo["The first argument is expected to be a specification of split points, (Automatic|{_?NumericQ..}|_?NumericQ). " <>
-           "The second argument is expected to be Automatic or a list of functions. " <>
-           "The third argument is expected to be Automatic or a variable symbol.",
-          "QRMonChowTestStatistic:"];
+          "The second argument is expected to be Automatic or a list of functions. " <>
+          "The third argument is expected to be Automatic or a variable symbol.",
+        "QRMonChowTestStatistic:"];
       $QRMonFailure;
     ];
 
