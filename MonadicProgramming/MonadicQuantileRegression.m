@@ -307,10 +307,12 @@ DatasetToNormalForm[dataArg_Dataset, functionName_String ] :=
 
         Length[colNames] >= 2,
 
-        Echo[ "When the data argument is a dataset the expected columns are: " <> Map[ "\"" <> # <> "\""&, ToString[expectedColNames] ], functionName <> ":" ];
+        Echo[ "When the data argument is a dataset the expected columns are: " <> ToString @ Map[ "\"" <> # <> "\""&, expectedColNames ], functionName <> ":" ];
 
-        Echo[ "Proceeding by renaming the first column " <> ToString[colNames[[1]]] <>
-            " as \"Regressor\" and renaming the second column " <> ToString[colNames[[2]]] <> " as \"Value\".",
+        colNames = Map[ If[ StringQ[#], "\"" <> # <> "\"", #]&, colNames ];
+
+        Echo[ Row[{"Proceeding by considering the first column ", colNames[[1]],
+          " to be \"Regressor\" and the second column ", colNames[[2]], " to be \"Value\"."}],
           functionName <> ":"
         ];
 
@@ -405,7 +407,7 @@ QRMonEchoDataSummary[$QRMonFailure] := $QRMonFailure;
 QRMonEchoDataSummary[xs_, context_] := QRMonEchoDataSummary[][xs, context];
 
 QRMonEchoDataSummary[][xs_, context_] :=
-    Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonEchoFunctionValue["Data summary:", RecordsSummary] } ]
+    Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonGetData, QRMonEchoFunctionValue["Data summary:", RecordsSummary[#, {"Regressor", "Value"}]& ] } ]
 
 QRMonEchoDataSummary[___][__] := $QRMonFailure;
 
