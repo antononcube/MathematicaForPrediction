@@ -230,6 +230,8 @@ SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
 SMRMonFilterMatrix::usage = "SMRMonFilterMatrix[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 applies a profile filter to the rows of the recommendation matrix.";
 
+SMRMonRemoveTagTypes::usage = "Remove specified tag types.";
+
 SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] compute the Top-K for specified data and K's.";
 
 SMRMonImportRecommender::usage = "SMRMonImportRecommender[ dirName_String, suffix_String ] imports a recommender \
@@ -2670,6 +2672,52 @@ SMRMonProveByHistory[___][__] :=
       Echo[
         "The expected signature is SMRMonProveByHistory[history_Association, itemName : ( _String | {_String..} ), opts___] .",
         "SMRMonProveByHistory:"];
+      $SMRMonFailure
+    ];
+
+
+(*=========================================================*)
+(* Remove tag type                                         *)
+(*=========================================================*)
+
+Clear[SMRMonRemoveTagTypes];
+
+SyntaxInformation[SMRMonRemoveTagTypes] = { "ArgumentsPattern" -> {_, OptionsPattern[] } };
+
+Options[SMRMonRemoveTagTypes] = { "TagTypes" -> None };
+
+SMRMonRemoveTagTypes[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonRemoveTagTypes[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonRemoveTagTypes[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonRemoveTagTypes[ opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{tagTypes},
+
+      tagTypes = OptionValue[SMRMonRemoveTagTypes, "TagTypes"];
+
+      SMRMonRemoveTagTypes[ tagTypes, opts][xs, context]
+    ];
+
+SMRMonRemoveTagTypes[ tagTypes : { _String ..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{smats},
+
+      smats = SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeMatrices ];
+
+      If[ Length[Intersection[Keys[smats], tagTypes]] == 0,
+        Echo["None of the specified tag types is a known tag type in the recommender object.", "SMRMonRemoveTagTypes:"];
+        Return[SMRMonUnit[xs, context]]
+      ];
+
+      Fold[ SMRMonBind, SMRMonUnit[], { SMRMonCreate[ KeyDrop[smats, tagTypes] ] }]
+    ];
+
+SMRMonRemoveTagTypes[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonRemoveTagTypes[tagTypes : { _String..}, opts___] .",
+        "SMRMonRemoveTagTypes:"];
       $SMRMonFailure
     ];
 
