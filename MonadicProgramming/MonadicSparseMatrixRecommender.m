@@ -95,7 +95,7 @@
 *   1. [X] [A] Implement tag-types re-weighting.
 *   2. [X] [A] Implement tags re-weighting.
 *   3. [ ] [B] Implement term weight functions application through association of tag-types.
-*   4. [ ] [A] Implement creation from long form dataset, and
+*   4. [X] [A] Implement creation from long form dataset, and
 *   5. [ ] [A] do corresponding refactoring.
 *   6. [ ] [B] Refactor the codes of the term weight functions ("SMRMonApply*Function",).
 *
@@ -215,6 +215,8 @@ SMRMonTakeTagTypeWeights::usage = "Takes the tag-type weights.";
 SMRMonTakeTagTypes::usage = "Takes the tag-types.";
 
 SMRMonTakeMatrixDataset::usage = "Take the Dataset object corresponding to the recommendation matrix.";
+
+SMRMonGetTagTypeRanges::usage = "Get the ranges of the tag types in the recommendation matrix.";
 
 SMRMonProveByMetadata::usage = "Metadata proofs for a recommended item and a profile. \
 (Tags from item's profile that are found in the given profile.)";
@@ -748,6 +750,36 @@ SMRMonCreateFromLongForm[___][__] :=
             "The optional second argument is expected to be a list four strings : " <>
             "{ itemColumnName_String, tagTypeColumnName_String, tagColumnName_String, weightColumnName_String } .",
         "SMRMonCreateFromLongForm:"];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
+(* SMRMonGetTagTypeRanges                                     *)
+(**************************************************************)
+
+Clear[SMRMonGetTagTypeRanges];
+
+SyntaxInformation[SMRMonGetTagTypeRanges] = { "ArgumentsPattern" -> {} };
+
+SMRMonGetTagTypeRanges[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetTagTypeRanges[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonGetTagTypeRanges[xs_, context_Association] := SMRMonGetTagTypeRanges[][xs, context];
+
+SMRMonGetTagTypeRanges[][xs_, context_Association] :=
+    Block[{lsNCols, aTagTypeRanges},
+      lsNCols = Map[ColumnsCount, SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeMatrices] ];
+
+      aTagTypeRanges = AssociationThread[Keys[lsNCols], Transpose[{Prepend[Most[Accumulate[Values@lsNCols]], 0] + 1, Accumulate[Values@lsNCols]}]];
+
+      SMRMonUnit[ aTagTypeRanges, context]
+    ];
+
+SMRMonGetTagTypeRanges[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "SMRMonGetTagTypeRanges:"];
       $SMRMonFailure
     ];
 
