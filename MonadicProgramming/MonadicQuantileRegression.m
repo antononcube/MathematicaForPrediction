@@ -56,13 +56,14 @@
        Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
 
        p =
-         QRMonUnit[sqPoints]\[DoubleLongRightArrow]
-          QRMonQuantileRegressionFit[20, 0.5]\[DoubleLongRightArrow]
-          QRMonPlot[]\[DoubleLongRightArrow]
-          QRMonErrorPlots\[DoubleLongRightArrow]
-          QRMonErrors\[DoubleLongRightArrow]QRMonEchoFunctionValue["Relative errors summary:", RecordsSummary /@ # &];
+         QRMonUnit[sqPoints]⟹
+          QRMonQuantileRegressionFit[20, 0.5]⟹
+          QRMonPlot[]⟹
+          QRMonErrorPlots⟹
+          QRMonErrors⟹
+          QRMonEchoFunctionValue["Relative errors summary:", RecordsSummary /@ # &];
 
-       qFunc = (p\[DoubleLongRightArrow]QRMonTakeRegressionFunctions)[0.5];
+       qFunc = (p⟹QRMonTakeRegressionFunctions)[0.5];
 
        Simplify[qFunc[x]]
 
