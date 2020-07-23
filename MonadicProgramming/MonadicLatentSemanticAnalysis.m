@@ -392,7 +392,7 @@ LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association
 
       stemRules = OptionValue[ LSAMonMakeDocumentTermMatrix, "StemmingRules" ];
 
-      If[ ! ( AssociationQ[stemRules] || DispatchQ[stemRules] || MatchQ[ stemRules, {_Rule...} ] || TrueQ[ stemRules === Automatic ] ),
+      If[ ! ( AssociationQ[stemRules] || DispatchQ[stemRules] || MatchQ[ stemRules, {_Rule...} ] || TrueQ[ stemRules === Automatic ] || BooleanQ[stemRules] ),
         Echo[
           "The value of the option \"StemmingRules\" is expected to be a list or rules, dispatch table, an association, or Automatic.",
           "LSAMonMakeDocumentTermMatrix:"
@@ -413,7 +413,7 @@ LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association
       LSAMonMakeDocumentTermMatrix[ stemRules, stopWords ][xs, context]
     ];
 
-LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _Dispatch | _Association | Automatic), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
+LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _Dispatch | _Association | Automatic | True | False), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
     Block[{ stemRules = stemRulesArg, stopWords = stopWordsArg, docs, docTermMat },
 
       docs = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonGetDocuments, LSAMonTakeValue } ];
@@ -427,6 +427,9 @@ LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _D
         stopWords = DictionaryLookup["*"];
         stopWords = Complement[stopWords, DeleteStopwords[stopWords]];
       ];
+
+      If[ TrueQ[stemRules === False], stemRules = {} ];
+      If[ TrueQ[stemRules === True], stemRules = Automatic ];
 
       docTermMat = DocumentTermSSparseMatrix[ ToLowerCase /@ docs, {stemRules, stopWords} ];
 
