@@ -53,6 +53,8 @@ Begin["`Private`"];
 
 Clear[ParallelCoordinatesPlot];
 
+SyntaxInformation[ParallelCoordinatesPlot] = { "ArgumentsPattern" -> {_, _., _., OptionsPattern[]} };
+
 ParallelCoordinatesPlot::args = "The expected arguments are \
 (1) a matrix or an association of matrices, \
 (2) column names, and \
@@ -74,8 +76,7 @@ Options[ParallelCoordinatesPlot] =
     ];
 
 ParallelCoordinatesPlot[data_?MatrixQ, opts : OptionsPattern[]] :=
-    ParallelCoordinatesPlot[data, Range[Length[data[[1]]]],
-      MinMax /@ Transpose[data], opts];
+    ParallelCoordinatesPlot[data, Range[Length[data[[1]]]], MinMax /@ Transpose[data], opts];
 
 ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, opts : OptionsPattern[]] :=
     ParallelCoordinatesPlot[data, colNames, MinMax /@ Transpose[data], opts];
@@ -88,7 +89,7 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
       lblOff = OptionValue[ParallelCoordinatesPlot, "LabelsOffset"];
       Which[
         TrueQ[lblOff === Automatic] && horizontalQ, lblOff = 3,
-        TrueQ[lblOff === Automatic] && !horizontalQ, lblOff = -0.1
+        TrueQ[lblOff === Automatic] && !horizontalQ, lblOff = -0.1,
         !NumberQ[lblOff],
         Message[ParallelCoordinatesPlot::optlo];
         Return[$Failed]
