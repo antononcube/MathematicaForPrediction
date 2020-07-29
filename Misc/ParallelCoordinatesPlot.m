@@ -125,10 +125,14 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
     ] /; MatrixQ[data, NumberQ] && MatrixQ[minMaxes, NumberQ] && Dimensions[minMaxes] == {Dimensions[data][[2]], 2};
 
 ParallelCoordinatesPlot[aData_Association, colNames_List, opts : OptionsPattern[]] :=
-    Block[{minMaxes, cols, axesOrder, grs},
+    Block[{minMaxes, cols, axesOrder, pstyle, grs},
 
       cols = OptionValue[ParallelCoordinatesPlot, "Colors"];
       axesOrder = OptionValue[ParallelCoordinatesPlot, "AxesOrder"];
+
+      pstyle = OptionValue[ParallelCoordinatesPlot, PlotStyle];
+      If[ TrueQ[pstyle === Automatic], pstyle = {} ];
+      pstyle = Flatten[{pstyle}];
 
       Which[
 
@@ -164,7 +168,7 @@ ParallelCoordinatesPlot[aData_Association, colNames_List, opts : OptionsPattern[
               #1[[All, axesOrder]],
               colNames[[axesOrder]],
               minMaxes[[axesOrder]],
-              PlotStyle -> #2, opts] &,
+              PlotStyle -> Prepend[pstyle, #2], opts] &,
             {Values@aData, cols}
           ];
       Legended[Show[grs], LineLegend[cols, Keys[aData]]]
