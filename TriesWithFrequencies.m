@@ -144,8 +144,8 @@ below the thresholds derived by the specified Pareto principle fraction. \
 If the value postfixVal of the option \"Postfix\" is different than NULL or None then \
 the dropped nodes are replaced with postfixVal -> removedTotal, \
 where removedTotal is the total of the values of the dropped nodes. \
-If the option \"RemoveBottomElements\" is to False, \
-the nodes with Pareto values below the derived thresholds are removed.";
+If the option \"RemoveBottomElements\" is set to False, \
+then the nodes with Pareto values below the derived thresholds are removed.";
 
 TrieHasCompleteMatchQ::usage = "TrieHasCompleteMatchQ[ tr_, sw_List ] finds does a fraction \
 of the list sw is a complete match in the trie tr.";
