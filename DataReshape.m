@@ -103,21 +103,39 @@ ColumnSpecQ[x_] := IntegerQ[x] || StringQ[x] || MatchQ[x, Key[__]];
 
 Clear[ToLongForm];
 
-ToLongForm[ds_Association] := RecordsToLongForm[ds];
+Options[ToLongForm] = { "VariablesColumnName" -> "Variable", "ValuesColumnName" -> "Value" };
 
-ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumn_?ColumnSpecQ] := ToLongForm[ds, {idColumn}, {valueColumn}];
+ToLongForm[ds_Association, opts : OptionsPattern[] ] := RecordsToLongForm[ds, opts];
 
-ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumns : {_?ColumnSpecQ ..}] := ToLongForm[ds, {idColumn}, valueColumns];
+ToLongForm[ds_Dataset, valueColumn_?ColumnSpecQ, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, {valueColumn}, opts];
 
-ToLongForm[ds_Dataset, idColumns : {_?ColumnSpecQ ..}, valueColumn_?ColumnSpecQ] := ToLongForm[ds, idColumns, {valueColumn}];
+ToLongForm[ds_Dataset, valueColumns : { _?ColumnSpecQ .. }, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, Automatic, valueColumns, opts];
 
-ToLongForm[ds_Dataset] := ToLongForm[ ds, {0}, Range[ Length[ ds[1] ] ] ] ;
+ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumn_?ColumnSpecQ, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, {idColumn}, {valueColumn}, opts];
 
-(*ToLongForm[ds_Dataset, valueColumn_Integer] := ToLongForm[ds, {0}, {valueColumn}];*)
+ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumns : {_?ColumnSpecQ ..}, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, {idColumn}, valueColumns, opts];
 
-(*ToLongForm[ds_Dataset, valueColumns : {_Integer ..}] := ToLongForm[ds, {0}, valueColumns];*)
+ToLongForm[ds_Dataset, idColumns : {_?ColumnSpecQ ..}, valueColumn_?ColumnSpecQ, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, idColumns, {valueColumn}, opts];
 
-ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}] :=
+ToLongForm[ds_Dataset, opts : OptionsPattern[] ] :=
+    ToLongForm[ ds, {0}, Range[ Length[ ds[1] ] ], opts ];
+
+ToLongForm[ds_Dataset, Automatic, valueColumns : {_Integer ..}, opts : OptionsPattern[] ] :=
+    Block[{idColumns},
+
+      idColumns = Complement[ Range @ Length[ds[1]], valueColumns ];
+
+      If[ Length[idColumns] == 0, idColumns = {0} ];
+
+      ToLongForm[ds, idColumns, valueColumns, opts]
+    ];
+
+ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}, opts : OptionsPattern[] ] :=
     Block[{records = Normal[ds]},
 
       records =
@@ -140,10 +158,16 @@ ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}] 
                 Map[KeyTake[#, Keys[#][[idColumns]]] ->
                     KeyTake[#, Keys[#][[valueColumns]]] &, records],
 
+            TrueQ[idColumns == {0}] && MatchQ[records, List[(_List) ..]],
+            Association@
+                MapIndexed[
+                  <| "RowKey" -> #2[[1]] |> -> AssociationThread[ToString /@ valueColumns, #1[[valueColumns]]] &,
+                  records],
+
             MatchQ[records, List[(_List) ..]],
             Association@
-                Map[AssociationThread[ToString/@idColumns, #[[idColumns]]] ->
-                    AssociationThread[ToString/@valueColumns, #[[valueColumns]]] &,
+                Map[AssociationThread[ToString /@ idColumns, #[[idColumns]]] ->
+                    AssociationThread[ToString /@ valueColumns, #[[valueColumns]]] &,
                   records],
 
             True,
@@ -162,8 +186,9 @@ ToLongForm::nocolkeys = "If the second and third arguments are not column indice
 
 ToLongForm::colkeys = "If the second and third arguments are not column indices then they are expected to be columns names of the dataset.";
 
-ToLongForm[ds_Dataset, idColumns_List, valueColumns_List] :=
-    Block[{keys},
+ToLongForm[ds_Dataset, idColumnsArg : ( Automatic | _List ), valueColumns_List, opts : OptionsPattern[] ] :=
+    Block[{idColumns = idColumnsArg, keys},
+
       keys = Normal[ds[1]];
 
       If[!AssociationQ[keys],
@@ -173,15 +198,25 @@ ToLongForm[ds_Dataset, idColumns_List, valueColumns_List] :=
 
       keys = Keys[keys];
 
-      If[ ! Apply[And, Map[ MemberQ[keys, #]&, idColumns ] ] || ! Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ],
+      If[ ! ( TrueQ[ idColumns === Automatic ] || Length[idColumns] == 0 || Apply[And, Map[ MemberQ[keys, #]&, idColumns ] ] ) ||
+          ! Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ],
         Message[ToLongForm::colkeys];
         Return[$Failed]
       ];
 
-      ToLongForm[ds, Flatten[Position[keys,#]& /@ idColumns], Flatten[Position[keys,#]& /@ valueColumns] ]
+      If[ TrueQ[ idColumns === Automatic ],
+        idColumns = Complement[keys, valueColumns];
+      ];
+
+      If[ Length[idColumns] == 0,
+        ToLongForm[ds, {0}, Flatten[Position[keys, #]& /@ valueColumns], opts ],
+        (*ELSE*)
+        ToLongForm[ds, Flatten[Position[keys, #]& /@ idColumns], Flatten[Position[keys, #]& /@ valueColumns], opts ]
+      ]
+
     ];
 
-ToLongForm[ds_Dataset, "RowID", valueColumns_List] :=
+ToLongForm[ds_Dataset, "RowID", valueColumns_List, opts : OptionsPattern[] ] :=
     Block[{keys},
       keys = Normal[ds[1]];
 
@@ -197,7 +232,7 @@ ToLongForm[ds_Dataset, "RowID", valueColumns_List] :=
         Return[$Failed]
       ];
 
-      ToLongForm[ds, 0, Flatten[Position[keys,#]& /@ valueColumns] ]
+      ToLongForm[ds, 0, Flatten[Position[keys, #]& /@ valueColumns], opts ]
     ];
 
 ToLongForm::args = "The first argument is expected to be an association or a dataset. \
@@ -218,14 +253,21 @@ Clear[NotAssociationQ];
 NotAssociationQ[x_] := Not[AssociationQ[x]];
 
 Clear[RecordsToLongForm];
-RecordsToLongForm[records: Association[( _?NotAssociationQ -> _Association) ..]] :=
-    RecordsToLongForm[ KeyMap[ <|"RowKey"->#|>&, records ] ];
 
-RecordsToLongForm[records: Association[(_Association -> _Association) ..]] :=
-    Block[{res},
+Options[RecordsToLongForm] = Options[ToLongForm];
+
+RecordsToLongForm[records : Association[( _?NotAssociationQ -> _Association) ..], opts : OptionsPattern[]] :=
+    RecordsToLongForm[ KeyMap[ <|"RowKey" -> #|>&, records ], opts ];
+
+RecordsToLongForm[records : Association[(_Association -> _Association) ..], opts : OptionsPattern[] ] :=
+    Block[{cnVariables, cnValues, res},
+
+      cnVariables = OptionValue[RecordsToLongForm, "VariablesColumnName"];
+      cnValues = OptionValue[RecordsToLongForm, "ValuesColumnName"];
+
       res =
           KeyValueMap[
-            Function[{k, rec}, Map[Join[k, <|"Variable" -> #, "Value" -> rec[#]|>] &, Keys[rec]]],
+            Function[{k, rec}, Map[Join[k, <|cnVariables -> #, cnValues -> rec[#]|>] &, Keys[rec]]],
             records
           ];
 
@@ -241,9 +283,9 @@ RecordsToLongForm[records: Association[(_Association -> _Association) ..]] :=
 
 Clear[ToWideForm];
 
-Options[ToWideForm] = {"AggregationFunction"->Total};
+Options[ToWideForm] = {"AggregationFunction" -> Total};
 
-ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_Integer, opts:OptionsPattern[] ] :=
+ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_Integer, opts : OptionsPattern[] ] :=
     Block[{records = Normal[ds]},
 
       records =
@@ -266,7 +308,7 @@ ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_In
 
       RecordsToWideForm[records, OptionValue[ToWideForm, "AggregationFunction"] ]
 
-    ]/; ( idColumn == 0 || 1 <= idColumn <= Dimensions[ds][[2]] ) &&
+    ] /; ( idColumn == 0 || 1 <= idColumn <= Dimensions[ds][[2]] ) &&
         ( 1 <= variableColumn <= Dimensions[ds][[2]] ) &&
         ( 1 <= valueColumn <= Dimensions[ds][[2]] ) &&
         ( Length[Union[{idColumn, variableColumn, valueColumn}]] == 3);
@@ -276,7 +318,7 @@ ToWideForm::nocolkeys = "If the second and third arguments are not column indice
 
 ToWideForm::colkeys = "If the second, third, and fourth arguments are not column indices then they are expected to be columns names of the dataset.";
 
-ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts:OptionsPattern[] ] :=
+ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts : OptionsPattern[] ] :=
     Block[{keys},
       keys = Normal[ds[1]];
 
@@ -292,10 +334,10 @@ ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts:OptionsPat
         Return[$Failed]
       ];
 
-      ToWideForm[ds, Sequence @@ Flatten[Position[keys,#]& /@ {idColumn, variableColumn, valueColumn}], opts ]
+      ToWideForm[ds, Sequence @@ Flatten[Position[keys, #]& /@ {idColumn, variableColumn, valueColumn}], opts ]
     ];
 
-ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts:OptionsPattern[] ] :=
+ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts : OptionsPattern[] ] :=
     Block[{keys},
       keys = Normal[ds[1]];
 
@@ -311,7 +353,7 @@ ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts:OptionsPatte
         Return[$Failed]
       ];
 
-      ToWideForm[ds, 0, Sequence @@ Flatten[Position[keys,#]& /@ { variableColumn, valueColumn}], opts ]
+      ToWideForm[ds, 0, Sequence @@ Flatten[Position[keys, #]& /@ { variableColumn, valueColumn}], opts ]
     ];
 
 ToWideForm::args = "The first argument is expected to be a dataset; \
@@ -324,7 +366,7 @@ ToWideForm[___] :=
     ];
 
 
-RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] :=
+RecordsToWideForm[records : { (_Association) ..}, aggrFunc_] :=
     Block[{res, colNames},
 
       res = GroupBy[records, {Keys[#][[1]] -> #[[1]], Keys[#][[2]]} &, aggrFunc@Map[Function[{r}, r[Keys[r][[2]]]], #] &];
