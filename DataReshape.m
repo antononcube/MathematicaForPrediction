@@ -315,7 +315,7 @@ ToWideForm[ds_Dataset, "RowID", variableColumn_, valueColumn_, opts:OptionsPatte
     ];
 
 ToWideForm::args = "The first argument is expected to be a dataset; \
-the rest of the arguments are expected to be columns specifications."
+the rest of the arguments are expected to be columns specifications.";
 
 ToWideForm[___] :=
     Block[{},
