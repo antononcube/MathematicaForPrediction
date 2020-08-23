@@ -281,7 +281,7 @@ DataToNormalForm[data_, functionName_String] :=
 
 
 (**************************************************************)
-(* DataToNormalForm                                           *)
+(* DatasetToNormalForm                                        *)
 (**************************************************************)
 
 Clear[DatasetToNormalForm];
