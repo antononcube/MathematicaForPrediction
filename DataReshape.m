@@ -177,6 +177,18 @@ ToLongForm[ds_Dataset, Automatic, valueColumns : {_Integer ..}, opts : OptionsPa
       ToLongForm[ds, idColumns, valueColumns, opts]
     ];
 
+ToLongForm[ds_Dataset, idColumns : {_Integer ..}, Automatic, opts : OptionsPattern[] ] :=
+    Block[{valueColumns},
+
+      valueColumns = Complement[ Range @ Length[ds[1]], idColumns ];
+
+      If[ Length[valueColumns] == 0,
+        ds,
+        (*ELSE*)
+        ToLongForm[ds, idColumns, valueColumns, opts]
+      ]
+    ];
+
 ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}, opts : OptionsPattern[] ] :=
     Block[{records = Normal[ds], cnAuto},
 
@@ -244,8 +256,8 @@ ToLongForm[ds_Dataset, idColumnsArg : ( Automatic | _List ), valueColumnsArg : (
       keys = Keys[keys];
 
       If[
-        ! (TrueQ[ idColumns === Automatic ] || Length[idColumns] == 0 || Apply[And, Map[ MemberQ[keys, #]&, idColumns ] ] ) ||
-            ! ( TrueQ[ valueColumns === Automatic ] || Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ] ),
+          !( TrueQ[ idColumns === Automatic ] || Length[idColumns] == 0 || Apply[And, Map[ MemberQ[keys, #]&, idColumns ] ] ) ||
+              !( TrueQ[ valueColumns === Automatic ] || Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ] ),
 
         Message[ToLongForm::colkeys];
         Return[$Failed]
