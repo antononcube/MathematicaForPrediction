@@ -54,21 +54,16 @@
 
 BeginTestSection["TriesWithFrequencies-Unit-Tests"];
 
-
 VerificationTest[(* 1 *)
-	CompoundExpression[
-		ClearAll["Trie*"],
-    userDirName = "~/";
-    Get[FileNameJoin[ {userDirName, "MathematicaForPrediction", "TriesWithFrequencies.m"} ] ],
-		TrieCreate[{}],
-    Length[DownValues[TriesWithFrequencies`TrieCreate]] > 0
-	]
-	,
-	True
-	,
-	TestID->"TrieInitialization"
+  CompoundExpression[
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/TriesWithFrequencies.m"],
+    Greater[Length[DownValues[TriesWithFrequencies`TrieCreate]], 0]
+  ]
+  ,
+  True
+  ,
+  TestID -> "LoadPackage"
 ];
-
 
 VerificationTest[(* 3 *)
   CompoundExpression[
