@@ -188,14 +188,17 @@ Begin["`Private`"];
 (************************************************************)
 
 Clear[TrieBodyQ];
+SyntaxInformation[TrieBodyQ] = { "ArgumentsPattern" -> { _ } };
 TrieBodyQ[a_Association] := KeyExistsQ[a, $TrieValue];
 TrieBodyQ[___] := False;
 
 Clear[TrieQ];
+SyntaxInformation[TrieQ] = { "ArgumentsPattern" -> { _ } };
 TrieQ[a_Association] := MatchQ[a, Association[x_ -> b_?TrieBodyQ]];
 TrieQ[___] := False;
 
 Clear[TrieRuleQ];
+SyntaxInformation[TrieRuleQ] = { "ArgumentsPattern" -> { _ } };
 TrieRuleQ[a_Rule] := MatchQ[a, Rule[x_, b_?TrieBodyQ]];
 TrieRuleQ[___] := False;
 
@@ -205,6 +208,7 @@ TrieWithTrieRootQ[a_Association] := MatchQ[a, Association[$TrieRoot -> b_?TrieBo
 TrieWithTrieRootQ[___] := False;
 
 Clear[TrieNodeCounts];
+SyntaxInformation[TrieNodeCounts] = { "ArgumentsPattern" -> { _ } };
 TrieNodeCounts[tr_] :=
     Block[{cs},
       cs = {Count[tr, <|___, $TrieValue -> _, ___|>, Infinity], Count[tr, <|$TrieValue -> _|>, Infinity]};
@@ -212,9 +216,13 @@ TrieNodeCounts[tr_] :=
     ];
 
 Clear[TrieDepth];
+SyntaxInformation[TrieDepth] = { "ArgumentsPattern" -> { _ } };
 TrieDepth[tr_?TrieQ] := Depth[tr] - 2;
 
 Clear[TrieMerge];
+
+SyntaxInformation[TrieMerge] = { "ArgumentsPattern" -> { _, _ } };
+
 TrieMerge[<||>, <||>] := <||>;
 TrieMerge[t1_?TrieQ, t2_?TrieQ] :=
     Block[{ckey},
@@ -242,13 +250,19 @@ TrieMerge[{t1_Association, t2_Association}] :=
 Clear[TrieBlank];
 TrieBlank[] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 
-Clear[TrieMake, TrieInsert];
+Clear[TrieMake];
+
+SyntaxInformation[TrieMake] = { "ArgumentsPattern" -> { _, _. } };
 
 TrieMake[chars_List] := TrieMake[chars, 1];
 TrieMake[chars_List, v_Integer] := TrieMake[chars, v, v];
 TrieMake[chars_List, v_Integer, v0_Integer] :=
     Fold[<|#2 -> <|$TrieValue -> v, #1|>|> &, <|Last[chars] -> <|$TrieValue -> v0|>|>,
       Reverse@Most@chars];
+
+Clear[TrieInsert];
+
+SyntaxInformation[TrieInsert] = { "ArgumentsPattern" -> { _, _, _. } };
 
 TrieInsert[tr_?TrieQ, word_List] :=
     TrieMerge[tr, <|$TrieRoot -> Join[<|$TrieValue -> 1|>, TrieMake[word, 1]]|>];
@@ -265,6 +279,7 @@ TrieInsert[tr_, word_List, value_] :=
 (************************************************************)
 
 Clear[TrieCreate1];
+SyntaxInformation[TrieCreate1] = { "ArgumentsPattern" -> { _ } };
 TrieCreate1[{}] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 TrieCreate1[words : {_List ..}] :=
     Fold[TrieInsert, <|
@@ -272,6 +287,7 @@ TrieCreate1[words : {_List ..}] :=
 
 
 Clear[TrieCreate];
+SyntaxInformation[TrieCreate] = { "ArgumentsPattern" -> { _ } };
 TrieCreate[{}] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 TrieCreate[words : {_List ..}] :=
     Block[{},
@@ -282,8 +298,9 @@ TrieCreate[words : {_List ..}] :=
     ];
 
 Clear[TrieCreateBySplit];
+SyntaxInformation[TrieCreateBySplit] = { "ArgumentsPattern" -> { _, _. } };
 TrieCreateBySplit[words : {_String ..}, patt_ : ""] :=
-    TrieCreate[ Map[StringSplit[#, ""]&, words]]
+    TrieCreate[ Map[StringSplit[#, ""]&, words]];
 
 
 (************************************************************)
@@ -291,6 +308,8 @@ TrieCreateBySplit[words : {_String ..}, patt_ : ""] :=
 (************************************************************)
 
 Clear[TrieSubTrie, TrieSubTriePathRec];
+
+SyntaxInformation[TrieSubTrie] = { "ArgumentsPattern" -> { _, _ } };
 
 TrieSubTrie::wargs = "The first argument is expected to be a trie; the second argument is expected to be a list.";
 
@@ -318,6 +337,7 @@ TrieSubTriePathRec[tr_, word_List] :=
 
 
 Clear[TriePosition];
+SyntaxInformation[TriePosition] = { "ArgumentsPattern" -> { _, _ } };
 TriePosition[tr_?TrieQ, word_List] :=
     If[TrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot, ___}],
       TrieSubTriePathRec[tr, Prepend[word, $TrieRoot] ],
@@ -325,6 +345,7 @@ TriePosition[tr_?TrieQ, word_List] :=
     ];
 
 Clear[TrieRetrieve];
+SyntaxInformation[TrieRetrieve] = { "ArgumentsPattern" -> { _, _ } };
 TrieRetrieve[tr_?TrieQ, wordArg_List] :=
     Block[{p, word = wordArg},
       If[TrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot, ___}], word = Prepend[word, $TrieRoot] ];
@@ -345,6 +366,9 @@ TrieRetrieve[tr_?TrieQ, wordArg_List] :=
 (************************************************************)
 
 Clear[TrieHasCompleteMatchQ];
+
+SyntaxInformation[TrieHasCompleteMatchQ] = { "ArgumentsPattern" -> { _, _ } };
+
 TrieHasCompleteMatchQ[tr_?TrieQ, word_List ] :=
     Block[{pos, b},
       pos = TriePosition[tr, word];
@@ -361,6 +385,9 @@ TrieHasCompleteMatchQ[tr_?TrieQ, word_List ] :=
     ];
 
 Clear[TrieContains];
+
+SyntaxInformation[TrieContains] = { "ArgumentsPattern" -> { _, _ } };
+
 TrieContains[tr_?TrieQ, wordArg_List ] :=
     Block[{pos, word = wordArg},
 
@@ -378,6 +405,9 @@ TrieContains[tr_?TrieQ, wordArg_List ] :=
 TrieMemberQ = TrieContains;
 
 Clear[TrieKeyExistsQ];
+
+SyntaxInformation[TrieKeyExistsQ] = { "ArgumentsPattern" -> { _, _ } };
+
 TrieKeyExistsQ[ tr_?TrieQ, wordArg_List ] :=
     Block[{pos, word = wordArg},
       If[ TrieWithTrieRootQ[tr] && !MatchQ[word, {$TrieRoot, ___}], word = Prepend[word, $TrieRoot] ];
@@ -394,6 +424,8 @@ TrieKeyQ = TrieKeyExistsQ;
 (************************************************************)
 
 Clear[TrieNodeProbabilities, TrieNodeProbabilitiesRec];
+
+SyntaxInformation[TrieNodeProbabilities] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
 Options[TrieNodeProbabilities] = {"ProbabilityModifier" -> N};
 Options[TrieNodeProbabilitiesRec] = Options[TrieNodeProbabilities];
@@ -423,6 +455,8 @@ Clear[TrieValueTotal];
 TrieValueTotal[trb_?TrieBodyQ] := Total[Map[#[$TrieValue] &, KeyDrop[trb, $TrieValue]]];
 
 Clear[TrieLeafProbabilities, TrieLeafProbabilitiesRec];
+
+SyntaxInformation[TrieLeafProbabilities] = { "ArgumentsPattern" -> { _ } };
 
 TrieLeafProbabilities::ntnode = "Non trie node was encountered: `1`. A trie node has two elements prefix and frequency.";
 
@@ -483,6 +517,8 @@ NodeJoin[n1_, n2_] := List[n1, n2];
 
 Clear[TrieShrink, TrieShrinkRec];
 
+SyntaxInformation[TrieShrink] = { "ArgumentsPattern" -> { _ } };
+
 TrieShrink::wargs = "The first argument is expected to be a trie; the second, optional argument is expected to a string.";
 
 TrieShrink[tr_?TrieQ] := TrieShrinkRec[tr];
@@ -524,6 +560,9 @@ TrieShrinkRec[tr_?TrieRuleQ] :=
 
 (* I am not particularly happy with using FixedPoint. This has to be profiled. *)
 Clear[TrieRootToLeafPaths];
+
+SyntaxInformation[TrieRootToLeafPaths] = { "ArgumentsPattern" -> { _ } };
+
 TrieRootToLeafPaths[tr_?TrieQ] :=
     Map[List @@@ Most[#[[1]]] &,
       FixedPoint[
@@ -569,6 +608,8 @@ TrieRootToLeafPathProbabilityRules[tr_?TrieQ] :=
 
 Clear[TrieGetWords];
 
+SyntaxInformation[TrieGetWords] = { "ArgumentsPattern" -> { _, _ } };
+
 TrieGetWords::args = "The first of argument is expected to be a trie, the second argument is expected to be a list or All";
 
 TrieGetWords[ tr_?TrieQ, word : ( _List | All ) : All ] :=
@@ -595,6 +636,9 @@ TrieGetWords[___] :=
 (************************************************************)
 
 Clear[TriePrune, TriePruneRec];
+
+SyntaxInformation[TrieMap] = { "ArgumentsPattern" -> { _, _ } };
+
 TriePrune[trie_?TrieQ, maxLevel_Integer] :=
     Block[{},
       Association[TriePruneRec[First @ Normal @ trie, maxLevel, 0]]
@@ -621,6 +665,8 @@ TriePruneRec[tr_?TrieRuleQ, maxLevel_Integer, level_Integer] :=
 (************************************************************)
 
 Clear[TrieMap, TrieMapRec];
+
+SyntaxInformation[TrieMap] = { "ArgumentsPattern" -> {_, _, _ } };
 
 TrieMap::funcs = "At least one of the second and third argument has to be a function.";
 
@@ -773,6 +819,7 @@ ParetoThresholdRemove[tr_?TrieRuleQ, paretoFraction_?NumberQ, postfix_, removeBo
 (************************************************************)
 
 Clear[TrieToRules];
+SyntaxInformation[TrieToRules] = { "ArgumentsPattern" -> { _, _. } };
 TrieToRules[tree_?TrieQ] := Block[{ORDER = 0}, TrieToRules[tree, 0, 0]];
 TrieToRules[tree_, level_, order_] :=
     Block[{nodeRules, k, v},
@@ -798,6 +845,7 @@ GrFramed[text_] :=
       FrameStyle -> RGBColor[0.94, 0.85, 0.36], FrameMargins -> Automatic}];
 
 Clear[TrieForm];
+SyntaxInformation[TrieForm] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 Options[TrieForm] = Options[LayeredGraphPlot];
 TrieForm[mytrie_?TrieQ, opts : OptionsPattern[]] :=
     LayeredGraphPlot[
@@ -806,6 +854,7 @@ TrieForm[mytrie_?TrieQ, opts : OptionsPattern[]] :=
       VertexShapeFunction -> (Text[GrFramed[#2[[1]]], #1] &), PlotTheme -> "Classic" ];
 
 Clear[TrieToJSON];
+SyntaxInformation[TrieToJSON] = { "ArgumentsPattern" -> { _ } };
 TrieToJSON[tr_?TrieQ] := TrieToJSON[First@Normal@tr];
 TrieToJSON[tr_?TrieRuleQ] :=
     Block[{k = First@tr},
@@ -814,6 +863,7 @@ TrieToJSON[tr_?TrieRuleQ] :=
     ];
 
 Clear[TrieToListTrie];
+SyntaxInformation[TrieToListTrie] = { "ArgumentsPattern" -> { _ } };
 TrieToListTrie[tr_?TrieQ] := TrieToListTrie[First@Normal@tr] /. $TrieRoot -> {};
 TrieToListTrie[tr_?TrieRuleQ] :=
     Block[{k = First@tr},
@@ -825,9 +875,14 @@ TrieToListTrie[tr_?TrieRuleQ] :=
 (* TrieComparisonGrid                                       *)
 (************************************************************)
 
-ClearAll[TrieComparisonGrid];
+Clear[TrieComparisonGrid];
+
+SyntaxInformation[TrieComparisonGrid] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
+
 SetAttributes[TrieComparisonGrid, HoldAll];
+
 Options[TrieComparisonGrid] = Union[Options[Graphics], Options[Grid], {"NumberFormPrecision" -> 3}];
+
 TrieComparisonGrid[trs_List, opts : OptionsPattern[]] :=
     Block[{graphOpts, gridOpts, nfp},
       graphOpts = Select[{opts}, MemberQ[Options[Graphics][[All, 1]], #[[1]]] &];
@@ -849,6 +904,8 @@ TrieComparisonGrid[trs_List, opts : OptionsPattern[]] :=
 (************************************************************)
 
 Clear[TrieClassify];
+
+SyntaxInformation[TrieClassify] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
 
 TrieClassify::notkey = "The second argument is not key in the trie: `1`.";
 
