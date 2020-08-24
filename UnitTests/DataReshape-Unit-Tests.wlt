@@ -170,6 +170,28 @@ VerificationTest[
   TestID -> "ToLongForm-Automatic-Equivalence-3"
 ];
 
+VerificationTest[
+  vInds = Range[ 2, Dimensions[dsSmallWithIDs][[2]] ];
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, 1, vInds ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, 1, Automatic ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Automatic-Equivalence-4"
+];
+
+VerificationTest[
+  vInds = Range[ 1, Dimensions[dsSmallWithIDs][[2]] ];
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, 0, vInds ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, 0, Automatic ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Automatic-Equivalence-5"
+];
+
 (***********************************************************)
 (* To long form failure                                    *)
 (***********************************************************)
@@ -183,6 +205,38 @@ VerificationTest[
   ,
   TestID -> "ToLongForm-fail-1"
 ];
+
+VerificationTest[
+  ToLongForm[ dsSmallWithIDs, "blah", {"a", "b"}]
+  ,
+  $Failed
+  ,
+  {ToLongForm::colkeys}
+  ,
+  TestID -> "ToLongForm-fail-2"
+];
+
+VerificationTest[
+  ToLongForm[ dsSmallWithIDs, "ID", {"blah", "b"}]
+  ,
+  $Failed
+  ,
+  {ToLongForm::colkeys}
+  ,
+  TestID -> "ToLongForm-fail-3"
+];
+
+
+VerificationTest[
+  ToLongForm[ dsLargeWithIDs, "ID", {"a", "b"}]
+  ,
+  $Failed
+  ,
+  {ToLongForm::nocolkeys}
+  ,
+  TestID -> "ToLongForm-fail-4"
+];
+
 
 (***********************************************************)
 (* To wide form                                            *)
