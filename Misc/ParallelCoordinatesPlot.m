@@ -61,6 +61,9 @@ ParallelCoordinatesPlot::args = "The expected arguments are \
 (3) minmax pairs. \
 The number of the column names should agree with the number of columns in the first argument.";
 
+ParallelCoordinatesPlot::ncoln = "The second argument is expected to be Automatic or \
+a list with length that equals the number of columns in the data.";
+
 ParallelCoordinatesPlot::optao = "The value of the option \"AxesOrder\" is expected to be \
 a list of indexes with the same length as the number of columns in the first argument, or Automatic, or Random.";
 
@@ -68,6 +71,7 @@ ParallelCoordinatesPlot::optc = "The value of the option \"Colors\" is expected 
 an association with keys that correspond to the keys of the first argument, or Automatic, or Random.";
 
 ParallelCoordinatesPlot::optlo = "The value of the option \"LabelsOffset\" is expected to be a number.";
+
 
 Options[ParallelCoordinatesPlot] =
     Join[
@@ -98,6 +102,11 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
         TrueQ[lblOff === Automatic] && !horizontalQ, lblOff = -0.1,
         !NumberQ[lblOff],
         Message[ParallelCoordinatesPlot::optlo];
+        Return[$Failed]
+      ];
+
+      If[ Length[colNames] != Length[ data[[1]] ],
+        Message[ParallelCoordinatesPlot::ncoln];
         Return[$Failed]
       ];
 
