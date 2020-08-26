@@ -71,14 +71,20 @@ ParallelCoordinatesPlot::optao = "The value of the option \"AxesOrder\" is expec
 a list of indexes with the same length as the number of columns in the first argument, or Automatic, or Random.";
 
 ParallelCoordinatesPlot::optc = "The value of the option \"Colors\" is expected to be \
-an association with keys that correspond to the keys of the first argument, or Automatic, or Random.";
+an association with keys that correspond to the keys of the first argument, a string, Automatic, or Random.";
 
 ParallelCoordinatesPlot::optlo = "The value of the option \"LabelsOffset\" is expected to be a number.";
 
 
 Options[ParallelCoordinatesPlot] =
     Join[
-      {"Colors" -> Automatic, "AxesOrder" -> Automatic, Direction -> "Horizontal", "LabelsOffset" -> Automatic, PlotStyle -> Automatic},
+      {
+        "AxesOrder" -> Automatic,
+        "Colors" -> Automatic,
+        "Direction" -> "Horizontal",
+        "LabelsOffset" -> Automatic,
+        PlotStyle -> Automatic
+      },
       Options[Graphics]
     ];
 
@@ -94,10 +100,17 @@ ParallelCoordinatesPlot[data_?MatrixQ, Automatic, minMaxes_, opts : OptionsPatte
 ParallelCoordinatesPlot[data_?MatrixQ, colNames_, Automatic, opts : OptionsPattern[]] :=
     ParallelCoordinatesPlot[data, colNames, MinMax /@ Transpose[data], opts];
 
-ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : OptionsPattern[]] :=
-    Block[{pstyle, horizontalQ, lblOff, divisions, data2, grBase, grid, xs, n = 5, c = 0.05, dirFunc = Identity },
+ParallelCoordinatesPlot[data_?MatrixQ, colNamesArg_List, minMaxes_?MatrixQ, opts : OptionsPattern[]] :=
+    Block[{colNames = colNamesArg, axesOrder, pstyle, horizontalQ, lblOff, divisions, data2, grBase, grid, xs, n = 5, c = 0.05, dirFunc = Identity },
 
-      horizontalQ = ! TrueQ[ MemberQ[ {"Vertical", "FromAbove"}, OptionValue[ParallelCoordinatesPlot, Direction] ] ];
+      axesOrder = OptionValue[ParallelCoordinatesPlot, "AxesOrder"];
+
+      If[ Length[colNames] != Length[ data[[1]] ],
+        Message[ParallelCoordinatesPlot::ncoln];
+        Return[$Failed]
+      ];
+
+      horizontalQ = ! TrueQ[ MemberQ[ {"Vertical", "FromAbove"}, OptionValue[ParallelCoordinatesPlot, "Direction"] ] ];
 
       lblOff = OptionValue[ParallelCoordinatesPlot, "LabelsOffset"];
       Which[
@@ -108,18 +121,28 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
         Return[$Failed]
       ];
 
-      If[ Length[colNames] != Length[ data[[1]] ],
-        Message[ParallelCoordinatesPlot::ncoln];
-        Return[$Failed]
-      ];
-
       pstyle = OptionValue[ParallelCoordinatesPlot, PlotStyle];
       If[ TrueQ[pstyle === Automatic], pstyle = Nothing ];
+
+      Which[
+        TrueQ[axesOrder === Automatic],
+        axesOrder = Range[Dimensions[data][[2]]],
+
+        TrueQ[axesOrder === Random],
+        axesOrder = RandomSample[Range[Dimensions[data][[2]]]],
+
+        !( VectorQ[axesOrder, IntegerQ] && Length[axesOrder] == Dimensions[data][[2]] && Range[Length[axesOrder]] == Sort[axesOrder] ),
+        Message[ParallelCoordinatesPlot::optao];
+        Return[$Failed];
+      ];
 
       divisions = FindDivisions[#, n] & /@ minMaxes;
       data2 = Transpose[MapThread[Rescale[#1, #2, {0, 1}] &, {Transpose[data], MinMax /@ divisions}]];
       xs = Range[Length[data[[1]]]];
-      (*      grBase = ListLinePlot[data2, opts, Axes -> False];*)
+
+      data2 = data2[[All, axesOrder]];
+      colNames = colNames[[ axesOrder ]];
+      divisions = divisions[[ axesOrder ]];
 
       dirFunc = If[ horizontalQ, Identity, Reverse];
 
@@ -139,7 +162,9 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
               MapThread[Text[#2, {lblOff, #1}, {Right, Center}] &, {xs, colNames}]
             ]
           }];
+
       Show[grBase, grid]
+
     ] /; MatrixQ[data, NumberQ] && MatrixQ[minMaxes, NumberQ] && Dimensions[minMaxes] == {Dimensions[data][[2]], 2};
 
 (*-----------------------------------------------------------*)
@@ -182,7 +207,11 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), 
         cols = AssociationThread[Keys[aData], ColorData["Pastel", "ColorFunction"] /@ Rescale[Range[Length[aData]]]],
 
         TrueQ[cols === Random],
-        cols = AssociationThread[Keys[aData], RandomSample[ColorData[11, "ColorList"], Length[aData]]]
+        cols = AssociationThread[Keys[aData], RandomSample[ColorData[11, "ColorList"], Length[aData]]],
+
+        StringQ[cols],
+        cols = AssociationThread[Keys[aData], ColorData[cols, "ColorFunction"] /@ Rescale[Range[Length[aData]]]]
+
       ];
 
       If[! (AssociationQ[cols] && Length[Intersection[Keys[cols], Keys[aData]]] == Length[aData]),
@@ -191,25 +220,13 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), 
       ];
       cols = cols /@ Keys[aData];
 
-      Which[
-        TrueQ[axesOrder === Automatic],
-        axesOrder = Range[Dimensions[aData[[1]]][[2]]],
-
-        TrueQ[axesOrder === Random],
-        axesOrder = RandomSample[Range[Dimensions[aData[[1]]][[2]]]],
-
-        !( VectorQ[axesOrder, IntegerQ] && Length[axesOrder] == Dimensions[aData[[1]]][[2]] && Range[Length[axesOrder]] == Sort[axesOrder] ),
-        Message[ParallelCoordinatesPlot::optao];
-        Return[$Failed];
-      ];
-
       minMaxes = MinMax /@ Transpose[Join @@ Values[aData]];
       grs =
           MapThread[
             ParallelCoordinatesPlot[
-              #1[[All, axesOrder]],
-              colNames[[axesOrder]],
-              minMaxes[[axesOrder]],
+              #1,
+              colNames,
+              minMaxes,
               PlotStyle -> Prepend[pstyle, #2], opts] &,
             {Values@aData, cols}
           ];
