@@ -157,7 +157,7 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), 
         colNames = Range@Length@Values[aData][[1, 1]]
       ];
 
-      If[ Length[colNames] != Length[ Values[aDdata][[1, 1]] ],
+      If[ Length[colNames] != Length[ Values[aData][[1, 1]] ],
         Message[ParallelCoordinatesPlot::ncoln];
         Return[$Failed]
       ];
