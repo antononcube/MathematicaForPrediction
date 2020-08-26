@@ -236,5 +236,14 @@ VerificationTest[
   TestID -> "WrongArgs-4"
 ];
 
+VerificationTest[
+  MatchQ[ #, Legended[ _Graphics, _ ] ]& @ParallelCoordinatesPlot[aRData, Automatic, "blah" ]
+  ,
+  True
+  ,
+  {ParallelCoordinatesPlot::arg3}
+  ,
+  TestID -> "WrongArgs-5"
+];
 
 EndTestSection[]

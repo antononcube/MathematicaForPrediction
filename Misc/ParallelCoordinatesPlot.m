@@ -61,6 +61,9 @@ ParallelCoordinatesPlot::args = "The expected arguments are \
 (3) minmax pairs. \
 The number of the column names should agree with the number of columns in the first argument.";
 
+ParallelCoordinatesPlot::arg3 = "If the first argument is an association of matrices \
+then the third argument is expected to be Automatic (if given.)";
+
 ParallelCoordinatesPlot::ncoln = "The second argument is expected to be Automatic or \
 a list with length that equals the number of columns in the data.";
 
@@ -150,7 +153,7 @@ ParallelCoordinatesPlot[aData : Association[ (_ -> _?MatrixQ) .. ], Automatic, o
 ParallelCoordinatesPlot[aData : Association[ (_ -> _?MatrixQ) .. ], colNames_List, opts : OptionsPattern[] ] :=
     ParallelCoordinatesPlot[aData, colNames, Automatic, opts ];
 
-ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), Automatic, opts : OptionsPattern[]] :=
+ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), minMaxDummy_, opts : OptionsPattern[]] :=
     Block[{colNames = colNamesArg, minMaxes, cols, axesOrder, pstyle, grs},
 
       If[ TrueQ[colNames === Automatic],
@@ -160,6 +163,10 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), 
       If[ Length[colNames] != Length[ Values[aData][[1, 1]] ],
         Message[ParallelCoordinatesPlot::ncoln];
         Return[$Failed]
+      ];
+
+      If[ !TrueQ[minMaxDummy === Automatic],
+        Message[ParallelCoordinatesPlot::arg3];
       ];
 
       cols = OptionValue[ParallelCoordinatesPlot, "Colors"];
