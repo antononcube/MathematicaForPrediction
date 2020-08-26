@@ -217,13 +217,23 @@ VerificationTest[
 ];
 
 VerificationTest[
+  ParallelCoordinatesPlot[aRData, {"var1", "var2"} ]
+  ,
+  $Failed
+  ,
+  {ParallelCoordinatesPlot::ncoln}
+  ,
+  TestID -> "WrongArgs-3"
+];
+
+VerificationTest[
   ParallelCoordinatesPlot[matData, Automatic, "blah" ]
   ,
   $Failed
   ,
   {ParallelCoordinatesPlot::args}
   ,
-  TestID -> "WrongArgs-3"
+  TestID -> "WrongArgs-4"
 ];
 
 
