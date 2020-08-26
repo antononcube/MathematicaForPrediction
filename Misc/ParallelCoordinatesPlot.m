@@ -159,6 +159,7 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNamesArg_List, minMaxes_?MatrixQ, opts
               {xs, divisions}],
             If[ horizontalQ,
               MapThread[Text[#2, {#1, 0}, {Center, lblOff}] &, {xs, colNames}],
+              (*ELSE*)
               MapThread[Text[#2, {lblOff, #1}, {Right, Center}] &, {xs, colNames}]
             ]
           }];
