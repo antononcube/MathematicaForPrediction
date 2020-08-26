@@ -76,9 +76,15 @@ Options[ParallelCoordinatesPlot] =
     ];
 
 ParallelCoordinatesPlot[data_?MatrixQ, opts : OptionsPattern[]] :=
-    ParallelCoordinatesPlot[data, Range[Length[data[[1]]]], MinMax /@ Transpose[data], opts];
+    ParallelCoordinatesPlot[data, Automatic, Automatic, opts];
 
-ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, opts : OptionsPattern[]] :=
+ParallelCoordinatesPlot[data_?MatrixQ, colNames_, opts : OptionsPattern[]] :=
+    ParallelCoordinatesPlot[data, colNames, Automatic, opts];
+
+ParallelCoordinatesPlot[data_?MatrixQ, Automatic, minMaxes_, opts : OptionsPattern[]] :=
+    ParallelCoordinatesPlot[data, Range[Length[data[[1]]]], minMaxes, opts];
+
+ParallelCoordinatesPlot[data_?MatrixQ, colNames_, Automatic, opts : OptionsPattern[]] :=
     ParallelCoordinatesPlot[data, colNames, MinMax /@ Transpose[data], opts];
 
 ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : OptionsPattern[]] :=
@@ -124,8 +130,23 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
       Show[grBase, grid]
     ] /; MatrixQ[data, NumberQ] && MatrixQ[minMaxes, NumberQ] && Dimensions[minMaxes] == {Dimensions[data][[2]], 2};
 
-ParallelCoordinatesPlot[aData_Association, colNames_List, opts : OptionsPattern[]] :=
-    Block[{minMaxes, cols, axesOrder, pstyle, grs},
+(*-----------------------------------------------------------*)
+
+ParallelCoordinatesPlot[aData : Association[ (_ -> _?MatrixQ) .. ], opts : OptionsPattern[] ] :=
+    ParallelCoordinatesPlot[aData, Automatic, Automatic, opts ];
+
+ParallelCoordinatesPlot[aData : Association[ (_ -> _?MatrixQ) .. ], Automatic, opts : OptionsPattern[] ] :=
+    ParallelCoordinatesPlot[aData, Automatic, Automatic, opts ];
+
+ParallelCoordinatesPlot[aData : Association[ (_ -> _?MatrixQ) .. ], colNames_List, opts : OptionsPattern[] ] :=
+    ParallelCoordinatesPlot[aData, colNames, Automatic, opts ];
+
+ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), Automatic, opts : OptionsPattern[]] :=
+    Block[{colNames = colNamesArg, minMaxes, cols, axesOrder, pstyle, grs},
+
+      If[ TrueQ[colNames === Automatic],
+        colNames = Range@Length@Values[aData][[1, 1]]
+      ];
 
       cols = OptionValue[ParallelCoordinatesPlot, "Colors"];
       axesOrder = OptionValue[ParallelCoordinatesPlot, "AxesOrder"];
