@@ -62,10 +62,13 @@ VerificationTest[(* 1 *)
 
 
 VerificationTest[
-  SeedRandom[232];
+  SeedRandom[5];
   n = 70;
-  aRData = GroupBy[MapThread[Prepend, {Sort@RandomReal[{-4, 10}, {n, 5}], Sort@RandomChoice[RandomWord[3], n]}], First, #[[All, 2 ;; -1]] &];
-  Apply[And, MatrixQ /@ Values[aRData] ]
+  matCore = RandomReal[{-10, 10}, {n, 5}];
+  matCore = Transpose[Rescale[#, MinMax[#], {-1, 1} * RandomReal[]] & /@ Transpose[matCore]];
+  aRData = GroupBy[MapThread[Prepend, {Sort@matCore, Sort@RandomChoice[RandomWord[3], n]}], First, #[[All, 2 ;; -1]] &];
+  lsRDataColNames = Style[#, FontSize -> 20] & /@ MapIndexed[ToString[#2[[1]]] <> "-" <> #1 &, RandomWord[Length@aRData[[1, 1]]]];
+  Apply[And, MatrixQ /@ aRData]
   ,
   True
   ,
@@ -244,6 +247,26 @@ VerificationTest[
   {ParallelCoordinatesPlot::arg3}
   ,
   TestID -> "WrongArgs-5"
+];
+
+VerificationTest[
+  ParallelCoordinatesPlot[aRData, "AxesOrder" -> {5, 3, 3, 2, 1}]
+  ,
+  $Failed
+  ,
+  {ParallelCoordinatesPlot::optao}
+  ,
+  TestID -> "WrongOptions-1"
+];
+
+VerificationTest[
+  ParallelCoordinatesPlot[aRData, "Colors" -> {5, 3}]
+  ,
+  $Failed
+  ,
+  {ParallelCoordinatesPlot::optc}
+  ,
+  TestID -> "WrongOptions-2"
 ];
 
 EndTestSection[]
