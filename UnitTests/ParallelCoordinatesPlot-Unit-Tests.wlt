@@ -51,8 +51,7 @@ BeginTestSection["ParallelCoordinatesPlot-Unit-Tests.wlt"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    (*    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/ParallelCoordinatesPlot.m"],*)
-    Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/Misc/ParallelCoordinatesPlot.m"],
+    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/ParallelCoordinatesPlot.m"],
     Greater[Length[DownValues[ParallelCoordinatesPlot`ParallelCoordinatesPlot]], 0]
   ]
   ,
@@ -191,5 +190,41 @@ VerificationTest[
   ,
   TestID -> "Association-5"
 ];
+
+
+(************************************************************)
+(* Messages                                                 *)
+(************************************************************)
+
+VerificationTest[
+  ParallelCoordinatesPlot[dfd, Automatic]
+  ,
+  $Failed
+  ,
+  {ParallelCoordinatesPlot::args}
+  ,
+  TestID -> "WrongArgs-1"
+];
+
+VerificationTest[
+  ParallelCoordinatesPlot[matData, {"var1", "var2"} ]
+  ,
+  $Failed
+  ,
+  {ParallelCoordinatesPlot::ncoln}
+  ,
+  TestID -> "WrongArgs-2"
+];
+
+VerificationTest[
+  ParallelCoordinatesPlot[matData, Automatic, "blah" ]
+  ,
+  $Failed
+  ,
+  {ParallelCoordinatesPlot::args}
+  ,
+  TestID -> "WrongArgs-3"
+];
+
 
 EndTestSection[]
