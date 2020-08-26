@@ -232,7 +232,7 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | None | _L
           MapThread[
             ParallelCoordinatesPlot[
               #1,
-              If[ #3 == 1, colNames, None],
+              If[ #3 == Length[aData], colNames, None],
               minMaxes,
               If[ #3 == Length[aData], "PlotAxesGrid" -> plotAxesGridQ, "PlotAxesGrid" -> False],
               PlotStyle -> Prepend[pstyle, #2], opts] &,
