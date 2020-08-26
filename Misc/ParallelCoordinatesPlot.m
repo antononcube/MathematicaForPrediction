@@ -75,7 +75,7 @@ ParallelCoordinatesPlot::optlo = "The value of the option \"LabelsOffset\" is ex
 
 Options[ParallelCoordinatesPlot] =
     Join[
-      {"Colors" -> Automatic, "AxesOrder" -> Automatic, Direction-> "Horizontal", "LabelsOffset" -> Automatic, PlotStyle -> Automatic},
+      {"Colors" -> Automatic, "AxesOrder" -> Automatic, Direction -> "Horizontal", "LabelsOffset" -> Automatic, PlotStyle -> Automatic},
       Options[Graphics]
     ];
 
@@ -116,7 +116,7 @@ ParallelCoordinatesPlot[data_?MatrixQ, colNames_List, minMaxes_?MatrixQ, opts : 
       divisions = FindDivisions[#, n] & /@ minMaxes;
       data2 = Transpose[MapThread[Rescale[#1, #2, {0, 1}] &, {Transpose[data], MinMax /@ divisions}]];
       xs = Range[Length[data[[1]]]];
-(*      grBase = ListLinePlot[data2, opts, Axes -> False];*)
+      (*      grBase = ListLinePlot[data2, opts, Axes -> False];*)
 
       dirFunc = If[ horizontalQ, Identity, Reverse];
 
@@ -155,6 +155,11 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), 
 
       If[ TrueQ[colNames === Automatic],
         colNames = Range@Length@Values[aData][[1, 1]]
+      ];
+
+      If[ Length[colNames] != Length[ Values[aDdata][[1, 1]] ],
+        Message[ParallelCoordinatesPlot::ncoln];
+        Return[$Failed]
       ];
 
       cols = OptionValue[ParallelCoordinatesPlot, "Colors"];
@@ -201,7 +206,13 @@ ParallelCoordinatesPlot[aData_Association, colNamesArg : ( Automatic | _List ), 
               PlotStyle -> Prepend[pstyle, #2], opts] &,
             {Values@aData, cols}
           ];
-      Legended[Show[grs], LineLegend[cols, Keys[aData]]]
+
+      If[ FreeQ[grs, $Failed],
+        Legended[Show[grs], LineLegend[cols, Keys[aData]]],
+        (* ELSE *)
+        $Failed
+      ]
+
     ] /; MatrixQ[Join @@ Values[aData], NumberQ];
 
 ParallelCoordinatesPlot[___] :=
