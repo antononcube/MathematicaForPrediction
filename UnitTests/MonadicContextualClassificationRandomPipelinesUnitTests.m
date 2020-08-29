@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2020 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -86,15 +86,15 @@ If[Length[SubValues[MonadicContextualClassification`ClConSplitData]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"]
 ];
 
-BeginPackage["MonadicContextualClassificationRandomPipelinesUnitTests`"]
+BeginPackage["MonadicContextualClassificationRandomPipelinesUnitTests`"];
 
-MakeOddQData::usage = "Make random test data."
+MakeOddQData::usage = "Make random test data.";
 
-MakeClConRandomPipelines::usage = "Make ClCon random pipelines."
+MakeClConRandomPipelines::usage = "Make ClCon random pipelines.";
 
-TestRunClConPipelines::usage = "Run ClCon pipelines using VerificationTest."
+TestRunClConPipelines::usage = "Run ClCon pipelines using VerificationTest.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 Needs["MonadicContextualClassification`"];
 Needs["ROCFunctions`"];
@@ -228,6 +228,6 @@ TestRunClConPipelines[ pipelines_, opts:OptionsPattern[] ] :=
 
     ];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]

@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2018 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2020 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -47,7 +47,7 @@
 
 *)
 
-BeginTestSection["MonadicContextualClassification-Unit-Tests"]
+BeginTestSection["MonadicContextualClassification-Unit-Tests"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
