@@ -21,7 +21,7 @@
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2017 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2020 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
@@ -592,8 +592,7 @@ ClConTakeVariableNames[xs_, context_Association] :=
 (**************************************************************)
 
 Clear[DatasetWithColumnNamesQ];
-DatasetWithColumnNamesQ[ds_Dataset] :=
-    FreeQ[ Normal[ds[1, Keys]], _Missing ];
+DatasetWithColumnNamesQ[ds_Dataset] := AssociationQ @ Normal @ ds[1];
 DatasetWithColumnNamesQ[___] := False;
 
 
@@ -693,7 +692,7 @@ ClConAssignVariableNames[___][xs_, context_Association] :=
 
 
 (************************************************************)
-(* ClConSummarizeData                                       *)
+(* GetData                                                  *)
 (************************************************************)
 
 Clear[GetData];
@@ -714,7 +713,14 @@ GetData[xs_, context_] :=
       ]
     ];
 
-Clear[ClConSummarizeData, ClConSummarizeDataLongForm];
+
+(************************************************************)
+(* ClConSummarizeData                                       *)
+(************************************************************)
+
+Clear[ClConSummarizeData];
+
+SyntaxInformation[ClConSummarizeData] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConSummarizeData] = Join[ {"Type" -> Automatic, "Echo"->True }, Options[DataColumnsSummary]];
 
@@ -763,6 +769,14 @@ ClConSummarizeData[opts:OptionsPattern[]][xs_, context_] :=
 
 ClConSummarizeData[___][__] := $ClConFailure;
 
+
+(************************************************************)
+(* ClConSummarizeDataLongForm                               *)
+(************************************************************)
+
+Clear[ClConSummarizeDataLongForm];
+
+SyntaxInformation[ClConSummarizeDataLongForm] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConSummarizeDataLongForm] = Join[ {"Echo"->True}, Options[DataColumnsSummary]];
 
@@ -818,12 +832,13 @@ ClConSummarizeDataLongForm[opts:OptionsPattern[]][xs_, context_] :=
 ClConSummarizeDataLongForm[___][__] := $ClConFailure;
 
 
-
 (************************************************************)
 (* ClConEchoDataSummary                                     *)
 (************************************************************)
 
 Clear[ClConEchoDataSummary];
+
+SyntaxInformation[ClConEchoDataSummary] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConEchoDataSummary] = Options[ClConSummarizeData];
 
@@ -848,6 +863,8 @@ ClConEchoDataSummary[___][__] := $ClConFailure;
 
 Clear[ClConDeleteMissing];
 
+SyntaxInformation[ClConDeleteMissing] = { "ArgumentsPattern" -> { } };
+
 ClConDeleteMissing[$ClConFailure] := $ClConFailure;
 
 ClConDeleteMissing[xs_, context_] := ClConDeleteMissing[][xs, context];
@@ -871,7 +888,7 @@ ClConDeleteMissing[___][__] := $ClConFailure;
 (************************************************************)
 (* ClConMakeClassifier                                      *)
 (************************************************************)
-Clear[ClConMethodQ, ClConMethodListQ, ClConResamplingMethodListQ, ClConMethodSpecQ, ClConClassifierQ, ClConMakeClassifier];
+Clear[ClConMethodQ, ClConMethodListQ, ClConResamplingMethodListQ, ClConMethodSpecQ, ClConClassifierQ];
 
 ClConMethodQ[x_] := StringQ[x] || MatchQ[ x, {_String, _Rule..} ]; (* And check is it known by Classify. *)
 
@@ -883,6 +900,10 @@ ClConResamplingMethodQ[x_] := MatchQ[ x, (Automatic | _Association | _String | {
 ClConResamplingMethodListQ[x_] := MatchQ[ x, { _?ClConResamplingMethodQ .. } ];
 
 ClConMethodSpecQ[x_] := ClConMethodQ[x] || ClConResamplingMethodQ[x] || ClConResamplingMethodListQ[x];
+
+Clear[ClConMakeClassifier];
+
+SyntaxInformation[ClConMakeClassifier] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
 
 ClConClassifierQ[ cl_ ] :=
     MatchQ[ cl, _ClassifierFunction] ||
@@ -964,7 +985,9 @@ ClConTrainClassifier = ClConMakeClassifier;
 (************************************************************)
 (* ClConClassifierMeasurements                              *)
 (************************************************************)
-CleaAll[ClConClassifierMeasurements];
+Clear[ClConClassifierMeasurements];
+
+SyntaxInformation[ClConClassifierMeasurements] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
 
 Options[ClConClassifierMeasurements] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
@@ -1033,7 +1056,9 @@ ClConClassifierMeasurements[___][xs_, context_Association] :=
 (************************************************************)
 (* ClConClassifierMeasurementsByThreshold                   *)
 (************************************************************)
-CleaAll[ClConClassifierMeasurementsByThreshold];
+Clear[ClConClassifierMeasurementsByThreshold];
+
+SyntaxInformation[ClConClassifierMeasurementsByThreshold] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
 
 Options[ClConClassifierMeasurementsByThreshold] = { Method -> Automatic, "ROCRange" -> Range[0,1,0.025]};
 
@@ -1083,6 +1108,8 @@ ClConClassifierMeasurementsByThreshold[___][xs_, context_Association] :=
 (* Note that there is an *Echo* version. This prompts as possible computation optimization. *)
 
 Clear[ClConROCData];
+
+SyntaxInformation[ClConROCData] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConROCData] = { "ROCRange" -> Automatic, "ClassLabels" -> All };
 
@@ -1155,6 +1182,8 @@ ClConROCData[___][xs_,context_Association] :=
 (************************************************************)
 Clear[ClConROCPlot];
 
+SyntaxInformation[ClConROCPlot] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
+
 Options[ClConROCPlot] = Join[ Options[ClConROCData], Options[ROCPlot], {"Echo"->True} ];
 
 ClConROCPlot[___][$ClConFailure] := $ClConFailure;
@@ -1217,6 +1246,8 @@ ClConROCPlot[___][xs_,context_] :=
 (* ClConROCLinePlot                                         *)
 (************************************************************)
 Clear[ClConROCListLinePlot];
+
+SyntaxInformation[ClConROCListLinePlot] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
 Options[ClConROCListLinePlot] = Join[ Options[ClConROCData], Options[ListLinePlot], {"Echo"->True} ];
 
@@ -1282,7 +1313,7 @@ ClConROCListLinePlot[rocFuncs:{_String...}, opts:OptionsPattern[]][xs_,context_]
 
 ClConROCListLinePlot[___][xs_,context_Association] :=
     Block[{},
-      Echo["The first argument is expected to be a list of strings that are names of ROC functions.", "ClConROCListLinePlot::"];
+      Echo["The first argument is expected to be a list of strings that are names of ROC functions.", "ClConROCListLinePlot:"];
       $ClConFailure
     ];
 
@@ -1292,13 +1323,15 @@ ClConROCListLinePlot[___][xs_,context_Association] :=
 (************************************************************)
 Clear[ClConSuggestROCThresholds];
 
+SyntaxInformation[ClConSuggestROCThresholds] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
+
 Options[ClConSuggestROCThresholds] = Options[ROCData];
 
 ClConSuggestROCThresholds[xs_, context_Association] := ClConSuggestROCThresholds[1][xs, context];
 
 ClConSuggestROCThresholds[][xs_, context_] := ClConSuggestROCThresholds[1][xs, context];
 
-ClConSuggestROCThresholds[n_Integer:1, opts:OptionsPattern[]][xs_, context_] :=
+ClConSuggestROCThresholds[n_Integer, opts:OptionsPattern[]][xs_, context_] :=
     Module[{rocData, rocPoints, rocDists},
 
       Which[
@@ -1322,12 +1355,20 @@ ClConSuggestROCThresholds[n_Integer:1, opts:OptionsPattern[]][xs_, context_] :=
           ];
 
       ClCon[ Keys[TakeSmallest[#, UpTo[n]]] & /@ rocDists, context]
+    ] /; n > 0;
+
+ClConSuggestROCThresholds[___][xs_,context_Association] :=
+    Block[{},
+      Echo["The first argument is expected to be a positive integer.", "ClConSuggestROCThresholds:"];
+      $ClConFailure
     ];
 
 (************************************************************)
 (* ClConAccuracyByVariableShuffling                         *)
 (************************************************************)
 Clear[ClConAccuracyByVariableShuffling];
+
+SyntaxInformation[ClConAccuracyByVariableShuffling] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConAccuracyByVariableShuffling] = { "ClassLabels" -> None };
 
@@ -1380,11 +1421,18 @@ ClConAccuracyByVariableShuffling[opts : OptionsPattern[]][xs_, context_] :=
       ]
     ];
 
+ClConAccuracyByVariableShuffling[___][xs_,context_Association] :=
+    Block[{},
+      Echo["No arguments are expected.", "ClConAccuracyByVariableShuffling:"];
+      $ClConFailure
+    ];
+
 (************************************************************)
 (* ClConReduceDimension                                     *)
 (************************************************************)
-
 Clear[ClConReduceDimension];
+
+SyntaxInformation[ClConReduceDimension] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
 Options[ClConReduceDimension] = { "Echo" -> True };
 
@@ -1440,9 +1488,14 @@ ClConReduceDimension[k_Integer, opts:OptionsPattern[]][xs_, context_] :=
           PlotRange -> All, PlotTheme -> "Detailed", Filling -> Axis, PlotStyle -> PointSize[0.02], ImageSize -> Small] &]
         ]
       ]
+    ] /; k > 0;
+
+ClConReduceDimension[___][xs_,context_Association] :=
+    Block[{},
+      Echo["The first argument is expected to be a positive integer.", "ClConReduceDimension:"];
+      $ClConFailure
     ];
 
-ClConReduceDimension[___][__] := $ClConFailure;
 
 (********************************************************************************************************************)
 (* Experimental functions                                                                                           *)
@@ -1456,6 +1509,8 @@ ClConReduceDimension[___][__] := $ClConFailure;
 (* ClConToLinearVectorSpaceRepresentation                   *)
 (************************************************************)
 Clear[ClConToLinearVectorSpaceRepresentation];
+
+SyntaxInformation[ClConToLinearVectorSpaceRepresentation] = { "ArgumentsPattern" -> { _. } };
 
 ClConToLinearVectorSpaceRepresentation[data:(_?MatrixQ|_Dataset)] :=
     Block[{catData, smats, resMat, res},
@@ -1490,6 +1545,8 @@ ClConToLinearVectorSpaceRepresentation[][xs_, context_] :=
 (* ClConOutlierPosition                                     *)
 (************************************************************)
 Clear[ClConOutlierPosition, ClConDataOutlierPosition];
+
+SyntaxInformation[ClConOutlierPosition] = { "ArgumentsPattern" -> { _., OptionsPattern[] } };
 
 Options[ClConOutlierPosition] = {
   "CentralItemFunction" -> Mean,
@@ -1595,10 +1652,19 @@ ClConOutlierPosition[opts:OptionsPattern[]][xs_, context_] :=
 
     ];
 
+ClConOutlierPosition[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "ClConOutlierPosition:"];
+      $ClConFailure
+    ];
+
+
 (************************************************************)
-(* ClConFindOutliersPerClassLabel                                *)
+(* ClConFindOutliersPerClassLabel                           *)
 (************************************************************)
 Clear[ClConFindOutliersPerClassLabel];
+
+SyntaxInformation[ClConFindOutliersPerClassLabel] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConFindOutliersPerClassLabel] = {
   "OutlierIdentifierParameters" -> (TopOutliers@*SPLUSQuartileIdentifierParameters),
@@ -1632,6 +1698,11 @@ ClConFindOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
       ClConUnit[res, context]
     ];
 
+ClConFindOutliersPerClassLabel[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "ClConFindOutliersPerClassLabel:"];
+      $ClConFailure
+    ];
 
 (************************************************************)
 (* ClConDropOutliersPerClassLabel                                *)
@@ -1652,6 +1723,8 @@ ClConFindOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
 *)
 
 Clear[ClConDropOutliersPerClassLabel];
+
+SyntaxInformation[ClConDropOutliersPerClassLabel] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConDropOutliersPerClassLabel] = Options[ClConFindOutliersPerClassLabel];
 
@@ -1682,11 +1755,18 @@ ClConDropOutliersPerClassLabel[opts : OptionsPattern[]][xs_, context_Association
       ClConUnit[res, context]
     ];
 
+ClConDropOutliersPerClassLabel[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "ClConDropOutliersPerClassLabel:"];
+      $ClConFailure
+    ];
 
 (************************************************************)
 (* ClConOutliersOperationsProcessing                        *)
 (************************************************************)
 Clear[ClConOutliersOperationsProcessing];
+
+SyntaxInformation[ClConOutliersOperationsProcessing] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
 Options[ClConOutliersOperationsProcessing] = Options[ClConFindOutliersPerClassLabel];
 
@@ -1759,6 +1839,13 @@ ClConOutliersOperationsProcessing[opts : OptionsPattern[]][xs_, context_Associat
 
       ClConUnit[res, context]
     ];
+
+ClConOutliersOperationsProcessing[___][__] :=
+    Block[{},
+      Echo["No arguments are expected.", "ClConOutliersOperationsProcessing:"];
+      $ClConFailure
+    ];
+
 
 End[]; (*`Private`*)
 
