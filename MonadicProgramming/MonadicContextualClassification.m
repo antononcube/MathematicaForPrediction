@@ -358,10 +358,46 @@ ClConToNormalClassifierData[ data_?MatrixQ, opts:OptionsPattern[] ] :=
 (**************************************************************)
 Clear[ClConSplitData];
 
-(* This function does not respect specified label column yet. *)
-Options[ClConSplitData] = {Method->"LabelsProportional", "ClassLabelColumn" -> Automatic};
+SyntaxInformation[ClConSplitData] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
 
-ClConSplitData[___][$ClConFailure] := $ClConFailure
+(* This function does not respect specified label column yet. *)
+Options[ClConSplitData] = {
+  "TrainingFraction" -> 0.75,
+  "ValidationFraction" -> 0,
+  Method->"LabelsProportional",
+  "ClassLabelColumn" -> Automatic};
+
+ClConSplitData[___][$ClConFailure] := $ClConFailure;
+
+ClConSplitData[opts:OptionsPattern[]][xs_, context_Association] :=
+    Block[{fr, valFr},
+
+      fr = OptionValue[ClConSplitData, "TrainingFraction"];
+
+      If[ TrueQ[fr === Automatic], fr = 0.75];
+
+      If[ !( NumberQ[fr] && 0 <= fr <= 1 ),
+        Echo[
+          "The value of the option \"TrainingFraction\" is expected to be Automatic or a number between 0 and 1.",
+          "ClConSplitData:"
+        ];
+        Return[$ClConFailure]
+      ];
+
+      valFr = OptionValue[ClConSplitData, "ValidationFraction"];
+
+      If[ TrueQ[valFr === Automatic], valFr = 0];
+
+      If[ !( NumberQ[valFr] && 0 <= valFr <= 1 ),
+        Echo[
+          "The value of the option \"ValidationFraction\" is expected to be Automatic or a number between 0 and 1.",
+          "ClConSplitData:"
+        ];
+        Return[$ClConFailure]
+      ];
+
+      ClConSplitData[fr, valFr, opts][xs, context]
+    ];
 
 ClConSplitData[fr_?NumberQ, opts:OptionsPattern[]][xs_, context_Association] :=
     ClConSplitData[fr, 0, opts][xs, context];
