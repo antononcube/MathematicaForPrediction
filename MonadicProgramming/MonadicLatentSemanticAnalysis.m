@@ -331,7 +331,7 @@ LSAMonSetWeightedDocumentTermMatrix[___][xs_, context_Association] :=
 (**************************************************************)
 
 Clear[LSAMonDocumentCollectionQ];
-LSAMonDocumentCollectionQ[x_] := AssociationQ[x] && VectorQ[ Values[x], StringQ ];
+LSAMonDocumentCollectionQ[x_] := AssociationQ[x] && ( VectorQ[ Values[x], StringQ ] || Apply[And, VectorQ[#, StringQ]& /@ Values[x] ] );
 
 Clear[LSAMonGetDocuments];
 
