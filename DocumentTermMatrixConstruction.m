@@ -117,7 +117,7 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List
 
         TrueQ[ stemmingRules === Automatic ],
         aDerivedStemmingRules = Association[ # -> WordData[#, "PorterStem"] & /@ Union[Flatten[docTerms]] ];
-        docTerms = Map[ aDerivedStemmingRules, docTerms]
+        docTerms = Map[ aDerivedStemmingRules, docTerms, {2}]
 
       ];
 
