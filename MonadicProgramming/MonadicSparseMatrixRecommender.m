@@ -2606,7 +2606,7 @@ SMRMonProveByMetadata[ itemNames : ( _String | {_String..} ), opts : OptionsPatt
 SMRMonProveByMetadata[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonProveByMetadata[profile : (_Association | Automatic), itemNames:( _String | {_String..} ), opts___]. " <>
+        "The expected signature is SMRMonProveByMetadata[profile : (_Association | _List | Automatic), itemNames:( _String | {_String..} ), opts___]. " <>
             "If profile is Automatic then the pipeline value is expected to be a valid profile.",
         "SMRMonProveByMetadata:"];
       $SMRMonFailure
@@ -2690,6 +2690,9 @@ SMRMonProveByHistory[ history_Association, itemNames : {_String..}, opts : Optio
       SMRMonUnit[ Join @@ res, context ]
     ];
 
+SMRMonProveByHistory[ Automatic, itemNames : ( _String | {_String..} ), opts : OptionsPattern[] ][ xs_, context_ ] :=
+    SMRMonProveByHistory[ itemNames, opts ][xs, context];
+
 SMRMonProveByHistory[ itemNames : ( _String | {_String..} ), opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{},
       If[ ScoredItemsQ[xs, context],
@@ -2702,7 +2705,8 @@ SMRMonProveByHistory[ itemNames : ( _String | {_String..} ), opts : OptionsPatte
 SMRMonProveByHistory[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonProveByHistory[history_Association, itemName : ( _String | {_String..} ), opts___] .",
+        "The expected signature is SMRMonProveByHistory[history : (_Association | _List | Automatic), itemNames:( _String | {_String..} ), opts___]. " <>
+            "If history is Automatic then the pipeline value is expected to be a valid history specification.",
         "SMRMonProveByHistory:"];
       $SMRMonFailure
     ];
