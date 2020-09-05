@@ -762,8 +762,10 @@ ImposeRowNames[rmat_SSparseMatrix, rowNames : Association[(_String -> _Integer) 
       rmatRowNames = RowNamesAssociation[rmat];
 
       aInds =
-          AssociationThread[Values[rmatRowNames],
-            Lookup[rowNames, #, None] & /@ Keys[rmatRowNames]];
+          AssociationThread[
+            Values[rmatRowNames],
+            Lookup[rowNames, Keys[rmatRowNames], None]
+          ];
 
       arules =
           Append[Map[{aInds[#[[1, 1]]], #[[1, 2]]} -> #[[2]] &,
