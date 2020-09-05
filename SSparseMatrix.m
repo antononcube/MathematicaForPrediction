@@ -773,8 +773,10 @@ ImposeRowNames[rmat_SSparseMatrix, rowNames : Association[(_String -> _Integer) 
           ];
 
       arules =
-          Append[Map[{aInds[#[[1, 1]]], #[[1, 2]]} -> #[[2]] &,
-            Most[arules]], Last[arules]];
+          Append[
+            Map[{aInds[#[[1, 1]]], #[[1, 2]]} -> #[[2]] &, Most[arules]],
+            Last[arules]
+          ];
       arules = DeleteCases[arules, {None, _Integer} -> _];
 
       ToSSparseMatrix[
