@@ -525,9 +525,14 @@ Round[SSparseMatrix[objArg_], args___] ^:=
     ];
 
 Total[SSparseMatrix[objArg_], args___] ^:=
-    Block[{obj = objArg},
-      obj["SparseMatrix"] = SparseArray[Total[ obj["SparseMatrix"], args]];
-      SSparseMatrix[obj]
+    Block[{obj = objArg, res},
+      res = Total[ obj["SparseMatrix"], args ];
+      If[NumericQ[res],
+        res,
+        (*ELSE*)
+        obj["SparseMatrix"] = SparseArray[res];
+        SSparseMatrix[obj]
+      ]
     ];
 
 Unitize[SSparseMatrix[objArg_]] ^:=
