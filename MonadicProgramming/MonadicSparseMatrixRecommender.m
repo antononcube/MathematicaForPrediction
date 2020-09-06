@@ -511,7 +511,10 @@ SMRMonCreate[ smat_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_Associa
     SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
 
 SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{smats = smatsArg, tagTypeNames, rowNames, columnNames, splicedMat},
+    Block[{smats = smatsArg, addTagTypesToColumnNamesQ, tagValueSeparator, tagTypeNames, rowNames, columnNames, splicedMat},
+
+      addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
+      tagValueSeparator = ToString[OptionValue[SMRMonCreate, "TagValueSeparator"]];
 
       tagTypeNames = Keys[smats];
 
@@ -521,6 +524,17 @@ SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPa
         (* Echo["The row names of the SSparseMatrix objects are expected to be the same.", "SMRMonCreate:"]; *)
         rowNames = Union[Flatten[Values[rowNames]]];
         smats = Map[ ImposeRowNames[ #, rowNames ]&, smats];
+      ];
+
+      If[addTagTypesToColumnNamesQ,
+
+        smats =
+            Association @
+                KeyValueMap[Function[{k, mat},
+                  k -> ToSSparseMatrix[mat,
+                    "ColumnNames" -> Map[ k <> tagValueSeparator <> #&, ColumnNames[mat] ],
+                    "RowNames" -> RowNames[mat]
+                  ]], smats]
       ];
 
       splicedMat = ColumnBind[Values[smats]];
@@ -617,11 +631,9 @@ SMRMonCreateFromWideForm[][xs_, context_Association] := $SMRMonFailure;
 
 SMRMonCreateFromWideForm[ds_Dataset, itemVarName_String, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{ ncol, tagTypeNames, smats, idPos, idName, numCols, ds2, rowNames, allRowNames,
-      addTagTypesToColumnNamesQ, numericalColumnsAsCategoricalQ, tagValueSeparator, missingValuesPattern},
+      numericalColumnsAsCategoricalQ, missingValuesPattern},
 
-      addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreateFromWideForm, "AddTagTypesToColumnNames"]];
       numericalColumnsAsCategoricalQ = TrueQ[OptionValue[SMRMonCreateFromWideForm, "NumericalColumnsAsCategorical"]];
-      tagValueSeparator = ToString[OptionValue[SMRMonCreateFromWideForm, "TagValueSeparator"]];
       missingValuesPattern = OptionValue[SMRMonCreateFromWideForm, "MissingValuesPattern"];
 
       ncol = Dimensions[ds][[2]];
@@ -657,18 +669,7 @@ SMRMonCreateFromWideForm[ds_Dataset, itemVarName_String, opts : OptionsPattern[]
 
       smats = Association[smats];
 
-      If[addTagTypesToColumnNamesQ,
-
-        smats =
-            Association @
-                KeyValueMap[Function[{k, mat},
-                  k -> ToSSparseMatrix[mat,
-                    "ColumnNames" -> Map[ k <> tagValueSeparator <> #&, ColumnNames[mat] ],
-                    "RowNames" -> RowNames[mat]
-                  ]], smats]
-      ];
-
-      SMRMonCreate[smats][xs, Join[context, <|"data" -> ds|>]]
+      SMRMonCreate[smats, opts][xs, Join[context, <|"data" -> ds|>]]
     ];
 
 SMRMonCreateFromWideForm[___][__] :=
