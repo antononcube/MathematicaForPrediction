@@ -943,7 +943,7 @@ Clear[SMRMonFilterByProfile];
 
 SyntaxInformation[SMRMonFilterByProfile] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
 
-Options[SMRMonFilterByProfile] = { "Type" -> "Union" };
+Options[SMRMonFilterByProfile] = { "Type" -> "Intersection" };
 
 SMRMonFilterByProfile[$SMRMonFailure] := $SMRMonFailure;
 
