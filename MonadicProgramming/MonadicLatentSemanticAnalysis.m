@@ -1408,7 +1408,7 @@ Clear[LSAMonEchoDocumentsStatistics];
 
 SyntaxInformation[LSAMonEchoDocumentsStatistics] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
-Options[LSAMonEchoDocumentsStatistics] = Join[ {"LogBase" -> None}, Options[Histogram] ];
+Options[LSAMonEchoDocumentsStatistics] = Join[ {"LogBase" -> None, "Echo" -> True}, Options[Histogram] ];
 
 LSAMonEchoDocumentsStatistics[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -1417,9 +1417,10 @@ LSAMonEchoDocumentsStatistics[xs_, context_Association] := LSAMonEchoDocumentsSt
 LSAMonEchoDocumentsStatistics[][xs_, context_Association] := LSAMonEchoDocumentsStatistics[ImageSize -> 300][xs, context];
 
 LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{logBase, logFunc, logInsert, texts, textWords, eLabel = None, dOpts, smat},
+    Block[{logBase, echoQ, logFunc, logInsert, texts, textWords, eLabel = None, dOpts, smat, res},
 
       logBase = OptionValue[LSAMonEchoDocumentsStatistics, "LogBase"];
+      echoQ = TrueQ[OptionValue[LSAMonEchoDocumentsStatistics, "Echo"]];
 
       texts = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonGetDocuments, LSAMonTakeValue} ];
 
@@ -1453,31 +1454,34 @@ LSAMonEchoDocumentsStatistics[opts : OptionsPattern[]][xs_, context_] :=
         logInsert = "number of"
       ];
 
-      Echo[
-        Grid[{
-          {
-            Row[{"Number of documents:", Length[texts]}],
-            Row[{"Number of unique words:", Length[Union[Flatten[Values[textWords]]]]}],
-            If[ TrueQ[smat === None],
-              Nothing,
-              Row[{"Document-term matrix dimensions:", Dimensions[smat]}]],
-            If[ TrueQ[smat === None], Nothing, ""]
-          },
-          {
-            Histogram[ logFunc[ StringLength /@ texts ], PlotLabel -> Capitalize[logInsert] <> " characters per document", FrameLabel -> {"Characters", "Documents"}, dOpts],
-            Histogram[ logFunc[ Length /@ textWords ], PlotLabel -> Capitalize[logInsert] <> " words per document", FrameLabel -> {"Words", "Documents"}, dOpts],
-            If[ TrueQ[smat === None],
-              Nothing,
-              Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts]],
-            If[ TrueQ[smat === None],
-              Nothing,
-              Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]]
-          }
-        }],
-        eLabel
+
+      res =
+          Grid[{
+            {
+              Row[{"Number of documents:", Length[texts]}],
+              Row[{"Number of unique words:", Length[Union[Flatten[Values[textWords]]]]}],
+              If[ TrueQ[smat === None],
+                Nothing,
+                Row[{"Document-term matrix dimensions:", Dimensions[smat]}]],
+              If[ TrueQ[smat === None], Nothing, ""]
+            },
+            {
+              Histogram[ logFunc[ StringLength /@ texts ], PlotLabel -> Capitalize[logInsert] <> " characters per document", FrameLabel -> {"Characters", "Documents"}, dOpts],
+              Histogram[ logFunc[ Length /@ textWords ], PlotLabel -> Capitalize[logInsert] <> " words per document", FrameLabel -> {"Words", "Documents"}, dOpts],
+              If[ TrueQ[smat === None],
+                Nothing,
+                Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts]],
+              If[ TrueQ[smat === None],
+                Nothing,
+                Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]]
+            }
+          }];
+
+      If[ echoQ,
+        Echo[res, eLabel]
       ];
 
-      LSAMonUnit[xs, context]
+      LSAMonUnit[res, context]
     ];
 
 LSAMonEchoDocumentsStatistics[__][___] :=
@@ -1495,7 +1499,7 @@ Clear[LSAMonEchoDocumentTermMatrixStatistics];
 
 SyntaxInformation[LSAMonEchoDocumentTermMatrixStatistics] = { "ArgumentsPattern" -> { OptionsPattern[] } };
 
-Options[LSAMonEchoDocumentTermMatrixStatistics] = Join[ {"LogBase" -> None, "ParetoPrinciplePlots" -> False }, Options[Histogram] ];
+Options[LSAMonEchoDocumentTermMatrixStatistics] = Join[ {"LogBase" -> None, "ParetoPrinciplePlots" -> False, "Echo" -> True }, Options[Histogram] ];
 
 LSAMonEchoDocumentTermMatrixStatistics[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -1504,11 +1508,15 @@ LSAMonEchoDocumentTermMatrixStatistics[xs_, context_Association] := LSAMonEchoDo
 LSAMonEchoDocumentTermMatrixStatistics[][xs_, context_Association] := LSAMonEchoDocumentTermMatrixStatistics[ImageSize -> 300][xs, context];
 
 LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :=
-    Block[{logBase, paretoQ, logFunc, logInsert, dOpts, smat},
+    Block[{logBase, paretoQ, echoQ, texts, logFunc, logInsert, dOpts, smat, res},
 
       logBase = OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "LogBase"];
 
       paretoQ = TrueQ[ OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "ParetoPrinciplePlots"] ];
+
+      echoQ = TrueQ[ OptionValue[LSAMonEchoDocumentTermMatrixStatistics, "Echo"] ];
+
+      texts = Fold[ LSAMonBind, LSAMonUnit[xs, context], {LSAMonGetDocuments, LSAMonTakeValue} ];
 
       If[ TrueQ[ texts === $LSAMonFailure], Return[$LSAMonFailure] ];
 
@@ -1530,31 +1538,33 @@ LSAMonEchoDocumentTermMatrixStatistics[opts : OptionsPattern[]][xs_, context_] :
         logInsert = "number of"
       ];
 
-      Echo[
-        Grid[{
-          {
-            Row[{"Dimensions:", Spacer[3], Dimensions[smat]}],
-            Row[{"Density:", Spacer[3], SparseArray[smat]["Density"]}],
-            SpanFromLeft
-          },
-          {
-            Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts],
-            Histogram[ logFunc[ Total[Transpose[smat]] ], PlotLabel -> Capitalize[logInsert] <> " terms per document", FrameLabel -> {"Terms", "Documents"}, dOpts],
-            Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]
-          },
-          If[ paretoQ,
+      res =
+          Grid[{
             {
-              ParetoPrinciplePlot[ ColumnSums[ context["documentTermMatrix"] ], FrameLabel -> {"Terms", "Occurrences"}, dOpts ],
-              ParetoPrinciplePlot[ Total[smat], FrameLabel -> {"Terms", "Documents"}, dOpts ],
-              ParetoPrinciplePlot[ Total[Transpose[smat]], FrameLabel -> {"Documents", "Terms"}, dOpts ]
+              Row[{"Dimensions:", Spacer[3], Dimensions[smat]}],
+              Row[{"Density:", Spacer[3], SparseArray[smat]["Density"]}],
+              SpanFromLeft
             },
-            Nothing
-          ]
-        }],
-        "Context value \"documentTermMatrix\":"
+            {
+              Histogram[ logFunc[ Total[smat] ], PlotLabel -> Capitalize[logInsert] <> " documents per term", FrameLabel -> {"Documents", "Terms"}, dOpts],
+              Histogram[ logFunc[ Total[Transpose[smat]] ], PlotLabel -> Capitalize[logInsert] <> " terms per document", FrameLabel -> {"Terms", "Documents"}, dOpts],
+              Column[{Capitalize[logInsert] <> "\ndocuments per term\nsummary", RecordsSummary[ logFunc[ Total[smat] ], {"# documents"} ]}]
+            },
+            If[ paretoQ,
+              {
+                ParetoPrinciplePlot[ ColumnSums[ context["documentTermMatrix"] ], FrameLabel -> {"Terms", "Occurrences"}, dOpts ],
+                ParetoPrinciplePlot[ Total[smat], FrameLabel -> {"Terms", "Documents"}, dOpts ],
+                ParetoPrinciplePlot[ Total[Transpose[smat]], FrameLabel -> {"Documents", "Terms"}, dOpts ]
+              },
+              Nothing
+            ]
+          }];
+
+      If[ echoQ,
+        Echo[res, "Context value \"documentTermMatrix\":"]
       ];
 
-      LSAMonUnit[xs, context]
+      LSAMonUnit[res, context]
     ];
 
 LSAMonEchoDocumentTermMatrixStatistics[__][___] :=
