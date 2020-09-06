@@ -229,6 +229,9 @@ SMRMonGetProperty::usage = "Get a recommender property.";
 
 SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
 
+SMRMonFilterByProfile::usage = "SMRMonFilterByProfile[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
+finds the items that have the tags of the given profile. The scores are corresponding row sums.";
+
 SMRMonFilterMatrix::usage = "SMRMonFilterMatrix[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 applies a profile filter to the rows of the recommendation matrix.";
 
@@ -933,6 +936,70 @@ SMRMonGetMatrixProperty[___][__] :=
 
 
 (**************************************************************)
+(* SMRMonFilterByProfile                                      *)
+(**************************************************************)
+
+Clear[SMRMonFilterByProfile];
+
+SyntaxInformation[SMRMonFilterByProfile] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
+
+Options[SMRMonFilterByProfile] = { "Type" -> "Union" };
+
+SMRMonFilterByProfile[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonFilterByProfile[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonFilterByProfile[xs_, context_Association] := SMRMonFilterByProfile[None][xs, context];
+
+SMRMonFilterByProfile[ profile_Association, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonFilterByProfile[ Keys[profile], opts][xs, context];
+
+SMRMonFilterByProfile[ profile_String, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonFilterByProfile[ {profile}, opts][xs, context];
+
+SMRMonFilterByProfile[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ filterType, pvec, svec, rowInds, res },
+
+      filterType = OptionValue[ SMRMonFilterByProfile, "Type" ];
+
+      pvec = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToProfileVector[profile], SMRMonTakeValue } ];
+      If[ TrueQ[ pvec === $SMRMonFailure ],
+        Echo["Cannot make a profile vector.", "SMRMonFilterByProfile:"];
+        Return[$SMRMonFailure]
+      ];
+
+      pvec = Unitize[pvec];
+
+      Which[
+        StringQ[filterType] && ToLowerCase[filterType] == "union",
+        svec = context["M"] . pvec;
+        rowInds = Flatten @ Most[ ArrayRules[svec] ][[All, 1]],
+
+        StringQ[filterType] && ToLowerCase[filterType] == "intersection",
+        svec = Unitize[context["M"]] . pvec;
+        rowInds = Flatten @ Select[ Most @ ArrayRules[svec], #[[2]] == Total[pvec]& ][[All, 1]],
+
+        True,
+        Echo["The value of the option \"Type\" should be either \"Union\" or \"Intersection\".", "SMRMonFilterByProfile:"];
+        Return[$SMRMonFailure]
+      ];
+
+      res = ReverseSort @ RowSumsAssociation[ Unitize @ context["M"][[ rowInds, All ]]];
+
+      SMRMonUnit[res, context]
+    ];
+
+SMRMonFilterByProfile[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonFilterByProfile[ profile : ( _String | {_String ..} | Association[ (_String -> _?NumberQ) .. ] ) ] .",
+        "SMRMonFilterByProfile:"
+      ];
+      $SMRMonFailure
+    ];
+
+
+(**************************************************************)
 (* SMRMonFilterMatrix                                         *)
 (**************************************************************)
 
@@ -940,7 +1007,7 @@ Clear[SMRMonFilterMatrix];
 
 SyntaxInformation[SMRMonFilterMatrix] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
 
-Options[SMRMonFilterMatrix] = { "Type" -> "Union" };
+Options[SMRMonFilterMatrix] = Options[SMRMonFilterByProfile];
 
 SMRMonFilterMatrix[$SMRMonFailure] := $SMRMonFailure;
 
@@ -955,32 +1022,26 @@ SMRMonFilterMatrix[ profile_String, opts : OptionsPattern[] ][xs_, context_Assoc
     SMRMonFilterMatrix[ {profile}, opts][xs, context];
 
 SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{ filterType, pvec, svec, rowInds },
+    Block[{ filterType, rowInds, smats },
 
       filterType = OptionValue[ SMRMonFilterMatrix, "Type" ];
 
-      pvec = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonToProfileVector[profile], SMRMonTakeValue } ];
-      If[ TrueQ[ pvec === $SMRMonFailure ],
-        Echo["Cannot make a profile vector.", "SMRMonFilterMatrix:"];
-        Return[$SMRMonFailure]
-      ];
-
-      pvec = Unitize[pvec];
-
-      Which[
-        StringQ[filterType] && ToLowerCase[filterType] == "union",
-        svec = context["M"] . pvec,
-
-        StringQ[filterType] && ToLowerCase[filterType] == "intersection",
-        (* The call to SparseArray is 98% likely redundant. *)
-        svec = SparseArray[ Unitize[ Unitize[SparseArray[context["M"]]] . pvec - Length[profile] ] ],
-
-        True,
+      If[ !( StringQ[filterType] && MemberQ[ {"intersection", "union"}, ToLowerCase[filterType] ] ),
         Echo["The value of the option \"Type\" should be either \"Union\" or \"Intersection\".", "SMRMonFilterMatrix:"];
         Return[$SMRMonFailure]
       ];
 
-      rowInds = Flatten[ Most[ ArrayRules[svec] ][[All, 1]] ];
+      rowInds = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonFilterByProfile[profile, opts], SMRMonTakeValue } ];
+
+      If[ TrueQ[ rowInds === $SMRMonFailure ], Return[$SMRMonFailure] ];
+
+      rowInds = Keys[rowInds];
+
+      If[ KeyExistsQ[context, "matrices" ],
+        smats = Map[ #[[ rowInds, All ]]&, context["matrices"] ],
+        (*ELSE*)
+        smats = None
+      ];
 
       (* I do not see a benefit of using the monadic solution instead of the direct one. *)
       (*
@@ -993,14 +1054,21 @@ SMRMonFilterMatrix[ profile : {_String ..}, opts : OptionsPattern[] ][xs_, conte
         }
       ]
       *)
-      SMRMonUnit[xs, Join[ context, <| "M" -> context["M"][[ rowInds, All ]], "M01" -> context["M01"][[ rowInds, All ]] |> ] ]
+      SMRMonUnit[xs, Join[ context, <| "M" -> context["M"][[ rowInds, All ]], "M01" -> context["M01"][[ rowInds, All ]], "matrices" -> smats |> ] ]
     ];
 
 SMRMonFilterMatrix[___][__] :=
     Block[{},
-      Echo["The expected signature is SMRMonFilterMatrix[ profile : ( _String | {_String ..} | Association[ (_String -> _?NumberQ) .. ] ) ] .", "SMRMonFilterMatrix:"];
+      Echo[
+        "The expected signature is SMRMonFilterMatrix[ profile : ( _String | {_String ..} | Association[ (_String -> _?NumberQ) .. ] ) ] .",
+        "SMRMonFilterMatrix:"];
       $SMRMonFailure
     ];
+
+
+(**************************************************************)
+(* SMRMonRetrievalByQueryElements                             *)
+(**************************************************************)
 
 
 (**************************************************************)
