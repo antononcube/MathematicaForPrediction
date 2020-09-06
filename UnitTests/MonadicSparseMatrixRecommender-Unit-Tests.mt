@@ -486,4 +486,56 @@ VerificationTest[(* 27 *)
 ];
 
 
+VerificationTest[(* 28 *)
+  res1 =
+      Keys @
+          Fold[
+            SMRMonBind,
+            smrTitanic,
+            {
+              SMRMonFilterByProfile[{"male", "1st"}, "Type" -> "Intersection"],
+              SMRMonTakeValue
+            }
+          ];
+  res2 = Normal @ dsTitanic[ Select[#passengerSex == "male" && #passengerClass == "1st" &] ][All, "id"];
+  Sort[res1] == Sort[ToString /@ res2]
+  ,
+  True
+  ,
+  TestID -> "smrTitanic-filter-by-profile-1"
+];
+
+
+VerificationTest[(* 29 *)
+  res1 =
+      Keys @
+          Fold[
+            SMRMonBind,
+            smrTitanic,
+            {
+              SMRMonFilterByProfile[{"male", "1st"}, "Type" -> "Union"],
+              SMRMonTakeValue
+            }
+          ];
+  res2 = Normal @ dsTitanic[ Select[#passengerSex == "male" || #passengerClass == "1st" &] ][All, "id"];
+  Sort[res1] == Sort[ToString /@ res2]
+  ,
+  True
+  ,
+  TestID -> "smrTitanic-filter-by-profile-2"
+];
+
+
+VerificationTest[(* 29 *)
+  smrObj = SMRMonBind[ smrTitanic, SMRMonFilterMatrix[{"male", "1st"}, "Type" -> "Intersection"] ];
+  res2 = Normal @ dsTitanic[ Select[#passengerSex == "male" && #passengerClass == "1st" &] ][All, "id"];
+  res2 = Sort[ToString /@ res2];
+  Sort[ RowNames @ SMRMonBind[ smrObj, SMRMonTakeM] ] == res2 &&
+      Apply[And, Map[ Sort[RowNames[#]] == res2 &, SMRMonBind[ smrObj, SMRMonTakeMatrices ] ] ]
+  ,
+  True
+  ,
+  TestID -> "smrTitanic-filter-matrix-1"
+];
+
 EndTestSection[]
