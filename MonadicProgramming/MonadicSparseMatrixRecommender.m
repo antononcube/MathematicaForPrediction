@@ -235,6 +235,9 @@ finds the items that have the tags of the given profile. The scores are correspo
 SMRMonFilterMatrix::usage = "SMRMonFilterMatrix[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 applies a profile filter to the rows of the recommendation matrix.";
 
+SMRMonRetrieveByQueryElements::usage = "SMRMonRetrieveByQueryElements[should, must, mustNot] \
+retrieves items according the retrieval query elements.";
+
 SMRMonRemoveTagTypes::usage = "Remove specified tag types.";
 
 SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] compute the Top-K for specified data and K's.";
@@ -1067,8 +1070,131 @@ SMRMonFilterMatrix[___][__] :=
 
 
 (**************************************************************)
-(* SMRMonRetrievalByQueryElements                             *)
+(* SMRMonRetrieveByQueryElements                             *)
 (**************************************************************)
+
+Clear[QueryElementSpecQ];
+QueryElementSpecQ[x_] := MatchQ[ x, Automatic | None | _String | _List | _Association ];
+
+Clear[QueryElementSpecConvert];
+QueryElementSpecConvert[None] := {};
+QueryElementSpecConvert[x_String] := {x};
+QueryElementSpecConvert[x_Association] := Keys[x];
+QueryElementSpecConvert[Automatic] := {};
+QueryElementSpecConvert[x_] := x;
+
+Clear[SMRMonRetrieveByQueryElements];
+
+SyntaxInformation[SMRMonRetrieveByQueryElements] = { "ArgumentsPattern" -> {_., _., _., OptionsPattern[]} };
+
+Options[SMRMonRetrieveByQueryElements] = { "Should" -> Automatic, "Must" -> Automatic, "MustNot" -> Automatic };
+
+SMRMonRetrieveByQueryElements[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonRetrieveByQueryElements[][$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonRetrieveByQueryElements[xs_, context_Association] :=
+    SMRMonRetrieveByQueryElements[Options[SMRMonRetrieveByQueryElements]][xs, context];
+
+SMRMonRetrieveByQueryElements[opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{should, must, mustNot},
+
+      should = OptionValue[ SMRMonRetrieveByQueryElements, "Should" ];
+      If[ !QueryElementSpecQ[should],
+        Echo[
+          "The value of the option \"Should\" should be a list, or an association, or Automatic, or None.",
+          "SMRMonRetrieveByQueryElements:"];
+        Return[$SMRMonFailure]
+      ];
+
+      must = OptionValue[ SMRMonRetrieveByQueryElements, "Must" ];
+      If[ !QueryElementSpecQ[should],
+        Echo[
+          "The value of the option \"Must\" should be a list, or an association, or Automatic, or None.",
+          "SMRMonRetrieveByQueryElements:"];
+        Return[$SMRMonFailure]
+      ];
+
+      mustNot = OptionValue[ SMRMonRetrieveByQueryElements, "MustNot" ];
+      If[ !QueryElementSpecQ[mustNot],
+        Echo[
+          "The value of the option \"MustNot\" should be a list, or an association, or Automatic, or None.",
+          "SMRMonRetrieveByQueryElements:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonRetrieveByQueryElements[ should, must, mustNot, opts ][xs, context]
+    ];
+
+SMRMonRetrieveByQueryElements[should_?QueryElementSpecQ, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonRetrieveByQueryElements["Should" -> should, opts][xs, context];
+
+SMRMonRetrieveByQueryElements[should_?QueryElementSpecQ, must_?QueryElementSpecQ, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonRetrieveByQueryElements["Should" -> should, "Must" -> must, opts][xs, context];
+
+SMRMonRetrieveByQueryElements[
+  shouldArg_?QueryElementSpecQ,
+  mustArg_?QueryElementSpecQ,
+  mustNotArg_?QueryElementSpecQ,
+  opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ should = shouldArg, must = mustArg, mustNot = mustNotArg, pvecShould, pvecMust, shouldItems, mustItems, mustNotItems, res },
+
+      If[ TrueQ[should === Automatic] && QueryElementSpecQ[xs], should = xs ];
+      should = QueryElementSpecConvert[should];
+      must = QueryElementSpecConvert[must];
+      mustNot = QueryElementSpecConvert[mustNot];
+
+      (* Should *)
+      If[ Length[should] > 0 || Length[must] > 0,
+
+        pvecShould  = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonToProfileVector[should], SMRMonTakeValue} ];
+        If[ TrueQ[pvecShould === $SMRMonFailure], Return[$SMRMonFailure]];
+
+        pvecMust    = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonToProfileVector[must], SMRMonTakeValue} ];
+        If[ TrueQ[pvecMust === $SMRMonFailure], Return[$SMRMonFailure]];
+
+        shouldItems = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommendByProfile[ pvecShould + pvecMust, All], SMRMonTakeValue }];
+        If[ TrueQ[pvecShould === $SMRMonFailure], Return[$SMRMonFailure]],
+
+        (* ELSE *)
+        shouldItems = RowSumsAssociation @ context["M"];
+      ];
+
+      res = shouldItems;
+
+      (* Must *)
+      If[ Length[must] > 0,
+        mustItems = Fold[SMRMonBind, SMRMonUnit[xs, context], {SMRMonFilterByProfile[must, "Type" -> "Intersection" ], SMRMonTakeValue}],
+        (*ELSE*)
+        mustItems = <||>
+      ];
+
+      If[ Length[must] > 0,
+        res = KeyTake[ res, Keys[mustItems] ]
+      ];
+
+      (* MustNot *)
+      If[ Length[mustNot] > 0,
+        mustNotItems = Fold[SMRMonBind, SMRMonUnit[xs, context], {SMRMonFilterByProfile[mustNot, "Type" -> "Union" ], SMRMonTakeValue}],
+        (*ELSE*)
+        mustNotItems = <||>
+      ];
+
+      If[ Length[mustNot] > 0,
+        res = KeyDrop[ res, Keys[mustNotItems] ]
+      ];
+
+      SMRMonUnit[res, context]
+    ];
+
+SMRMonRetrieveByQueryElements[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonRetrieveByQueryElements[ should_, must_, mustNot_ ] " <>
+            "all arguments matching ( Automatic | None | _String | _List | _Association ).",
+        "SMRMonRetrieveByQueryElements:"];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
@@ -1999,6 +2125,8 @@ SyntaxInformation[SMRMonToProfileVector] = { "ArgumentsPattern" -> {_} };
 SMRMonToProfileVector[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonToProfileVector[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonToProfileVector[prof : ( {} | <||> ) ][xs_, context_Association] := SMRMonUnit[ 0, context ];
 
 SMRMonToProfileVector[ prof : ( { _String ..} | { _Integer .. } ) ][xs_, context_Association] :=
     SMRMonToProfileVector[ AssociationThread[prof -> 1.] ][xs, context];
