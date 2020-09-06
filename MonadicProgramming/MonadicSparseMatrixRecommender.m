@@ -1123,20 +1123,25 @@ SMRMonRetrieveByQueryElements[opts : OptionsPattern[]][xs_, context_Association]
         Return[$SMRMonFailure]
       ];
 
-      SMRMonRetrieveByQueryElements[ should, must, mustNot, opts ][xs, context]
+      SMRMonRetrieveByQueryElements[ should, must, mustNot ][xs, context]
     ];
 
 SMRMonRetrieveByQueryElements[should_?QueryElementSpecQ, opts : OptionsPattern[] ][xs_, context_Association] :=
-    SMRMonRetrieveByQueryElements["Should" -> should, opts][xs, context];
+    SMRMonRetrieveByQueryElements[
+      should,
+      OptionValue[SMRMonRetrieveByQueryElements, "Must"],
+      OptionValue[SMRMonRetrieveByQueryElements, "MustNot"] ][xs, context];
 
 SMRMonRetrieveByQueryElements[should_?QueryElementSpecQ, must_?QueryElementSpecQ, opts : OptionsPattern[] ][xs_, context_Association] :=
-    SMRMonRetrieveByQueryElements["Should" -> should, "Must" -> must, opts][xs, context];
+    SMRMonRetrieveByQueryElements[
+      should,
+      must,
+      OptionValue[SMRMonRetrieveByQueryElements, "MustNot"] ][xs, context];
 
 SMRMonRetrieveByQueryElements[
   shouldArg_?QueryElementSpecQ,
   mustArg_?QueryElementSpecQ,
-  mustNotArg_?QueryElementSpecQ,
-  opts : OptionsPattern[] ][xs_, context_Association] :=
+  mustNotArg_?QueryElementSpecQ ][xs_, context_Association] :=
     Block[{ should = shouldArg, must = mustArg, mustNot = mustNotArg, pvecShould, pvecMust, shouldItems, mustItems, mustNotItems, res },
 
       If[ TrueQ[should === Automatic] && QueryElementSpecQ[xs], should = xs ];
@@ -1147,10 +1152,10 @@ SMRMonRetrieveByQueryElements[
       (* Should *)
       If[ Length[should] > 0 || Length[must] > 0,
 
-        pvecShould  = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonToProfileVector[should], SMRMonTakeValue} ];
+        pvecShould = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonToProfileVector[should], SMRMonTakeValue} ];
         If[ TrueQ[pvecShould === $SMRMonFailure], Return[$SMRMonFailure]];
 
-        pvecMust    = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonToProfileVector[must], SMRMonTakeValue} ];
+        pvecMust = Fold[ SMRMonBind, SMRMonUnit[xs, context], {SMRMonToProfileVector[must], SMRMonTakeValue} ];
         If[ TrueQ[pvecMust === $SMRMonFailure], Return[$SMRMonFailure]];
 
         shouldItems = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommendByProfile[ pvecShould + pvecMust, All], SMRMonTakeValue }];
