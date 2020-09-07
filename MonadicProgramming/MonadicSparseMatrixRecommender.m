@@ -1514,7 +1514,7 @@ SMRMonRecommend[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommend[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommend[ history : ( Association[ (_String -> _?NumberQ) ... ] | _String | {_String..} ), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommend[ history, 12, opts][xs, context];
 
 SMRMonRecommend[ history : Association[ (_String -> _?NumberQ) ... ], nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
