@@ -159,39 +159,44 @@ If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
 
 BeginPackage["ClassifierEnsembles`"];
 
-EnsembleClassifier::usage = "Create an ensemble of classifiers over the same data. \
-Returns an Association of IDs mapped to classifier functions.";
+EnsembleClassifier::usage = "EnsembleClassifier[ cls : (Automatic | _String | {_String..} ), args__) ] \
+creates an ensemble of classifiers over the same data using Classify. \
+Returns an Association of IDs mapped to classifier functions. \
+The argument cls is expected to be specify which Classify methods to be used.";
 
-EnsembleClassifierVotes::usage = "Find votes by a classifier ensemble for a record ora a list of records.";
+EnsembleClassifierVotes::usage = "Finds votes by a classifier ensemble for a record or a list of records.";
 
-EnsembleClassifierProbabilities::usage = "Give the averaged probabilities of a classifier ensemble \
-a record or a list of records.";
+EnsembleClassifierProbabilities::usage = "Gives the averaged probabilities of a classifier ensemble \
+for a record or a list of records.";
 
-EnsembleClassify::usage = "Classify by a classifier ensemble for a record or a list of records. \
+EnsembleClassify::usage = "EnsembleClassify[ cls_Association, r_, type_. ] \
+classifies by a classifier ensemble for a record or a list of records. \
 The third argument is one of \"Votes\" or \"ProbabilitiesMean\".";
 
-EnsembleClassifyByThreshold::usage = "Classify by a classifier ensemble for a record or a list of records. \
-The third argument is a rule label->threshold. The fourth argument is one of \"Votes\" or \"ProbabilitiesMean\". \
-The specified label is returned if its votes or average probability are higher or equal than \
-the specified threshold.";
+EnsembleClassifyByThreshold::usage = "EnsembleClassifyByThreshold[ cls_Association, r_, thr_, type_. ] \
+Classifies by a classifier ensemble for a record or a list of records. \
+The third argument is a rule label->threshold or an association of such rules. \
+The fourth argument is one of \"Votes\" or \"ProbabilitiesMean\". \
+A specified label is the classification result if its votes or average probability are higher or equal than \
+the corresponding threshold.";
 
 ClassifyByThreshold::usage = "A shortcut to calling EnsembleClassifyByThreshold using a classifier function \
 instead of a classifier ensemble.";
 
-EnsembleClassifierMeasurements::usage = "EnsembleClassifierMeasurements[ensCF, testData, props] \
-gives measurements corresponding to props when the ensemble of classifiers ensCF is evaluated over testData. \
+EnsembleClassifierMeasurements::usage = "EnsembleClassifierMeasurements[ cls_Association, testData_, props_ ] \
+gives measurements corresponding to props when the ensemble of classifiers cls is evaluated over testData. \
 (Emulates ClassifierMeasurements for ensembles of classifiers.)";
 
-ResamplingEnsembleClassifier::usage = "ResamplingEnsembleClassifier[{(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..}, data] \
-builds ensemble classifier based on a specification.";
+ResamplingEnsembleClassifier::usage = "ResamplingEnsembleClassifier[ {(_String | {_String, _?NumberQ} | {_String, _?NumberQ, _Integer}) ..}, data_ ] \
+builds an ensemble classifier based on a specification.";
 
-EnsembleClassifierROCData::usage = "EnsembleClassifierROCData[ensCF_Association, testData, thRange, targetClasses] \
+EnsembleClassifierROCData::usage = "EnsembleClassifierROCData[ cls_Association, testData_, thRange_, targetClasses_ ] \
 returns an association of classifier ensemble ROC data.";
 
-EnsembleClassifierROCPlots::usage = "EnsembleClassifierROCPlots[ensCF, testData, thRange, targetClasses, opts___] \
+EnsembleClassifierROCPlots::usage = "EnsembleClassifierROCPlots[ cls_Association, testData_, thRange_, targetClasses_, opts___ ] \
 returns an association of classifier ensemble ROC plots.";
 
-EnsembleClassifierConfusionMatrix::usage = "EnsembleClassifierConfusionMatrix[ ensCF, testData, spec_, opts]
+EnsembleClassifierConfusionMatrix::usage = "EnsembleClassifierConfusionMatrix[ cls_Association, testData_, spec_, opts___ ] \
 computes the confusion matrix for a classifier ensemble and test data. \
 The third argument is expected to be one of \"Votes\" or \"ProbabilitiesMean\".
 If the fourth argument is a label-threshold specification then EnsembleClassifyByThreshold is used.";
@@ -208,15 +213,22 @@ EnsembleClassifier::nargs =
 The rest of the arguments are given to Classify.";
 
 EnsembleClassifier[Automatic, args___] :=
-    EnsembleClassifier[{"NearestNeighbors", "NeuralNetwork", "LogisticRegression",
-      "RandomForest", "SupportVectorMachine", "NaiveBayes"}, args];
+    EnsembleClassifier[{
+      "GradientBoostedTrees",
+      "LogisticRegression",
+      "NaiveBayes",
+      "NearestNeighbors",
+      "NeuralNetwork",
+      "RandomForest",
+      "SupportVectorMachine"
+    }, args];
 
 EnsembleClassifier[clID_String, args___] := EnsembleClassifier[{clID}, args];
 
 EnsembleClassifier[clIDs : {_String ..}, args___] :=
     Association @ Table[cl -> Classify[args, Method -> cl], {cl, clIDs}];
 
-EnsembleClassifier[___] := (Message[EnsembleClassify::nargs]; $Failed);
+EnsembleClassifier[___] := (Message[EnsembleClassifier::nargs]; $Failed);
 
 
 (**************************************************************)
