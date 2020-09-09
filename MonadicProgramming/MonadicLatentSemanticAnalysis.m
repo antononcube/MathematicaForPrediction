@@ -379,7 +379,7 @@ Clear[LSAMonMakeDocumentTermMatrix];
 
 SyntaxInformation[LSAMonMakeDocumentTermMatrix] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
 
-Options[LSAMonMakeDocumentTermMatrix] = { "StemmingRules" -> {}, "StopWords" -> Automatic };
+Options[LSAMonMakeDocumentTermMatrix] = Join[ { "StemmingRules" -> {}, "StopWords" -> Automatic }, Options[DocumentTermSSparseMatrix] ];
 
 LSAMonMakeDocumentTermMatrix[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -410,11 +410,15 @@ LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association
         Return[$LSAMonFailure]
       ];
 
-      LSAMonMakeDocumentTermMatrix[ stemRules, stopWords ][xs, context]
+      LSAMonMakeDocumentTermMatrix[ stemRules, stopWords, opts ][xs, context]
     ];
 
-LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _Dispatch | _Association | Automatic | True | False), stopWordsArg : {_String ...} | Automatic ][xs_, context_] :=
-    Block[{ stemRules = stemRulesArg, stopWords = stopWordsArg, docs, docTermMat },
+LSAMonMakeDocumentTermMatrix[
+  stemRulesArg : ({ Rule[_String, _String] ... } | _Dispatch | _Association | Automatic | True | False),
+  stopWordsArg : {_String ...} | Automatic,
+  opts : OptionsPattern[] ][xs_, context_] :=
+
+    Block[{ stemRules = stemRulesArg, stopWords = stopWordsArg, docs, docTermMat, documentTermMatrixCreationOptions  },
 
       docs = Fold[ LSAMonBind, LSAMonUnit[xs, context], { LSAMonGetDocuments, LSAMonTakeValue } ];
 
@@ -431,7 +435,9 @@ LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _D
       If[ TrueQ[stemRules === False], stemRules = {} ];
       If[ TrueQ[stemRules === True], stemRules = Automatic ];
 
-      docTermMat = DocumentTermSSparseMatrix[ ToLowerCase /@ docs, {stemRules, stopWords} ];
+      documentTermMatrixCreationOptions = FilterRules[ {opts}, Options[DocumentTermSSparseMatrix]] ;
+
+      docTermMat = DocumentTermSSparseMatrix[ ToLowerCase /@ docs, {stemRules, stopWords}, None, documentTermMatrixCreationOptions ];
 
       stemRules =
           Which[
@@ -445,7 +451,15 @@ LSAMonMakeDocumentTermMatrix[stemRulesArg : ({ Rule[_String, _String] ... } | _D
             stemRules
           ];
 
-      LSAMonUnit[xs, Join[context, <| "documents" -> docs, "documentTermMatrix" -> docTermMat, "terms" -> ColumnNames[docTermMat], "stopWords" -> stopWords, "stemmingRules" -> stemRules |>]]
+      LSAMonUnit[xs,
+        Join[context,
+          <| "documents" -> docs,
+            "documentTermMatrix" -> docTermMat,
+            "terms" -> ColumnNames[docTermMat],
+            "stopWords" -> stopWords,
+            "stemmingRules" -> stemRules,
+            "documentTermMatrixCreationOptions" -> documentTermMatrixCreationOptions
+          |>]]
 
     ];
 
@@ -1201,7 +1215,7 @@ Clear[LSAMonRepresentByTerms];
 
 SyntaxInformation[LSAMonRepresentByTerms] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
-Options[LSAMonRepresentByTerms] = { "ApplyTermWeightFunctions" -> True };
+Options[LSAMonRepresentByTerms] = Join[ { "ApplyTermWeightFunctions" -> True }, Options[DocumentTermSSparseMatrix] ];
 
 LSAMonRepresentByTerms[___][$LSAMonFailure] := $LSAMonFailure;
 
@@ -1224,7 +1238,7 @@ LSAMonRepresentByTerms[ query_?QueryPatternQ, opts : OptionsPattern[] ][xs_, con
         stemmingRules = context["stemmingRules"]
       ];
 
-      qmat = DocumentTermSSparseMatrix[ ToLowerCase /@ query, {stemmingRules, stopWords} ];
+      qmat = DocumentTermSSparseMatrix[ ToLowerCase /@ query, {stemmingRules, stopWords}, None, Lookup[context, "documentTermMatrixCreationOptions", {}] ];
 
       If[ Total[ SparseArray[qmat] ] == 0,
         Echo["All query terms are stop words.", "LSAMonRepresentByTerms:"];
