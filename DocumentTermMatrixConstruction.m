@@ -74,10 +74,19 @@ WeightTermsOfSSparseMatrix::usage = "SSparseMatrix adapter function to WeightTer
 
 Begin["`Private`"];
 
+
+(***********************************************************)
+(* To bag of words                                         *)
+(***********************************************************)
+
 Clear[ToBagOfWords];
-Options[ToBagOfWords] = {"SplittingCharacters" -> {Whitespace, "\n",
-  " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
-  "PostSplittingPredicate" -> (StringLength[#] > 2 &)};
+
+SyntaxInformation[ToBagOfWords] =  { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };;
+
+Options[ToBagOfWords] = {
+  "SplittingCharacters" -> {Whitespace, "\n", " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
+  "PostSplittingPredicate" -> (StringLength[#] > 2 &)
+};
 
 ToBagOfWords[doc_String, {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_List}, opts : OptionsPattern[]] :=
     ToBagOfWords[{doc}, {stemmingRules, stopWords}, opts][[1]];
@@ -88,8 +97,11 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List
       splittingCharacters = OptionValue[ToBagOfWords, "SplittingCharacters"];
       pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
 
+      If[ TrueQ[splittingCharacters===Automatic], splittingCharacters = WhitespaceCharacter];
+
       If[ MatchQ[ docs, {_String..} ],
         docTerms = Flatten[StringSplit[#, splittingCharacters]] & /@ docs,
+        (*ELSE*)
         docTerms = docs
       ];
 
@@ -124,8 +136,28 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List
       docTerms
     ];
 
+
+(***********************************************************)
+(* Document-term matrix                                    *)
+(***********************************************************)
+
 Clear[DocumentTermMatrix];
-DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_}, opts : OptionsPattern[]] :=
+
+Options[DocumentTermMatrix] = Options[ToBagOfWords];
+
+SyntaxInformation[DocumentTermSSparseMatrix] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
+
+DocumentTermMatrix[
+  docs : ( {_String ...} | {{_String...}...} ),
+  {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
+  opts : OptionsPattern[]] :=
+    DocumentTermMatrix[docs, {stemmingRules, stopWords}, None, opts];
+
+DocumentTermMatrix[
+  docs : ( {_String ...} | {{_String...}...} ),
+  {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
+  None,
+  opts : OptionsPattern[]] :=
     Block[{terms, mat, docTerms,
       n = Length[docs], termToIndexRules},
 
@@ -142,9 +174,13 @@ DocumentTermMatrix[docs : ( {_String ...} | {{_String...}...} ), {stemmingRules 
       {mat, terms}
     ];
 
-DocumentTermMatrix[docs : {_String ...}, {stemmingRules_, stopWords_}, {globalWeightFunc_, localWeightFunc_, normalizerFunc_}, opts : OptionsPattern[]] :=
+DocumentTermMatrix[
+  docs : {_String ...},
+  {stemmingRules_, stopWords_},
+  {globalWeightFunc_, localWeightFunc_, normalizerFunc_},
+  opts : OptionsPattern[]] :=
     Block[{terms, mat},
-      {mat, terms} = DocumentTermMatrix[docs, {stemmingRules, stopWords}, opts];
+      {mat, terms} = DocumentTermMatrix[docs, {stemmingRules, stopWords}, None, opts];
       {WeightTerms[mat, globalWeightFunc, localWeightFunc, normalizerFunc], terms}
     ];
 
@@ -340,18 +376,30 @@ ApplyNormalizationFunction[docTermMat_?MatrixQ, funcName_String] :=
 
 Clear[DocumentTermSSparseMatrix];
 
-DocumentTermSSparseMatrix[ docs : ( {_String ...} | {{_String...}...} ), {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_}, opts : OptionsPattern[] ] :=
-    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, opts ];
+SyntaxInformation[DocumentTermSSparseMatrix] = { "ArgumentsPattern" -> { _, _, _., OptionsPattern[] } };
+
+Options[DocumentTermSSparseMatrix] = Options[DocumentTermMatrix];
+
+DocumentTermSSparseMatrix[docs_, {stemmingRules_, stopWords_}, opts : OptionsPattern[] ] :=
+    DocumentTermSSparseMatrix[docs, {stemmingRules, stopWords}, None, opts ];
+
+DocumentTermSSparseMatrix[
+  docs : ( {_String ...} | {{_String...}...} ),
+  {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
+  termWeightFuncs : ( { _, _, _} | None ),
+  opts : OptionsPattern[] ] :=
+    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], termWeightFuncs, {stemmingRules, stopWords}, opts ];
 
 DocumentTermSSparseMatrix[
   docs : ( Association[ (_ -> _String) ...] | Association[ (_ -> {_String...}) ... ] ),
   {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
+  termWeightFuncs : ( { _, _, _} | None ),
   opts : OptionsPattern[]] :=
     Block[{docIDs, docTermMat, terms},
 
       docIDs = ToString /@ Keys[docs];
 
-      {docTermMat, terms} = DocumentTermMatrix[ Values[docs], { stemmingRules, stopWords}, opts];
+      {docTermMat, terms} = DocumentTermMatrix[ Values[docs], { stemmingRules, stopWords}, termWeightFuncs, opts];
 
       SSparseMatrix`ToSSparseMatrix[ docTermMat, "RowNames" -> docIDs, "ColumnNames" -> terms ]
     ];
