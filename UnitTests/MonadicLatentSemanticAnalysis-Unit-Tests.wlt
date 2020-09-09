@@ -509,4 +509,76 @@ VerificationTest[ (* 29 *)
 ];
 
 
+VerificationTest[ (* 30 *)
+  res =
+      Fold[
+        LSAMonBind,
+        lsaObj3,
+        {
+          LSAMonRepresentByTerms["something might be rotten in Denmark"],
+          LSAMonTakeValue
+        }
+      ];
+  MatchQ[ res, _SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Represent-by-terms-1"
+];
+
+
+VerificationTest[ (* 31 *)
+  res =
+      Fold[
+        LSAMonBind,
+        lsaObj3,
+        {
+          LSAMonRepresentByTerms[ {"something", "might", "be", "rotten", "in", "Denmark"} ],
+          LSAMonTakeValue
+        }
+      ];
+  MatchQ[ res, _SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Represent-by-terms-2"
+];
+
+
+VerificationTest[ (* 31 *)
+  res =
+      Fold[
+        LSAMonBind,
+        lsaObj3,
+        {
+          LSAMonRepresentByTopics["something might be rotten in Denmark"],
+          LSAMonTakeValue
+        }
+      ];
+  MatchQ[ res, _SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Represent-by-topics-1"
+];
+
+
+VerificationTest[ (* 32 *)
+  res =
+      Fold[
+        LSAMonBind,
+        lsaObj3,
+        {
+          LSAMonRepresentByTopics[ {"something", "might", "be", "rotten", "in", "Denmark"} ],
+          LSAMonTakeValue
+        }
+      ];
+  MatchQ[ res, _SSparseMatrix ]
+  ,
+  True
+  ,
+  TestID -> "Represent-by-topics-2"
+];
+
+
 EndTestSection[]
