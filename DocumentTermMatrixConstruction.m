@@ -388,7 +388,7 @@ DocumentTermSSparseMatrix[
   {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_},
   termWeightFuncs : ( { _, _, _} | None ),
   opts : OptionsPattern[] ] :=
-    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], termWeightFuncs, {stemmingRules, stopWords}, opts ];
+    DocumentTermSSparseMatrix[ AssociationThread[ Map[ ToString, Range[Length[docs]]], docs ], {stemmingRules, stopWords}, termWeightFuncs, opts ];
 
 DocumentTermSSparseMatrix[
   docs : ( Association[ (_ -> _String) ...] | Association[ (_ -> {_String...}) ... ] ),
