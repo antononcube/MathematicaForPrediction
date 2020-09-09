@@ -135,7 +135,7 @@ VerificationTest[ (* 6 *)
 
   Keys[LSAMonBind[ lsaObj, LSAMonTakeContext] ]
   ,
-  {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules"}
+  {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "documentTermMatrixCreationOptions"}
   ,
   TestID -> "Make-document-term-matrix-2"
 ];
@@ -152,9 +152,11 @@ VerificationTest[ (* 7 *)
         }
       ];
 
-  Keys[ lsaContext ] ==
-      {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "weightedDocumentTermMatrix",
-        "globalWeights", "globalWeightFunction", "localWeightFunction", "normalizerFunction"} &&
+  Sort[ Keys[ lsaContext ] ] ==
+      Sort[ {"documents", "documentTermMatrix",
+        "documentTermMatrixCreationOptions", "globalWeightFunction",
+        "globalWeights", "localWeightFunction", "normalizerFunction",
+        "stemmingRules", "stopWords", "terms", "weightedDocumentTermMatrix"} ] &&
       SSparseMatrixQ[lsaContext["weightedDocumentTermMatrix"]] &&
       Dimensions[lsaContext["weightedDocumentTermMatrix"]] == Dimensions[lsaContext["documentTermMatrix"]]
   ,
@@ -175,9 +177,11 @@ VerificationTest[ (* 8 *)
         }
       ];
 
-  Keys[ lsaContext ] ==
-      {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "weightedDocumentTermMatrix",
-        "globalWeights", "globalWeightFunction", "localWeightFunction", "normalizerFunction"} &&
+  Sort[ Keys[ lsaContext ] ] ==
+      Sort[ {"documents", "documentTermMatrix",
+        "documentTermMatrixCreationOptions", "globalWeightFunction",
+        "globalWeights", "localWeightFunction", "normalizerFunction",
+        "stemmingRules", "stopWords", "terms", "weightedDocumentTermMatrix"} ] &&
       SSparseMatrixQ[lsaContext["weightedDocumentTermMatrix"]] &&
       Dimensions[lsaContext["weightedDocumentTermMatrix"]] == Dimensions[lsaContext["documentTermMatrix"]]
   ,
@@ -198,12 +202,14 @@ VerificationTest[ (* 9 *)
         }
       ];
 
-  Keys[LSAMonBind[ lsaObj2, LSAMonTakeContext] ]
+  Sort @ Keys[LSAMonBind[ lsaObj2, LSAMonTakeContext] ]
   ,
-  {"documents", "documentTermMatrix", "terms", "stopWords",
-    "stemmingRules", "weightedDocumentTermMatrix", "globalWeights",
-    "globalWeightFunction", "localWeightFunction", "normalizerFunction",
-    "W", "H", "topicColumnPositions", "automaticTopicNames", "method", "topicsTable"}
+  {"automaticTopicNames", "documents", "documentTermMatrix",
+    "documentTermMatrixCreationOptions", "globalWeightFunction",
+    "globalWeights", "H", "localWeightFunction", "method",
+    "normalizerFunction", "stemmingRules", "stopWords", "terms",
+    "topicColumnPositions", "topicsTable", "W",
+    "weightedDocumentTermMatrix"}
   ,
   TestID -> "Topic-extraction-1"
 ];
@@ -232,11 +238,14 @@ VerificationTest[ (* 11 *)
         }
       ];
 
-  Keys[LSAMonBind[ lsaObj3, LSAMonTakeContext] ]
+  Sort @ Keys[LSAMonBind[ lsaObj3, LSAMonTakeContext] ]
   ,
-  {"documents", "documentTermMatrix", "terms", "stopWords", "stemmingRules", "weightedDocumentTermMatrix", "globalWeights",
-    "globalWeightFunction", "localWeightFunction", "normalizerFunction",
-    "W", "H", "topicColumnPositions", "automaticTopicNames", "method", "topicsTable"}
+  {"automaticTopicNames", "documents", "documentTermMatrix",
+    "documentTermMatrixCreationOptions", "globalWeightFunction",
+    "globalWeights", "H", "localWeightFunction", "method",
+    "normalizerFunction", "stemmingRules", "stopWords", "terms",
+    "topicColumnPositions", "topicsTable", "W",
+    "weightedDocumentTermMatrix"}
   ,
   TestID -> "Topic-extraction-3"
 ];
