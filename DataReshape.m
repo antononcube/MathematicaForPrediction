@@ -151,21 +151,30 @@ Clear[ToLongForm];
 
 SyntaxInformation[ToLongForm] = { "ArgumentsPattern" -> { _, _., _., OptionsPattern[] } };
 
-Options[ToLongForm] = { "AutomaticKeysTo" -> "AutomaticKey", "VariablesTo" -> "Variable", "ValuesTo" -> "Value" };
+Options[ToLongForm] = {
+  "IdentifierColumns" -> Automatic,
+  "VariableColumns" -> Automatic,
+  "AutomaticKeysTo" -> "AutomaticKey",
+  "VariablesTo" -> "Variable",
+  "ValuesTo" -> "Value" };
 
 ToLongForm[ds_Association, opts : OptionsPattern[] ] := RecordsToLongForm[ds, opts];
 
+ToLongForm[ds_Dataset, opts : OptionsPattern[] ] :=
+    Block[{ idCols, varCols },
+      idCols = OptionValue[ToLongForm, "IdentifierColumns"];
+      varCols = OptionValue[ToLongForm, "VariableColumns"];
+      ToLongForm[ ds, idCols, varCols, opts ]
+    ];
+
 ToLongForm[ds_Dataset, Automatic, Automatic, opts : OptionsPattern[] ] :=
-    ToLongForm[ds, opts];
+    ToLongForm[ds, {0}, Range[ Length[ ds[1] ] ], opts];
 
 ToLongForm[ds_Dataset, isColumn_?ColumnSpecQ, valueColumns_, opts : OptionsPattern[] ] :=
     ToLongForm[ds, {isColumn}, valueColumns, opts];
 
 ToLongForm[ds_Dataset, idColumns_, valueColumn_?ColumnSpecQ, opts : OptionsPattern[] ] :=
     ToLongForm[ds, idColumns, {valueColumn}, opts];
-
-ToLongForm[ds_Dataset, opts : OptionsPattern[] ] :=
-    ToLongForm[ ds, {0}, Range[ Length[ ds[1] ] ], opts ];
 
 ToLongForm[ds_Dataset, Automatic, valueColumns : {_Integer ..}, opts : OptionsPattern[] ] :=
     Block[{idColumns},
