@@ -49,6 +49,9 @@
 
 BeginTestSection["DataReshape-Unit-Tests.wlt"];
 
+(***********************************************************)
+(* Load package                                            *)
+(***********************************************************)
 
 VerificationTest[(* 1 *)
   CompoundExpression[
@@ -99,6 +102,7 @@ VerificationTest[
   TestID -> "Generated-datasets"
 ];
 
+
 (***********************************************************)
 (* Get built in data                                       *)
 (***********************************************************)
@@ -111,6 +115,7 @@ VerificationTest[
   ,
   TestID -> "Titanic-dataset"
 ];
+
 
 (***********************************************************)
 (* To long form                                            *)
@@ -127,6 +132,21 @@ VerificationTest[
   TestID -> "ToLongForm-1"
 ];
 
+
+VerificationTest[
+  dsTemp = ToLongForm[dsSmall, Automatic, {"a", "b"} ];
+  dsTemp2 = ToLongForm[dsSmall, "IdentifierColumns" -> Automatic, "VariableColumns" -> {"a", "b"} ];
+  MatchQ[ dsTemp2, _Dataset] &&
+      Dimensions[dsTemp2] == { 2 * Dimensions[dsSmall][[1]], 3 } &&
+      Normal[ Keys[dsTemp2[[1]]] ] == { "AutomaticKey", "Variable", "Value" } &&
+      dsTemp == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-2"
+];
+
+
 VerificationTest[
   dsTemp = ToLongForm[dsSmallWithIDs, "ID", {"a", "b"}];
   MatchQ[ dsTemp, _Dataset] &&
@@ -135,8 +155,23 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ToLongForm-2"
+  TestID -> "ToLongForm-3"
 ];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsSmallWithIDs, "ID", {"a", "b"}];
+  dsTemp2 = ToLongForm[dsSmallWithIDs, "IdentifierColumns" -> "ID", "VariableColumns" -> {"a", "b"} ];
+  MatchQ[ dsTemp, _Dataset] &&
+      Dimensions[dsTemp] == { 2 * Dimensions[dsSmallWithIDs][[1]], 3 } &&
+      Normal[ Keys[dsTemp[[1]]] ] == { "ID", "Variable", "Value" } &&
+      dsTemp == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-4"
+];
+
 
 VerificationTest[
   dsTemp1 = ToLongForm[dsSmall];
@@ -147,6 +182,7 @@ VerificationTest[
   ,
   TestID -> "ToLongForm-Automatic-Equivalence-1"
 ];
+
 
 VerificationTest[
   vInds = Range[ 2, Dimensions[dsSmallWithIDs][[2]] ];
@@ -159,6 +195,7 @@ VerificationTest[
   TestID -> "ToLongForm-Automatic-Equivalence-2"
 ];
 
+
 VerificationTest[
   vInds = Range[ 1, Dimensions[dsSmallWithIDs][[2]] ];
   dsTemp1 = ToLongForm[ dsSmallWithIDs, 0, vInds ];
@@ -169,6 +206,7 @@ VerificationTest[
   ,
   TestID -> "ToLongForm-Automatic-Equivalence-3"
 ];
+
 
 VerificationTest[
   vInds = Range[ 2, Dimensions[dsSmallWithIDs][[2]] ];
@@ -181,6 +219,7 @@ VerificationTest[
   TestID -> "ToLongForm-Automatic-Equivalence-4"
 ];
 
+
 VerificationTest[
   vInds = Range[ 1, Dimensions[dsSmallWithIDs][[2]] ];
   dsTemp1 = ToLongForm[ dsSmallWithIDs, 0, vInds ];
@@ -191,6 +230,7 @@ VerificationTest[
   ,
   TestID -> "ToLongForm-Automatic-Equivalence-5"
 ];
+
 
 (***********************************************************)
 (* To long form failure                                    *)
@@ -206,6 +246,7 @@ VerificationTest[
   TestID -> "ToLongForm-fail-1"
 ];
 
+
 VerificationTest[
   ToLongForm[ dsSmallWithIDs, "blah", {"a", "b"}]
   ,
@@ -215,6 +256,7 @@ VerificationTest[
   ,
   TestID -> "ToLongForm-fail-2"
 ];
+
 
 VerificationTest[
   ToLongForm[ dsSmallWithIDs, "ID", {"blah", "b"}]
@@ -249,6 +291,7 @@ VerificationTest[
   ,
   TestID -> "ToWideForm-1"
 ];
+
 
 EndTestSection[]
 
