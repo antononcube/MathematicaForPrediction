@@ -402,20 +402,20 @@ LSAMonMakeDocumentTermMatrix[ opts : OptionsPattern[] ][xs_, context_Association
 
       stopWords = OptionValue[ LSAMonMakeDocumentTermMatrix, "StopWords" ];
 
-      If[ ! ( MatchQ[ stopWords, {_String...} ] || TrueQ[ stopWords === Automatic ] ),
+      If[ ! ( MatchQ[ stopWords, {_String...} ] || TrueQ[ stopWords === Automatic ] || TrueQ[ stopWords === None ] ),
         Echo[
-          "The value of the option \"StopWords\" is expected to be a list or strings or Automatic.",
+          "The value of the option \"StopWords\" is expected to be a list or strings, Automatic, or None.",
           "LSAMonMakeDocumentTermMatrix:"
         ];
         Return[$LSAMonFailure]
       ];
 
-      LSAMonMakeDocumentTermMatrix[ stemRules, stopWords, opts ][xs, context]
+      LSAMonMakeDocumentTermMatrix[ stemRules, stopWords, DeleteCases[{opts}, ("StemmingRules" | "StopWords") -> _ ] ][xs, context]
     ];
 
 LSAMonMakeDocumentTermMatrix[
   stemRulesArg : ({ Rule[_String, _String] ... } | _Dispatch | _Association | Automatic | True | False),
-  stopWordsArg : {_String ...} | Automatic,
+  stopWordsArg : {_String ...} | Automatic | None,
   opts : OptionsPattern[] ][xs_, context_] :=
 
     Block[{ stemRules = stemRulesArg, stopWords = stopWordsArg, docs, docTermMat, documentTermMatrixCreationOptions  },
@@ -466,7 +466,7 @@ LSAMonMakeDocumentTermMatrix[
 LSAMonMakeDocumentTermMatrix[__][___] :=
     Block[{},
       Echo[
-        "The expected signature is one of LSAMonMakeDocumentTermMatrix[stemRules : ( { Rule[_String,_String] .. } | _Dispatch | _Association ), stopWords : { _String ... } ] "
+        "The expected signature is one of LSAMonMakeDocumentTermMatrix[stemRules : ( { Rule[_String,_String] .. } | _Dispatch | _Association ), stopWords : { _String ... } | Automatic | None ] "
             <> " or LSAMonMakeDocumentTermMatrix[OptionsPattern[]].",
         "LSAMonMakeDocumentTermMatrix:"];
       $LSAMonFailure
