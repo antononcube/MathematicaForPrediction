@@ -81,23 +81,23 @@ Begin["`Private`"];
 
 Clear[ToBagOfWords];
 
-SyntaxInformation[ToBagOfWords] =  { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };;
+SyntaxInformation[ToBagOfWords] = { "ArgumentsPattern" -> { _, _, OptionsPattern[] } };
 
 Options[ToBagOfWords] = {
   "SplittingCharacters" -> {Whitespace, "\n", " ", ".", ",", "!", "?", ";", ":", "-", "\"", "'", "(", ")", "\[OpenCurlyDoubleQuote]", "`"},
   "PostSplittingPredicate" -> (StringLength[#] > 2 &)
 };
 
-ToBagOfWords[doc_String, {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords_List}, opts : OptionsPattern[]] :=
+ToBagOfWords[doc_String, {stemmingRules : (_List | _Dispatch | _Association | Automatic), stopWords : (_List | None) }, opts : OptionsPattern[]] :=
     ToBagOfWords[{doc}, {stemmingRules, stopWords}, opts][[1]];
 
-ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List | _Dispatch | Automatic), stopWords_List}, opts : OptionsPattern[]] :=
+ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List | _Dispatch | Automatic), stopWords : (_List | None)}, opts : OptionsPattern[]] :=
     Block[{docTerms, splittingCharacters, pSPred, stopWordsRules, aDerivedStemmingRules},
 
       splittingCharacters = OptionValue[ToBagOfWords, "SplittingCharacters"];
       pSPred = OptionValue[ToBagOfWords, "PostSplittingPredicate"];
 
-      If[ TrueQ[splittingCharacters===Automatic], splittingCharacters = WhitespaceCharacter];
+      If[ TrueQ[splittingCharacters === Automatic], splittingCharacters = WhitespaceCharacter];
 
       If[ MatchQ[ docs, {_String..} ],
         docTerms = Flatten[StringSplit[#, splittingCharacters]] & /@ docs,
@@ -109,7 +109,8 @@ ToBagOfWords[docs : ( {_String ..} | {{_String...}..} ), {stemmingRules : (_List
         docTerms = Map[ Pick[ #, pSPred /@ # ] &, docTerms ]
       ];
 
-      If[ MatchQ[ stopWords, {_String..} ],
+      If[
+        MatchQ[ stopWords, {_String..} ],
         stopWordsRules = Dispatch[ Append[ Thread[ stopWords -> True ], _String -> False ] ];
         (* docTerms = Flatten[Fold[If[MemberQ[stopWords, #2], #1, {#1, #2}] &, {}, #]] & /@ docTerms; *)
         docTerms = Pick[ #, Not /@ (# /. stopWordsRules) ] & /@ docTerms;
