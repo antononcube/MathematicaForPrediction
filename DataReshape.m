@@ -265,8 +265,8 @@ ToLongForm[ds_Dataset, idColumnsArg : ( Automatic | _List ), valueColumnsArg : (
       keys = Keys[keys];
 
       If[
-          !( TrueQ[ idColumns === Automatic ] || Length[idColumns] == 0 || Apply[And, Map[ MemberQ[keys, #]&, idColumns ] ] ) ||
-              !( TrueQ[ valueColumns === Automatic ] || Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ] ),
+        !( TrueQ[ idColumns === Automatic ] || Length[idColumns] == 0 || Apply[And, Map[ MemberQ[keys, #]&, idColumns ] ] ) ||
+            !( TrueQ[ valueColumns === Automatic ] || Apply[And, Map[ MemberQ[keys, #]&, valueColumns ] ] ),
 
         Message[ToLongForm::colkeys];
         Return[$Failed]
@@ -401,7 +401,20 @@ PivotLonger[ data_Dataset, columnsArg : { _?ColumnSpecQ  ..}, opts : OptionsPatt
 
 Clear[ToWideForm];
 
-Options[ToWideForm] = {"AggregationFunction" -> Total};
+Options[ToWideForm] = {
+  "IdentifierColumns" -> Automatic,
+  "VariablesFrom" -> Automatic,
+  "ValuesFrom" -> Automatic,
+  "AggregationFunction" -> Total
+};
+
+ToWideForm[ ds_Dataset, opts : OptionsPattern[] ] :=
+    Block[{ idCols, varCol, valCol },
+      idCols = OptionValue[ToWideForm, "IdentifierColumns"];
+      varCol = OptionValue[ToWideForm, "VariableColumns"];
+      valCol = OptionValue[ToWideForm, "ValuesFrom"];
+      ToWideForm[ ds, idCols, varCol, valCol, opts ]
+    ];
 
 ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_Integer, opts : OptionsPattern[] ] :=
     Block[{records = Normal[ds]},
