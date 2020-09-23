@@ -180,6 +180,11 @@ SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dat
 
 SMRMonJoinAcross::usage = "Joins a recommendations association with a given Dataset object.";
 
+SMRMonAnnexSubMatrix::usage = "Annex matrices to the recommender. \
+(Synonym of SMRMonAnnexSubMatrices.)";
+
+SMRMonAnnexSubMatrices::usage = "Annex matrices to the recommender.";
+
 SMRMonJoin::usage = "Joins the recommender with another recommender. \
 (By column-binding the corresponding tag-type sub-matrices.)";
 
@@ -2282,6 +2287,40 @@ SMRMonSetTagWeights[___][__] :=
 
 
 (**************************************************************)
+(* SMR Annex sub matrices                                     *)
+(**************************************************************)
+
+Clear[SMRMonAnnexSubMatrices];
+
+SyntaxInformation[SMRMonAnnexSubMatrices] = { "ArgumentsPattern" -> { _, _. } };
+
+SMRMonAnnexSubMatrices[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonAnnexSubMatrices[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonAnnexSubMatrices[ smat_?SSparseMatrixQ, tagType_String ][xs_, context_Association] :=
+    SMRMonAnnexSubMatrices[ <| tagType -> smat |> ][xs, context];
+
+SMRMonAnnexSubMatrices[ smats : Association[ (_String -> _?SSparseMatrixQ) .. ] ][xs_, context_Association] :=
+    Block[{smr2},
+      smr2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ];
+      SMRMonBind[ SMRMonUnit[xs, context], SMRMonJoin[smr2, "left"] ]
+    ];
+
+SMRMonAnnexSubMatrices[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signatures are SMRMonAnnexSubMatrices[ smat_?SSparseMatrixQ, tagType_String] or SMRMonAnnexSubMatrices[ smats : <| (_String -> _?SSparseMatrixQ) .. |> ].",
+        "SMRMonAnnexSubMatrices:"];
+      $SMRMonFailure
+    ];
+
+
+Clear[SMRMonAnnexSubMatrix];
+SMRMonAnnexSubMatrix = SMRMonAnnexSubMatrices;
+
+
+(**************************************************************)
 (* SMR Join                                                   *)
 (**************************************************************)
 
@@ -2299,18 +2338,19 @@ SMRMonJoin[ smr2_SMRMon ][xs_, context_Association] :=
 SMRMonJoin[ smr2_SMRMon, joinType_String ][xs_, context_Association] :=
     SMRMonJoin[ smr2, joinType, Automatic, Automatic ][xs, context];
 
-SMRMonJoin[ smr2_SMRMon, joinType_String, colnamesPrefix1 : (_String | Automatic), colnamesPrefix2 : (_String | Automatic) ][xs_, context_Association] :=
-    Block[{smats1, smats2, allRownames, matrices},
+SMRMonJoin[ smr2_SMRMon, joinTypeArg_String, colnamesPrefix1 : (_String | Automatic), colnamesPrefix2 : (_String | Automatic) ][xs_, context_Association] :=
+    Block[{joinType = ToLowerCase[joinTypeArg], smats1, smats2, allRownames, matrices},
 
       (*  Get the appropriate all row names. *)
       If[ joinType != "same",
 
         Which[
-          joinType == "outer",
+          MemberQ[ {"outer", "union" }, joinType],
           allRownames =
-              Union[ Flatten[
+              Union[ Flatten[ {
                 RowNames[ context["M"] ],
-                RowNames[ SMRMonBind[ smr2, SMRMonTakeContext]["M"] ] ] ],
+                RowNames[ SMRMonBind[ smr2, SMRMonTakeContext]["M"] ]
+              }] ],
 
           joinType == "inner",
           allRownames =
@@ -2343,8 +2383,8 @@ SMRMonJoin[ smr2_SMRMon, joinType_String, colnamesPrefix1 : (_String | Automatic
 
       matrices =
           Join[
-            Map[ ImposeRowNames[#, allRownames]&, smats1 ],
-            Map[ ImposeRowNames[#, allRownames]&, smats2 ]
+            If[joinType == "same", smats1, Map[ ImposeRowNames[#, allRownames]&, smats1 ]],
+            If[joinType == "same", smats2, Map[ ImposeRowNames[#, allRownames]&, smats2 ]]
           ];
 
       Fold[ SMRMonBind, SMRMonUnit[], {SMRMonCreate[ matrices ] } ]
