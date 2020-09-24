@@ -496,10 +496,12 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoFunctionContext[f___][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
       MStateEchoFunctionContext::usage = "Echoes function application over the monad context.";
 
+
       MStateAssignTo[___][MStateFailureSymbol] := MStateFailureSymbol;
       SetAttributes[MStateAssignTo, HoldFirst];
       MStateAssignTo[s_Symbol][x_, context_] := Set[s, MStateUnit[x, context]];
       MStateAssignTo::usage = "Assigns the monad object to the argument.";
+
 
       MStateTakeValue[MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeValue[x_, context_] := x;
