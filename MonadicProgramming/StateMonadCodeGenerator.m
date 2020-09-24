@@ -337,6 +337,8 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateBind = ToExpression[monadName <> "Bind"],
       MStateAddToContext = ToExpression[monadName <> "AddToContext"],
       MStateAssignTo = ToExpression[monadName <> "AssignTo"],
+      MStateAssignContextTo = ToExpression[monadName <> "AssignContextTo"],
+      MStateAssignValueTo = ToExpression[monadName <> "AssignValueTo"],
       MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateDropFromContext = ToExpression[monadName <> "DropFromContext"],
       MStateEcho = ToExpression[monadName <> "Echo"],
@@ -501,6 +503,16 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       SetAttributes[MStateAssignTo, HoldFirst];
       MStateAssignTo[s_Symbol][x_, context_] := Set[s, MStateUnit[x, context]];
       MStateAssignTo::usage = "Assigns the monad object to the argument.";
+
+      MStateAssignContextTo[___][MStateFailureSymbol] := MStateFailureSymbol;
+      SetAttributes[MStateAssignContextTo, HoldFirst];
+      MStateAssignContextTo[s_Symbol][x_, context_] := Set[s, context];
+      MStateAssignContextTo::usage = "Assigns the monad context to the argument.";
+
+      MStateAssignValueTo[___][MStateFailureSymbol] := MStateFailureSymbol;
+      SetAttributes[MStateAssignValueTo, HoldFirst];
+      MStateAssignValueTo[s_Symbol][x_, context_] := Set[s, x];
+      MStateAssignValueTo::usage = "Assigns the monad value to the argument.";
 
 
       MStateTakeValue[MStateFailureSymbol] := MStateFailureSymbol;
