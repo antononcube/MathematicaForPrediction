@@ -101,6 +101,10 @@ BottomOutliers::usage = "Changes the parameters {L,U} of an outlier identifier t
 
 HampelIdentifier::usage = "Shortcut for OutlierIdentify[#, HampelIdentifierParameters]& .";
 
+QuartileIdentifier::usage = "Shortcut for OutlierIdentify[#, QuartileIdentifierParameters]& .";
+
+SPLUSQuartileIdentifier::usage = "Shortcut for OutlierIdentify[#, SPLUSQuartileIdentifierParameters]& .";
+
 OutlierPosition::usage = "OutlierPosition[ data : {_?NumberQ...}, pars] gives the positions of the outliers \
 in data using the outlier identifier parameters pars. Top and bottom outliers can be found with
 TopOutliers @* pars and BottomOutliers @* pars respectively.";
@@ -143,7 +147,7 @@ BottomOutliers[{xL_, xU_}] := {xL, Infinity};
 
 (***********::Section:: ***********)
 (* Identifiers                    *)
-
+(**********************************)
 
 Clear[OutlierIdentify, OutlierIdentifyLess];
 OutlierIdentify[data : {_?NumberQ...}, outlierIdentifierParameters_ : HampelIdentifierParameters ] :=
@@ -158,13 +162,17 @@ OutlierIdentify[ data : Association[ (_ -> _?NumberQ) ..], outlierIdentifierPara
 OutlierIdentifyLess[data : {_?NumberQ...} | Association[ (_ -> _?NumberQ) ..], outlierIdentifierParameters_ : HampelIdentifierParameters ] :=
     OutlierIdentify[ data, BottomOutliers @* outlierIdentifierParameters ];
 
-
 Clear[OutlierIdentifier];
 OutlierIdentifier = OutlierIdentify;
 
-
 Clear[HampelIdentifier];
-HampelIdentifier[data__] := OutlierIdentify[data, HampelIdentifierParameters];
+HampelIdentifier[data_] := OutlierIdentify[data, HampelIdentifierParameters];
+
+Clear[QuartileIdentifier];
+QuartileIdentifier[data_] := OutlierIdentify[data, QuartileIdentifierParameters];
+
+Clear[SPLUSQuartileIdentifier];
+SPLUSQuartileIdentifier[data_] := OutlierIdentify[data, SPLUSQuartileIdentifierParameters];
 
 
 Clear[OutlierPosition];
@@ -183,7 +191,8 @@ OutlierPosition[data : Association[ (_ -> _?NumberQ) ... ], outlierIdentifier_ :
 
 
 (*********** ::Section:: ***********)
-(*Plot definitions*)
+(* Plot definitions                *)
+(***********************************)
 
 Clear[ListPlotOutliers];
 Options[ListPlotOutliers] = {PlotStyle -> {PointSize[0.015]}, PlotRange -> All, ImageSize -> 300};
@@ -198,7 +207,7 @@ ListPlotOutliers[ds_, outlierParameters_, optsArg___] :=
       ]
     ];
 
-ClearAll[ColorPlotOutliers]
+ClearAll[ColorPlotOutliers];
 ColorPlotOutliers[] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]]]]]]}} &;
 ColorPlotOutliers[oid_] := # /. {Point[ps_] :> {Point[ps], Red, Point[ps[[OutlierPosition[ps[[All, 2]], oid]]]]}} &;
 
