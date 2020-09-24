@@ -50,15 +50,14 @@ BeginTestSection["MonadicSparseMatrixRecommender-Unit-Tests.mt"];
 
 
 VerificationTest[(* 1 *)
-  CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"],
-    Greater[Length[SubValues[MonadicSparseMatrixRecommender`SMRMonCreate]], 0]
-  ]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"];
+  Greater[Length[SubValues[MonadicSparseMatrixRecommender`SMRMonCreate]], 0]
   ,
   True
   ,
   TestID -> "LoadPackage"
 ];
+
 
 VerificationTest[(* 2 *)
   SeedRandom[342];
@@ -72,6 +71,7 @@ VerificationTest[(* 2 *)
   TestID -> "GenerateData"
 ];
 
+
 VerificationTest[(* 2 *)
   dsMiss = ds /. {0 -> Missing[]};
   MatchQ[dsMiss, _Dataset] && Count[dsMiss, _Missing, Infinity] > 10
@@ -81,6 +81,7 @@ VerificationTest[(* 2 *)
   TestID -> "MakeDataWithMissing"
 ];
 
+
 VerificationTest[(* 4 *)
   lsTitanic = Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Titanic.csv"];
   dsTitanic = Dataset[Dataset[Rest[lsTitanic]][All, AssociationThread[First[lsTitanic], #] &]];
@@ -88,8 +89,9 @@ VerificationTest[(* 4 *)
   ,
   True
   ,
-  TestID -> "LoadTitanicData"
+  TestID -> "Load-Titanic-data"
 ];
+
 
 VerificationTest[(* 5 *)
   lsMushroom = Import["https://raw.githubusercontent.com/antononcube/MathematicaVsR/master/Data/MathematicaVsR-Data-Mushroom.csv"];
@@ -105,7 +107,22 @@ VerificationTest[(* 5 *)
   ,
   True
   ,
-  TestID -> "LoadMushroomData"
+  TestID -> "Load-Mushroom-data"
+];
+
+
+VerificationTest[(* 5 *)
+  lsMint = Import["https://raw.githubusercontent.com/antononcube/R-packages/master/DataObfuscation/inst/extdata/dfMintBubblesTransactions.csv"];
+  dfMintBubblesTransactions = Dataset[Dataset[Rest[lsMint]][All, AssociationThread[First[lsMint], #] &]];
+  Block[{k = 1},
+    dfMintBubblesTransactions = dfMintBubblesTransactions[All, Prepend[#, "ID" -> "id." <> ToString[k++]] &];
+  ];
+  expectedColumnNames = Sort @ {"ID", "Date", "Description", "Amount", "Transaction.Type", "Category", "Account.Name"};
+  Head[dfMintBubblesTransactions] === Dataset && Sort[Normal[Keys[dfMintBubblesTransactions[[1]]]]] == expectedColumnNames
+  ,
+  True
+  ,
+  TestID -> "Load-MintBubblesTransactions"
 ];
 
 
@@ -125,6 +142,7 @@ VerificationTest[(* 6 *)
   TestID -> "SMR-creation-with-Titanic-data"
 ];
 
+
 VerificationTest[(* 7 *)
   colNames = Normal[Keys[dsTitanic[[1]]]];
 
@@ -142,6 +160,7 @@ VerificationTest[(* 7 *)
   TestID -> "SMR-creation-with-Titanic-matrices"
 ];
 
+
 VerificationTest[(* 8 *)
   smrMushroom = SMRMonBind[ SMRMonUnit[], SMRMonCreate[dsMushroom, "id", "AddTagTypesToColumnNames" -> True, "TagValueSeparator" -> ":" ]];
 
@@ -153,6 +172,7 @@ VerificationTest[(* 8 *)
   ,
   TestID -> "SMR-creation-with-Mushroom-data"
 ];
+
 
 VerificationTest[(* 9 *)
   colNames = Normal[Keys[dsMushroom[[1]]]];
@@ -193,6 +213,7 @@ VerificationTest[(* 13 *)
   TestID -> "smrTitanic2-recommendations-1"
 ];
 
+
 VerificationTest[(* 14 *)
   recs3 =
       Fold[
@@ -209,6 +230,7 @@ VerificationTest[(* 14 *)
   ,
   TestID -> "smrTitanic2-recommendations-2"
 ];
+
 
 VerificationTest[(* 15 *)
   recs4 =
@@ -251,6 +273,7 @@ VerificationTest[(* 17 *)
   TestID -> "smrTitanic-recommendations-by-profile-1"
 ];
 
+
 VerificationTest[(* 18 *)
   precs2 = Fold[ SMRMonBind, smrMushroom, {SMRMonRecommendByProfile[<|"odor:pungent" -> 1, "edibility:poisonous" -> 1|>, 12], SMRMonTakeValue} ];
 
@@ -261,6 +284,7 @@ VerificationTest[(* 18 *)
   ,
   TestID -> "smrMushroom-recommendations-by-profile-1"
 ];
+
 
 VerificationTest[(* 19 *)
   precs2 =
@@ -303,6 +327,7 @@ VerificationTest[(* 20 *)
   TestID -> "smrTitanic2-apply-term-weights-1"
 ];
 
+
 VerificationTest[(* 20 *)
   recs2 = Fold[
     SMRMonBind,
@@ -319,6 +344,7 @@ VerificationTest[(* 20 *)
   ,
   TestID -> "smrTitanic2-apply-term-weights-2"
 ];
+
 
 VerificationTest[(* 21 *)
   recs2 = Fold[
@@ -358,6 +384,7 @@ VerificationTest[(* 22 *)
   TestID -> "smrTitanic2-metadata-proofs-1"
 ];
 
+
 VerificationTest[(* 23 *)
   itemNames = { "10", "120", "320" };
   proofs2 = Fold[
@@ -375,6 +402,7 @@ VerificationTest[(* 23 *)
   TestID -> "smrTitanic2-metadata-proofs-2"
 ];
 
+
 VerificationTest[(* 24 *)
   proofs3 = Fold[
     SMRMonBind,
@@ -390,6 +418,7 @@ VerificationTest[(* 24 *)
   ,
   TestID -> "smrTitanic2-history-proofs-1"
 ];
+
 
 VerificationTest[(* 25 *)
   itemNames = { "120", "220", "320" };
@@ -407,6 +436,7 @@ VerificationTest[(* 25 *)
   ,
   TestID -> "smrTitanic2-history-proofs-2"
 ];
+
 
 (*---------------------------------------------------------*)
 (* Get top recommendations                                 *)
@@ -537,5 +567,151 @@ VerificationTest[(* 29 *)
   ,
   TestID -> "smrTitanic-filter-matrix-1"
 ];
+
+
+(*---------------------------------------------------------*)
+(* Recommender algebra                                     *)
+(*---------------------------------------------------------*)
+
+VerificationTest[
+  smrObj1 =
+      Fold[ SMRMonBind,
+        SMRMonUnit[],
+        {
+          SMRMonCreate[dfMintBubblesTransactions[200 ;; -1, {1, 2, 3, 4}]]
+        }
+      ];
+
+  smrObj2 =
+      Fold[ SMRMonBind,
+        SMRMonUnit[],
+        {
+          SMRMonCreate[dfMintBubblesTransactions[1 ;; 300 , {1, 5, 6, 7}]]
+        }
+      ];
+
+  Head[smrObj1] === SMRMon &&
+      AssociationQ[ smrObj1[[2]]["matrices"] ] &&
+      Length[smrObj1[[2]]["matrices"]] == 3 &&
+      Head[smrObj2] === SMRMon &&
+      AssociationQ[ smrObj2[[2]]["matrices"] ] &&
+      Length[smrObj2[[2]]["matrices"]] == 3
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-recommenders-1"
+];
+
+
+VerificationTest[
+  smrObj3 =
+      Fold[SMRMonBind,
+        smrObj1,
+        {
+          SMRMonJoin[smrObj2, "outer"]}
+      ];
+
+
+  Head[smrObj3] === SMRMon &&
+      AssociationQ[ smrObj3[[2]]["matrices"] ] &&
+      Length[smrObj3[[2]]["matrices"]] == 6 &&
+      Sort @ Keys @ SMRMonBind[smrObj3, SMRMonTakeMatrices] == Sort @ Complement[ Normal @ Keys @ dfMintBubblesTransactions[1], {"ID"}] &&
+      Apply[Equal, Prepend[ RowsCount /@ Values[SMRMonBind[smrObj3, SMRMonTakeMatrices]], Length @ Union @ Normal @ dfMintBubblesTransactions[All, "ID"] ] ] &&
+      Apply[Equal, Prepend[ RowNames /@ Values[SMRMonBind[smrObj3, SMRMonTakeMatrices]], Union @ Normal @ dfMintBubblesTransactions[All, "ID"] ] ]
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-join-outer-1"
+];
+
+
+VerificationTest[
+  smrObj3 =
+      Fold[SMRMonBind,
+        smrObj1,
+        {
+          SMRMonJoin[smrObj2, "left"]}
+      ];
+
+
+  Head[smrObj3] === SMRMon &&
+      AssociationQ[ smrObj3[[2]]["matrices"] ] &&
+      Length[smrObj3[[2]]["matrices"]] == 6 &&
+      Sort @ Keys @ SMRMonBind[smrObj3, SMRMonTakeMatrices] == Sort @ Complement[ Normal @ Keys @ dfMintBubblesTransactions[1], {"ID"}] &&
+      Apply[Equal, Join[ RowsCount /@ Values[SMRMonBind[smrObj3, SMRMonTakeMatrices]], RowsCount /@ Values[SMRMonBind[smrObj1, SMRMonTakeMatrices]] ] ] &&
+      Apply[Equal, Join[ RowNames /@ Values[SMRMonBind[smrObj3, SMRMonTakeMatrices]], RowNames /@ Values[SMRMonBind[smrObj1, SMRMonTakeMatrices]] ] ]
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-join-left-1"
+];
+
+
+VerificationTest[
+  smrObj3 = SMRMonBind[smrObj1, SMRMonJoin[smrObj2, "inner"]];
+
+  Head[smrObj3] === SMRMon &&
+      AssociationQ[ smrObj3[[2]]["matrices"] ] &&
+      Length[smrObj3[[2]]["matrices"]] == 6 &&
+      Sort @ Keys @ SMRMonBind[smrObj3, SMRMonTakeMatrices] == Sort @ Complement[ Normal @ Keys @ dfMintBubblesTransactions[1], {"ID"}] &&
+      Apply[Equal,
+        Prepend[
+          RowNames /@ Values[SMRMonBind[smrObj3, SMRMonTakeMatrices]],
+          Sort @
+              Intersection[
+                RowNames @ First @ SMRMonBind[smrObj1, SMRMonTakeMatrices],
+                RowNames @ First @ SMRMonBind[smrObj2, SMRMonTakeMatrices]
+              ]
+        ]
+      ]
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-join-inner-1"
+];
+
+
+VerificationTest[
+  smrObj4 =
+      SMRMonBind[
+        smrObj1,
+        SMRMonAnnexSubMatrices[<| "Account.Name" -> SMRMonBind[smrObj2, SMRMonTakeContext]["matrices"][[1]] |>]
+      ];
+
+
+  Head[smrObj4] === SMRMon &&
+      AssociationQ[ smrObj4[[2]]["matrices"] ] &&
+      Length[smrObj4[[2]]["matrices"]] == 4 &&
+      Keys[SMRMonBind[smrObj4, SMRMonTakeMatrices]] == Append[ Keys @ SMRMonBind[smrObj1, SMRMonTakeMatrices], "Account.Name"]
+
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-annex-sub-matrix-1"
+];
+
+
+VerificationTest[
+  smrObj5 = SMRMonBind[smrObj1, SMRMonAnnexSubMatrices[SMRMonBind[smrObj2, SMRMonTakeContext]["matrices"][[1]], "Account.Name"]];
+
+  Head[smrObj5] === SMRMon &&
+      AssociationQ[ smrObj5[[2]]["matrices"] ] &&
+      Length[smrObj5[[2]]["matrices"]] == 4 &&
+      Keys[SMRMonBind[smrObj5, SMRMonTakeMatrices]] == Append[ Keys @ SMRMonBind[smrObj1, SMRMonTakeMatrices], "Account.Name"]
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-annex-sub-matrix-2"
+];
+
+
+VerificationTest[
+  SMRMonBind[smrObj4, SMRMonTakeMatrices] == SMRMonBind[smrObj5, SMRMonTakeMatrices]
+  ,
+  True
+  ,
+  TestID -> "Recommender-algebra-annex-sub-matrix-3"
+];
+
 
 EndTestSection[]
