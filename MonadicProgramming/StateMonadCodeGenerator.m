@@ -334,38 +334,39 @@ Options[GenerateStateMonadCode] = {"StringContextNames" -> True, "FailureSymbol"
 GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
     With[{
       MState = ToExpression[monadName],
-      MStateUnit = ToExpression[monadName <> "Unit"],
-      MStateUnitQ = ToExpression[monadName <> "UnitQ"],
       MStateBind = ToExpression[monadName <> "Bind"],
-      MStateFail = ToExpression[monadName <> "Fail"],
-      MStateSucceed = ToExpression[monadName <> "Succeed"],
-      MStateEcho = ToExpression[monadName <> "Echo"],
-      MStateEchoValue = ToExpression[monadName <> "EchoValue"],
-      MStateEchoFunctionValue = ToExpression[monadName <> "EchoFunctionValue"],
-      MStateEchoContext = ToExpression[monadName <> "EchoContext"],
-      MStateEchoFunctionContext = ToExpression[monadName <> "EchoFunctionContext"],
-      MStateTakeContext = ToExpression[monadName <> "TakeContext"],
-      MStateTakeValue = ToExpression[monadName <> "TakeValue"],
-      MStatePutContext = ToExpression[monadName <> "PutContext"],
-      MStatePutValue = ToExpression[monadName <> "PutValue"],
-      MStateModifyContext = ToExpression[monadName <> "ModifyContext"],
       MStateAddToContext = ToExpression[monadName <> "AddToContext"],
-      MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
+      MStateAssignTo = ToExpression[monadName <> "AssignTo"],
+      MStateContexts = ToExpression[monadName <> "Contexts"],
       MStateDropFromContext = ToExpression[monadName <> "DropFromContext"],
-      MStateOption = ToExpression[monadName <> "Option"],
-      MStateWhen = ToExpression[monadName <> "When"],
+      MStateEcho = ToExpression[monadName <> "Echo"],
+      MStateEchoContext = ToExpression[monadName <> "EchoContext"],
+      MStateEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]],
+      MStateEchoFunctionContext = ToExpression[monadName <> "EchoFunctionContext"],
+      MStateEchoFunctionValue = ToExpression[monadName <> "EchoFunctionValue"],
+      MStateEchoValue = ToExpression[monadName <> "EchoValue"],
+      MStateFail = ToExpression[monadName <> "Fail"],
+      MStateFailureSymbol = OptionValue["FailureSymbol"],
+      MStateFold = ToExpression[monadName <> "Fold"],
+      MStateIf = ToExpression[monadName <> "If"],
       MStateIfElse = ToExpression[monadName <> "IfElse"],
       MStateIterate = ToExpression[monadName <> "Iterate"],
-      MStateIf = ToExpression[monadName <> "If"],
+      MStateModifyContext = ToExpression[monadName <> "ModifyContext"],
+      MStateModule = ToExpression[monadName <> "Module"],
       MStateNest = ToExpression[monadName <> "Nest"],
       MStateNestWhile = ToExpression[monadName <> "NestWhile"],
-      MStateFold = ToExpression[monadName <> "Fold"],
-      MStateModule = ToExpression[monadName <> "Module"],
-      MStateContexts = ToExpression[monadName <> "Contexts"],
-      MStateFailureSymbol = OptionValue["FailureSymbol"],
-      MStateEchoFailingFunction = TrueQ[OptionValue["EchoFailingFunction"]],
+      MStateOption = ToExpression[monadName <> "Option"],
+      MStatePutContext = ToExpression[monadName <> "PutContext"],
+      MStatePutValue = ToExpression[monadName <> "PutValue"],
+      MStateRetrieveFromContext = ToExpression[monadName <> "RetrieveFromContext"],
       MStateSetContext = ToExpression[monadName <> "SetContext"],
-      MStateSetValue = ToExpression[monadName <> "SetValue"]
+      MStateSetValue = ToExpression[monadName <> "SetValue"],
+      MStateSucceed = ToExpression[monadName <> "Succeed"],
+      MStateTakeContext = ToExpression[monadName <> "TakeContext"],
+      MStateTakeValue = ToExpression[monadName <> "TakeValue"],
+      MStateUnit = ToExpression[monadName <> "Unit"],
+      MStateUnitQ = ToExpression[monadName <> "UnitQ"],
+      MStateWhen = ToExpression[monadName <> "When"]
     },
 
       ClearAll[MState, MStateUnit, MStateUnitQ, MStateBind, MStateFail, MStateSucceed, MStateEcho,
@@ -495,6 +496,10 @@ GenerateStateMonadCode[monadName_String, opts : OptionsPattern[]] :=
       MStateEchoFunctionContext[f___][x_, context_Association] := (EchoFunction[f][context]; MState[x, context]);
       MStateEchoFunctionContext::usage = "Echoes function application over the monad context.";
 
+      MStateAssignTo[___][MStateFailureSymbol] := MStateFailureSymbol;
+      SetAttributes[MStateAssignTo, HoldFirst];
+      MStateAssignTo[s_Symbol][x_, context_] := Set[s, MStateUnit[x, context]];
+      MStateAssignTo::usage = "Assigns the monad object to the argument.";
 
       MStateTakeValue[MStateFailureSymbol] := MStateFailureSymbol;
       MStateTakeValue[x_, context_] := x;
