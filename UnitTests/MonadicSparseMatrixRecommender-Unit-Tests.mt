@@ -683,7 +683,6 @@ VerificationTest[
       AssociationQ[ smrObj4[[2]]["matrices"] ] &&
       Length[smrObj4[[2]]["matrices"]] == 4 &&
       Keys[SMRMonBind[smrObj4, SMRMonTakeMatrices]] == Append[ Keys @ SMRMonBind[smrObj1, SMRMonTakeMatrices], "Account.Name"]
-
   ,
   True
   ,
