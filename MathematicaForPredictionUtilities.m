@@ -374,7 +374,7 @@ GridTableForm[data_List, opts : OptionsPattern[]] :=
         TrueQ[gridHeadings === Automatic],
         {rowNames, gridHeadings} = {Automatic, Automatic},
 
-        MatchQ[gridHeadings, {_List| Automatic | None}],
+        MatchQ[gridHeadings, {_List | Automatic | None}],
         {rowNames, gridHeadings} = {gridHeadings[[1]], Automatic},
 
         MatchQ[gridHeadings, {_List | None | Automatic, _List | None | Automatic}],
@@ -461,11 +461,39 @@ ParetoLawPlot = ParetoPrincipleAdherence`ParetoPrinciplePlot;
 (*===========================================================*)
 
 Clear[IntervalMappingFunction];
-IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
-    Block[{XXX, t = Partition[Join[{-\[Infinity]}, qBoundaries, {\[Infinity]}], 2, 1]},
-      Function[
-        Evaluate[Piecewise[
-          MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t, Range[1, Length[t]]}]] /. {XXX -> #}]]
+
+SyntaxInformation[IntervalMappingFunction] = {"ArgumentsPattern" -> {_, OptionsPattern[]}};
+
+Options[IntervalMappingFunction] = { "IntervalNames" -> False, "InequalityForm" -> True };
+
+IntervalMappingFunction[qBoundaries : {_?NumberQ ...}, opts : OptionsPattern[]] :=
+    Block[{XXX, t, intervalNamesQ, ineqForm, MyToString},
+
+      MyToString[x_] := ToString[x] /. "Infinity" -> "\[Infinity]";
+
+      t = Partition[Join[{-Infinity}, qBoundaries, {Infinity}], 2, 1];
+
+      intervalNamesQ = TrueQ[OptionValue[IntervalMappingFunction, "IntervalNames"]];
+      ineqForm = TrueQ[OptionValue[IntervalMappingFunction, "InequalityForm"]];
+
+      Which[
+        intervalNamesQ && ineqForm,
+
+        Function[
+          Evaluate[Piecewise[
+            Map[{ MyToString[#1[[1]]] <> "<#<=" <> MyToString[#1[[2]]], #1[[1]] < XXX <= #1[[2]]} &, t]] /. {XXX -> #}]],
+
+        intervalNamesQ && !ineqForm,
+
+        Function[
+          Evaluate[Piecewise[
+            Map[{ "(" <> MyToString[#1[[1]]] <> "," <> MyToString[#1[[2]]] <> "]", #1[[1]] < XXX <= #1[[2]]} &, t]] /. {XXX -> #}]],
+
+        True,
+        Function[
+          Evaluate[Piecewise[
+            MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t, Range[1, Length[t]]}]] /. {XXX -> #}]]
+      ]
     ];
 
 
@@ -475,14 +503,17 @@ IntervalMappingFunction[qBoundaries : {_?NumberQ ...}] :=
 
 Clear[ToCategoricalColumns];
 
-ToCategoricalColumns::mslen = "The second argument is expected to be a numerical vector or \
+ToCategoricalColumns::mslen = "The first argument is expected to be an array or a dataset. \
+The second argument is expected to be a numerical vector or \
 a list of numerical vectors. When a lists of numerical vectors then the length of that list \
 is expected to be equal to the number of numerical columns of the first argument.";
 
-Options[ToCategoricalColumns] = { "QuantileBreaks" -> False };
+Options[ToCategoricalColumns] = Join[ { "QuantileBreaks" -> False }, Options[IntervalMappingFunction] ];
 
 ToCategoricalColumns[data_?ArrayQ, breaks_List : Range[0, 1, 0.1], opts : OptionsPattern[] ] :=
-    Block[{inds, imFuncs, res, quantileBreaksQ},
+    Block[{inds, imFuncs, res, quantileBreaksQ, imfOpts},
+
+      imfOpts = FilterRules[{opts}, Options[IntervalMappingFunction]];
 
       quantileBreaksQ = TrueQ[ OptionValue[ ToCategoricalColumns, "QuantileBreaks" ] ];
 
@@ -493,16 +524,23 @@ ToCategoricalColumns[data_?ArrayQ, breaks_List : Range[0, 1, 0.1], opts : Option
       Which[
         quantileBreaksQ && VectorQ[ breaks, NumericQ ],
         imFuncs =
-            IntervalMappingFunction /@ (Quantile[DeleteMissing[#], breaks] & /@ Transpose[data[[All, inds]]]),
+            IntervalMappingFunction[#, imfOpts]& /@ (Quantile[DeleteMissing[#], breaks] & /@ Transpose[data[[All, inds]]]),
 
         quantileBreaksQ && Length[breaks] == Length[inds] && Apply[ And, VectorQ[ #, NumericQ ]& /@ breaks],
-        imFuncs = MapIndexed[ IntervalMappingFunction[ Quantile[  DeleteMissing[ data[[All, #1]] ], breaks[[ #2[[1]] ]] ] ] &, inds ],
+        imFuncs =
+            MapIndexed[
+              IntervalMappingFunction[
+                Quantile[  DeleteMissing[ data[[All, #1]] ], breaks[[ #2[[1]] ]] ],
+                imfOpts
+              ] &,
+              inds
+            ],
 
         VectorQ[ breaks, NumericQ],
-        imFuncs = Table[ IntervalMappingFunction[breaks], Length[inds] ],
+        imFuncs = Table[ IntervalMappingFunction[breaks, imfOpts ], Length[inds] ],
 
         Length[breaks] == Length[inds] && Apply[ And, VectorQ[ #, NumericQ ]& /@ breaks ],
-        imFuncs = Map[ IntervalMappingFunction, breaks ],
+        imFuncs = Map[ IntervalMappingFunction[#, imfOpts]&, breaks ],
 
         True,
         Message[ToCategoricalColumns::mslen];
@@ -516,7 +554,9 @@ ToCategoricalColumns[data_?ArrayQ, breaks_List : Range[0, 1, 0.1], opts : Option
     ] /; Length[Dimensions[data]] == 2;
 
 ToCategoricalColumns[ds_Dataset, breaks_List : Range[0, 1, 0.1], opts : OptionsPattern[] ] :=
-    Block[{aNumColsQ, numCols, imFuncs, quantileBreaksQ},
+    Block[{aNumColsQ, numCols, imFuncs, quantileBreaksQ, imfOpts},
+
+      imfOpts = FilterRules[{opts}, Options[IntervalMappingFunction]];
 
       quantileBreaksQ = TrueQ[ OptionValue[ ToCategoricalColumns, "QuantileBreaks" ] ];
 
@@ -527,17 +567,25 @@ ToCategoricalColumns[ds_Dataset, breaks_List : Range[0, 1, 0.1], opts : OptionsP
 
       Which[
         quantileBreaksQ && VectorQ[ breaks, NumericQ ],
-        imFuncs = IntervalMappingFunction /@ (Quantile[DeleteMissing[#], breaks] & /@ Transpose[ds[All, numCols]]);
+        imFuncs = IntervalMappingFunction[#, imfOpts]& /@ (Quantile[DeleteMissing[#], breaks] & /@ Transpose[ds[All, numCols]]);
         imFuncs = Normal @ imFuncs,
 
         quantileBreaksQ && Length[breaks] == Length[numCols] && Apply[ And, VectorQ[ #, NumericQ ]& /@ breaks],
-        imFuncs = Association @ MapIndexed[ #1 -> IntervalMappingFunction[ Quantile[ Normal @ DeleteMissing[ ds[All, #1] ], breaks[[ #2[[1]] ]] ] ] &, numCols ],
+        imFuncs =
+            Association @
+                MapIndexed[
+                  #1 -> IntervalMappingFunction[
+                    Quantile[ Normal @ DeleteMissing[ ds[All, #1] ], breaks[[ #2[[1]] ]] ],
+                    imfOpts
+                  ] &,
+                  numCols
+                ],
 
         VectorQ[ breaks, NumericQ],
-        imFuncs = AssociationThread[ numCols -> Table[ IntervalMappingFunction[breaks], Length[numCols]] ],
+        imFuncs = AssociationThread[ numCols -> Table[ IntervalMappingFunction[breaks, FilterRules[{opts}, Options[IntervalMappingFunction]]], Length[numCols]] ],
 
         Length[breaks] == Length[numCols] && Apply[ And, VectorQ[ #, NumericQ ]& /@ breaks ],
-        imFuncs = AssociationThread[ numCols -> Map[ IntervalMappingFunction, breaks ] ],
+        imFuncs = AssociationThread[ numCols -> Map[ IntervalMappingFunction[#, imfOpts]&, breaks ] ],
 
         True,
         Message[ToCategoricalColumns::mslen];
