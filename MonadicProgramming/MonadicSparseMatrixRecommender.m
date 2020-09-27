@@ -522,7 +522,7 @@ SMRMonCreate[ smat_SSparseMatrix, opts : OptionsPattern[] ][xs_, context_Associa
     SMRMonCreate[ <| "anonymous" -> smat |>, opts][xs, context];
 
 SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{smats = smatsArg, addTagTypesToColumnNamesQ, tagValueSeparator, tagTypeNames, rowNames, columnNames, splicedMat},
+    Block[{smats = smatsArg, addTagTypesToColumnNamesQ, tagValueSeparator, tagTypeNames, rowNames, columnNames, lsCommonColumnNames, splicedMat},
 
       addTagTypesToColumnNamesQ = TrueQ[OptionValue[SMRMonCreate, "AddTagTypesToColumnNames"]];
       tagValueSeparator = ToString[OptionValue[SMRMonCreate, "TagValueSeparator"]];
@@ -546,6 +546,23 @@ SMRMonCreate[smatsArg : Association[ (_ -> _SSparseMatrix) ..], opts : OptionsPa
                     "ColumnNames" -> Map[ k <> tagValueSeparator <> #&, ColumnNames[mat] ],
                     "RowNames" -> RowNames[mat]
                   ]], smats]
+      ];
+
+      lsCommonColumnNames =
+          Association @ Flatten @
+              Map[
+                # -> Length[Intersection[ColumnNames@smats[#[[1]]], ColumnNames@smats[#[[2]]]]]&,
+                Flatten[ Table[ Keys[smats][[{k1, k2}]], {k1, 1, Length[smats]}, {k2, k1 + 1, Length[smats]}], 1]
+              ];
+      lsCommonColumnNames = Select[ KeySelect[ lsCommonColumnNames, Not[Equal @@ #]&], # > 0 &];
+
+      If[ Length[lsCommonColumnNames] > 0,
+        Echo[
+          "Some of the creation sub-matrices have common column names, therefore the columns were renamed." <>
+              " Sub-matrices with common column names: " <>
+              ToString[lsCommonColumnNames] <>
+              " .",
+          "SMRMonCreate:" ];
       ];
 
       splicedMat = ColumnBind[Values[smats]];
@@ -703,8 +720,8 @@ SyntaxInformation[SMRMonCreateFromLongForm] = { "ArgumentsPattern" -> { _, ___, 
 
 Options[SMRMonCreateFromLongForm] =
     {
-      "AddTagTypesToColumnNames" -> False,
-      "TagValueSeparator" -> ".",
+      "AddTagTypesToColumnNames" -> True,
+      "TagValueSeparator" -> ":",
       "MissingValuesPattern" -> (None | "None" | Missing[___])
     };
 
@@ -2294,23 +2311,27 @@ Clear[SMRMonAnnexSubMatrices];
 
 SyntaxInformation[SMRMonAnnexSubMatrices] = { "ArgumentsPattern" -> { _, _. } };
 
+Options[SMRMonAnnexSubMatrices] = Options[SMRMonCreate];
+
 SMRMonAnnexSubMatrices[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonAnnexSubMatrices[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonAnnexSubMatrices[ smat_?SSparseMatrixQ, tagType_String ][xs_, context_Association] :=
+SMRMonAnnexSubMatrices[ smat_?SSparseMatrixQ, tagType_String, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonAnnexSubMatrices[ <| tagType -> smat |> ][xs, context];
 
-SMRMonAnnexSubMatrices[ smats : Association[ (_String -> _?SSparseMatrixQ) .. ] ][xs_, context_Association] :=
+SMRMonAnnexSubMatrices[ smats : Association[ (_String -> _?SSparseMatrixQ) .. ], opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{smr2},
-      smr2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ];
-      SMRMonBind[ SMRMonUnit[xs, context], SMRMonJoin[smr2, "left"] ]
+
+      smr2 = SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats, FilterRules[{opts}, Options[SMRMonCreate]]] ];
+
+      SMRMonBind[ SMRMonUnit[xs, context], SMRMonJoin[smr2, "left" ] ]
     ];
 
 SMRMonAnnexSubMatrices[___][__] :=
     Block[{},
       Echo[
-        "The expected signatures are SMRMonAnnexSubMatrices[ smat_?SSparseMatrixQ, tagType_String] or SMRMonAnnexSubMatrices[ smats : <| (_String -> _?SSparseMatrixQ) .. |> ].",
+        "The expected signatures are SMRMonAnnexSubMatrices[ smat_?SSparseMatrixQ, tagType_String, opts___] or SMRMonAnnexSubMatrices[ smats : <| (_String -> _?SSparseMatrixQ) .. |>, opts___ ].",
         "SMRMonAnnexSubMatrices:"];
       $SMRMonFailure
     ];
@@ -2326,19 +2347,40 @@ SMRMonAnnexSubMatrix = SMRMonAnnexSubMatrices;
 
 Clear[SMRMonJoin];
 
-SyntaxInformation[SMRMonJoin] = { "ArgumentsPattern" -> { _, ___, ___, ___ } };
+SyntaxInformation[SMRMonJoin] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+
+Options[SMRMonJoin] =
+    Join[
+      { "JoinType" -> Automatic },
+      Options[SMRMonCreate]
+    ];
 
 SMRMonJoin[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonJoin[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonJoin[ smr2_SMRMon ][xs_, context_Association] :=
-    SMRMonJoin[ smr2, "same", Automatic, Automatic ][xs, context];
+SMRMonJoin[ smr2_SMRMon, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{joinType, lsExpectedJoinTypes},
 
-SMRMonJoin[ smr2_SMRMon, joinType_String ][xs_, context_Association] :=
-    SMRMonJoin[ smr2, joinType, Automatic, Automatic ][xs, context];
+      lsExpectedJoinTypes = {"same", "outer", "union", "inner", "left"};
 
-SMRMonJoin[ smr2_SMRMon, joinTypeArg_String, colnamesPrefix1 : (_String | Automatic), colnamesPrefix2 : (_String | Automatic) ][xs_, context_Association] :=
+      joinType = OptionValue[SMRMonJoin, "JoinType"];
+      joinType = If[ joinType === Automatic, "same", joinType];
+      If[ !( StringQ[joinType] && MemberQ[lsExpectedJoinTypes, joinType] ),
+        Echo["The value of the option \"JoinType\" is expected to be Automatic or one of : \"" <> StringRiffle[lsExpectedJoinTypes, "\", \""] <> "\"."];
+        Return[$SMRMonFailure];
+      ];
+
+      SMRMonJoin[ smr2, "JoinType" -> joinType, opts ][xs, context]
+    ];
+
+SMRMonJoin[ smr2_SMRMon, joinType_String, opts : OptionsPattern[] ][xs_, context_Association] :=
+    SMRMonJoin[ smr2, joinType, opts][xs, context];
+
+SMRMonJoin[
+  smr2_SMRMon,
+  joinTypeArg_String,
+  opts : OptionsPattern[] ][xs_, context_Association] :=
     Block[{joinType = ToLowerCase[joinTypeArg], smats1, smats2, allRownames, matrices},
 
       (*  Get the appropriate all row names. *)
@@ -2387,7 +2429,7 @@ SMRMonJoin[ smr2_SMRMon, joinTypeArg_String, colnamesPrefix1 : (_String | Automa
             If[joinType == "same", smats2, Map[ ImposeRowNames[#, allRownames]&, smats2 ]]
           ];
 
-      Fold[ SMRMonBind, SMRMonUnit[], {SMRMonCreate[ matrices ] } ]
+      Fold[ SMRMonBind, SMRMonUnit[], {SMRMonCreate[ matrices, FilterRules[{opts}, Options[SMRMonJoin]] ] } ]
     ];
 
 SMRMonJoin[___][__] :=
