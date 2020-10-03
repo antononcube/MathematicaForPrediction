@@ -411,27 +411,30 @@ Options[ToWideForm] = {
 ToWideForm[ ds_Dataset, opts : OptionsPattern[] ] :=
     Block[{ idCols, varCol, valCol },
       idCols = OptionValue[ToWideForm, "IdentifierColumns"];
-      varCol = OptionValue[ToWideForm, "VariableColumns"];
+      varCol = OptionValue[ToWideForm, "VariablesFrom"];
       valCol = OptionValue[ToWideForm, "ValuesFrom"];
       ToWideForm[ ds, idCols, varCol, valCol, opts ]
     ];
 
 ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_Integer, opts : OptionsPattern[] ] :=
+    ToWideForm[ ds, {idColumn}, variableColumn, valueColumn, opts];
+
+ToWideForm[ ds_Dataset, idColumns : { _Integer.. }, variableColumn_Integer, valueColumn_Integer, opts : OptionsPattern[] ] :=
     Block[{records = Normal[ds]},
 
       records =
           Which[
-            TrueQ[idColumn == 0] && MatchQ[records, Association[(_ -> _Association) ..]],
+            TrueQ[idColumns == {0}] && MatchQ[records, Association[(_ -> _Association) ..]],
             KeyValueMap[ <| "AutomaticKey" -> #1, Values[#2][[variableColumn]] -> Values[#2][[valueColumn]] |> &, records],
 
-            ! TrueQ[idColumn == 0] && MatchQ[records, Association[(_ -> _Association) ..]],
-            Map[ <| Keys[#][[idColumn]] -> Values[#][[idColumn]] , Values[#][[variableColumn]] -> Values[#][[valueColumn]] |> &, Values[records]],
+            ! TrueQ[idColumns == {0}] && MatchQ[records, Association[(_ -> _Association) ..]],
+            Map[ <| Keys[#][[idColumns]] -> Values[#][[idColumns]] , Values[#][[variableColumn]] -> Values[#][[valueColumn]] |> &, Values[records]],
 
             MatchQ[records, List[(_Association) ..]],
-            Map[ <| Keys[#][[idColumn]] -> Values[#][[idColumn]] , Values[#][[variableColumn]] -> Values[#][[valueColumn]] |> &, records],
+            Map[ <| Keys[#][[idColumns]] -> Values[#][[idColumns]] , Values[#][[variableColumn]] -> Values[#][[valueColumn]] |> &, records],
 
             MatchQ[records, List[(_List) ..]],
-            Map[ <| idColumn -> #[[idColumn]], #[[variableColumn]] -> #[[valueColumn]] |> &, records],
+            Map[ <| idColumns -> #[[idColumns]], #[[variableColumn]] -> #[[valueColumn]] |> &, records],
 
             True,
             Return[$Failed]
@@ -439,17 +442,22 @@ ToWideForm[ ds_Dataset, idColumn_Integer, variableColumn_Integer, valueColumn_In
 
       RecordsToWideForm[records, OptionValue[ToWideForm, "AggregationFunction"] ]
 
-    ] /; ( idColumn == 0 || 1 <= idColumn <= Dimensions[ds][[2]] ) &&
-        ( 1 <= variableColumn <= Dimensions[ds][[2]] ) &&
-        ( 1 <= valueColumn <= Dimensions[ds][[2]] ) &&
-        ( Length[Union[{idColumn, variableColumn, valueColumn}]] == 3);
+    ] /; (idColumns == {0} ||
+        Apply[And, 1 <= # <= Dimensions[ds][[2]] & /@ idColumns]) && (1 <=
+        variableColumn <= Dimensions[ds][[2]]) && (1 <= valueColumn <=
+        Dimensions[ds][[2]]) && (Length[
+      Union@Flatten@{idColumns, variableColumn, valueColumn}] >= 3);
 
 
 ToWideForm::nocolkeys = "If the second and third arguments are not column indices the dataset should have named columns.";
 
 ToWideForm::colkeys = "If the second, third, and fourth arguments are not column indices then they are expected to be columns names of the dataset.";
 
-ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts : OptionsPattern[] ] :=
+Clear[ColumnNameIndex];
+ColumnNameIndex[keys_, cols_List] := ColumnNameIndex[keys, #]& /@ cols;
+ColumnNameIndex[keys_, col_] := First @ Flatten @ Position[keys, col];
+
+ToWideForm[ds_Dataset, idColumns_, variableColumn_, valueColumn_, opts : OptionsPattern[] ] :=
     Block[{keys},
       keys = Normal[ds[1]];
 
@@ -460,15 +468,15 @@ ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_, opts : OptionsP
 
       keys = Keys[keys];
 
-      If[ ! Apply[And, Map[ MemberQ[keys, #]&, {idColumn, variableColumn, valueColumn} ] ],
+      If[ ! Apply[And, Map[ MemberQ[keys, #]&, Flatten @ {idColumns, variableColumn, valueColumn} ] ],
         Message[ToWideForm::colkeys];
         Return[$Failed]
       ];
 
-      ToWideForm[ds, Sequence @@ Flatten[Position[keys, #]& /@ {idColumn, variableColumn, valueColumn}], opts ]
+      ToWideForm[ds, ColumnNameIndex[keys, idColumns], ColumnNameIndex[keys, variableColumn], ColumnNameIndex[keys, valueColumn], opts ]
     ];
 
-ToWideForm[ds_Dataset, "AutomaticKey", variableColumn_, valueColumn_, opts : OptionsPattern[] ] :=
+ToWideForm[ds_Dataset, Automatic, variableColumn_, valueColumn_, opts : OptionsPattern[] ] :=
     Block[{keys},
       keys = Normal[ds[1]];
 
@@ -484,7 +492,7 @@ ToWideForm[ds_Dataset, "AutomaticKey", variableColumn_, valueColumn_, opts : Opt
         Return[$Failed]
       ];
 
-      ToWideForm[ds, 0, Sequence @@ Flatten[Position[keys, #]& /@ { variableColumn, valueColumn}], opts ]
+      ToWideForm[ds, 0, ColumnNameIndex[keys, variableColumn], ColumnNameIndex[keys, valueColumn], opts ]
     ];
 
 ToWideForm::args = "The first argument is expected to be a dataset; \
@@ -498,14 +506,17 @@ ToWideForm[___] :=
 
 
 RecordsToWideForm[records : { (_Association) ..}, aggrFunc_] :=
-    Block[{res, colNames},
+    Block[{res, keyColNames, colNames},
+
+      keyColNames = Keys[records[[1]]][[1]];
 
       res = GroupBy[records, {Keys[#][[1]] -> #[[1]], Keys[#][[2]]} &, aggrFunc@Map[Function[{r}, r[Keys[r][[2]]]], #] &];
-      res = KeyValueMap[<|#1[[1]], #1[[2]] -> #2|> &, res];
 
-      res = Dataset[GroupBy[res, #[[1]] &, Join[Association[#]] &]];
+      res = KeyValueMap[<|AssociationThread @@ #1[[1]], #1[[2]] -> #2|> &, res];
 
-      colNames = DeleteDuplicates[Flatten[Values[Normal[res[All, Keys]]]]];
+      res = Dataset[Values @ GroupBy[res, # /@ keyColNames &, Join[Association[#]] &]];
+
+      colNames = DeleteDuplicates[Flatten[Normal[res[All, Keys]]]];
 
       res[All, Join[AssociationThread[colNames -> Missing[]], #]& ]
     ];
