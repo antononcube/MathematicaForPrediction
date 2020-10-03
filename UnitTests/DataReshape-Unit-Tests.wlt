@@ -54,10 +54,8 @@ BeginTestSection["DataReshape-Unit-Tests.wlt"];
 (***********************************************************)
 
 VerificationTest[(* 1 *)
-  CompoundExpression[
-    Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DataReshape.m"],
-    Greater[Length[DownValues[DataReshape`ToLongForm]], 0]
-  ]
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/DataReshape.m"];
+  Greater[Length[DownValues[DataReshape`ToLongForm]], 0]
   ,
   True
   ,
@@ -292,6 +290,25 @@ VerificationTest[
   TestID -> "ToWideForm-1"
 ];
 
+
+VerificationTest[
+  dsTemp = ToWideForm[ToLongForm[dsSmall], "AutomaticKey", "Variable", "Value"];
+  dsTemp[All, {2,3}] == dsSmall
+  ,
+  True
+  ,
+  TestID -> "ToWideForm-2"
+];
+
+
+VerificationTest[
+  dsTemp = ToWideForm[ToLongForm[dsSmallWithIDs, "ID", Automatic], "ID", "Variable", "Value"];
+  dsTemp == dsSmallWithIDs
+  ,
+  True
+  ,
+  TestID -> "ToWideForm-3"
+];
 
 EndTestSection[]
 
