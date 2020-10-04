@@ -96,9 +96,11 @@ Begin["`Private`"];
 (* Column specs                                            *)
 (***********************************************************)
 
-Clear[ColumnSpecQ];
+Clear[ColumnSpecQ, ColumnSpecsListQ];
 
 ColumnSpecQ[x_] := IntegerQ[x] || StringQ[x] || MatchQ[x, Key[__]];
+
+ColumnSpecsListQ[x_] := VectorQ[x, ColumnSpecQ];
 
 
 (***********************************************************)
@@ -167,11 +169,14 @@ ToLongForm[ds_Dataset, opts : OptionsPattern[] ] :=
       ToLongForm[ ds, idCols, varCols, opts ]
     ];
 
+ToLongForm[ds_Dataset, idColumnsSpec_, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, idColumnsSpec, Automatic, opts];
+
 ToLongForm[ds_Dataset, Automatic, Automatic, opts : OptionsPattern[] ] :=
     ToLongForm[ds, {0}, Range[ Length[ ds[1] ] ], opts];
 
-ToLongForm[ds_Dataset, isColumn_?ColumnSpecQ, valueColumns_, opts : OptionsPattern[] ] :=
-    ToLongForm[ds, {isColumn}, valueColumns, opts];
+ToLongForm[ds_Dataset, idColumn_?ColumnSpecQ, valueColumns_, opts : OptionsPattern[] ] :=
+    ToLongForm[ds, {idColumn}, valueColumns, opts];
 
 ToLongForm[ds_Dataset, idColumns_, valueColumn_?ColumnSpecQ, opts : OptionsPattern[] ] :=
     ToLongForm[ds, idColumns, {valueColumn}, opts];
@@ -252,7 +257,7 @@ ToLongForm::nocolkeys = "If the second and third arguments are not column indice
 ToLongForm::colkeys = "If the second and third arguments are not Automatic or column indices \
 then they are expected to be columns names of the dataset.";
 
-ToLongForm[ds_Dataset, idColumnsArg : ( Automatic | _List ), valueColumnsArg : ( Automatic | _List ), opts : OptionsPattern[] ] :=
+ToLongForm[ds_Dataset, idColumnsArg : ( Automatic | _?ColumnSpecsListQ ), valueColumnsArg : ( Automatic | _?ColumnSpecsListQ ), opts : OptionsPattern[] ] :=
     Block[{idColumns = idColumnsArg, valueColumns = valueColumnsArg, keys},
 
       keys = Normal[ds[1]];
@@ -293,7 +298,7 @@ ToLongForm[ds_Dataset, idColumnsArg : ( Automatic | _List ), valueColumnsArg : (
 
     ];
 
-ToLongForm[ds_Dataset, "AutomaticKey", valueColumns_List, opts : OptionsPattern[] ] :=
+ToLongForm[ds_Dataset, "AutomaticKey", valueColumns_?ColumnSpecsListQ, opts : OptionsPattern[] ] :=
     Block[{keys},
       keys = Normal[ds[1]];
 
@@ -336,7 +341,7 @@ Options[RecordsToLongForm] = Options[ToLongForm];
 RecordsToLongForm[records : Association[( _?NotAssociationQ -> _Association) ..], opts : OptionsPattern[]] :=
     Block[{cnAuto},
       cnAuto = OptionValue[RecordsToLongForm, "AutomaticKeysTo"];
-      RecordsToLongForm[ KeyMap[ <|cnAuto -> #|>&, records ], opts ];
+      RecordsToLongForm[ KeyMap[ <|cnAuto -> #|>&, records ], opts ]
     ];
 
 RecordsToLongForm[records : Association[(_Association -> _Association) ..], opts : OptionsPattern[] ] :=
