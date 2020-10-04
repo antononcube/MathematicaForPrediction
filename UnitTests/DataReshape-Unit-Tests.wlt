@@ -230,6 +230,28 @@ VerificationTest[
 ];
 
 
+VerificationTest[
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, "ID" ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, 1, Automatic ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Automatic-Equivalence-6"
+];
+
+
+VerificationTest[
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, "ID" ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, "ID", Automatic ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Automatic-Equivalence-7"
+];
+
+
 (***********************************************************)
 (* To long form failure                                    *)
 (***********************************************************)
