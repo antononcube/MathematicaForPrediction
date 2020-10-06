@@ -357,6 +357,7 @@ VerificationTest[(* 36 *)
 	TestID->"PermutationPart-1"
 ];
 
+(* This test is expected to fail. *)
 VerificationTest[(* 37 *)
 	Part[rmat, List["C", "D", "A", "B"]]
 	,
