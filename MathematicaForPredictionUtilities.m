@@ -98,6 +98,8 @@ after removing missing and NA values.";
 ToAutomaticKeysAssociation::usage = "ToAutomaticKeysAssociation[ls_List, prefix_String] makes an association with \
 automatically derived keys.";
 
+ExampleDataSpecToDataset::usage = "Converts Statistics and MachineLearning example data into datasets.";
+
 Begin["`Private`"];
 
 Needs["MosaicPlot`"];
@@ -767,6 +769,34 @@ ToIDString[i_Integer, nd_Integer] := ToString[NumberForm[i, {nd - 1, 0}, NumberP
 Clear[ToAutomaticKeysAssociation];
 ToAutomaticKeysAssociation[ ls_List, prefix_String : "id." ] :=
     AssociationThread[ Map[ prefix <> ToIDString[#, Ceiling[Log10[Length[ls]]] + 1] &, Range[Length[ls]]], ls ];
+
+
+(***********************************************************)
+(* ExampleDataSpecToDataset                                *)
+(***********************************************************)
+
+Clear[ExampleDataSpecToDataset];
+
+ExampleDataSpecToDataset::args = "One argument is expected that is a list of two strings. (A specification for ExampleData.)";
+
+ExampleDataSpecToDataset[sp : {"Statistics", dataset_String}] :=
+    Block[{data = ExampleData[sp]},
+      If[! MemberQ[{"MultivariateSample", "TimeSeries", "EventData"}, ExampleData[sp, "DataType"]],
+        Return[$Failed]
+      ];
+
+      If[VectorQ[data], data = List /@ data];
+
+      Dataset[data][All, AssociationThread[ExampleData[sp, "ColumnHeadings"] -> #] &]
+    ];
+
+ExampleDataSpecToDataset[sp : {"MachineLearning", dataset_String}] :=
+    Dataset[Flatten@*List @@@ ExampleData[sp, "Data"]][All, AssociationThread[Flatten@*List @@ ExampleData[sp, "VariableDescriptions"], #] &];
+
+ExampleDataSpecToDataset[___] :=
+    Block[{},
+      Message[ExampleDataSpecToDataset::args]
+    ];
 
 End[];
 
