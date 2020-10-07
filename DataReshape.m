@@ -90,6 +90,8 @@ converts an association of associations into a long form dataset.";
 RecordsToWideForm::usage = "RecordsToWideForm[records: { (_Association) ..}, aggrFunc_] \
 converts a list of associations into a wide form dataset using a specified aggregation function.";
 
+SeparateColumn::usage = "Separates the values of string column and makes new columns with them.";
+
 Begin["`Private`"];
 
 (***********************************************************)
@@ -140,7 +142,7 @@ TypeOfDataToBeReshaped[ data_Dataset ] :=
             Return[$Failed]
           ];
 
-      {"Type" -> resType, "ColumnNames" -> colNames, "RowNames" -> If[ namedRowsQ, Keys @ Normal @data, None ] }
+      <| "Type" -> resType, "ColumnNames" -> colNames, "RowNames" -> If[ namedRowsQ, Keys @ Normal @data, None ] |>
 
     ];
 
@@ -526,6 +528,59 @@ RecordsToWideForm[records : { (_Association) ..}, aggrFunc_] :=
       res[All, Join[AssociationThread[colNames -> Missing[]], #]& ]
     ];
 
+
+(***********************************************************)
+(* SeparateColumn                                          *)
+(***********************************************************)
+
+Clear[SeparateColumn];
+
+Options[SeparateColumn] = {"Separator" -> (Except[WordCharacter]..), "RemoveInputColumn" -> True };
+
+SeparateColumn[ dsArg_Dataset, colSpec_, intoSpec_List, opts : OptionsPattern[] ] :=
+    Block[{ds = dsArg, sep, removeInputColumnQ, typeRes, column, newValues, res},
+
+      sep = OptionValue[SeparateColumn, "Separator"];
+      removeInputColumnQ = TrueQ[ OptionValue[SeparateColumn, "RemoveInputColumn"] ];
+
+      typeRes = TypeOfDataToBeReshaped[ds];
+
+      column = ds[All, colSpec];
+
+      Which[
+        TrueQ[Dataset`GetType[column] === $Failed],
+        Return[column],
+
+        !MatchQ[ Dataset`GetType[column], h_[___] /; SymbolName[h] == "Vector" ],
+        Return[$Failed]
+      ];
+
+      newValues = StringSplit[ #, sep ]& /@ Normal[column];
+
+      If[ TrueQ[typeRes["ColumnNames"] === None],
+        newValues = Map[ Take[#, UpTo @ Length @ intoSpec]&, newValues ],
+        (*ELSE*)
+        newValues = Map[ AssociationThread[ Take[ intoSpec, UpTo @ Length @ #], Take[#, UpTo @ Length @ intoSpec] ]&, newValues ]
+      ];
+
+      If[ removeInputColumnQ && !MemberQ[ intoSpec, colSpec ],
+        Which[
+          TrueQ[typeRes["ColumnNames"] === None],
+          ds = ds[All, Complement[Range @ Dimensions[ds][[2]], {colSpec}]  ],
+
+          True,
+          ds = ds[All, KeyDrop[#, colSpec]& ]
+        ]
+      ];
+
+      res = Join[ ds, Dataset[newValues], 2 ];
+
+      If[ !MatchQ[ res, _Dataset],
+        Return[res]
+      ];
+
+      res
+    ];
 
 End[]; (* `Private` *)
 
