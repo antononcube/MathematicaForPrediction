@@ -91,7 +91,9 @@ VerificationTest[
 
   aLarge = AssociationThread[Map[First, Normal@dsLargeWithIDs], Map[Rest, Normal@dsLargeWithIDs]];
 
-  Apply[ And, Map[ MatchQ[#, _Dataset]&, {dsSmall, dsSmallWithIDs, dsLarge, dsLargeWithIDs} ] ] &&
+  dsAnscombe = Dataset[ExampleData[{"Statistics", "AnscombeRegressionLines"}]][All, AssociationThread[ExampleData[{"Statistics", "AnscombeRegressionLines"}, "ColumnHeadings"], #] &];
+
+  Apply[ And, Map[ MatchQ[#, _Dataset]&, {dsSmall, dsSmallWithIDs, dsLarge, dsLargeWithIDs, dsAnscombe} ] ] &&
       AssociationQ[aSmall] &&
       AssociationQ[aLarge]
   ,
@@ -331,6 +333,109 @@ VerificationTest[
   ,
   TestID -> "ToWideForm-3"
 ];
+
+
+(***********************************************************)
+(* Separate column                                         *)
+(***********************************************************)
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsRes = SeparateColumn[dsTemp, "Variable", {"Variable", "Set"}, "Separator" -> ""];
+  MatchQ[ dsRes, _Dataset] &&
+      AssociationQ[Normal[dsRes[1]]] &&
+      Sort[ Keys[Normal[dsRes[1]]] ] == Union[ Append[ Keys[Normal[dsTemp[1]]], "Set"] ]
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-1"
+];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsTemp2 = ReplacePart[dsTemp, {2, 2} -> "Z"];
+  dsRes = SeparateColumn[dsTemp, "Variable", {"Variable", "Set"}, "Separator" -> ""];
+  MatchQ[ dsRes, _Dataset] &&
+      AssociationQ[Normal[dsRes[1]]] &&
+      Sort[ Keys[Normal[dsRes[1]]] ] == Union[ Append[ Keys[Normal[dsTemp2[1]]], "Set"] ]
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-2"
+];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsTemp2 = ReplacePart[dsTemp, {2, 2} -> "ZZZ"];
+  dsRes = SeparateColumn[dsTemp, "Variable", {"Variable", "Set"}, "Separator" -> ""];
+  MatchQ[ dsRes, _Dataset] &&
+      AssociationQ[Normal[dsRes[1]]] &&
+      Sort[ Keys[Normal[dsRes[1]]] ] == Union[ Append[ Keys[Normal[dsTemp2[1]]], "Set"] ]
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-3"
+];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsTemp2 = ReplacePart[dsTemp, {2, 2} -> "ZZZ"];
+  dsRes = SeparateColumn[dsTemp, "Variable", {"Axis", "Set"}, "Separator" -> "", "RemoveInputColumn" -> True ];
+  MatchQ[ dsRes, _Dataset] &&
+      AssociationQ[Normal[dsRes[1]]] &&
+      Sort[ Keys[Normal[dsRes[1]]] ] == Union[ Complement[ Join[ Keys[Normal[dsTemp2[1]]], {"Axis", "Set"}], {"Variable"} ] ]
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-4"
+];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsTemp2 = ReplacePart[dsTemp, {2, 2} -> "ZZZ"];
+  dsRes = SeparateColumn[dsTemp, "Variable", {"Axis", "Set"}, "Separator" -> "", "RemoveInputColumn" -> False ];
+  MatchQ[ dsRes, _Dataset] &&
+      AssociationQ[Normal[dsRes[1]]] &&
+      Sort[ Keys[Normal[dsRes[1]]] ] == Union[ Join[ Keys[Normal[dsTemp2[1]]], {"Axis", "Set"}] ]
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-5"
+];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsTemp0 = dsTemp[Values];
+  dsRes = SeparateColumn[dsTemp0, 2, {"Variable", "Set"}, "Separator" -> ""];
+  MatchQ[ dsRes, _Dataset] &&
+      ListQ[Normal[dsRes[1]]] &&
+      Dimensions[dsRes][[2]] ==  Dimensions[dsTemp0][[2]] + 1
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-6"
+];
+
+
+VerificationTest[
+  dsTemp = ToLongForm[dsAnscombe];
+  dsTemp0 = dsTemp[Values];
+  dsRes = SeparateColumn[dsTemp0, 2, {"Variable", "Set"}, "Separator" -> "",  "RemoveInputColumn" -> False ];
+  MatchQ[ dsRes, _Dataset] &&
+      ListQ[Normal[dsRes[1]]] &&
+      Dimensions[dsRes][[2]] ==  Dimensions[dsTemp0][[2]] + 2
+  ,
+  True
+  ,
+  TestID -> "SeparateColumn-7"
+];
+
+
 
 EndTestSection[]
 
