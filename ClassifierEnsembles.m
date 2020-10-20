@@ -238,7 +238,7 @@ EnsembleClassifier[___] := (Message[EnsembleClassifier::nargs]; $Failed);
 
 Clear[ClassifierDataQ];
 ClassifierDataQ[data_] :=
-    MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]] || MatchQ[data, {Rule[_?AtomQ | _List, _] ..}];
+    MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]] || MatchQ[data, {Rule[_?AtomQ, _] ..}];
 
 Clear[ClassifierMethodQ];
 ClassifierMethodQ[x_] := StringQ[x] || MatchQ[ x, {_String, _Rule..} ]; (* And check is it known by Classify. *)
