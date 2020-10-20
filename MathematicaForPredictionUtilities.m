@@ -156,7 +156,7 @@ ClassificationSuccessGrid[ctRules_] :=
 (*===========================================================*)
 
 Clear[DataRulesForClassifyQ];
-DataRulesForClassifyQ[data_] := MatchQ[data, {Rule[_?AtomQ, _] ..}] || DataArrayRulesForClassifyQ[data];
+DataRulesForClassifyQ[data_] := MatchQ[data, {Rule[ ( _?AtomQ | _List ), _] ..}] || DataArrayRulesForClassifyQ[data];
 
 Clear[DataArrayRulesForClassifyQ];
 DataArrayRulesForClassifyQ[data_] := MatchQ[data, {Rule[_List, _] ..}] && ArrayQ[data[[All, 1]]];
