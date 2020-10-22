@@ -204,6 +204,12 @@ In effect makes an union of cn and ColumnNames[smat].";
 ImposeRowNames::usage = "ImposeRowNames[smat,rn] imposes the row names rn into the SSparseMatrix smat. \
 In effect makes an union of rn and RowNames[smat].";
 
+SSparseMatrixAssociation::usage = "SSparseMatrixAssociation[smat] gives the association corresponding to smat.";
+
+RowAssociations::usage = "RowAssociations[smat] converts into an associations each row of smat.";
+
+ColumnAssociations::usage = "RowAssociations[smat] converts into an associations each column of smat.";
+
 Begin["`Private`"];
 
 Clear[SSparseMatrix, MakeSSparseMatrix, ToSSparseMatrix,
@@ -811,6 +817,24 @@ The implementation is still experimental.
 New functions for SSparseMatrix objects have to be added into the do-not-decorate list.
 Note that this decoration is very aggressive and it might have un-forseen effects.
 *)
+
+(*------------------------------------------------------------*)
+(* Matrix to associations                                     *)
+(*------------------------------------------------------------*)
+
+Clear[SSparseMatrixAssociation];
+SSparseMatrixAssociation[smat_?SSparseMatrixQ] :=
+    Block[{recs = SSparseMatrixToTriplets[smat]},
+      AssociationThread[recs[[All, {1, 2}]], recs[[All, 3]] ]
+    ];
+
+Clear[RowAssociations];
+RowAssociations[smat_?SSparseMatrixQ] :=
+    GroupBy[SSparseMatrixToTriplets[smat], First, Association[Rule @@@ #[[All, {2, 3}]]] &];
+
+Clear[ColumnAssociations];
+ColumnAssociations[smat_?SSparseMatrixQ] :=
+    GroupBy[SSparseMatrixToTriplets[smat], #[[2]]&, Association[Rule @@@ #[[All, {1, 3}]]] &];
 
 
 (*------------------------------------------------------------*)
