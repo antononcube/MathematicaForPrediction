@@ -3058,13 +3058,13 @@ SMRMonComputeTopK[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonComputeTopK[][xs_, context_Association] := $SMRMonFailure;
 
-SMRMonComputeTopK[ testData_Association, ksArg : {_IntegerQ..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
+SMRMonComputeTopK[ testData_Association, ksArg : {_?IntegerQ..}, opts : OptionsPattern[] ][ xs_, context_ ] :=
     Block[{ ks = ksArg, type, expectedTypes, aTopK, recs, topKStat, expectedRecs },
 
       type = OptionValue[SMRMonComputeTopK, "Type"];
 
-      If[ ! ( MatchQ[ Association[ ( _String -> _String ) .. ], testData ] || MatchQ[ Association[ ( _String -> {_String..} ) .. ], testData ] ),
-        Echo[ "The first argument is expected to be an association of search ID and expected results rules.", "SMRMonComputeTopK:"];
+      If[ ! ( MatchQ[ testData, Association[ ( ( _String | _List | _Association ) -> ( _String | {_String..} ) ) .. ] ] ),
+        Echo[ "The first argument is expected to be an association that maps profiles or items into expected results.", "SMRMonComputeTopK:"];
         Return[$SMRMonFailure]
       ];
 
@@ -3083,37 +3083,39 @@ SMRMonComputeTopK[ testData_Association, ksArg : {_IntegerQ..}, opts : OptionsPa
       type = ToLowerCase[type];
 
       aTopK =
-          Association @ Map[
-            Function[{searchID},
+          Map[
+            Function[{search},
 
               (* Recommendations *)
-              recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommend[searchID, Max[ks] ], SMRMonTakeValue } ];
+              recs = Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonGetTopRecommendations[search, Max[ks] ], SMRMonTakeValue } ];
 
               (* Top-K of the key over the specified ks. *)
 
-              expectedRecs = Flatten[{testData[searchID]}];
+              expectedRecs = Flatten[{testData[search]}];
 
               Which[
 
                 MemberQ[ { "binary", "incidence" }, type ],
-                topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] > 0&, ks],
+                topKStat = Map[ # -> Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] > 0&, ks],
 
                 type == "count",
-                topKStat = Map[ Length @ Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]&, ks],
+                topKStat = Map[ # -> Length[Intersection[ Take[Keys[recs], UpTo[#] ]], expectedRecs ]&, ks],
 
                 type == "fraction",
-                topKStat = Map[ Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] / Length[expectedRecs] &, ks],
+                topKStat = Map[ # -> Length[Intersection[ Take[Keys[recs], UpTo[#] ], expectedRecs ]] / Length[expectedRecs] &, ks],
 
                 True,
                 (* Should not happen. *)
                 Return[$SMRMonFailure]
               ];
 
-              searchID -> topKStat
+              topKStat
 
             ],
             Keys[testData]
           ];
+
+      aTopK = GroupBy[ Join @@ aTopK, First, #[[All,2]]& ];
 
       SMRMonUnit[ aTopK, context ]
 
@@ -3122,7 +3124,7 @@ SMRMonComputeTopK[ testData_Association, ksArg : {_IntegerQ..}, opts : OptionsPa
 SMRMonComputeTopK[___][__] :=
     Block[{},
       Echo[
-        "The expected signature is SMRMonComputeTopK[ testData : Association[ ( _String -> {_String..} ) .. ], ks : {_?IntegerQ..}, opts___] .",
+        "The expected signature is SMRMonComputeTopK[ testData : Association[ ( ( _String | _List | _Association) -> ( _String, {_String..} ) ) .. ], ks : {_?IntegerQ..}, opts___] .",
         "SMRMonComputeTopK:"];
       $SMRMonFailure
     ];
