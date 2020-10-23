@@ -243,9 +243,11 @@ applies a profile filter to the rows of the recommendation matrix.";
 SMRMonRetrieveByQueryElements::usage = "SMRMonRetrieveByQueryElements[should, must, mustNot] \
 retrieves items according the retrieval query elements.";
 
-SMRMonRemoveTagTypes::usage = "Remove specified tag types.";
+SMRMonRemoveTagTypes::usage = "SMRMonRemoveTagTypes[ tagTypes : {_String..}] removes specified tag types.";
 
-SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] compute the Top-K for specified data and K's.";
+SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?IntegerQ..}, opts] computes the Top-K for specified data and K's.";
+
+SMRMonToMetadataRecommender::usage = "SMRMonToMetadataRecommender[ tagTypeTo_String, opts] converts the recommender into a recommender for tagTypeTo tags.";
 
 SMRMonImportRecommender::usage = "SMRMonImportRecommender[ dirName_String, suffix_String ] imports a recommender \
 using data files from the specified directory having the specified suffix. \
@@ -3115,7 +3117,7 @@ SMRMonComputeTopK[ testData_Association, ksArg : {_?IntegerQ..}, opts : OptionsP
             Keys[testData]
           ];
 
-      aTopK = GroupBy[ Join @@ aTopK, First, #[[All,2]]& ];
+      aTopK = GroupBy[ Join @@ aTopK, First, #[[All, 2]]& ];
 
       SMRMonUnit[ aTopK, context ]
 
@@ -3126,6 +3128,106 @@ SMRMonComputeTopK[___][__] :=
       Echo[
         "The expected signature is SMRMonComputeTopK[ testData : Association[ ( ( _String | _List | _Association) -> ( _String, {_String..} ) ) .. ], ks : {_?IntegerQ..}, opts___] .",
         "SMRMonComputeTopK:"];
+      $SMRMonFailure
+    ];
+
+
+(*=========================================================*)
+(* SMRMonToMetadataRecommender                             *)
+(*=========================================================*)
+
+Clear[SMRMonToMetadataRecommender];
+
+SyntaxInformation[SMRMonToMetadataRecommender] = { "ArgumentsPattern" -> {_., OptionsPattern[] } };
+
+Options[SMRMonToMetadataRecommender] =
+    Join[
+      { "TagTypeTo" -> None, "NumberOfTopTags" -> 1, "TagTypes" -> Automatic, "TagSelectionCriteria" -> Automatic},
+      Options[SMRMonCreate]
+    ];
+
+SMRMonToMetadataRecommender[$SMRMonFailure] := $SMRMonFailure;
+
+SMRMonToMetadataRecommender[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonToMetadataRecommender[][xs_, context_Association] := $SMRMonFailure;
+
+SMRMonToMetadataRecommender[ opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{ tagTypeTo },
+
+      tagTypeTo = OptionValue[SMRMonToMetadataRecommender, "TagTypeTo"];
+      If[ !StringQ[tagTypeTo],
+        Echo["The value of the option \"TagTypeTo\" is expected to be a string.", "SMRMonToMetadataRecommender:"];
+        Return[$SMRMonFailure]
+      ];
+
+      SMRMonToMetadataRecommender[tagTypeTo, opts][xs, context]
+    ];
+
+SMRMonToMetadataRecommender[ tagTypeTo_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
+    Block[{ numberOfTopTags, knownTagTypes, tagTypes, aLongForms, smat, aIDToTag, aSMats },
+
+      knownTagTypes = SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeTagTypes];
+      If[ TrueQ[knownTagTypes === $SMRMonFailure], Return[$SMRMonFailure]];
+
+      If[ !MemberQ[knownTagTypes, tagTypeTo],
+        Echo["The first argument is not a known recommender tag type.", "SMRMonToMetadataRecommender:"];
+        Return[$SMRMonFailure]
+      ];
+
+      numberOfTopTags = OptionValue[SMRMonToMetadataRecommender, "NumberOfTopTags"];
+      If[ TrueQ[numberOfTopTags === Automatic], numberOfTopTags = 1];
+      If[ !(IntegerQ[numberOfTopTags] && numberOfTopTags > 0),
+        Echo["The value of the option \"NumberOfTopTags\" is expected to be a positive integer.", "SMRMonToMetadataRecommender:"];
+        Return[$SMRMonFailure]
+      ];
+
+      If[ numberOfTopTags > 1,
+        Echo["The value of the option \"NumberOfTopTags\" is taken to be 1: larger number of tags is not implemented (yet.).", "SMRMonToMetadataRecommender:"];
+        numberOfTopTags = 1
+      ];
+
+      tagTypes = OptionValue[SMRMonToMetadataRecommender, "TagTypes"];
+      If[ TrueQ[numberOfTopTags === Automatic], numberOfTopTags = 1];
+      If[ !(IntegerQ[numberOfTopTags] && numberOfTopTags > 0),
+        Echo["The value of the option \"NumberOfTopTags\" is expected to be a positive integer.", "SMRMonToMetadataRecommender:"];
+        Return[$SMRMonFailure]
+      ];
+
+      (* Long forms *)
+      aLongForms = Map[ SSparseMatrixAssociation, context["matrices"] ];
+
+      (* Make mapping rules *)
+      smat = context["matrices"][tagTypeTo];
+
+      aIDToTag = TakeLargest[1] /@ RowAssociations[smat];
+      aIDToTag = AssociationThread[ Keys[aIDToTag], First@*Keys /@ Values[aIDToTag]];
+
+      (* Remove tagTypeTo from long forms association *)
+      aLongForms = KeyDrop[aLongForms, tagTypeTo];
+
+      If[ Length[aLongForms] == 0,
+        Echo["Empty tag type long forms list was obtained.", "SMRMonToMetadataRecommender:"];
+        Return[$SMRMonFailure]
+      ];
+
+      (* Map items to tagTypeTo values *)
+      aLongForms = Map[ KeyMap[# /. aIDToTag&, #]&, aLongForms];
+
+      (* Create contingency matrices from the transformed long form *)
+      aSMats = ToSSparseMatrix /@ aLongForms;
+
+      (* Select tags *)
+
+      (* Create recommender *)
+      SMRMonCreate[aSMats][xs, context]
+    ];
+
+SMRMonToMetadataRecommender[___][__] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonToMetadataRecommender[ tagTypeTo_String, opts___ ] or SMRMonToMetadataRecommender[ opts__ ].",
+        "SMRMonToMetadataRecommender:"];
       $SMRMonFailure
     ];
 
