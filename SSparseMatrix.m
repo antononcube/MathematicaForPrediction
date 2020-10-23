@@ -808,8 +808,8 @@ Clear[SSparseMatrixToTriplets];
 SSparseMatrixToTriplets[ rsmat_SSparseMatrix ] :=
     Block[{t},
       t = Most[ArrayRules[rsmat]];
-      t[[All, 1, 1]] = t[[All, 1, 1]] /. Dispatch[Thread[Range[RowsCount[rsmat]] -> RowNames[rsmat]]];
-      t[[All, 1, 2]] = t[[All, 1, 2]] /. Dispatch[Thread[Range[ColumnsCount[rsmat]] -> ColumnNames[rsmat]]];
+      t[[All, 1, 1]] = t[[All, 1, 1]] /. Association[ Reverse /@ Normal[ RowNamesAssociation[rsmat] ] ];
+      t[[All, 1, 2]] = t[[All, 1, 2]] /. Association[ Reverse /@ Normal[ ColumnNamesAssociation[rsmat] ] ];
       Flatten /@ (List @@@ t)
     ];
 
