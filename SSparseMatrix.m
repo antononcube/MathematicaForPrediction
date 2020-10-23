@@ -364,6 +364,9 @@ ToSSparseMatrix[xtabs_Association, opts : OptionsPattern[] ] :=
       ]
     ] /; KeyExistsQ[xtabs, "SparseMatrix"] && KeyExistsQ[xtabs, "RowNames"] && KeyExistsQ[xtabs, "ColumnNames"];
 
+ToSSparseMatrix[arules : Association[ ({_String, _String} -> _?NumericQ) .. ], opts : OptionsPattern[] ] :=
+    ToSSparseMatrix[ KeyValueMap[ Join[#1, {#2}]&, arules ], opts];
+
 ToSSparseMatrix[___] := Message[ToSSparseMatrix::arg1];
 
 SparseArray[rmat_SSparseMatrix] ^:= First[rmat]["SparseMatrix"];
