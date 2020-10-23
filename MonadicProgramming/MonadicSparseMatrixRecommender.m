@@ -3215,7 +3215,7 @@ SMRMonToMetadataRecommender[ tagTypeTo_String, opts : OptionsPattern[] ][ xs_, c
       ];
 
       (* Map items to tagTypeTo values *)
-      aLongForms = Map[ KeyMap[# /. aIDToTag&, #]&, aLongForms];
+      aLongForms = Map[ KeyMap[# /. aIDToTag&, KeySelect[ #, KeyExistsQ[aIDToTag, #[[1]]]& ]]&, aLongForms];
 
       (* Create contingency matrices from the transformed long form *)
       aSMats = ToSSparseMatrix /@ aLongForms;
