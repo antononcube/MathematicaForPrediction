@@ -156,9 +156,9 @@ of the contingency matrix.";
 SMRMonApplyNormalizationFunction::usage = "Applies a specified normalization function to the entries \
 of the contingency matrix.";
 
-SMRMonApplyTermWeightFunctions::usage = "Apply term weight functions to entries of the recommender matrix.";
+SMRMonApplyTermWeightFunctions::usage = "Applies term weight functions to entries of the recommender matrix.";
 
-SMRMonGetTopRecommendations::usage = "Recommend items based on a history or profile specification.";
+SMRMonGetTopRecommendations::usage = "Recommends items based on a history or profile specification.";
 
 SMRMonRecommend::usage = "Recommends items based on history.";
 
@@ -174,16 +174,16 @@ makes a profile vector from an argument that is a list of tags or an association
 
 SMRMonFromProfileVector::usage = "Makes a profile association from a profile vector argument.";
 
-SMRMonProfile::usage = "Profile based on history.";
+SMRMonProfile::usage = "Computes profile based on history.";
 
 SMRMonToItemsDataset::usage = "Converts a recommendations association into a Dataset object.";
 
 SMRMonJoinAcross::usage = "Joins a recommendations association with a given Dataset object.";
 
-SMRMonAnnexSubMatrix::usage = "Annex matrices to the recommender. \
+SMRMonAnnexSubMatrix::usage = "Annexes matrices to the recommender. \
 (Synonym of SMRMonAnnexSubMatrices.)";
 
-SMRMonAnnexSubMatrices::usage = "Annex matrices to the recommender.";
+SMRMonAnnexSubMatrices::usage = "Annexes matrices to the recommender.";
 
 SMRMonJoin::usage = "Joins the recommender with another recommender. \
 (By column-binding the corresponding tag-type sub-matrices.)";
@@ -203,9 +203,9 @@ SMRMonClassify::usage = "Uses IIR as a classifier for specified label tag-type o
 
 SMRMonSetClassificationParameters::usage = "Sets the parameters to be used by SMRMonClassifyOriginal.";
 
-SMRMonProveByHistory::usage = "Proof the recommendations using consumption history.";
+SMRMonProveByHistory::usage = "Computes proofs for recommendations using consumption history.";
 
-SMRMonProveByProfile::usage = "Proof the recommendations using consumption profile.";
+SMRMonProveByProfile::usage = "Computes proofs for recommendations using consumption profile.";
 
 SMRMonTakeMatrices::usage = "Gives an association with the tag (sparse) matrices.";
 
@@ -219,9 +219,9 @@ SMRMonTakeTagTypeWeights::usage = "Takes the tag-type weights.";
 
 SMRMonTakeTagTypes::usage = "Takes the tag-types.";
 
-SMRMonTakeMatrixDataset::usage = "Take the Dataset object corresponding to the recommendation matrix.";
+SMRMonTakeMatrixDataset::usage = "Takes the Dataset object corresponding to the recommendation matrix.";
 
-SMRMonGetTagTypeRanges::usage = "Get the ranges of the tag types in the recommendation matrix.";
+SMRMonGetTagTypeRanges::usage = "Gets the ranges of the tag types in the recommendation matrix.";
 
 SMRMonProveByMetadata::usage = "Metadata proofs for a recommended item and a profile. \
 (Tags from item's profile that are found in the given profile.)";
@@ -230,9 +230,9 @@ SMRMonProveByHistory::usage = "History proofs for a recommended item and scored 
 
 SMRMonEchoDataSummary::usage = "Echoes summary of the dataset.";
 
-SMRMonGetProperty::usage = "Get a recommender property.";
+SMRMonGetProperty::usage = "Gets a recommender property.";
 
-SMRMonGetMatrixProperty::usage = "Get a recommender matrix property.";
+SMRMonGetMatrixProperty::usage = "Gets a recommender matrix property.";
 
 SMRMonFilterByProfile::usage = "SMRMonFilterByProfile[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 finds the items that have the tags of the given profile. The scores are corresponding row sums.";
