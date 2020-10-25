@@ -282,8 +282,11 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, opts : OptionsPattern
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : OptionsPattern[]] :=
     HextileHistogram[data, binSize, If[MatrixQ[data], MinMax /@ Transpose[data], MinMax /@ Transpose[Keys[data]]], opts];
 
+(*
+Using Module instead of Block because the second argument Legended depends on the module's variables.
+I.e. for Block we have explicitly evaluate the functions and numbers of the second argument.
+*)
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
-
     Module[{cFunc, ptype, overlapFactor, maxTally, minTally, plotLegends, tally, vh, rFunc, grRes},
 
       cFunc = OptionValue[HextileHistogram, ColorFunction];
@@ -320,6 +323,7 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
 
       tally = HextileCenterBins[ data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]] ];
       tally = List @@@ Normal[tally];
+
       If[ TrueQ[maxTally === Automatic], maxTally = Max[Last /@ tally] ];
       If[ TrueQ[minTally === Automatic], minTally = Min[Last /@ tally] ];
 
@@ -351,7 +355,9 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
               {n, Length@tally}
             ],
             FilterRules[{opts}, Options[Graphics]],
-            Frame -> True, PlotRange -> {{xmin, xmax}, {ymin, ymax}}, PlotRangeClipping -> True];
+            Frame -> True, PlotRange -> {{xmin, xmax}, {ymin, ymax}},
+            PlotRangeClipping -> True
+          ];
 
       If[ TrueQ[plotLegends === Automatic],
         Legended[ grRes, BarLegend[ {cFunc[Rescale[#, {minTally, maxTally}]] &, {minTally, maxTally}} ] ],
