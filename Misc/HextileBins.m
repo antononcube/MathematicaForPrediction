@@ -284,7 +284,7 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : Opt
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
-    Module[{cFunc, ptype, overlapFactor, maxTally, minTally, plotLegends, tally, vh, grRes},
+    Module[{cFunc, ptype, overlapFactor, maxTally, minTally, plotLegends, tally, vh, rFunc, grRes},
 
       cFunc = OptionValue[HextileHistogram, ColorFunction];
       If[ StringQ[cFunc], cFunc = ColorData[cFunc]];
@@ -323,7 +323,7 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
       If[ TrueQ[maxTally === Automatic], maxTally = Max[Last /@ tally] ];
       If[ TrueQ[minTally === Automatic], minTally = Min[Last /@ tally] ];
 
-      tally[[All, 2]] = N @ Rescale[ tally[[All, 2]], {minTally, maxTally}];
+      rFunc = Rescale[#, {minTally, maxTally}]&;
 
       grRes =
           Graphics[
@@ -331,19 +331,19 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
               Which[
                 ptype == 1 || ptype == "ColoredPolygons",
                 Tooltip[
-                  {cFunc[Last@tally[[n]]], TransformByVector[vh, First@tally[[n]]]},
+                  {cFunc[Last@ rFunc @ tally[[n]]], TransformByVector[vh, First@tally[[n]]]},
                   Last@tally[[n]]
                 ],
 
                 ptype == 2 || ptype == "ProportionalSideSize",
                 Tooltip[
-                  TransformByVector[Last@tally[[n]] * vh, First@tally[[n]]],
+                  TransformByVector[Last @ rFunc @ tally[[n]] * vh, First@tally[[n]]],
                   Last@tally[[n]]
                 ],
 
                 ptype == 3 || ptype == "ProportionalArea",
                 Tooltip[
-                  TransformByVector[Sqrt[Last@tally[[n]]] * vh, First@tally[[n]]],
+                  TransformByVector[Sqrt[Last @ rFunc @ tally[[n]]] * vh, First@tally[[n]]],
                   Last@tally[[n]]
                 ]
 
