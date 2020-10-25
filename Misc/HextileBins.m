@@ -270,8 +270,8 @@ Options[HextileHistogram] =
         "MaxTally" -> Automatic,
         "MinTally" -> Automatic,
         "OverlapFactor" -> 1,
-        PlotLegends -> None,
-        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &)
+        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &),
+        PlotLegends -> None
       },
       Options[Graphics]
     ];
@@ -293,6 +293,12 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
       If[ StringQ[cFunc], cFunc = ColorData[cFunc]];
       If[ TrueQ[cFunc === Automatic], cFunc = (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &) ];
 
+      plotLegends = OptionValue[HextileHistogram, PlotLegends];
+      If[ ! ( TrueQ[plotLegends === Automatic] || TrueQ[plotLegends === None] ),
+        Message[HextileHistogram::"npl"];
+        plotLegends = None;
+      ];
+
       ptype = OptionValue[HextileHistogram, "HistogramType"];
 
       maxTally = OptionValue[HextileHistogram, "MaxTally"];
@@ -313,12 +319,6 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
         Return[$Failed]
       ];
 
-      plotLegends = OptionValue[HextileHistogram, PlotLegends];
-      If[ ! ( TrueQ[plotLegends === Automatic] || TrueQ[plotLegends === None] ),
-        Message[HextileHistogram::"npl"];
-        plotLegends = None;
-      ];
-
       vh = HexagonVertexDistance[binSize, overlapFactor];
 
       tally = HextileCenterBins[ data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]] ];
@@ -335,7 +335,7 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
               Which[
                 ptype == 1 || ptype == "ColoredPolygons",
                 Tooltip[
-                  {cFunc[Last@ rFunc @ tally[[n]]], TransformByVector[vh, First@tally[[n]]]},
+                  {cFunc[Last @ rFunc @ tally[[n]]], TransformByVector[vh, First@tally[[n]]]},
                   Last@tally[[n]]
                 ],
 
