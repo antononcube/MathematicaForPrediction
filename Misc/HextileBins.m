@@ -258,12 +258,15 @@ The third argument is expected to be a range specification, two pairs of numbers
 
 HextileHistogram::"nof" = "The value of the option \"OverlapFactor\" is expected to be a positive number.";
 
+HextileHistogram::"nmt" = "The value of the option \"MaxTally\" is expected to be a number or Automatic.";
+
 Options[HextileHistogram] =
     Join[
       {
         "AggregationFunction" -> Total,
         "HistogramType" -> "ColoredPolygons",
         "OverlapFactor" -> 1,
+        "MaxTally" -> Automatic,
         ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &)
       },
       Options[Graphics]
@@ -277,7 +280,7 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, Automatic, opts : Opt
 
 HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
-    Block[{cFunc, ptype, overlapFactor, tally, vh},
+    Block[{cFunc, ptype, overlapFactor, maxTally, tally, vh},
 
       cFunc = OptionValue[HextileHistogram, ColorFunction];
       If[ StringQ[cFunc], cFunc = ColorData[cFunc]];
@@ -291,30 +294,38 @@ HextileHistogram[data_?HextileBinDataQ, binSize_?NumericQ, {{xmin_, xmax_}, {ymi
         Return[$Failed]
       ];
 
+      maxTally = OptionValue[HextileHistogram, "MaxTally"];
+      If[ ! ( TrueQ[maxTally === Automatic] || NumericQ[maxTally] ),
+        Message[HextileHistogram::"nmt"];
+        Return[$Failed]
+      ];
+
       vh = HexagonVertexDistance[binSize, overlapFactor];
 
       tally = HextileCenterBins[ data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[HextileCenterBins]] ];
       tally = List @@@ Normal[tally];
 
-      With[{maxTally = Max[Last /@ tally]},
+      If[ TrueQ[maxTally === Automatic], maxTally = Max[Last /@ tally] ];
+
+      With[{maxTallyLocal = maxTally},
         Graphics[
           Table[
             Which[
               ptype == 1 || ptype == "ColoredPolygons",
               Tooltip[
-                {cFunc[Last@tally[[n]] / maxTally], TransformByVector[vh, First@tally[[n]]]},
+                {cFunc[Last@tally[[n]] / maxTallyLocal], TransformByVector[vh, First@tally[[n]]]},
                 Last@tally[[n]]
               ],
 
               ptype == 2 || ptype == "ProportionalSideSize",
               Tooltip[
-                TransformByVector[Last@tally[[n]] / maxTally * vh, First@tally[[n]]],
+                TransformByVector[Last@tally[[n]] / maxTallyLocal * vh, First@tally[[n]]],
                 Last@tally[[n]]
               ],
 
               ptype == 3 || ptype == "ProportionalArea",
               Tooltip[
-                TransformByVector[Sqrt[Last@tally[[n]] / maxTally] * vh, First@tally[[n]]],
+                TransformByVector[Sqrt[Last@tally[[n]] / maxTallyLocal] * vh, First@tally[[n]]],
                 Last@tally[[n]]
               ]
 
