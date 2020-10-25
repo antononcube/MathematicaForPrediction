@@ -209,29 +209,29 @@ If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
 (* Generation                                                 *)
 (**************************************************************)
 
-BeginPackage["MonadicTracing`"]
+BeginPackage["MonadicTracing`"];
 
-$TraceMonadFailure::usage = "Failure symbol for TraceMonad."
+$TraceMonadFailure::usage = "Failure symbol for TraceMonad.";
 
-TraceMonadUnit::usage = "Lifting a monad object into TraceMonad."
+TraceMonadUnit::usage = "Lifting a monad object into TraceMonad.";
 
-TraceMonadBind::usage = "The binding function of TraceMonad."
+TraceMonadBind::usage = "The binding function of TraceMonad.";
 
-TraceMonadEchoGrid::usage = "Echoes a tabulation of the traced monad functions using Grid."
+TraceMonadEchoGrid::usage = "Echoes a tabulation of the traced monad functions using Grid.";
 
-TraceMonadTakeGrid::usage = "Gives a tabulation of the traced monad functions using Grid."
+TraceMonadTakeGrid::usage = "Gives a tabulation of the traced monad functions using Grid.";
 
-Grid87::usage = "A modified version of Grid."
+Grid87::usage = "A modified version of Grid.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-ClearAll[$TraceMonadFailure]
+ClearAll[$TraceMonadFailure];
 (*$TraceMonadFailure = None;*)
 
 (**************************************************************)
 (* Generation                                                 *)
 (**************************************************************)
-Needs["StateMonadCodeGenerator`"]
+Needs["StateMonadCodeGenerator`"];
 GenerateStateMonadCode["MonadicTracing`TraceMonad", "StringContextNames" -> False, "FailureSymbol" -> $TraceMonadFailure ];
 
 (**************************************************************)
