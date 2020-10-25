@@ -293,13 +293,20 @@ The third argument is expected to be a range specification, two pairs of numbers
 
 TileHistogram::"nof" = "The value of the option \"OverlapFactor\" is expected to be a positive number.";
 
+TileHistogram::"nmt" = "The value of the option \"`1`\" is expected to be a number or Automatic.";
+
+TileHistogram::"npl" = "The value of the option PlotLegends is expected to be Automatic or None.";
+
 Options[TileHistogram] =
     Join[
       {
         "AggregationFunction" -> Total,
         "HistogramType" -> "ColoredPolygons",
+        "MaxTally" -> Automatic,
+        "MinTally" -> Automatic,
         "OverlapFactor" -> 1,
-        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &)
+        ColorFunction -> (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &),
+        PlotLegends -> None
       },
       Options[Graphics]
     ];
@@ -312,13 +319,31 @@ TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?Numer
 
 TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?NumericQ } ), {{xmin_, xmax_}, {ymin_, ymax_}}, opts : OptionsPattern[]] :=
 
-    Block[{cFunc, ptype, overlapFactor, tally, vh},
+    Module[{cFunc, ptype, maxTally, minTally, overlapFactor, plotLegends, tally, vh, rFunc, grRes},
 
       cFunc = OptionValue[TileHistogram, ColorFunction];
       If[StringQ[cFunc], cFunc = ColorData[cFunc]];
       If[ TrueQ[cFunc === Automatic], cFunc = (Blend[{Lighter[Blue, 0.99], Darker[Blue, 0.6]}, Sqrt[#]] &) ];
 
+      plotLegends = OptionValue[TileHistogram, PlotLegends];
+      If[ ! ( TrueQ[plotLegends === Automatic] || TrueQ[plotLegends === None] ),
+        Message[TileHistogram::"npl"];
+        plotLegends = None;
+      ];
+
       ptype = OptionValue[TileHistogram, "HistogramType"];
+
+      maxTally = OptionValue[TileHistogram, "MaxTally"];
+      If[ ! ( TrueQ[maxTally === Automatic] || NumericQ[maxTally] ),
+        Message[TileHistogram::"nmt", "MaxTally"];
+        Return[$Failed]
+      ];
+
+      minTally = OptionValue[TileHistogram, "MinTally"];
+      If[ ! ( TrueQ[minTally === Automatic] || NumericQ[minTally] ),
+        Message[TileHistogram::"nmt", "MinTally"];
+        Return[$Failed]
+      ];
 
       overlapFactor = OptionValue[TileHistogram, "OverlapFactor"];
       If[ ! ( NumberQ[overlapFactor] && overlapFactor > 0 ),
@@ -331,33 +356,43 @@ TileHistogram[data_?TileBinDataQ, binSize : ( _?NumericQ | { _?NumericQ, _?Numer
       tally = TileOriginBins[ data, binSize, {{xmin, xmax}, {ymin, ymax}}, FilterRules[{opts}, Options[TileOriginBins]] ];
       tally = List @@@ Normal[tally];
 
-      With[{maxTally = Max[Last /@ tally]},
-        Graphics[
-          Table[
-            Which[
-              ptype == 1 || ptype == "ColoredPolygons",
-              Tooltip[
-                {cFunc[Last@tally[[n]] / maxTally], TransformByVector[vh, First@tally[[n]]]},
-                Last@tally[[n]]
-              ],
+      If[ TrueQ[maxTally === Automatic], maxTally = Max[Last /@ tally] ];
+      If[ TrueQ[minTally === Automatic], minTally = Min[Last /@ tally] ];
 
-              ptype == 2 || ptype == "ProportionalSideSize",
-              Tooltip[
-                TransformByVector[Last@tally[[n]] / maxTally * vh, First@tally[[n]]],
-                Last@tally[[n]]
-              ],
+      rFunc = Rescale[#, {minTally, maxTally}]&;
 
-              ptype == 3 || ptype == "ProportionalArea",
-              Tooltip[
-                TransformByVector[Sqrt[Last@tally[[n]] / maxTally] * vh, First@tally[[n]]],
-                Last@tally[[n]]
-              ]
-
+      grRes = Graphics[
+        Table[
+          Which[
+            ptype == 1 || ptype == "ColoredPolygons",
+            Tooltip[
+              {cFunc[Last @ rFunc @ tally[[n]]], TransformByVector[vh, First@tally[[n]]]},
+              Last@tally[[n]]
             ],
-            {n, Length@tally}
+
+            ptype == 2 || ptype == "ProportionalSideSize",
+            Tooltip[
+              TransformByVector[Last @ rFunc @ tally[[n]] * vh, First@tally[[n]]],
+              Last@tally[[n]]
+            ],
+
+            ptype == 3 || ptype == "ProportionalArea",
+            Tooltip[
+              TransformByVector[Sqrt[Last @ rFunc @ tally[[n]]] * vh, First@tally[[n]]],
+              Last@tally[[n]]
+            ]
+
           ],
-          FilterRules[{opts}, Options[Graphics]],
-          Frame -> True, PlotRange -> {{xmin, xmax}, {ymin, ymax}}, PlotRangeClipping -> True]
+          {n, Length@tally}
+        ],
+        FilterRules[{opts}, Options[Graphics]],
+        Frame -> True, PlotRange -> {{xmin, xmax}, {ymin, ymax}},
+        PlotRangeClipping -> True];
+
+      If[ TrueQ[plotLegends === Automatic],
+        Legended[ grRes, BarLegend[ {cFunc[Rescale[#, {minTally, maxTally}]] &, {minTally, maxTally}} ] ],
+        (* ELSE *)
+        grRes
       ]
     ];
 
