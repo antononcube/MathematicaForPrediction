@@ -247,7 +247,7 @@ GenerateStateMonadCode["MonadicTracing`TraceMonad", "StringContextNames" -> Fals
 (**************************************************************)
 
 
-ClearAll[TraceMonadUnit]
+ClearAll[TraceMonadUnit];
 
 SetAttributes[TraceMonadUnit, HoldAll];
 
@@ -256,7 +256,7 @@ TraceMonadUnit[x_] := TraceMonadUnit[x, DoubleLongRightArrow ];
 TraceMonadUnit[x_, binder_Symbol] :=
     TraceMonad[x, <|"data" -> HoldForm[x], "binder" -> binder, "commands" -> {}, "comments" -> {""}, "contextKeys" -> {{}} |>];
 
-ClearAll[TraceMonadBind]
+ClearAll[TraceMonadBind];
 
 TraceMonadBind[___] := $TraceMonadFailure;
 
@@ -300,13 +300,13 @@ TraceMonadBind[TraceMonad[x_, context_], f_] :=
     ];
 
 
-ClearAll[Grid87]
+ClearAll[Grid87];
 
 Grid87 = Framed@
     Grid[#, Alignment -> Left, Dividers -> All, FrameStyle -> Directive[Dashing[2], GrayLevel[0.87]]] &;
 
 
-ClearAll[TraceMonadEchoGrid]
+ClearAll[TraceMonadEchoGrid];
 
 Options[TraceMonadEchoGrid] = { "ComplexStyling" -> True, "ContextKeys" -> False };
 
@@ -383,6 +383,6 @@ TraceMonadTakeGrid[gridFunc_, opts:OptionsPattern[] ][x_, context_] :=
     ];
 
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
