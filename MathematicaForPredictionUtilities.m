@@ -779,15 +779,26 @@ Clear[ExampleDataSpecToDataset];
 
 ExampleDataSpecToDataset::args = "One argument is expected that is a list of two strings. (A specification for ExampleData.)";
 
+ExampleDataSpecToDataset::stype = "The specified Statistics entity is expected to have data type that is one of `1`";
+
 ExampleDataSpecToDataset[sp : {"Statistics", dataset_String}] :=
-    Block[{data = ExampleData[sp]},
-      If[! MemberQ[{"MultivariateSample", "TimeSeries", "EventData"}, ExampleData[sp, "DataType"]],
-        Return[$Failed]
+    Block[{data, expectedDataTypes},
+
+      data = ExampleData[sp];
+      If[TrueQ[Head[data] == ExampleData],
+        Return[Failure["UnknownDataset", <|"Spec" -> sp|>]]
+      ];
+
+      expectedDataTypes = {"MultivariateSample", "TimeSeries", "EventData"};
+      If[! MemberQ[expectedDataTypes, ExampleData[sp, "DataType"]],
+        Message[ExampleDataSpecToDataset::stype, expectedDataTypes];
+        Return[Failure["UnexpectedDataType", <|"DataType" -> ExampleData[sp, "DataType"]|>]]
       ];
 
       If[VectorQ[data], data = List /@ data];
 
-      Dataset[data][All, AssociationThread[ExampleData[sp, "ColumnHeadings"] -> #] &]
+      Dataset[data][All,
+        AssociationThread[ExampleData[sp, "ColumnHeadings"] -> #] &]
     ];
 
 ExampleDataSpecToDataset[sp : {"MachineLearning", dataset_String}] :=
