@@ -106,7 +106,7 @@ ColumnSpecsListQ[x_] := VectorQ[x, ColumnSpecQ];
 
 
 (***********************************************************)
-(* TypeOfDataToBeReshaped                                      *)
+(* TypeOfDataToBeReshaped                                  *)
 (***********************************************************)
 
 Clear[TypeOfDataToBeReshaped];
@@ -208,7 +208,7 @@ ToLongForm[ds_Dataset, idColumns : {_Integer ..}, Automatic, opts : OptionsPatte
 ToLongForm[ds_Dataset, idColumns : {_Integer ..}, valueColumns : {_Integer ..}, opts : OptionsPattern[] ] :=
     Block[{records = Normal[ds], cnAuto},
 
-      cnAuto = OptionValue[RecordsToLongForm, "AutomaticKeysTo"];
+      cnAuto = OptionValue[ToLongForm, "AutomaticKeysTo"];
 
       records =
           Which[
@@ -329,6 +329,9 @@ ToLongForm[___] :=
       $Failed
     ];
 
+(***********************************************************)
+(* RecordsToLongForm                                       *)
+(***********************************************************)
 
 (* RecordsToLongForm is an "internal" function. It is assumed that all records have the same keys. *)
 (* valueColumns is expected to be a list of keys that is a subset of the records keys. *)
