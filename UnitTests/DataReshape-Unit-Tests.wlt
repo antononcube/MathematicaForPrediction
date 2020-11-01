@@ -255,6 +255,53 @@ VerificationTest[
 
 
 (***********************************************************)
+(* To long form options                                    *)
+(***********************************************************)
+
+VerificationTest[
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, "IdentifierColumns" -> "ID" ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, "ID" ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Options-1"
+];
+
+
+VerificationTest[
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, "IdentifierColumns" -> { "ID" } ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, "ID" ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Options-2"
+];
+
+
+VerificationTest[
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, "VariableColumns" -> { "a", "b"} ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, Automatic, {"a", "b"} ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Options-3"
+];
+
+
+VerificationTest[
+  dsTemp1 = ToLongForm[ dsSmallWithIDs, "AutomaticKeysTo" -> "SpecialID" ];
+  First[ Keys @ dsTemp1[1] ] == "SpecialID"
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Options-4"
+];
+
+
+(***********************************************************)
 (* To long form failure                                    *)
 (***********************************************************)
 
