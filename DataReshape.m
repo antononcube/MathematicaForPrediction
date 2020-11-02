@@ -111,6 +111,16 @@ ColumnSpecsListQ[x_] := VectorQ[x, ColumnSpecQ];
 
 Clear[TypeOfDataToBeReshaped];
 
+TypeOfDataToBeReshaped[ data_?MatrixQ ] := { "Type" -> "Matrix", "ColumnNames" -> None, "RowNames" -> None };
+
+TypeOfDataToBeReshaped[ data : { _Association .. } ] :=
+    If[ MatrixQ[Values /@ data],
+      { "Type" -> "ListOfAssociations", "ColumnNames" -> Union[Keys /@ data], "RowNames" -> None },
+      (*ELSE*)
+      Echo[ "Unhandled dataset case!", "TypeOfDataToBeReshaped:" ];
+      Return[$Failed]
+    ];
+
 TypeOfDataToBeReshaped[ data_Association ] := { "Type" -> "Association", "ColumnNames" -> None, "RowNames" -> None };
 
 TypeOfDataToBeReshaped[ data_Dataset ] :=
@@ -161,6 +171,10 @@ Options[ToLongForm] = {
   "AutomaticKeysTo" -> "AutomaticKey",
   "VariablesTo" -> "Variable",
   "ValuesTo" -> "Value" };
+
+ToLongForm[mat_?MatrixQ, args___ ] := ToLongForm[ Dataset[mat], args];
+
+ToLongForm[ds : { _Association .. }, args___ ] := ToLongForm[ Dataset[ds], args] /; MatrixQ[ Values /@ ds ];
 
 ToLongForm[ds_Association, opts : OptionsPattern[] ] := RecordsToLongForm[ds, opts];
 
