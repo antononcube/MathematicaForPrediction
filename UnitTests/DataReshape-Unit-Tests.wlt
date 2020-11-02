@@ -333,16 +333,6 @@ VerificationTest[
 (* To long form failure                                    *)
 (***********************************************************)
 
-VerificationTest[
-  ToLongForm[Normal @ dsSmallWithIDs, "ID", {"a", "b"}]
-  ,
-  $Failed
-  ,
-  {ToLongForm::args}
-  ,
-  TestID -> "ToLongForm-fail-1"
-];
-
 
 VerificationTest[
   ToLongForm[ dsSmallWithIDs, "blah", {"a", "b"}]
@@ -351,7 +341,7 @@ VerificationTest[
   ,
   {ToLongForm::colkeys}
   ,
-  TestID -> "ToLongForm-fail-2"
+  TestID -> "ToLongForm-fail-1"
 ];
 
 
@@ -362,7 +352,7 @@ VerificationTest[
   ,
   {ToLongForm::colkeys}
   ,
-  TestID -> "ToLongForm-fail-3"
+  TestID -> "ToLongForm-fail-2"
 ];
 
 
@@ -373,7 +363,7 @@ VerificationTest[
   ,
   {ToLongForm::nocolkeys}
   ,
-  TestID -> "ToLongForm-fail-4"
+  TestID -> "ToLongForm-fail-3"
 ];
 
 
