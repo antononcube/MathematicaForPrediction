@@ -174,6 +174,23 @@ VerificationTest[
 
 
 VerificationTest[
+  mat = RandomReal[{100, 200}, {4, 7}];
+  dsTemp = ToLongForm[mat];
+  MatchQ[ dsTemp, _Dataset] &&
+      Dimensions[dsTemp] == { Times @@ Dimensions[mat], 3 } &&
+      Normal[ Keys[dsTemp[[1]]] ] == { "AutomaticKey", "Variable", "Value" }
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-5"
+];
+
+
+(***********************************************************)
+(* To long form equivalences                               *)
+(***********************************************************)
+
+VerificationTest[
   dsTemp1 = ToLongForm[dsSmall];
   dsTemp2 = ToLongForm[dsSmall, Automatic, Automatic];
   dsTemp1 == dsTemp2
@@ -251,6 +268,17 @@ VerificationTest[
   True
   ,
   TestID -> "ToLongForm-Automatic-Equivalence-7"
+];
+
+
+VerificationTest[
+  dsTemp1 = ToLongForm[ Normal @ dsSmallWithIDs, "ID" ];
+  dsTemp2 = ToLongForm[ dsSmallWithIDs, "ID" ];
+  dsTemp1 == dsTemp2
+  ,
+  True
+  ,
+  TestID -> "ToLongForm-Automatic-Equivalence-8"
 ];
 
 
