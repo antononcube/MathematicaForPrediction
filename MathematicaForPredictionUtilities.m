@@ -98,7 +98,7 @@ after removing missing and NA values.";
 ToAutomaticKeysAssociation::usage = "ToAutomaticKeysAssociation[ls_List, prefix_String] makes an association with \
 automatically derived keys.";
 
-ExampleDataSpecToDataset::usage = "Converts Statistics and MachineLearning example data into datasets.";
+ExampleDataset::usage = "Converts Statistics and MachineLearning example data into datasets.";
 
 Begin["`Private`"];
 
@@ -772,16 +772,16 @@ ToAutomaticKeysAssociation[ ls_List, prefix_String : "id." ] :=
 
 
 (***********************************************************)
-(* ExampleDataSpecToDataset                                *)
+(* ExampleDataset                                          *)
 (***********************************************************)
 
-Clear[ExampleDataSpecToDataset];
+Clear[ExampleDataset];
 
-ExampleDataSpecToDataset::args = "One argument is expected that is a list of two strings. (A specification for ExampleData.)";
+ExampleDataset::args = "One argument is expected that is a list of two strings. (A specification for ExampleData.)";
+ExampleDataset::stype = "The specified Statistics entity is expected to have data type that is one of `1`";
 
-ExampleDataSpecToDataset::stype = "The specified Statistics entity is expected to have data type that is one of `1`";
+ExampleDataset[sp : {"Statistics", dataset_String}] :=
 
-ExampleDataSpecToDataset[sp : {"Statistics", dataset_String}] :=
     Block[{data, expectedDataTypes},
 
       data = ExampleData[sp];
@@ -791,23 +791,27 @@ ExampleDataSpecToDataset[sp : {"Statistics", dataset_String}] :=
 
       expectedDataTypes = {"MultivariateSample", "TimeSeries", "EventData"};
       If[! MemberQ[expectedDataTypes, ExampleData[sp, "DataType"]],
-        Message[ExampleDataSpecToDataset::stype, expectedDataTypes];
-        Return[Failure["UnexpectedDataType", <|"DataType" -> ExampleData[sp, "DataType"]|>]]
+        ResourceFunction["ResourceFunctionMessage"][ExampleDataset::stype, expectedDataTypes];
+        Return[
+          Failure["UnexpectedDataType", <|"DataType" -> ExampleData[sp, "DataType"]|>]]
       ];
-
+   
       If[VectorQ[data], data = List /@ data];
 
       Dataset[data][All,
         AssociationThread[ExampleData[sp, "ColumnHeadings"] -> #] &]
     ];
 
-ExampleDataSpecToDataset[sp : {"MachineLearning", dataset_String}] :=
-    Dataset[Flatten@*List @@@ ExampleData[sp, "Data"]][All, AssociationThread[Flatten@*List @@ ExampleData[sp, "VariableDescriptions"], #] &];
+ExampleDataset[sp : {"MachineLearning", dataset_String}] :=
+    Dataset[Flatten@*List @@@ ExampleData[sp, "Data"]][All,
+      AssociationThread[
+        Flatten@*List @@ ExampleData[sp, "VariableDescriptions"], #] &];
 
-ExampleDataSpecToDataset[___] :=
+ExampleDataset[___] :=
     Block[{},
-      Message[ExampleDataSpecToDataset::args]
+      ResourceFunction["ResourceFunctionMessage"][ExampleDataset::args]
     ];
+
 
 End[];
 
