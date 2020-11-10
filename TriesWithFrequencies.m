@@ -517,7 +517,7 @@ NodeJoin[n1_, n2_] := List[n1, n2];
 
 Clear[TrieShrink, TrieShrinkRec];
 
-SyntaxInformation[TrieShrink] = { "ArgumentsPattern" -> { _ } };
+SyntaxInformation[TrieShrink] = { "ArgumentsPattern" -> { _, _. } };
 
 TrieShrink::wargs = "The first argument is expected to be a trie; the second, optional argument is expected to a string.";
 
