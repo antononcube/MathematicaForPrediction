@@ -425,6 +425,8 @@ PivotLonger[ data_Dataset, columnsArg : { _?ColumnSpecQ  ..}, opts : OptionsPatt
 
 Clear[ToWideForm];
 
+SyntaxInformation[ToWideForm] = { "ArgumentsPattern" -> { _, _, _, _, OptionsPattern[] } };
+
 Options[ToWideForm] = {
   "IdentifierColumns" -> Automatic,
   "VariablesFrom" -> Automatic,
