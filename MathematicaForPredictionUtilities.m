@@ -803,13 +803,12 @@ ExampleDataset[sp : {"Statistics", dataset_String}] :=
     ];
 
 ExampleDataset[sp : {"MachineLearning", dataset_String}] :=
-    Dataset[Flatten@*List @@@ ExampleData[sp, "Data"]][All,
-      AssociationThread[
-        Flatten@*List @@ ExampleData[sp, "VariableDescriptions"], #] &];
+    Dataset[Flatten@*List @@@ ExampleData[sp, "Data"]][All, AssociationThread[Flatten@*List @@ ExampleData[sp, "VariableDescriptions"], #] &];
 
 ExampleDataset[___] :=
     Block[{},
-      ResourceFunction["ResourceFunctionMessage"][ExampleDataset::args]
+      Message[ExampleDataset::args];
+      $Failed
     ];
 
 
