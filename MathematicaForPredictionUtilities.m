@@ -790,7 +790,7 @@ ExampleDataset[sp : {"Statistics", dataset_String}] :=
 
       expectedDataTypes = {"MultivariateSample", "TimeSeries", "EventData"};
       If[! MemberQ[expectedDataTypes, ExampleData[sp, "DataType"]],
-        ResourceFunction["ResourceFunctionMessage"][ExampleDataset::stype, expectedDataTypes];
+        Message[ExampleDataset::stype, expectedDataTypes];
         Return[
           Failure["UnexpectedDataType", <|"DataType" -> ExampleData[sp, "DataType"]|>]]
       ];
