@@ -781,7 +781,6 @@ ExampleDataset::args = "One argument is expected that is a list of two strings. 
 ExampleDataset::stype = "The specified Statistics entity is expected to have data type that is one of `1`";
 
 ExampleDataset[sp : {"Statistics", dataset_String}] :=
-
     Block[{data, expectedDataTypes},
 
       data = ExampleData[sp];
