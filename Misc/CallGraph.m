@@ -153,37 +153,37 @@
 
 BeginPackage["CallGraph`"];
 
-FunctionDependencies::usage = "Find functions called by the down values and sub values of the argument."
+FunctionDependencies::usage = "Find functions called by the down values and sub values of the argument.";
 
 CallGraph::usage = "CallGraph[contexts:{_String..}, opts___] makes a call graph for the functions of \
-specified (package) contexts."
+specified (package) contexts.";
 
 CallGraphAddUsageMessages::usage = "CallGraphAddUsageMessages[gr_Graph] adds tooltips with usage messages for \
-the nodes of the call graph gr."
+the nodes of the call graph gr.";
 
 CallGraphAddPrintDefinitionsButtons::usage = "CallGraphAddPrintDefinitionsButtons[gr_Graph] adds buttons for \
-printing the codes corresponding to the nodes of the call graph gr."
+printing the codes corresponding to the nodes of the call graph gr.";
 
 CallGraphBiColorCircularEmbedding::usage = "CallGraphBiColorCircularEmbedding[gr_Graph] applies to the graph gr \
-the layout \"CircularEmbedding\" and renders the gr edges using Bezier curves and two colors."
+the layout \"CircularEmbedding\" and renders the gr edges using Bezier curves and two colors.";
 
 NodeInducedInEdges::usage = "NodeInducedInEdges[gr_Graph, nd_?AtomQ, k_Integer:3] \
 finds the edges of the graph gr that make paths finishing at the node nd; \
-the paths are at most k edges long."
+the paths are at most k edges long.";
 
 NodeInducedOutEdges::usage = "NodeInducedOutEdges[gr_Graph, nd_?AtomQ, k_Integer:3] \
 finds the edges of the graph gr that make paths starting from the node nd; \
-the paths are at most k edges long."
+the paths are at most k edges long.";
 
 NodeInducedEdges::usage = "NodeInducedEdges[gr_Graph, nd_?AtomQ, k_Integer:3] \
 finds the edges of the graph gr that make paths starting from the node nd or finishing at nd; \
-the paths are at most k edges long."
+the paths are at most k edges long.";
 
 Begin["`Private`"];
 
 (*Needs["GeneralUtilities`"];*)
 
-Clear[SymbolQ]
+Clear[SymbolQ];
 SymbolQ[x_] := Head[x] === Symbol;
 
 (***********************************************************)
@@ -195,12 +195,12 @@ SymbolQ[x_] := Head[x] === Symbol;
     https://mathematica.stackexchange.com/a/4344/34008
 *)
 
-ClearAll[FunctionQ]
-SetAttributes[FunctionQ, HoldAll]
+ClearAll[FunctionQ];
+SetAttributes[FunctionQ, HoldAll];
 FunctionQ[sym_Symbol] :=
     ((DownValues[sym] =!= {}) || SubValues[sym] =!= {}) && (OwnValues[sym] === {});
 
-ClearAll[FunctionDependencies]
+ClearAll[FunctionDependencies];
 Options[FunctionDependencies] = {"AtomicSymbols" -> True };
 SetAttributes[FunctionDependencies, HoldFirst];
 FunctionDependencies[sym_Symbol, opts:OptionsPattern[] ] :=
@@ -226,7 +226,7 @@ FunctionDependencies[sym_Symbol, opts:OptionsPattern[] ] :=
 (* CallGraph                                               *)
 (***********************************************************)
 
-Clear[CallGraph]
+Clear[CallGraph];
 
 Options[CallGraph] =
     Join[
