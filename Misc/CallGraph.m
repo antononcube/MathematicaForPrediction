@@ -415,24 +415,24 @@ Clear[NodeInducedInEdges, NodeInducedOutEdges, NodeInducedEdges];
 NodeInducedInEdges[gr_Graph, node_?AtomQ, n_Integer: 3] :=
     Union@Flatten@Rest@
         NestList[
-          Flatten[Map[Cases[EdgeList[gr], _ \[DirectedEdge] #] &, #[[All, 1]]]] &,
-          {node \[DirectedEdge] node},
+          Flatten[Map[Cases[EdgeList[gr], DirectedEdge[_, #] ] &, #[[All, 1]]]] &,
+          {DirectedEdge[node, node]},
           n
         ];
 
 NodeInducedOutEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
     Union@Flatten@Rest@
         NestList[
-          Flatten[Map[Cases[EdgeList[gr], # \[DirectedEdge] _] &, #[[All, 2]]]] &,
-          {node \[DirectedEdge] node},
+          Flatten[Map[Cases[EdgeList[gr], DirectedEdge[#, _] ] &, #[[All, 2]]]] &,
+          { DirectedEdge[node, node] },
           n
         ];
 
 NodeInducedEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
     Union@Flatten@Rest@
         NestList[
-          Flatten[Map[Cases[EdgeList[gr], # \[DirectedEdge] _ | _ \[DirectedEdge] #] &, Union[Flatten[List @@@ #]]]] &,
-          {node \[DirectedEdge] node},
+          Flatten[Map[Cases[EdgeList[gr], DirectedEdge[#, _] | DirectedEdge[_, #] ] &, Union[Flatten[List @@@ #]]]] &,
+          { DirectedEdge[node, node] },
           n
         ];
 
