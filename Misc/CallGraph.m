@@ -228,6 +228,8 @@ FunctionDependencies[sym_Symbol, opts:OptionsPattern[] ] :=
 
 Clear[CallGraph];
 
+SyntaxInformation[CallGraph] = {"ArgumentsPattern" -> {_, OptionsPattern[]}};
+
 Options[CallGraph] =
     Join[
       { "PrivateContexts" -> False, "SelfReferencing" -> False, "AtomicSymbols" -> True, Exclusions -> {},
@@ -309,7 +311,7 @@ CallGraph[___] :=
       $Failed
     ];
 
-CallGraph::args = "The first argument is expected to be a string or a list of strings; each string corresponds to a context."
+CallGraph::args = "The first argument is expected to be a string or a list of strings; each string corresponds to a context.";
 
 
 (***********************************************************)
@@ -317,6 +319,8 @@ CallGraph::args = "The first argument is expected to be a string or a list of st
 (***********************************************************)
 
 Clear[CallGraphAddUsageMessages];
+
+SyntaxInformation[CallGraphAddUsageMessages] = {"ArgumentsPattern" -> {_, OptionsPattern[]}};
 
 Options[CallGraphAddUsageMessages] = Join[ {"UsageTooltipsStyle"->"Subsubsection"}, Options[Graph] ];
 
@@ -332,12 +336,22 @@ CallGraphAddUsageMessages[gr_Graph, opts:OptionsPattern[] ] :=
       Graph[gRules, Sequence @@ grOpts, VertexLabels -> "Name"]
     ];
 
+CallGraphAddUsageMessages[___] :=
+    Block[{},
+      Message[CallGraphAddUsageMessages::args];
+      $Failed
+    ];
+
+CallGraphAddUsageMessages::args = "The first (and only) argument is expected to be a graph object.";
+
 
 (***********************************************************)
 (* CallGraphAddPrintDefinitionsButtons                     *)
 (***********************************************************)
 
 Clear[CallGraphAddPrintDefinitionsButtons];
+
+SyntaxInformation[CallGraphAddPrintDefinitionsButtons] = {"ArgumentsPattern" -> {_, OptionsPattern[]}};
 
 Options[CallGraphAddPrintDefinitionsButtons] = Options[Graph];
 
@@ -346,6 +360,14 @@ CallGraphAddPrintDefinitionsButtons[gr_Graph, opts:OptionsPattern[] ] :=
       grDefRules = Map[Button[#, GeneralUtilities`PrintDefinitions[#], Appearance->Frameless]&, EdgeList[gr], {2}];
       Graph[grDefRules, opts, VertexLabels -> "Name"]
     ];
+
+CallGraphAddPrintDefinitionsButtons[___] :=
+    Block[{},
+      Message[CallGraphAddPrintDefinitionsButtons::args];
+      $Failed
+    ];
+
+CallGraphAddPrintDefinitionsButtons::args = "The first (and only) argument is expected to be a graph object.";
 
 
 (***********************************************************)
@@ -383,7 +405,9 @@ vSf[g_, cols_, pointSize_: Large] :=
       PointSize[pointSize], Point@#}] &;
 
 
-Clear[CallGraphBiColorCircularEmbedding]
+Clear[CallGraphBiColorCircularEmbedding];
+
+SyntaxInformation[CallGraphBiColorCircularEmbedding] = {"ArgumentsPattern" -> {_, OptionsPattern[]}};
 
 Options[CallGraphBiColorCircularEmbedding] = Join[ {"VertexColors" -> Automatic }, Options[Graph] ];
 
@@ -405,12 +429,22 @@ CallGraphBiColorCircularEmbedding[gr_Graph, opts:OptionsPattern[] ] :=
         EdgeShapeFunction -> eSf[gr, cols, If[EdgeCount[gr]/(VertexCount[gr]+1) > 1.5 || EdgeCount[gr] > 400, Thin, Thick, Thin]]]
     ];
 
+CallGraphBiColorCircularEmbedding[___] :=
+    Block[{},
+      Message[CallGraphBiColorCircularEmbedding::args];
+      $Failed
+    ];
+
+CallGraphBiColorCircularEmbedding::args = "The first (and only) argument is expected to be a graph object.";
+
 
 (***********************************************************)
-(* Sub-graph making                                        *)
+(* Sub-graph making -- induced in edges                    *)
 (***********************************************************)
 
-Clear[NodeInducedInEdges, NodeInducedOutEdges, NodeInducedEdges];
+Clear[NodeInducedInEdges];
+
+SyntaxInformation[NodeInducedInEdges] = {"ArgumentsPattern" -> {_, _, _.}};
 
 NodeInducedInEdges[gr_Graph, node_?AtomQ, n_Integer: 3] :=
     Union@Flatten@Rest@
@@ -418,7 +452,26 @@ NodeInducedInEdges[gr_Graph, node_?AtomQ, n_Integer: 3] :=
           Flatten[Map[Cases[EdgeList[gr], DirectedEdge[_, #] ] &, #[[All, 1]]]] &,
           {DirectedEdge[node, node]},
           n
-        ];
+        ] /; n >= 0;
+
+NodeInducedInEdges[___] :=
+    Block[{},
+      Message[NodeInducedInEdges::args];
+      $Failed
+    ];
+
+NodeInducedInEdges::args = "The first argument is expected to be a graph object; \
+the second argument is expected to be a graph vertex; \
+the third, optional argument is expected to be a non-negative integer.";
+
+
+(***********************************************************)
+(* Sub-graph making -- induces out edges                   *)
+(***********************************************************)
+
+Clear[NodeInducedOutEdges];
+
+SyntaxInformation[NodeInducedOutEdges] = {"ArgumentsPattern" -> {_, _, _.}};
 
 NodeInducedOutEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
     Union@Flatten@Rest@
@@ -426,7 +479,26 @@ NodeInducedOutEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
           Flatten[Map[Cases[EdgeList[gr], DirectedEdge[#, _] ] &, #[[All, 2]]]] &,
           { DirectedEdge[node, node] },
           n
-        ];
+        ]/; n >= 0;
+
+NodeInducedOutEdges[___] :=
+    Block[{},
+      Message[NodeInducedOutEdges::args];
+      $Failed
+    ];
+
+NodeInducedOutEdges::args = "The first argument is expected to be a graph object; \
+the second argument is expected to be a graph vertex; \
+the third, optional argument is expected to be a non-negative integer.";
+
+
+(***********************************************************)
+(* Sub-graph making -- induced edges                       *)
+(***********************************************************)
+
+Clear[NodeInducedEdges];
+
+SyntaxInformation[NodeInducedEdges] = {"ArgumentsPattern" -> {_, _, _.}};
 
 NodeInducedEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
     Union@Flatten@Rest@
@@ -434,7 +506,17 @@ NodeInducedEdges[gr_Graph, node_Symbol, n_Integer: 3] :=
           Flatten[Map[Cases[EdgeList[gr], DirectedEdge[#, _] | DirectedEdge[_, #] ] &, Union[Flatten[List @@@ #]]]] &,
           { DirectedEdge[node, node] },
           n
-        ];
+        ]/; n >= 0;
+
+NodeInducedEdges[___] :=
+    Block[{},
+      Message[NodeInducedEdges::args];
+      $Failed
+    ];
+
+NodeInducedEdges::args = "The first argument is expected to be a graph object; \
+the second argument is expected to be a graph vertex; \
+the third, optional argument is expected to be a non-negative integer.";
 
 End[]; (* `Private` *)
 
