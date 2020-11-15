@@ -96,17 +96,17 @@ If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
 (* Package definition                                         *)
 (**************************************************************)
 
-BeginPackage["HeatmapPlot`"]
+BeginPackage["HeatmapPlot`"];
 
-MatrixPlotWithTooltips::usage = "MatrixPlotWithTooltips[data, rowNames, columnNames] makes a MatrixPlot with tooltips."
+MatrixPlotWithTooltips::usage = "MatrixPlotWithTooltips[data, rowNames, columnNames] makes a MatrixPlot with tooltips.";
 
 HeatmapPlot::usage = "HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List] makes a heat-map plot based on MatrixPlot \
-and HierarchicalClustering`Agglomerate ."
+and HierarchicalClustering`Agglomerate .";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
-Needs["HierarchicalClustering`"]
-Needs["SSparseMatrix`"]
+Needs["HierarchicalClustering`"];
+Needs["SSparseMatrix`"];
 
 MatrixPlotWithTooltips[mat_, rowNames_, columnNames_, opts : OptionsPattern[]] :=
     With[{dims = Dimensions[mat],
@@ -271,6 +271,6 @@ HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List, opts:OptionsPattern[
       }]
     ] /; Dimensions[data] == { Length[rowNames], Length[columnNames] };
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
