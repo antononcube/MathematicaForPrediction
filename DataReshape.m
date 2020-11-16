@@ -71,11 +71,15 @@ BeginPackage["DataReshape`"];
 
 TypeOfDataToBeReshaped::usage = "TypeOfDataToBeReshaped[data] gives association with data type elements.";
 
+LongFormDataset::usage = "Synonym of ToLongForm.";
+
 ToLongForm::usage = "ToLongForm[ds_Dataset, idColumns_, variableColumns_, opts___] \
 converts the dataset ds into long form.";
 
 PivotLonger::usage = "PivotLonger[ds_Dataset, columns_, opts___] \
 \"lengthens\" data, increasing the number of rows and decreasing the number of columns.";
+
+WideFormDataset::usage = "Synonym of ToWideForm.";
 
 ToWideForm::usage = "ToWideForm[ds_Dataset, idColumn_, variableColumn_, valueColumn_] \
 converts the dataset ds into wide form. The result dataset has columns that are unique values of \
@@ -343,6 +347,10 @@ ToLongForm[___] :=
       $Failed
     ];
 
+Clear[LongFormDataset];
+LongFormDataset = ToLongForm;
+
+
 (***********************************************************)
 (* RecordsToLongForm                                       *)
 (***********************************************************)
@@ -530,6 +538,13 @@ ToWideForm[___] :=
       $Failed
     ];
 
+Clear[WideFormDataset];
+WideFormDataset = ToWideForm;
+
+
+(***********************************************************)
+(* RecordsToWideForm                                       *)
+(***********************************************************)
 
 RecordsToWideForm[records : { (_Association) ..}, aggrFunc_] :=
     Block[{res, keyColNames, colNames},
