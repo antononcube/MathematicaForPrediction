@@ -357,7 +357,7 @@ VerificationTest[(* 36 *)
 	TestID->"PermutationPart-1"
 ];
 
-(* This test is expected to fail. *)
+(* This test is expected to fail with the current SSparseMatrix.m . *)
 VerificationTest[(* 37 *)
 	Part[rmat, List["C", "D", "A", "B"]]
 	,
