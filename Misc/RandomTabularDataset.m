@@ -173,7 +173,9 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
         aColValGens = AssociationThread[Range[ncols] -> Table[Identity, ncols]]
       ];
       If[ListQ[aColValGens],
-        aColValGens = AssociationThread[Range@Length@aColValGens, aColValGens]
+        aColValGens = Join[ aColValGens, Flatten @ Table[ aColValGens, Ceiling[ncols / Length[aColValGens]] ] ];
+        aColValGens = Take[ aColValGens, ncols];
+        aColValGens = AssociationThread[Range@ncols, aColValGens]
       ];
       aColValGens = Join[aAutomaticColValGens, aColValGens];
 
@@ -218,7 +220,7 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
         ToLowerCase[form] == "wide",
         aMissing = AssociationThread[lsColNames, Missing[]];
         res =
-            GroupBy[tbl, 
+            GroupBy[tbl,
               First,
               Join[aMissing, AssociationThread[#[[All, 2]], #[[All, 3]]]] &];
         res = If[rowKeysQ, Dataset[res], Dataset[Values@res]]
