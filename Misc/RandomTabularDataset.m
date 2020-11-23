@@ -155,12 +155,14 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
     Block[{colNameGen, aColValGens, aAutomaticColValGens, rowKeysQ,
       numberOfValues, form, lsColNames, lsPairs, tbl, res, aMissing},
 
+      (* Get column name generator *)
       colNameGen = OptionValue[RandomTabularDataset, "ColumnNameGenerator"];
       If[TrueQ[colNameGen === Automatic] || TrueQ[colNameGen === RandomWord],
         colNameGen = First@RandomWord["CommonWords", 1] &
       ];
       If[TrueQ[colNameGen === None], colNameGen = Identity];
 
+      (* Get column values generators *)
       aColValGens = OptionValue[RandomTabularDataset, "ColumnValueGenerators"];
       aAutomaticColValGens =
           AssociationThread[
@@ -172,6 +174,8 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
       If[TrueQ[aColValGens === Identity] || TrueQ[aColValGens === None],
         aColValGens = AssociationThread[Range[ncols] -> Table[Identity, ncols]]
       ];
+
+      (* Extend column values generators if given as a list *)
       If[ListQ[aColValGens],
         aColValGens = Join[ aColValGens, Flatten @ Table[ aColValGens, Ceiling[ncols / Length[aColValGens]] ] ];
         aColValGens = Take[ aColValGens, ncols];
@@ -179,6 +183,7 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
       ];
       aColValGens = Join[aAutomaticColValGens, aColValGens];
 
+      (* Get form *)
       form = OptionValue[RandomTabularDataset, "Form"];
       If[TrueQ[form === Automatic], form = "Wide"];
       If[! MemberQ[ToLowerCase@{"Long", "Wide"}, ToLowerCase[form]],
@@ -186,6 +191,7 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
         form = "Wide";
       ];
 
+      (* Get number of values *)
       numberOfValues = OptionValue[RandomTabularDataset, "NumberOfValues"];
       If[TrueQ[numberOfValues === Automatic] || TrueQ[numberOfValues === All],
         numberOfValues = nrows * ncols
@@ -195,19 +201,25 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
         Return[$Failed];
       ];
 
+      (* Get row keys or not *)
       rowKeysQ = OptionValue[RandomTabularDataset, "RowKeys"];
       If[TrueQ[rowKeysQ === Automatic], rowKeysQ = False];
       If[TrueQ[rowKeysQ === RandomChoice], rowKeysQ = RandomChoice[{False, True}]];
       rowKeysQ = TrueQ[rowKeysQ];
 
+      (* Generate column names *)
       lsColNames = Table[colNameGen[i], {i, ncols}];
+
+      (* Generate coordinate pairs for the random values *)
       lsPairs = Flatten[Table[{i, j}, {i, nrows}, {j, ncols}], 1];
       If[numberOfValues < Length[lsPairs],
         lsPairs = Sort@RandomSample[lsPairs, numberOfValues]
       ];
 
+      (* Generate random values *)
       tbl = MapThread[{#1, lsColNames[[#2]], aColValGens[#2][{#1, #2}]} &, Transpose[lsPairs]];
 
+      (* Convert to dataset according to form specification *)
       Which[
         ! rowKeysQ && ToLowerCase[form] == "long",
         res =
@@ -227,6 +239,7 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
 
       ];
 
+      (* Result *)
       res
     ] /; nrows > 0 && ncols > 0;
 
