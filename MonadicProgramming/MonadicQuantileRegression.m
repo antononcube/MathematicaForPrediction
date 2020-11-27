@@ -1952,6 +1952,10 @@ ChowTestStatistic[data : {{_?NumberQ, _?NumberQ} ..}, splitPoints : {_?NumberQ .
     ];
 
 
+(**************************************************************)
+(* QRMonChowTestStatistic                                     *)
+(**************************************************************)
+
 Clear[QRMonChowTestStatistic];
 
 SyntaxInformation[QRMonChowTestStatistic] = { "ArgumentsPattern" -> { _, ___, ___ } };
