@@ -39,8 +39,30 @@
 (* :Package Version: 0.1 *)
 (* :Mathematica Version: 12.1 *)
 (* :Copyright: (c) 2020 Anton Antonov *)
-(* :Keywords: *)
-(* :Discussion: *)
+(* :Keywords: Symbolic regression, Quantile regression, Function basis, Random search *)
+(* :Discussion:
+
+TODO:
+   1. [ ] Implement the use of standard function bases. (B-splines, Chebyshev, Sin/Cos.)
+   2. [ ] Implement options to determine target (basis) functions.
+   3. [ ] Improve the random search algorithm.
+   4. [ ] Option-specified parallel computations.
+   5. [ ] Unit tests.
+*)
+
+(**************************************************************)
+(* Importing packages (if needed)                             *)
+(**************************************************************)
+
+If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
+  Echo["MonadicQuantileRegression.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
+];
+
+
+(**************************************************************)
+(* Package definition                                         *)
+(**************************************************************)
 
 BeginPackage["SymbolicRegressionByQRMon`"];
 (* Exported symbols added here with SymbolName::usage *)
@@ -54,12 +76,15 @@ selects (at most) n random functions from a function basis generated with Genera
 FindFormulaByQRMon::usage = "FindFormulaByQRMon[data_, x_Symbol, n_Integer] \
 finds n formulas for data using basis functions that have x as argument.";
 
+PlotDataAndFit::usage = "PlotDataAndFit[data, x_Symbol, fitRes_Association, ___];";
+
 Begin["`Private`"];
 
+Needs["MonadicQuantileRegression`"];
 
-(*===========================================================*)
-(* GenerateBasisFunctions                                    *)
-(*===========================================================*)
+(**************************************************************)
+(* GenerateBasisFunctions                                     *)
+(**************************************************************)
 
 Clear[GenerateBasisFunctions];
 
@@ -89,9 +114,9 @@ GenerateBasisFunctions[x_Symbol, k_Integer, opts : OptionsPattern[]] :=
     ] /; k > 0;
 
 
-(*===========================================================*)
+(**************************************************************)
 (* RandomFunctionBasis                                       *)
-(*===========================================================*)
+(**************************************************************)
 
 Clear[RandomFunctionBasis];
 
@@ -121,9 +146,9 @@ RandomFunctionBasis[x_Symbol, n_Integer, k_Integer, opts : OptionsPattern[]] :=
     ] /; n > 0 && k > 0;
 
 
-(*===========================================================*)
+(**************************************************************)
 (* FindFormulaByQRMon                                        *)
-(*===========================================================*)
+(**************************************************************)
 
 Clear[FindFormulaByQRMon];
 
@@ -216,9 +241,9 @@ FindFormulaByQRMon[data_, x_Symbol, basis_List, opts : OptionsPattern[]] :=
     ];
 
 
-(*===========================================================*)
+(**************************************************************)
 (* PlotDataAndFit                                            *)
-(*===========================================================*)
+(**************************************************************)
 
 Clear[PlotDataAndFit];
 PlotDataAndFit[data_, x_Symbol, aFFRes_Association, opts : OptionsPattern[]] :=
