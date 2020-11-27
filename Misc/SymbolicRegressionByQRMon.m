@@ -47,7 +47,8 @@ TODO:
    2. [ ] Implement options to determine target (basis) functions.
    3. [ ] Improve the random search algorithm.
    4. [ ] Option-specified parallel computations.
-   5. [ ] Unit tests.
+   5. [ ] Implement random fits over segments derived by found structural breaks.
+   6. [ ] Unit tests.
 *)
 
 (**************************************************************)
@@ -57,6 +58,11 @@ TODO:
 If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
   Echo["MonadicQuantileRegression.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
+];
+
+If[Length[DownValues[MonadicStructuralBreaksFinder`QRMonFindStructuralBreaks]] == 0,
+  Echo["MonadicStructuralBreaksFinder.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicStructuralBreaksFinder.m"]
 ];
 
 
