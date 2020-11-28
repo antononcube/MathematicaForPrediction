@@ -465,6 +465,9 @@ QRMonRescale[opts : OptionsPattern[]][xs_, context_] :=
       If[data === $QRMonFailure, Return[$QRMonFailure]];
 
       Which[
+        TrueQ[ axesOpt == {False, False}] || TrueQ[ !axesOpt ] || TrueQ[ axesOpt === None ],
+        QRMonUnit[xs, context],
+
         TrueQ[axesOpt] || TrueQ[axesOpt == {True, True}] ||
             TrueQ[ ToLowerCase[axesOpt] == "both" || ToLowerCase[axesOpt] == "path" || axesOpt === All ] ||
             TrueQ[ ListQ[axesOpt] && Length[Intersection[axesOpt, {"x", "y", "time"}]] == 2 ] ||
