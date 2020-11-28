@@ -43,7 +43,11 @@
 (* :Discussion:
 
 TODO:
-   1. [ ] Implement the use of standard function bases. (B-splines, Chebyshev, Sin/Cos.)
+   1. [-] Implement the use of standard function bases.
+      - [X] B-splines
+      - [X] Chebyshev
+      - [X] (Centered) polynomials
+      - [ ] Sin/Cos
    2. [ ] Implement options to determine target (basis) functions.
    3. [ ] Improve the random search algorithm.
    4. [ ] Option-specified parallel computations.
@@ -60,7 +64,7 @@ If[Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"]
 ];
 
-If[Length[DownValues[MonadicStructuralBreaksFinder`QRMonFindStructuralBreaks]] == 0,
+If[Length[SubValues[MonadicStructuralBreaksFinder`QRMonFindChowTestLocalMaxima]] == 0,
   Echo["MonadicStructuralBreaksFinder.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicStructuralBreaksFinder.m"]
 ];
@@ -81,6 +85,9 @@ selects (at most) n random functions from a function basis generated with Genera
 
 FindFormulaByQRMon::usage = "FindFormulaByQRMon[data_, x_Symbol, n_Integer] \
 finds n formulas for data using basis functions that have x as argument.";
+
+FindFormulaByQRMonBasis::usage = "FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer) ] \
+finds a formula for data using specified basis functions that have x as argument.";
 
 PlotDataAndFit::usage = "PlotDataAndFit[data, x_Symbol, fitRes_Association, ___];";
 
@@ -163,18 +170,29 @@ Options[FindFormulaByQRMon] =
       {"Bases" -> Automatic,
         "LeafCountWeight" -> 1 / 100,
         "MaxNumberOfBases" -> Infinity,
-        "ErrorAggregationFunction" -> Max@*Abs},
+        "ErrorAggregationFunction" -> Max@*Abs,
+        "RegressionFunction" -> Automatic
+      },
       Options[RandomFunctionBasis]
     ];
 
+FindFormulaByQRMon::args = "The expected signatures are \
+FindFormulaByQRMon[data_, x_Symbol, n_Integer, ___] or FindFormulaByQRMon[data_, x_Symbol, basis_List, ___].";
+
+FindFormulaByQRMon::nfbs = "Unknown bases specified with \"Bases\". Computing with Chebyshev polynomials.";
+
+FindFormulaByQRMon::nrgf = "Unknown regression function specified with \"RegressionFunction\". Computing with QRMonQuantileRegressionFit.";
+
 FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
-    Module[{lsBases, lcWeight, maxNBases, lsRes, maxLeafCount},
+    Module[{lsBases, lcWeight, maxNBases, regFunc, lsRes, maxLeafCount},
 
       lsBases = OptionValue[FindFormulaByQRMon, "Bases"];
       lcWeight = OptionValue[FindFormulaByQRMon, "LeafCountWeight"];
       maxNBases = OptionValue[FindFormulaByQRMon, "MaxNumberOfBases"];
+      regFunc = OptionValue[FindFormulaByQRMon, "RegressionFunction"];
 
-      If[TrueQ[lsBases === Automatic],
+      Which[
+        TrueQ[lsBases === Automatic],
         Block[{opts2 = FilterRules[{opts}, Options[RandomFunctionBasis]]},
           Quiet[
             lsBases = Union@
@@ -194,19 +212,32 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
           ]
         ];
 
-        lsBases =
-            RandomSample[Map[1 / Sqrt[Length[#]] &, lsBases] -> lsBases, maxNBases];
+        lsBases = RandomSample[Map[1 / Sqrt[Length[#]] &, lsBases] -> lsBases, maxNBases];
         (*lsBases=Append[lsBases,Flatten@Table[{Sin[x*i],Cos[x*i]},{i,0,30}]];*)
 
-        lsBases = Select[lsBases, ! FreeQ[#, x] &];
+        lsBases = Select[lsBases, ! FreeQ[#, x] &],
+
+        MemberQ[{ "CenteredPolynomials", "Polynomials", "PolynomialBasis" }, lsBases],
+        lsBases = Rest @ Rest @ FoldList[ Append, {}, Table[ (x - 0.5)^i, {i, 0, maxNBases} ] ],
+
+        MemberQ[{ "ChebyshevPolynomials", "Chebyshev", "ChebyshevBasis" }, lsBases],
+        lsBases = Range[maxNBases],
+
+        MemberQ[{ "BSplines", "BSplinePolynomials", "BSplineBasis" }, lsBases],
+        regFunc = QRMonQuantileRegression;
+        lsBases = Range[maxNBases],
+
+        True,
+        Message[FindFormulaByQRMon::nfbs];
+        lsBases = Rest @ FoldList[ Append, {}, Range[maxNBases] ]
       ];
 
-      If[! MatchQ[lsBases, {{__} ..}],
+      If[! MatchQ[lsBases, {{__} ..} | {_Integer..}],
         Return[$Failed]
       ];
 
       Quiet[
-        lsRes = Map[FindFormulaByQRMon[data, x, #, opts] &, lsBases];
+        lsRes = Map[FindFormulaByQRMonBasis[data, x, #, "RegressionFunction" -> regFunc, opts] &, lsBases];
       ];
 
       maxLeafCount = Max[LeafCount[#Fit] & /@ lsRes];
@@ -218,20 +249,59 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
 
     ] /; TrueQ[n === All] || IntegerQ[n] && n > 0;
 
+FindFormulaByQRMon[___] :=
+    Block[{},
+      Message[FindFormulaByQRMon::args];
+      $Failed
+    ];
 
-FindFormulaByQRMon[data_, x_Symbol, basis_List, opts : OptionsPattern[]] :=
-    Block[{errorAggrFunc, qrObj, k, qFunc, qFuncExpr, qFuncExpr2, qErrs},
 
-      errorAggrFunc = OptionValue[FindFormulaByQRMon, "ErrorAggregationFunction"];
+(**************************************************************)
+(* FindFormulaByQRMonBasis                                    *)
+(**************************************************************)
 
-      qrObj =
-          Fold[
-            QRMonBind,
-            QRMonUnit[data],
-            {
-              QRMonRescale[Axes -> {True, True}],
-              QRMonQuantileRegressionFit[basis, 0.5, FilterRules[{opts}, Options[QRMonQuantileRegression]]]
-            }];
+Clear[FindFormulaByQRMonBasis];
+
+Options[FindFormulaByQRMonBasis] = Options[FindFormulaByQRMon];
+
+FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : OptionsPattern[]] :=
+    Block[{errorAggrFunc, regFunc, qrObj, qFunc, qFuncExpr, qFuncExpr2, qErrs},
+
+      errorAggrFunc = OptionValue[FindFormulaByQRMonBasis, "ErrorAggregationFunction"];
+
+      regFunc = OptionValue[FindFormulaByQRMonBasis, "RegressionFunction"];
+
+      If[ TrueQ[regFunc === Automatic],
+        regFunc = QRMonQuantileRegressionFit
+      ];
+
+      If[ !MemberQ[{QRMonQuantileRegressionFit, QRMonQuantileRegression, QRMonLeastSquaresFit}, regFunc],
+        Message[FindFormulaByQRMon::nrgf];
+        regFunc = QRMonQuantileRegressionFit
+      ];
+
+      Which[
+
+        TrueQ[regFunc === QRMonLeastSquaresFit ],
+        qrObj =
+            Fold[
+              QRMonBind,
+              QRMonUnit[data],
+              {
+                QRMonRescale[Axes -> {True, True}],
+                If[IntegerQ[basis], QRMonLeastSquaresFit[basis], QRMonLeastSquaresFit[basis, x]]
+              }],
+
+        True,
+        qrObj =
+            Fold[
+              QRMonBind,
+              QRMonUnit[data],
+              {
+                QRMonRescale[Axes -> {True, True}],
+                regFunc[basis, 0.5, FilterRules[{opts}, Options[regFunc]]]
+              }]
+      ];
 
       qFunc = First @ QRMonBind[qrObj, QRMonTakeRegressionFunctions];
 
@@ -248,7 +318,7 @@ FindFormulaByQRMon[data_, x_Symbol, basis_List, opts : OptionsPattern[]] :=
 
 
 (**************************************************************)
-(* PlotDataAndFit                                            *)
+(* PlotDataAndFit                                             *)
 (**************************************************************)
 
 Clear[PlotDataAndFit];
