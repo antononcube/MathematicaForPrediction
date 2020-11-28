@@ -174,7 +174,7 @@ Options[FindFormulaByQRMon] =
         "MaxNumberOfBases" -> Infinity,
         "RegressionFunction" -> Automatic,
         "RescaleSpec" -> Automatic,
-        "Simplify" -> True
+        "Simplify" -> False
       },
       Options[RandomFunctionBasis]
     ];
