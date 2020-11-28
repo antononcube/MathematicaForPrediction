@@ -43,11 +43,11 @@
 (* :Discussion:
 
 TODO:
-   1. [-] Implement the use of standard function bases.
+   1. [X] Implement the use of standard function bases.
       - [X] B-splines
       - [X] Chebyshev
       - [X] (Centered) polynomials
-      - [ ] Sin/Cos
+      - [X] Sin/Cos
    2. [ ] Implement options to determine target (basis) functions.
    3. [ ] Improve the random search algorithm.
    4. [ ] Option-specified parallel computations.
@@ -222,6 +222,9 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
 
         MemberQ[{ "ChebyshevPolynomials", "Chebyshev", "ChebyshevBasis" }, lsBases],
         lsBases = Range[maxNBases],
+
+        MemberQ[{ "SinCos", "SineCosine", "SinCosBasis", "SineCosineBasis" }, lsBases],
+        lsBases = Rest @ FoldList[ Join, {}, Table[ { Sin[x * i], Cos[x * i] }, {i, 0, maxNBases} ] ],
 
         MemberQ[{ "BSplines", "BSplinePolynomials", "BSplineBasis" }, lsBases],
         regFunc = QRMonQuantileRegression;
