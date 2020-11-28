@@ -227,7 +227,7 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         regFunc = QRMonQuantileRegression;
         lsBases = Range[maxNBases],
 
-        True,
+        StringQ[lsBases],
         Message[FindFormulaByQRMon::nfbs];
         lsBases = Rest @ FoldList[ Append, {}, Range[maxNBases] ]
       ];
@@ -272,7 +272,7 @@ FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : Opti
       regFunc = OptionValue[FindFormulaByQRMonBasis, "RegressionFunction"];
 
       If[ TrueQ[regFunc === Automatic],
-        regFunc = QRMonQuantileRegressionFit
+        regFunc = QRMonLeastSquaresFit
       ];
 
       If[ !MemberQ[{QRMonQuantileRegressionFit, QRMonQuantileRegression, QRMonLeastSquaresFit}, regFunc],
