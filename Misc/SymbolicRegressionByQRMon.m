@@ -167,11 +167,14 @@ Clear[FindFormulaByQRMon];
 
 Options[FindFormulaByQRMon] =
     Join[
-      {"Bases" -> Automatic,
+      {
+        "Bases" -> Automatic,
+        "ErrorAggregationFunction" -> Max@*Abs,
         "LeafCountWeight" -> 1 / 100,
         "MaxNumberOfBases" -> Infinity,
-        "ErrorAggregationFunction" -> Max@*Abs,
-        "RegressionFunction" -> Automatic
+        "RegressionFunction" -> Automatic,
+        "RescaleSpec" -> Automatic,
+        "Simplify" -> True
       },
       Options[RandomFunctionBasis]
     ];
@@ -184,47 +187,50 @@ FindFormulaByQRMon::nfbs = "Unknown bases specified with \"Bases\". Computing wi
 FindFormulaByQRMon::nrgf = "Unknown regression function specified with \"RegressionFunction\". Computing with QRMonQuantileRegressionFit.";
 
 FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
-    Module[{lsBases, lcWeight, maxNBases, regFunc, lsRes, maxLeafCount},
+    Module[{lsBases, lcWeight, maxNBases, regFunc, rescaleSpec, simplifyQ, lsRes, maxLeafCount},
 
       lsBases = OptionValue[FindFormulaByQRMon, "Bases"];
       lcWeight = OptionValue[FindFormulaByQRMon, "LeafCountWeight"];
       maxNBases = OptionValue[FindFormulaByQRMon, "MaxNumberOfBases"];
       regFunc = OptionValue[FindFormulaByQRMon, "RegressionFunction"];
+      rescaleSpec = OptionValue[FindFormulaByQRMon, "RescaleSpec"];
+      simplifyQ = OptionValue[FindFormulaByQRMon, "Simplify"];
 
+      If[ TrueQ[rescaleSpec === Automatic], rescaleSpec = {False, False}];
+
+      (* Derive search space of function bases. *)
       Which[
         TrueQ[lsBases === Automatic],
+        (* Random basis generation *)
         Block[{opts2 = FilterRules[{opts}, Options[RandomFunctionBasis]]},
           Quiet[
             lsBases = Union@
                 Join[
-                  Flatten[
-                    Table[RandomFunctionBasis[x, i, 20, opts2], {i, 1, 3}, {j, 1, 10}],
-                    1],
-                  Flatten[
-                    Table[RandomFunctionBasis[x, 20, 5, opts2], {i, 1, 3}, {j, 1, 10}],
-                    1],
-                  Flatten[
-                    Table[RandomFunctionBasis[x, i, RandomInteger[{4, 6}],
-                      "BasisRatios" -> RandomChoice[{True, False}], opts2], {i, 1,
-                      20}, {j, 1, 20}], 1]
+                  Flatten[Table[RandomFunctionBasis[x, i, 20, opts2], {i, 1, 3}, {j, 1, 10}], 1],
+                  Flatten[Table[RandomFunctionBasis[x, 20, 5, opts2], {i, 1, 3}, {j, 1, 10}], 1],
+                  Flatten[Table[RandomFunctionBasis[x, i, RandomInteger[{4, 6}], "BasisRatios" -> RandomChoice[{True, False}], opts2], {i, 1, 20}, {j, 1, 20}], 1]
                 ];
             lsBases = Select[lsBases, Length[#] > 0 &]
-          ]
-        ];
+          ];
 
-        lsBases = RandomSample[Map[1 / Sqrt[Length[#]] &, lsBases] -> lsBases, maxNBases];
-        (*lsBases=Append[lsBases,Flatten@Table[{Sin[x*i],Cos[x*i]},{i,0,30}]];*)
+          lsBases = RandomSample[Map[1 / Sqrt[Length[#]] &, lsBases] -> lsBases, maxNBases];
 
-        lsBases = Select[lsBases, ! FreeQ[#, x] &],
+          lsBases = Select[lsBases, ! FreeQ[#, x] &];
+
+          rescaleSpec = {True, False}
+        ],
 
         MemberQ[{ "CenteredPolynomials", "Polynomials", "PolynomialBasis" }, lsBases],
-        lsBases = Rest @ Rest @ FoldList[ Append, {}, Table[ (x - 0.5)^i, {i, 0, maxNBases} ] ],
+        Block[{ m = Mean @ data[[All, 1]] },
+          lsBases = Rest @ Rest @ FoldList[ Append, {}, Table[ (x - m)^i, {i, 0, maxNBases} ] ]
+        ],
 
         MemberQ[{ "ChebyshevPolynomials", "Chebyshev", "ChebyshevBasis" }, lsBases],
         lsBases = Range[maxNBases],
 
         MemberQ[{ "SinCos", "SineCosine", "SinCosBasis", "SineCosineBasis" }, lsBases],
-        lsBases = Rest @ FoldList[ Join, {}, Table[ { Sin[x * i], Cos[x * i] }, {i, 0, maxNBases} ] ],
+        lsBases = Rest @ FoldList[ Join, {}, Table[ { Sin[x * i], Cos[x * i] }, {i, 0, maxNBases} ] ];
+        rescaleSpec = {True, False},
 
         MemberQ[{ "BSplines", "BSplinePolynomials", "BSplineBasis" }, lsBases],
         regFunc = QRMonQuantileRegression;
@@ -239,15 +245,29 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         Return[$Failed]
       ];
 
+      (* Fit for each basis. *)
       Quiet[
-        lsRes = Map[FindFormulaByQRMonBasis[data, x, #, "RegressionFunction" -> regFunc, opts] &, lsBases];
+        lsRes = Map[FindFormulaByQRMonBasis[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
       ];
 
+      (* Simplify fit expressions *)
+      lsRes = Join[ #, <| "SimplifiedFit" -> Simplify[#Fit] |> ] & /@ lsRes;
+
+      (* Sort taking both fitting error and expression complexity into account. *)
       maxLeafCount = Max[LeafCount[#Fit] & /@ lsRes];
+
       lsRes =
-          SortBy[DeleteDuplicates[
-            lsRes, #1["Fit"] == #2["Fit"] &], {#Error +
-              LeafCount[#Fit] / maxLeafCount * lcWeight} &];
+          SortBy[
+            DeleteDuplicates[lsRes, #1["Fit"] == #2["Fit"] &],
+            {#Error + LeafCount[#SimplifiedFit] / maxLeafCount * lcWeight} &
+          ];
+
+      (* Simplify fit expressions *)
+      If[ simplifyQ,
+        lsRes = Map[ <| "Fit" -> #SimplifiedFit, "Error" -> #Error |>&, lsRes ]
+      ];
+
+      (* End result *)
       If[TrueQ[n === All], lsRes, Take[lsRes, UpTo[n]]]
 
     ] /; TrueQ[n === All] || IntegerQ[n] && n > 0;
@@ -268,10 +288,12 @@ Clear[FindFormulaByQRMonBasis];
 Options[FindFormulaByQRMonBasis] = Options[FindFormulaByQRMon];
 
 FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : OptionsPattern[]] :=
-    Block[{errorAggrFunc, regFunc, qrObj, qFunc, qFuncExpr, qFuncExpr2, qErrs},
+    Block[{errorAggrFunc, regFunc, qrObj, qFunc, qFuncExpr, qFuncExpr2, qErrs, rescaleSpec},
 
+      (* Error aggregation *)
       errorAggrFunc = OptionValue[FindFormulaByQRMonBasis, "ErrorAggregationFunction"];
 
+      (* Regression function *)
       regFunc = OptionValue[FindFormulaByQRMonBasis, "RegressionFunction"];
 
       If[ TrueQ[regFunc === Automatic],
@@ -283,6 +305,13 @@ FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : Opti
         regFunc = QRMonQuantileRegressionFit
       ];
 
+      (* Rescale specification *)
+      rescaleSpec = OptionValue[FindFormulaByQRMonBasis, "RescaleSpec"];
+      If[ rescaleSpec === Automatic,
+        rescaleSpec = If[ IntegerQ[basis], {False, False}, {True, False} ];
+      ];
+
+      (* Fit with basis *)
       Which[
 
         TrueQ[regFunc === QRMonLeastSquaresFit ],
@@ -291,8 +320,8 @@ FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : Opti
               QRMonBind,
               QRMonUnit[data],
               {
-                QRMonRescale[Axes -> {True, True}],
-                If[IntegerQ[basis], QRMonLeastSquaresFit[basis], QRMonLeastSquaresFit[basis, x]]
+                QRMonRescale[Axes -> rescaleSpec],
+                If[ IntegerQ[basis], QRMonLeastSquaresFit[basis], QRMonLeastSquaresFit[basis, x]]
               }],
 
         True,
@@ -301,20 +330,31 @@ FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : Opti
               QRMonBind,
               QRMonUnit[data],
               {
-                QRMonRescale[Axes -> {True, True}],
+                QRMonRescale[Axes -> rescaleSpec],
                 regFunc[basis, 0.5, FilterRules[{opts}, Options[regFunc]]]
               }]
       ];
 
-      qFunc = First @ QRMonBind[qrObj, QRMonTakeRegressionFunctions];
 
+      (* Get fit error *)
       qErrs = First @ Fold[ QRMonBind, qrObj, {QRMonErrors["RelativeErrors" -> False], QRMonTakeValue }];
 
-      qFuncExpr = Simplify[qFunc[x]];
-      qFuncExpr2 =
-          Simplify[Rescale[
-            qFuncExpr /. x -> Rescale[x, MinMax[data[[All, 1]]], {0, 1}], {0, 1},
-            MinMax[data[[All, 2]]]]];
+      (* Get regression functions *)
+      qFunc = First @ QRMonBind[qrObj, QRMonTakeRegressionFunctions];
+
+      (* Get fit expression *)
+      qFuncExpr = qFunc[x];
+
+      If[ TrueQ[ rescaleSpec == {False, False} ],
+        qFuncExpr2 = qFuncExpr,
+        (*ELSE*)
+        qFuncExpr2 = qFuncExpr /. x -> Rescale[x, MinMax[data[[All, 1]]], {0, 1}]
+      ];
+
+      (*      qFuncExpr2 =*)
+      (*          Simplify[Rescale[*)
+      (*            qFuncExpr /. x -> Rescale[x, MinMax[data[[All, 1]]], {0, 1}], {0, 1},*)
+      (*            MinMax[data[[All, 2]]]]];*)
 
       <|"Fit" -> qFuncExpr2, "Error" -> errorAggrFunc[qErrs[[All, 2]]]|>
     ];
