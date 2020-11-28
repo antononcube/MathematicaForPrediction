@@ -228,6 +228,14 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         MemberQ[{ "ChebyshevPolynomials", "Chebyshev", "ChebyshevBasis" }, lsBases],
         lsBases = Range[maxNBases],
 
+        MemberQ[{ "Sin", "Sine", "SinBasis", "SineBasis" }, lsBases],
+        lsBases = FoldList[ Append, {1}, Table[ Sin[x * i], {i, 1, maxNBases} ] ];
+        rescaleSpec = {True, False},
+
+        MemberQ[{ "Cos", "Cosine", "CosBasis", "CosineBasis" }, lsBases],
+        lsBases = Rest @ FoldList[ Append, {}, Table[ Cos[x * i], {i, 0, maxNBases} ] ];
+        rescaleSpec = {True, False},
+
         MemberQ[{ "SinCos", "SineCosine", "SinCosBasis", "SineCosineBasis" }, lsBases],
         lsBases = Rest @ FoldList[ Join, {}, Table[ { Sin[x * i], Cos[x * i] }, {i, 0, maxNBases} ] ];
         rescaleSpec = {True, False},
