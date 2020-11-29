@@ -186,7 +186,7 @@ FindFormulaByQRMon::nrgf = "Unknown regression function specified with \"Regress
 
 FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
     Module[{lsBases, lcWeight, maxNBases, regFunc, rescaleSpec, simplifyQ,
-      lsAllAutomaticBasisNames, lsRes, maxLeafCount},
+      lsBases2, lsAllAutomaticBasisNames, lsRes, maxLeafCount},
 
       lsBases = OptionValue[FindFormulaByQRMon, "Bases"];
       lcWeight = OptionValue[FindFormulaByQRMon, "LeafCountWeight"];
@@ -212,9 +212,13 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
             lsBases = Select[lsBases, Length[#] > 0 &]
           ];
 
-          lsBases = RandomSample[Map[1 / Sqrt[Length[#]] &, lsBases] -> lsBases, maxNBases];
-
           lsBases = Select[lsBases, ! FreeQ[#, x] &];
+          lsBases = RandomSample[Map[1 / Sqrt[Length[#]] &, lsBases] -> lsBases, 3 * maxNBases];
+
+          lsBases2 = Flatten @ lsBases;
+          lsBases2 = Table[ RandomSample[Map[1 / LeafCount[#] &, lsBases2] -> lsBases2, i], {i, 2 * maxNBases}];
+
+          lsBases = RandomSample[ Join[lsBases, lsBases2], maxNBases];
 
           rescaleSpec = {True, False}
         ],
@@ -268,7 +272,7 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
 
         VectorQ[lsBases, StringQ] &&
-              Length[ Intersection[ lsBases, lsAllAutomaticBasisNames ] ] == Length[lsBases],
+            Length[ Intersection[ lsBases, lsAllAutomaticBasisNames ] ] == Length[lsBases],
         lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, Union @ lsBases ],
 
         True,
