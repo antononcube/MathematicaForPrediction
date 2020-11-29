@@ -247,12 +247,15 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         lsBases = Rest @ FoldList[ Append, {}, Range[maxNBases] ]
       ];
 
-      If[! MatchQ[lsBases, {{__} ..} | {_Integer..} | Automatic ],
+      If[!( VectorQ[lsBases, StringQ] || MatchQ[lsBases, {{__} ..} | {_Integer..} | Automatic ] ),
         Return[$Failed]
       ];
 
       (* Fit for each basis. *)
-      If[ TrueQ[ lsBases === Automatic ],
+      If[ TrueQ[ lsBases === Automatic ] ||
+          VectorQ[lsBases, StringQ] &&
+              Length[ Intersection[ lsBases, { "Chebyshev", "BSplines", "Sin", "Cos", "SinCos", "Polynomials"} ] ] == Length[lsBases],
+
         lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
         (*ELSE*)
         Quiet[
