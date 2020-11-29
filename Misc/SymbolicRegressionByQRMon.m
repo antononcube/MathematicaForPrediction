@@ -86,7 +86,7 @@ selects (at most) n random functions from a function basis generated with Genera
 FindFormulaByQRMon::usage = "FindFormulaByQRMon[data_, x_Symbol, n_Integer] \
 finds n formulas for data using basis functions that have x as argument.";
 
-FindFormulaByQRMonBasis::usage = "FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer) ] \
+FindFormulaByBasisFit::usage = "FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer) ] \
 finds a formula for data using specified basis functions that have x as argument.";
 
 PlotDataAndFit::usage = "PlotDataAndFit[data, x_Symbol, fitRes_Association, ___];";
@@ -255,7 +255,7 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
 
       (* Fit for each basis. *)
       Quiet[
-        lsRes = Map[FindFormulaByQRMonBasis[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
+        lsRes = Map[FindFormulaByBasisFit[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
       ];
 
       (* Simplify fit expressions *)
@@ -288,21 +288,21 @@ FindFormulaByQRMon[___] :=
 
 
 (**************************************************************)
-(* FindFormulaByQRMonBasis                                    *)
+(* FindFormulaByBasisFit                                    *)
 (**************************************************************)
 
-Clear[FindFormulaByQRMonBasis];
+Clear[FindFormulaByBasisFit];
 
-Options[FindFormulaByQRMonBasis] = Options[FindFormulaByQRMon];
+Options[FindFormulaByBasisFit] = Options[FindFormulaByQRMon];
 
-FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : OptionsPattern[]] :=
+FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer), opts : OptionsPattern[]] :=
     Block[{errorAggrFunc, regFunc, qrObj, qFunc, qFuncExpr, qFuncExpr2, qErrs, rescaleSpec},
 
       (* Error aggregation *)
-      errorAggrFunc = OptionValue[FindFormulaByQRMonBasis, "ErrorAggregationFunction"];
+      errorAggrFunc = OptionValue[FindFormulaByBasisFit, "ErrorAggregationFunction"];
 
       (* Regression function *)
-      regFunc = OptionValue[FindFormulaByQRMonBasis, "RegressionFunction"];
+      regFunc = OptionValue[FindFormulaByBasisFit, "RegressionFunction"];
 
       If[ TrueQ[regFunc === Automatic],
         regFunc = QRMonLeastSquaresFit
@@ -314,7 +314,7 @@ FindFormulaByQRMonBasis[data_, x_Symbol, basis : (_List | _Integer), opts : Opti
       ];
 
       (* Rescale specification *)
-      rescaleSpec = OptionValue[FindFormulaByQRMonBasis, "RescaleSpec"];
+      rescaleSpec = OptionValue[FindFormulaByBasisFit, "RescaleSpec"];
       If[ rescaleSpec === Automatic,
         rescaleSpec = If[ IntegerQ[basis], {False, False}, {True, False} ];
       ];
