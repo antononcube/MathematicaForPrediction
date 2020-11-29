@@ -171,12 +171,14 @@ Options[FindFormulaByQRMon] =
         "Bases" -> Automatic,
         "ErrorAggregationFunction" -> Max@*Abs,
         "LeafCountWeight" -> 1 / 100,
-        "MaxNumberOfBases" -> Infinity,
+        "MaxNumberOfBases" -> 5,
         "RegressionFunction" -> Automatic,
+        "RelativeErrors" -> True,
         "RescaleSpec" -> Automatic,
         "Simplify" -> False
       },
-      Options[RandomFunctionBasis]
+      Options[RandomFunctionBasis],
+      Options[QRMonQuantileRegression]
     ];
 
 FindFormulaByQRMon::args = "The expected signatures are \
@@ -200,7 +202,7 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
 
       (* Derive search space of function bases. *)
       Which[
-        TrueQ[lsBases === Automatic],
+        MemberQ[ {Random, "Random"}, lsBases ],
         (* Random basis generation *)
         Block[{opts2 = FilterRules[{opts}, Options[RandomFunctionBasis]]},
           Quiet[
@@ -240,7 +242,7 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         lsBases = Rest @ FoldList[ Join, {}, Table[ { Sin[x * i], Cos[x * i] }, {i, 0, maxNBases} ] ];
         rescaleSpec = {True, False},
 
-        MemberQ[{ "BSplines", "BSplinePolynomials", "BSplineBasis" }, lsBases],
+        MemberQ[{ "BSpline", "BSplines", "BSplinePolynomials", "BSplineBasis", BSplineBasis }, lsBases],
         regFunc = QRMonQuantileRegression;
         lsBases = Range[maxNBases],
 
@@ -249,13 +251,17 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         lsBases = Rest @ FoldList[ Append, {}, Range[maxNBases] ]
       ];
 
-      If[! MatchQ[lsBases, {{__} ..} | {_Integer..}],
+      If[! MatchQ[lsBases, {{__} ..} | {_Integer..} | Automatic ],
         Return[$Failed]
       ];
 
       (* Fit for each basis. *)
-      Quiet[
-        lsRes = Map[FindFormulaByBasisFit[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
+      If[ TrueQ[ lsBases === Automatic ],
+        lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #,  opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
+        (*ELSE*)
+        Quiet[
+          lsRes = Map[FindFormulaByBasisFit[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
+        ]
       ];
 
       (* Simplify fit expressions *)
@@ -296,7 +302,7 @@ Clear[FindFormulaByBasisFit];
 Options[FindFormulaByBasisFit] = Options[FindFormulaByQRMon];
 
 FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer), opts : OptionsPattern[]] :=
-    Block[{errorAggrFunc, regFunc, qrObj, qFunc, qFuncExpr, qFuncExpr2, qErrs, rescaleSpec},
+    Block[{errorAggrFunc, regFunc, relativeErrorsQ, qrObj, qFunc, qFuncExpr, qFuncExpr2, qErrs, rescaleSpec},
 
       (* Error aggregation *)
       errorAggrFunc = OptionValue[FindFormulaByBasisFit, "ErrorAggregationFunction"];
@@ -312,6 +318,9 @@ FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer), opts : Option
         Message[FindFormulaByQRMon::nrgf];
         regFunc = QRMonQuantileRegressionFit
       ];
+
+      (* Relative errors *)
+      relativeErrorsQ = TrueQ[ OptionValue[FindFormulaByBasisFit, "RelativeErrors"] ];
 
       (* Rescale specification *)
       rescaleSpec = OptionValue[FindFormulaByBasisFit, "RescaleSpec"];
@@ -345,7 +354,7 @@ FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer), opts : Option
 
 
       (* Get fit error *)
-      qErrs = First @ Fold[ QRMonBind, qrObj, {QRMonErrors["RelativeErrors" -> False], QRMonTakeValue }];
+      qErrs = First @ Fold[ QRMonBind, qrObj, {QRMonErrors["RelativeErrors" -> relativeErrorsQ], QRMonTakeValue }];
 
       (* Get regression functions *)
       qFunc = First @ QRMonBind[qrObj, QRMonTakeRegressionFunctions];
