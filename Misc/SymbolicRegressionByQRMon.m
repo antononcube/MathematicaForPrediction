@@ -185,7 +185,8 @@ FindFormulaByQRMon::nfbs = "Unknown bases specified with \"Bases\". Computing wi
 FindFormulaByQRMon::nrgf = "Unknown regression function specified with \"RegressionFunction\". Computing with QRMonQuantileRegressionFit.";
 
 FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
-    Module[{lsBases, lcWeight, maxNBases, regFunc, rescaleSpec, simplifyQ, lsRes, maxLeafCount},
+    Module[{lsBases, lcWeight, maxNBases, regFunc, rescaleSpec, simplifyQ,
+      lsAllAutomaticBasisNames, lsRes, maxLeafCount},
 
       lsBases = OptionValue[FindFormulaByQRMon, "Bases"];
       lcWeight = OptionValue[FindFormulaByQRMon, "LeafCountWeight"];
@@ -251,14 +252,24 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
         Return[$Failed]
       ];
 
+      (* All automatic basis names. *)
+      lsAllAutomaticBasisNames = Flatten @ {
+        { "CenteredPolynomials", "Polynomials", "PolynomialBasis" },
+        { "ChebyshevPolynomials", "Chebyshev", "ChebyshevBasis" },
+        { "Sin", "Sine", "SinBasis", "SineBasis" },
+        { "Cos", "Cosine", "CosBasis", "CosineBasis" },
+        { "SinCos", "SineCosine", "SinCosBasis", "SineCosineBasis" },
+        { "BSpline", "BSplines", "BSplinePolynomials", "BSplineBasis", BSplineBasis }
+      };
+
       (* Fit for each basis. *)
       Which[
         TrueQ[ lsBases === Automatic ],
         lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
 
         VectorQ[lsBases, StringQ] &&
-              Length[ Intersection[ lsBases, { "Chebyshev", "BSplines", "Sin", "Cos", "SinCos", "Polynomials"} ] ] == Length[lsBases],
-        lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, lsBases ],
+              Length[ Intersection[ lsBases, lsAllAutomaticBasisNames ] ] == Length[lsBases],
+        lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, Union @ lsBases ],
 
         True,
         Quiet[
