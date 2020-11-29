@@ -136,24 +136,20 @@ Clear[RandomFunctionBasis];
 Options[RandomFunctionBasis] = {"AddRandomBasisRatios" -> True, "FunctionRatios" -> False};
 
 RandomFunctionBasis[x_Symbol, n_Integer, k_Integer, opts : OptionsPattern[]] :=
-
     Block[{lsAllBasisFuncs, lsRBasis},
 
-      lsAllBasisFuncs =
-          GenerateBasisFunctions[x, k,
-            FilterRules[{opts}, Options[GenerateBasisFunctions]]];
+      lsAllBasisFuncs = GenerateBasisFunctions[x, k, FilterRules[{opts}, Options[GenerateBasisFunctions]]];
 
       lsRBasis = Union@RandomChoice[lsAllBasisFuncs, n];
 
       If[TrueQ[OptionValue[RandomFunctionBasis, "AddRandomBasisRatios"]],
         lsRBasis =
             RandomSample[
-              Join[lsRBasis,
-                RandomChoice[lsAllBasisFuncs, n] / RandomChoice[lsAllBasisFuncs, n]],
-              Length[lsRBasis]];
+              Join[lsRBasis, RandomChoice[lsAllBasisFuncs, n] / RandomChoice[lsAllBasisFuncs, n]],
+              Length[lsRBasis]
+            ];
         lsRBasis =
-            Quiet[Select[lsRBasis,
-              NumberQ[# /. x -> 0.] && NumberQ[# /. x -> 1.] &]];
+            Quiet[Select[lsRBasis, NumberQ[# /. x -> 0.] && NumberQ[# /. x -> 1.] &]];
       ];
       lsRBasis
     ] /; n > 0 && k > 0;
@@ -257,7 +253,7 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
 
       (* Fit for each basis. *)
       If[ TrueQ[ lsBases === Automatic ],
-        lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #,  opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
+        lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
         (*ELSE*)
         Quiet[
           lsRes = Map[FindFormulaByBasisFit[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
