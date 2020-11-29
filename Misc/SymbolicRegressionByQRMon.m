@@ -252,12 +252,15 @@ FindFormulaByQRMon[data_, x_Symbol, n_ : 1, opts : OptionsPattern[]] :=
       ];
 
       (* Fit for each basis. *)
-      If[ TrueQ[ lsBases === Automatic ] ||
-          VectorQ[lsBases, StringQ] &&
-              Length[ Intersection[ lsBases, { "Chebyshev", "BSplines", "Sin", "Cos", "SinCos", "Polynomials"} ] ] == Length[lsBases],
-
+      Which[
+        TrueQ[ lsBases === Automatic ],
         lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, { "Chebyshev", "BSplines", "Sin", "Cos"} ],
-        (*ELSE*)
+
+        VectorQ[lsBases, StringQ] &&
+              Length[ Intersection[ lsBases, { "Chebyshev", "BSplines", "Sin", "Cos", "SinCos", "Polynomials"} ] ] == Length[lsBases],
+        lsRes = Flatten @ Map[ FindFormulaByQRMon[data, x, Ceiling[ n / 2 ], "Bases" -> #, opts]&, lsBases ],
+
+        True,
         Quiet[
           lsRes = Map[FindFormulaByBasisFit[data, x, #, "RegressionFunction" -> regFunc, "RescaleSpec" -> rescaleSpec, opts] &, lsBases];
         ]
