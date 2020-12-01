@@ -48,11 +48,12 @@ TODO:
       - [X] Chebyshev
       - [X] (Centered) polynomials
       - [X] Sin/Cos
-   2. [ ] Implement options to determine target (basis) functions.
-   3. [ ] Improve the random search algorithm.
-   4. [ ] Option-specified parallel computations.
-   5. [ ] Implement random fits over segments derived by found structural breaks.
-   6. [ ] Unit tests.
+   2. [X] Distributions finding by CDF data.
+   3. [ ] Implement options to determine target (basis) functions.
+   4. [ ] Improve the random search algorithm.
+   5. [ ] Option-specified parallel computations.
+   6. [ ] Implement random fits over segments derived by found structural breaks.
+   7. [ ] Unit tests.
 *)
 
 (**************************************************************)
@@ -81,13 +82,16 @@ GenerateBasisFunctions::usage = "GenerateBasisFunctions[x_Symbol, k_Integer] \
 generates basis function for symbol x with k functions per function type.";
 
 RandomFunctionBasis::usage = "RandomFunctionBasis[x_Symbol, n_Integer, k_Integer] \
-selects (at most) n random functions from a function basis generated with GenerateBasisFunctions[x,k].";
+selects (at most) n random functions from a function basis generated with GenerateBasisFunctions[x, k].";
 
 FindFormulaByQRMon::usage = "FindFormulaByQRMon[data_, x_Symbol, n_Integer] \
 finds n formulas for data using basis functions that have x as argument.";
 
 FindFormulaByBasisFit::usage = "FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer) ] \
 finds a formula for data using specified basis functions that have x as argument.";
+
+FindDistributionByCDF::usage = "FindDistributionByCDFData[ cdfValues : {{_,_}..}, n_Integer, ___] \
+finds n distributions that are best fit for cdfValues.";
 
 PlotDataAndFit::usage = "PlotDataAndFit[data, x_Symbol, fitRes_Association, ___];";
 
@@ -311,7 +315,7 @@ FindFormulaByQRMon[___] :=
 
 
 (**************************************************************)
-(* FindFormulaByBasisFit                                    *)
+(* FindFormulaByBasisFit                                      *)
 (**************************************************************)
 
 Clear[FindFormulaByBasisFit];
@@ -392,6 +396,156 @@ FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer), opts : Option
 
       <|"Fit" -> qFuncExpr2, "Error" -> errorAggrFunc[qErrs[[All, 2]]]|>
     ];
+
+
+(**************************************************************)
+(* Distributions                                              *)
+(**************************************************************)
+
+(* The distributions were obtained with this code: *)
+(*
+lsDistributions = ToExpression /@ Names["*Distribution"];
+
+lsTwoParamDist =
+  Select[lsDistributions,
+    FreeQ[PDF[#[a, b], x], #] &&
+      DistributionDomain[#[a, b]] ===
+       Interval[{-Infinity, Infinity}] &] // Quiet;
+
+lsThreeParamDist =
+  Select[lsDistributions,
+    FreeQ[PDF[#[a, b, c], x], #] &&
+      DistributionDomain[#[a, b, c]] ===
+       Interval[{-Infinity, Infinity}] &] // Quiet;
+*)
+
+lsTwoParamDist = {CauchyDistribution, ExtremeValueDistribution,
+  FisherZDistribution, GumbelDistribution, LaplaceDistribution,
+  LogisticDistribution, MaxStableDistribution, MinStableDistribution,
+  MoyalDistribution, NoncentralStudentTDistribution,
+  NormalDistribution, SechDistribution, VoigtDistribution};
+
+lsThreeParamDist = {ExpGammaDistribution, ExponentialPowerDistribution,
+MaxStableDistribution, MinStableDistribution, SkewNormalDistribution,
+StudentTDistribution, TsallisQGaussianDistribution};
+
+
+(**************************************************************)
+(* CDFValuesQ                                                 *)
+(**************************************************************)
+
+Clear[CDFValuesQ];
+CDFValuesQ[x : {{_, _} ..}] :=
+    VectorQ[x[[All, 2]], NumericQ[#] || MatchQ[#, DirectedInfinity[_]] &] && 0 <= Min[x[[All, 2]]] && Max[x[[All, 2]]] <= 1;
+CDFValuesQ[___] := False;
+
+
+(**************************************************************)
+(* FindDistributionByCDFData                                  *)
+(**************************************************************)
+
+Clear[FindDistributionByCDFData];
+
+Options[FindDistributionByCDFData] = Join[{"NumberOfPoints" -> 1000}, Options[FindDistribution]];
+
+FindDistributionByCDFData[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern[]] :=
+    Module[{nPoints, cdfFunc, dist, x, rData},
+      nPoints = OptionValue[FindDistributionByCDFData, "NumberOfPoints"];
+
+      cdfFunc = Interpolation[cdfValues, InterpolationOrder -> 1];
+      dist = ProbabilityDistribution[{"CDF", cdfFunc[x]}, {x,
+        Min[cdfValues[[All, 1]]], Max[cdfValues[[All, 1]]]},
+        Method -> "Normalize"];
+      rData = RandomVariate[dist, 1000];
+
+      FindDistribution[rData, n, FilterRules[opts, Options[FindDistribution]]]
+    ];
+
+
+(**************************************************************)
+(* FindDistributionByCDFFit                                   *)
+(**************************************************************)
+
+Clear[FindDistributionByCDFFit];
+
+Options[FindDistributionByCDFFit] = Join[{TargetFunctions -> Automatic}, Options[NonlinearModelFit]];
+
+FindDistributionByCDFFit[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern[]] :=
+    Module[{targetFunctions, a, b, c, x, aRes, aRes2 = <||>, aRes3 = <||>},
+
+      targetFunctions = OptionValue[FindDistributionByCDFFit, TargetFunctions];
+
+      If[MemberQ[{2, "TwoArgumentDistributions", All, Automatic},
+        targetFunctions],
+        aRes2 =
+            Association@
+                Map[
+                  # -> Quiet[
+                    NonlinearModelFit[
+                      cdfValues, CDF[#[a, b], x], {{a, Mean[cdfValues[[All, 1]]]}, b}, x,
+                      FilterRules[{opts}, Options[NonlinearModelFit]],
+                      PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient"
+                    ]
+                  ] &,
+                  lsTwoParamDist
+                ];
+      ];
+
+      If[MemberQ[{3, "ThreeArgumentDistributions", All}, targetFunctions],
+        aRes3 =
+            Association@
+                Map[
+                  # -> Quiet[
+                    NonlinearModelFit[
+                      cdfValues,
+                      CDF[#[a, b, c], x], {{a, Mean[cdfValues[[All, 1]]]}, b, c}, x,
+                      FilterRules[{opts}, Options[NonlinearModelFit]],
+                      PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient"]
+                  ] &,
+                  lsThreeParamDist
+                ];
+      ];
+
+      aRes = Join[aRes2, aRes3];
+      aRes = Take[Quiet@SortBy[aRes, RootMeanSquare[#["FitResiduals"]] &],
+        UpTo[n]];
+
+      KeyValueMap[#1[Sequence @@ #2["BestFitParameters"][[All, 2]]] &, aRes]
+    ];
+
+
+(**************************************************************)
+(* FindDistributionByCDF                                      *)
+(**************************************************************)
+
+Clear[FindDistributionByCDF];
+
+SyntaxInformation[FindDistributionByCDF] = "ArgumentsPattern" -> {_, _., OptionsPattern[]};
+
+FindDistributionByCDF::nmeth = "Unknown method.";
+
+Options[FindDistributionByCDF] = {Method -> "Fit"};
+
+FindDistributionByCDF[cdfValues_?CDFValuesQ, n_Integer : 1,
+  opts : OptionsPattern[]] :=
+    Block[{method},
+      method = Flatten@List@OptionValue[opts, Method];
+
+      Which[
+
+        MemberQ[{"FindDistribution", FindDistribution}, First@method],
+        FindDistributionByCDFData[cdfValues, n,
+          FilterRules[Cases[method, _Rule], Options[FindDistributionByCDFData]]],
+
+        MemberQ[{"Fit", Fit}, First@method],
+        FindDistributionByCDFFit[cdfValues, n,
+          FilterRules[Cases[method, _Rule], Options[FindDistributionByCDFFit]]],
+
+        True,
+        Message[FindDistributionByCDF::nmeth];
+        $Failed
+      ]
+    ] /; CDFValuesQ[cdfValues];
 
 
 (**************************************************************)
