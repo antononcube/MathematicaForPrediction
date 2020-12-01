@@ -90,7 +90,7 @@ finds n formulas for data using basis functions that have x as argument.";
 FindFormulaByBasisFit::usage = "FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer) ] \
 finds a formula for data using specified basis functions that have x as argument.";
 
-FindDistributionByCDFValues::usage = "FindDistributionByCDFData[ cdfValues : {{_,_}..}, n_Integer, ___] \
+FindDistributionByQuantiles::usage = "FindDistributionByQuantiles[ cdfValues : {{_,_}..}, n_Integer, ___] \
 finds n distributions that are best fit for cdfValues.";
 
 PlotDataAndFit::usage = "PlotDataAndFit[data, x_Symbol, fitRes_Association, ___];";
@@ -517,21 +517,21 @@ FindDistributionByCDFFit[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern
 
 
 (**************************************************************)
-(* FindDistributionByCDF                                      *)
+(* FindDistributionByQuantiles                                *)
 (**************************************************************)
 
-Clear[FindDistributionByCDFValues];
+Clear[FindDistributionByQuantiles];
 
-SyntaxInformation[FindDistributionByCDFValues] = "ArgumentsPattern" -> {_, _., OptionsPattern[]};
+SyntaxInformation[FindDistributionByQuantiles] = "ArgumentsPattern" -> {_, _., OptionsPattern[]};
 
-FindDistributionByCDFValues::args = "The first argument is expected to be a list of CDF-value-and-probability pairs. \
+FindDistributionByQuantiles::args = "The first argument is expected to be a list of CDF-value-and-probability pairs. \
 The second argument is expected to be a positive integer.";
 
-FindDistributionByCDFValues::nmeth = "Unknown method.";
+FindDistributionByQuantiles::nmeth = "Unknown method.";
 
-Options[FindDistributionByCDFValues] = {Method -> "Fit"};
+Options[FindDistributionByQuantiles] = {Method -> "Fit"};
 
-FindDistributionByCDFValues[cdfValues_?CDFValuesQ, n_Integer : 1,
+FindDistributionByQuantiles[cdfValues_?CDFValuesQ, n_Integer : 1,
   opts : OptionsPattern[]] :=
     Block[{method},
       method = Flatten@List@OptionValue[opts, Method];
@@ -547,14 +547,14 @@ FindDistributionByCDFValues[cdfValues_?CDFValuesQ, n_Integer : 1,
           FilterRules[Cases[method, _Rule], Options[FindDistributionByCDFFit]]],
 
         True,
-        Message[FindDistributionByCDFValues::nmeth];
+        Message[FindDistributionByQuantiles::nmeth];
         $Failed
       ]
     ] /; CDFValuesQ[cdfValues] && n > 0;
 
-FindDistributionByCDFValues[___] :=
+FindDistributionByQuantiles[___] :=
     Block[{},
-      Message[FindDistributionByCDFValues::args];
+      Message[FindDistributionByQuantiles::args];
       $Failed
     ];
 
