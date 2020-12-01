@@ -90,7 +90,7 @@ finds n formulas for data using basis functions that have x as argument.";
 FindFormulaByBasisFit::usage = "FindFormulaByBasisFit[data_, x_Symbol, basis : (_List | _Integer) ] \
 finds a formula for data using specified basis functions that have x as argument.";
 
-FindDistributionByCDF::usage = "FindDistributionByCDFData[ cdfValues : {{_,_}..}, n_Integer, ___] \
+FindDistributionByCDFValues::usage = "FindDistributionByCDFData[ cdfValues : {{_,_}..}, n_Integer, ___] \
 finds n distributions that are best fit for cdfValues.";
 
 PlotDataAndFit::usage = "PlotDataAndFit[data, x_Symbol, fitRes_Association, ___];";
@@ -518,15 +518,18 @@ FindDistributionByCDFFit[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern
 (* FindDistributionByCDF                                      *)
 (**************************************************************)
 
-Clear[FindDistributionByCDF];
+Clear[FindDistributionByCDFValues];
 
-SyntaxInformation[FindDistributionByCDF] = "ArgumentsPattern" -> {_, _., OptionsPattern[]};
+SyntaxInformation[FindDistributionByCDFValues] = "ArgumentsPattern" -> {_, _., OptionsPattern[]};
 
-FindDistributionByCDF::nmeth = "Unknown method.";
+FindDistributionByCDFValues::args = "The first argument is expected to be a list of CDF-value-and-probability pairs. \
+The second argument is expected to be a positive integer.";
 
-Options[FindDistributionByCDF] = {Method -> "Fit"};
+FindDistributionByCDFValues::nmeth = "Unknown method.";
 
-FindDistributionByCDF[cdfValues_?CDFValuesQ, n_Integer : 1,
+Options[FindDistributionByCDFValues] = {Method -> "Fit"};
+
+FindDistributionByCDFValues[cdfValues_?CDFValuesQ, n_Integer : 1,
   opts : OptionsPattern[]] :=
     Block[{method},
       method = Flatten@List@OptionValue[opts, Method];
@@ -537,15 +540,21 @@ FindDistributionByCDF[cdfValues_?CDFValuesQ, n_Integer : 1,
         FindDistributionByCDFData[cdfValues, n,
           FilterRules[Cases[method, _Rule], Options[FindDistributionByCDFData]]],
 
-        MemberQ[{"Fit", Fit}, First@method],
+        MemberQ[{"Fit", Fit, "NonlinearModelFit", NonlinearModelFit}, First@method],
         FindDistributionByCDFFit[cdfValues, n,
           FilterRules[Cases[method, _Rule], Options[FindDistributionByCDFFit]]],
 
         True,
-        Message[FindDistributionByCDF::nmeth];
+        Message[FindDistributionByCDFValues::nmeth];
         $Failed
       ]
-    ] /; CDFValuesQ[cdfValues];
+    ] /; CDFValuesQ[cdfValues] && n > 0;
+
+FindDistributionByCDFValues[___] :=
+    Block[{},
+      Message[FindDistributionByCDFValues::args];
+      $Failed
+    ];
 
 
 (**************************************************************)
