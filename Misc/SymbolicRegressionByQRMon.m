@@ -419,15 +419,15 @@ lsThreeParamDist =
        Interval[{-Infinity, Infinity}] &] // Quiet;
 *)
 
-lsTwoParamDist = {CauchyDistribution, ExtremeValueDistribution,
+lsTwoParamDists = {CauchyDistribution, ExtremeValueDistribution,
   FisherZDistribution, GumbelDistribution, LaplaceDistribution,
   LogisticDistribution, MaxStableDistribution, MinStableDistribution,
   MoyalDistribution, NoncentralStudentTDistribution,
   NormalDistribution, SechDistribution, VoigtDistribution};
 
-lsThreeParamDist = {ExpGammaDistribution, ExponentialPowerDistribution,
-MaxStableDistribution, MinStableDistribution, SkewNormalDistribution,
-StudentTDistribution, TsallisQGaussianDistribution};
+lsThreeParamDists = {ExpGammaDistribution, ExponentialPowerDistribution,
+  MaxStableDistribution, MinStableDistribution, SkewNormalDistribution,
+  StudentTDistribution, TsallisQGaussianDistribution};
 
 
 (**************************************************************)
@@ -468,49 +468,51 @@ FindDistributionByCDFData[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPatter
 
 Clear[FindDistributionByCDFFit];
 
-Options[FindDistributionByCDFFit] = Join[{TargetFunctions -> Automatic}, Options[NonlinearModelFit]];
+Options[FindDistributionByCDFFit] = Join[{TargetFunctions -> Automatic, TimeConstraint -> 1}, Options[NonlinearModelFit]];
 
 FindDistributionByCDFFit[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern[]] :=
-    Module[{targetFunctions, a, b, c, x, aRes, aRes2 = <||>, aRes3 = <||>},
+    Module[{targetFunctions, timeConstraint, a, b, c, x, aRes, aRes2 = <||>, aRes3 = <||>},
 
       targetFunctions = OptionValue[FindDistributionByCDFFit, TargetFunctions];
+      timeConstraint = OptionValue[FindDistributionByCDFFit, TimeConstraint];
 
-      If[MemberQ[{2, "TwoArgumentDistributions", All, Automatic},
-        targetFunctions],
+      If[MemberQ[{2, "TwoArgumentDistributions", All, Automatic}, targetFunctions],
         aRes2 =
             Association@
                 Map[
-                  # -> Quiet[
+                  # -> Quiet[ TimeConstrained[
                     NonlinearModelFit[
                       cdfValues, CDF[#[a, b], x], {{a, Mean[cdfValues[[All, 1]]]}, b}, x,
                       FilterRules[{opts}, Options[NonlinearModelFit]],
-                      PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient"
-                    ]
-                  ] &,
-                  lsTwoParamDist
+                      PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient", MaxIterations -> 1000
+                    ],
+                  timeConstraint, $Failed ] ]&,
+                  lsTwoParamDists
                 ];
+        aRes2 = Select[ aRes2, !TrueQ[$Failed === #]& ]
       ];
 
       If[MemberQ[{3, "ThreeArgumentDistributions", All}, targetFunctions],
         aRes3 =
             Association@
                 Map[
-                  # -> Quiet[
+                  # -> Quiet[ TimeConstrained[
                     NonlinearModelFit[
                       cdfValues,
                       CDF[#[a, b, c], x], {{a, Mean[cdfValues[[All, 1]]]}, b, c}, x,
                       FilterRules[{opts}, Options[NonlinearModelFit]],
-                      PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient"]
-                  ] &,
-                  lsThreeParamDist
+                      PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient", MaxIterations -> 1000
+                    ],
+                  timeConstraint, $Failed] ] &,
+                  lsThreeParamDists
                 ];
+        aRes3 = Select[ aRes3, !TrueQ[$Failed === #]& ]
       ];
 
       aRes = Join[aRes2, aRes3];
-      aRes = Take[Quiet@SortBy[aRes, RootMeanSquare[#["FitResiduals"]] &],
-        UpTo[n]];
+      aRes = Take[Quiet@SortBy[aRes, RootMeanSquare[#["FitResiduals"]] &], UpTo[n]];
 
-      KeyValueMap[#1[Sequence @@ #2["BestFitParameters"][[All, 2]]] &, aRes]
+      Quiet @ KeyValueMap[#1[Sequence @@ #2["BestFitParameters"][[All, 2]]] &, aRes]
     ];
 
 
