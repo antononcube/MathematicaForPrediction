@@ -486,7 +486,7 @@ FindDistributionByCDFFit[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern
                       FilterRules[{opts}, Options[NonlinearModelFit]],
                       PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient", MaxIterations -> 1000
                     ],
-                  timeConstraint, $Failed ] ]&,
+                    timeConstraint, $Failed ] ]&,
                   lsTwoParamDists
                 ];
         aRes2 = Select[ aRes2, !TrueQ[$Failed === #]& ]
@@ -503,7 +503,7 @@ FindDistributionByCDFFit[cdfValues_?CDFValuesQ, n_Integer, opts : OptionsPattern
                       FilterRules[{opts}, Options[NonlinearModelFit]],
                       PrecisionGoal -> 3, AccuracyGoal -> 4, Method -> "Gradient", MaxIterations -> 1000
                     ],
-                  timeConstraint, $Failed] ] &,
+                    timeConstraint, $Failed] ] &,
                   lsThreeParamDists
                 ];
         aRes3 = Select[ aRes3, !TrueQ[$Failed === #]& ]
