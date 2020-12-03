@@ -121,7 +121,8 @@ Options[RandomTabularDataset] := {
   "ColumnNameGenerator" -> Automatic,
   "ColumnValueGenerators" -> Automatic,
   "Form" -> "Wide",
-  "NumberOfValues" -> Automatic,
+  "MaxNumberOfValues" -> Automatic,
+  "MinNumberOfValues" -> Automatic,
   "PointwiseGeneration" -> False,
   "RowKeys" -> False};
 
@@ -132,7 +133,7 @@ RandomTabularDataset::nform =
     "The value of the option \"Form\" is expected to be one of \"Long\", \"Wide\", or Automatic.";
 
 RandomTabularDataset::nnov =
-    "The value of the option \"NumberOfValues\" is expected to be a positive integer or Automatic.";
+    "The value of the option \"`1`\" is expected to be a positive integer or Automatic.";
 
 RandomTabularDataset[opts : OptionsPattern[]] :=
     RandomTabularDataset[{Automatic, Automatic}, opts];
@@ -155,10 +156,12 @@ RandomTabularDataset[{nrows_, Automatic}, opts : OptionsPattern[]] :=
       RandomTabularDataset[{nrows, ncols}, opts]
     ];
 
-RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
-    Block[{pointwiseGenerationQ, colNameGen, aColValGens, aAutomaticColValGens,
-      numberOfValues, form, rowKeysQ,
+RandomTabularDataset[{nrows_Integer, colsSpec : ( _Integer | {_...} ) }, opts : OptionsPattern[]] :=
+    Block[{ncols, pointwiseGenerationQ, colNameGen, aColValGens, aAutomaticColValGens,
+      maxNumberOfValues, minNumberOfValues, form, rowKeysQ,
       lsColNames, lsPairs, tbl, res, aMissing},
+
+      ncols = If[ ListQ[colsSpec], Length[colsSpec], colsSpec];
 
       (* Get point-wise generation or not *)
       pointwiseGenerationQ = OptionValue[RandomTabularDataset, "PointwiseGeneration"];
@@ -220,15 +223,27 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
         form = "Wide";
       ];
 
-      (* Get number of values *)
-      numberOfValues = OptionValue[RandomTabularDataset, "NumberOfValues"];
-      If[TrueQ[numberOfValues === Automatic] || TrueQ[numberOfValues === All],
-        numberOfValues = nrows * ncols
+      (* Get max number of values *)
+      maxNumberOfValues = OptionValue[RandomTabularDataset, "MaxNumberOfValues"];
+      If[TrueQ[maxNumberOfValues === Automatic] || TrueQ[maxNumberOfValues === All],
+        maxNumberOfValues = nrows * ncols
       ];
-      If[! (IntegerQ[numberOfValues] && numberOfValues > 0),
-        Message[RandomTabularDataset::nnov];
+      If[! (IntegerQ[maxNumberOfValues] && maxNumberOfValues > 0),
+        Message[RandomTabularDataset::nnov, "MaxNumberOfValues"];
         Return[$Failed];
       ];
+
+      (* Get min number of values *)
+      minNumberOfValues = OptionValue[RandomTabularDataset, "MinNumberOfValues"];
+      If[TrueQ[minNumberOfValues === Automatic] || TrueQ[minNumberOfValues === All],
+        minNumberOfValues = maxNumberOfValues
+      ];
+      If[! (IntegerQ[minNumberOfValues] && minNumberOfValues > 0),
+        Message[RandomTabularDataset::nnov, "MinNumberOfValues"];
+        Return[$Failed];
+      ];
+
+      If[ minNumberOfValues > maxNumberOfValues, minNumberOfValues = maxNumberOfValues];
 
       (* Get row keys or not *)
       rowKeysQ = OptionValue[RandomTabularDataset, "RowKeys"];
@@ -238,16 +253,20 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
 
       (* Generate column names *)
       lsColNames =
-          If[ pointwiseGenerationQ,
-            Table[colNameGen[i], {i, ncols}],
+          If[ ListQ[colsSpec],
+            colsSpec,
             (*ELSE*)
-            colNameGen[ncols, Range[ncols]]
+            If[ pointwiseGenerationQ,
+              Table[colNameGen[i], {i, ncols}],
+              (*ELSE*)
+              colNameGen[ncols, Range[ncols]]
+            ]
           ];
 
       (* Generate coordinate pairs for the random values *)
       lsPairs = Flatten[Table[{i, j}, {i, nrows}, {j, ncols}], 1];
-      If[numberOfValues < Length[lsPairs],
-        lsPairs = Sort@RandomSample[lsPairs, numberOfValues]
+      If[minNumberOfValues < Length[lsPairs] || maxNumberOfValues < Length[lsPairs],
+        lsPairs = Sort @ RandomSample[lsPairs, RandomInteger[{minNumberOfValues, maxNumberOfValues}]]
       ];
 
       (* Generate random values *)
@@ -280,7 +299,7 @@ RandomTabularDataset[{nrows_Integer, ncols_Integer}, opts : OptionsPattern[]] :=
 
       (* Result *)
       res
-    ] /; nrows > 0 && ncols > 0;
+    ] /; nrows > 0 && ( ListQ[colsSpec] && Length[colsSpec] > 0 || IntegerQ[colsSpec] && colsSpec > 0 );
 
 RandomTabularDataset[___] :=
     Block[{},
