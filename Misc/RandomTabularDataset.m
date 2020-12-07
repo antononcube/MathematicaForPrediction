@@ -112,6 +112,66 @@ RandomTabularDataset::usage = "Generates a random tabular dataset";
 
 Begin["`Private`"];
 
+(**************************************************************)
+(* Known distributions                                        *)
+(**************************************************************)
+
+aKnownDistributions = <|ChiDistribution -> True, ChiSquareDistribution -> True,
+  ExponentialDistribution -> True,
+  ExponentialPowerDistribution -> True, GeometricDistribution -> True,
+  HalfNormalDistribution -> True, InverseChiSquareDistribution -> True,
+  LindleyDistribution -> True, MaxwellDistribution -> True,
+  ParetoPickandsDistribution -> True, PoissonDistribution -> True,
+  RayleighDistribution -> True, SkewNormalDistribution -> True,
+  StudentTDistribution -> True, TsallisQGaussianDistribution -> True,
+  WaringYuleDistribution -> True, BenktanderGibratDistribution -> True,
+  BenktanderWeibullDistribution -> True,
+  BetaPrimeDistribution -> True, BirnbaumSaundersDistribution -> True,
+  CauchyDistribution -> True, ErlangDistribution -> True,
+  ExtremeValueDistribution -> True, FisherZDistribution -> True,
+  FRatioDistribution -> True, FrechetDistribution -> True,
+  GammaDistribution -> True, GompertzMakehamDistribution -> True,
+  GumbelDistribution -> True, HotellingTSquareDistribution -> True,
+  HoytDistribution -> True, InverseGammaDistribution -> True,
+  InverseGaussianDistribution -> True, KDistribution -> True,
+  LaplaceDistribution -> True, LogisticDistribution -> True,
+  LogLogisticDistribution -> True, LogNormalDistribution -> True,
+  MaxStableDistribution -> True, MinStableDistribution -> True,
+  MoyalDistribution -> True, NakagamiDistribution -> True,
+  NegativeBinomialDistribution -> True,
+  NoncentralChiSquareDistribution -> True,
+  NoncentralStudentTDistribution -> True, NormalDistribution -> True,
+  PoissonConsulDistribution -> True, PolyaAeppliDistribution -> True,
+  RiceDistribution -> True, SechDistribution -> True,
+  ShiftedGompertzDistribution -> True, SkellamDistribution -> True,
+  TsallisQExponentialDistribution -> True, VoigtDistribution -> True,
+  WeibullDistribution -> True,
+  BetaNegativeBinomialDistribution -> True, DagumDistribution -> True,
+  ExpGammaDistribution -> True, HjorthDistribution -> True,
+  NoncentralFRatioDistribution -> True,
+  SinghMaddalaDistribution -> True|>
+
+
+(**************************************************************)
+(* Derivation distributions                                   *)
+(**************************************************************)
+
+aDerivationDistributions = <|TransformedDistribution -> True,
+  OrderDistribution -> True, SplicedDistribution -> True,
+  MixtureDistribution -> True, ParameterMixtureDistribution -> True,
+  CompoundPoissonDistribution -> True, TruncatedDistribution -> True,
+  CensoredDistribution -> True, CopulaDistribution -> True,
+  ProductDistribution -> True, MarginalDistribution -> True,
+  ReliabilityDistribution -> True, FailureDistribution -> True,
+  StandbyDistribution -> True, SliceDistribution -> True,
+  StationaryDistribution -> True, GraphPropertyDistribution -> True,
+  BernoulliGraphDistribution -> True|>;
+
+
+(**************************************************************)
+(* RandomTabularDataset                                       *)
+(**************************************************************)
+
 Clear[RandomTabularDataset];
 
 SyntaxInformation[
@@ -156,7 +216,7 @@ RandomTabularDataset[{nrows_, Automatic}, opts : OptionsPattern[]] :=
       RandomTabularDataset[{nrows, ncols}, opts]
     ];
 
-RandomTabularDataset[{nrows_Integer, colsSpec : ( _Integer | {_...} ) }, opts : OptionsPattern[]] :=
+RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
     Block[{ncols, pointwiseGenerationQ, colNameGen, aColValGens, aAutomaticColValGens,
       maxNumberOfValues, minNumberOfValues, form, rowKeysQ,
       lsColNames, lsPairs, tbl, res, aMissing},
@@ -267,6 +327,21 @@ RandomTabularDataset[{nrows_Integer, colsSpec : ( _Integer | {_...} ) }, opts : 
       lsPairs = Flatten[Table[{i, j}, {i, nrows}, {j, ncols}], 1];
       If[minNumberOfValues < Length[lsPairs] || maxNumberOfValues < Length[lsPairs],
         lsPairs = Sort @ RandomSample[lsPairs, RandomInteger[{minNumberOfValues, maxNumberOfValues}]]
+      ];
+
+      (* Process generators *)
+      If[ pointwiseGenerationQ,
+        aColValGens =
+            Map[
+              If[ Lookup[aKnownDistributions, Head[#], False] || Lookup[aDerivationDistributions, Head[#], False], With[{d = #}, RandomVariate[d]&], #] &,
+              aColValGens
+            ],
+        (*ELSE*)
+        aColValGens =
+            Map[
+              If[ Lookup[aKnownDistributions, Head[#], False] || Lookup[aDerivationDistributions, Head[#], False], With[{d = #}, RandomVariate[d, #]&], #] &,
+              aColValGens
+            ]
       ];
 
       (* Generate random values *)
