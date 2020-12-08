@@ -157,7 +157,7 @@ VerificationTest[
 
 
 VerificationTest[
-  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[]&), "PointwiseGenerators" -> False ];
+  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[]&), "PointwiseGenerators" -> True ];
   TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == 23 &&
       Dimensions[ds1][[2]] == 12
@@ -165,6 +165,30 @@ VerificationTest[
   True
   ,
   TestID -> "ColumnNamesGenerator-2"
+];
+
+
+VerificationTest[
+  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> RandomWord ];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == 23 &&
+      Dimensions[ds1][[2]] == 12
+  ,
+  True
+  ,
+  TestID -> "ColumnNamesGenerator-3"
+];
+
+
+VerificationTest[
+  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> RandomWord, "PointwiseGenerators" -> True ];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == 23 &&
+      Dimensions[ds1][[2]] == 12
+  ,
+  True
+  ,
+  TestID -> "ColumnNamesGenerator-3"
 ];
 
 
@@ -184,7 +208,7 @@ VerificationTest[
 
 
 (***********************************************************)
-(* Column values generator specs                           *)
+(* Column values generator specs - list extrapolation      *)
 (***********************************************************)
 
 VerificationTest[
@@ -196,7 +220,7 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ColumnValueGenerators-1"
+  TestID -> "ColumnValueGenerators-list-extrapolation-1"
 ];
 
 
@@ -209,7 +233,7 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ColumnValueGenerators-list-extrapolation-1"
+  TestID -> "ColumnValueGenerators-list-extrapolation-2"
 ];
 
 
@@ -225,7 +249,7 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ColumnValueGenerators-list-extrapolation-2"
+  TestID -> "ColumnValueGenerators-list-extrapolation-3"
 ];
 
 
@@ -241,7 +265,185 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ColumnValueGenerators-list-extrapolation-3"
+  TestID -> "ColumnValueGenerators-list-extrapolation-4"
+];
+
+
+(***********************************************************)
+(* Column values generator specs - shorthand of Random*    *)
+(***********************************************************)
+
+VerificationTest[
+  {m, n} = {12, 5};
+  SeedRandom[3223];
+  ds1 = RandomTabularDataset[{m, n},
+    "ColumnValueGenerators" -> <|1 -> RandomInteger, 2 -> RandomWord, 3 -> RandomColor, 4 -> RandomReal, 5 -> RandomImage|>];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 2], StringQ] &&
+      VectorQ[Normal@ds1[All, 3], MatchQ[#, _RGBColor] &] &&
+      VectorQ[Normal@ds1[All, 4], NumberQ] &&
+      VectorQ[Normal@ds1[All, 5], ImageQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Random-1"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  SeedRandom[3223];
+  ds1 = RandomTabularDataset[{m, n},
+    "ColumnValueGenerators" -> <|1 -> RandomInteger, 2 -> RandomWord, 3 -> RandomColor, 4 -> RandomReal, 5 -> RandomImage|>,
+    "PointwiseGenerators" -> True];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 2], StringQ] &&
+      VectorQ[Normal@ds1[All, 3], MatchQ[#, _RGBColor] &] &&
+      VectorQ[Normal@ds1[All, 4], NumberQ] &&
+      VectorQ[Normal@ds1[All, 5], ImageQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Random-2"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  SeedRandom[3223];
+  ds1 = RandomTabularDataset[{m, n},
+    "ColumnValueGenerators" -> {RandomInteger, RandomWord, RandomColor}];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 2], StringQ] &&
+      VectorQ[Normal@ds1[All, 3], MatchQ[#, _RGBColor] &] &&
+      VectorQ[Normal@ds1[All, 4], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 5], StringQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Random-3"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  SeedRandom[3223];
+  ds1 = RandomTabularDataset[{m, n},
+    "ColumnValueGenerators" -> {RandomInteger, RandomWord, RandomColor},
+    "PointwiseGenerators" -> True];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 2], StringQ] &&
+      VectorQ[Normal@ds1[All, 3], MatchQ[#, _RGBColor] &] &&
+      VectorQ[Normal@ds1[All, 4], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 5], StringQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Random-4"
+];
+
+
+(***********************************************************)
+(* Column values generator distribution shorthand specs    *)
+(***********************************************************)
+
+VerificationTest[
+  {m, n} = {12, 5};
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> {NormalDistribution[12, 1], PoissonDistribution[23]}, "PointwiseGenerators" -> False];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], NumberQ] &&
+      VectorQ[Normal@ds1[All, 2], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 3], NumberQ] &&
+      VectorQ[Normal@ds1[All, 4], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 5], NumberQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Distributions-1"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> {NormalDistribution[12, 1], PoissonDistribution[23]}, "PointwiseGenerators" -> True];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], NumberQ] &&
+      VectorQ[Normal@ds1[All, 2], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 3], NumberQ] &&
+      VectorQ[Normal@ds1[All, 4], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 5], NumberQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Distributions-2"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> <| 3 -> SkewNormalDistribution[12, 1, 0.4], 1 -> PoissonDistribution[23] |>, "PointwiseGenerators" -> False];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 3], NumberQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Distributions-3"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> <| 3 -> SkewNormalDistribution[12, 1, 0.4], 1 -> PoissonDistribution[23] |>, "PointwiseGenerators" -> True];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 3], NumberQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Distributions-4"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 5};
+  ds1 =
+      RandomTabularDataset[{m, n},
+        "ColumnValueGenerators" ->
+            <|
+              3 -> MixtureDistribution[ {0.5, 06}, {SkewNormalDistribution[12, 1, 0.4], LogisticDistribution[32, 2]}],
+              1 -> PoissonDistribution[23]
+            |>
+      ];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], IntegerQ] &&
+      VectorQ[Normal@ds1[All, 3], NumberQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-shorthand-Distributions-5"
 ];
 
 
@@ -258,13 +460,14 @@ VerificationTest[
 
 
 (***********************************************************)
-(* PointwiseGeneration                                     *)
+(* PointwiseGenerators                                     *)
 (***********************************************************)
 
 VerificationTest[
   SeedRandom[42];
   ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[#]&) ];
-  ds2 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[#]&), "PointwiseGenerators" -> True ];
+  SeedRandom[42];
+  ds2 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[#]&), "PointwiseGenerators" -> False ];
   ds1 == ds2 &&
       TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == 23 &&
