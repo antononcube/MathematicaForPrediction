@@ -50,8 +50,7 @@
 BeginTestSection["RecordsSummary-Unit-Tests"];
 
 VerificationTest[(* 1 *)
-(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"];*)
-  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/MathematicaForPredictionUtilities.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"];
   Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] > 0
   ,
   True
