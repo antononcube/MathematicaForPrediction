@@ -149,7 +149,7 @@ aKnownDistributions = <|ChiDistribution -> True, ChiSquareDistribution -> True,
   BetaNegativeBinomialDistribution -> True, DagumDistribution -> True,
   ExpGammaDistribution -> True, HjorthDistribution -> True,
   NoncentralFRatioDistribution -> True,
-  SinghMaddalaDistribution -> True|>
+  SinghMaddalaDistribution -> True|>;
 
 
 (**************************************************************)
@@ -174,10 +174,37 @@ aDerivationDistributions = <|TransformedDistribution -> True,
 
 Clear[MakeDistributionFunction];
 MakeDistributionFunction[ spec_, True ] :=
-    If[ Lookup[aKnownDistributions, Head[spec], False] || Lookup[aDerivationDistributions, Head[spec], False], With[{d = spec}, RandomVariate[d]&], spec];
+    Which[
+      Lookup[aKnownDistributions, Head[spec], False] || Lookup[aDerivationDistributions, Head[spec], False],
+      With[{d = spec}, RandomVariate[d]&],
+
+      MemberQ[ {RandomColor, RandomImage, RandomInteger, RandomReal, RandomWord}, spec],
+      With[{f = spec}, f[]&],
+
+      True,
+      spec
+    ];
 
 MakeDistributionFunction[ spec_, False ] :=
-    If[ Lookup[aKnownDistributions, Head[spec], False] || Lookup[aDerivationDistributions, Head[spec], False], With[{d = spec}, RandomVariate[d, #]&], spec];
+    Which[
+      Lookup[aKnownDistributions, Head[spec], False] || Lookup[aDerivationDistributions, Head[spec], False],
+      With[{d = spec}, RandomVariate[d, #]&],
+
+      MemberQ[ {RandomColor, RandomWord}, spec],
+      With[{f = spec}, f[#]&],
+
+      MemberQ[ {RandomInteger}, spec],
+      With[{f = spec}, f[1, #]&],
+
+      MemberQ[ {RandomReal}, spec],
+      With[{f = spec}, f[1, #]&],
+
+      MemberQ[ {RandomImage}, spec],
+      With[{f = spec}, Table[f[], #]&],
+
+      True,
+      spec
+    ];
 
 
 (**************************************************************)
