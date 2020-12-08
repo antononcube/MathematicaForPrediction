@@ -324,6 +324,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       rowKeysQ = TrueQ[rowKeysQ];
 
       (* Generate column names *)
+      colNameGen = MakeDistributionFunction[colNameGen, pointwiseGeneratorsQ];
       lsColNames =
           If[ ListQ[colsSpec],
             colsSpec,
