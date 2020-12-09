@@ -157,7 +157,7 @@ VerificationTest[
 
 
 VerificationTest[
-  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[]&), "PointwiseGenerators" -> True ];
+  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[]&), "PointwiseGeneration" -> True ];
   TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == 23 &&
       Dimensions[ds1][[2]] == 12
@@ -181,7 +181,7 @@ VerificationTest[
 
 
 VerificationTest[
-  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> RandomWord, "PointwiseGenerators" -> True ];
+  ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> RandomWord, "PointwiseGeneration" -> True ];
   TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == 23 &&
       Dimensions[ds1][[2]] == 12
@@ -209,7 +209,7 @@ VerificationTest[
 
 VerificationTest[
   nCols = 6;
-  ds1 = RandomTabularDataset[{23, nCols}, "ColumnNameGenerator" -> ("A"&), "PointwiseGenerators" -> True];
+  ds1 = RandomTabularDataset[{23, nCols}, "ColumnNameGenerator" -> ("A"&), "PointwiseGeneration" -> True];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == 23 &&
       Dimensions[ds1][[2]] == nCols &&
@@ -314,7 +314,7 @@ VerificationTest[
   SeedRandom[3223];
   ds1 = RandomTabularDataset[{m, n},
     "ColumnValueGenerators" -> <|1 -> RandomInteger, 2 -> RandomWord, 3 -> RandomColor, 4 -> RandomReal, 5 -> RandomImage|>,
-    "PointwiseGenerators" -> True];
+    "PointwiseGeneration" -> True];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == m &&
       Dimensions[ds1][[2]] == n &&
@@ -355,7 +355,7 @@ VerificationTest[
   SeedRandom[3223];
   ds1 = RandomTabularDataset[{m, n},
     "ColumnValueGenerators" -> {RandomInteger, RandomWord, RandomColor},
-    "PointwiseGenerators" -> True];
+    "PointwiseGeneration" -> True];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == m &&
       Dimensions[ds1][[2]] == n &&
@@ -412,7 +412,7 @@ VerificationTest[
 
 VerificationTest[
   {m, n} = {12, 5};
-  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> {NormalDistribution[12, 1], PoissonDistribution[23]}, "PointwiseGenerators" -> False];
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> {NormalDistribution[12, 1], PoissonDistribution[23]}, "PointwiseGeneration" -> False];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == m &&
       Dimensions[ds1][[2]] == n &&
@@ -430,7 +430,7 @@ VerificationTest[
 
 VerificationTest[
   {m, n} = {12, 5};
-  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> {NormalDistribution[12, 1], PoissonDistribution[23]}, "PointwiseGenerators" -> True];
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> {NormalDistribution[12, 1], PoissonDistribution[23]}, "PointwiseGeneration" -> True];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == m &&
       Dimensions[ds1][[2]] == n &&
@@ -448,7 +448,7 @@ VerificationTest[
 
 VerificationTest[
   {m, n} = {12, 5};
-  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> <| 3 -> SkewNormalDistribution[12, 1, 0.4], 1 -> PoissonDistribution[23] |>, "PointwiseGenerators" -> False];
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> <| 3 -> SkewNormalDistribution[12, 1, 0.4], 1 -> PoissonDistribution[23] |>, "PointwiseGeneration" -> False];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == m &&
       Dimensions[ds1][[2]] == n &&
@@ -463,7 +463,7 @@ VerificationTest[
 
 VerificationTest[
   {m, n} = {12, 5};
-  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> <| 3 -> SkewNormalDistribution[12, 1, 0.4], 1 -> PoissonDistribution[23] |>, "PointwiseGenerators" -> True];
+  ds1 = RandomTabularDataset[{m, n}, "ColumnValueGenerators" -> <| 3 -> SkewNormalDistribution[12, 1, 0.4], 1 -> PoissonDistribution[23] |>, "PointwiseGeneration" -> True];
   TrueQ[Head[ds1] === Dataset] &&
       Dimensions[ds1][[1]] == m &&
       Dimensions[ds1][[2]] == n &&
@@ -511,14 +511,14 @@ VerificationTest[
 
 
 (***********************************************************)
-(* PointwiseGenerators                                     *)
+(* PointwiseGeneration                                     *)
 (***********************************************************)
 
 VerificationTest[
   SeedRandom[42];
   ds1 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[#]&) ];
   SeedRandom[42];
-  ds2 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[#]&), "PointwiseGenerators" -> False ];
+  ds2 = RandomTabularDataset[{23, 12}, "ColumnNameGenerator" -> (RandomWord[#]&), "PointwiseGeneration" -> False ];
   ds1 == ds2 &&
       TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == 23 &&
@@ -526,7 +526,7 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "PointwiseGenerators-Default-1"
+  TestID -> "PointwiseGeneration-Default-1"
 ];
 
 
