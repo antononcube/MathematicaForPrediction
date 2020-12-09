@@ -116,56 +116,58 @@ Begin["`Private`"];
 (* Known distributions                                        *)
 (**************************************************************)
 
-aKnownDistributions = <|ChiDistribution -> True, ChiSquareDistribution -> True,
-  ExponentialDistribution -> True,
-  ExponentialPowerDistribution -> True, GeometricDistribution -> True,
-  HalfNormalDistribution -> True, InverseChiSquareDistribution -> True,
-  LindleyDistribution -> True, MaxwellDistribution -> True,
-  ParetoPickandsDistribution -> True, PoissonDistribution -> True,
-  RayleighDistribution -> True, SkewNormalDistribution -> True,
-  StudentTDistribution -> True, TsallisQGaussianDistribution -> True,
-  WaringYuleDistribution -> True, BenktanderGibratDistribution -> True,
+aKnownDistributions = <|BenktanderGibratDistribution -> True,
   BenktanderWeibullDistribution -> True,
+  BetaNegativeBinomialDistribution -> True,
   BetaPrimeDistribution -> True, BirnbaumSaundersDistribution -> True,
-  CauchyDistribution -> True, ErlangDistribution -> True,
+  CauchyDistribution -> True, ChiDistribution -> True,
+  ChiSquareDistribution -> True, DagumDistribution -> True,
+  ErlangDistribution -> True, ExpGammaDistribution -> True,
+  ExponentialDistribution -> True,
+  ExponentialPowerDistribution -> True,
   ExtremeValueDistribution -> True, FisherZDistribution -> True,
   FRatioDistribution -> True, FrechetDistribution -> True,
-  GammaDistribution -> True, GompertzMakehamDistribution -> True,
-  GumbelDistribution -> True, HotellingTSquareDistribution -> True,
-  HoytDistribution -> True, InverseGammaDistribution -> True,
+  GammaDistribution -> True, GeometricDistribution -> True,
+  GompertzMakehamDistribution -> True, GumbelDistribution -> True,
+  HalfNormalDistribution -> True, HjorthDistribution -> True,
+  HotellingTSquareDistribution -> True, HoytDistribution -> True,
+  InverseChiSquareDistribution -> True,
+  InverseGammaDistribution -> True,
   InverseGaussianDistribution -> True, KDistribution -> True,
-  LaplaceDistribution -> True, LogisticDistribution -> True,
-  LogLogisticDistribution -> True, LogNormalDistribution -> True,
-  MaxStableDistribution -> True, MinStableDistribution -> True,
+  LaplaceDistribution -> True, LindleyDistribution -> True,
+  LogisticDistribution -> True, LogLogisticDistribution -> True,
+  LogNormalDistribution -> True, MaxStableDistribution -> True,
+  MaxwellDistribution -> True, MinStableDistribution -> True,
   MoyalDistribution -> True, NakagamiDistribution -> True,
   NegativeBinomialDistribution -> True,
   NoncentralChiSquareDistribution -> True,
-  NoncentralStudentTDistribution -> True, NormalDistribution -> True,
-  PoissonConsulDistribution -> True, PolyaAeppliDistribution -> True,
-  RiceDistribution -> True, SechDistribution -> True,
-  ShiftedGompertzDistribution -> True, SkellamDistribution -> True,
-  TsallisQExponentialDistribution -> True, VoigtDistribution -> True,
-  WeibullDistribution -> True,
-  BetaNegativeBinomialDistribution -> True, DagumDistribution -> True,
-  ExpGammaDistribution -> True, HjorthDistribution -> True,
   NoncentralFRatioDistribution -> True,
-  SinghMaddalaDistribution -> True|>;
+  NoncentralStudentTDistribution -> True, NormalDistribution -> True,
+  ParetoDistribution -> True, ParetoPickandsDistribution -> True,
+  PoissonConsulDistribution -> True, PoissonDistribution -> True,
+  PolyaAeppliDistribution -> True, RayleighDistribution -> True,
+  RiceDistribution -> True, SechDistribution -> True,
+  ShiftedGompertzDistribution -> True,
+  SinghMaddalaDistribution -> True, SkellamDistribution -> True,
+  SkewNormalDistribution -> True, StudentTDistribution -> True,
+  TsallisQExponentialDistribution -> True,
+  TsallisQGaussianDistribution -> True, VoigtDistribution -> True,
+  WaringYuleDistribution -> True, WeibullDistribution -> True|>;
 
 
 (**************************************************************)
 (* Derivation distributions                                   *)
 (**************************************************************)
 
-aDerivationDistributions = <|TransformedDistribution -> True,
-  OrderDistribution -> True, SplicedDistribution -> True,
-  MixtureDistribution -> True, ParameterMixtureDistribution -> True,
-  CompoundPoissonDistribution -> True, TruncatedDistribution -> True,
-  CensoredDistribution -> True, CopulaDistribution -> True,
-  ProductDistribution -> True, MarginalDistribution -> True,
-  ReliabilityDistribution -> True, FailureDistribution -> True,
-  StandbyDistribution -> True, SliceDistribution -> True,
-  StationaryDistribution -> True, GraphPropertyDistribution -> True,
-  BernoulliGraphDistribution -> True|>;
+aDerivationDistributions = <|BernoulliGraphDistribution -> True, CensoredDistribution -> True,
+  CompoundPoissonDistribution -> True, CopulaDistribution -> True,
+  FailureDistribution -> True, GraphPropertyDistribution -> True,
+  MarginalDistribution -> True, MixtureDistribution -> True,
+  OrderDistribution -> True, ParameterMixtureDistribution -> True,
+  ProductDistribution -> True, ReliabilityDistribution -> True,
+  SliceDistribution -> True, SplicedDistribution -> True,
+  StandbyDistribution -> True, StationaryDistribution -> True,
+  TransformedDistribution -> True, TruncatedDistribution -> True|>;
 
 
 (**************************************************************)
@@ -234,6 +236,9 @@ RandomTabularDataset::nform =
 RandomTabularDataset::nnov =
     "The value of the option \"`1`\" is expected to be a positive integer or Automatic.";
 
+RandomTabularDataset::ngcols =
+    "The column name generator produced too few column names. Completing with automatic column names.";
+
 RandomTabularDataset[opts : OptionsPattern[]] :=
     RandomTabularDataset[{Automatic, Automatic}, opts];
 
@@ -258,9 +263,9 @@ RandomTabularDataset[{nrows_, Automatic}, opts : OptionsPattern[]] :=
 RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
     Block[{ncols, pointwiseGeneratorsQ, colNameGen, aColValGens, aAutomaticColValGens,
       maxNumberOfValues, minNumberOfValues, form, rowKeysQ,
-      lsColNames, lsPairs, tbl, res, aMissing},
+      lsColNames, lsColGenKeys, lsPairs, tbl, res, aMissing},
 
-      ncols = If[ ListQ[colsSpec], Length[colsSpec], colsSpec];
+      ncols = If[ ListQ[colsSpec], Length @ Union @ colsSpec, colsSpec];
 
       (* Get point-wise generation or not *)
       pointwiseGeneratorsQ = OptionValue[RandomTabularDataset, "PointwiseGenerators"];
@@ -362,6 +367,18 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
               colNameGen[ncols, Range[ncols]]
             ]
           ];
+      lsColNames = DeleteDuplicates[lsColNames];
+
+      If[ Length[lsColNames] < ncols,
+        Message[RandomTabularDataset::ngcols];
+        lsColNames = Join[ lsColNames, Table[ToString[i], { i, Length[lsColNames] + 1, ncols}] ];
+      ];
+
+      (* If some of the obtained column names are keys in generators *)
+      lsColGenKeys = Intersection[ Keys[aColValGens], lsColNames ];
+      If[ Length[ lsColGenKeys ] > 0,
+        aColValGens = Join[ aColValGens, KeyMap[ Position[lsColNames, #][[1, 1]]&, KeyTake[ aColValGens, lsColGenKeys ] ] ];
+      ];
 
       (* Generate coordinate pairs for the random values *)
       lsPairs = Flatten[Table[{i, j}, {i, nrows}, {j, ncols}], 1];
