@@ -58,8 +58,8 @@
 
   RandomTabularDataset takes the following options:
 
-    "ColumnNameGenerator"	Automatic	generator of column names
-    "ColumnValueGenerators"	Automatic	generators for the values in each column
+    "ColumnNamesGenerator"	Automatic	generator of column names
+    "Generators"	Automatic	generators for the values in each column
     "Form"	"Wide"	the form of the generated dataset (long or wide)
     "NumberOfValues"	Automatic	number of non-missing values
     "RowKeys"	False	should the rows have keys or not
@@ -81,7 +81,7 @@
    Generate a random tabular dataset with specified random value generators for certain columns:
 
    SeedRandom[4];
-   RandomTabularDataset[{5, Automatic}, "ColumnValueGenerators" -> <|1 -> (RandomVariate[NormalDistribution[100, 3]] &), 3 -> (RandomColor[] &)|>]
+   RandomTabularDataset[{5, Automatic}, "Generators" -> <|1 -> (RandomVariate[NormalDistribution[100, 3]] &), 3 -> (RandomColor[] &)|>]
 
    # Scope
 
@@ -97,12 +97,12 @@
 
    Using Identity or symbols without down values to specify the column name generation or column value generation gives insight of how the random generator functions are called. Here is example with Identity utilization:
 
-   RandomTabularDataset[{4, 5}, "ColumnNameGenerator" -> ToString@*Identity, "ColumnValueGenerators" -> Identity, "RowKeys" -> True]
+   RandomTabularDataset[{4, 5}, "ColumnNamesGenerator" -> ToString@*Identity, "Generators" -> Identity, "RowKeys" -> True]
 
    Here is an example with symbols without down values:
 
    Clear[F, G];
-   RandomTabularDataset[{4, 5}, "ColumnNameGenerator" -> ToString@*F@*Identity, "ColumnValueGenerators" -> Table[G, {5}], "RowKeys" -> True]
+   RandomTabularDataset[{4, 5}, "ColumnNamesGenerator" -> ToString@*F@*Identity, "Generators" -> Table[G, {5}], "RowKeys" -> True]
 
 *)
 
@@ -219,12 +219,12 @@ SyntaxInformation[
   RandomTabularDataset] = {"ArgumentsPattern" -> {_., OptionsPattern[]}};
 
 Options[RandomTabularDataset] := {
-  "ColumnNameGenerator" -> Automatic,
-  "ColumnValueGenerators" -> Automatic,
+  "ColumnNamesGenerator" -> Automatic,
+  "Generators" -> Automatic,
   "Form" -> "Wide",
   "MaxNumberOfValues" -> Automatic,
   "MinNumberOfValues" -> Automatic,
-  "PointwiseGenerators" -> False,
+  "PointwiseGeneration" -> False,
   "RowKeys" -> False};
 
 RandomTabularDataset::args =
@@ -261,35 +261,35 @@ RandomTabularDataset[{nrows_, Automatic}, opts : OptionsPattern[]] :=
     ];
 
 RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
-    Block[{ncols, pointwiseGeneratorsQ, colNameGen, aColValGens, aAutomaticColValGens,
+    Block[{ncols, pointwiseGenerationQ, colNameGen, aColValGens, aAutomaticColValGens,
       maxNumberOfValues, minNumberOfValues, form, rowKeysQ,
       lsColNames, lsColGenKeys, lsPairs, tbl, res, aMissing},
 
       ncols = If[ ListQ[colsSpec], Length @ Union @ colsSpec, colsSpec];
 
       (* Get point-wise generation or not *)
-      pointwiseGeneratorsQ = OptionValue[RandomTabularDataset, "PointwiseGenerators"];
-      If[TrueQ[pointwiseGeneratorsQ === Automatic], pointwiseGeneratorsQ = False];
-      pointwiseGeneratorsQ = TrueQ[pointwiseGeneratorsQ];
+      pointwiseGenerationQ = OptionValue[RandomTabularDataset, "PointwiseGeneration"];
+      If[TrueQ[pointwiseGenerationQ === Automatic], pointwiseGenerationQ = False];
+      pointwiseGenerationQ = TrueQ[pointwiseGenerationQ];
 
       (* Get column name generator *)
-      colNameGen = OptionValue[RandomTabularDataset, "ColumnNameGenerator"];
+      colNameGen = OptionValue[RandomTabularDataset, "ColumnNamesGenerator"];
       If[TrueQ[colNameGen === Automatic] || TrueQ[colNameGen === RandomWord],
         colNameGen =
-            If[ pointwiseGeneratorsQ,
+            If[ pointwiseGenerationQ,
               First@RandomWord["CommonWords", 1] &,
               (*ELSE*)
               RandomWord["CommonWords", #]&
             ]
       ];
       If[TrueQ[colNameGen === None],
-        colNameGen = If[ pointwiseGeneratorsQ, Identity, #2&]
+        colNameGen = If[ pointwiseGenerationQ, Identity, #2&]
       ];
 
       (* Get column values generators *)
-      aColValGens = OptionValue[RandomTabularDataset, "ColumnValueGenerators"];
+      aColValGens = OptionValue[RandomTabularDataset, "Generators"];
       aAutomaticColValGens =
-          If[ pointwiseGeneratorsQ,
+          If[ pointwiseGenerationQ,
             AssociationThread[
               Range[ncols],
               RandomChoice[{RandomReal[{-10, 10}] &, RandomInteger[{-100, 100}] &, First@RandomWord[1] &}, ncols]
@@ -304,7 +304,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       If[TrueQ[aColValGens === Automatic] || TrueQ[aColValGens === RandomChoice], aColValGens = <||>];
       If[TrueQ[aColValGens === Identity] || TrueQ[aColValGens === None],
         aColValGens =
-            If[ pointwiseGeneratorsQ,
+            If[ pointwiseGenerationQ,
               AssociationThread[Range[ncols] -> Table[Identity, ncols]],
               (*ELSE*)
               AssociationThread[Range[ncols] -> Table[Range[#]&, ncols]]
@@ -356,12 +356,12 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       rowKeysQ = TrueQ[rowKeysQ];
 
       (* Generate column names *)
-      colNameGen = MakeDistributionFunction[colNameGen, pointwiseGeneratorsQ];
+      colNameGen = MakeDistributionFunction[colNameGen, pointwiseGenerationQ];
       lsColNames =
           If[ ListQ[colsSpec],
             colsSpec,
             (*ELSE*)
-            If[ pointwiseGeneratorsQ,
+            If[ pointwiseGenerationQ,
               Table[colNameGen[i], {i, ncols}],
               (*ELSE*)
               colNameGen[ncols, Range[ncols]]
@@ -387,10 +387,10 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       ];
 
       (* Process generators *)
-      aColValGens = Map[ MakeDistributionFunction[#, pointwiseGeneratorsQ] &, aColValGens ];
+      aColValGens = Map[ MakeDistributionFunction[#, pointwiseGenerationQ] &, aColValGens ];
 
       (* Generate random values *)
-      If[ pointwiseGeneratorsQ,
+      If[ pointwiseGenerationQ,
         tbl = MapThread[{#1, lsColNames[[#2]], aColValGens[#2][{#1, #2}]} &, Transpose[lsPairs]],
         (*ELSE*)
         tbl = GroupBy[lsPairs, #[[2]] &, Transpose[{#[[All, 1]], lsColNames[[#[[All, 2]]]], aColValGens[#[[1, 2]]][Length[#], #]}] &];
