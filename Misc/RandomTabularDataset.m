@@ -311,8 +311,14 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
             ]
       ];
 
+      (* Convert atomic and/or non-list, non-association generators spec. *)
+      If[ !( ListQ[aColValGens] || AssociationQ[aColValGens] ),
+        aColValGens = Flatten[{aColValGens}]
+      ];
+
       (* Extend column values generators if given as a list *)
-      If[ListQ[aColValGens],
+      If[
+        ListQ[aColValGens],
         aColValGens = Join[ aColValGens, Flatten @ Table[ aColValGens, Ceiling[ncols / Length[aColValGens]] ] ];
         aColValGens = Take[ aColValGens, ncols];
         aColValGens = AssociationThread[Range@ncols, aColValGens]
