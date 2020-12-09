@@ -504,6 +504,61 @@ VerificationTest[
 
 
 (***********************************************************)
+(* Form                                                    *)
+(***********************************************************)
+
+VerificationTest[
+  ds1 = RandomTabularDataset["Form" -> "Long"];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] > 0 &&
+      Dimensions[ds1][[2]] == 3
+  ,
+  True
+  ,
+  TestID -> "Form-long-1"
+];
+
+
+VerificationTest[
+  {m, n} = {40, 12};
+  ds1 = RandomTabularDataset[{m, n}, "Form" -> "Long"];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == m*n &&
+      Dimensions[ds1][[2]] == 3
+  ,
+  True
+  ,
+  TestID -> "Form-long-2"
+];
+
+
+VerificationTest[
+  n = 12;
+  ds1 = RandomTabularDataset[{Automatic, n}, "Form" -> "Wide"];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] > 0 &&
+      Dimensions[ds1][[2]] == n
+  ,
+  True
+  ,
+  TestID -> "Form-wide-1"
+];
+
+
+VerificationTest[
+  {m, n} = {40, 12};
+  ds1 = RandomTabularDataset[{m, n}, "Form" -> "Wide"];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n
+  ,
+  True
+  ,
+  TestID -> "Form-wide-2"
+];
+
+
+(***********************************************************)
 (* MaxNumberOfValues                                       *)
 (***********************************************************)
 
@@ -521,7 +576,6 @@ VerificationTest[
   ,
   TestID -> "MaxNumberOfValues-integer-1"
 ];
-
 
 
 (***********************************************************)
@@ -636,6 +690,46 @@ VerificationTest[
 (* Row keys specs                                          *)
 (***********************************************************)
 
+VerificationTest[
+  ds1 = RandomTabularDataset["RowKeys" -> True];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] > 0 &&
+      Dimensions[ds1][[2]] > 0 &&
+      AssociationQ[Normal[ds1]]
+  ,
+  True
+  ,
+  TestID -> "RowKeys-no-arguments-1"
+];
+
+
+VerificationTest[
+  ds1 = RandomTabularDataset[{40, 12}, "RowKeys" -> True];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == 40 &&
+      Dimensions[ds1][[2]] == 12 &&
+      AssociationQ[Normal[ds1]]
+  ,
+  True
+  ,
+  TestID -> "RowKeys-integer-arguments-1"
+];
+
+
+
+
+
+VerificationTest[
+  ds1 = RandomTabularDataset[{40, 12}, "RowKeys" -> True, "Form" -> "Wide"];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == 40 &&
+      Dimensions[ds1][[2]] == 12 &&
+      AssociationQ[Normal[ds1]]
+  ,
+  True
+  ,
+  TestID -> "RowKeys-wide-form-1"
+];
 
 
 EndTestSection[]
