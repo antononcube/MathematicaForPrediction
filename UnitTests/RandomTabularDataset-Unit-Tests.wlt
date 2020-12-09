@@ -113,12 +113,12 @@ VerificationTest[
 
 
 VerificationTest[
-  lsColNames = {"a", "b", "c"};
+  lsColNames = {"f", "a", "c"};
   ds1 = RandomTabularDataset[{Automatic, lsColNames}];
   TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] > 0 &&
       Dimensions[ds1][[2]] > 0 &&
-      Normal[Keys[ds1[1]]] == {"a", "b", "c"}
+      Normal[Keys[ds1[1]]] == {"f", "a", "c"}
   ,
   True
   ,
@@ -188,7 +188,7 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ColumnNamesGenerator-3"
+  TestID -> "ColumnNamesGenerator-4"
 ];
 
 
@@ -203,7 +203,23 @@ VerificationTest[
   ,
   True
   ,
-  TestID -> "ColumnNamesGenerator-3"
+  TestID -> "ColumnNamesGenerator-5"
+];
+
+
+VerificationTest[
+  nCols = 6;
+  ds1 = RandomTabularDataset[{23, nCols}, "ColumnNameGenerator" -> ("A"&), "PointwiseGenerators" -> True];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == 23 &&
+      Dimensions[ds1][[2]] == nCols &&
+      Normal[Keys[ds1[1]]] == Join[ {"A"}, Table[ToString[i], {i, 2, nCols}]]
+  ,
+  True
+  ,
+  {RandomTabularDataset::ngcols}
+  ,
+  TestID -> "ColumnNamesGenerator-6"
 ];
 
 
@@ -356,7 +372,42 @@ VerificationTest[
 
 
 (***********************************************************)
-(* Column values generator distribution shorthand specs    *)
+(* Column values generator by association specs            *)
+(***********************************************************)
+
+VerificationTest[
+  {m, n} = {12, 5};
+  ds1 = RandomTabularDataset[{m, n},
+    "ColumnValueGenerators" -> <|1 -> (RandomReal[100, #]&), 3 -> (RandomWord["CommonWords", #]&) |>];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], NumberQ] &&
+      VectorQ[Normal@ds1[All, 3], StringQ]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-association-spec-1"
+];
+
+
+VerificationTest[
+  {m, n} = {12, 3};
+  ds1 = RandomTabularDataset[{m, {"b", "a", "c"}},
+    "ColumnValueGenerators" -> <|1 -> (RandomReal[100, #]&), "b" -> RandomColor |>];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[Normal@ds1[All, 1], MatchQ[#, _RGBColor]&]
+  ,
+  True
+  ,
+  TestID -> "ColumnValueGenerators-association-spec-1"
+];
+
+
+(***********************************************************)
+(* Column values generators distribution shorthand specs   *)
 (***********************************************************)
 
 VerificationTest[
