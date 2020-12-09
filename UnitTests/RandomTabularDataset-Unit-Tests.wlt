@@ -682,6 +682,24 @@ VerificationTest[
 ];
 
 
+VerificationTest[
+  {m, n} = {4, 5};
+  ds1 = RandomTabularDataset[{m, n},
+    "Generators" -> {RandomReal[] &, RandomInteger[] &},
+    "PointwiseGeneration" -> False];
+  mat1 = Normal@ds1[Values];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      MatrixQ[mat1, NumberQ] &&
+      Apply[And, Apply[Equal, #] & /@ Transpose[mat1]]
+  ,
+  True
+  ,
+  TestID -> "PointwiseGeneration-False-success-1"
+];
+
+
 (***********************************************************)
 (* Row keys specs                                          *)
 (***********************************************************)
@@ -723,6 +741,7 @@ VerificationTest[
   TestID -> "RowKeys-wide-form-1"
 ];
 
+
 (***********************************************************)
 (* Expected equivalences                                   *)
 (***********************************************************)
@@ -762,9 +781,9 @@ VerificationTest[
 VerificationTest[
   SeedRandom[42];
   {m, n} = {41, 15};
-  ds1 = RandomTabularDataset[{m, n}, "Generators" -> NormalDistribution[120,2], "PointwiseGeneration" -> False ];
+  ds1 = RandomTabularDataset[{m, n}, "Generators" -> NormalDistribution[120, 2], "PointwiseGeneration" -> False ];
   SeedRandom[42];
-  ds2 = RandomTabularDataset[{m, n}, "Generators" -> {NormalDistribution[120,2]}, "PointwiseGeneration" -> False ];
+  ds2 = RandomTabularDataset[{m, n}, "Generators" -> {NormalDistribution[120, 2]}, "PointwiseGeneration" -> False ];
   ds1 == ds2 &&
       TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == m &&
@@ -778,9 +797,9 @@ VerificationTest[
 VerificationTest[
   SeedRandom[42];
   {m, n} = {41, 15};
-  ds1 = RandomTabularDataset[{m, n}, "Generators" -> NormalDistribution[120,2], "PointwiseGeneration" -> True ];
+  ds1 = RandomTabularDataset[{m, n}, "Generators" -> NormalDistribution[120, 2], "PointwiseGeneration" -> True ];
   SeedRandom[42];
-  ds2 = RandomTabularDataset[{m, n}, "Generators" -> {NormalDistribution[120,2]}, "PointwiseGeneration" -> True ];
+  ds2 = RandomTabularDataset[{m, n}, "Generators" -> {NormalDistribution[120, 2]}, "PointwiseGeneration" -> True ];
   ds1 == ds2 &&
       TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == m &&
