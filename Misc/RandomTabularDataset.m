@@ -417,6 +417,15 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
 
       ];
 
+      (* In case the generated dataset has too few rows *)
+      If[ Dimensions[res][[1]] < nrows,
+        res =
+            Join[
+              res,
+              Dataset[Table[Missing[], nrows - Dimensions[res][[1]], ncols]][All, AssociationThread[Normal@Keys@res[1], #] &]
+            ]
+      ];
+
       (* Result *)
       res
     ] /; nrows > 0 && ( ListQ[colsSpec] && Length[colsSpec] > 0 || IntegerQ[colsSpec] && colsSpec > 0 );
