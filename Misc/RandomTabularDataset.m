@@ -399,7 +399,21 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       If[ pointwiseGenerationQ,
         tbl = MapThread[{#1, lsColNames[[#2]], aColValGens[#2][{#1, #2}]} &, Transpose[lsPairs]],
         (*ELSE*)
-        tbl = GroupBy[lsPairs, #[[2]] &, Transpose[{#[[All, 1]], lsColNames[[#[[All, 2]]]], aColValGens[#[[1, 2]]][Length[#], #]}] &];
+        tbl =
+            GroupBy[
+              lsPairs,
+              #[[2]] &,
+              {
+                #[[All, 1]],
+                lsColNames[[#[[All, 2]]]],
+                aColValGens[#[[1, 2]]][Length[#], #]
+              } &
+            ];
+
+        (* Handling the case when pointwise generators are used as vector generators. *)
+        (* If the 3rd element is an atop replace it with a list of it (that has appropriate length.) *)
+        tbl = Map[ Transpose @ If[ AtomQ[#[[3]]], ReplacePart[#, 3 -> Table[#[[3]], Length[#[[1]]]]], #]&, tbl];
+
         tbl = Join @@ Values[ tbl ]
       ];
 
