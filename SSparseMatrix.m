@@ -226,10 +226,10 @@ SSparseMatrixQ[x_] := Head[x] === SSparseMatrix;
 (*Creation and conversion*)
 
 SSparseMatrix::rnset =
-    "The row names `1` are expected to be a list of strings with length that equals the number of rows (`2`) of the SSparseMatrix object.";
+    "The row names `1` are expected to be None, Automatic, or a list of strings with length that equals the number of rows (`2`) of the SSparseMatrix object.";
 
 SSparseMatrix::cnset =
-    "The column names `1` are expected to be a list of strings with length that equals the number of columns (`2`) of the SSparseMatrix object.";
+    "The column names `1` are expected to be None, Automatic, or a list of strings with length that equals the number of columns (`2`) of the SSparseMatrix object.";
 
 SSparseMatrix::dnset =
     "The dimension names `1` are expected to be a list of two strings or None.";
@@ -284,6 +284,14 @@ ToSSparseMatrix[sarr_SparseArray, opts : OptionsPattern[]] :=
       rnames = OptionValue[ToSSparseMatrix, "RowNames"];
       cnames = OptionValue[ToSSparseMatrix, "ColumnNames"];
       dnames = OptionValue[ToSSparseMatrix, "DimensionNames"];
+
+      If[ TrueQ[rnames === Automatic],
+        rnames = Map[ ToString, Range @ Dimensions[sarr][[1]] ]
+      ];
+
+      If[ TrueQ[cnames === Automatic],
+        cnames = Map[ ToString, Range @ Dimensions[sarr][[2]] ]
+      ];
 
       If[! ( rnames === None || (VectorQ[rnames, StringQ] && Length[rnames] == Dimensions[sarr][[1]]) ),
         Message[SSparseMatrix::rnset, If[LeafCount[rnames] > 200, Short[rnames], rnames], Dimensions[sarr][[1]]];
