@@ -237,6 +237,9 @@ RandomTabularDataset::nform =
 RandomTabularDataset::nnov =
     "The value of the option \"`1`\" is expected to be a positive integer or Automatic.";
 
+RandomTabularDataset::ncngen =
+    "The column names generator did not produce a list. Using automatic column names.";
+
 RandomTabularDataset::ngcols =
     "The column name generator produced too few column names. Completing with automatic column names.";
 
@@ -378,6 +381,12 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
               colNameGen[ncols, Range[ncols]]
             ]
           ];
+
+      If[ !ListQ[lsColNames],
+        Message[RandomTabularDataset::ncngen];
+        lsColNames = Table[ToString[i], { i, ncols}];
+      ];
+
       lsColNames = DeleteDuplicates[lsColNames];
 
       If[ Length[lsColNames] < ncols,
