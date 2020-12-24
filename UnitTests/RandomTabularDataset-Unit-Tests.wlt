@@ -881,4 +881,64 @@ VerificationTest[
 ];
 
 
+(***********************************************************)
+(* Failing gracefully                                      *)
+(***********************************************************)
+
+VerificationTest[
+  MatchQ[RandomTabularDataset["ColumnNamesGenerator" -> "Blah"], _Dataset]
+  ,
+  True
+  ,
+  {RandomTabularDataset::ncngen}
+  ,
+  TestID -> "Failing-gracefully-1"
+];
+
+
+VerificationTest[
+  RandomTabularDataset[{3, 4}, "Generators" -> "Blah"]
+  ,
+  $Failed
+  ,
+  {RandomTabularDataset::ngen}
+  ,
+  TestID -> "Failing-gracefully-2"
+];
+
+
+VerificationTest[
+  RandomTabularDataset[{3, 4}, "Generators" -> <|1 -> RandomReal, 3 -> 3, 4 -> RandomWord|>]
+  ,
+  $Failed
+  ,
+  {RandomTabularDataset::ngen}
+  ,
+  TestID -> "Failing-gracefully-3"
+];
+
+
+VerificationTest[
+  RandomTabularDataset["MaxNumberOfValues" -> "Blah"]
+  ,
+  $Failed
+  ,
+  {RandomTabularDataset::nnov}
+  ,
+  TestID -> "Failing-gracefully-4"
+];
+
+
+VerificationTest[
+  RandomTabularDataset["MinNumberOfValues" -> "Blah"]
+  ,
+  $Failed
+  ,
+  {RandomTabularDataset::nnov}
+  ,
+  TestID -> "Failing-gracefully-5"
+];
+
+
+
 EndTestSection[]
