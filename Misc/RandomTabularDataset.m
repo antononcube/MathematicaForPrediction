@@ -217,8 +217,7 @@ MakeDistributionFunction[ spec_, False ] :=
 
 Clear[RandomTabularDataset];
 
-SyntaxInformation[
-  RandomTabularDataset] = {"ArgumentsPattern" -> {_., OptionsPattern[]}};
+SyntaxInformation[RandomTabularDataset] = {"ArgumentsPattern" -> {_., OptionsPattern[]}};
 
 Options[RandomTabularDataset] := {
   "ColumnNamesGenerator" -> Automatic,
@@ -240,6 +239,9 @@ RandomTabularDataset::nnov =
 
 RandomTabularDataset::ngcols =
     "The column name generator produced too few column names. Completing with automatic column names.";
+
+RandomTabularDataset::ngen =
+    "None of the generators for the columns `1` produced a vector of required length.";
 
 RandomTabularDataset[opts : OptionsPattern[]] :=
     RandomTabularDataset[{Automatic, Automatic}, opts];
@@ -329,7 +331,8 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
 
       (* Get form *)
       form = OptionValue[RandomTabularDataset, "Form"];
-      If[TrueQ[form === Automatic], form = "Wide"];
+      If[TrueQ[form === Automatic], form = RandomChoice[{0.3, 0.7} -> {"Long", "Wide"}] ];
+      If[MemberQ[{RandomChoice, Random}, form], form = RandomChoice[{"Long", "Wide"}] ];
       If[! MemberQ[ToLowerCase@{"Long", "Wide"}, ToLowerCase[form]],
         Message[RandomTabularDataset::nform];
         form = "Wide";
@@ -359,8 +362,8 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
 
       (* Get row keys or not *)
       rowKeysQ = OptionValue[RandomTabularDataset, "RowKeys"];
-      If[TrueQ[rowKeysQ === Automatic], rowKeysQ = False];
-      If[TrueQ[rowKeysQ === RandomChoice], rowKeysQ = RandomChoice[{False, True}]];
+      If[TrueQ[rowKeysQ === Automatic], rowKeysQ = RandomChoice[{0.7, 0.3} -> {False, True}] ];
+      If[MemberQ[{RandomChoice, Random}, rowKeysQ], rowKeysQ = RandomChoice[{False, True}] ];
       rowKeysQ = TrueQ[rowKeysQ];
 
       (* Generate column names *)
@@ -413,10 +416,15 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
             ];
 
         (* Handling the case when pointwise generators are used as vector generators. *)
-        (* If the 3rd element is an atop replace it with a list of it (that has appropriate length.) *)
-        tbl = Map[ Transpose @ If[ AtomQ[#[[3]]], ReplacePart[#, 3 -> Table[#[[3]], Length[#[[1]]]]], #]&, tbl];
+        (* If the 3rd element is an atom replace it with a list of it (that has appropriate length.) *)
+        tbl = Map[ If[ AtomQ[#[[3]]], ReplacePart[#, 3 -> Table[#[[3]], Length[#[[1]]]]], #]&, tbl];
 
-        tbl = Join @@ Values[ tbl ]
+        If[ !Apply[ And, MatrixQ /@ Values[tbl] ],
+          Message[RandomTabularDataset::ngen, Keys[Select[ MatrixQ /@ tbl, !#&]]];
+          Return[$Failed]
+        ];
+
+        tbl = Join @@ Values[ Transpose /@ tbl ]
       ];
 
       (* Convert to dataset according to form specification *)
