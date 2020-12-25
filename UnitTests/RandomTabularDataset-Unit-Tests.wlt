@@ -89,6 +89,18 @@ VerificationTest[
 
 
 VerificationTest[
+  ds1 = RandomTabularDataset[{30}];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == 30 &&
+      Dimensions[ds1][[2]] > 0
+  ,
+  True
+  ,
+  TestID -> "Basic-just-nRows-spec-2"
+];
+
+
+VerificationTest[
   ds1 = RandomTabularDataset[{20, Automatic}];
   TrueQ[ Head[ds1] === Dataset ] &&
       Dimensions[ds1][[1]] == 20 &&
