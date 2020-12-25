@@ -252,6 +252,9 @@ RandomTabularDataset[opts : OptionsPattern[]] :=
 RandomTabularDataset[nrows_ : (_?IntegerQ | Automatic), opts : OptionsPattern[]] :=
     RandomTabularDataset[{nrows, Automatic}, opts];
 
+RandomTabularDataset[ { nrows_ : (_?IntegerQ | Automatic) }, opts : OptionsPattern[]] :=
+    RandomTabularDataset[{nrows, Automatic}, opts];
+
 RandomTabularDataset[{Automatic, ncols_}, opts : OptionsPattern[]] :=
     RandomTabularDataset[{Automatic, Automatic}, opts];
 
