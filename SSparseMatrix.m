@@ -523,11 +523,11 @@ Clip[SSparseMatrix[objArg_], args___] ^:=
       SSparseMatrix[obj]
     ];
 
-N[SSparseMatrix[objArg_], args___] ^:=
-    Block[{obj = objArg},
-      obj["SparseMatrix"] = SparseArray[N[ obj["SparseMatrix"], args ]];
-      SSparseMatrix[obj]
-    ];
+(*N[SSparseMatrix[objArg_], args___] ^:=*)
+(*    Block[{obj = objArg},*)
+(*      obj["SparseMatrix"] = SparseArray[N[ obj["SparseMatrix"], args ]];*)
+(*      SSparseMatrix[obj]*)
+(*    ];*)
 
 Rescale[SSparseMatrix[objArg_], args___] ^:=
     Block[{obj = objArg},
