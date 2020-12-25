@@ -1681,7 +1681,7 @@ SMRMonRecommendByProfile[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonRecommendByProfile[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonRecommendByProfile[tagsArg : (_Association | _List | {_Integer..}), opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[tagsArg : (_?AssociationQ | _List | {_Integer..}), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommendByProfile[tagsArg, 12, opts][xs, context];
 
 SMRMonRecommendByProfile[nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
@@ -1705,10 +1705,10 @@ SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ.
       SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
     ] /; Length[profileInds] == Length[profileScores];
 
-SMRMonRecommendByProfile[tagsArg : (_Association | _List), opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[tagsArg : (_?AssociationQ | _List), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommendByProfile[tagsArg, 12, opts][xs, context];
 
-SMRMonRecommendByProfile[tagsArg : (_Association | _List), nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
+SMRMonRecommendByProfile[tagsArg : (_?AssociationQ | _List), nRes : (_Integer | All), opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{tags = tagsArg, p},
 
       If[ ListQ[tags], tags = AssociationThread[ tags -> 1. ] ];
