@@ -106,6 +106,15 @@
 
 *)
 
+(*
+   TODO:
+       1. [X] "ColumnNamesGenerator" -> None, means no column names.
+          Initially it meant integer columns.
+       2. [X] "ColumnNamesGenerator" -> v_String, means column names with prefix v.
+       3. [X] "MaxNumberOfValue" -> 0 handling.
+       4. [X] "Generators" -> None handling.
+*)
+
 BeginPackage["RandomTabularDataset`"];
 
 RandomTabularDataset::usage = "Generates a random tabular dataset";
@@ -235,7 +244,7 @@ RandomTabularDataset::nform =
     "The value of the option \"Form\" is expected to be one of \"Long\", \"Wide\", or Automatic.";
 
 RandomTabularDataset::nnov =
-    "The value of the option \"`1`\" is expected to be a positive integer or Automatic.";
+    "The value of the option \"`1`\" is expected to be a non-negative integer or Automatic.";
 
 RandomTabularDataset::ncngen =
     "The column names generator did not produce a list. Using automatic column names.";
@@ -292,6 +301,11 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
               RandomWord["CommonWords", #]&
             ]
       ];
+      If[StringQ[colNameGen],
+        With[{prefix = colNameGen},
+          colNameGen = If[ pointwiseGenerationQ, prefix <> ToString[#]&, Map[ prefix <> ToString[#]&, Range[#]]& ]
+        ]
+      ];
       If[TrueQ[colNameGen === None],
         colNameGen = If[ pointwiseGenerationQ, Identity, #2&]
       ];
@@ -312,12 +326,20 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
           ];
 
       If[TrueQ[aColValGens === Automatic] || TrueQ[aColValGens === RandomChoice], aColValGens = <||>];
-      If[TrueQ[aColValGens === Identity] || TrueQ[aColValGens === None],
+      If[TrueQ[aColValGens === Identity],
         aColValGens =
             If[ pointwiseGenerationQ,
               AssociationThread[Range[ncols] -> Table[Identity, ncols]],
               (*ELSE*)
               AssociationThread[Range[ncols] -> Table[Range[#]&, ncols]]
+            ]
+      ];
+      If[TrueQ[aColValGens === None],
+        aColValGens =
+            If[ pointwiseGenerationQ,
+              AssociationThread[Range[ncols] -> Table[Missing[]&, ncols]],
+              (*ELSE*)
+              AssociationThread[Range[ncols] -> Table[Table[Missing[],#]&, ncols]]
             ]
       ];
 
@@ -349,7 +371,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       If[TrueQ[maxNumberOfValues === Automatic] || TrueQ[maxNumberOfValues === All],
         maxNumberOfValues = nrows * ncols
       ];
-      If[! (IntegerQ[maxNumberOfValues] && maxNumberOfValues > 0),
+      If[! (IntegerQ[maxNumberOfValues] && maxNumberOfValues >= 0),
         Message[RandomTabularDataset::nnov, "MaxNumberOfValues"];
         Return[$Failed];
       ];
@@ -359,7 +381,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       If[TrueQ[minNumberOfValues === Automatic] || TrueQ[minNumberOfValues === All],
         minNumberOfValues = maxNumberOfValues
       ];
-      If[! (IntegerQ[minNumberOfValues] && minNumberOfValues > 0),
+      If[! (IntegerQ[minNumberOfValues] && minNumberOfValues >= 0),
         Message[RandomTabularDataset::nnov, "MinNumberOfValues"];
         Return[$Failed];
       ];
@@ -412,10 +434,18 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       (* Process generators *)
       aColValGens = Map[ MakeDistributionFunction[#, pointwiseGenerationQ] &, aColValGens ];
 
+      (* Handling of empty list of pairs *)
+      (* Probably not very fast, but it is a rare, corner case. *)
+      If[ Length[lsPairs] == 0,
+        lsPairs = Flatten[Table[{i, j}, {i, nrows}, {j, ncols}], 1];
+        aColValGens = AssociationThread[ Keys[aColValGens], If[ pointwiseGenerationQ, Missing[]&, Table[ Missing[], #]&] ];
+      ];
+
       (* Generate random values *)
-      If[ pointwiseGenerationQ,
+      If[pointwiseGenerationQ,
         tbl = MapThread[{#1, lsColNames[[#2]], aColValGens[#2][{#1, #2}]} &, Transpose[lsPairs]],
-        (*ELSE*)
+
+        (* ELSE*)
         tbl =
             GroupBy[
               lsPairs,
@@ -451,10 +481,16 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
 
         ToLowerCase[form] == "wide",
         aMissing = AssociationThread[lsColNames, Missing[]];
+
         res =
             GroupBy[tbl,
               First,
               Join[aMissing, AssociationThread[#[[All, 2]], #[[All, 3]]]] &];
+
+        If[ TrueQ[OptionValue[RandomTabularDataset, "ColumnNamesGenerator"] === None],
+          res = Values /@ res
+        ];
+
         res = If[rowKeysQ, Dataset[res], Dataset[Values@res]]
 
       ];
