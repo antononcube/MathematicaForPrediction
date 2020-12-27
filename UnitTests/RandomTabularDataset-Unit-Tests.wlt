@@ -50,8 +50,7 @@
 BeginTestSection["RandomTabularDataset-Unit-Tests.wlt.mt"];
 
 VerificationTest[(* 1 *)
-  (*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RandomTabularDataset.m"];*)
-  Import["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/Misc/RandomTabularDataset.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RandomTabularDataset.m"];
   Length[DownValues[RandomTabularDataset`RandomTabularDataset]] > 0
   ,
   True
