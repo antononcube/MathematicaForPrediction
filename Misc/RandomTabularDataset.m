@@ -111,8 +111,12 @@
        1. [X] "ColumnNamesGenerator" -> None, means no column names.
           Initially it meant integer columns.
        2. [X] "ColumnNamesGenerator" -> v_String, means column names with prefix v.
-       3. [X] "MaxNumberOfValue" -> 0 handling.
+       3. [X] "MaxNumberOfValues" -> 0 handling.
        4. [X] "Generators" -> None handling.
+       5. [ ] Multi-column generators specification. For example:
+              "Generators" -> <| {1,3,4} -> ProductDistribution[NormalDistribution[0, 2], NormalDistribution[1/3, 1], PoissonDistribution[3]] |>
+       6. [ ] Handling of "MaxNumberOfValues" per column specifications. For example:
+              "MaxNumberOfValues" -> <| 1->12, 3->All, 2->None |>
 *)
 
 BeginPackage["RandomTabularDataset`"];
