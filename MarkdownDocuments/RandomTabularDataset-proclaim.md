@@ -37,8 +37,11 @@ More specifically I want to:
 ## Demonstration
 
 The resource function 
-[ExampleDataset](https://resources.wolframcloud.com/FunctionRepository/resources/ExampleDataset) 
-makes datasets from ExampleData. Here is an example dataset:
+[`ExampleDataset`](https://resources.wolframcloud.com/FunctionRepository/resources/ExampleDataset) 
+makes datasets from 
+[`ExampleData`](https://reference.wolfram.com/language/ref/ExampleData.html). 
+Here is an example dataset:
+
 
 ```mathematica
 dsAW = ResourceFunction["ExampleDataset"][{"Statistics", "AnimalWeights"}]
