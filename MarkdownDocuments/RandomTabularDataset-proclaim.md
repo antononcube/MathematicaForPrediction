@@ -31,7 +31,7 @@ More specifically I want to:
   [Data Transformations Workflows Conversational Agent](https://github.com/antononcube/Raku-DSL-English-DataQueryWorkflows)
   I develop
   
-- Have a large corpus of datasets to illustrate the Data Quality verification algorithms or frameworks, like this
+- Have a large corpus of datasets to illustrate data quality verification algorithms or frameworks, like this
   [Data Quality Monitoring Module](https://github.com/antononcube/HowToBeADataScientistImpostor-book/blob/master/Part-5-Software-engineering-skills/Data-Quality-Monitoring-Module.md)
   
 ## Demonstration
@@ -58,7 +58,7 @@ IQB = Interval[Quartiles[N@Normal[dsAW[All, #BrainWeight/#BodyWeight &]]][[{1, 3
 dsCW[Select[IntervalMemberQ[IQB, #BrainWeight/ #BodyWeight] &]]
 ```
 
-**Remark:** Instead of quartile boundaries filtering we can filter 
+**Remark:** Instead of quartile boundaries filtering we can filter with
 `AnomalyDetection[Normal[dsAW[All, #BrainWeight/#BodyWeight &]]]`,
 but the latter is prone to produce results that are "too far off."
 
