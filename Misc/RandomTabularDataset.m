@@ -117,6 +117,7 @@
               "Generators" -> <| {1,3,4} -> ProductDistribution[NormalDistribution[0, 2], NormalDistribution[1/3, 1], PoissonDistribution[3]] |>
        6. [ ] Handling of "MaxNumberOfValues" per column specifications. For example:
               "MaxNumberOfValues" -> <| 1->12, 3->All, 2->None |>
+       7. [ ] Specification and implementation of row names generators.
 *)
 
 BeginPackage["RandomTabularDataset`"];
