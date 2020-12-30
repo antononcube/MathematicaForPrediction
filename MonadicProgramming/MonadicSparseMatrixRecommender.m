@@ -2311,7 +2311,7 @@ SMRMonSetTagWeights[___][__] :=
 
 Clear[SMRMonAnnexSubMatrices];
 
-SyntaxInformation[SMRMonAnnexSubMatrices] = { "ArgumentsPattern" -> { _, _. } };
+SyntaxInformation[SMRMonAnnexSubMatrices] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
 
 Options[SMRMonAnnexSubMatrices] = Options[SMRMonCreate];
 
