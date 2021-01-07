@@ -113,11 +113,12 @@
        2. [X] "ColumnNamesGenerator" -> v_String, means column names with prefix v.
        3. [X] "MaxNumberOfValues" -> 0 handling.
        4. [X] "Generators" -> None handling.
-       5. [ ] Multi-column generators specification. For example:
+       5. [X] "Generators" -> {{..}...} handling.
+       6. [ ] Multi-column generators specification. For example:
               "Generators" -> <| {1,3,4} -> ProductDistribution[NormalDistribution[0, 2], NormalDistribution[1/3, 1], PoissonDistribution[3]] |>
-       6. [ ] Handling of "MaxNumberOfValues" per column specifications. For example:
+       7. [ ] Handling of "MaxNumberOfValues" per column specifications. For example:
               "MaxNumberOfValues" -> <| 1->12, 3->All, 2->None |>
-       7. [ ] Specification and implementation of row names generators.
+       8. [ ] Specification and implementation of row names generators.
 *)
 
 BeginPackage["RandomTabularDataset`"];
@@ -199,6 +200,9 @@ MakeDistributionFunction[ spec_, True ] :=
       MemberQ[ {RandomColor, RandomImage, RandomInteger, RandomReal, RandomWord}, spec],
       With[{f = spec}, f[]&],
 
+      ListQ[spec],
+      With[{ls = spec}, RandomChoice[ls]&],
+
       True,
       spec
     ];
@@ -219,6 +223,9 @@ MakeDistributionFunction[ spec_, False ] :=
 
       MemberQ[ {RandomImage}, spec],
       With[{f = spec}, Table[f[], #]&],
+
+      ListQ[spec],
+      With[{ls = spec}, RandomChoice[ls, #]&],
 
       True,
       spec
@@ -344,7 +351,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
             If[ pointwiseGenerationQ,
               AssociationThread[Range[ncols] -> Table[Missing[]&, ncols]],
               (*ELSE*)
-              AssociationThread[Range[ncols] -> Table[Table[Missing[],#]&, ncols]]
+              AssociationThread[Range[ncols] -> Table[Table[Missing[], #]&, ncols]]
             ]
       ];
 
@@ -356,7 +363,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       (* Extend column values generators if given as a list *)
       If[
         ListQ[aColValGens],
-        aColValGens = Join[ aColValGens, Flatten @ Table[ aColValGens, Ceiling[ncols / Length[aColValGens]] ] ];
+        aColValGens = Join[ aColValGens, Flatten[ Table[ aColValGens, Ceiling[ncols / Length[aColValGens]] ], 1] ];
         aColValGens = Take[ aColValGens, ncols];
         aColValGens = AssociationThread[Range@ncols, aColValGens]
       ];

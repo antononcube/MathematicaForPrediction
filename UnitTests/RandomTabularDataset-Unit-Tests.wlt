@@ -505,6 +505,45 @@ VerificationTest[
 ];
 
 
+VerificationTest[
+  ClearAll[AAA, BBB];
+  {m, n} = {20, 10};
+  col = RandomColor[];
+  spec = { {"A", "B", "C"}, {14, AAA, BBB, col}};
+  ds1 = RandomTabularDataset[{m, n}, "Generators" -> spec, "PointwiseGeneration" -> False];
+  vec1 = Flatten[Normal[ds1[Values]]];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[vec1] &&
+      Union[vec1] == Union[ Flatten @ spec ]
+  ,
+  True
+  ,
+  TestID -> "Generators-list-extrapolation-5"
+];
+
+
+VerificationTest[
+  ClearAll[AAA, BBB];
+  {m, n} = {20, 10};
+  col = RandomColor[];
+  spec = { {"A", "B", "C"}, {14, AAA, BBB, col}};
+  ds1 = RandomTabularDataset[{m, n}, "Generators" -> spec, "PointwiseGeneration" -> True];
+  vec1 = Flatten[Normal[ds1[Values]]];
+  TrueQ[Head[ds1] === Dataset] &&
+      Dimensions[ds1][[1]] == m &&
+      Dimensions[ds1][[2]] == n &&
+      VectorQ[vec1] &&
+      Union[vec1] == Union[ Flatten @ spec ]
+  ,
+  True
+  ,
+  TestID -> "Generators-list-extrapolation-6"
+];
+
+
+
 (***********************************************************)
 (* Generator specs - shorthand of Random*                  *)
 (***********************************************************)
