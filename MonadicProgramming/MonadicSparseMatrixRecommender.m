@@ -1705,6 +1705,9 @@ SMRMonRecommendByProfile[profileInds : {_Integer..}, profileScores : {_?NumberQ.
       SMRMonRecommendByProfile[vec, nRes, opts][xs, context]
     ] /; Length[profileInds] == Length[profileScores];
 
+SMRMonRecommendByProfile[tagsArg : _?StringQ, opts : OptionsPattern[]][xs_, context_Association] :=
+    SMRMonRecommendByProfile[{tagsArg}, opts][xs, context];
+
 SMRMonRecommendByProfile[tagsArg : (_?AssociationQ | _List), opts : OptionsPattern[]][xs_, context_Association] :=
     SMRMonRecommendByProfile[tagsArg, 12, opts][xs, context];
 
