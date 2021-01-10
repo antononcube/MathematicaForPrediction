@@ -50,7 +50,8 @@
 BeginTestSection["RandomTabularDataset-Unit-Tests.wlt.mt"];
 
 VerificationTest[(* 1 *)
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RandomTabularDataset.m"];
+(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/RandomTabularDataset.m"];*)
+  Get["/Volumes/Macintosh HD/Users/antonov/MathematicaForPrediction/Misc/RandomTabularDataset.m"];
   Length[DownValues[RandomTabularDataset`RandomTabularDataset]] > 0
   ,
   True
@@ -369,6 +370,24 @@ VerificationTest[
   ,
   TestID -> "Form-RandomChoice-1"
 ];
+
+
+VerificationTest[
+  {m, n, k} = {20, 5, 18};
+  ds1 = RandomTabularDataset[{20, 5},
+    "Generators" -> {RandomChoice[{RandomWord[], RandomInteger[], RandomColor[]}, #] &},
+    "MaxNumberOfValues" -> 18,
+    "Form" -> "Long"];
+  TrueQ[ Head[ds1] === Dataset ] &&
+      Dimensions[ds1][[1]] == k &&
+      Dimensions[ds1][[2]] == 3 &&
+      Normal[Keys @ ds1[1]] == {"ID", "Variable", "Value"}
+  ,
+  True
+  ,
+  TestID -> "Form-Long-Incomplete-1"
+];
+
 
 (***********************************************************)
 (* Generator specs - special cases                         *)
