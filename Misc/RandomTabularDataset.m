@@ -508,7 +508,7 @@ RandomTabularDataset[{nrows_Integer, colsSpec_}, opts : OptionsPattern[]] :=
       ];
 
       (* In case the generated dataset has too few rows *)
-      If[ Dimensions[res][[1]] < nrows,
+      If[ ToLowerCase[form] == "wide" && Dimensions[res][[1]] < nrows,
         res =
             Join[
               res,
