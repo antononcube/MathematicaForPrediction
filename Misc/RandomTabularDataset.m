@@ -184,7 +184,8 @@ aDerivationDistributions = <|BernoulliGraphDistribution -> True, CensoredDistrib
   ProductDistribution -> True, ReliabilityDistribution -> True,
   SliceDistribution -> True, SplicedDistribution -> True,
   StandbyDistribution -> True, StationaryDistribution -> True,
-  TransformedDistribution -> True, TruncatedDistribution -> True|>;
+  TransformedDistribution -> True, TruncatedDistribution -> True,
+  LearnedDistribution -> True |>;
 
 
 (**************************************************************)
