@@ -138,8 +138,7 @@ QRMonFindAnomaliesByResiduals[ opts : OptionsPattern[] ][xs_, context_Associatio
             Fold[ QRMonBind,
               QRMonUnit[xs, context],
               {
-                QRMonErrors[ "RelativeErrors" -> relativeErrorsQ ],
-                QRMonPickPathPoints[ threshold, "PickAboveThreshold" -> True ],
+                QRMonPickPathPoints[ threshold, "PickAboveThreshold" -> True, "RelativeErrors" -> relativeErrorsQ ],
                 QRMonTakeValue
               }];
         outliers = outliers[[1]],
