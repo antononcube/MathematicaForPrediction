@@ -823,7 +823,7 @@ Clear[DatasetToMatrix];
 SyntaxInformation[DatasetToMatrix] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 
 Options[DatasetToMatrix] = {
-  "ExpectedColumnNames" -> {"Regressor", "Value"},
+  "ExpectedColumnNames" -> Automatic,
   "FunctionName" -> "DatasetToMatrix",
   "FailureSymbol" -> $Failed
 };
@@ -845,21 +845,21 @@ DatasetToMatrix[dataArg_Dataset, opts : OptionsPattern[] ] :=
       ];
 
       expectedColNames = OptionValue[ DatasetToMatrix, "ExpectedColumnNames" ];
-      If[ !( ListQ[expectedColNames] && Length[expectedColNames] >= 1 ),
-        Echo["The value of the option \"ExpectedColumnNames\" is expected to be a list with more than one element.", functionName <> ":"];
+      If[ !( ListQ[expectedColNames] && Length[expectedColNames] >= 1 || TrueQ[expectedColNames === Automatic]),
+        Echo["The value of the option \"ExpectedColumnNames\" is expected to be a list with more than one element or Automatic.", functionName <> ":"];
         Return[failureSymbol]
-      ];
-
-      expectedColNames = OptionValue[ DatasetToMatrix, "ExpectedColumnNames" ];
-      If[ !( ListQ[expectedColNames] && Length[expectedColNames] >= 1 ),
-        Echo["The value of the option \"ExpectedColumnNames\" is expected to be a list with more than one element"];
-        Return[]
       ];
 
       firstRecord = Normal[data[1, All]];
       colNames = If[ AssociationQ[firstRecord], Keys[firstRecord], None ];
 
       Which[
+        TrueQ[colNames === None] && TrueQ[ expectedColNames === Automatic ],
+        data = Normal @ data,
+
+        ListQ[colNames] && TrueQ[ expectedColNames === Automatic ],
+        data = Normal @ data[Values],
+
         TrueQ[colNames === None] && Dimensions[data][[2]] >= Length[expectedColNames],
         data = Normal @ data[All, Range[Length[expectedColNames]]],
 
