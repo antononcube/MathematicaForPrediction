@@ -177,7 +177,7 @@ GNNMonGetData[$GNNMonFailure] := $GNNMonFailure;
 GNNMonGetData[][xs_, context_Association] := GNNMonGetData[xs, context];
 
 GNNMonGetData[xs_, context_Association] :=
-    Block[{},
+    Block[{mat},
 
       Which[
 
@@ -185,19 +185,39 @@ GNNMonGetData[xs_, context_Association] :=
         GNNMonUnit[ context["data"], context ],
 
         MatrixQ[xs, NumericQ] && TrueQ[ Head[xs] === SparseArray ],
-        GNNMonUnit[ AssociationThread[ Range[Length[xs]] -> N[Normal[xs]] ], context ],
+        GNNMonUnit[ AssociationThread[ Range @ Length @ xs, N @ Normal @ xs ], context ],
+
+        TrueQ[ Head[xs] === Dataset ],
+        (* DatasetToMatrix is implemented in MathematicaForPredictionUtilities.m *)
+        mat =
+            DatasetToMatrix[
+              xs,
+              "ExpectedColumnNames" -> Automatic,
+              "FunctionName" -> "GNNMonGetData",
+              "FailureSymbol" -> $GNNMonFailure
+            ];
+
+        If[ TrueQ[mat === $GNNMonFailure],
+          Return[$GNNMonFailure]
+        ];
+
+        If[ AssociationQ @ Normal @ xs,
+          GNNMonUnit[ AssociationThread[ Keys @ Normal @ xs, N @ mat], context],
+          (*ELSE*)
+          GNNMonUnit[ AssociationThread[ Range @ Length @ xs, N @ mat], context]
+        ],
 
         MatrixQ[xs, NumericQ],
-        GNNMonUnit[ AssociationThread[ Range[Length[xs]] -> N[xs] ], context],
+        GNNMonUnit[ AssociationThread[ Range @ Length @ xs, N @ xs ], context],
 
         SSparseMatrixQ[xs],
-        GNNMonUnit[ AssociationThread[ RowNames[xs] -> Normal[N[SparseArray[xs]]] ], context],
+        GNNMonUnit[ AssociationThread[ RowNames[xs], Normal[N[SparseArray[xs]]] ], context],
 
         DataAssociationQ[ xs ],
         GNNMonUnit[xs, context],
 
         True,
-        Echo["Cannot find data.", "GetData:"];
+        Echo["Cannot find data.", "GNNMonGetData:"];
         $GNNMonFailure
       ]
 
