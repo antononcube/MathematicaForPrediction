@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmai l . c om,
+    antononcube @ posteo . net,
     Windermere, Florida, USA.
 *)
 
@@ -73,7 +73,7 @@ VerificationTest[(* 2 *)
 
 
 VerificationTest[(* 3 *)
-  findData =
+  finData =
       TemporalData[TimeSeries,
         List[List[
           StructuredArray[QuantityArray, List[22],
