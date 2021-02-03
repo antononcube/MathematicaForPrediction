@@ -262,7 +262,7 @@ QRMonSetNet[__][___] := $QRMonFailure;
 
 
 (**************************************************************)
-(* GetData                                                    *)
+(* DataToNormalForm                                           *)
 (**************************************************************)
 
 Clear[DataToNormalForm];
@@ -276,60 +276,13 @@ DataToNormalForm[data_, functionName_String] :=
       Transpose[{ Range[Length[data]], data }],
 
       TrueQ[ Head[data] === Dataset ],
-      DatasetToNormalForm[data, functionName]
-    ];
-
-
-(**************************************************************)
-(* DatasetToNormalForm                                        *)
-(**************************************************************)
-
-Clear[DatasetToNormalForm];
-
-DatasetToNormalForm[dataArg_Dataset, functionName_String ] :=
-    Block[{data = dataArg, namedRowsQ, expectedColNames, firstRecord, colNames},
-
-      If[ AssociationQ[Normal[data]],
-        namedRowsQ = True;
-        data = data[Values];
-      ];
-
-      expectedColNames = {"Regressor", "Value"};
-
-      firstRecord = Normal[data[1, All]];
-      colNames = If[ AssociationQ[firstRecord], Keys[firstRecord], None ];
-
-      Which[
-        TrueQ[colNames === None] && Dimensions[data][[2]] >= 2,
-        data = Normal @ data[All, {1, 2}],
-
-        Length[ Intersection[ colNames, expectedColNames] ] == 2,
-        data = Normal @ data[All, {"Regressor", "Value"}][Values],
-
-        Length[colNames] >= 2,
-
-        Echo[ "When the data argument is a dataset the expected columns are: " <> ToString @ Map[ "\"" <> # <> "\""&, expectedColNames ], functionName <> ":" ];
-
-        colNames = Map[ If[ StringQ[#], "\"" <> # <> "\"", #]&, colNames ];
-
-        Echo[ Row[{"Proceeding by considering the first column ", colNames[[1]],
-          " to be \"Regressor\" and the second column ", colNames[[2]], " to be \"Value\"."}],
-          functionName <> ":"
-        ];
-
-        data = Normal[data[Values, {1, 2}]],
-
-        True,
-        Echo[ "Cannot use dataset.", functionName <> ":" ];
-        Return[$QRMonFailure]
-      ];
-
-      If[ !MatrixQ[data, NumericQ],
-        Echo[ "The columns of the dataset are expected to be numerical.", functionName <> ":" ];
-        Return[$QRMonFailure]
-      ];
-
-      data
+      (* DatasetToMatrix is implemented in MathematicaForPredictionUtilities.m *)
+      DatasetToMatrix[
+        data,
+        "ExpectedColumnNames" -> {"Regressor", "Value"},
+        "FunctionName" -> functionName,
+        "FailureSymbol" -> $QRMonFailure
+      ]
     ];
 
 
@@ -1358,7 +1311,7 @@ Clear[QRMonPickPathPoints];
 
 SyntaxInformation[QRMonPickPathPoints] = { "ArgumentsPattern" -> {_, OptionsPattern[]} };
 
-Options[QRMonPickPathPoints] = { "PickAboveThreshold" -> False };
+Options[QRMonPickPathPoints] = { "PickAboveThreshold" -> False, "RelativeErrors" -> False };
 
 QRMonPickPathPoints[$QRMonFailure] := $QRMonFailure;
 
@@ -1380,7 +1333,11 @@ QRMonPickPathPoints[threshold_?NumberQ, opts : OptionsPattern[] ][xs_, context_]
         criteriaFunc = Greater;
       ];
 
-      res = Map[ Function[{qf}, Select[data, criteriaFunc[ Abs[qf[#[[1]]] - #[[2]]], threshold] &]], qFuncs ];
+      If[ TrueQ[OptionValue[QRMonPickPathPoints, "RelativeErrors"]],
+        res = Map[ Function[{qf}, Select[data, criteriaFunc[ Abs[ (qf[#[[1]]] - #[[2]]) / #[[2]] ], threshold] &]], qFuncs ],
+        (*ELSE*)
+        res = Map[ Function[{qf}, Select[data, criteriaFunc[ Abs[qf[#[[1]]] - #[[2]]], threshold] &]], qFuncs ]
+      ];
 
       QRMonUnit[res, context]
     ] /; threshold >= 0;
