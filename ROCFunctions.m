@@ -265,7 +265,7 @@ ToROCAssociation[ {trueLabel_?AtomQ, falseLabel_?AtomQ}, apfAssoc_Association] :
 
 ToROCAssociation[___] := (Message[ToROCAssociation::sgntrs];$Failed);
 
-Clear[ROCAssociationQ]
+Clear[ROCAssociationQ];
 ROCAssociationQ[ obj_ ] :=
     AssociationQ[obj] &&
         Length[Intersection[Keys[obj], {"TruePositive", "FalsePositive", "TrueNegative", "FalseNegative"}]] == 4;
@@ -350,7 +350,7 @@ aROCFunctions =
     ];
 
 
-Clear[ROCFunctions]
+Clear[ROCFunctions];
 ROCFunctions["Methods"] := {"FunctionInterpretations", "FunctionNames", "Functions", "Methods", "Properties"};
 ROCFunctions["Properties"] := ROCFunctions["Methods"];
 ROCFunctions["FunctionNames"] := Keys[aROCAcronyms];
