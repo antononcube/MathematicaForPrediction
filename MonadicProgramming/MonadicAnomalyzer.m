@@ -199,8 +199,8 @@ QRMonPlaceOutliers[ {nBottom_?IntegerQ, nTop_?IntegerQ}, opts : OptionsPattern[]
         qFunc = 0&
       ];
 
-      pointsBottom2 = Map[ { #[[1]], factor * (#[[2]] - qFunc[ #[[1]] ]) + qFunc[ #[[1]] ] - offset }&, pointsBottom];
-      pointsTop2 = Map[ { #[[1]], factor * (#[[2]] - qFunc[ #[[1]] ]) + qFunc[ #[[1]] ] + offset }&, pointsTop];
+      pointsBottom2 = Map[ { #[[1]], qFunc[ #[[1]] ] - offset - factor * Abs[ #[[2]] - qFunc[ #[[1]] ] ] }&, pointsBottom];
+      pointsTop2 =    Map[ { #[[1]], qFunc[ #[[1]] ] + offset + factor * Abs[ #[[2]] - qFunc[ #[[1]] ] ] }&, pointsTop];
 
       data = data /. Join[ Thread[ pointsBottom -> pointsBottom2 ], Thread[ pointsTop -> pointsTop2 ] ];
 
