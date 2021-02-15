@@ -141,11 +141,21 @@ QRMonFindAnomaliesByResiduals[ opts : OptionsPattern[] ][xs_, context_Associatio
                 QRMonPickPathPoints[ threshold, "PickAboveThreshold" -> True, "RelativeErrors" -> relativeErrorsQ ],
                 QRMonTakeValue
               }];
+
+        If[ TrueQ[outliers === $QRMonFailure], Return[$QRMonFailure] ];
+
         outliers = outliers[[1]],
 
         TrueQ[ outlierFunc =!= None],
         errs =
-            Fold[ QRMonBind, QRMonUnit[xs, context], { QRMonErrors[ "RelativeErrors" -> relativeErrorsQ], QRMonTakeValue }];
+            Fold[ QRMonBind,
+              QRMonUnit[xs, context],
+              {
+                QRMonErrors[ "RelativeErrors" -> relativeErrorsQ],
+                QRMonTakeValue
+              }];
+
+        If[ TrueQ[outliers === $QRMonFailure], Return[$QRMonFailure] ];
 
         outPos = OutlierPosition[ Abs[errs[[1, All, 2]]], TopOutliers @* outlierFunc ];
 
@@ -182,7 +192,7 @@ SyntaxInformation[SMRMonFindAnomalies] = { "ArgumentsPattern" -> { _., OptionsPa
 
 Options[SMRMonFindAnomalies] = {
   "NumberOfNearestNeighbors" -> 10,
-  "OutlierIdentifier" -> (BottomOutliers @* SPLUSQuartileIdentifierParameters),
+  "ThresholdsIdentifier" -> (BottomOutliers @* SPLUSQuartileIdentifierParameters),
   "AggregationFunction" -> Mean,
   "Property" -> "SSparseMatrix"
 };
@@ -195,14 +205,14 @@ SMRMonFindAnomalies[ opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonFindAnomalies[ Automatic, opts ][xs, context];
 
 SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{ nns, outFunc, aggrFunc, newContext, prop, smat, recs, outlierInds, outlierThresholds, knownProperties },
+    Block[{ nns, outThresholdsFunc, aggrFunc, newContext, prop, smat, recs, outlierInds, outlierThresholds, knownProperties },
 
       (* Preliminary assignments. *)
 
-      knownProperties = { "Distances", "SSparseMatrix", "RowNames", "OutlierThresholds", "Properties" };
+      knownProperties = { "Distances", "SSparseMatrix", "RowNames", "Indices", "OutlierThresholds", "Properties" };
 
       nns = OptionValue[ SMRMonFindAnomalies, "NumberOfNearestNeighbors" ];
-      outFunc = OptionValue[ SMRMonFindAnomalies, "OutlierIdentifier" ];
+      outThresholdsFunc = OptionValue[ SMRMonFindAnomalies, "ThresholdsIdentifier" ];
       aggrFunc = OptionValue[ SMRMonFindAnomalies, "AggregationFunction" ];
       prop = OptionValue[ SMRMonFindAnomalies, "Property" ];
 
@@ -232,7 +242,14 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         recs =
             Association[
               Map[
-                # -> Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommendByHistory[#, nns], SMRMonTakeValue} ]&,
+                # ->
+                    Fold[
+                      SMRMonBind,
+                      SMRMonUnit[xs, context],
+                      {
+                        SMRMonRecommendByHistory[#, nns, "Normalize" -> False],
+                        SMRMonTakeValue
+                      } ]&,
                 RowNames[context["M"]]
               ]
             ],
@@ -242,7 +259,14 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         recs =
             Association[
               Map[
-                # -> Fold[ SMRMonBind, SMRMonUnit[xs, context], { SMRMonRecommendByProfile[ SparseArray[smat[[#,All]]], nns], SMRMonTakeValue} ]&,
+                # ->
+                    Fold[
+                      SMRMonBind,
+                      SMRMonUnit[xs, context],
+                      {
+                        SMRMonRecommendByProfile[ SparseArray[smat[[#, All]]], nns, "Normalize" -> False],
+                        SMRMonTakeValue
+                      } ]&,
                 RowNames[smat]
               ]
             ],
@@ -269,18 +293,23 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
 
       (* If smat is not Automatic and the outliers thresholds are already in the context then use them. *)
       (* If smat is Automatic then (re-)compute the outlier thresholds. *)
-      If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
+      (* Is storing of the outlier thresholds needed? *)
+      (* They seems cheap to compute, and it is confusing to keep as "state" variable. *)
+      (*If[ SSparseMatrixQ[smat] && KeyExistsQ[context, "outlierThresholds"],
 
         aggrFunc = context["aggregationFunction"];
         outlierThresholds = context["outlierThresholds"];
         With[ {th = outlierThresholds},
           outlierInds = OutlierPosition[ Values[recs], th& ]
         ],
-        (* ELSE *)
+        *)(* ELSE *)(*
 
-        outlierThresholds = outFunc[ Values[recs] ];
-        outlierInds = OutlierPosition[ Values[recs], outFunc ]
-      ];
+        outlierThresholds = outThresholdsFunc[ Values[recs] ];
+        outlierInds = OutlierPosition[ Values[recs], outThresholdsFunc ]
+       ];*)
+
+      outlierThresholds = outThresholdsFunc[ Values[recs] ];
+      outlierInds = OutlierPosition[ Values[recs], outThresholdsFunc ];
 
       (* The updated context. *)
       newContext = Join[ context, <| "outlierThresholds" -> outlierThresholds, "aggregationFunction" -> aggrFunc, "numberOfNNs" -> nns |>];
@@ -293,8 +322,11 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
         MemberQ[ ToLowerCase[{ "Distances", "AggregatedDistances" }], ToLowerCase[prop] ],
         SMRMonUnit[ recs, newContext ],
 
-        MemberQ[ ToLowerCase[{ "RowNames", "Indices" }], ToLowerCase[prop] ],
+        MemberQ[ ToLowerCase[{ "Indices", "Indexes" }], ToLowerCase[prop] ],
         SMRMonUnit[ outlierInds, newContext ],
+
+        MemberQ[ ToLowerCase[{ "RowNames" }], ToLowerCase[prop] ],
+        SMRMonUnit[ RowNames[context["M"]][[outlierInds]], newContext ],
 
         MemberQ[ ToLowerCase[{ "Thresholds", "OutlierThresholds" }], ToLowerCase[prop] ],
         SMRMonUnit[ outlierThresholds, newContext ],
@@ -308,7 +340,7 @@ SMRMonFindAnomalies[ arg_, opts : OptionsPattern[] ][xs_, context_Association] :
 
         True,
         Echo[ "Unknown property. The property should be one of : " <> ToString[knownProperties] <> ".", "SMRMonFindAnomalies:"];
-        Return[$SMRMonFailure]
+        $SMRMonFailure
       ]
     ];
 
