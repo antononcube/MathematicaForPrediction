@@ -128,7 +128,8 @@ TrieRootToLeafPathRules::usage = "TrieRootToLeafPathRules[trie] gives rules for 
 TrieRootToLeafPathProbabilityRules::usage = "TrieRootToLeafPathProbabilityRules[trie] gives path probability rules \
 for all paths from the root node to the leaf nodes.";
 
-TrieGetWords::usage = "TrieGetWords[ tr_, sw_List ] gives a list words in tr that start with sw.";
+TrieGetWords::usage = "TrieGetWords[ tr_, sw_List ] gives a list words in tr that start with sw. \
+The second argument can be All.";
 
 TrieRemove::usage = "TrieRemove removes a \"word\" from a trie.";
 
@@ -608,9 +609,9 @@ TrieRootToLeafPathProbabilityRules[tr_?TrieQ] :=
 
 Clear[TrieGetWords];
 
-SyntaxInformation[TrieGetWords] = { "ArgumentsPattern" -> { _, _ } };
+SyntaxInformation[TrieGetWords] = { "ArgumentsPattern" -> { _, _. } };
 
-TrieGetWords::args = "The first of argument is expected to be a trie, the second argument is expected to be a list or All";
+TrieGetWords::args = "The first of argument is expected to be a trie, the second argument is expected to be a list or All.";
 
 TrieGetWords[ tr_?TrieQ, word : ( _List | All ) : All ] :=
     Which[
