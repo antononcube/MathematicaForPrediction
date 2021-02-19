@@ -81,6 +81,8 @@ TrieBodyQ::usage = "A predicate is an expression a trie body.";
 
 TrieRuleQ::usage = "A predicate is an expression a trie rule.";
 
+TrieValueRuleQ::usage = "A predicate is an expression a trie value rule.";
+
 TrieRetrieve::usage = "TrieRetrieve[t_, w_List] gives the node corresponding to the last \"character\" of the \"word\" w in the trie t.";
 
 TrieSubTrie::usage = "TrieSubTrie[t_, w_List] gives the sub-trie corresponding to the last \"character\" of the \"word\" w in the trie t.";
@@ -202,6 +204,11 @@ Clear[TrieRuleQ];
 SyntaxInformation[TrieRuleQ] = { "ArgumentsPattern" -> { _ } };
 TrieRuleQ[a_Rule] := MatchQ[a, Rule[x_, b_?TrieBodyQ]];
 TrieRuleQ[___] := False;
+
+Clear[TrieValueRuleQ];
+SyntaxInformation[TrieValueRuleQ] = { "ArgumentsPattern" -> { _ } };
+TrieValueRuleQ[a_Rule] := MatchQ[a, Rule[$TrieValue, _]];
+TrieValueRuleQ[___] := False;
 
 (* This is private context only. *)
 Clear[TrieWithTrieRootQ];
