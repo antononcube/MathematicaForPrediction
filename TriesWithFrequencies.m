@@ -77,6 +77,8 @@ $TrieValue::usage = "Symbol used as a key for a trie node value.";
 
 TrieQ::usage = "A predicate is an expression a trie.";
 
+TrieWithTrieRootQ = "A predicate is an expression a trie with a root that is $TrieRoot.";
+
 TrieBodyQ::usage = "A predicate is an expression a trie body.";
 
 TrieRuleQ::usage = "A predicate is an expression a trie rule.";
@@ -210,7 +212,6 @@ SyntaxInformation[TrieValueRuleQ] = { "ArgumentsPattern" -> { _ } };
 TrieValueRuleQ[a_Rule] := MatchQ[a, Rule[$TrieValue, _]];
 TrieValueRuleQ[___] := False;
 
-(* This is private context only. *)
 Clear[TrieWithTrieRootQ];
 TrieWithTrieRootQ[a_Association] := MatchQ[a, Association[$TrieRoot -> b_?TrieBodyQ]];
 TrieWithTrieRootQ[___] := False;
