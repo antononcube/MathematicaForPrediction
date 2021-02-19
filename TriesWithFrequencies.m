@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    antononcube @ posteo . net,
     Windermere, Florida, USA.
 *)
 
@@ -164,6 +164,10 @@ TrieKeyExistsQ::usage = "TrieKeyExistsQ[tr_, sw_List] finds is the list sw a key
 TrieKeyQ::usage = "Synonym of TrieKeyExistsQ.";
 
 TriePrune::usage = "TriePrune[t, maxLvl] prunes the trie to a maximum node level. (The root is level 0.)";
+
+TrieKeyValueTraverse::usage = "TrieKeyValueTraverse[t, composeFunc, joinFunc, nodeFunc] traverses a trie.";
+
+TrieKeyTraverse::usage = "TrieKeyTraverse[t, composeFunc, joinFunc] traverses the keys of a trie.";
 
 TrieMap::usage = "TrieMap[t, preFunc, postFunc] traverses the trie t and applies preFunc and postFunc at each node.";
 
@@ -640,6 +644,7 @@ TrieGetWords[___] :=
       $Failed
     ];
 
+
 (************************************************************)
 (* TriePrune                                                *)
 (************************************************************)
@@ -670,7 +675,68 @@ TriePruneRec[tr_?TrieRuleQ, maxLevel_Integer, level_Integer] :=
 
 
 (************************************************************)
-(* Trie Map / traversal                                     *)
+(* Trie traversal                                           *)
+(************************************************************)
+
+Clear[TrieKeyValueTraverse];
+
+SyntaxInformation[TrieKeyValueTraverse] = { "ArgumentsPattern" -> { _, _., _., _. } };
+
+TrieKeyValueTraverse::args = "The first argument is expected to be a trie.";
+
+TrieKeyValueTraverse[tr_?TrieQ, composeFunc_ : List, joinFunc_ : List, nodeFunc_ : Identity] :=
+    TrieKeyValueTraverseRec[Normal[tr][[1]], composeFunc, joinFunc, nodeFunc, 1];
+
+TrieKeyValueTraverse[___] :=
+    Block[{},
+      Message[TrieKeyValueTraverse::args];
+      $Failed
+    ];
+
+TrieKeyValueTraverseRec[trRule_?TrieValueRuleQ, composeFunc_, joinFunc_, nodeFunc_, lvl_Integer] := nodeFunc[trRule];
+
+TrieKeyValueTraverseRec[trRule_?TrieRuleQ, composeFunc_, joinFunc_, nodeFunc_, lvl_Integer] :=
+    Block[{res},
+      res = Map[TrieKeyValueTraverseRec[#, composeFunc, joinFunc, nodeFunc, lvl + 1] &, Normal@trRule[[2]]];
+      composeFunc[trRule[[1]], joinFunc @@ res]
+    ];
+
+
+(************************************************************)
+(* Trie keys traversal                                      *)
+(************************************************************)
+
+Clear[TrieKeyTraverse];
+
+SyntaxInformation[TrieKeyTraverse] = { "ArgumentsPattern" -> { _, _., _. } };
+
+TrieKeyTraverse::args = "The first argument is expected to be a trie.";
+
+TrieKeyTraverse[tr_?TrieQ, composeFunc_ : List, joinFunc_ : List] :=
+    TrieKeyTraverseRec[Normal[tr][[1]], composeFunc, joinFunc, 1];
+
+TrieKeyTraverse[___] :=
+    Block[{},
+      Message[TrieKeyTraverse::args];
+      $Failed
+    ];
+
+TrieKeyTraverseRec[trRule_?TrieValueRuleQ, composeFunc_, joinFunc_, lvl_Integer] := {};
+
+TrieKeyTraverseRec[trRule_?TrieRuleQ, composeFunc_, joinFunc_, lvl_Integer] :=
+    Block[{res},
+      res = Map[TrieKeyTraverseRec[#, composeFunc, joinFunc, lvl + 1] &, Normal@trRule[[2]]];
+      res = DeleteCases[res, {}];
+      If[Length[res] == 0,
+        trRule[[1]],
+        (*ELSE*)
+        composeFunc[trRule[[1]], joinFunc @@ res]
+      ]
+    ];
+
+
+(************************************************************)
+(* Trie Map                                                 *)
 (************************************************************)
 
 Clear[TrieMap, TrieMapRec];
@@ -759,7 +825,6 @@ ThresholdRemove[tr_?TrieRuleQ, threshold_?NumberQ, postfix_, belowThresholdQ : (
 
       tr[[1]] -> Join[KeyTake[tr[[2]], $TrieValue], resChildren]
     ];
-
 
 
 (************************************************************)
@@ -853,6 +918,7 @@ GrFramed[text_] :=
     Framed[text, {Background -> RGBColor[1, 1, 0.8],
       FrameStyle -> RGBColor[0.94, 0.85, 0.36], FrameMargins -> Automatic}];
 
+
 Clear[TrieForm];
 SyntaxInformation[TrieForm] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
 Options[TrieForm] = Options[LayeredGraphPlot];
@@ -862,6 +928,7 @@ TrieForm[mytrie_?TrieQ, opts : OptionsPattern[]] :=
       opts,
       VertexShapeFunction -> (Text[GrFramed[#2[[1]]], #1] &), PlotTheme -> "Classic" ];
 
+
 Clear[TrieToJSON];
 SyntaxInformation[TrieToJSON] = { "ArgumentsPattern" -> { _ } };
 TrieToJSON[tr_?TrieQ] := TrieToJSON[First@Normal@tr];
@@ -870,6 +937,7 @@ TrieToJSON[tr_?TrieRuleQ] :=
       {"key" -> k, "value" -> tr[[2]][$TrieValue],
         "children" -> Map[TrieToJSON, Normal[KeyDrop[tr[[2]], $TrieValue]]]}
     ];
+
 
 Clear[TrieToListTrie];
 SyntaxInformation[TrieToListTrie] = { "ArgumentsPattern" -> { _ } };
