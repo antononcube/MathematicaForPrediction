@@ -775,15 +775,21 @@ TrieRandomChoiceRec[trRule_?TrieRuleQ] :=
       ];
       recurseQ = RandomChoice[{childrenProb, 1.0 - childrenProb} -> {True, False}];
 
-      (* This recursion is slow. The choice over which element to recurse should happen beforehand. *)
       If[! recurseQ,
         {trRule[[1]]} -> trRule[[2]][$TrieValue],
         (*ELSE*)
-
-        res = Map[TrieRandomChoiceRec, Normal@KeyDrop[trRule[[2]], $TrieValue]];
-        res = RandomChoice[res[[All, 2]] -> res[[All, 1]]];
-        Flatten[{trRule[[1]], res}] -> trRule[[2]][$TrieValue]
+        (* The choice over which element to recurse should happen beforehand. *)
+        res = TrieBodyElementRandomChoice[trRule[[2]]];
+        res = TrieRandomChoiceRec[ res -> trRule[[2]][res] ];
+        Flatten[{trRule[[1]], res[[1]]}] -> trRule[[2]][$TrieValue]
       ]
+    ];
+
+Clear[TrieBodyElementRandomChoice];
+TrieBodyElementRandomChoice[trb_?TrieBodyQ] :=
+    Block[{res},
+      res = Map[#[$TrieValue] &, KeyDrop[trb, $TrieValue]];
+      RandomChoice[ Values[res] -> Keys[res] ]
     ];
 
 
