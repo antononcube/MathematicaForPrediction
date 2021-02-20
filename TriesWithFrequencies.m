@@ -169,6 +169,8 @@ TrieKeyValueTraverse::usage = "TrieKeyValueTraverse[t, composeFunc, joinFunc, no
 
 TrieKeyTraverse::usage = "TrieKeyTraverse[t, composeFunc, joinFunc] traverses the keys of a trie.";
 
+TrieRandomChoice::usage = "TrieRandomChoice[t, n] gives n random \"words\" from the trie t.";
+
 TrieMap::usage = "TrieMap[t, preFunc, postFunc] traverses the trie t and applies preFunc and postFunc at each node.";
 
 TrieNodeCounts::usage = "TrieNodeCounts[t] gives and association with the total number of nodes, internal nodes only, and leaves only.";
@@ -651,11 +653,20 @@ TrieGetWords[___] :=
 
 Clear[TriePrune, TriePruneRec];
 
-SyntaxInformation[TrieMap] = { "ArgumentsPattern" -> { _, _ } };
+SyntaxInformation[TriePrune] = { "ArgumentsPattern" -> { _, _ } };
+
+TriePrune::args = "The first argument is expected to be a trie. \
+The second argument is expected to be a positive integer.";
 
 TriePrune[trie_?TrieQ, maxLevel_Integer] :=
     Block[{},
       Association[TriePruneRec[First @ Normal @ trie, maxLevel, 0]]
+    ] /; maxLevel > 0;
+
+TriePrune[___] :=
+    Block[{},
+      Message[TriePrune::args];
+      $Failed
     ];
 
 TriePruneRec[tr_?TrieRuleQ, maxLevel_Integer, level_Integer] :=
@@ -675,7 +686,7 @@ TriePruneRec[tr_?TrieRuleQ, maxLevel_Integer, level_Integer] :=
 
 
 (************************************************************)
-(* Trie traversal                                           *)
+(* Trie key-value traversal                                 *)
 (************************************************************)
 
 Clear[TrieKeyValueTraverse];
@@ -731,6 +742,44 @@ TrieKeyTraverseRec[trRule_?TrieRuleQ, composeFunc_, joinFunc_, lvl_Integer] :=
         trRule[[1]],
         (*ELSE*)
         composeFunc[trRule[[1]], joinFunc @@ res]
+      ]
+    ];
+
+
+(************************************************************)
+(* Trie random choice                                       *)
+(************************************************************)
+
+Clear[TrieRandomChoice];
+
+SyntaxInformation[TrieRandomChoice] = { "ArgumentsPattern" -> { _, _., _., _. } };
+
+TrieRandomChoice::args = "The first argument is expected to be a trie. \
+The second (optional) argument is expected to be a positive integer.";
+
+Clear[TrieRandomChoice];
+TrieRandomChoice[tr_?TrieQ, n_Integer : 1] :=
+    Table[TrieRandomChoiceRec[Normal[tr][[1]]][[1]], n];
+
+Clear[TrieRandomChoiceRec];
+
+TrieRandomChoiceRec[trRule_?TrieValueRuleQ] := trRule;
+
+TrieRandomChoiceRec[trRule_?TrieRuleQ] :=
+
+    Block[{recurseQ, res, childrenProb},
+
+      childrenProb = TrieValueTotal[trRule[[2]]];
+
+      recurseQ = RandomChoice[{childrenProb, 1 - childrenProb} -> {True, False}];
+
+      If[! recurseQ,
+        {trRule[[1]]} -> trRule[[2]][$TrieValue],
+        (*ELSE*)
+
+        res = Map[TrieRandomChoiceRec, Normal@KeyDrop[trRule[[2]], $TrieValue]];
+        res = RandomChoice[res[[All, 2]] -> res[[All, 1]]];
+        Flatten[{trRule[[1]], res}] -> trRule[[2]][$TrieValue]
       ]
     ];
 
