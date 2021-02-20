@@ -752,10 +752,10 @@ TrieKeyTraverseRec[trRule_?TrieRuleQ, composeFunc_, joinFunc_, lvl_Integer] :=
 
 Clear[TrieRandomChoice];
 
-SyntaxInformation[TrieRandomChoice] = { "ArgumentsPattern" -> { _, _., _., _. } };
+SyntaxInformation[TrieRandomChoice] = { "ArgumentsPattern" -> { _, _. } };
 
 TrieRandomChoice::args = "The first argument is expected to be a trie. \
-The second (optional) argument is expected to be a positive integer.";
+The second, optional argument is expected to be a positive integer.";
 
 Clear[TrieRandomChoice];
 TrieRandomChoice[tr_?TrieQ, n_Integer : 1] :=
@@ -775,6 +775,7 @@ TrieRandomChoiceRec[trRule_?TrieRuleQ] :=
       ];
       recurseQ = RandomChoice[{childrenProb, 1.0 - childrenProb} -> {True, False}];
 
+      (* This recursion is slow. The choice over which element to recurse should happen beforehand. *)
       If[! recurseQ,
         {trRule[[1]]} -> trRule[[2]][$TrieValue],
         (*ELSE*)
