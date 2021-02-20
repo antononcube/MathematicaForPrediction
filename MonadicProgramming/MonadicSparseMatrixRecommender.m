@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    antononcube @ posteo . net,
     Windermere, Florida, USA.
 *)
 
@@ -168,6 +168,8 @@ SMRMonRecommendByProfile::usage = "Recommends items based on profile.";
 
 SMRMonRecommendByCorrelation::usage = "Recommends items based on a correlation matrix. \
 (The context value for the key \"timeSeriesMatrix\" should have the same dimensions and row names as the recommendation matrix.)";
+
+SMRMonBatchRecommend::usage = "Recommends items using a SSparseMatrix object or a items specification.";
 
 SMRMonToProfileVector::usage = "SMRMonToProfileVector[ prof : ( { _String ..} | Association[ (_Integer -> _?NumberQ) .. ] | Association[ (_String -> _?NumberQ) .. ] ) ] \
 makes a profile vector from an argument that is a list of tags or an association of scored indices or scored tags.";
@@ -1574,9 +1576,9 @@ SMRMonRecommend[ itemIndices : {_Integer...}, itemRatings : {_?NumberQ...}, nRes
     Block[{removeHistoryQ, itemNamesQ, normalizeQ, vectorResultQ, vec, filterIDs = All,
       filterInds, smat, fmat, recs, recsInds, recsVals, ordInds, rowNames},
 
-      If[Length[itemIndices],
+      If[Length[itemIndices] == 0,
         Echo["Empty history as an argument.", "SMRMonRecommend:"];
-        Return[<||>]
+        Return[ SMRMonUnit[<||>, context] ]
       ];
 
       removeHistoryQ = TrueQ[OptionValue[SMRMonRecommend, "RemoveHistory"]];
@@ -1877,6 +1879,115 @@ SMRMonRecommendByCorrelation[ searchVector_?VectorQ, nRes_Integer, opts : Option
     ];
 
 SMRMonRecommendByCorrelation[___][__] := $SMRMonFailure;
+
+
+(**************************************************************)
+(* SMRMonBatchRecommend                                       *)
+(**************************************************************)
+
+Clear[SMRMonBatchRecommend];
+
+SyntaxInformation[SMRMonBatchRecommend] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
+
+Options[SMRMonBatchRecommend] = {
+  "Data" -> None,
+  "RemoveHistory" -> True,
+  "Normalize" -> True,
+  "MatrixResult" -> False
+};
+
+SMRMonBatchRecommend[xs_, context_Association] := $SMRMonFailure;
+
+SMRMonBatchRecommend[xs_, context_Association][] :=
+    SMRMonBatchRecommend[ Automatic, 12 ][xs, context];
+
+SMRMonBatchRecommend[xs_, context_Association][ opts : OptionsPattern[] ] :=
+    SMRMonBatchRecommend[ Automatic, 12, opts ][xs, context];
+
+SMRMonBatchRecommend[ data : ( Automatic | _List | _?SSparseMatrixQ ), nRes_Integer, opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{removeHistoryQ, normalizeQ, matrixResultQ, dataRowNames, matRecs, matDiag},
+
+      If[ ListQ[data] && Length[data] == 0,
+        Echo["Empty history as an argument.", "SMRMonBatchRecommend:"];
+        Return[SMRMonUnit[None, context]]
+      ];
+
+      removeHistoryQ = TrueQ[OptionValue[SMRMonBatchRecommend, "RemoveHistory"]];
+      normalizeQ = TrueQ[OptionValue[SMRMonBatchRecommend, "Normalize"]];
+      matrixResultQ = TrueQ[OptionValue[SMRMonBatchRecommend, "MatrixResult"]];
+
+      If[!KeyExistsQ[context, "M"],
+        Echo["Cannot find the recommendation matrix. (The context key \"M\".)", "SMRMonBatchRecommend:"];
+        Return[$SMRMonFailure]
+      ];
+
+      dataRowNames = None;
+      If[ ListQ[data],
+
+        dataRowNames = Intersection[data, RowNames[context["M"]]];
+
+        If[ Length[dataRowNames] == 0,
+          Echo["None of the specified items are known.", "SMRMonBatchRecommend:"];
+          Return[SMRMonUnit[None, context]]
+        ]
+
+      ];
+
+      If[ !( TrueQ[data === Automatic] || ListQ[dataRowNames] || SSparseMatrixQ[data] && ColumnNames[data] == ColumnNames[context["M"]] ),
+        Echo[
+          "If the first argument is a SSparseMatrix then its columns are expected to be the same as recommender matrix columns.",
+          "SMRMonBatchRecommend:"
+        ];
+        Return[SMRMonUnit[None, context]]
+      ];
+
+      Which[
+        TrueQ[ data === Automatic ],
+        matRecs = context["M"] . Transpose[ context["M"] ],
+
+        ListQ[ dataRowNames ],
+        matRecs = context["M"] . Transpose[ context["M"][[ dataRowNames, All ]] ],
+
+        True,
+        matRecs = context["M"] . Transpose[ data ]
+      ];
+
+      matRecs = Transpose[matRecs];
+
+      If[ removeHistoryQ && ( TrueQ[data === Automatic] || ListQ[data] ),
+
+        matDiag = DiagonalMatrix[Diagonal[SparseArray[matRecs]]];
+        matDiag = ToSSparseMatrix[matDiag, "RowNames" -> RowNames[matRecs], "ColumnNames" -> RowNames[matRecs]];
+        matDiag = ImposeColumnNames[matDiag, RowNames[ context["M"] ]];
+
+        matRecs = matRecs - matDiag;
+        (* In order to get rid of 0's quickly *)
+        matRecs = SSparseMatrix[ReplacePart[matRecs[[1]], "SparseMatrix" -> SparseArray[matRecs[[1]]["SparseMatrix"]]]]
+      ];
+
+      If[ normalizeQ,
+        matDiag = DiagonalMatrix[SparseArray[ Normal[Diagonal[SparseArray[matRecs]]] /. {0 -> 1., 0. -> 1.}]];
+        matDiag = ToSSparseMatrix[matDiag, "RowNames" -> RowNames[matRecs], "ColumnNames" -> RowNames[matRecs]];
+        matRecs = matDiag . matRecs
+      ];
+
+      Which[
+        matrixResultQ,
+        SMRMonUnit[matRecs, context],
+
+        True,
+        SMRMonUnit[ RowAssociations[matRecs], context]
+      ]
+    ];
+
+SMRMonBatchRecommend[___][__] :=
+    Block[{},
+      Echo[
+        "The first argument is expected to be Automatic, a SSparseMatrix object, or a list of recommender items.",
+        "SMRMonBatchRecommend:"
+      ];
+      $SMRMonFailure
+    ];
 
 
 (**************************************************************)
