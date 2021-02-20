@@ -766,12 +766,14 @@ Clear[TrieRandomChoiceRec];
 TrieRandomChoiceRec[trRule_?TrieValueRuleQ] := trRule;
 
 TrieRandomChoiceRec[trRule_?TrieRuleQ] :=
-
     Block[{recurseQ, res, childrenProb},
 
       childrenProb = TrieValueTotal[trRule[[2]]];
-
-      recurseQ = RandomChoice[{childrenProb, 1 - childrenProb} -> {True, False}];
+      If[ 1.0 - childrenProb < 0,
+        (* This might happen around the $MachineEpsilon .*)
+        childrenProb = 1.0
+      ];
+      recurseQ = RandomChoice[{childrenProb, 1.0 - childrenProb} -> {True, False}];
 
       If[! recurseQ,
         {trRule[[1]]} -> trRule[[2]][$TrieValue],
