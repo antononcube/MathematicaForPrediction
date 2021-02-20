@@ -816,9 +816,17 @@ Clear[SSparseMatrixToTriplets];
 SSparseMatrixToTriplets[ rsmat_SSparseMatrix ] :=
     Block[{t},
       t = Most[ArrayRules[rsmat]];
-      t[[All, 1, 1]] = t[[All, 1, 1]] /. Association[ Reverse /@ Normal[ RowNamesAssociation[rsmat] ] ];
-      t[[All, 1, 2]] = t[[All, 1, 2]] /. Association[ Reverse /@ Normal[ ColumnNamesAssociation[rsmat] ] ];
-      Flatten /@ (List @@@ t)
+      t = Flatten /@ (List @@@ t);
+
+      (* The following two lines are somewhat slower, say, by 20% than the next two lines, but guaranteed to be correct. *)
+      (* t[[All, 1]] = t[[All, 1]] /. Association[ Reverse /@ Normal[ RowNamesAssociation[rsmat] ] ];*)
+      (* t[[All, 2]] = t[[All, 2]] /. Association[ Reverse /@ Normal[ ColumnNamesAssociation[rsmat] ] ];*)
+
+      (* The following two lines are fast, but there is an assumption that the associations
+         for row names and column names are (1) sorted and (2) getting keys preserves the order. *)
+      t[[All, 1]] = RowNames[rsmat][[ t[[All, 1]] ]];
+      t[[All, 2]] = ColumnNames[rsmat][[ t[[All, 2]] ]];
+      t
     ];
 
 (* Delegation to SparseArray functions *)
@@ -839,13 +847,29 @@ SSparseMatrixAssociation[smat_?SSparseMatrixQ] :=
       AssociationThread[recs[[All, {1, 2}]], recs[[All, 3]] ]
     ];
 
+(*
+Interestingly using
+  AssociationThread @@ Transpose[ #[[All, {2, 3}]] ] &
+is not noticeably faster than
+  Association[ Rule @@@ #[[All, {2, 3}]] ] &
+Say, ~ 10%.
+*)
+(*Clear[RowAssociations];*)
+(*RowAssociations[smat_?SSparseMatrixQ] :=*)
+(*    GroupBy[SSparseMatrixToTriplets[smat], First, Association[ Rule @@@ #[[All, {2, 3}]] ] &];*)
+
+(*Clear[ColumnAssociations];*)
+(*ColumnAssociations[smat_?SSparseMatrixQ] :=*)
+(*    GroupBy[SSparseMatrixToTriplets[smat], #[[2]]&, Association[ Rule @@@ #[[All, {1, 3}]] ] &];*)
+
 Clear[RowAssociations];
 RowAssociations[smat_?SSparseMatrixQ] :=
-    GroupBy[SSparseMatrixToTriplets[smat], First, Association[Rule @@@ #[[All, {2, 3}]]] &];
+    GroupBy[SSparseMatrixToTriplets[smat], First, AssociationThread @@ Transpose[ #[[All, {2, 3}]] ] &];
 
 Clear[ColumnAssociations];
 ColumnAssociations[smat_?SSparseMatrixQ] :=
-    GroupBy[SSparseMatrixToTriplets[smat], #[[2]]&, Association[Rule @@@ #[[All, {1, 3}]]] &];
+    GroupBy[SSparseMatrixToTriplets[smat], #[[2]]&, AssociationThread @@ Transpose[ #[[All, {1, 3}]] ] &];
+
 
 
 (*------------------------------------------------------------*)
