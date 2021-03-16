@@ -92,6 +92,10 @@ TrieSubTrie::usage = "TrieSubTrie[t_, w_List] gives the sub-trie corresponding t
 TriePosition::usage = "TriePosition[ tr_, ks_List ] finds a sub-list of the list of keys \
 ks that corresponds to a sub-trie in the trie tr.";
 
+ToTrieWithRoot::usage = "ToTrieWithRoot[tr] convert a trie into trie with root.";
+
+TrieBlank::usage = "TrieBlank[] makes a blank trie.";
+
 TrieCreate::usage = "TrieCreate[words:{_List..}] creates a trie from a list of lists.";
 
 TrieCreateBySplit::usage = "TrieCreateBySplit[ ws:{_String..}, patt:\"\"] creates a trie object \
@@ -195,7 +199,7 @@ TrieClassify[tr_,record_] is the same as TrieClassify[tr_,record_,\"Decision\"].
 Begin["`Private`"];
 
 (************************************************************)
-(* Trie core functions                                      *)
+(* Trie predicates                                          *)
 (************************************************************)
 
 Clear[TrieBodyQ];
@@ -222,6 +226,11 @@ Clear[TrieWithTrieRootQ];
 TrieWithTrieRootQ[a_Association] := MatchQ[a, Association[$TrieRoot -> b_?TrieBodyQ]];
 TrieWithTrieRootQ[___] := False;
 
+
+(************************************************************)
+(* Trie stats                                               *)
+(************************************************************)
+
 Clear[TrieNodeCounts];
 SyntaxInformation[TrieNodeCounts] = { "ArgumentsPattern" -> { _ } };
 TrieNodeCounts[tr_] :=
@@ -234,6 +243,33 @@ Clear[TrieDepth];
 SyntaxInformation[TrieDepth] = { "ArgumentsPattern" -> { _ } };
 TrieDepth[tr_?TrieQ] := Depth[tr] - 2;
 
+
+(************************************************************)
+(* Trivial trie                                             *)
+(************************************************************)
+
+Clear[TrieBlank];
+TrieBlank[] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
+
+
+(************************************************************)
+(* Trie conversion                                          *)
+(************************************************************)
+
+Clear[ToTrieWithRoot];
+
+ToTrieWithRoot[ tr_?TrieWithTrieRootQ ] := tr;
+
+ToTrieWithRoot[ tr_?TrieQ ] :=
+    Block[{},
+      <| $TrieRoot -> Join[ <| $TrieValue -> tr[[1]][$TrieValue] |>, tr ] |>
+    ] /; !TrieWithTrieRootQ[tr];
+
+
+(************************************************************)
+(* Trie merge related                                       *)
+(************************************************************)
+
 Clear[TrieMerge];
 
 SyntaxInformation[TrieMerge] = { "ArgumentsPattern" -> { _, _ } };
@@ -242,7 +278,7 @@ TrieMerge[<||>, <||>] := <||>;
 TrieMerge[t1_?TrieQ, t2_?TrieQ] :=
     Block[{ckey},
       Which[
-        Keys[t1] == Keys[t2],
+        TrueQ[Keys[t1] == Keys[t2]],
         ckey = First@Keys[t1];
         <|ckey ->
             Join[Merge[{t1[ckey], t2[ckey]},
@@ -260,10 +296,6 @@ TrieMerge[{t1_Association, t2_Association}] :=
       Join[Merge[{KeyDrop[t1, $TrieValue], KeyDrop[t2, $TrieValue]},
         TrieMerge], <|$TrieValue -> (t1[$TrieValue] + t2[$TrieValue])|>]
     ];
-
-
-Clear[TrieBlank];
-TrieBlank[] := <|$TrieRoot -> <|$TrieValue -> 0|>|>;
 
 Clear[TrieMake];
 
