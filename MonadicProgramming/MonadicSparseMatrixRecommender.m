@@ -1891,9 +1891,10 @@ SyntaxInformation[SMRMonBatchRecommend] = { "ArgumentsPattern" -> { _., _., Opti
 
 Options[SMRMonBatchRecommend] = {
   "Data" -> None,
-  "RemoveHistory" -> True,
+  "MatrixResult" -> False,
+  "MinScore" -> -Infinity,
   "Normalize" -> True,
-  "MatrixResult" -> False
+  "RemoveHistory" -> True
 };
 
 SMRMonBatchRecommend[xs_, context_Association] := $SMRMonFailure;
@@ -1905,7 +1906,7 @@ SMRMonBatchRecommend[xs_, context_Association][ opts : OptionsPattern[] ] :=
     SMRMonBatchRecommend[ Automatic, 12, opts ][xs, context];
 
 SMRMonBatchRecommend[ data : ( Automatic | _List | _?SSparseMatrixQ ), nRes_Integer, opts : OptionsPattern[] ][xs_, context_Association] :=
-    Block[{removeHistoryQ, normalizeQ, matrixResultQ, dataRowNames, matRecs, matDiag},
+    Block[{removeHistoryQ, normalizeQ, matrixResultQ, dataRowNames, matRecs, matDiag, aRes},
 
       If[ ListQ[data] && Length[data] == 0,
         Echo["Empty history as an argument.", "SMRMonBatchRecommend:"];
@@ -1965,10 +1966,21 @@ SMRMonBatchRecommend[ data : ( Automatic | _List | _?SSparseMatrixQ ), nRes_Inte
         matRecs = SSparseMatrix[ReplacePart[matRecs[[1]], "SparseMatrix" -> SparseArray[matRecs[[1]]["SparseMatrix"]]]]
       ];
 
-      If[ normalizeQ,
+      (* Unfinished !!! *)
+      Which[
+        normalizeQ && removeHistoryQ,
+        matDiag = DiagonalMatrix[SparseArray[ Normal[Diagonal[SparseArray[matRecs]]] /. {0 -> 1., 0. -> 1.}]];
+        matDiag = ToSSparseMatrix[matDiag, "RowNames" -> RowNames[matRecs], "ColumnNames" -> RowNames[matRecs]];
+        matRecs = matDiag . matRecs,
+
+        normalizeQ,
         matDiag = DiagonalMatrix[SparseArray[ Normal[Diagonal[SparseArray[matRecs]]] /. {0 -> 1., 0. -> 1.}]];
         matDiag = ToSSparseMatrix[matDiag, "RowNames" -> RowNames[matRecs], "ColumnNames" -> RowNames[matRecs]];
         matRecs = matDiag . matRecs
+      ];
+
+      If[ matrixResultQ && !MemberQ[{All, Automatic, Infinity}, nRes],
+        Echo["When matrix result all similar items are returned.", "SMRMonBatchRecommend:"]
       ];
 
       Which[
@@ -1976,7 +1988,8 @@ SMRMonBatchRecommend[ data : ( Automatic | _List | _?SSparseMatrixQ ), nRes_Inte
         SMRMonUnit[matRecs, context],
 
         True,
-        SMRMonUnit[ RowAssociations[matRecs], context]
+        aRes = TakeLargest[#, UpTo[nRes]] & /@ RowAssociations[matRecs];
+        SMRMonUnit[ aRes, context]
       ]
     ];
 
@@ -3279,7 +3292,8 @@ SMRMonToMetadataRecommender[ opts : OptionsPattern[] ][ xs_, context_ ] :=
     ];
 
 SMRMonToMetadataRecommender[ tagTypeTo_String, opts : OptionsPattern[] ][ xs_, context_ ] :=
-    Block[{ numberOfTopTags, knownTagTypes, tagTypesFrom, aLongForms, smat, aIDToTag, aSMats },
+    Block[{numberOfTopTags, knownTagTypes, tagTypesFrom, tagSelectionCriteria,
+      aLongForms, smat, aIDToTag, aSMats },
 
       knownTagTypes = SMRMonBind[ SMRMonUnit[xs, context], SMRMonTakeTagTypes];
       If[ TrueQ[knownTagTypes === $SMRMonFailure], Return[$SMRMonFailure]];
@@ -3292,12 +3306,18 @@ SMRMonToMetadataRecommender[ tagTypeTo_String, opts : OptionsPattern[] ][ xs_, c
       numberOfTopTags = OptionValue[SMRMonToMetadataRecommender, "NumberOfTopTags"];
       If[ TrueQ[numberOfTopTags === Automatic], numberOfTopTags = 1];
       If[ !(IntegerQ[numberOfTopTags] && numberOfTopTags > 0),
-        Echo["The value of the option \"NumberOfTopTags\" is expected to be a positive integer.", "SMRMonToMetadataRecommender:"];
+        Echo[
+          "The value of the option \"NumberOfTopTags\" is expected to be a positive integer.",
+          "SMRMonToMetadataRecommender:"
+        ];
         Return[$SMRMonFailure]
       ];
 
       If[ numberOfTopTags > 1,
-        Echo["The value of the option \"NumberOfTopTags\" is taken to be 1: larger number of tags is not implemented (yet.).", "SMRMonToMetadataRecommender:"];
+        Echo[
+          "The value of the option \"NumberOfTopTags\" is taken to be 1: larger number of tags is not implemented (yet.).",
+          "SMRMonToMetadataRecommender:"
+        ];
         numberOfTopTags = 1
       ];
 
@@ -3307,7 +3327,21 @@ SMRMonToMetadataRecommender[ tagTypeTo_String, opts : OptionsPattern[] ][ xs_, c
       tagTypesFrom = Flatten[{tagTypesFrom}];
       tagTypesFrom = Complement[tagTypesFrom, {tagTypeTo}];
       If[ !( VectorQ[tagTypesFrom, StringQ] && Length[tagTypesFrom] > 0 && Length[Complement[ tagTypesFrom, knownTagTypes] ] == 0 ),
-        Echo["The value of the option \"TagTypesFrom\" is expected to be All or a list of known recommender tag types.", "SMRMonToMetadataRecommender:"];
+        Echo[
+          "The value of the option \"TagTypesFrom\" is expected to be All or a list of known recommender tag types.",
+          "SMRMonToMetadataRecommender:"
+        ];
+        Return[$SMRMonFailure]
+      ];
+
+      tagSelectionCriteria = OptionValue[SMRMonToMetadataRecommender, "TagSelectionCriteria"];
+      If[ TrueQ[tagSelectionCriteria === Automatic], tagSelectionCriteria = All];
+
+      If[ IntegerQ[tagSelectionCriteria] && tagSelectionCriteria <= 0,
+        Echo[
+          "The value of the option \"TagSelectionCriteria\" is an integer then it is expected to be greater than zero.",
+          "SMRMonToMetadataRecommender:"
+        ];
         Return[$SMRMonFailure]
       ];
 
@@ -3329,12 +3363,27 @@ SMRMonToMetadataRecommender[ tagTypeTo_String, opts : OptionsPattern[] ][ xs_, c
       ];
 
       (* Map items to tagTypeTo values *)
-      aLongForms = Map[ KeyMap[# /. aIDToTag&, KeySelect[ #, KeyExistsQ[aIDToTag, #[[1]]]& ]]&, aLongForms];
+      aLongForms = Map[ Map[ (#[[1]] /. aIDToTag) -> #[[2]]&, Normal@KeySelect[ #, KeyExistsQ[aIDToTag, #[[1]]]& ]]&, aLongForms];
 
       (* Create contingency matrices from the transformed long form *)
-      aSMats = ToSSparseMatrix /@ aLongForms;
+      aSMats = Map[ToSSparseMatrix @ CrossTabulate[Flatten /@ List @@@ #]&, aLongForms];
 
       (* Select tags *)
+      (* This is very ineffective because of the transformation to row-associations. *)
+      If[ !TrueQ[tagSelectionCriteria === All],
+        aLongForms = Map[ RowAssociations, aSMats];
+
+        Which[
+          IntegerQ[tagSelectionCriteria] && tagSelectionCriteria > 0,
+          aLongForms = Map[TakeLargest[#, tagSelectionCriteria]& /@ #&, aLongForms],
+
+          True,
+          aLongForms = Map[Select[#, tagSelectionCriteria]& /@ #&, aLongForms];
+          aLongForms = Map[ Select[#, Length[#] > 0&]&, aLongForms]
+        ];
+
+        aSMats = ToSSparseMatrix /@ aLongForms;
+      ];
 
       (* Create recommender *)
       SMRMonCreate[aSMats][xs, context]
