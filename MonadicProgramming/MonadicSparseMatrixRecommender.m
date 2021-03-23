@@ -2050,18 +2050,35 @@ SMRMonToItemsDataset[__][___] := $SMRMonFailure;
 
 Clear[SMRMonJoinAcross];
 
-SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _, _., OptionsPattern[] } };
+SyntaxInformation[SMRMonJoinAcross] = { "ArgumentsPattern" -> { _., _., OptionsPattern[] } };
 
-Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "DatasetResult" -> True };
+Options[SMRMonJoinAcross] = {"DropJoiningColumnName" -> True, "DatasetResult" -> True, "Warning" -> True };
 
 SMRMonJoinAcross[$SMRMonFailure] := $SMRMonFailure;
 
 SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
 
-SMRMonJoinAcross[][xs_, context_Association] := $SMRMonFailure;
+SMRMonJoinAcross[][xs_, context_Association] := SMRMonJoinAcross[Options[SMRMonJoinAcross]][xs, context];
+
+SMRMonJoinAcross[opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{warnQ},
+
+      warnQ = TrueQ[OptionValue[SMRMonJoinAcross, "Warning"]];
+
+      If[ KeyExistsQ[context, "data"] && TrueQ[ Head[context["data"]] === Dataset ],
+        If[ warnQ,
+          Echo[ "Using the dataset for the context key \"data\".", "SMRMonJoinAcross:" ]
+        ];
+        SMRMonJoinAcross[context["data"], opts][xs, context],
+        (*ELSE*)
+        SMRMonJoinAcross["NoData"][xs, context]
+      ]
+    ];
 
 SMRMonJoinAcross[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{byColName, keys},
+    Block[{warnQ, byColName, keys},
+
+      warnQ = TrueQ[OptionValue[SMRMonJoinAcross, "Warning"]];
 
       keys = Normal @ Keys @ ds[[1]];
 
@@ -2076,13 +2093,17 @@ SMRMonJoinAcross[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] 
         byColName = First @ Normal @ Keys @ ds[[1]];
       ];
 
-      Echo[ "Heuristically picking the joining column to be \"" <> byColName <> "\".", "SMRMonJoinAcross:" ];
+      If[ warnQ,
+        Echo[ "Heuristically picking the joining column to be \"" <> byColName <> "\".", "SMRMonJoinAcross:" ]
+      ];
 
       SMRMonJoinAcross[ds, byColName, opts][xs, context]
     ];
 
 SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{ds = dsArg, dropQ, dsRecs, res},
+    Block[{warnQ, ds = dsArg, dropQ, dsRecs, res},
+
+      warnQ = TrueQ[OptionValue[SMRMonJoinAcross, "Warning"]];
 
       dropQ = TrueQ[ OptionValue[SMRMonJoinAcross, "DropJoiningColumnName"] ];
 
@@ -2093,10 +2114,14 @@ SMRMonJoinAcross[dsArg_Dataset, byColName_?AtomQ, opts : OptionsPattern[]][xs_, 
       ];
 
       If[ !VectorQ[Normal[ds[All, byColName]], StringQ],
-        Echo["The joining column, \"" <> byColName <> "\", is expected to consist of strings.", "SMRMonJoinAcross:"];
+        If[ warnQ,
+          Echo["The joining column, \"" <> byColName <> "\", is expected to consist of strings.", "SMRMonJoinAcross:"]
+        ];
 
         If[ VectorQ[Normal[ds[All, byColName]], IntegerQ],
-          Echo["Proceeding by converting the integers in \"" <> byColName <> "\" into strings.", "SMRMonJoinAcross:"];
+          If[ warnQ,
+            Echo["Proceeding by converting the integers in \"" <> byColName <> "\" into strings.", "SMRMonJoinAcross:"]
+          ];
           ds = ds[All, Join[#, <| byColName -> ToString[#[byColName]]|>]& ]
           ,
           (*ELSE*)
@@ -2164,7 +2189,8 @@ SMRMonJoinAcross[__][___] :=
     Block[{},
       Echo[
         "The first argument is expected to be an Association or a Dataset. " <>
-            "If the first argument is a Dataset then the second argument is expected to be a column name to join with.",
+            "If the first argument is a Dataset then the second argument is expected to be a column name to join with. " <>
+        "If no arguments are given then context[\"data\"] is used if it exists.",
         "SMRMonJoinAcross:"];
       $SMRMonFailure
     ];
