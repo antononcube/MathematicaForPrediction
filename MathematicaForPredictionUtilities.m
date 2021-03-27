@@ -717,15 +717,19 @@ lsImportOptions = {
   "CurrencyTokens" -> {{"$", "£", "¥", "\[Euro]"}, {"c", "¢", "p", "F"}},
   "DateStringFormat" -> None, "FillRows" -> Automatic,
   "HeaderLines" -> 0, "IgnoreEmptyLines" -> False,
-  "NumberPoint" -> ".", "Numeric" -> Automatic, "SkipLines" -> 0};
+  "NumberPoint" -> ".", "Numeric" -> Automatic, "SkipLines" -> 0, "FieldSeparators" -> ","};
 
 Options[ImportCSVToDataset] = Join[ {"RowNames" -> False, "ColumnNames" -> True}, lsImportOptions ];
 
 ImportCSVToDataset[fname_String, opts : OptionsPattern[]] :=
     ImportCSVToDataset[fname, Automatic, opts];
 
-ImportCSVToDataset[fname_String, format : (_String | Automatic), opts : OptionsPattern[]] :=
-    Block[{data},
+ImportCSVToDataset[fname_String, formatArg : (_String | Automatic), opts : OptionsPattern[]] :=
+    Block[{format = formatArg, data},
+
+      If[ Length[{opts}] > 0 && MemberQ[ {opts}[[All, 1]], "FieldSeparators" ],
+        format = "Table"
+      ];
 
       If[ TrueQ[format === Automatic],
         data = Import[fname, Automatic, FilterRules[{opts}, lsImportOptions] ],
@@ -797,7 +801,7 @@ ExampleDataset[sp : {"Statistics", dataset_String}] :=
         Return[
           Failure["UnexpectedDataType", <|"DataType" -> ExampleData[sp, "DataType"]|>]]
       ];
-   
+
       If[VectorQ[data], data = List /@ data];
 
       Dataset[data][All,
