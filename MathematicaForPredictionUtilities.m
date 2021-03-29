@@ -712,29 +712,43 @@ GridOfCodeAndComments[code_String, opts : OptionsPattern[]] :=
 
 Clear[ImportCSVToDataset];
 
-lsImportOptions = {
-  "EmptyFields" -> "", "TextDelimiters" -> "\"", CharacterEncoding -> "UTF8ISOLatin1",
-  "CurrencyTokens" -> {{"$", "£", "¥", "\[Euro]"}, {"c", "¢", "p", "F"}},
+ImportCSVToDataset::args =
+    "The first argument is expected to be a string: a file name, an URL, or a CSV string. The second, optional argument is expected to be Automatic or a string.";
+
+ImportCSVToDataset::nmeth =
+    "The value of the option Method is expected to be one of Automatic, Import, ImportString";
+
+lsImportOptions = {"EmptyFields" -> "", "TextDelimiters" -> "\"",
+  CharacterEncoding -> "UTF8ISOLatin1",
+  "CurrencyTokens" -> {{"$", "£", "¥", "€"}, {"c", "¢", "p", "F"}},
   "DateStringFormat" -> None, "FillRows" -> Automatic,
   "HeaderLines" -> 0, "IgnoreEmptyLines" -> False,
-  "NumberPoint" -> ".", "Numeric" -> Automatic, "SkipLines" -> 0, "FieldSeparators" -> ","};
+  "NumberPoint" -> ".", "Numeric" -> Automatic, "SkipLines" -> 0,
+  "FieldSeparators" -> ","};
 
-Options[ImportCSVToDataset] = Join[ {"RowNames" -> False, "ColumnNames" -> True}, lsImportOptions ];
+Options[ImportCSVToDataset] = Join[{"RowNames" -> False, "ColumnNames" -> True, Method -> Import}, lsImportOptions];
 
-ImportCSVToDataset[fname_String, opts : OptionsPattern[]] :=
-    ImportCSVToDataset[fname, Automatic, opts];
+ImportCSVToDataset[fname_String, opts : OptionsPattern[]] := ImportCSVToDataset[fname, Automatic, opts];
 
 ImportCSVToDataset[fname_String, formatArg : (_String | Automatic), opts : OptionsPattern[]] :=
-    Block[{format = formatArg, data},
+    Block[{format = formatArg, method, data},
 
-      If[ Length[{opts}] > 0 && MemberQ[ {opts}[[All, 1]], "FieldSeparators" ],
+      method = OptionValue[ImportCSVToDataset, Method];
+      If[TrueQ[method === Automatic], method = Import];
+      If[! MemberQ[{Import, ImportString}, method],
+        Message[ImportCSVToDataset::nmeth];
+        Return[$Failed]
+      ];
+
+      If[Length[{opts}] > 0 && MemberQ[{opts}[[All, 1]], "FieldSeparators"],
         format = "Table"
       ];
 
-      If[ TrueQ[format === Automatic],
-        data = Import[fname, Automatic, FilterRules[{opts}, lsImportOptions] ],
-        (* ELSE *)
-        data = Import[fname, format, FilterRules[{opts}, lsImportOptions] ]
+      If[TrueQ[format === Automatic],
+        data = method[fname, Automatic, FilterRules[{opts}, lsImportOptions]],
+        (*ELSE*)
+
+        data = method[fname, format, FilterRules[{opts}, lsImportOptions]]
       ];
 
       If[OptionValue["ColumnNames"],
@@ -749,6 +763,11 @@ ImportCSVToDataset[fname_String, formatArg : (_String | Automatic), opts : Optio
 
       data
     ];
+
+ImportCSVToDataset[___] :=
+    (Message[ImportCSVToDataset::args];
+    $Failed);
+
 
 (***********************************************************)
 (* DatasetColumnNumericQ                                   *)
