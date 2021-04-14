@@ -2190,7 +2190,7 @@ SMRMonJoinAcross[__][___] :=
       Echo[
         "The first argument is expected to be an Association or a Dataset. " <>
             "If the first argument is a Dataset then the second argument is expected to be a column name to join with. " <>
-        "If no arguments are given then context[\"data\"] is used if it exists.",
+            "If no arguments are given then context[\"data\"] is used if it exists.",
         "SMRMonJoinAcross:"];
       $SMRMonFailure
     ];
@@ -3429,6 +3429,9 @@ SMRMonToMetadataRecommender[___][__] :=
 (*=========================================================*)
 
 Clear[SMRMonImportRecommender];
+
+SMRMonImportRecommender::uniq = "The `1` are expected to be unique.";
+
 SMRMonImportRecommender[dirName_String, suffix_String] :=
     Block[{smat, dsTagTypeRanges, dsRowNames, rowNames, dsColumnNames, columnNames, smat2, smats},
 
@@ -3437,10 +3440,20 @@ SMRMonImportRecommender[dirName_String, suffix_String] :=
       dsTagTypeRanges = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-TagTypeRanges-from-" <> suffix <> ".csv"}], "RowNames" -> True];
 
       dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-rownames-from-" <> suffix <> ".csv"}], "RowNames" -> True];
-      rowNames = Normal[dsRowNames[Values, "RowName"]];
+      rowNames =  ToString /@ Normal[dsRowNames[Values, "RowName"]];
+
+      If[Length[rowNames] != Length[Union[rowNames]],
+        Message[SMRMonImportRecommender::uniq,"row names"];
+        Return[$Failed]
+      ];
 
       dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-colnames-from-" <> suffix <> ".csv"}], "RowNames" -> True];
-      columnNames = Normal[dsColumnNames[Values, "ColumnName"]];
+      columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
+
+      If[Length[columnNames] != Length[Union[columnNames]],
+        Message[SMRMonImportRecommender::uniq,"column names"];
+        Return[$Failed]
+      ];
 
       (* Create SMRMon object *)
       smat2 = ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames];
