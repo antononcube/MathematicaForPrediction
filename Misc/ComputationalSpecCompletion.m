@@ -71,6 +71,10 @@ aShortcuts = <|
   "LSAMon" -> "LatentSemanticAnalysis",
   "LSA" -> "LatentSemanticAnalysis",
 
+  "Classification" -> "Classification",
+  "ClCon" -> "Classification",
+  "Classify" -> "Classification",
+
   "RandomTabularDataset" -> "RandomTabularDataset",
   "RandomDataset" -> "RandomTabularDataset"
 |>;
@@ -97,6 +101,16 @@ LSAMonApplyTermWeightFunctions[\"GlobalWeightFunction\" -> \"`globalWeightFuncti
 LSAMonExtractTopics[\"NumberOfTopics\" -> `numberOfTopics`, Method -> \"`method`\", \"MaxSteps\" -> `maxSteps`, \"MinNumberOfDocumentsPerTerm\" -> `minNumberOfDocumentsPerTerm`] \[DoubleLongRightArrow]
 LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleLongRightArrow]
 LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
+
+  "Classification" ->
+      StringTemplate[
+        "ClConUnit[`data`]\[DoubleLongRightArrow]
+        ClConSplitData[`splitRatio`]\[DoubleLongRightArrow]
+        ClConEchoDataSummary\[DoubleLongRightArrow]
+        ClConMakeClassifier[\"`method`\"]\[DoubleLongRightArrow]
+        ClConClassifierMeasurements[`measurementFuncs`]\[DoubleLongRightArrow]
+        ClConEchoValue\[DoubleLongRightArrow]
+        ClConROCPlot[`rocPlotFuncs`];"],
 
   "RandomTabularDataset" ->
       StringTemplate[
@@ -139,20 +153,45 @@ aQuestions = <|
 
   "LatentSemanticAnalysis" ->
       <|
+        "Apply stemming" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "stemmingRules"|>,
+
         "How many topics" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.75, "Parameter" -> "numberOfTopics"|>,
         "Which method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method"|>,
         "Which dimension reduction method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method"|>,
         "Which topic extraction method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method"|>,
-        "Apply stemming" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "stemmingRules"|>,
         "Show topics table" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "showTopicsTableQ"|>,
         "Number of terms in the topics table" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "topicsTableNumberOfTerms"|>,
+
         "Which words to use for statistical thesaurus" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.15, "Parameter" -> "statThesaurusWords"|>,
         "Thesaurus words" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.15, "Parameter" -> "statThesaurusWords"|>,
         "Thesaurus words to show" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.15, "Parameter" -> "statThesaurusWords"|>,
         "Statistical thesaurus words" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.75, "Parameter" -> "statThesaurusWords"|>,
+
         "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "textData"|>,
         "Which text corpus" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "textData"|>,
         "Which collection of texts" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "textData"|>
+      |>,
+
+  "Classification" ->
+      <|
+        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "Which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+
+        "What is the split ratio" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
+        "Training vs testing data  ratio" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
+
+        "Which classifier method" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
+        "What kind of classifier" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
+        "How to classify" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
+        "Which classifier algorithm" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
+
+        "Classifier measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs"|>,
+        "Which evaluation metrics" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs"|>,
+        "Which measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs"|>,
+
+        "Which ROC functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>,
+        "Which ROC plot functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>
       |>,
 
   "RandomTabularDataset" -> <|
@@ -222,6 +261,14 @@ aDefaults = <|
     "textData" -> None,
     "thesaurusWords" -> None,
     "topicsTableNumberOfTerms" -> 10|>,
+
+  "Classification" -> <|
+    "data" -> None,
+    "splitRatio" -> 0.75,
+    "method" -> "LogisticRegression",
+    "measurementFuncs" -> "{\"Accuracy\", \"Precision\", \"Recall\"}",
+    "rocPlotFuncs" -> "{\"FPR\", \"TPR\"}"
+  |>,
 
   "RandomTabularDataset" -> <|
     "nrow" -> Automatic,
