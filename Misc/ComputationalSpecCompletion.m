@@ -1,5 +1,5 @@
 (*
-    Computational Specs Completion Mathematica package
+    Computational Spec Completion Mathematica package
     Copyright (C) 2021  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
@@ -67,9 +67,13 @@ aShortcuts = <|
   "QRMon" -> "QuantileRegression",
   "QR" -> "QuantileRegression",
 
+  "LatentSemanticAnalysis" -> "LatentSemanticAnalysis",
   "LSAMon" -> "LatentSemanticAnalysis",
   "LSA" -> "LatentSemanticAnalysis",
-  "LatentSemanticAnalysis" -> "LatentSemanticAnalysis"|>;
+
+  "RandomTabularDataset" -> "RandomTabularDataset",
+  "RandomDataset" -> "RandomTabularDataset"
+|>;
 
 
 (***********************************************************)
@@ -92,7 +96,18 @@ LSAMonMakeDocumentTermMatrix[ \"StemmingRules\" -> `stemmingRules`, \"StopWords\
 LSAMonApplyTermWeightFunctions[\"GlobalWeightFunction\" -> \"`globalWeightFunction`\", \"LocalWeightFunction\" -> \"`localWeightFunction`\", \"NormalizerFunction\" -> \"`normalizerFunction`\"] \[DoubleLongRightArrow]
 LSAMonExtractTopics[\"NumberOfTopics\" -> `numberOfTopics`, Method -> \"`method`\", \"MaxSteps\" -> `maxSteps`, \"MinNumberOfDocumentsPerTerm\" -> `minNumberOfDocumentsPerTerm`] \[DoubleLongRightArrow]
 LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleLongRightArrow]
-LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"]
+LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
+
+  "RandomTabularDataset" ->
+      StringTemplate[
+        "ResourceFunction[\"RandomTabularDataset\"][" <>
+            "{`nrow`, `ncol`}, " <>
+            "\"ColumnNamesGenerator\" -> `columnNamesGenerator`, " <>
+            "\"Form\" -> \"`form`\", " <>
+            "\"MaxNumberOfValues\" -> `maxNumberOfValues`, " <>
+            "\"MinNumberOfValues\" -> `minNumberOfValues`, " <>
+            "\"RowKeys\" -> `rowKeys`" <>
+            "]"]
 |>;
 
 
@@ -138,7 +153,40 @@ aQuestions = <|
         "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "textData"|>,
         "Which text corpus" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "textData"|>,
         "Which collection of texts" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "textData"|>
-      |>
+      |>,
+
+  "RandomTabularDataset" -> <|
+    "How many rows" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
+    "What number of rows" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
+    "Rows count" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
+
+    "How many columns" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
+    "What number of columns" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
+    "Columns count" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
+
+    "Max number values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+    "Maximum number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+    "Number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+    "At most how many of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+
+    "Min number values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
+    "Minimum number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
+    "At least how many of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
+
+    "Which form" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+    "Which format" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+    "What kind of form" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+    "What kind of format" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+
+    "What is the column name generator" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
+    "Which is the column name generator" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
+    "How to generate the column names" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
+
+    "What are the value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
+    "What are the generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
+    "Which value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
+    "Which generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>
+  |>
 |>;
 
 
@@ -157,6 +205,7 @@ aDefaults = <|
     "dataset" -> None,
     "relativeErrorsQ" -> False
   |>,
+
   "LatentSemanticAnalysis" -> <|
     "globalWeightFunction" -> "IDF",
     "localWeightFunction" -> "None",
@@ -172,7 +221,19 @@ aDefaults = <|
     "stopWords" -> Automatic,
     "textData" -> None,
     "thesaurusWords" -> None,
-    "topicsTableNumberOfTerms" -> 10|>
+    "topicsTableNumberOfTerms" -> 10|>,
+
+  "RandomTabularDataset" -> <|
+    "nrow" -> Automatic,
+    "ncol" -> Automatic,
+    "columnNamesGenerator" -> Automatic,
+    "generators" -> Automatic,
+    "form" -> "Wide",
+    "maxNumberOfValues" -> Automatic,
+    "minNumberOfValues" -> Automatic,
+    "pointwiseGeneration" -> False,
+    "rowKeys" -> False
+  |>
 |>;
 
 (***********************************************************)
