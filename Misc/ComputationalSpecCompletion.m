@@ -133,32 +133,51 @@ aQuestions = <|
 
   "QuantileRegression" ->
       <|
-        "How many knots" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.75, "Parameter" -> "knots"|>,
+        "How many knots" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.6, "Parameter" -> "knots",
+          "ContextWordsToRemove" -> {"knots"} |>,
+
         "What is the interpolation order" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.75, "Parameter" -> "intOrder"|>,
+
         "Data summary" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "dataSummaryQ"|>,
+
         "Which axes to rescale" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.75, "Parameter" -> {"rescaleTimeAxisQ", "rescaleValueAxisQ"}|>,
+
         "What kind of plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "dateListPlotQ",
           "TrueValues" -> {"true", "yes", "datelist", "date list", "datelist plot", "use date list plot"}|>,
         "Date list plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75,
           "Parameter" -> "dateListPlotQ",
           "TrueValues" -> {"true", "yes", "datelist", "date list", "datelist plot", "use date list plot"}|>,
+
         "Relative errors plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "relativeErrorsQ"|>,
         "Absolute errors plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "absoluteErrorsQ"|>,
-        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.70, "Parameter" -> "dataset"|>,
-        "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.40, "Parameter" -> "dataset"|>,
-        "Which time series to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.4, "Parameter" -> "dataset"|>,
-        "Which probabilities" -> <|"TypePattern" -> {_?NumericQ ..}, "Threshold" -> 0.7, "Parameter" -> "probs"|>,
-        "Which regression quantiles" -> <|"TypePattern" -> {_?NumericQ ..}, "Threshold" -> 0.6, "Parameter" -> "probs"|>
+
+        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.70, "Parameter" -> "dataset",
+          "ContextWordsToRemove" -> {"dataset"}|>,
+        "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.40, "Parameter" -> "dataset",
+          "ContextWordsToRemove" -> {"data"}|>,
+        "Which time series to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.4, "Parameter" -> "dataset",
+          "ContextWordsToRemove" -> {"time series"}|>,
+
+        "Which probabilities" -> <|"TypePattern" -> {_?NumericQ ..}, "Threshold" -> 0.7, "Parameter" -> "probs",
+          "ContextWordsToRemove" -> {"probabilities"}|>,
+        "Which regression quantiles" -> <|"TypePattern" -> {_?NumericQ ..}, "Threshold" -> 0.6, "Parameter" -> "probs",
+          "ContextWordsToRemove" -> {"regression quantiles"}|>
       |>,
 
   "LatentSemanticAnalysis" ->
       <|
         "Apply stemming" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "stemmingRules"|>,
 
-        "How many topics" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.75, "Parameter" -> "numberOfTopics"|>,
-        "Which method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method"|>,
-        "Which dimension reduction method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method"|>,
-        "Which topic extraction method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method"|>,
+        "How many topics" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.75, "Parameter" -> "numberOfTopics",
+          "ContextWordsToRemove" -> {"topics"}|>,
+
+        "Which method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method",
+          "ContextWordsToRemove" -> {"method", "algorithm"}|>,
+        "Which dimension reduction method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method",
+          "ContextWordsToRemove" -> {"method", "algorithm"}|>,
+        "Which topic extraction method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method",
+          "ContextWordsToRemove" -> {"method", "algorithm"}|>,
+
         "Show topics table" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "showTopicsTableQ"|>,
         "Number of terms in the topics table" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "topicsTableNumberOfTerms"|>,
 
@@ -186,9 +205,12 @@ aQuestions = <|
         "How to classify" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
         "Which classifier algorithm" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
 
-        "Classifier measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs"|>,
-        "Which evaluation metrics" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs"|>,
-        "Which measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs"|>,
+        "Classifier measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs",
+          "ContextWordsToRemove" -> {"measurements", "ROC functions"}|>,
+        "Which evaluation metrics" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs",
+          "ContextWordsToRemove" -> {"measurements", "ROC functions"}|>,
+        "Which measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs",
+          "ContextWordsToRemove" -> {"measurements", "ROC functions"}|>,
 
         "Which ROC functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>,
         "Which ROC plot functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>
@@ -321,31 +343,46 @@ GetRawAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts
 ClearAll[TakeLargestKey];
 TakeLargestKey[args__] := StringTrim@First@Keys@TakeLargest[args];
 
+ClearAll[RemoveContextWords];
+RemoveContextWords[s : (_String | {_String ..}), {} ] := s;
+RemoveContextWords[s : (_String | {_String ..}), words : {_String..} ] :=
+    StringTrim[StringReplace[ s, Thread[words -> ""] ]];
+
 Clear[GetAnswers];
-Options[GetAnswers] = Options[GetRawAnswers];
+Options[GetAnswers] = Join[ Options[GetRawAnswers], {"RemoveByThreshold" -> True}];
 GetAnswers[workflowType_String, command_String, nAnswers_Integer : 4, opts : OptionsPattern[]] :=
     Block[{aRes, aParameterQuestions, parVal},
 
       (*Get raw answers*)
-
-      aRes =
-          GetRawAnswers[workflowType, command, nAnswers,
-            FilterRules[{opts}, Options[GetRawAnswers]]];
+      aRes = GetRawAnswers[workflowType, command, nAnswers, FilterRules[{opts}, Options[GetRawAnswers]]];
       If[TrueQ[aRes === $Failed],
         Return[$Failed]
       ];
 
       (*Filter out candidates with too low probabilities*)
+      If[ TrueQ[OptionValue[GetAnswers, "RemoveByThreshold"]],
+        aRes =
+            Association@
+                KeyValueMap[
+                  Function[{k, v},
+                    k -> Select[v, # >= aQuestions[workflowType, k, "Threshold"] &]], aRes];
+        aRes = Select[aRes, Length[#] > 0 &];
+      ];
 
+      (*Remove specified words*)
       aRes =
           Association@
               KeyValueMap[
                 Function[{k, v},
-                  k -> Select[v, # >= aQuestions[workflowType, k, "Threshold"] &]], aRes];
+                  k ->
+                      KeySelect[
+                        KeyMap[RemoveContextWords[#, Lookup[aQuestions[workflowType, k], "ContextWordsToRemove", {}]]&, v],
+                        StringLength[#] > 0&
+                      ]
+                ], aRes];
       aRes = Select[aRes, Length[#] > 0 &];
 
       (*Group the questions per parameter *)
-
       aParameterQuestions = GroupBy[aQuestions[workflowType], #["Parameter"] &, Keys];
       (*aParameterCandidateValues=Map[Merge[Values@KeyTake[aRes,#],Max]&, aParameterQuestions];*)
 
