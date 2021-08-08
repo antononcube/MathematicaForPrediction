@@ -81,7 +81,7 @@ aShortcuts = <|
 (* Stencils                                                *)
 (***********************************************************)
 
-aStencils = <|
+aTemplates = <|
   "QuantileRegression" ->
       StringTemplate[
         "QRMonUnit[`dataset`]\[DoubleLongRightArrow]
@@ -434,6 +434,23 @@ GetAnswers[workflowType_String, command_String, nAnswers_Integer : 4, opts : Opt
 (***********************************************************)
 
 ClearAll[ComputationalSpecCompletion];
+
+ComputationalSpecCompletion["Data"] :=
+    <|
+      "Templates" -> aTemplates,
+      "Questions" -> aQuestions,
+      "Defaults" -> aDefaults,
+      "Shortcuts" -> aShortcuts
+    |>;
+
+ComputationalSpecCompletion["Templates"] := ComputationalSpecCompletion["Data"]["Templates"];
+
+ComputationalSpecCompletion["Questions"] := ComputationalSpecCompletion["Data"]["Questions"];
+
+ComputationalSpecCompletion["Defaults"] := ComputationalSpecCompletion["Data"]["Defaults"];
+
+ComputationalSpecCompletion["Shortcuts"] := ComputationalSpecCompletion["Data"]["Shortcuts"];
+
 ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsPattern[]] :=
     Block[{aRes},
 
@@ -443,7 +460,7 @@ ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsP
         Return[$Failed]
       ];
 
-      ToExpression["Hold[" <> aStencils[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
+      ToExpression["Hold[" <> aTemplates[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
     ];
 
 End[];
