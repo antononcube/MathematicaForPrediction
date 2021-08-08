@@ -55,9 +55,6 @@ ComputationalSpecCompletion::usage = "ComputationalSpecCompletion";
 
 Begin["`Private`"];
 
-End[]; (* `Private` *)
-
-
 (***********************************************************)
 (* Shortcuts                                               *)
 (***********************************************************)
@@ -449,4 +446,6 @@ ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsP
       ToExpression["Hold[" <> aStencils[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
     ];
 
-EndPackage[]
+End[];
+
+EndPackage[];
