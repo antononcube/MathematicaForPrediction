@@ -79,7 +79,10 @@ aShortcuts = <|
   "Classify" -> "Classification",
 
   "RandomTabularDataset" -> "RandomTabularDataset",
-  "RandomDataset" -> "RandomTabularDataset"
+  "RandomDataset" -> "RandomTabularDataset",
+
+  "Recommendations" -> "Recommendations",
+  "SMRMon" -> "Recommendations"
 |>;
 
 
@@ -137,7 +140,15 @@ LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
             "\"MaxNumberOfValues\" -> `maxNumberOfValues`, " <>
             "\"MinNumberOfValues\" -> `minNumberOfValues`, " <>
             "\"RowKeys\" -> `rowKeys`" <>
-            "]"]
+            "]"],
+
+  "Recommendations" ->
+      StringTemplate[
+        "SMRMonUnit[]\[DoubleLongRightArrow]
+         SMRMonCreate[`dataset`]\[DoubleLongRightArrow]
+         SMRMonRecommendByProfile[`prof`, `nrecs`]\[DoubleLongRightArrow]
+         SMRMonJoinAcross[`dataset`]\[DoubleLongRightArrow]
+         SMRMonEchoValue[]"]
 |>;
 
 
@@ -268,7 +279,25 @@ aQuestions = <|
     "What are the generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
     "Which value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
     "Which generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>
-  |>
+  |>,
+
+  "Recommendations" ->
+      <|
+        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset"|>,
+        "Which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset"|>,
+        "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset"|>,
+        "Over which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset"|>,
+        "Over which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset"|>,
+
+        "Which profile to use" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "prof"|>,
+        "Which profile" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "prof"|>,
+        "What is the profile" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+
+        "How many recommendations" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>,
+        "What number of top recommendations" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>,
+        "How many results" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>,
+        "What number of top results" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>
+      |>
 |>;
 
 
@@ -323,7 +352,14 @@ aDefaults = <|
     "minNumberOfValues" -> Automatic,
     "pointwiseGeneration" -> False,
     "rowKeys" -> False
+  |>,
+
+  "Recommendations" -> <|
+    "dataset" -> None,
+    "prof" -> None,
+    "nrecs" -> 12
   |>
+
 |>;
 
 (***********************************************************)
