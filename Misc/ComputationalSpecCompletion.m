@@ -38,8 +38,8 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2021-07-19 *)
 
-(* :Package Version: 0.1 *)
-(* :Mathematica Version: 11.3 *)
+(* :Package Version: 0.2 *)
+(* :Mathematica Version: 12.3 *)
 (* :Copyright: (c) 2021 Anton Antonov *)
 (* :Keywords: *)
 (* :Discussion: *)
@@ -47,11 +47,17 @@
 BeginPackage["ComputationalSpecCompletion`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-GetRawAnswers::usage = "GetRawAnswers";
+GetRawAnswers::usage = "GetRawAnswers[wfSpec, spec, opts] \
+finds probability-scored answers of parameters questions for the computational workflow template wfSpec \
+over the computational specification spec.";
 
-GetAnswers::usage = "GetAnswers";
+GetAnswers::usage = "GetAnswers[wfSpec, spec, opts] \
+finds precise answers of parameters questions for the computational workflow template wfSpec \
+over the computational specification spec.";
 
-ComputationalSpecCompletion::usage = "ComputationalSpecCompletion";
+ComputationalSpecCompletion::usage = "ComputationalSpecCompletion[wfSpec, spec, opts] \
+finds parameters for the computational workflow template wfSpec based on the computational specification spec \
+and creates corresponding executable expression.";
 
 Begin["`Private`"];
 
@@ -83,6 +89,18 @@ aShortcuts = <|
 
 aTemplates = <|
   "QuantileRegression" ->
+      StringTemplate[
+        "qrData = `dataset`;
+         qrData = N@Which[ Head[qrData] === TemporalData, QuantityMagnitude[qrData[\"Path\"]], VectorQ[qrData], Transpose[{Range@Length@qrData, qrData}], True, qrData];
+Echo[ResourceFunction[\"RecordsSummary\"][qrData],\"data summary:\"];
+aQRFuncs = AssociationThread[ `probs`, ResourceFunction[\"QuantileRegression\"][qrData, `knots`, `probs`, InterpolationOrder->`intOrder`]];
+aQRPlotData = Prepend[(Transpose[{qrData[[All, 1]], #1 /@ qrData[[All, 1]]}] &) /@ aQRFuncs, \"data\" -> qrData];
+Echo[ListPlot[Values[aQRPlotData], Joined -> Prepend[Table[True, Length[aQRPlotData]-1], False], PlotLegends -> Keys[aQRPlotData], PlotTheme -> \"Detailed\", FrameLabel -> {\"Regressor\", \"Value\"}, ImageSize -> Medium],\"regression quantiles:\"];
+Echo[Map[Function[{qFunc},
+  DateListPlot[
+    Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", AspectRatio -> 1/4, ImageSize -> Large]], aQRFuncs],\"errors:\"];"],
+
+  "QRMon" ->
       StringTemplate[
         "QRMonUnit[`dataset`]\[DoubleLongRightArrow]
 QRMonEchoDataSummary[]\[DoubleLongRightArrow]
@@ -451,6 +469,22 @@ ComputationalSpecCompletion["Defaults"] := ComputationalSpecCompletion["Data"]["
 
 ComputationalSpecCompletion["Shortcuts"] := ComputationalSpecCompletion["Data"]["Shortcuts"];
 
+ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] :=
+    Block[{cf},
+
+      If[Length[DownValues[ComputationalWorkflowTypeClassifier`GetComputationalWorkflowTypeClassifier]] == 0,
+        Echo["ComputationalWorkflowTypeClassifier.m", "Importing from GitHub:"];
+        Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/ComputationalWorkflowTypeClassifier.m"];
+      ];
+
+      cf = ComputationalWorkflowTypeClassifier`GetComputationalWorkflowTypeClassifier[];
+
+      ComputationalSpecCompletion[ cf[command], command, opts]
+    ];
+
+ComputationalSpecCompletion[cf_ClassifierFunction, command_String, opts : OptionsPattern[]] :=
+    ComputationalSpecCompletion[ cf[command], command, opts];
+
 ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsPattern[]] :=
     Block[{aRes},
 
@@ -462,6 +496,16 @@ ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsP
 
       ToExpression["Hold[" <> aTemplates[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
     ];
+
+
+(***********************************************************)
+(* GetComputationalWorkflowTypeClassifier                  *)
+(***********************************************************)
+
+Clear[GetComputationalWorkflowTypeClassifier];
+GetComputationalWorkflowTypeClassifier[] = Uncompress@
+    Get["/Users/antonov/MathFiles/RakuForPrediction/ProcessedData/cSpecClassifier.m"];
+
 
 End[];
 
