@@ -511,8 +511,11 @@ ComputationalSpecCompletion["Defaults"] := ComputationalSpecCompletion["Data"]["
 
 ComputationalSpecCompletion["Shortcuts"] := ComputationalSpecCompletion["Data"]["Shortcuts"];
 
-ComputationalSpecCompletion[ command_String, opts : OptionsPattern[]] :=
-    ComputationalSpecCompletion[Automatic, command];
+ComputationalSpecCompletion[ commands : ( _String | {_String..} ), opts : OptionsPattern[]] :=
+    ComputationalSpecCompletion[Automatic, commands];
+
+ComputationalSpecCompletion[ sf : (Automatic | _ClassifierFunction), commands : {_String..}, opts : OptionsPattern[]] :=
+    Association @ Map[ # -> ComputationalSpecCompletion[sf, #]&,  commands];
 
 ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] :=
     Block[{cf},
