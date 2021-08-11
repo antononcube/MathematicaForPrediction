@@ -112,6 +112,7 @@ QRMonErrorPlots[\"RelativeErrors\"->`relativeErrorsQ`,\"DateListPlot\"->`dateLis
       StringTemplate["
 LSAMonUnit[`textData`] \[DoubleLongRightArrow]
 LSAMonMakeDocumentTermMatrix[ \"StemmingRules\" -> `stemmingRules`, \"StopWords\" -> `stopWords`] \[DoubleLongRightArrow]
+LSAMonEchoDocumentTermMatrixStatistics[\"LogBase\" -> 10] \[DoubleLongRightArrow]
 LSAMonApplyTermWeightFunctions[\"GlobalWeightFunction\" -> \"`globalWeightFunction`\", \"LocalWeightFunction\" -> \"`localWeightFunction`\", \"NormalizerFunction\" -> \"`normalizerFunction`\"] \[DoubleLongRightArrow]
 LSAMonExtractTopics[\"NumberOfTopics\" -> `numberOfTopics`, Method -> \"`method`\", \"MaxSteps\" -> `maxSteps`, \"MinNumberOfDocumentsPerTerm\" -> `minNumberOfDocumentsPerTerm`] \[DoubleLongRightArrow]
 LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleLongRightArrow]
@@ -211,8 +212,13 @@ aQuestions = <|
         "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
         "Which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
         "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "For which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "For which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "For what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "Over what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
 
         "What is the split ratio" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
+        "Which split ratio to use" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
         "Training vs testing data  ratio" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
 
         "Which classifier method" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
@@ -221,11 +227,11 @@ aQuestions = <|
         "Which classifier algorithm" -> <|"TypePattern" -> _String, "Threshold" -> 0.66, "Parameter" -> "method"|>,
 
         "Classifier measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs",
-          "ContextWordsToRemove" -> {"measurements", "ROC functions"}|>,
+          "ContextWordsToRemove" -> {"measurements", "ROC functions", "classifier"}|>,
         "Which evaluation metrics" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs",
-          "ContextWordsToRemove" -> {"measurements", "ROC functions"}|>,
+          "ContextWordsToRemove" -> {"measurements", "ROC functions", "classifier"}|>,
         "Which measurements" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "measurementFuncs",
-          "ContextWordsToRemove" -> {"measurements", "ROC functions"}|>,
+          "ContextWordsToRemove" -> {"measurements", "ROC functions", "classifier"}|>,
 
         "Which ROC functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>,
         "Which ROC plot functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>
