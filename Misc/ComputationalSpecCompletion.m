@@ -469,6 +469,9 @@ ComputationalSpecCompletion["Defaults"] := ComputationalSpecCompletion["Data"]["
 
 ComputationalSpecCompletion["Shortcuts"] := ComputationalSpecCompletion["Data"]["Shortcuts"];
 
+ComputationalSpecCompletion[ command_String, opts : OptionsPattern[]] :=
+    ComputationalSpecCompletion[Automatic, command];
+
 ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] :=
     Block[{cf},
 
@@ -496,15 +499,6 @@ ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsP
 
       ToExpression["Hold[" <> aTemplates[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
     ];
-
-
-(***********************************************************)
-(* GetComputationalWorkflowTypeClassifier                  *)
-(***********************************************************)
-
-Clear[GetComputationalWorkflowTypeClassifier];
-GetComputationalWorkflowTypeClassifier[] = Uncompress@
-    Get["/Users/antonov/MathFiles/RakuForPrediction/ProcessedData/cSpecClassifier.m"];
 
 
 End[];
