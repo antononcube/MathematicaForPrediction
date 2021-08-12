@@ -98,7 +98,8 @@ aShortcuts = <|
 aTemplates = <|
   "QuantileRegression" ->
       StringTemplate[
-        "qrData = `dataset`;
+        "Module[{qrData,aQRFuncs,aQRPlotData},
+         qrData = `dataset`;
          qrData = N@Which[ Head[qrData] === TemporalData, QuantityMagnitude[qrData[\"Path\"]], VectorQ[qrData], Transpose[{Range@Length@qrData, qrData}], True, qrData];
 Echo[ResourceFunction[\"RecordsSummary\"][qrData],\"data summary:\"];
 aQRFuncs = AssociationThread[ `probs`, ResourceFunction[\"QuantileRegression\"][qrData, `knots`, `probs`, InterpolationOrder->`intOrder`]];
@@ -106,7 +107,8 @@ aQRPlotData = Prepend[(Transpose[{qrData[[All, 1]], #1 /@ qrData[[All, 1]]}] &) 
 Echo[ListPlot[Values[aQRPlotData], Joined -> Prepend[Table[True, Length[aQRPlotData]-1], False], PlotLegends -> Keys[aQRPlotData], PlotTheme -> \"Detailed\", FrameLabel -> {\"Regressor\", \"Value\"}, ImageSize -> Medium],\"regression quantiles:\"];
 Echo[Map[Function[{qFunc},
   DateListPlot[
-    Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", AspectRatio -> 1/4, ImageSize -> Large]], aQRFuncs],\"errors:\"];"],
+    Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", ImageSize -> Large]], aQRFuncs],\"errors:\"];
+    ]"],
 
   "QRMon" ->
       StringTemplate[
@@ -127,14 +129,16 @@ LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleL
 LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
 
   "Classification" -> StringTemplate[
-    "clData = ClConToNormalClassifierData[`data`];
+    "Module[{clData,clDataTraining,clDataTesting,clObj,clCMObj,clMeasurements},
+    clData = ClConToNormalClassifierData[`data`];
     {clDataTraining, clDataTesting} = TakeDrop[clData, Floor[`splitRatio` * Length[clData]]];
     clObj = Classify[clDataTraining, Method -> \"`method`\"];
     clCMObj = ClassifierMeasurements[clObj, clDataTesting];
     Echo[ clCMObj[{\"Accuracy\", \"Precision\", \"Recall\"}], \"measurements:\"];
     clMeasurements = Intersection[clCMObj[\"Properties\"], `measurementFuncs`];
     If[ Length[clMeasurements] > 0, Echo[ clCMObj[clMeasurements], ToString[clMeasurements] <> \":\"]];
-    Echo[ clCMObj[\"ConfusionMatrixPlot\"], \"confusion matrix:\"];"
+    Echo[ clCMObj[\"ConfusionMatrixPlot\"], \"confusion matrix:\"];
+    ]"
   ],
 
   "ClCon" ->
