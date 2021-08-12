@@ -199,9 +199,9 @@ aQuestions = <|
         "Absolute errors plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "absoluteErrorsQ"|>,
 
         "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.70, "Parameter" -> "dataset",
-          "ContextWordsToRemove" -> {"dataset"}|>,
+          "ContextWordsToRemove" -> {"dataset", "data"}|>,
         "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.40, "Parameter" -> "dataset",
-          "ContextWordsToRemove" -> {"data"}|>,
+          "ContextWordsToRemove" -> {"data", "dataset"}|>,
         "Which time series to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.4, "Parameter" -> "dataset",
           "ContextWordsToRemove" -> {"time series"}|>,
 
@@ -240,13 +240,13 @@ aQuestions = <|
 
   "Classification" ->
       <|
-        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
-        "Which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
-        "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
-        "For which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
-        "For which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
-        "For what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
-        "Over what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data"|>,
+        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "Which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "For which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "For which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "For what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "Over what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
 
         "What is the split ratio" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
         "Which split ratio to use" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
