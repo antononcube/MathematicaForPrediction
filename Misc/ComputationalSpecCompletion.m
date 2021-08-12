@@ -80,6 +80,8 @@ aShortcuts = <|
 
   "RandomTabularDataset" -> "RandomTabularDataset",
   "RandomDataset" -> "RandomTabularDataset",
+  "RandomDataGeneration" -> "RandomTabularDataset",
+  "RandomDatasetGeneration" -> "RandomTabularDataset",
 
   "Recommendations" -> "Recommendations",
   "SMRMon" -> "Recommendations"
@@ -407,8 +409,10 @@ RemoveContextWords[s : (_String | {_String ..}), words : {_String..} ] :=
 
 Clear[GetAnswers];
 Options[GetAnswers] = Join[ Options[GetRawAnswers], {"RemoveByThreshold" -> True}];
-GetAnswers[workflowType_String, command_String, nAnswers_Integer : 4, opts : OptionsPattern[]] :=
-    Block[{aRes, aParameterQuestions, parVal},
+GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : OptionsPattern[]] :=
+    Block[{workflowType = workflowTypeArg, aRes, aParameterQuestions, parVal},
+
+      workflowType = workflowType /. aShortcuts;
 
       (*Get raw answers*)
       aRes = GetRawAnswers[workflowType, command, nAnswers, FilterRules[{opts}, Options[GetRawAnswers]]];
@@ -533,8 +537,10 @@ ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] 
 ComputationalSpecCompletion[cf_ClassifierFunction, command_String, opts : OptionsPattern[]] :=
     ComputationalSpecCompletion[ cf[command], command, opts];
 
-ComputationalSpecCompletion[workflowType_String, command_String, opts : OptionsPattern[]] :=
-    Block[{aRes},
+ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : OptionsPattern[]] :=
+    Block[{workflowType = workflowTypeArg, aRes},
+
+      workflowType = workflowType /. aShortcuts;
 
       aRes = GetAnswers[workflowType, command, FilterRules[{opts}, Options[GetAnswers]]];
 
