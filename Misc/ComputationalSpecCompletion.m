@@ -67,16 +67,19 @@ Begin["`Private`"];
 
 aShortcuts = <|
   "QuantileRegression" -> "QuantileRegression",
-  "QRMon" -> "QuantileRegression",
   "QR" -> "QuantileRegression",
+
+  "QRMon" -> "QRMon",
 
   "LatentSemanticAnalysis" -> "LatentSemanticAnalysis",
   "LSAMon" -> "LatentSemanticAnalysis",
   "LSA" -> "LatentSemanticAnalysis",
 
   "Classification" -> "Classification",
-  "ClCon" -> "Classification",
   "Classify" -> "Classification",
+
+  "ClCon" -> "ClCon",
+  "CLMon" -> "ClCon",
 
   "RandomTabularDataset" -> "RandomTabularDataset",
   "RandomDataset" -> "RandomTabularDataset",
@@ -123,7 +126,18 @@ LSAMonExtractTopics[\"NumberOfTopics\" -> `numberOfTopics`, Method -> \"`method`
 LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleLongRightArrow]
 LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
 
-  "Classification" ->
+  "Classification" -> StringTemplate[
+    "clData = ClConToNormalClassifierData[`data`];
+    {clDataTraining, clDataTesting} = TakeDrop[clData, Floor[`splitRatio` * Length[clData]]];
+    clObj = Classify[clDataTraining, Method -> \"`method`\"];
+    clCMObj = ClassifierMeasurements[clObj, clDataTesting];
+    Echo[ clCMObj[{\"Accuracy\", \"Precision\", \"Recall\"}], \"measurements:\"];
+    clMeasurements = Intersection[clCMObj[\"Properties\"], `measurementFuncs`];
+    If[ Length[clMeasurements] > 0, Echo[ clCMObj[clMeasurements], ToString[clMeasurements] <> \":\"]];
+    Echo[ clCMObj[\"ConfusionMatrixPlot\"], \"confusion matrix:\"];"
+  ],
+
+  "ClCon" ->
       StringTemplate[
         "ClConUnit[`data`]\[DoubleLongRightArrow]
         ClConSplitData[`splitRatio`]\[DoubleLongRightArrow]
@@ -302,6 +316,8 @@ aQuestions = <|
       |>
 |>;
 
+aQuestions = Join[aQuestions, <|"ClCon" -> aQuestions["Classification"], "QRMon" -> aQuestions["QuantileRegression"]|>];
+
 
 (***********************************************************)
 (* Defaults                                                *)
@@ -363,6 +379,9 @@ aDefaults = <|
   |>
 
 |>;
+
+aDefaults = Join[aDefaults, <|"ClCon" -> aDefaults["Classification"], "QRMon" -> aDefaults["QuantileRegression"]|>];
+
 
 (***********************************************************)
 (* GetRawAnswers                                           *)
@@ -518,7 +537,7 @@ ComputationalSpecCompletion["Shortcuts"] := ComputationalSpecCompletion["Data"][
 ComputationalSpecCompletion[ commands : ( _String | {_String..} ), opts : OptionsPattern[]] :=
     ComputationalSpecCompletion[Automatic, commands];
 
-ComputationalSpecCompletion[ sf : (Automatic | _ClassifierFunction), commands : {_String..}, opts : OptionsPattern[]] :=
+ComputationalSpecCompletion[ sf : (Automatic | _ClassifierFunction | _String), commands : {_String..}, opts : OptionsPattern[]] :=
     Association @ Map[ # -> ComputationalSpecCompletion[sf, #]&,  commands];
 
 ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] :=
