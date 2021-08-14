@@ -92,64 +92,67 @@ aShortcuts = <|
 
 
 (***********************************************************)
-(* Stencils                                                *)
+(* WL templates                                            *)
 (***********************************************************)
 
 aWLTemplates = <|
   "QuantileRegression" ->
-      StringTemplate[
-        "Module[{qrData,aQRFuncs,aQRPlotData},
-         qrData = `dataset`;
-         qrData = N@Which[ Head[qrData] === TemporalData, QuantityMagnitude[qrData[\"Path\"]], VectorQ[qrData], Transpose[{Range@Length@qrData, qrData}], True, qrData];
-Echo[ResourceFunction[\"RecordsSummary\"][qrData],\"data summary:\"];
-aQRFuncs = AssociationThread[ `probs`, ResourceFunction[\"QuantileRegression\"][qrData, `knots`, `probs`, InterpolationOrder->`intOrder`]];
-aQRPlotData = Prepend[(Transpose[{qrData[[All, 1]], #1 /@ qrData[[All, 1]]}] &) /@ aQRFuncs, \"data\" -> qrData];
-Echo[ListPlot[Values[aQRPlotData], Joined -> Prepend[Table[True, Length[aQRPlotData]-1], False], PlotLegends -> Keys[aQRPlotData], PlotTheme -> \"Detailed\", FrameLabel -> {\"Regressor\", \"Value\"}, ImageSize -> Medium],\"regression quantiles:\"];
-Echo[Map[Function[{qFunc},
-  DateListPlot[
-    Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", ImageSize -> Medium]], aQRFuncs],\"errors:\"];
-    ]"],
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "Module[{qrData,aQRFuncs,aQRPlotData},
+            qrData = `dataset`;
+            qrData = N@Which[ Head[qrData] === TemporalData, QuantityMagnitude[qrData[\"Path\"]], VectorQ[qrData], Transpose[{Range@Length@qrData, qrData}], True, qrData];
+            Echo[ResourceFunction[\"RecordsSummary\"][qrData],\"data summary:\"];
+            aQRFuncs = AssociationThread[ `probs`, ResourceFunction[\"QuantileRegression\"][qrData, `knots`, `probs`, InterpolationOrder->`intOrder`]];
+            aQRPlotData = Prepend[(Transpose[{qrData[[All, 1]], #1 /@ qrData[[All, 1]]}] &) /@ aQRFuncs, \"data\" -> qrData];
+            Echo[ListPlot[Values[aQRPlotData], Joined -> Prepend[Table[True, Length[aQRPlotData]-1], False], PlotLegends -> Keys[aQRPlotData], PlotTheme -> \"Detailed\", FrameLabel -> {\"Regressor\", \"Value\"}, ImageSize -> Medium],\"regression quantiles:\"];
+            Echo[Map[Function[{qFunc},
+             DateListPlot[
+              Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", ImageSize -> Medium]], aQRFuncs],\"errors:\"];
+           ]",
 
   "QRMon" ->
-      StringTemplate[
-        "QRMonUnit[`dataset`]\[DoubleLongRightArrow]
-QRMonEchoDataSummary[]\[DoubleLongRightArrow]
-QRMonQuantileRegression[`knots`, `probs`, InterpolationOrder->`intOrder`]\[DoubleLongRightArrow]
-QRMonPlot[\"DateListPlot\"->`dateListPlotQ`,PlotTheme->\"Detailed\"]\[DoubleLongRightArrow]
-QRMonErrorPlots[\"RelativeErrors\"->`relativeErrorsQ`,\"DateListPlot\"->`dateListPlotQ`,PlotTheme->\"Detailed\"]"],
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "qrObj=
+        QRMonUnit[`dataset`]\[DoubleLongRightArrow]
+        QRMonEchoDataSummary[]\[DoubleLongRightArrow]
+        QRMonQuantileRegression[`knots`, `probs`, InterpolationOrder->`intOrder`]\[DoubleLongRightArrow]
+        QRMonPlot[\"DateListPlot\"->`dateListPlotQ`,PlotTheme->\"Detailed\"]\[DoubleLongRightArrow]
+        QRMonErrorPlots[\"RelativeErrors\"->`relativeErrorsQ`,\"DateListPlot\"->`dateListPlotQ`,PlotTheme->\"Detailed\"];",
 
   "LatentSemanticAnalysis" ->
-      StringTemplate["
-LSAMonUnit[`textData`] \[DoubleLongRightArrow]
-LSAMonMakeDocumentTermMatrix[ \"StemmingRules\" -> `stemmingRules`, \"StopWords\" -> `stopWords`] \[DoubleLongRightArrow]
-LSAMonEchoDocumentTermMatrixStatistics[\"LogBase\" -> 10] \[DoubleLongRightArrow]
-LSAMonApplyTermWeightFunctions[\"GlobalWeightFunction\" -> \"`globalWeightFunction`\", \"LocalWeightFunction\" -> \"`localWeightFunction`\", \"NormalizerFunction\" -> \"`normalizerFunction`\"] \[DoubleLongRightArrow]
-LSAMonExtractTopics[\"NumberOfTopics\" -> `numberOfTopics`, Method -> \"`method`\", \"MaxSteps\" -> `maxSteps`, \"MinNumberOfDocumentsPerTerm\" -> `minNumberOfDocumentsPerTerm`] \[DoubleLongRightArrow]
-LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleLongRightArrow]
-LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "lsaObj=
+      LSAMonUnit[`textData`] \[DoubleLongRightArrow]
+      LSAMonMakeDocumentTermMatrix[ \"StemmingRules\" -> `stemmingRules`, \"StopWords\" -> `stopWords`] \[DoubleLongRightArrow]
+      LSAMonEchoDocumentTermMatrixStatistics[\"LogBase\" -> 10] \[DoubleLongRightArrow]
+      LSAMonApplyTermWeightFunctions[\"GlobalWeightFunction\" -> \"`globalWeightFunction`\", \"LocalWeightFunction\" -> \"`localWeightFunction`\", \"NormalizerFunction\" -> \"`normalizerFunction`\"] \[DoubleLongRightArrow]
+      LSAMonExtractTopics[\"NumberOfTopics\" -> `numberOfTopics`, Method -> \"`method`\", \"MaxSteps\" -> `maxSteps`, \"MinNumberOfDocumentsPerTerm\" -> `minNumberOfDocumentsPerTerm`] \[DoubleLongRightArrow]
+      LSAMonEchoTopicsTable[\"NumberOfTerms\" -> `topicsTableNumberOfTerms`] \[DoubleLongRightArrow]
+      LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];",
 
-  "Classification" -> StringTemplate[
-    "Module[{clData,clDataTraining,clDataTesting,clObj,clCMObj,clMeasurements},
-    clData = ClConToNormalClassifierData[`data`];
-    {clDataTraining, clDataTesting} = TakeDrop[clData, Floor[`splitRatio` * Length[clData]]];
-    clObj = Classify[clDataTraining, Method -> \"`method`\"];
-    clCMObj = ClassifierMeasurements[clObj, clDataTesting];
-    Echo[ clCMObj[{\"Accuracy\", \"Precision\", \"Recall\"}], \"measurements:\"];
-    clMeasurements = Intersection[clCMObj[\"Properties\"], `measurementFuncs`];
-    If[ Length[clMeasurements] > 0, Echo[ clCMObj[clMeasurements], ToString[clMeasurements] <> \":\"]];
-    Echo[ clCMObj[\"ConfusionMatrixPlot\"], \"confusion matrix:\"];
-    ]"
-  ],
+  "Classification" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "Module[{clData,clDataTraining,clDataTesting,clObj,clCMObj,clMeasurements},
+            clData = ClConToNormalClassifierData[`data`];
+            {clDataTraining, clDataTesting} = TakeDrop[clData, Floor[`splitRatio` * Length[clData]]];
+            clObj = Classify[clDataTraining, Method -> \"`method`\"];
+            clCMObj = ClassifierMeasurements[clObj, clDataTesting];
+            Echo[ clCMObj[{\"Accuracy\", \"Precision\", \"Recall\"}], \"measurements:\"];
+            clMeasurements = Intersection[clCMObj[\"Properties\"], `measurementFuncs`];
+            If[ Length[clMeasurements] > 0, Echo[ clCMObj[clMeasurements], ToString[clMeasurements] <> \":\"]];
+            Echo[ clCMObj[\"ConfusionMatrixPlot\"], \"confusion matrix:\"];
+           ]",
 
   "ClCon" ->
-      StringTemplate[
-        "ClConUnit[`data`]\[DoubleLongRightArrow]
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "clObj=
+        ClConUnit[`data`]\[DoubleLongRightArrow]
         ClConSplitData[`splitRatio`]\[DoubleLongRightArrow]
         ClConEchoDataSummary\[DoubleLongRightArrow]
         ClConMakeClassifier[\"`method`\"]\[DoubleLongRightArrow]
         ClConClassifierMeasurements[`measurementFuncs`]\[DoubleLongRightArrow]
         ClConEchoValue\[DoubleLongRightArrow]
-        ClConROCPlot[`rocPlotFuncs`];"],
+        ClConROCPlot[`rocPlotFuncs`];",
 
   "RandomTabularDataset" ->
       StringTemplate[
@@ -163,13 +166,74 @@ LSAMonEchoStatisticalThesaurus[ \"Words\" -> `statThesaurusWords`];"],
             "]"],
 
   "Recommendations" ->
-      StringTemplate[
-        "SMRMonUnit[]\[DoubleLongRightArrow]
-         SMRMonCreate[`dataset`]\[DoubleLongRightArrow]
-         SMRMonRecommendByProfile[`prof`, `nrecs`]\[DoubleLongRightArrow]
-         SMRMonJoinAcross[`dataset`]\[DoubleLongRightArrow]
-         SMRMonEchoValue[]"]
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "smrObj=
+        SMRMonUnit[]\[DoubleLongRightArrow]
+        SMRMonCreate[`dataset`]\[DoubleLongRightArrow]
+        SMRMonRecommendByProfile[`prof`, `nrecs`]\[DoubleLongRightArrow]
+        SMRMonJoinAcross[`dataset`]\[DoubleLongRightArrow]
+        SMRMonEchoValue[];"
 |>;
+
+
+(***********************************************************)
+(* R templates                                            *)
+(***********************************************************)
+
+aRTemplates = <|
+  "QuantileRegression" ->
+      StringTemplate["{library(quanreg)}"],
+
+  "QRMon" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "qrObj <-
+          QRMonUnit(`dataset`) %>%
+          QRMonEchoDataSummary() %>%
+          QRMonQuantileRegression(df = `knots`, probabilities = `probs`, degree = `intOrder`) %>%
+          QRMonPlot(datePlotQ = `dateListPlotQ` ) %>%
+          QRMonErrorsPlot(relativeErrors = `relativeErrorsQ`, datePlotQ = `dateListPlotQ`)",
+
+  "LatentSemanticAnalysis" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "lsaObj <-
+          LSAMonUnit(`textData`) %>%
+          LSAMonMakeDocumentTermMatrix( stemmingRules = `stemmingRules`, stopWords = `stopWords`) %>%
+          LSAMonEchoDocumentTermMatrixStatistics() %>%
+          LSAMonApplyTermWeightFunctions(globalWeightFunction = \"`globalWeightFunction`\", localWeightFunction = \"`localWeightFunction`\", normalizerFunction = \"`normalizerFunction`\") %>%
+          LSAMonExtractTopics( numberOfTopics = `numberOfTopics`, method = \"`method`\", maxSteps = `maxSteps`, minNumberOfDocumentsPerTerm = `minNumberOfDocumentsPerTerm`) %>%
+          LSAMonEchoTopicsTable( numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE) %>%
+          LSAMonEchoStatisticalThesaurus( words = `statThesaurusWords`)",
+
+  "Classification" -> StringTemplate["Not implemented"],
+
+  "ClCon" -> StringTemplate["Not implemented"],
+
+  "RandomTabularDataset" ->
+      StringTemplate[
+        "RandomDataFrame(" <>
+            "nrow = `nrow`, ncol = `ncol`, " <>
+            "columnNamesGenerator = `columnNamesGenerator`, " <>
+            "form =  \"`form`\", " <>
+            "maxNumberOfValues = `maxNumberOfValues`, " <>
+            "minNumberOfValues = `minNumberOfValues`, " <>
+            "rowNamesQ = `rowKeys`" <>
+            ")"],
+
+  "Recommendations" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "smrObj <-
+          SMRMonUnit() %>%
+          SMRMonCreate( data = `dataset`) %>%
+          SMRMonRecommendByProfile( profile = `prof`, nrecs = `nrecs`) %>%
+          SMRMonJoinAcross( data = `dataset`) %>%
+          SMRMonEchoValue()"
+|>;
+
+(***********************************************************)
+(* All templates                                           *)
+(***********************************************************)
+
+aTemplates = <| "R" -> aRTemplates, "WL" -> aWLTemplates |>;
 
 
 (***********************************************************)
@@ -522,11 +586,13 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
 
 ClearAll[ComputationalSpecCompletion];
 
-Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"AvoidMonads" -> False}];
+Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False}];
+
+ComputationalSpecCompletion::plang = "The value of the option \"ProgrammingLanguage\" is expected to be one of `1`.";
 
 ComputationalSpecCompletion["Data"] :=
     <|
-      "Templates" -> aWLTemplates,
+      "Templates" -> aTemplates,
       "Questions" -> aQuestions,
       "Defaults" -> aDefaults,
       "Shortcuts" -> aShortcuts
@@ -544,7 +610,7 @@ ComputationalSpecCompletion[ commands : ( _String | {_String..} ), opts : Option
     ComputationalSpecCompletion[Automatic, commands, opts];
 
 ComputationalSpecCompletion[ sf : (Automatic | _ClassifierFunction | _String), commands : {_String..}, opts : OptionsPattern[]] :=
-    Association @ Map[ # -> ComputationalSpecCompletion[sf, #, opts]&,  commands];
+    Association @ Map[ # -> ComputationalSpecCompletion[sf, #, opts]&, commands];
 
 ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] :=
     Block[{cf},
@@ -567,7 +633,15 @@ ComputationalSpecCompletion[cf_ClassifierFunction, command_String, opts : Option
     ComputationalSpecCompletion[ cf[command], command, opts];
 
 ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : OptionsPattern[]] :=
-    Block[{workflowType = workflowTypeArg, aRes},
+    Block[{workflowType = workflowTypeArg, lang, aRes, code},
+
+      lang = OptionValue[ComputationalSpecCompletion, "ProgrammingLanguage"];
+      If[ TrueQ[lang === Automatic], lang = "WL" ];
+      If[ TrueQ[StringQ[lang] && ToLowerCase[lang] == "mathematica"], lang = "WL"];
+      If[ !StringQ[lang] || !MemberQ[ {"R", "WL"}, ToUpperCase[lang] ],
+        Message[ComputationalSpecCompletion::plang, {"R", "WL", Automatic}];
+        lang = "WL"
+      ];
 
       workflowType = workflowType /. aShortcuts;
 
@@ -577,9 +651,23 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
         Return[$Failed]
       ];
 
-      ToExpression["Hold[" <> aWLTemplates[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
-    ];
+      code = aTemplates[lang][workflowType][Join[aDefaults[workflowType], aRes]];
 
+      If[ lang == "WL",
+        ToExpression["Hold[" <> code <> "]"],
+        (*ELSE*)
+        code =
+            StringReplace[
+              code,
+              {
+                WordBoundary ~~ "Automatic" ~~ WordBoundary -> "NULL",
+                WordBoundary ~~ "True" ~~ WordBoundary -> "TRUE",
+                WordBoundary ~~ "False" ~~ WordBoundary -> "FALSE",
+                "{" ~~ x : (Except[Characters["{}"]]..) ~~ "}" :> "c(" <> x <> ")"
+              }];
+        "parse( text = '" <> code <> "')"
+      ]
+    ];
 
 End[];
 
