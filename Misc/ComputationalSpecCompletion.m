@@ -522,6 +522,8 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
 
 ClearAll[ComputationalSpecCompletion];
 
+Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"AvoidMonads" -> False}];
+
 ComputationalSpecCompletion["Data"] :=
     <|
       "Templates" -> aTemplates,
@@ -539,10 +541,10 @@ ComputationalSpecCompletion["Defaults"] := ComputationalSpecCompletion["Data"]["
 ComputationalSpecCompletion["Shortcuts"] := ComputationalSpecCompletion["Data"]["Shortcuts"];
 
 ComputationalSpecCompletion[ commands : ( _String | {_String..} ), opts : OptionsPattern[]] :=
-    ComputationalSpecCompletion[Automatic, commands];
+    ComputationalSpecCompletion[Automatic, commands, opts];
 
 ComputationalSpecCompletion[ sf : (Automatic | _ClassifierFunction | _String), commands : {_String..}, opts : OptionsPattern[]] :=
-    Association @ Map[ # -> ComputationalSpecCompletion[sf, #]&,  commands];
+    Association @ Map[ # -> ComputationalSpecCompletion[sf, #, opts]&,  commands];
 
 ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] :=
     Block[{cf},
@@ -554,7 +556,11 @@ ComputationalSpecCompletion[Automatic, command_String, opts : OptionsPattern[]] 
 
       cf = ComputationalWorkflowTypeClassifier`GetComputationalWorkflowTypeClassifier[];
 
-      ComputationalSpecCompletion[ cf[command], command, opts]
+      If[ TrueQ[OptionValue[ComputationalSpecCompletion, "AvoidMonads"]],
+        ComputationalSpecCompletion[ cf[command], command, opts],
+        (*ELSE*)
+        ComputationalSpecCompletion[ cf[command] /. {"Classification" -> "ClCon", "QuantileRegression" -> "QRMon"}, command, opts]
+      ]
     ];
 
 ComputationalSpecCompletion[cf_ClassifierFunction, command_String, opts : OptionsPattern[]] :=
