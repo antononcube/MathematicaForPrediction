@@ -66,6 +66,10 @@ Begin["`Private`"];
 (***********************************************************)
 
 aShortcuts = <|
+  "ProgrammingEnvironment" -> "ProgrammingEnvironment",
+  "Programming" -> "ProgrammingEnvironment",
+  "System" -> "ProgrammingEnvironment",
+
   "QuantileRegression" -> "QuantileRegression",
   "QR" -> "QuantileRegression",
 
@@ -242,6 +246,23 @@ aTemplates = <| "R" -> aRTemplates, "WL" -> aWLTemplates |>;
 
 aQuestions = <|
 
+  "ProgrammingEnvironment" ->
+      (KeySort @
+          Join[ #,
+            KeyMap[ StringReplace[#, {"package" ~~ WordBoundary -> "library", "packages" -> "libraries"}]&, #],
+            KeyMap[ StringReplace[#, {"use" -> "load"}]&, #],
+            KeyMap[ StringReplace[#, {"language" -> "language to use"}]&, #],
+            KeyMap[ StringReplace[#, {"Which" -> "What"}]&, #]
+          ] & @
+          <|
+            "Which language" -> <|"TypePattern" -> _String, "Threshold" -> 0.56, "Parameter" -> "lang", "ContextWordsToRemove" -> {"code", "language", "programming"} |>,
+            "Which programming language" -> <|"TypePattern" -> _String, "Threshold" -> 0.56, "Parameter" -> "lang", "ContextWordsToRemove" -> {"code", "language", "programming"} |>,
+            "Which computer language" -> <|"TypePattern" -> _String, "Threshold" -> 0.56, "Parameter" -> "lang", "ContextWordsToRemove" -> {"code", "language", "programming"} |>,
+
+            "Which packages" -> <|"TypePattern" -> _String, "Threshold" -> 0.56, "Parameter" -> "packages", "ContextWordsToRemove" -> {"library", "libraries", "package", "packages"} |>,
+            "Which packages to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.56, "Parameter" -> "packages", "ContextWordsToRemove" -> {"library", "libraries", "package", "packages"} |>
+          |>),
+
   "QuantileRegression" ->
       <|
         "How many knots" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.6, "Parameter" -> "knots",
@@ -332,38 +353,39 @@ aQuestions = <|
         "Which ROC plot functions" -> <|"TypePattern" -> {_String ..}, "Threshold" -> 0.35, "Parameter" -> "rocPlotFuncs"|>
       |>,
 
-  "RandomTabularDataset" -> <|
-    "How many rows" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
-    "What number of rows" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
-    "Rows count" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
+  "RandomTabularDataset" ->
+      <|
+        "How many rows" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
+        "What number of rows" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
+        "Rows count" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "nrow"|>,
 
-    "How many columns" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
-    "What number of columns" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
-    "Columns count" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
+        "How many columns" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
+        "What number of columns" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
+        "Columns count" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "ncol"|>,
 
-    "Max number values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
-    "Maximum number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
-    "Number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
-    "At most how many of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+        "Max number values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+        "Maximum number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+        "Number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
+        "At most how many of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "maxNumberOfValues"|>,
 
-    "Min number values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
-    "Minimum number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
-    "At least how many of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
+        "Min number values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
+        "Minimum number of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
+        "At least how many of values" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "minNumberOfValues"|>,
 
-    "Which form" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
-    "Which format" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
-    "What kind of form" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
-    "What kind of format" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+        "Which form" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+        "Which format" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+        "What kind of form" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
+        "What kind of format" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "form"|>,
 
-    "What is the column name generator" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
-    "Which is the column name generator" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
-    "How to generate the column names" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
+        "What is the column name generator" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
+        "Which is the column name generator" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
+        "How to generate the column names" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.5, "Parameter" -> "columnNamesGenerator"|>,
 
-    "What are the value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
-    "What are the generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
-    "Which value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
-    "Which generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>
-  |>,
+        "What are the value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
+        "What are the generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
+        "Which value generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>,
+        "Which generators" -> <|"TypePattern" -> {_String..}, "Threshold" -> 0.5, "Parameter" -> "generators"|>
+      |>,
 
   "Recommendations" ->
       <|
@@ -392,6 +414,11 @@ aQuestions = Join[aQuestions, <|"ClCon" -> aQuestions["Classification"], "QRMon"
 (***********************************************************)
 
 aDefaults = <|
+  "ProgrammingEnvironment" -> <|
+    "Language" -> "WL",
+    "Packages" -> None
+  |>,
+
   "QuantileRegression" -> <|
     "knots" -> 12,
     "probs" -> {0.25, 0.5, 0.75},
@@ -586,7 +613,7 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
 
 ClearAll[ComputationalSpecCompletion];
 
-Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False}];
+Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"ProgrammingLanguage" -> Automatic, "AvoidMonads" -> False}];
 
 ComputationalSpecCompletion::plang = "The value of the option \"ProgrammingLanguage\" is expected to be one of `1`.";
 
@@ -636,7 +663,15 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
     Block[{workflowType = workflowTypeArg, lang, aRes, code},
 
       lang = OptionValue[ComputationalSpecCompletion, "ProgrammingLanguage"];
-      If[ TrueQ[lang === Automatic], lang = "WL" ];
+      If[ TrueQ[lang === Automatic],
+        aRes = Join[aDefaults["ProgrammingEnvironment"], GetAnswers["ProgrammingEnvironment", command]];
+        lang =
+            Which[
+              Length[StringCases[ aRes["Language"], WordBoundary ~~ ("WL" | "Mathematica") ~~ WordBoundary]] > 0, "WL",
+              Length[StringCases[ aRes["Language"], WordBoundary ~~ ("R") ~~ WordBoundary]] > 0, "R",
+              True, "WL"
+            ]
+      ];
       If[ TrueQ[StringQ[lang] && ToLowerCase[lang] == "mathematica"], lang = "WL"];
       If[ !StringQ[lang] || !MemberQ[ {"R", "WL"}, ToUpperCase[lang] ],
         Message[ComputationalSpecCompletion::plang, {"R", "WL", Automatic}];
