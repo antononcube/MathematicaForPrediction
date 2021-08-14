@@ -95,7 +95,7 @@ aShortcuts = <|
 (* Stencils                                                *)
 (***********************************************************)
 
-aTemplates = <|
+aWLTemplates = <|
   "QuantileRegression" ->
       StringTemplate[
         "Module[{qrData,aQRFuncs,aQRPlotData},
@@ -107,7 +107,7 @@ aQRPlotData = Prepend[(Transpose[{qrData[[All, 1]], #1 /@ qrData[[All, 1]]}] &) 
 Echo[ListPlot[Values[aQRPlotData], Joined -> Prepend[Table[True, Length[aQRPlotData]-1], False], PlotLegends -> Keys[aQRPlotData], PlotTheme -> \"Detailed\", FrameLabel -> {\"Regressor\", \"Value\"}, ImageSize -> Medium],\"regression quantiles:\"];
 Echo[Map[Function[{qFunc},
   DateListPlot[
-    Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", ImageSize -> Large]], aQRFuncs],\"errors:\"];
+    Map[{#[[1]], (qFunc[#[[1]]] - #[[2]])/#[[2]]} &, qrData], Joined -> False, PlotRange -> All, Filling -> Axis, PlotTheme -> \"Detailed\", ImageSize -> Medium]], aQRFuncs],\"errors:\"];
     ]"],
 
   "QRMon" ->
@@ -526,7 +526,7 @@ Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"AvoidMonads" 
 
 ComputationalSpecCompletion["Data"] :=
     <|
-      "Templates" -> aTemplates,
+      "Templates" -> aWLTemplates,
       "Questions" -> aQuestions,
       "Defaults" -> aDefaults,
       "Shortcuts" -> aShortcuts
@@ -577,7 +577,7 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
         Return[$Failed]
       ];
 
-      ToExpression["Hold[" <> aTemplates[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
+      ToExpression["Hold[" <> aWLTemplates[workflowType][Join[aDefaults[workflowType], aRes]] <> "]"]
     ];
 
 
