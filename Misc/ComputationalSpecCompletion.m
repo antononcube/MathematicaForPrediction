@@ -42,7 +42,48 @@
 (* :Mathematica Version: 12.3 *)
 (* :Copyright: (c) 2021 Anton Antonov *)
 (* :Keywords: *)
-(* :Discussion: *)
+(* :Discussion:
+
+## Problem formulation
+
+We want to have a system that:
+
+- Generates relevant, correct, executable programming code based natural language specifications of computational workflows
+
+- Can automatically recognize the workflow types
+
+- Can generate code for different programming languages and related software packages
+
+The points above are given in order of importance; the most important are placed first.
+
+## Examples
+
+Consider the following -- intentionally short and non-specific -- computational workflow specifications:
+
+```mathematica
+lsCommands = {
+   "Create a random dataset.",
+   "Do quantile regression over findData.",
+   "Make a classifier over dsTitanic."};
+```
+
+Here we generate the code -- note the only the list of commands is given to the function ComputationalSpecCompletion, [AAp1]:
+
+```mathematica
+aRes = ComputationalSpecCompletion[lsCommands];
+```
+
+Here we tabulate the code generation (templates fill-in) results:
+
+```mathematica
+ResourceFunction["GridTableForm"][List @@@ Normal[aRes], TableHeadings -> {"Spec", "Code"}]
+```
+
+## References
+
+[AAp1] Anton Antonov, Computational workflow type classifier Mathematica package
+
+*)
 
 BeginPackage["ComputationalSpecCompletion`"];
 (* Exported symbols added here with SymbolName::usage *)
@@ -330,8 +371,8 @@ aQuestions = <|
         "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
         "For which data" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
         "For which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
-        "For what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
-        "Over what dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "Using which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "Over which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "data", "ContextWordsToRemove" -> {"dataset", "data"}|>,
 
         "What is the split ratio" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
         "Which split ratio to use" -> <|"TypePattern" -> _?NumericQ, "Threshold" -> 0.75, "Parameter" -> "splitRatio"|>,
@@ -526,15 +567,25 @@ Options[GetAnswers] = Join[ Options[GetRawAnswers], {"RemoveByThreshold" -> True
 GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : OptionsPattern[]] :=
     Block[{workflowType = workflowTypeArg, aRes, aParameterQuestions, parVal},
 
+      (*
+       We have multiple questions for each parameter in order to capture relevant answers
+       from different types of phrasings.
+       We hope that the (1) multiplicity of questions and (2) passing threshold and redundant words per question
+       would suffice to get correct answers (most of the time.)
+      *)
+
+      (*"Normalize" the specified workflow type with replacement rules.*)
       workflowType = workflowType /. aShortcuts;
 
-      (*Get raw answers*)
+      (*Get raw answers.*)
+      (*For each question we get an association of scored answers. The answers are keys. *)
       aRes = GetRawAnswers[workflowType, command, nAnswers, FilterRules[{opts}, Options[GetRawAnswers]]];
       If[TrueQ[aRes === $Failed],
         Return[$Failed]
       ];
 
-      (*Filter out candidates with too low probabilities*)
+      (*Filter out candidates with too low probabilities.*)
+      (*For each question apply the threshold filtering.*)
       If[ TrueQ[OptionValue[GetAnswers, "RemoveByThreshold"]],
         aRes =
             Association@
@@ -544,7 +595,8 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
         aRes = Select[aRes, Length[#] > 0 &];
       ];
 
-      (*Remove specified words*)
+      (*Remove specified "redundant" words.*)
+      (*For each question and each key/answer replace redundant words with empty string.*)
       aRes =
           Association@
               KeyValueMap[
@@ -557,11 +609,11 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
                 ], aRes];
       aRes = Select[aRes, Length[#] > 0 &];
 
-      (*Group the questions per parameter *)
+      (*Group the questions per parameter.*)
       aParameterQuestions = GroupBy[aQuestions[workflowType], #["Parameter"] &, Keys];
       (*aParameterCandidateValues=Map[Merge[Values@KeyTake[aRes,#],Max]&, aParameterQuestions];*)
 
-      (*For each parameter and each question of that parameter extract the top candidate parameter value and associated probability *)
+      (*For each parameter and each question of that parameter extract the top candidate parameter value and associated probability.*)
       aRes =
           Map[
             KeyValueMap[
@@ -577,7 +629,7 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
 
                       "{_?NumericQ..}" | "{_Integer..}",
 
-                      ToExpression /@ StringTrim[StringSplit[TakeLargestKey[v, 1], {",", "and"}]],
+                      ToExpression /@ Select[StringTrim[StringSplit[TakeLargestKey[v, 1], {",", "and"}]], StringLength[#] > 0&],
 
                       "_?NumericQ" | "_Integer",
                       ToExpression[TakeLargestKey[v, 1]],
@@ -613,9 +665,13 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
 
 ClearAll[ComputationalSpecCompletion];
 
-Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"ProgrammingLanguage" -> Automatic, "AvoidMonads" -> False}];
+Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False}];
 
 ComputationalSpecCompletion::plang = "The value of the option \"ProgrammingLanguage\" is expected to be one of `1`.";
+ComputationalSpecCompletion::aulang = "The automatic programming language detection failed. Continuing by using \"WL\".";
+ComputationalSpecCompletion::nargs = "If one argument is given then the first argument is expected to be a string or a list of strings. \
+If two arguments are given then the first argument is expected to be a classifier function or Automatic, \
+and the second argument is expected to be a string or a list of strings.";
 
 ComputationalSpecCompletion["Data"] :=
     <|
@@ -669,7 +725,9 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
             Which[
               Length[StringCases[ aRes["Language"], WordBoundary ~~ ("WL" | "Mathematica") ~~ WordBoundary]] > 0, "WL",
               Length[StringCases[ aRes["Language"], WordBoundary ~~ ("R") ~~ WordBoundary]] > 0, "R",
-              True, "WL"
+              True,
+              Message[ComputationalSpecCompletion::aulang];
+              "WL"
             ]
       ];
       If[ TrueQ[StringQ[lang] && ToLowerCase[lang] == "mathematica"], lang = "WL"];
@@ -702,6 +760,12 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
               }];
         "parse( text = '" <> code <> "')"
       ]
+    ];
+
+ComputationalSpecCompletion[___] :=
+    Block[{},
+      Message[ComputationalSpecCompletion::nargs];
+      $Failed
     ];
 
 End[];
