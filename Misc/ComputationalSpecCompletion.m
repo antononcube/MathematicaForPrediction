@@ -242,11 +242,12 @@ aRTemplates = <|
       (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
           "lsaObj <-
           LSAMonUnit(`textData`) %>%
-          LSAMonMakeDocumentTermMatrix( stemWordsQ = `stemmingRules`, stopWords = `stopWords`) %>%
+          LSAMonMakeDocumentTermMatrix(stemWordsQ = `stemmingRules`, stopWords = `stopWords`) %>%
+          LSAMonEchoDocumentTermMatrixStatistics(logBase = 10) %>%
           LSAMonApplyTermWeightFunctions(globalWeightFunction = \"`globalWeightFunction`\", localWeightFunction = \"`localWeightFunction`\", normalizerFunction = \"`normalizerFunction`\") %>%
-          LSAMonExtractTopics( numberOfTopics = `numberOfTopics`, method = \"`method`\", maxSteps = `maxSteps`, minNumberOfDocumentsPerTerm = `minNumberOfDocumentsPerTerm`) %>%
-          LSAMonEchoTopicsTable( numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE) %>%
-          LSAMonEchoStatisticalThesaurus( words = `statThesaurusWords`)",
+          LSAMonExtractTopics(numberOfTopics = `numberOfTopics`, method = \"`method`\", maxSteps = `maxSteps`, minNumberOfDocumentsPerTerm = `minNumberOfDocumentsPerTerm`) %>%
+          LSAMonEchoTopicsTable(numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE) %>%
+          LSAMonEchoStatisticalThesaurus(words = `statThesaurusWords`)",
 
   "Classification" -> StringTemplate["Not implemented"],
 
