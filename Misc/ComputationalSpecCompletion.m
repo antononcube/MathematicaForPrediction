@@ -242,8 +242,7 @@ aRTemplates = <|
       (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
           "lsaObj <-
           LSAMonUnit(`textData`) %>%
-          LSAMonMakeDocumentTermMatrix( stemmingRules = `stemmingRules`, stopWords = `stopWords`) %>%
-          LSAMonEchoDocumentTermMatrixStatistics() %>%
+          LSAMonMakeDocumentTermMatrix( stemWordsQ = `stemmingRules`, stopWords = `stopWords`) %>%
           LSAMonApplyTermWeightFunctions(globalWeightFunction = \"`globalWeightFunction`\", localWeightFunction = \"`localWeightFunction`\", normalizerFunction = \"`normalizerFunction`\") %>%
           LSAMonExtractTopics( numberOfTopics = `numberOfTopics`, method = \"`method`\", maxSteps = `maxSteps`, minNumberOfDocumentsPerTerm = `minNumberOfDocumentsPerTerm`) %>%
           LSAMonEchoTopicsTable( numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE) %>%
