@@ -998,7 +998,7 @@ ClConClassifierMeasurements[][xs_, context_Association] := ClConClassifierMeasur
 ClConClassifierMeasurements[___][$ClConFailure] := $ClConFailure;
 
 ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:OptionsPattern[]][xs_, context_] :=
-    Block[{cm, measures = Flatten[{measuresArg}], cmROC, rocRange},
+    Block[{cm, measures = Flatten[{measuresArg}], measures2, cmROC, rocRange},
 
       rocRange = OptionValue[ ClConClassifierMeasurements, "ROCRange"];
       If[ !( VectorQ[rocRange,NumberQ] && Apply[And, 0 <= # <= 1& /@ rocRange] ),
@@ -1023,7 +1023,12 @@ ClConClassifierMeasurements[measuresArg : (_String | {_String ..}), opts:Options
 
         MatchQ[ context["classifier"], _ClassifierFunction],
         cm = ClassifierMeasurements[context["classifier"], ClConToNormalClassifierData[context@"testData"]];
-        ClCon[AssociationThread[measures -> cm /@ measures], context],
+        measures2 = Intersection[cm["Properties"], measures];
+        If[ Length[measures2] == 0,
+          Echo["None of the specified measures " <> ToString[measures] <> " is known. Using Accuracy, Precision, and Recall instead.", "ClConClassifierMeasurements:"];
+          measures2 = {"Accuracy", "Precision", "Recall"}
+        ];
+        ClCon[AssociationThread[measures2 -> cm /@ measures2], context],
 
         !MemberQ[measures, "ROCCurve"],
         cm = EnsembleClassifierMeasurements[ context["classifier"], ClConToNormalClassifierData[context@"testData"], measures, opts];
