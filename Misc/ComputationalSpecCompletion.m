@@ -85,6 +85,46 @@ ResourceFunction["GridTableForm"][List @@@ Normal[aRes], TableHeadings -> {"Spec
 
 *)
 
+
+(***********************************************************)
+(* Load packages                                           *)
+(***********************************************************)
+
+If[ Length[DownValues[MonadicContextualClassification`ClConUnit]] == 0,
+  Echo["MonadicContextualClassification.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicContextualClassification.m"];
+];
+
+If[ Length[DownValues[MonadicQuantileRegression`QRMonUnit]] == 0,
+  Echo["MonadicQuantileRegression.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicQuantileRegression.m"];
+];
+
+If[ Length[DownValues[MonadicStructuralBreaksFinder`QRMonFindChowTestLocalMaxima]] == 0,
+  Echo["MonadicStructuralBreaksFinder.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicStructuralBreaksFinder.m"];
+];
+
+If[ Length[DownValues[MonadicLatentSemanticAnalysis`LSAMonUnit]] == 0,
+  Echo["MonadicLatentSemanticAnalysis.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicLatentSemanticAnalysis.m"];
+];
+
+If[ Length[DownValues[MonadicSparseMatrixRecommender`SMRMonUnit]] == 0,
+  Echo["MonadicSparseMatrixRecommender.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/MonadicSparseMatrixRecommender.m"];
+];
+
+(*If[ Length[DownValues[MonadicEpidemiologyCompartmentalModeling`ECMMonUnit]] == 0,*)
+(*  Echo["MonadicEpidemiologyCompartmentalModeling.m", "Importing from GitHub:"];*)
+(*  Import["https://raw.githubusercontent.com/antononcube/SystemModeling/master/Projects/Coronavirus-propagation-dynamics/WL/MonadicEpidemiologyCompartmentalModeling.m"];*)
+(*];*)
+
+
+(***********************************************************)
+(* Package definition                                      *)
+(***********************************************************)
+
 BeginPackage["ComputationalSpecCompletion`"];
 (* Exported symbols added here with SymbolName::usage *)
 
@@ -324,12 +364,14 @@ aQuestions = <|
         "Relative errors plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "relativeErrorsQ"|>,
         "Absolute errors plot" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "absoluteErrorsQ"|>,
 
-        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.70, "Parameter" -> "dataset",
+        "Which dataset to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.40, "Parameter" -> "dataset",
           "ContextWordsToRemove" -> {"dataset", "data"}|>,
         "Which data to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.40, "Parameter" -> "dataset",
           "ContextWordsToRemove" -> {"data", "dataset"}|>,
         "Which time series to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.4, "Parameter" -> "dataset",
           "ContextWordsToRemove" -> {"time series"}|>,
+        "Over which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset",
+          "ContextWordsToRemove" -> {"dataset", "data"}|>,
 
         "Which probabilities" -> <|"TypePattern" -> {_?NumericQ ..}, "Threshold" -> 0.7, "Parameter" -> "probs",
           "ContextWordsToRemove" -> {"probabilities"}|>,
@@ -665,7 +707,11 @@ GetAnswers[workflowTypeArg_String, command_String, nAnswers_Integer : 4, opts : 
 
 ClearAll[ComputationalSpecCompletion];
 
-Options[ComputationalSpecCompletion] = Join[Options[GetAnswers], {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False}];
+Options[ComputationalSpecCompletion] =
+    Join[
+      Options[GetAnswers],
+      {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False, "AssociationResult" -> False}
+    ];
 
 ComputationalSpecCompletion::plang = "The value of the option \"ProgrammingLanguage\" is expected to be one of `1`.";
 ComputationalSpecCompletion::aulang = "The automatic programming language detection failed. Continuing by using \"WL\".";
@@ -747,7 +793,7 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
       code = aTemplates[lang][workflowType][Join[aDefaults[workflowType], aRes]];
 
       If[ lang == "WL",
-        ToExpression["Hold[" <> code <> "]"],
+        code = ToExpression["Hold[" <> code <> "]"],
         (*ELSE*)
         code =
             StringReplace[
@@ -758,7 +804,23 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
                 WordBoundary ~~ "False" ~~ WordBoundary -> "FALSE",
                 "{" ~~ x : (Except[Characters["{}"]]..) ~~ "}" :> "c(" <> x <> ")"
               }];
-        "parse( text = '" <> code <> "')"
+        code = "parse( text = '" <> code <> "')"
+      ];
+
+      If[ TrueQ[OptionValue[ComputationalSpecCompletion, "AssociationResult"]],
+        <|
+          "CODE" -> code,
+          "LANGUAGE" -> lang,
+          "DSLTARGET" -> workflowType,
+          "DSL" -> workflowType,
+          "DSLFUNCTION" -> With[{wf = workflowType, l = lang, am = TrueQ[OptionValue[ComputationalSpecCompletion, "AvoidMonads"]]},
+            ComputationalSpecCompletion[wf, #,
+              "ProgrammingLanguage" -> l,
+              "AvoidMonads" -> am,
+              "AssociationResult" -> True]&]
+        |>,
+        (*ELSE*)
+        code
       ]
     ];
 
