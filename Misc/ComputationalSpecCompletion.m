@@ -370,7 +370,9 @@ aQuestions = <|
           "ContextWordsToRemove" -> {"data", "dataset"}|>,
         "Which time series to use" -> <|"TypePattern" -> _String, "Threshold" -> 0.4, "Parameter" -> "dataset",
           "ContextWordsToRemove" -> {"time series"}|>,
-        "Over which dataset" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset",
+        "Over which" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset",
+          "ContextWordsToRemove" -> {"dataset", "data"}|>,
+        "Over what" -> <|"TypePattern" -> _String, "Threshold" -> 0.35, "Parameter" -> "dataset",
           "ContextWordsToRemove" -> {"dataset", "data"}|>,
 
         "Which probabilities" -> <|"TypePattern" -> {_?NumericQ ..}, "Threshold" -> 0.7, "Parameter" -> "probs",
@@ -710,7 +712,7 @@ ClearAll[ComputationalSpecCompletion];
 Options[ComputationalSpecCompletion] =
     Join[
       Options[GetAnswers],
-      {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False, "AssociationResult" -> False}
+      {"ProgrammingLanguage" -> "WL", "AvoidMonads" -> False, "AssociationResult" -> False, "UserID" -> None}
     ];
 
 ComputationalSpecCompletion::plang = "The value of the option \"ProgrammingLanguage\" is expected to be one of `1`.";
@@ -762,7 +764,11 @@ ComputationalSpecCompletion[cf_ClassifierFunction, command_String, opts : Option
     ComputationalSpecCompletion[ cf[command], command, opts];
 
 ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : OptionsPattern[]] :=
-    Block[{workflowType = workflowTypeArg, lang, aRes, code, codeExpr},
+    Block[{workflowType = workflowTypeArg, userID, lang, aRes, code, codeExpr},
+
+      userID = OptionValue[ComputationalSpecCompletion, "UserID"];
+      If[ MemberQ[{None, Automatic}, userID], userID = ""];
+      userID = ToString[userID];
 
       lang = OptionValue[ComputationalSpecCompletion, "ProgrammingLanguage"];
       If[ TrueQ[lang === Automatic],
@@ -810,8 +816,8 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
       If[ TrueQ[OptionValue[ComputationalSpecCompletion, "AssociationResult"]],
         <|
           "CODE" -> code,
-          "LANGUAGE" -> lang,
-          "DSLTARGET" -> workflowType,
+          "USERID" -> userID,
+          "DSLTARGET" -> lang <> "::" <> workflowType,
           "DSL" -> workflowType,
           "DSLFUNCTION" -> With[{wf = workflowType, l = lang, am = TrueQ[OptionValue[ComputationalSpecCompletion, "AvoidMonads"]]},
             ToString[ComputationalSpecCompletion[wf, #,
