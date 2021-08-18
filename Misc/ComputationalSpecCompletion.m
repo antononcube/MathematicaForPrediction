@@ -762,7 +762,7 @@ ComputationalSpecCompletion[cf_ClassifierFunction, command_String, opts : Option
     ComputationalSpecCompletion[ cf[command], command, opts];
 
 ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : OptionsPattern[]] :=
-    Block[{workflowType = workflowTypeArg, lang, aRes, code},
+    Block[{workflowType = workflowTypeArg, lang, aRes, code, codeExpr},
 
       lang = OptionValue[ComputationalSpecCompletion, "ProgrammingLanguage"];
       If[ TrueQ[lang === Automatic],
@@ -793,7 +793,7 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
       code = aTemplates[lang][workflowType][Join[aDefaults[workflowType], aRes]];
 
       If[ lang == "WL",
-        code = ToExpression["Hold[" <> code <> "]"],
+        codeExpr = ToExpression["Hold[" <> code <> "]"],
         (*ELSE*)
         code =
             StringReplace[
@@ -804,7 +804,7 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
                 WordBoundary ~~ "False" ~~ WordBoundary -> "FALSE",
                 "{" ~~ x : (Except[Characters["{}"]]..) ~~ "}" :> "c(" <> x <> ")"
               }];
-        code = "parse( text = '" <> code <> "')"
+        codeExpr = "parse( text = '" <> code <> "')"
       ];
 
       If[ TrueQ[OptionValue[ComputationalSpecCompletion, "AssociationResult"]],
@@ -814,13 +814,14 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
           "DSLTARGET" -> workflowType,
           "DSL" -> workflowType,
           "DSLFUNCTION" -> With[{wf = workflowType, l = lang, am = TrueQ[OptionValue[ComputationalSpecCompletion, "AvoidMonads"]]},
-            ComputationalSpecCompletion[wf, #,
+            ToString[ComputationalSpecCompletion[wf, #,
               "ProgrammingLanguage" -> l,
               "AvoidMonads" -> am,
               "AssociationResult" -> True]&]
+          ]
         |>,
         (*ELSE*)
-        code
+        codeExpr
       ]
     ];
 
