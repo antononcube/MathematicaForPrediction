@@ -900,6 +900,81 @@ ComputationalSpecCompletion[___] :=
       $Failed
     ];
 
+
+(***********************************************************)
+(* Introspection data preparation functions                *)
+(***********************************************************)
+
+Clear[ToWorkflowTemplate];
+ToWorkflowTemplate[spec_String] := ComputationalSpecCompletion["Templates"]["WL"][spec][ComputationalSpecCompletion["Defaults"][spec]];
+ToWorkflowTemplate[x_] := x;
+
+Clear[SplitWorkflowType];
+SplitWorkflowType[name_String] := StringRiffle[StringCases[name, CharacterRange["A", "Z"] ~~ (CharacterRange["a", "z"] ..)]];
+SplitWorkflowType[name_String] := StringRiffle[{StringReplace[name, "Mon" -> ""], "monad"}] /; StringMatchQ[name, __ ~~ "Mon"];
+SplitWorkflowType["ClCon"] := "Classification monad";
+
+
+(***********************************************************)
+(* Introspection data                                      *)
+(***********************************************************)
+
+lsWorkflowTypes = Keys[ComputationalSpecCompletion["Templates"]["WL"]];
+txtWorkflowTypes = StringRiffle[lsWorkflowTypes, ", "];
+txtSQASDescription1 = "The current specialized Question Answering System (QAS) has the workflow types " <> txtWorkflowTypes <> ".";
+txtSQASDescription1 =
+    txtSQASDescription1 <> "\nThe known workflow types are " <> txtWorkflowTypes <> ".";
+txtSQASDescription1 =
+    txtSQASDescription1 <> "\nThe implemented workflow template types are " <> txtWorkflowTypes <> ".";
+txtSQASDescription1 =
+    txtSQASDescription1 <> "\nThe number of implemented workflow templates is " <> ToString[Length@lsWorkflowTypes] <> ".";
+txtSQASDescription1 =
+    txtSQASDescription1 <> "\nThere are " <> ToString[Length@lsWorkflowTypes] <> " workflows.";
+txtSQASDescription1 =
+    txtSQASDescription1 <> "\nThere are " <> ToString[Length@lsWorkflowTypes] <> " templates per programming language.";
+
+txtSQASDescription2 =
+    Map["The template for " <> # <> " is: WorkflowTemplate-" <> # <> "." &, Keys[ComputationalSpecCompletion["Templates"]["WL"]]];
+
+txtSQASDescription2 =
+    Join[
+      txtSQASDescription2,
+      Map["The template for " <> SplitWorkflowType[#] <> " is: WorkflowTemplate-" <> # <> "." &, Keys[ComputationalSpecCompletion["Templates"]["WL"]]]
+    ];
+
+txtSQASDescription2 =
+    Join[
+      txtSQASDescription2,
+      Map["The " <> SplitWorkflowType[#] <> " workflow template is: WorkflowTemplate-" <> # <> "." &, Keys[ComputationalSpecCompletion["Templates"]["WL"]]]
+    ];
+
+txtSQASDescription2 =
+    Join[
+      txtSQASDescription2,
+      StringReplace[Select[txtSQASDescription2, Length[StringCases[#, "LatentSemanticAnalysis"]] > 0 &], WhitespaceCharacter ~~ "LatentSemanticAnalysis" ~~ WhitespaceCharacter -> " LSAMon "],
+      StringReplace[Select[txtSQASDescription2, Length[StringCases[#, "Recommendations"]] > 0 &], WhitespaceCharacter ~~ "Recommendations" ~~ WhitespaceCharacter -> " SMRMon "]
+    ];
+
+txtSQASDescription2 = StringRiffle[Union[txtSQASDescription2], "\n"];
+
+txtSQASDescription = StringJoin[txtSQASDescription1, "\n", txtSQASDescription2];
+
+
+(***********************************************************)
+(* ComputationalSpecCompletion continued                   *)
+(***********************************************************)
+
+ComputationalSpecCompletion["Introspection", query_String, opts : OptionsPattern[]] :=
+    Block[{res},
+      res = FindTextualAnswer[txtSQASDescription, query, FilterRules[{opts}, Options[FindTextualAnswer]]];
+      res =
+          StringReplace[
+            res,
+            "WorkflowTemplate-" ~~ (x : (LetterCharacter..)) ~~ WordBoundary :> ComputationalSpecCompletion["Templates"]["WL"][x][ComputationalSpecCompletion["Defaults"][x]]
+          ];
+      res
+    ];
+
 End[];
 
 EndPackage[];
