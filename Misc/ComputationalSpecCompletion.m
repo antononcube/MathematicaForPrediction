@@ -267,7 +267,7 @@ aWLTemplates = <|
 
 aRTemplates = <|
   "QuantileRegression" ->
-      StringTemplate["{library(quanreg)}"],
+      StringTemplate["Not implemented"],
 
   "QRMon" ->
       (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
@@ -314,11 +314,67 @@ aRTemplates = <|
           SMRMonEchoValue()"
 |>;
 
+
+(***********************************************************)
+(* Python templates                                        *)
+(***********************************************************)
+
+aPythonTemplates = <|
+  "QuantileRegression" ->
+      StringTemplate["Not implemented"],
+
+  "QRMon" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "print(\"Example API -- no actual implementation !!!\")
+          qrObj = QRMonUnit(`dataset`)
+          QRMonEchoDataSummary(qrObj)
+          qrObj = QRMonQuantileRegression(obj, df = `knots`, probabilities = `probs`, degree = `intOrder`)
+          QRMonPlot(qrObj, datePlotQ = `dateListPlotQ` )
+          QRMonErrorsPlot(qrObj, relativeErrors = `relativeErrorsQ`, datePlotQ = `dateListPlotQ`)",
+
+  "LatentSemanticAnalysis" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "print(\"Example API -- no actual implementation !!!\")
+          lsaObj = LSAMonUnit(`textData`)
+          lsaObj = LSAMonMakeDocumentTermMatrix(lsaObj, stemWordsQ = `stemmingRules`, stopWords = `stopWords`)
+          LSAMonEchoDocumentTermMatrixStatistics(lsaObj, logBase = 10)
+          lsaObj = LSAMonApplyTermWeightFunctions(lsaObj, globalWeightFunction = \"`globalWeightFunction`\", localWeightFunction = \"`localWeightFunction`\", normalizerFunction = \"`normalizerFunction`\")
+          lsaObj = LSAMonExtractTopics(lsaObj, numberOfTopics = `numberOfTopics`, method = \"`method`\", maxSteps = `maxSteps`, minNumberOfDocumentsPerTerm = `minNumberOfDocumentsPerTerm`)
+          LSAMonEchoTopicsTable(lsaObj, numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE)
+          LSAMonEchoStatisticalThesaurus(lsaObj, words = `statThesaurusWords`)",
+
+  "Classification" -> StringTemplate["Not implemented"],
+
+  "ClCon" -> StringTemplate["Not implemented"],
+
+  "RandomTabularDataset" ->
+      StringTemplate[
+        "print(\"Example API -- no actual implementation !!!\")
+            RandomDataFrame(" <>
+            "nrow = `nrow`, ncol = `ncol`, " <>
+            "columnNamesGenerator = `columnNamesGenerator`, " <>
+            "form =  \"`form`\", " <>
+            "maxNumberOfValues = `maxNumberOfValues`, " <>
+            "minNumberOfValues = `minNumberOfValues`, " <>
+            "rowNamesQ = `rowKeys`" <>
+            ")"],
+
+  "Recommendations" ->
+      (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
+          "print(\"Example API -- no actual implementation !!!\")
+          smrObj = SMRMonUnit()
+          smrObj = SMRMonCreate( data = `dataset`)
+          smrObj = SMRMonRecommendByProfile(smrObj, profile = `prof`, nrecs = `nrecs`)
+          smrObj = SMRMonJoinAcross(smrObj, data = `dataset`)
+          SMRMonEchoValue(smrObj)"
+|>;
+
+
 (***********************************************************)
 (* All templates                                           *)
 (***********************************************************)
 
-aTemplates = <| "R" -> aRTemplates, "WL" -> aWLTemplates |>;
+aTemplates = <| "Python" -> aPythonTemplates, "R" -> aRTemplates, "WL" -> aWLTemplates |>;
 
 
 (***********************************************************)
@@ -385,7 +441,9 @@ aQuestions = <|
       <|
         "Apply stemming" -> <|"TypePattern" -> _?BooleanQ, "Threshold" -> 0.75, "Parameter" -> "stemmingRules"|>,
 
-        "How many topics" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.75, "Parameter" -> "numberOfTopics",
+        "How many topics" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.45, "Parameter" -> "numberOfTopics",
+          "ContextWordsToRemove" -> {"topics"}|>,
+        "How many topics to extract" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.45, "Parameter" -> "numberOfTopics",
           "ContextWordsToRemove" -> {"topics"}|>,
 
         "Which method" -> <|"TypePattern" -> _String, "Threshold" -> 0.5, "Parameter" -> "method",
@@ -783,8 +841,8 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
             ]
       ];
       If[ TrueQ[StringQ[lang] && ToLowerCase[lang] == "mathematica"], lang = "WL"];
-      If[ !StringQ[lang] || !MemberQ[ {"R", "WL"}, ToUpperCase[lang] ],
-        Message[ComputationalSpecCompletion::plang, {"R", "WL", Automatic}];
+      If[ !StringQ[lang] || !MemberQ[ ToUpperCase@Keys@aTemplates, ToUpperCase[lang] ],
+        Message[ComputationalSpecCompletion::plang, Append[Keys[aTemplates], Automatic]];
         lang = "WL"
       ];
 
@@ -798,9 +856,11 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
 
       code = aTemplates[lang][workflowType][Join[aDefaults[workflowType], aRes]];
 
-      If[ lang == "WL",
+      Which[
+        lang == "WL",
         codeExpr = ToExpression["Hold[" <> code <> "]"],
-        (*ELSE*)
+
+        lang == "R",
         code =
             StringReplace[
               code,
@@ -810,7 +870,10 @@ ComputationalSpecCompletion[workflowTypeArg_String, command_String, opts : Optio
                 WordBoundary ~~ "False" ~~ WordBoundary -> "FALSE",
                 "{" ~~ x : (Except[Characters["{}"]]..) ~~ "}" :> "c(" <> x <> ")"
               }];
-        codeExpr = "parse( text = '" <> code <> "')"
+        codeExpr = "parse( text = '" <> code <> "')",
+
+        True,
+        codeExpr = code
       ];
 
       If[ TrueQ[OptionValue[ComputationalSpecCompletion, "AssociationResult"]],
