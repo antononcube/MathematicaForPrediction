@@ -261,7 +261,7 @@ aWLTemplates = <|
         SMRMonJoinAcross[`dataset`]\[DoubleLongRightArrow]
         SMRMonEchoValue[];",
 
-  "NeuralNetworkCreation" -> StringTemplate["Not implemented."]
+  "NeuralNetworkCreation" -> StringTemplate["\"Not implemented\""]
 |>;
 
 
@@ -271,7 +271,7 @@ aWLTemplates = <|
 
 aRTemplates = <|
   "QuantileRegression" ->
-      StringTemplate["Not implemented"],
+      StringTemplate["\"Not implemented\""],
 
   "QRMon" ->
       (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
@@ -293,9 +293,9 @@ aRTemplates = <|
           LSAMonEchoTopicsTable(numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE) %>%
           LSAMonEchoStatisticalThesaurus(words = `statThesaurusWords`)",
 
-  "Classification" -> StringTemplate["Not implemented"],
+  "Classification" -> StringTemplate["\"Not implemented\""],
 
-  "ClCon" -> StringTemplate["Not implemented"],
+  "ClCon" -> StringTemplate["\"Not implemented\""],
 
   "RandomTabularDataset" ->
       StringTemplate[
@@ -318,7 +318,7 @@ aRTemplates = <|
           SMRMonEchoValue()",
 
   "NeuralNetworkCreation" ->
-      StringTemplate["Not implemented."]
+      StringTemplate["\"Not implemented\""]
 |>;
 
 
@@ -328,7 +328,7 @@ aRTemplates = <|
 
 aPythonTemplates = <|
   "QuantileRegression" ->
-      StringTemplate["Not implemented"],
+      StringTemplate["\"Not implemented\""],
 
   "QRMon" ->
       (StringTemplate @ StringReplace[#, "\n" ~~ (WhitespaceCharacter..) -> "\n"]&) @
@@ -350,9 +350,9 @@ aPythonTemplates = <|
           LSAMonEchoTopicsTable(lsaObj, numberOfTerms = `topicsTableNumberOfTerms`, wideFormQ = TRUE)
           LSAMonEchoStatisticalThesaurus(lsaObj, words = `statThesaurusWords`)",
 
-  "Classification" -> StringTemplate["Not implemented"],
+  "Classification" -> StringTemplate["\"Not implemented\""],
 
-  "ClCon" -> StringTemplate["Not implemented"],
+  "ClCon" -> StringTemplate["\"Not implemented\""],
 
   "RandomTabularDataset" ->
       StringTemplate[
@@ -376,7 +376,7 @@ aPythonTemplates = <|
           SMRMonEchoValue(smrObj)",
 
   "NeuralNetworkCreation" ->
-      StringTemplate["Not implemented."]
+      StringTemplate["\"Not implemented\""]
 |>;
 
 
