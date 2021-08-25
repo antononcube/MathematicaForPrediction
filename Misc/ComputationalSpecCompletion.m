@@ -172,7 +172,9 @@ aShortcuts = <|
   "RandomDatasetGeneration" -> "RandomTabularDataset",
 
   "Recommendations" -> "Recommendations",
-  "SMRMon" -> "Recommendations"
+  "SMRMon" -> "Recommendations",
+
+  "NeuralNetworkCreation" -> "NeuralNetworkCreation"
 |>;
 
 
@@ -257,7 +259,9 @@ aWLTemplates = <|
         SMRMonCreate[`dataset`]\[DoubleLongRightArrow]
         SMRMonRecommendByProfile[`prof`, `nrecs`]\[DoubleLongRightArrow]
         SMRMonJoinAcross[`dataset`]\[DoubleLongRightArrow]
-        SMRMonEchoValue[];"
+        SMRMonEchoValue[];",
+
+  "NeuralNetworkCreation" -> StringTemplate["Not implemented."]
 |>;
 
 
@@ -311,7 +315,10 @@ aRTemplates = <|
           SMRMonCreate( data = `dataset`) %>%
           SMRMonRecommendByProfile( profile = `prof`, nrecs = `nrecs`) %>%
           SMRMonJoinAcross( data = `dataset`) %>%
-          SMRMonEchoValue()"
+          SMRMonEchoValue()",
+
+  "NeuralNetworkCreation" ->
+      StringTemplate["Not implemented."]
 |>;
 
 
@@ -366,7 +373,10 @@ aPythonTemplates = <|
           smrObj = SMRMonCreate( data = `dataset`)
           smrObj = SMRMonRecommendByProfile(smrObj, profile = `prof`, nrecs = `nrecs`)
           smrObj = SMRMonJoinAcross(smrObj, data = `dataset`)
-          SMRMonEchoValue(smrObj)"
+          SMRMonEchoValue(smrObj)",
+
+  "NeuralNetworkCreation" ->
+      StringTemplate["Not implemented."]
 |>;
 
 
@@ -546,7 +556,9 @@ aQuestions = <|
         "What number of top recommendations" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>,
         "How many results" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>,
         "What number of top results" -> <|"TypePattern" -> _Integer, "Threshold" -> 0.35, "Parameter" -> "nrecs"|>
-      |>
+      |>,
+
+  "NeuralNetworkCreation" -> <||>
 |>;
 
 aQuestions = Join[aQuestions, <|"ClCon" -> aQuestions["Classification"], "QRMon" -> aQuestions["QuantileRegression"]|>];
@@ -614,8 +626,9 @@ aDefaults = <|
     "dataset" -> None,
     "prof" -> None,
     "nrecs" -> 12
-  |>
+  |>,
 
+  "NeuralNetworkCreation" -> <||>
 |>;
 
 aDefaults = Join[aDefaults, <|"ClCon" -> aDefaults["Classification"], "QRMon" -> aDefaults["QuantileRegression"]|>];
