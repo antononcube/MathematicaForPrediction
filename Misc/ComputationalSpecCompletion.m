@@ -136,7 +136,7 @@ GetAnswers::usage = "GetAnswers[wfSpec, spec, opts] \
 finds precise answers of parameters questions for the computational workflow template wfSpec \
 over the computational specification spec.";
 
-Concretize::usage = "A synonym of ComputationalSpecCompletion".
+Concretize::usage = "A synonym of ComputationalSpecCompletion.";
 
 ComputationalSpecCompletion::usage = "ComputationalSpecCompletion[wfSpec, spec, opts] \
 finds parameters for the computational workflow template wfSpec based on the computational specification spec \
