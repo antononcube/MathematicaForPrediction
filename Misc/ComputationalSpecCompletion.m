@@ -38,7 +38,7 @@
 (* :Author: Anton Antonov *)
 (* :Date: 2021-07-19 *)
 
-(* :Package Version: 0.2 *)
+(* :Package Version: 0.5 *)
 (* :Mathematica Version: 12.3 *)
 (* :Copyright: (c) 2021 Anton Antonov *)
 (* :Keywords: *)
@@ -135,6 +135,8 @@ over the computational specification spec.";
 GetAnswers::usage = "GetAnswers[wfSpec, spec, opts] \
 finds precise answers of parameters questions for the computational workflow template wfSpec \
 over the computational specification spec.";
+
+Concretize::usage = "A synonym of ComputationalSpecCompletion".
 
 ComputationalSpecCompletion::usage = "ComputationalSpecCompletion[wfSpec, spec, opts] \
 finds parameters for the computational workflow template wfSpec based on the computational specification spec \
@@ -987,6 +989,8 @@ ComputationalSpecCompletion["Introspection", query_String, opts : OptionsPattern
           ];
       res
     ];
+
+Concretize = ComputationalSpecCompletion;
 
 End[];
 
