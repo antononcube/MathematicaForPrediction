@@ -44,6 +44,8 @@
 (* :Keywords: *)
 (* :Discussion:
 
+!!! WARNING : this file is obsolete. See https://github.com/antononcube/NLP-Template-Engine .
+
 ## Problem formulation
 
 We want to have a system that:
@@ -85,6 +87,7 @@ ResourceFunction["GridTableForm"][List @@@ Normal[aRes], TableHeadings -> {"Spec
 
 *)
 
+Echo["This file is obsolete. See https://github.com/antononcube/NLP-Template-Engine .", "Warning:"];
 
 (***********************************************************)
 (* Load packages                                           *)

@@ -42,7 +42,13 @@
 (* :Mathematica Version: 12.1 *)
 (* :Copyright: (c) 2021 Anton Antonov *)
 (* :Keywords: classifier, workflow, computation *)
-(* :Discussion: *)
+(* :Discussion:
+
+!!! WARNING : this file is obsolete. See https://github.com/antononcube/NLP-Template-Engine .
+
+*)
+
+Echo["This file is obsolete. See https://github.com/antononcube/NLP-Template-Engine .", "Warning:"];
 
 BeginPackage["ComputationalWorkflowTypeClassifier`"];
 
