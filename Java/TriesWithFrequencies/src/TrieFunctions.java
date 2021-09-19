@@ -151,6 +151,9 @@ public class TrieFunctions {
 
         } else if (!tr1.getKey().equals(tr2.getKey())) {
 
+            // This is wrong, but with this implementation is does not happen.
+            // (Or at least has not been detected.)
+            // With the tipycal trie creation with "" root, the merge in the next logical branch happens.
             res.getChildren().putAll(tr1.getChildren());
             res.getChildren().putAll(tr2.getChildren());
 
@@ -300,7 +303,6 @@ public class TrieFunctions {
     //! @description Retrieval of a sub-trie corresponding to a "word".
     //! @param tr a trie object
     //! @param word a list of strings
-    //! @param
     public static Trie retrieve(Trie tr, List<String> word) {
 
         if (word == null || word.isEmpty()) {
@@ -987,11 +989,11 @@ public class TrieFunctions {
 
             }
 
+            res.setChildren( resChildren );
+
             if ( postFunc != null ) {
                 res = postFunc.apply(res);
             }
-
-            res.setChildren( resChildren );
 
             return res;
         }
