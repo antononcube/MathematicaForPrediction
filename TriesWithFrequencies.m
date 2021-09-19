@@ -280,9 +280,13 @@ TrieMerge[t1_?TrieQ, t2_?TrieQ] :=
       Which[
         TrueQ[Keys[t1] == Keys[t2]],
         ckey = First@Keys[t1];
-        <|ckey ->
-            Join[Merge[{t1[ckey], t2[ckey]},
-              TrieMerge], <|$TrieValue -> (t1[ckey][$TrieValue] + t2[ckey][$TrieValue])|>]|>,
+        <|
+          ckey ->
+              Join[
+                Merge[{t1[ckey], t2[ckey]}, TrieMerge],
+                <|$TrieValue -> (t1[ckey][$TrieValue] + t2[ckey][$TrieValue])|>
+              ]
+        |>,
 
         True,
         Join[t1, t2]
