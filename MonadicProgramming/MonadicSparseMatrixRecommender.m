@@ -3431,27 +3431,51 @@ SMRMonToMetadataRecommender[___][__] :=
 Clear[SMRMonImportRecommender];
 
 SMRMonImportRecommender::uniq = "The `1` are expected to be unique.";
+SMRMonImportRecommender::nfix = "The values of the \"Prefix\" and \"Infix\" are expected to be strings or Automatic.";
 
-SMRMonImportRecommender[dirName_String, suffix_String] :=
-    Block[{smat, dsTagTypeRanges, dsRowNames, rowNames, dsColumnNames, columnNames, smat2, smats},
+Options[SMRMonImportRecommender] = {"Prefix" -> "", "Infix" -> ""};
 
-      smat = Import[FileNameJoin[{dirName, "SMR-M01-from-" <> suffix <> ".mm"}]];
+SMRMonImportRecommender[dirName_String, opts : OptionsPattern[]] :=
+    Block[{prefix, infix, smat, dsTagTypeRanges, dsRowNames, rowNames, dsColumnNames, columnNames, smat2, smats},
 
-      dsTagTypeRanges = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-TagTypeRanges-from-" <> suffix <> ".csv"}], "RowNames" -> True];
+      (* Obtain prefix and infix  *)
+      prefix = OptionValue[SMRMonImportRecommender, "Prefix"];
+      If[ TrueQ[prefix === Automatic], prefix = ""];
 
-      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-rownames-from-" <> suffix <> ".csv"}], "RowNames" -> True];
-      rowNames =  ToString /@ Normal[dsRowNames[Values, "RowName"]];
+      infix = OptionValue[SMRMonImportRecommender, "Infix"];
+      If[ TrueQ[infix === Automatic], infix = ""];
 
-      If[Length[rowNames] != Length[Union[rowNames]],
-        Message[SMRMonImportRecommender::uniq,"row names"];
+      If[ !StringQ[infix] || !StringQ[prefix],
+        Message[SMRMonImportRecommender::nfix];
         Return[$Failed]
       ];
 
-      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, "SMR-colnames-from-" <> suffix <> ".csv"}], "RowNames" -> True];
+      If[ StringLength[prefix] > 0 && !StringMatchQ[prefix, __ ~~ "-"],
+        prefix = prefix <> "-";
+      ];
+
+      If[ StringLength[infix] > 0 && !StringMatchQ[infix, "-" ~~ __],
+        infix = "-" <> infix;
+      ];
+
+      (* Import recommender matrix *)
+      smat = Import[FileNameJoin[{dirName, prefix <> "SMR-M01" <> infix <> ".mm"}]];
+
+      dsTagTypeRanges = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-TagTypeRanges" <> infix <> ".csv"}], "RowNames" -> True];
+
+      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-M01-rownames" <> infix <> ".csv"}], "RowNames" -> True];
+      rowNames = ToString /@ Normal[dsRowNames[Values, "RowName"]];
+
+      If[Length[rowNames] != Length[Union[rowNames]],
+        Message[SMRMonImportRecommender::uniq, "row names"];
+        Return[$Failed]
+      ];
+
+      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-M01-colnames" <> infix <> ".csv"}], "RowNames" -> True];
       columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
 
       If[Length[columnNames] != Length[Union[columnNames]],
-        Message[SMRMonImportRecommender::uniq,"column names"];
+        Message[SMRMonImportRecommender::uniq, "column names"];
         Return[$Failed]
       ];
 
