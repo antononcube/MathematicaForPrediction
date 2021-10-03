@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	  Written by Anton Antonov,
-   	antononcube @ gmail . com,
+   	antononcube @@ posteo . n et,
 	  Windermere, Florida, USA.
 *)
 
@@ -800,7 +800,12 @@ RGSentence[parsedEBNF_EBNF] :=
       StringTrim[StringReplace[StringRiffle[t, " "], (WhitespaceCharacter ~~ WhitespaceCharacter ..) -> " "]]
     ];
 
+
 Clear[GrammarRandomSentences];
+
+GrammarRandomSentences::nargs = "The first argument is expected to be a string (with a grammar in EBNF). \
+The second argument is expected to be a positive integer.";
+
 GrammarRandomSentences[ebnfGrammar_String, n_Integer] :=
     Block[{EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
       EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule, tokens, res},
@@ -814,11 +819,17 @@ GrammarRandomSentences[ebnfGrammar_String, n_Integer] :=
       res = ParseEBNF[tokens];
 
       Table[RGSentence[res[[1, 2]]], {n}]
-    ];
+    ] /; n > 0;
 
 GrammarRandomSentences[parsedEBNFRules_EBNF, n_Integer] :=
     Block[{},
       Table[RGSentence[parsedEBNFRules], {n}]
+    ];
+
+GrammarRandomSentences[___] :=
+    Block[{},
+      Message[GrammarRandomSentences::nargs];
+      $Failed
     ];
 
 End[];
