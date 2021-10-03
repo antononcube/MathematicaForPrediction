@@ -185,12 +185,12 @@ Clear["Parse?*"];
 (* Basic parsers                                            *)
 (************************************************************)
 
-ParseSymbol[a_] := 
-  Function[If[Length[#] > 0 && a === First[#], {{Rest[#], a}}, {}]];
+ParseSymbol[a_] :=
+    Function[If[Length[#] > 0 && a === First[#], {{Rest[#], a}}, {}]];
 
-ParseToken[k_][xs_] := 
- With[{n = Length[k]}, 
-  If[Length[xs] >= n && k == Take[xs, n], {{Drop[xs, n], k}}, {}]];
+ParseToken[k_][xs_] :=
+    With[{n = Length[k]},
+      If[Length[xs] >= n && k == Take[xs, n], {{Drop[xs, n], k}}, {}]];
 
 ParsePredicate[pred_][xs_] :=
     If[TrueQ[Length[xs] > 0 && pred[First[xs]]], {{Rest[xs], First[xs]}}, {}];
@@ -213,23 +213,23 @@ ParseFail[xs_] := {};
 
 ParseComposeWithResults[p_][{}] := {};
 ParseComposeWithResults[p_][res : {{_, _} ..}] :=
-  Block[{t},
-   Flatten[#, 1] &@
-    Map[
-     Function[{r},
-      If[r === {}, {},
-       t = p[r[[1]]];
-       If[t === {}, {},
-        Map[{#[[1]], {r[[2]], #[[2]]}} &, t]
-        ]]],
-     res]
-   ];
+    Block[{t},
+      Flatten[#, 1] &@
+          Map[
+            Function[{r},
+              If[r === {}, {},
+                t = p[r[[1]]];
+                If[t === {}, {},
+                  Map[{#[[1]], {r[[2]], #[[2]]}} &, t]
+                ]]],
+            res]
+    ];
 ParseSequentialComposition[p1_][xs_] := p1[xs];
 
 ParseSequentialComposition[args__][xs_] :=
-  With[{parsers = {args}},
-    Fold[ParseComposeWithResults[#2][#1] &, First[parsers][xs], 
-     Rest[parsers]]
+    With[{parsers = {args}},
+      Fold[ParseComposeWithResults[#2][#1] &, First[parsers][xs],
+        Rest[parsers]]
     ] /; Length[{args}] > 1;
 
 ParseAlternativeComposition[args__][xs_] := Join @@ Map[#[xs] &, {args}];
@@ -241,27 +241,27 @@ ParseAlternativeComposition[args__][xs_] := Join @@ Map[#[xs] &, {args}];
 (************************************************************)
 (* ParseSpaces[p_][xs_]:=p[NestWhile[Rest,xs,First[#]==""||First[#]==" "&]]; *)
 
-ParseSpaces[pArg_] := 
- With[{p = pArg}, 
-  Function[p[
-    NestWhile[Rest, #, 
-     Length[#] > 
-        0 && (First[#] == "" || First[#] == " " || 
-         First[#] == "\n") &]]]]
+ParseSpaces[pArg_] :=
+    With[{p = pArg},
+      Function[p[
+        NestWhile[Rest, #,
+          Length[#] >
+              0 && (First[#] == "" || First[#] == " " ||
+              First[#] == "\n") &]]]]
 
 ParseJust[p_][xs_] := With[{res = p[xs]}, Select[res, First[#] === {} &]];
 
 ParseApply[f_, p_][xs_] := Map[{#[[1]], f[#[[2]]]} &, p[xs]];
 
-ParseApply[{fNo_, fYes_}, p_] := 
-  With[{res = p[#]}, 
-    Map[{#[[1]], If[#[[2]] === {}, fNo, fYes[#[[2]]]]} &, res]] &;
+ParseApply[{fNo_, fYes_}, p_] :=
+    With[{res = p[#]},
+      Map[{#[[1]], If[#[[2]] === {}, fNo, fYes[#[[2]]]]} &, res]] &;
 
 ParseModify[f_, p_][xs_] := With[{res = p[xs]}, f[res] ];
 
-ParseSome[p_][xs_] := 
-  With[{parsed = ParseJust[p][xs]}, 
-   If[Length[parsed] > 0, Take[parsed, 1], parsed]];
+ParseSome[p_][xs_] :=
+    With[{parsed = ParseJust[p][xs]},
+      If[Length[parsed] > 0, Take[parsed, 1], parsed]];
 
 ParseShortest[p_] := With[{parsed = p[#]}, If[parsed === {}, parsed, {First@SortBy[parsed, Length[#[[1]]] &]}]] &;
 
@@ -269,8 +269,8 @@ ParseSequentialCompositionPickLeft[p1_, p2_][xs_] := ParseApply[#[[1]] &, ParseS
 
 ParseSequentialCompositionPickRight[p1_, p2_][xs_] := ParseApply[#[[2]] &, ParseSequentialComposition[p1, p2]][xs];
 
-ParseChoice[args__][xs_] := 
-  With[{parsers = {args}}, Fold[Join[#2[xs], #1] &, ParseFail[xs], Reverse@parsers]];
+ParseChoice[args__][xs_] :=
+    With[{parsers = {args}}, Fold[Join[#2[xs], #1] &, ParseFail[xs], Reverse@parsers]];
 
 
 (************************************************************)
@@ -322,14 +322,14 @@ ParseOption[p_] := (ParseAlternativeComposition[ParseApply[{#1} &, p], ParseAppl
 ParseOption1[p_] := Block[{res = p[#]}, If[TrueQ[res === {}], {{#, {}}}, res]] &;
 
 ParseMany1[p_][xs_] :=
-  Module[{t = {}, res},
-   res = ParseShortest[ParseOption1[p]][xs];
-   While[! (res === {} || res[[1, 2]] === {}),
-    AppendTo[t, res[[1, 2]]];
-    res = ParseShortest[ParseOption1[p]][res[[1, 1]]];
-   ];
-   {{res[[1, 1]], t}}
-  ];
+    Module[{t = {}, res},
+      res = ParseShortest[ParseOption1[p]][xs];
+      While[! (res === {} || res[[1, 2]] === {}),
+        AppendTo[t, res[[1, 2]]];
+        res = ParseShortest[ParseOption1[p]][res[[1, 1]]];
+      ];
+      {{res[[1, 1]], t}}
+    ];
 
 ParseMany[p_] := ParseMany1[p]\[CirclePlus]ParseSucceed[{}];
 
@@ -361,21 +361,21 @@ ParseManyByBranching[p_, epsilon_, maxSteps_Integer ][xs_] :=
 
 ParseListOf[p_, separatorParser_] := (Prepend[#[[2]], #[[1]]] &)\[CircleDot](p\[CircleTimes]ParseMany[separatorParser \[RightTriangle] p])\[CirclePlus]ParseSucceed[{}];
 
-ParseChainLeft[p_, separatorParser_] := 
-  Fold[#2[[1]][#1, #2[[2]]] &, #[[1]], #[[2]]] &\[CircleDot](p\[CircleTimes]ParseMany[separatorParser\[CircleTimes]p])\[CirclePlus]ParseSucceed[{}];
+ParseChainLeft[p_, separatorParser_] :=
+    Fold[#2[[1]][#1, #2[[2]]] &, #[[1]], #[[2]]] &\[CircleDot](p\[CircleTimes]ParseMany[separatorParser\[CircleTimes]p])\[CirclePlus]ParseSucceed[{}];
 
-ParseChain1Left[p_, separatorParser_] := 
-  Fold[#2[[1]][#1, #2[[2]]] &, #[[1]], #[[2]]] &\[CircleDot](p\[CircleTimes]ParseMany1[separatorParser\[CircleTimes]p]);
+ParseChain1Left[p_, separatorParser_] :=
+    Fold[#2[[1]][#1, #2[[2]]] &, #[[1]], #[[2]]] &\[CircleDot](p\[CircleTimes]ParseMany1[separatorParser\[CircleTimes]p]);
 
-ParseChainLeft[p_, {separatorParser_, func_}] := 
-(Fold[func[#1, #2[[2]]] &, #[[1]], #[[2]]] &)\[CircleDot](p\[CircleTimes]ParseMany[separatorParser\[CircleTimes]p])\[CirclePlus]ParseSucceed[{}];
+ParseChainLeft[p_, {separatorParser_, func_}] :=
+    (Fold[func[#1, #2[[2]]] &, #[[1]], #[[2]]] &)\[CircleDot](p\[CircleTimes]ParseMany[separatorParser\[CircleTimes]p])\[CirclePlus]ParseSucceed[{}];
 
-ParseChainRight[p_, separatorParser_] := 
-  Fold[#2[[2]][#2[[1]], #1] &, #[[2]], 
+ParseChainRight[p_, separatorParser_] :=
+    Fold[#2[[2]][#2[[1]], #1] &, #[[2]],
       Reverse[#[[1]]]] &\[CircleDot](ParseMany[p\[CircleTimes]separatorParser]\[CircleTimes]p)\[CirclePlus]ParseSucceed[{}];
 
-ParseChainRight[p_, {separatorParser_, func_}] := 
-  Fold[func[#2[[1]], #1] &, #[[2]], 
+ParseChainRight[p_, {separatorParser_, func_}] :=
+    Fold[func[#2[[1]], #1] &, #[[2]],
       Reverse[#[[1]]]] &\[CircleDot](ParseMany[p\[CircleTimes]separatorParser]\[CircleTimes]p)\[CirclePlus]ParseSucceed[{}];
 
 
@@ -385,9 +385,9 @@ ParseChainRight[p_, {separatorParser_, func_}] :=
 
 SetAttributes[ParseRecursiveDefinition, HoldAll]
 ParseRecursiveDefinition[parserName_Symbol, rhs__] :=
-  Block[{},
-   parserName[xs_] := rhs[xs]
-  ];
+    Block[{},
+      parserName[xs_] := rhs[xs]
+    ];
 
 
 (************************************************************)
@@ -397,13 +397,13 @@ ParseRecursiveDefinition[parserName_Symbol, rhs__] :=
 ToTokens[text_String] := StringSplit[text];
 ToTokens[text_String, {}] := StringSplit[text];
 ToTokens[text_String, terminals : {_String ...}] :=
-  StringSplit[StringReplace[text, Map[# -> " " <> # <> " " &, terminals]]];
+    StringSplit[StringReplace[text, Map[# -> " " <> # <> " " &, terminals]]];
 
 ToTokens[text_, "EBNF"] :=
-  ToTokens[text, {"|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}];
+    ToTokens[text, {"|", ",", ";", "=", "[", "]", "(", ")", "{", "}"}];
 
 Clear[ParseToTokens];
-ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :=
+ParseToTokens[text_String, terminalDelimiters_ : {}, whitespaces_ : {" ", "\n"}] :=
     Block[{pApplyFunc, pWord, pQWord, pLongTermDelim, pTermDelim, res, procText = Characters[text]},
 
       pWord =
@@ -412,8 +412,8 @@ ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :
               ParsePredicate[!MemberQ[Join[terminalDelimiters, whitespaces], #] &]]];
 
       pQWord = ParseSpaces[(ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])\[CircleTimes]
-        ParseMany1[ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes]
-        (ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])];
+          ParseMany1[ParsePredicate[# != "'" && # != "\"" &]]\[CircleTimes]
+          (ParseSymbol["'"]\[CirclePlus]ParseSymbol["\""])];
 
       If[Length[Select[terminalDelimiters, StringLength[#] > 1 &]] > 0,
         pLongTermDelim =
@@ -430,7 +430,7 @@ ParseToTokens[text_String, terminalDelimiters_: {}, whitespaces_: {" ", "\n"}] :
       res[[1, 2]]
     ];
 
-ParseToEBNFTokens[text_, whitespaces_: {" ", "\n", "\t"}] :=
+ParseToEBNFTokens[text_, whitespaces_ : {" ", "\n", "\t"}] :=
     ParseToTokens[text, {"|", "&>", "<&", "<@", ",", ";", "=", "[", "]", "(", ")", "{", "}"}, whitespaces ];
 
 
@@ -442,46 +442,46 @@ Clear[ParsingTestTable];
 
 ParsingTestTable::unval = "Unknown value `2` for the option `1`."
 
-Options[ParsingTestTable] = {FontFamily -> "Times", FontSize -> 16, "Terminals" -> {}, "TokenizerFunction"-> ToTokens, "Layout" -> "Horizontal"};
+Options[ParsingTestTable] = {FontFamily -> "Times", FontSize -> 16, "Terminals" -> {}, "TokenizerFunction" -> ToTokens, "Layout" -> "Horizontal"};
 ParsingTestTable[parser_, statements : {_String ..}, optsArg : OptionsPattern[]] :=
-  Block[{res, ff = OptionValue[ParsingTestTable, FontFamily], 
-    fs = OptionValue[ParsingTestTable, FontSize], 
-    ts = OptionValue[ParsingTestTable, "Terminals"],
-    tokenizerFunc = OptionValue[ParsingTestTable, "TokenizerFunction"],
-    layout = OptionValue[ParsingTestTable, "Layout"], opts, ptbl, vptbl},
-   	opts = {FontFamily -> ff, FontSize -> fs};
-    If[ TrueQ[tokenizerFunc === ToTokens],
-   	  res = Map[parser[ToTokens[#, ts]]  &, statements],
-      res = Map[parser[tokenizerFunc[#]] &, statements]
+    Block[{res, ff = OptionValue[ParsingTestTable, FontFamily],
+      fs = OptionValue[ParsingTestTable, FontSize],
+      ts = OptionValue[ParsingTestTable, "Terminals"],
+      tokenizerFunc = OptionValue[ParsingTestTable, "TokenizerFunction"],
+      layout = OptionValue[ParsingTestTable, "Layout"], opts, ptbl, vptbl},
+      opts = {FontFamily -> ff, FontSize -> fs};
+      If[ TrueQ[tokenizerFunc === ToTokens],
+        res = Map[parser[ToTokens[#, ts]]  &, statements],
+        res = Map[parser[tokenizerFunc[#]] &, statements]
+      ];
+      ptbl =
+          Grid[
+            Prepend[
+              MapThread[Prepend, {Transpose[{Map[Style[#, opts] &, statements], res}], Style[#, Darker[Red], opts] & /@ Range[Length[statements]] }],
+              Style[#, Darker[Red], opts] & /@ {"#", "Statement", "Parser output"}
+            ],
+            Dividers -> {All, {True, True, Sequence @@ Table[False, {Length[statements] - 1}], True}},
+            Alignment -> {{Right, Left, Left}}
+          ];
+      Which[
+        TrueQ[layout == "Horizontal"], ptbl,
+        TrueQ[layout == "Vertical"],
+        ptbl = Transpose[{Map[Style[#, opts] &, statements], res}];
+        ptbl[[All, 2]] = Map[ If[ TrueQ[# === {}], {{{}, {}}}, #]&, ptbl[[All, 2]] ];
+        vptbl = Flatten[
+          Transpose[{statements, ptbl[[All, 2, 1, 2]], ptbl[[All, 2, 1, 1]]}], 1];
+        vptbl =
+            Transpose[{Flatten[
+              Table[{Style[i, Darker[Red], opts], "", ""}, {i, 1, Length[statements]}]],
+              Style[#, Gray] & /@
+                  Flatten[Table[{"command:", "parsed:", "residual:"}, {Length[vptbl] / 3}]], vptbl}];
+        Grid[vptbl, Alignment -> {{Right, Right, Left}}, Spacings -> {0.5, 0.75},
+          Dividers -> {{True, True, False, True},
+            Join[{True}, Flatten@Table[{False, False, True}, {Length[vptbl]}]]}],
+        True,
+        Message[ParsingTestTable::unval, "Layout", layout]; ptbl
+      ]
     ];
-    ptbl =
-        Grid[
-          Prepend[
-            MapThread[Prepend, {Transpose[{Map[Style[#, opts] &, statements], res}], Style[#, Darker[Red], opts] & /@ Range[Length[statements]] }],
-            Style[#, Darker[Red], opts] & /@ {"#", "Statement", "Parser output"}
-          ],
-          Dividers -> {All, {True, True, Sequence @@ Table[False, {Length[statements] - 1}], True}},
-          Alignment -> {{Right, Left, Left}}
-        ];
-    Which[
-      TrueQ[layout == "Horizontal"], ptbl,
-      TrueQ[layout == "Vertical"],
-      ptbl = Transpose[{Map[Style[#, opts] &, statements], res}];
-      ptbl[[All, 2]] = Map[ If[ TrueQ[# === {}], {{{}, {}}}, #]&, ptbl[[All, 2]] ];
-      vptbl = Flatten[
-        Transpose[{statements, ptbl[[All, 2, 1, 2]], ptbl[[All, 2, 1, 1]]}], 1];
-      vptbl =
-          Transpose[{Flatten[
-            Table[{Style[i, Darker[Red], opts], "", ""}, {i, 1, Length[statements]}]],
-            Style[#, Gray] & /@
-                Flatten[Table[{"command:", "parsed:", "residual:"}, {Length[vptbl] / 3}]], vptbl}];
-      Grid[vptbl, Alignment -> {{Right, Right, Left}}, Spacings -> {0.5, 0.75},
-        Dividers -> {{True, True, False, True},
-          Join[{True}, Flatten@Table[{False, False, True}, {Length[vptbl]}]]}],
-      True,
-      Message[ParsingTestTable::unval, "Layout", layout]; ptbl
-    ]
-  ];
 
 
 (***************************************************************************)
@@ -497,21 +497,21 @@ Clear["pG*"];
 
 (* Parse typeTerminal. All teminals are assumed to be between single or double quotes. *)
 
-EBNFSymbolTest = 
-  TrueQ[# == "|" || # == "," || # == "=" || # == ";" || # == "\[LeftTriangle]" || # == "\[RightTriangle]" || # == "<&" || # == "&>" ] &;
+EBNFSymbolTest =
+    TrueQ[# == "|" || # == "," || # == "=" || # == ";" || # == "\[LeftTriangle]" || # == "\[RightTriangle]" || # == "<&" || # == "&>" ] &;
 
-NonTerminalTest = 
-  TrueQ[StringMatchQ[#, "<" ~~ (WordCharacter | WhitespaceCharacter | "-" | "_") .. ~~ ">"]] &;
+NonTerminalTest =
+    TrueQ[StringMatchQ[#, "<" ~~ (WordCharacter | WhitespaceCharacter | "-" | "_") .. ~~ ">"]] &;
 
 InQuotesTest = TrueQ[StringMatchQ[#, ("'" | "\"") ~~ __ ~~ ("'" | "\"")]] &;
 
-pGTerminal = 
-  ParsePredicate[StringQ[#] && InQuotesTest[#] && ! EBNFSymbolTest[#] &];
+pGTerminal =
+    ParsePredicate[StringQ[#] && InQuotesTest[#] && ! EBNFSymbolTest[#] &];
 
 (* Parser typeNonTerminal. I prefer the <xxx> format for non-terminals instead of allowing any string without quotes. *)
 
-pGNonTerminal = 
-  ParsePredicate[StringQ[#] && NonTerminalTest[#] && ! EBNFSymbolTest[#] &];
+pGNonTerminal =
+    ParsePredicate[StringQ[#] && NonTerminalTest[#] && ! EBNFSymbolTest[#] &];
 
 pGOption = EBNFOption\[CircleDot]ParseBracketed[pGExpr];
 
@@ -533,13 +533,13 @@ pEBNF = EBNF\[CircleDot]ParseMany1[pGRule];
 (********************************************************************************)
 
 Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminalInterpreter, EBNFOptionInterpreter, EBNFRepetitionInterpreter,
-      EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter];
+  EBNFSequenceInterpreter, EBNFAlternativesInterpreter, EBNFRuleInterpreter];
 
 Clear[pNumber, pInteger, pWord, pLetterWord, pIdentifierWord];
 
 pNumber = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] &];
 
-pInteger = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, (DigitCharacter..) | (( "+" | "-" )~~(DigitCharacter..))] &];
+pInteger = ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, (DigitCharacter..) | (( "+" | "-" ) ~~ (DigitCharacter..))] &];
 
 pWord = ParsePredicate[StringMatchQ[#, (WordCharacter | "_") ..] &];
 
@@ -549,31 +549,31 @@ pIdentifierWord = ParsePredicate[StringMatchQ[#, LetterCharacter ~~ (WordCharact
 
 Clear[pNumberRange];
 pNumberRange[{s_?NumberQ, e_?NumberQ}] :=
-  ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] && s <= ToExpression[#] <= e &];
+    ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] && s <= ToExpression[#] <= e &];
 
-EBNFMakeSymbolName[p_String] := 
-  "p" <> ToUpperCase[StringReplace[p, {"<" -> "", ">" -> "", "_" -> "", "-" -> ""}]];
+EBNFMakeSymbolName[p_String] :=
+    "p" <> ToUpperCase[StringReplace[p, {"<" -> "", ">" -> "", "_" -> "", "-" -> ""}]];
 
 EBNFTerminalInterpreter[parsed_] :=
-  Which[
-   StringMatchQ[parsed, ("'" | "\"") ~~ "_?NumberQ" ~~ ("'" | "\"")], 
-   pNumber,
-   StringMatchQ[parsed, ("'" | "\"") ~~ "_?IntegerQ" ~~ ("'" | "\"")], 
-   pInteger,
-   StringMatchQ[
-    parsed, ("'" | "\"") ~~ "Range[" ~~ NumberString ~~ "," ~~ NumberString ~~ "]" ~~ ("'" | "\"")], 
-   pNumberRange[
-    Flatten@StringCases[
-      parsed, ("'" | "\"") ~~ "Range[" ~~ (s : NumberString) ~~ "," ~~ (e : NumberString) ~~ "]" ~~ ("'" | "\"") :> Map[ToExpression, {s, e}]]],
-   parsed == "\"_String\"" || parsed == "'_String'", 
-   ParsePredicate[StringQ[#] &],
-   parsed == "\"_WordString\"" || parsed == "'_WordString'", pWord,
-   parsed == "\"_LetterString\"" || parsed == "'_LetterString'", pLetterWord,
-   parsed == "\"_IdentifierString\"" || parsed == "'_IdentifierString'", pIdentifierWord,
-   True, ParseSymbol[
-    If[StringMatchQ[parsed, ("'" | "\"") ~~ ___ ~~ ("'" | "\"")], 
-     StringTake[parsed, {2, -2}], parsed]]
-  ];
+    Which[
+      StringMatchQ[parsed, ("'" | "\"") ~~ "_?NumberQ" ~~ ("'" | "\"")],
+      pNumber,
+      StringMatchQ[parsed, ("'" | "\"") ~~ "_?IntegerQ" ~~ ("'" | "\"")],
+      pInteger,
+      StringMatchQ[
+        parsed, ("'" | "\"") ~~ "Range[" ~~ NumberString ~~ "," ~~ NumberString ~~ "]" ~~ ("'" | "\"")],
+      pNumberRange[
+        Flatten@StringCases[
+          parsed, ("'" | "\"") ~~ "Range[" ~~ (s : NumberString) ~~ "," ~~ (e : NumberString) ~~ "]" ~~ ("'" | "\"") :> Map[ToExpression, {s, e}]]],
+      parsed == "\"_String\"" || parsed == "'_String'",
+      ParsePredicate[StringQ[#] &],
+      parsed == "\"_WordString\"" || parsed == "'_WordString'", pWord,
+      parsed == "\"_LetterString\"" || parsed == "'_LetterString'", pLetterWord,
+      parsed == "\"_IdentifierString\"" || parsed == "'_IdentifierString'", pIdentifierWord,
+      True, ParseSymbol[
+      If[StringMatchQ[parsed, ("'" | "\"") ~~ ___ ~~ ("'" | "\"")],
+        StringTake[parsed, {2, -2}], parsed]]
+    ];
 
 EBNFNonTerminalInterpreter[parsed_] := ToExpression[EBNFMakeSymbolName[parsed]];
 
@@ -582,52 +582,52 @@ EBNFRepetitionInterpreter[parsed_] := ParseMany1[parsed];
 EBNFOptionInterpreter[parsed_] := ParseOption1[parsed];
 
 EBNFSequenceInterpreter[parsedArg_] :=
-  Block[{parsed = parsedArg, crules},
-   (*Print["before:",parsed];*)
-   
-   crules = {ParseSymbol[","] -> "X$$#$#$#1",
-     ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", ParseSymbol["<&"] -> "X$$#$#$#2",
-     ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3", ParseSymbol["&>"] -> "X$$#$#$#3"};
-   parsed = parsed //. crules;
-   (*Print["mid:",parsed];*)
-   
-   parsed = parsed /. {"," -> ParseSequentialComposition, 
-      "\[LeftTriangle]" -> ParseSequentialCompositionPickLeft, "<&" -> ParseSequentialCompositionPickLeft,
-      "\[RightTriangle]" -> ParseSequentialCompositionPickRight, "&>" -> ParseSequentialCompositionPickRight};
-   parsed = parsed //. (Reverse /@ crules);
-   (*Print["after:",parsed];*)
-   Which[
-    ! ListQ[parsed], parsed,
-    Length[parsed] == 1, parsed[[1]],
-    True, ParseSequentialComposition @@ parsed
-   ]
-  ];
+    Block[{parsed = parsedArg, crules},
+      (*Print["before:",parsed];*)
+
+      crules = {ParseSymbol[","] -> "X$$#$#$#1",
+        ParseSymbol["\[LeftTriangle]"] -> "X$$#$#$#2", ParseSymbol["<&"] -> "X$$#$#$#2",
+        ParseSymbol["\[RightTriangle]"] -> "X$$#$#$#3", ParseSymbol["&>"] -> "X$$#$#$#3"};
+      parsed = parsed //. crules;
+      (*Print["mid:",parsed];*)
+
+      parsed = parsed /. {"," -> ParseSequentialComposition,
+        "\[LeftTriangle]" -> ParseSequentialCompositionPickLeft, "<&" -> ParseSequentialCompositionPickLeft,
+        "\[RightTriangle]" -> ParseSequentialCompositionPickRight, "&>" -> ParseSequentialCompositionPickRight};
+      parsed = parsed //. (Reverse /@ crules);
+      (*Print["after:",parsed];*)
+      Which[
+        ! ListQ[parsed], parsed,
+        Length[parsed] == 1, parsed[[1]],
+        True, ParseSequentialComposition @@ parsed
+      ]
+    ];
 
 
 EBNFAlternativesInterpreter[parsed_] :=
-  Which[
-   ! ListQ[parsed], parsed,
-   Length[parsed] == 1, parsed[[1]],
-   True, ParseAlternativeComposition @@ parsed
-  ];
+    Which[
+      ! ListQ[parsed], parsed,
+      Length[parsed] == 1, parsed[[1]],
+      True, ParseAlternativeComposition @@ parsed
+    ];
 
 EBNFRuleInterpreter[parsed_] :=
-  Block[{lhsSymbolName, lhsSymbol, res},
-   lhsSymbolName = EBNFMakeSymbolName[parsed[[1, 1]]];
-   With[{sn = lhsSymbolName}, Clear[sn]];
-   lhsSymbol = ToExpression[lhsSymbolName];
-   (*Print[lhsSymbol];*)
-   If[ListQ[parsed[[2]]],
-    With[{lhs = lhsSymbol, rhs = parsed[[1, 2]], func = parsed[[2, 2]]},
-     lhs[xs_] := ParseApply[ToExpression[func], rhs][xs]];
-    res = Row[{lhsSymbolName, " = ", parsed[[1, 2]], parsed[[2, 1]], parsed[[2, 2]]}],
-    (* assumed Length[parsed] == 2*)
-    
-    With[{lhs = lhsSymbol, rhs = parsed[[1, 2]]}, lhs[xs_] := rhs[xs]];
-    res = Row[{lhsSymbolName, " = ", parsed[[1, 2]]}]
-   ];
-   res
-  ];
+    Block[{lhsSymbolName, lhsSymbol, res},
+      lhsSymbolName = EBNFMakeSymbolName[parsed[[1, 1]]];
+      With[{sn = lhsSymbolName}, Clear[sn]];
+      lhsSymbol = ToExpression[lhsSymbolName];
+      (*Print[lhsSymbol];*)
+      If[ListQ[parsed[[2]]],
+        With[{lhs = lhsSymbol, rhs = parsed[[1, 2]], func = parsed[[2, 2]]},
+          lhs[xs_] := ParseApply[ToExpression[func], rhs][xs]];
+        res = Row[{lhsSymbolName, " = ", parsed[[1, 2]], parsed[[2, 1]], parsed[[2, 2]]}],
+        (* assumed Length[parsed] == 2*)
+
+        With[{lhs = lhsSymbol, rhs = parsed[[1, 2]]}, lhs[xs_] := rhs[xs]];
+        res = Row[{lhsSymbolName, " = ", parsed[[1, 2]]}]
+      ];
+      res
+    ];
 
 
 (************************************************************)
@@ -637,61 +637,61 @@ EBNFRuleInterpreter[parsed_] :=
 (* one downvalue per parser is assumed *)
 Clear[AddParserModifier];
 AddParserModifier[parser_Symbol, func_] :=
-  Block[{dvs = Cases[DownValues[parser], _RuleDelayed]},
-   If[Length[dvs] == 0, {},
-    With[{parserBody = dvs[[1, 2, 0]], parserVar = dvs[[1, 1, 1, 1, 1]]},
-     DownValues[
-       parser] = {dvs[[1, 1]] :> ParseApply[func, parserBody][parserVar]}
-    ]
-   ]
-  ];
+    Block[{dvs = Cases[DownValues[parser], _RuleDelayed]},
+      If[Length[dvs] == 0, {},
+        With[{parserBody = dvs[[1, 2, 0]], parserVar = dvs[[1, 1, 1, 1, 1]]},
+          DownValues[
+            parser] = {dvs[[1, 1]] :> ParseApply[func, parserBody][parserVar]}
+        ]
+      ]
+    ];
 
 Clear[SetParserModifier];
 SetParserModifier[parser_Symbol, func_] :=
-  Block[{dvs = Cases[DownValues[parser], _RuleDelayed]},
-   Which[
-    Length[dvs] == 0, {},
-    Length[dvs] > 0 && Head[dvs[[1, 2, 0]]] === ParseApply,
-    DownValues[parser] = {ReplacePart[dvs, {1, 2, 0, 1} -> func]},
-    True,
-    AddParserModifier[parser, func]
-   ]
-  ];
+    Block[{dvs = Cases[DownValues[parser], _RuleDelayed]},
+      Which[
+        Length[dvs] == 0, {},
+        Length[dvs] > 0 && Head[dvs[[1, 2, 0]]] === ParseApply,
+        DownValues[parser] = {ReplacePart[dvs, {1, 2, 0, 1} -> func]},
+        True,
+        AddParserModifier[parser, func]
+      ]
+    ];
 
 (************************************************************)
 (* Interpretation                                           *)
 (************************************************************)
 
-EBNFContextRules = 
- {EBNFNonTerminal -> EBNFNonTerminalInterpreter, 
- EBNFTerminal -> EBNFTerminalInterpreter, 
- EBNFOption -> EBNFOptionInterpreter, 
- EBNFRepetition -> EBNFRepetitionInterpreter, 
- EBNFSequence -> EBNFSequenceInterpreter, 
- EBNFAlternatives -> EBNFAlternativesInterpreter, 
- EBNFRule -> EBNFRuleInterpreter};
+EBNFContextRules =
+    {EBNFNonTerminal -> EBNFNonTerminalInterpreter,
+      EBNFTerminal -> EBNFTerminalInterpreter,
+      EBNFOption -> EBNFOptionInterpreter,
+      EBNFRepetition -> EBNFRepetitionInterpreter,
+      EBNFSequence -> EBNFSequenceInterpreter,
+      EBNFAlternatives -> EBNFAlternativesInterpreter,
+      EBNFRule -> EBNFRuleInterpreter};
 
 Clear[InterpretWithContext];
 InterpretWithContext[parsed_, contextRules : {_Rule ...}] :=
-  Block[{},
-   {parsed /. contextRules, {} }
-  ];
+    Block[{},
+      {parsed /. contextRules, {} }
+    ];
 
 InterpretWithContext[parsed_, contextRules : {"data" -> {}, "functions" -> {(_Symbol -> _) ...}}] :=
-  InterpretWithContext[parsed, "functions" /. contextRules];
+    InterpretWithContext[parsed, "functions" /. contextRules];
 
 InterpretWithContext[parsed_, contextRules : {"data" -> {(_Symbol -> _) ..}, "functions" -> {(_Symbol -> _) ...}}] :=
-  Block[{dataVars, res, newData},
-   dataVars = ("data" /. contextRules)[[All, 1]];
-   {res, newData} =
-    Block[Evaluate[dataVars],
-     Do[
-      Evaluate[r[[1]]] = r[[2]]
-      , {r, ("data" /. contextRules)}];
-     {parsed /. ("functions" /. contextRules), dataVars}
+    Block[{dataVars, res, newData},
+      dataVars = ("data" /. contextRules)[[All, 1]];
+      {res, newData} =
+          Block[Evaluate[dataVars],
+            Do[
+              Evaluate[r[[1]]] = r[[2]]
+              , {r, ("data" /. contextRules)}];
+            {parsed /. ("functions" /. contextRules), dataVars}
+          ];
+      {res, Thread[dataVars -> newData]}
     ];
-   {res, Thread[dataVars -> newData]}
-  ];
 
 ParseEBNF[code_] := pEBNF[code];
 
@@ -760,19 +760,30 @@ RGSequence[parsed_] :=
       True, parsed
     ];
 
+$RGAlternativesRecursionLimit = 50;
+$RGAlternativesRecursionLevel = 0;
+
 RGAlternatives[parsed_] :=
-    Which[
-      ! ListQ[parsed], parsed,
-      Length[parsed] == 1, parsed[[1]],
-      True, RandomSample[parsed, 1][[1]]
+    Block[{},
+      $RGAlternativesRecursionLevel++;
+      Which[
+        $RGAlternativesRecursionLevel > $RGAlternativesRecursionLimit,
+        RandomChoice[Flatten[Cases[parsed, _String, Infinity]]],
+
+        ! ListQ[parsed], parsed,
+
+        Length[parsed] == 1, parsed[[1]],
+
+        True, RandomChoice[parsed]
+      ]
     ];
 
 MakeNonTerminalReplacementRules[parsedEBNFRules_] :=
     Cases[parsedEBNFRules, {s_String, rhs_} :> (EBNFNonTerminal[s] -> rhs), Infinity];
 
 Clear[RGSentence];
-RGSentence[parsedEBNF_EBNF] :=
-    Block[{parsedEBNFRules = parsedEBNF[[1]], rrules, rrulesRest, EBNFToRGRules, t},
+RGSentence[parsedEBNF_EBNF, recursionLimit : (_Integer | Automatic | Infinity ) : 20] :=
+    Block[{parsedEBNFRules = parsedEBNF[[1]], rrules, rrulesRest, dRRulesRest, EBNFToRGRules, t},
 
       EBNFToRGRules =
           Dispatch[Thread[{EBNFTerminal, EBNFOption, EBNFRepetition, EBNFSequence} -> {RGTerminal, RGOption, RGRepetition, RGSequence}]];
@@ -780,16 +791,26 @@ RGSentence[parsedEBNF_EBNF] :=
       rrules = Cases[parsedEBNFRules, {s_String, rhs_} :> (EBNFNonTerminal[s] -> rhs), Infinity];
 
       rrulesRest = Rest[rrules];
+      dRRulesRest = Dispatch[rrulesRest];
 
-      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. Dispatch[rrulesRest];
+      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. dRRulesRest;
       PRINT["1.", rrulesRest[[All, 2]]];
 
       rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. EBNFToRGRules;
       PRINT["2.", rrulesRest[[All, 2]]];
 
-      rrulesRest[[All, 2]] = rrulesRest[[All, 2]] //. Dispatch[rrulesRest];
+      If[ IntegerQ[recursionLimit],
+        Do[
+          rrulesRest[[All, 2]] = rrulesRest[[All, 2]] /. dRRulesRest,
+          {i, 0, recursionLimit}
+        ],
+        (*ELSE*)
+        rrulesRest[[All, 2]] = rrulesRest[[All, 2]] //. dRRulesRest
+      ];
       PRINT["3.", rrulesRest];
 
+      $RGAlternativesRecursionLimit = If[ NumericQ[recursionLimit], recursionLimit, $RecursionLimit];
+      $RGAlternativesRecursionLevel = 0;
       t = Flatten@List[(First[rrules][[2]] /. Dispatch[rrulesRest]) /. EBNFToRGRules //. EBNFAlternatives[s___] :> RGAlternatives[s]];
       PRINT["t=", t];
 
@@ -806,9 +827,19 @@ Clear[GrammarRandomSentences];
 GrammarRandomSentences::nargs = "The first argument is expected to be a string (with a grammar in EBNF). \
 The second argument is expected to be a positive integer.";
 
-GrammarRandomSentences[ebnfGrammar_String, n_Integer] :=
-    Block[{EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
+Options[GrammarRandomSentences] = {"RecursionLimit" -> Automatic};
+
+GrammarRandomSentences[ebnfGrammar_String, n_Integer, opts : OptionsPattern[]] :=
+    Block[{recursionLimit, EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
       EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule, tokens, res},
+
+      recursionLimit = OptionValue[GrammarRandomSentences, "RecursionLimit"];
+      If[ !NumericQ[recursionLimit] && !MemberQ[{Automatic, Infinity}, recursionLimit],
+        recursionLimit = 20
+      ];
+      If[ NumericQ[recursionLimit],
+        recursionLimit = Ceiling[recursionLimit]
+      ];
 
       Clear[EBNFMakeSymbolName, EBNFNonTerminal, EBNFTerminal, EBNFOption,
         EBNFRepetition, EBNFSequence, EBNFAlternatives, EBNFRule];
@@ -818,7 +849,7 @@ GrammarRandomSentences[ebnfGrammar_String, n_Integer] :=
 
       res = ParseEBNF[tokens];
 
-      Table[RGSentence[res[[1, 2]]], {n}]
+      Table[RGSentence[res[[1, 2]], recursionLimit], {n}]
     ] /; n > 0;
 
 GrammarRandomSentences[parsedEBNFRules_EBNF, n_Integer] :=
