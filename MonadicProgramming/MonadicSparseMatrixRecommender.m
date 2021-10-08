@@ -251,8 +251,8 @@ SMRMonComputeTopK::usage = "SMRMonComputeTopK[ testData_Association, ks:{_?Integ
 
 SMRMonToMetadataRecommender::usage = "SMRMonToMetadataRecommender[ tagTypeTo_String, opts] converts the recommender into a recommender for tagTypeTo tags.";
 
-SMRMonImportRecommender::usage = "SMRMonImportRecommender[ dirName_String, suffix_String ] imports a recommender \
-using data files from the specified directory having the specified suffix. \
+SMRMonImportRecommender::usage = "SMRMonImportRecommender[ dirName_String] imports a recommender \
+using data files from the specified directory having the specified prefix and infix through the options \"Prefix\" and \"Infix\". \
 This is a non-monadic function; can be used in place of SMRMonUnit[].";
 
 Begin["`Private`"];
@@ -3430,6 +3430,8 @@ SMRMonToMetadataRecommender[___][__] :=
 
 Clear[SMRMonImportRecommender];
 
+SyntaxInformation[SMRMonImportRecommender] = { "ArgumentsPattern" -> {_, OptionsPattern[] } };
+
 SMRMonImportRecommender::uniq = "The `1` are expected to be unique.";
 SMRMonImportRecommender::nfix = "The values of the \"Prefix\" and \"Infix\" are expected to be strings or Automatic.";
 
@@ -3484,6 +3486,14 @@ SMRMonImportRecommender[dirName_String, opts : OptionsPattern[]] :=
       smats = Map[smat2[[All, #Begin ;; #End]] &, Normal[dsTagTypeRanges]];
 
       SMRMonBind[ SMRMonUnit[], SMRMonCreate[smats] ]
+    ];
+
+SMRMonImportRecommender[___] :=
+    Block[{},
+      Echo[
+        "The expected signature is SMRMonImportRecommender[ dirName_String, opts___ ].",
+        "SMRMonImportRecommender:"];
+      $SMRMonFailure
     ];
 
 End[]; (* `Private` *)
