@@ -278,7 +278,7 @@ GlobalTermFunctionWeights[ docTermMat_?MatrixQ, funcName_String] :=
         mat = SparseArray[docTermMat];
         mat = Unitize[mat];
         globalWeights = Total[mat, {1}];
-        globalWeights = Log[ Dimensions[mat][[1]] / (1.0 + globalWeights)];
+        globalWeights = Log[2, Dimensions[mat][[1]] / (1.0 + globalWeights)];
         globalWeights = Clip[ globalWeights, {0, Max[globalWeights]} ],
 
         funcName == "GFIDF",
