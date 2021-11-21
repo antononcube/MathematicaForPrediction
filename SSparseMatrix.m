@@ -735,9 +735,14 @@ RowBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
         Return[$Failed];
       ];
 
-      sarr = Join[ SparseArray[r1], SparseArray[r2] ];
-      (* Special handling of duplication of row names in the result. *)
+      (* Optimization *)
+      If[ ColumnNames[r1] == ColumnNames[r2],
+        sarr = Join[ SparseArray[r1], SparseArray[r2] ],
+        (*ELSE*)
+        sarr = Join[ SparseArray[r1], SparseArray[r2[[All, ColumnNames[r1]]]] ]
+      ];
 
+      (* Special handling of duplication of row names in the result. *)
       joinedRowAssoc = Join[First[r1]["RowNames"], First[r2]["RowNames"]];
       If[Length[joinedRowAssoc] == Dimensions[sarr][[1]],
         resRowNames = Join[RowNames[r1], RowNames[r2]],
@@ -756,10 +761,13 @@ ColumnBind[rm : {_SSparseMatrix..}] := Fold[ColumnBind, First[rm], Rest[rm]];
 
 ColumnBind[r1_SSparseMatrix, r2_SSparseMatrix ] :=
     Block[{sarr, joinedRowAssoc, resColumnNames},
+
+      (*Note that here we ignore the row names.*)
+
       sarr = Transpose@
           Join[Transpose@SparseArray[r1], Transpose@SparseArray[r2]];
-      (* Special handling of duplication of column names in the result. *)
 
+      (* Special handling of duplication of column names in the result. *)
       joinedRowAssoc = Join[ColumnNamesAssociation[r1], ColumnNamesAssociation[r2]];
       If[Length[joinedRowAssoc] == Dimensions[sarr][[2]],
         resColumnNames = Join[ColumnNames[r1], ColumnNames[r2]],
@@ -782,7 +790,6 @@ ImposeRowNames[rmat_SSparseMatrix, rowNames : {_String ..}] :=
     ImposeRowNames[rmat, AssociationThread[rowNames -> Range[Length[rowNames]]]];
 
 ImposeRowNames[rmat_SSparseMatrix, rowNames : Association[(_String -> _Integer) ..]] :=
-
     Block[{arules, rmatRowNames, aInds, resMat},
 
       arules = ArrayRules[SparseArray[rmat]];
