@@ -377,9 +377,28 @@ ToSSparseMatrix[arules : Association[ ({_String, _String} -> _?NumericQ) .. ], o
 
 ToSSparseMatrix[aRows : Association[ (_String -> Association[ (_String -> _?NumericQ) .. ]).. ], opts : OptionsPattern[] ] :=
     Block[{arules},
-      arules = Join @@ KeyValueMap[ Function[{k,v}, KeyMap[ {k,#}&, v]], aRows];
+      arules = Join @@ KeyValueMap[ Function[{k, v}, KeyMap[ {k, #}&, v]], aRows];
       ToSSparseMatrix[ arules, opts]
     ];
+
+Clear[NumericArraySpecQ];
+NumericArraySpecQ[x_Association] :=
+    Apply[And, Map[ KeyExistsQ[x, #]&, {"rowIndexes", "columnIndexes", "values", "shape", "rowNames", "columnNames"}]] &&
+        Apply[And, NumericArrayQ /@ Values[KeyTake[x, {"rowIndexes", "columnIndexes", "values"}]]];
+NumericArraySpecQ[___] := False;
+
+ToSSparseMatrix[spec_?AssociationQ] :=
+    ToSSparseMatrix[
+      SparseArray[
+        Map[(Most[#] + 1) -> Last[#] &,
+          Transpose[Normal /@ Values[KeyTake[spec, {"rowIndexes", "columnIndexes", "values"}]]]
+        ],
+        spec["shape"]
+      ],
+      "RowNames" -> spec["rowNames"],
+      "ColumnNames" -> spec["columnNames"]
+    ] /; NumericArraySpecQ[spec];
+
 
 ToSSparseMatrix[___] := Message[ToSSparseMatrix::arg1];
 
