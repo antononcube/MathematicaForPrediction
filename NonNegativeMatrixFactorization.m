@@ -332,7 +332,7 @@ RightNormalizeMatrixProduct[W_?MatrixQ, H_?MatrixQ] :=
     Block[{d, S, SI},
       d = Table[Norm[H[[i]]], {i, Length[H]}];
       S = DiagonalMatrix[d];
-      SI = DiagonalMatrix[1 / d];
+      SI = DiagonalMatrix[Map[If[# != 0, 1 / #, 0]&, d]];
       {W.S, SI.H}
     ];
 
