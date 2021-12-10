@@ -446,6 +446,18 @@ GridTableForm[data_List, opts : OptionsPattern[]] :=
       ]
     ];
 
+GridTableForm[ds_Dataset] :=
+    Which[
+      AssociationQ[Normal[ds]] && AssociationQ[Normal[ds][[1]]],
+      GridTableForm[Normal@ds[Values, Values], TableHeadings -> Normal[Keys[ds[[1]]]]],
+
+      ListQ[Normal[ds]] && AssociationQ[Normal[ds][[1]]],
+      GridTableForm[Normal@ds[Values], TableHeadings -> Normal[Keys[ds[[1]]]]],
+
+      True,
+      GridTableForm[Normal@ds]
+    ];
+
 GridTableForm[___] :=
     Block[{},
       Message[GridTableForm::nargs];
