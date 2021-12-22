@@ -87,6 +87,8 @@
    5. Refactor the code so the git data be retrieved separately from the plotting.
       This is needed for experimentation with the plots because GitHub will reject requests
       after they become too many (for GitHub).
+   6. DONE -- Implement Oauth credentials retrieval of GitHub commit records.
+   7. DONE -- Refactor code for just getting the commit records.
 
 
   There are probably bugs in the code. I have tested it with only 4-5 repositories.
@@ -101,13 +103,17 @@
 BeginPackage["GitHubPlots`"];
 (* Exported symbols added here with SymbolName::usage *)
 
+GitHubCommitRecords::usage = "Gives the commit records for a user and a repository.";
+
 GitHubDateListPlot::usage = "Gives a plot of GitHub commits order and dependencies for a specified user and repository.";
 
 GitHubBarChart::usage = "Gives a bar chart for the GitHub commits distanses from now for a specified user and repository.";
 
 Begin["`Private`"];
 
-(* Parser *)
+(************************************************************)
+(* Parser                                                   *)
+(************************************************************)
 
 (* Different entities can be parsed. I have just selected few that seem to be most important. *)
 
@@ -132,24 +138,20 @@ EmptyGitRecord[sha_String, date_String] :=
       "commit" -> {"message" -> "none", "committer" -> {"name" -> "unknown", "date" -> date}},
       "parents" -> {"sha" -> "none"}, "htmlURL" -> ""};
 
-(* Core plot data *)
-(* Some parametrizing options would be nice to be added:
-   1. should the graph paths be computed or not;
-   2. what colors to use for the tick labels;
-   3. with what distance to offset the date of the unknown commits.
- *)
-ClearAll[CorePlotData];
 
-Options[CorePlotData] = {"Username" -> None, "AuthToken" -> None };
+(************************************************************)
+(* Core plot data                                           *)
+(************************************************************)
 
-CorePlotData[ user_String, repo_String, page_Integer : 0, perPage_Integer : 30, opts : OptionsPattern[]] :=
-    Block[{url, data, commitRecs,
-      graphRules, commitsGraph, unknown, unknownDate,
-      roots, leaves, paths, shaInds, pathsByInds, tickLabels, datePoints,
-      userName, authToken, aRes},
+ClearAll[GitHubCommitRecords];
 
-      userName = OptionValue[CorePlotData, "Username"];
-      authToken = OptionValue[CorePlotData, "AuthToken"];
+Options[GitHubCommitRecords] = {"Username" -> None, "AuthToken" -> None };
+
+GitHubCommitRecords[user_String, repo_String, page_Integer : 0, perPage_Integer : 30, opts : OptionsPattern[]] :=
+    Block[{url, data, commitRecs, userName, authToken, aRes},
+
+      userName = OptionValue[GitHubCommitRecords, "Username"];
+      authToken = OptionValue[GitHubCommitRecords, "AuthToken"];
 
       (* Get data *)
       url = StringTemplate["https://api.github.com/repos/`1`/`2`/commits?page=`3`&per_page=`4`"];
@@ -165,7 +167,28 @@ CorePlotData[ user_String, repo_String, page_Integer : 0, perPage_Integer : 30, 
       ];
 
       (* Parse *)
-      commitRecs = ParseGitRecord /@ data;
+      commitRecs = ParseGitRecord /@ data
+    ];
+
+
+(************************************************************)
+(* Core plot data                                           *)
+(************************************************************)
+(* Some parametrizing options would be nice to be added:
+   1. should the graph paths be computed or not;
+   2. what colors to use for the tick labels;
+   3. with what distance to offset the date of the unknown commits.
+ *)
+ClearAll[CorePlotData];
+
+Options[CorePlotData] = {"Username" -> None, "AuthToken" -> None };
+
+CorePlotData[ user_String, repo_String, page_Integer : 0, perPage_Integer : 30, opts : OptionsPattern[]] :=
+    Block[{commitRecs,
+      graphRules, commitsGraph, unknown, unknownDate,
+      roots, leaves, paths, shaInds, pathsByInds, tickLabels, datePoints},
+
+      commitRecs = GitHubCommitRecords[user, repo, page, perPage, opts];
       (*commitRecs = SortBy[commitRecs, "date" /. # &];*) (* This is will be done after adding the unknown. *)
 
       (* Make a commits graph *)
@@ -222,6 +245,10 @@ CorePlotData[ user_String, repo_String, page_Integer : 0, perPage_Integer : 30, 
     ];
 
 
+
+(************************************************************)
+(* GitHubDateListPlot                                       *)
+(************************************************************)
 (* DateListPlot based *)
 (* It would be nice to be able to specify the commits point sizes and line thickness of the dependencies. *)
 ClearAll[GitHubDateListPlot];
@@ -285,6 +312,9 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
     ];
 
 
+(************************************************************)
+(* GitHubBarChart                                           *)
+(************************************************************)
 (* BarChart based *)
 ClearAll[GitHubBarChart];
 
