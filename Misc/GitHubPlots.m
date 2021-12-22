@@ -130,7 +130,7 @@ EmptyGitRecord[sha_String] := EmptyGitRecord[sha, ""];
 EmptyGitRecord[sha_String, date_String] :=
     {"sha" -> sha,
       "commit" -> {"message" -> "none", "committer" -> {"name" -> "unknown", "date" -> date}},
-      "parents" -> {"sha" -> "none"}, "htmlURL"->""};
+      "parents" -> {"sha" -> "none"}, "htmlURL" -> ""};
 
 (* Core plot data *)
 (* Some parametrizing options would be nice to be added:
@@ -139,14 +139,30 @@ EmptyGitRecord[sha_String, date_String] :=
    3. with what distance to offset the date of the unknown commits.
  *)
 ClearAll[CorePlotData];
-CorePlotData[ user_String, repo_String, page_Integer:0, perPage_Integer:30 ] :=
-    Block[{ url, data, commitRecs,
-      graphRules, commitsGraph, unknown, unknownDate,
-      roots, leaves, paths, shaInds, pathsByInds, tickLabels, datePoints },
 
-    (* Get data *)
+Options[CorePlotData] = {"Username" -> None, "AuthToken" -> None };
+
+CorePlotData[ user_String, repo_String, page_Integer : 0, perPage_Integer : 30, opts : OptionsPattern[]] :=
+    Block[{url, data, commitRecs,
+      graphRules, commitsGraph, unknown, unknownDate,
+      roots, leaves, paths, shaInds, pathsByInds, tickLabels, datePoints,
+      userName, authToken, aRes},
+
+      userName = OptionValue[CorePlotData, "Username"];
+      authToken = OptionValue[CorePlotData, "AuthToken"];
+
+      (* Get data *)
       url = StringTemplate["https://api.github.com/repos/`1`/`2`/commits?page=`3`&per_page=`4`"];
-      data = Import[url[user, repo, ToString[page], ToString[perPage]], "JSON"];
+
+      If[ TrueQ[authToken === None],
+        data = Import[url[user, repo, ToString[page], ToString[perPage]], "JSON"],
+        (*ELSE*)
+        aRes = RunProcess[{"curl",
+          "-u", userName <> ":" <> authToken,
+          "-H", "Accept: application/vnd.github.v3+json",
+          url[user, repo, ToString[page], ToString[perPage]]}, All];
+        data = ImportString[aRes["StandardOutput"], "JSON"]
+      ];
 
       (* Parse *)
       commitRecs = ParseGitRecord /@ data;
@@ -161,7 +177,7 @@ CorePlotData[ user_String, repo_String, page_Integer:0, perPage_Integer:30 ] :=
 
       unknownDate =
           DateString[
-            Min[Map[AbsoluteTime[DateList[#]] &, "date" /. commitRecs]] - 24*3600];
+            Min[Map[AbsoluteTime[DateList[#]] &, "date" /. commitRecs]] - 24 * 3600];
 
       commitRecs =
           Join[commitRecs,
@@ -189,9 +205,9 @@ CorePlotData[ user_String, repo_String, page_Integer:0, perPage_Integer:30 ] :=
 
       tickLabels[[All, 1]] =
           MapThread[
-            Function[{mess,url},
+            Function[{mess, url},
               Button[
-                Mouseover[Style[mess,"Text"], Style[mess, "HyperlinkActive"]],
+                Mouseover[Style[mess, "Text"], Style[mess, "HyperlinkActive"]],
                 NotebookLocate[{URL[url], None}],
                 Appearance -> None]
             ],
@@ -210,14 +226,16 @@ CorePlotData[ user_String, repo_String, page_Integer:0, perPage_Integer:30 ] :=
 (* It would be nice to be able to specify the commits point sizes and line thickness of the dependencies. *)
 ClearAll[GitHubDateListPlot];
 
-Options[GitHubDateListPlot] = Options[DateListPlot];
+Options[GitHubDateListPlot] = Join[Options[CorePlotData], Options[DateListPlot]];
 
-GitHubDateListPlot[ user_String, repo_String, opts:OptionsPattern[] ] := GitHubDateListPlot[user, repo, 1, 30, opts];
+GitHubDateListPlot[ user_String, repo_String, opts : OptionsPattern[] ] := GitHubDateListPlot[user, repo, 1, 30, opts];
 
-GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opts:OptionsPattern[] ] :=
-    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize=0.03, plotTicks, frameTicksValue, colRange},
+GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opts : OptionsPattern[] ] :=
+    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize = 0.03, plotTicks, frameTicksValue,
+      colRange, gridLinesSpec},
 
-      {commitRecs, pathsByInds, datePoints, tickLabels} = CorePlotData[user, repo, page, perPage];
+      {commitRecs, pathsByInds, datePoints, tickLabels} =
+          CorePlotData[user, repo, page, perPage, FilterRules[{opts}, Options[CorePlotData]]];
 
       plotTicks = Table[{i, tickLabels[[i]] }, {i, 1, Length[tickLabels]}];
 
@@ -228,7 +246,7 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
         frameTicksValue = { { First[frameTicksValue], plotTicks}, {Automatic, Automatic} },
 
         MatchQ[ frameTicksValue, {{_, Automatic}, {_, _}}],
-        frameTicksValue = { { frameTicksValue[[1,1]], plotTicks}, frameTicksValue[[2]] },
+        frameTicksValue = { { frameTicksValue[[1, 1]], plotTicks}, frameTicksValue[[2]] },
 
         TrueQ[ frameTicksValue === Automatic],
         frameTicksValue = {{Automatic, plotTicks}, {Automatic, Automatic}}
@@ -237,7 +255,7 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
       gr = DateListPlot[
         MapThread[Tooltip[#1, #2] &, {datePoints, tickLabels}],
         FrameTicks -> frameTicksValue,
-        opts,
+        FilterRules[{opts}, Options[DateListPlot]],
         Joined -> False, PlotStyle -> {PointSize[pointSize]},
         PlotRange -> All, AspectRatio -> 2, ImageSize -> {Automatic, 800},
         GridLines -> {None, Automatic},
@@ -245,39 +263,46 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
 
       colRange = If[ Length[pathsByInds] > 1, RandomSample[Range[0, 1, 1 / (Length[pathsByInds] - 1)]], {0.3}];
 
-      Show[gr,
-        Graphics[{Opacity[0.5], Thickness[0.01],
-          MapThread[{
-            ColorData["TemperatureMap"][#2],
-            Mouseover[
-              Line[datePoints[[#1]]], {Red, PointSize[pointSize*1.18], Point[datePoints[[#1]]]}]
-          } &,
-            {pathsByInds, colRange}],
-          Opacity[1], LightBlue, PointSize[pointSize*0.66],
-          MapThread[
-            Tooltip[
-              Point[#1],
-              Row[{#2, " ", DateDifference[#1[[1]], Date[], {"Month", "Day", "Hour", "Minute"}], " ago"}]] &,
-            {datePoints, "sha" /. commitRecs}]}]]
+      gr =
+          Show[gr,
+            Graphics[{Opacity[0.5], Thickness[0.01],
+              MapThread[{
+                ColorData["TemperatureMap"][#2],
+                Mouseover[
+                  Line[datePoints[[#1]]], {Red, PointSize[pointSize * 1.18], Point[datePoints[[#1]]]}]
+              } &,
+                {pathsByInds, colRange}],
+              Opacity[1], LightBlue, PointSize[pointSize * 0.66],
+              MapThread[
+                Tooltip[
+                  Point[#1],
+                  Row[{#2, " ", DateDifference[#1[[1]], Date[], {"Month", "Day", "Hour", "Minute"}], " ago"}]] &,
+                {datePoints, "sha" /. commitRecs}]}]];
+
+      (* For some reason in Version 13.0 I am getting at this point GridLines -> {None, {All}},
+      about which Mathematica complains about. *)
+      Replace[gr, HoldPattern[GridLines -> {None,{All}}] -> (GridLines -> {None, Automatic}), Infinity]
     ];
 
 
 (* BarChart based *)
 ClearAll[GitHubBarChart];
 
-Options[GitHubBarChart] = Options[BarChart];
+Options[GitHubBarChart] = Join[Options[CorePlotData], Options[BarChart]];
 
-GitHubBarChart[ user_String, repo_String, opts:OptionsPattern[] ] := GitHubBarChart[user, repo, 1, 30, opts];
+GitHubBarChart[ user_String, repo_String, opts : OptionsPattern[] ] := GitHubBarChart[user, repo, 1, 30, opts];
 
-GitHubBarChart[ user_String, repo_String, page_Integer, perPage_Integer, opts:OptionsPattern[] ] :=
+GitHubBarChart[ user_String, repo_String, page_Integer, perPage_Integer, opts : OptionsPattern[] ] :=
     Block[{commitRecs, pathsByInds, datePoints, tickLabels, distancesFromNow},
 
-      {commitRecs, pathsByInds, datePoints, tickLabels} = CorePlotData[user, repo, page, perPage];
+      {commitRecs, pathsByInds, datePoints, tickLabels} =
+          CorePlotData[user, repo, page, perPage, FilterRules[{opts}, Options[CorePlotData]]];
 
       distancesFromNow =
           Map[DateDifference[DateList[#], Date[]] &, "date" /. commitRecs];
 
-      BarChart[distancesFromNow, opts,
+      BarChart[distancesFromNow,
+        FilterRules[{opts}, Options[BarChart]],
         BarOrigin -> Right, BarSpacing -> 0.5,
         ChartElementFunction -> "GradientScaleRectangle", Frame -> True,
         GridLines -> Automatic, Method -> {"GridLinesInFront" -> True},
@@ -285,7 +310,7 @@ GitHubBarChart[ user_String, repo_String, page_Integer, perPage_Integer, opts:Op
         FrameLabel -> {{"commit order", None}, {1, 1} "number of days"},
         FrameTicks -> {{Automatic,
           Table[{i, tickLabels[[i]] }, {i, 1, Length[tickLabels]}]}, {Automatic,
-          Automatic}},(*ScalingFunctions\[Rule]"Log",*)AspectRatio -> 3,
+          Automatic}}, (*ScalingFunctions\[Rule]"Log",*)AspectRatio -> 3,
         ImageSize -> {Automatic, 800}]
 
     ];
