@@ -98,20 +98,20 @@
 
 *)
 
-BeginPackage["GitHubPlots`"]
+BeginPackage["GitHubPlots`"];
 (* Exported symbols added here with SymbolName::usage *)
 
-GitHubDateListPlot::usage = "Gives a plot of GitHub commits order and dependencies for a specified user and repository."
+GitHubDateListPlot::usage = "Gives a plot of GitHub commits order and dependencies for a specified user and repository.";
 
-GitHubBarChart::usage = "Gives a bar chart for the GitHub commits distanses from now for a specified user and repository."
+GitHubBarChart::usage = "Gives a bar chart for the GitHub commits distanses from now for a specified user and repository.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 (* Parser *)
 
 (* Different entities can be parsed. I have just selected few that seem to be most important. *)
 
-Clear[ParseGitRecord]
+Clear[ParseGitRecord];
 ParseGitRecord[recRules_] :=
     Block[{sha, message, committer, date, parentSha, htmlURL},
       sha = "sha" /. recRules;
@@ -125,7 +125,7 @@ ParseGitRecord[recRules_] :=
     ];
 
 
-Clear[EmptyGitRecord]
+Clear[EmptyGitRecord];
 EmptyGitRecord[sha_String] := EmptyGitRecord[sha, ""];
 EmptyGitRecord[sha_String, date_String] :=
     {"sha" -> sha,
@@ -138,7 +138,7 @@ EmptyGitRecord[sha_String, date_String] :=
    2. what colors to use for the tick labels;
    3. with what distance to offset the date of the unknown commits.
  *)
-ClearAll[CorePlotData]
+ClearAll[CorePlotData];
 CorePlotData[ user_String, repo_String, page_Integer:0, perPage_Integer:30 ] :=
     Block[{ url, data, commitRecs,
       graphRules, commitsGraph, unknown, unknownDate,
@@ -208,14 +208,14 @@ CorePlotData[ user_String, repo_String, page_Integer:0, perPage_Integer:30 ] :=
 
 (* DateListPlot based *)
 (* It would be nice to be able to specify the commits point sizes and line thickness of the dependencies. *)
-ClearAll[GitHubDateListPlot]
+ClearAll[GitHubDateListPlot];
 
 Options[GitHubDateListPlot] = Options[DateListPlot];
 
 GitHubDateListPlot[ user_String, repo_String, opts:OptionsPattern[] ] := GitHubDateListPlot[user, repo, 1, 30, opts];
 
 GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opts:OptionsPattern[] ] :=
-    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize=0.03, plotTicks, frameTicksValue},
+    Block[{commitRecs, pathsByInds, datePoints, tickLabels, gr, pointSize=0.03, plotTicks, frameTicksValue, colRange},
 
       {commitRecs, pathsByInds, datePoints, tickLabels} = CorePlotData[user, repo, page, perPage];
 
@@ -243,6 +243,8 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
         GridLines -> {None, Automatic},
         FrameLabel -> {{"commit order", None}, {1, 1} "date"}];
 
+      colRange = If[ Length[pathsByInds] > 1, RandomSample[Range[0, 1, 1 / (Length[pathsByInds] - 1)]], {0.3}];
+
       Show[gr,
         Graphics[{Opacity[0.5], Thickness[0.01],
           MapThread[{
@@ -250,7 +252,7 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
             Mouseover[
               Line[datePoints[[#1]]], {Red, PointSize[pointSize*1.18], Point[datePoints[[#1]]]}]
           } &,
-            {pathsByInds, RandomSample[Range[0, 1, 1/(Length[pathsByInds] - 1)]]}],
+            {pathsByInds, colRange}],
           Opacity[1], LightBlue, PointSize[pointSize*0.66],
           MapThread[
             Tooltip[
@@ -261,7 +263,7 @@ GitHubDateListPlot[ user_String, repo_String, page_Integer, perPage_Integer, opt
 
 
 (* BarChart based *)
-ClearAll[GitHubBarChart]
+ClearAll[GitHubBarChart];
 
 Options[GitHubBarChart] = Options[BarChart];
 
@@ -288,6 +290,6 @@ GitHubBarChart[ user_String, repo_String, page_Integer, perPage_Integer, opts:Op
 
     ];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
-EndPackage[]
+EndPackage[];
