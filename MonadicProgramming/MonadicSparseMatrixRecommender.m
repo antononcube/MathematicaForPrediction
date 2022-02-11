@@ -2060,21 +2060,6 @@ SMRMonJoinAcross[xs_, context_Association] := $SMRMonFailure;
 
 SMRMonJoinAcross[][xs_, context_Association] := SMRMonJoinAcross[Options[SMRMonJoinAcross]][xs, context];
 
-SMRMonJoinAcross[opts : OptionsPattern[]][xs_, context_Association] :=
-    Block[{warnQ},
-
-      warnQ = TrueQ[OptionValue[SMRMonJoinAcross, "Warning"]];
-
-      If[ KeyExistsQ[context, "data"] && TrueQ[ Head[context["data"]] === Dataset ],
-        If[ warnQ,
-          Echo[ "Using the dataset for the context key \"data\".", "SMRMonJoinAcross:" ]
-        ];
-        SMRMonJoinAcross[context["data"], opts][xs, context],
-        (*ELSE*)
-        SMRMonJoinAcross["NoData"][xs, context]
-      ]
-    ];
-
 SMRMonJoinAcross[ds_Dataset, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{warnQ, byColName, keys},
 
@@ -2182,6 +2167,21 @@ SMRMonJoinAcross[ dataName_String -> asc_Association, opts : OptionsPattern[]][x
               xs ];
 
         SMRMonUnit[ dsRecs, context ]
+      ]
+    ];
+
+SMRMonJoinAcross[opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{warnQ},
+
+      warnQ = TrueQ[OptionValue[SMRMonJoinAcross, "Warning"]];
+
+      If[ KeyExistsQ[context, "data"] && TrueQ[ Head[context["data"]] === Dataset ],
+        If[ warnQ,
+          Echo[ "Using the dataset for the context key \"data\".", "SMRMonJoinAcross:" ]
+        ];
+        SMRMonJoinAcross[context["data"], opts][xs, context],
+        (*ELSE*)
+        SMRMonJoinAcross["NoData"][xs, context]
       ]
     ];
 
