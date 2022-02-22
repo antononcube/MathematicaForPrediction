@@ -16,12 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ
     Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2017 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2022 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 

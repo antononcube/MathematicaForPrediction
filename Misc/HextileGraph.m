@@ -1,6 +1,6 @@
 (*
     Hextile graph Mathematica package
-    Copyright (C) 2015  Anton Antonov
+    Copyright (C) 2020  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
   	Written by Anton Antonov,
-  	antononcube @ gmail.com,
+  	ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
   	Windermere, Florida, USA.
 *)
 
 (*
-    Mathematica is (C) Copyright 1988-2020 Wolfram Research, Inc.
+    Mathematica is (C) Copyright 1988-2022 Wolfram Research, Inc.
 
     Protected by copyright law and international treaties.
 
