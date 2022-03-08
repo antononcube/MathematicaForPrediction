@@ -2653,7 +2653,7 @@ Clear[SMRMonClassifyOriginal];
 Options[SMRMonClassifyOriginal] = {
   "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
   "NumberOfNearestNeighbors" -> Automatic, "NumberOfResults" -> All,
-  "Voting" -> False, "DropZeroScoredLabels" -> True
+  "Normalize" -> True, "Voting" -> False, "DropZeroScoredLabels" -> True
 };
 
 SMRMonClassifyOriginal[$SMRMonFailure] := $SMRMonFailure;
@@ -2687,12 +2687,13 @@ SMRMonClassifyOriginal[tagType_String, profile : {_String..}, opts : OptionsPatt
 SMRMonClassifyOriginal[tagType_String, profile_Association, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{recs, clMat, clMat01, s, t,
       property, expectedProperties, numberOfNearestNeighbors, numberOfResults,
-      votingQ, dropZeroScoredLabelsQ, qProfile, res, recsVec},
+      normalizeQ, votingQ, dropZeroScoredLabelsQ, qProfile, res, recsVec},
 
       property = OptionValue[SMRMonClassifyOriginal, "Property"];
       numberOfNearestNeighbors = OptionValue[SMRMonClassifyOriginal, "NumberOfNearestNeighbors"];
       numberOfResults = OptionValue[SMRMonClassifyOriginal, "NumberOfResults"];
 
+      normalizeQ = TrueQ[OptionValue[SMRMonClassifyOriginal, "Normalize"]];
       votingQ = TrueQ[OptionValue[SMRMonClassifyOriginal, "Voting"]];
       dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassifyOriginal, "DropZeroScoredLabels"]];
 
@@ -2760,7 +2761,8 @@ SMRMonClassifyOriginal[tagType_String, profile_Association, opts : OptionsPatter
       ];
 
       (* Finally the "classification" computation follows. *)
-      s = ( Values[recs] / Max[recs] ) . SparseArray[ clMat[[ Keys[recs], All ]] ];
+      s = If[ normalizeQ, ( Values[recs] / Max[recs] ), Values[recs]];
+      s = s . SparseArray[ clMat[[ Keys[recs], All ]] ];
 
       If[ Max[Abs[s]] > 0, s = s / Max[s] ];
 
@@ -2806,7 +2808,7 @@ SyntaxInformation[SMRMonClassify] = { "ArgumentsPattern" -> {___, ___, OptionsPa
 Options[SMRMonClassify] = {
   "TagType" -> None, "Profile" -> None, "Property" -> "Probabilities",
   "NumberOfNearestNeighbors" -> Automatic, "NumberOfResults" -> All,
-  "Voting" -> False, "DropZeroScoredLabels" -> True
+  "Normalize" -> True, "Voting" -> False, "DropZeroScoredLabels" -> True
 };
 
 SMRMonClassify[$SMRMonFailure] := $SMRMonFailure;
@@ -2840,12 +2842,13 @@ SMRMonClassify[tagType_String, profile : {_String..}, opts : OptionsPattern[]][x
 SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_, context_Association] :=
     Block[{recs, clMat, clMat01, cnAsc, s, t,
       property, expectedProperties, numberOfNearestNeighbors, numberOfResults,
-      votingQ, dropZeroScoredLabelsQ, qProfile, resInds, res},
+      normalizeQ, votingQ, dropZeroScoredLabelsQ, qProfile, resInds, res},
 
       property = OptionValue[SMRMonClassify, "Property"];
       numberOfNearestNeighbors = OptionValue[SMRMonClassify, "NumberOfNearestNeighbors"];
       numberOfResults = OptionValue[SMRMonClassify, "NumberOfResults"];
 
+      normalizeQ = TrueQ[OptionValue[SMRMonClassify, "Normalize"]];
       votingQ = TrueQ[OptionValue[SMRMonClassify, "Voting"]];
       dropZeroScoredLabelsQ = TrueQ[OptionValue[SMRMonClassify, "DropZeroScoredLabels"]];
 
@@ -2921,7 +2924,7 @@ SMRMonClassify[tagType_String, profile_Association, opts : OptionsPattern[]][xs_
         (* Finally the "classification" computation follows. *)
         s = recs . SparseArray[ clMat ];
 
-        If[ Max[s] > 0, s = s / Max[s] ];
+        If[ Max[s] > 0 && normalizeQ, s = s / Max[s] ];
 
         If[ dropZeroScoredLabelsQ,
           resInds = Range[Length[s]];
