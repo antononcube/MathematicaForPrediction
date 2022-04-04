@@ -3428,7 +3428,7 @@ SMRMonToMetadataRecommender[___][__] :=
 
 
 (*=========================================================*)
-(* Compute Top-K statistic                                 *)
+(* Import recommender                                      *)
 (*=========================================================*)
 
 Clear[SMRMonImportRecommender];
