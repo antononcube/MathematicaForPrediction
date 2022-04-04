@@ -181,7 +181,7 @@ VerificationTest[(* 14 *)
   ,
   Union[words, words2]
   ,
-  TestID -> "JavaTrieGetWords"
+  TestID -> "JavaTrieGetWords3"
 ];
 
 VerificationTest[(* 15 *)
