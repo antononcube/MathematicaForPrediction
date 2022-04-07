@@ -210,6 +210,8 @@ RowAssociations::usage = "RowAssociations[smat] converts into an associations ea
 
 ColumnAssociations::usage = "RowAssociations[smat] converts into an associations each column of smat.";
 
+SSparseMatrixImportFromDirectory::usage "SSparseMatrixImportFromDirectory[dirName, opts___] imports and SSparseMatrix from a directory.";
+
 Begin["`Private`"];
 
 Clear[SSparseMatrix, MakeSSparseMatrix, ToSSparseMatrix,
@@ -902,6 +904,78 @@ Clear[ColumnAssociations];
 ColumnAssociations[smat_?SSparseMatrixQ] :=
     GroupBy[SSparseMatrixToTriplets[smat], #[[2]]&, AssociationThread @@ Transpose[ #[[All, {1, 3}]] ] &];
 
+
+(*------------------------------------------------------------*)
+(* SSparseMatrixImportFromDirectory                           *)
+(*------------------------------------------------------------*)
+
+Clear[SSparseMatrixImportFromDirectory];
+
+SyntaxInformation[SSparseMatrixImportFromDirectory] = { "ArgumentsPattern" -> {_, OptionsPattern[] } };
+
+SSparseMatrixImportFromDirectory::uniq = "The `1` are expected to be unique.";
+SSparseMatrixImportFromDirectory::nfix = "The values of the options \"Prefix\" and \"Infix\" are expected to be strings or Automatic.";
+SSparseMatrixImportFromDirectory::hlns = "The value of the option \"HeaderLines\" is expected to be positive integer or Automatic.";
+
+Options[SSparseMatrixImportFromDirectory] = {"Prefix" -> "", "Infix" -> "", "Format" -> Automatic, "HeaderLines" -> 1};
+
+SSparseMatrixImportFromDirectory[dirName_String, opts : OptionsPattern[]] :=
+    Block[{prefix, infix, format, headerLines, smat, dsRowNames, rowNames, dsColumnNames, columnNames},
+
+      (* Obtain prefix and infix  *)
+      prefix = OptionValue[SSparseMatrixImportFromDirectory, "Prefix"];
+      If[ TrueQ[prefix === Automatic], prefix = ""];
+
+      infix = OptionValue[SSparseMatrixImportFromDirectory, "Infix"];
+      If[ TrueQ[infix === Automatic], infix = ""];
+
+      If[ !StringQ[infix] || !StringQ[prefix],
+        Message[SSparseMatrixImportFromDirectory::nfix];
+        Return[$Failed]
+      ];
+
+(*      If[ StringLength[prefix] > 0 && StringMatchQ[prefix, __ ~~ "-"],*)
+(*        prefix = prefix <> "-";*)
+(*      ];*)
+
+(*      If[ StringLength[infix] > 0 && !StringMatchQ[infix, "-" ~~ __],*)
+(*        infix = "-" <> infix;*)
+(*      ];*)
+
+      (* Obtain format  *)
+      format = OptionValue[SSparseMatrixImportFromDirectory, "Format"];
+      If[ TrueQ[format === Automatic], format = "CSVHarwellBoeing"];
+
+      headerLines = OptionValue[SSparseMatrixImportFromDirectory, "HeaderLines"];
+      If[ TrueQ[headerLines === Automatic], headerLines = 1];
+
+      If[ !(IntegerQ[headerLines] && headerLines > 0),
+        Message[SSparseMatrixImportFromDirectory::hlns];
+        Return[$Failed]
+      ];
+
+      (* Import the matrix *)
+      smat = Import[FileNameJoin[{dirName, prefix <> "" <> infix <> ".mm"}]];
+
+      dsRowNames = Import[FileNameJoin[{dirName, prefix <> "-rownames.csv"}], "Dataset", "HeaderLines" -> headerLines, "Numeric" -> False];
+      rowNames = ToString /@ Normal[dsRowNames[All, "RowName"]];
+
+      If[Length[rowNames] != Length[Union[rowNames]],
+        Message[SSparseMatrixImportFromDirectory::uniq, "row names of the document-term matrix"];
+        Return[$Failed]
+      ];
+
+      dsColumnNames = Import[FileNameJoin[{dirName, prefix <> "-colnames.csv"}], "Dataset", "HeaderLines" -> headerLines, "Numeric" -> False];
+      columnNames = ToString /@ Normal[dsColumnNames[All, "ColumnName"]];
+
+      If[Length[columnNames] != Length[Union[columnNames]],
+        Message[SSparseMatrixImportFromDirectory::uniq, "column names of the document-term matrix"];
+        Return[$Failed]
+      ];
+
+      (* Result matrix *)
+      ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames]
+    ];
 
 
 (*------------------------------------------------------------*)
