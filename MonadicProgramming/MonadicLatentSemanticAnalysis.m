@@ -2038,53 +2038,13 @@ LSAMonImportFromDirectory[dirName_String, opts : OptionsPattern[]] :=
       ];
 
       (* Document-term matrix *)
-      smat = Import[FileNameJoin[{dirName, prefix <> "LSAMon-DocumentTermMatrix" <> infix <> ".mm"}]];
-
-      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-DocumentTermMatrix-rownames" <> infix <> ".csv"}], "RowNames" -> True];
-      rowNames = ToString /@ Normal[dsRowNames[Values, "RowName"]];
-
-      If[Length[rowNames] != Length[Union[rowNames]],
-        Message[LSAMonImportFromDirectory::uniq, "row names"];
-        Return[$Failed]
-      ];
-
-      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-DocumentTermMatrix-colnames" <> infix <> ".csv"}], "RowNames" -> True];
-      columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
-
-      If[Length[columnNames] != Length[Union[columnNames]],
-        Message[LSAMonImportFromDirectory::uniq, "column names"];
-        Return[$Failed]
-      ];
-
-      (* Set doc-term matrix *)
-      smat2 = ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames];
-
+      smat = SSparseMatrixImportFromDirectory[dirName, "Prefix"-> (prefix <> "LSAMon-DocumentTermMatrix" <> infix)];
       resContext = Append[resContext, "documentTermMatrix" -> smat];
 
       (* Topics matrix *)
       If[ FileExistsQ[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix" <> infix <> ".mm"}]],
 
-        smat = Import[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix" <> infix <> ".mm"}]];
-
-        dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix-rownames" <> infix <> ".csv"}], "RowNames" -> True];
-        rowNames = ToString /@ Normal[dsRowNames[Values, "RowName"]];
-
-        If[Length[rowNames] != Length[Union[rowNames]],
-          Message[LSAMonImportFromDirectory::uniq, "row names"];
-          Return[$Failed]
-        ];
-
-        dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix-colnames" <> infix <> ".csv"}], "RowNames" -> True];
-        columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
-
-        If[Length[columnNames] != Length[Union[columnNames]],
-          Message[LSAMonImportFromDirectory::uniq, "column names"];
-          Return[$Failed]
-        ];
-
-        (* Set topics matrix *)
-        smat2 = ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames];
-
+        smat = SSparseMatrixImportFromDirectory[dirName, "Prefix"-> (prefix <> "LSAMon-TopicMatrix" <> infix)];
         resContext = Append[resContext, "H" -> smat];
       ];
 
