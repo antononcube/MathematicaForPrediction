@@ -858,7 +858,7 @@ QRMonPlot[opts : OptionsPattern[]][xs_, context_] :=
           Which[
             KeyExistsQ[context, "regressionFunctions"],
             Show[{
-              listPlotFunc[data, listPlotOpts, Joined -> False, PlotStyle -> Gray, PlotRange -> All, ImageSize -> Medium, PlotTheme -> "Scientific"],
+              listPlotFunc[data, listPlotOpts, Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> {"Default", "Frame"}],
               Plot[Evaluate[Through[Values[context["regressionFunctions"]][x]]], {x, Min[data[[All, 1]]], Max[data[[All, 1]]]},
                 Evaluate[plotOpts],
                 PerformanceGoal -> "Speed",
@@ -867,7 +867,7 @@ QRMonPlot[opts : OptionsPattern[]][xs_, context_] :=
             }],
 
             True,
-            listPlotFunc[data, listPlotOpts, Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> "Scientific"]
+            listPlotFunc[data, listPlotOpts, Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> {"Default", "Frame"}]
           ];
 
 
@@ -967,7 +967,7 @@ QRMonErrorPlots[opts : OptionsPattern[]][xs_, context_] :=
                   listPlotFunc[
                     Map[Function[{p}, {p[[1]], (p[[2]] - f[p[[1]]]) / If[ !relativeErrorsQ || p[[2]] == 0, 1, p[[2]] ] }], context["data"] ],
                     listPlotOpts,
-                    Joined -> False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> "Scientific"]
+                    Joined -> False, PlotRange -> All, Filling -> Axis, Frame -> True, ImageSize -> Medium, PlotTheme -> {"Default", "Frame"}]
             ],
             context["regressionFunctions"]
           ];
@@ -1078,7 +1078,7 @@ QRMonConditionalCDFPlot[ opts : OptionsPattern[] ][xs_, context_] :=
                     Evaluate[plotOpts],
                     Evaluate[If[ quantileGridLinesQ, GridLines -> { #2["Coordinates"][[1]], None}, {}]],
                     PlotRange -> {All, All}, PlotLegends -> False,
-                    PlotTheme -> "Scientific",
+                    PlotTheme -> {"Default", "Frame"},
                     PlotLabel -> Row[{"CDF at regressor value:", Spacer[2], #1}],
                     FrameLabel -> {"regressand", "Probability"},
                     ImageSize -> Small,
@@ -1280,7 +1280,7 @@ QRMonOutliersPlot[opts : OptionsPattern[]][xs_, context_] :=
             listPlotFunc[Join[{#data}, Values[#outliers]] /. {} -> Nothing,
               listPlotOpts,
               PlotStyle -> {Gray, {PointSize[0.01], Lighter[Red]}, {PointSize[0.01], Lighter[Red]}},
-              Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> "Scientific"
+              Joined -> False, PlotRange -> All, ImageSize -> Medium, PlotTheme -> {"Default", "Frame"}
             ],
 
             Plot[Evaluate@KeyValueMap[ Tooltip[#2[x], #1]&, #outlierRegressionFunctions], Prepend[MinMax[#data[[All, 1]]], x],
