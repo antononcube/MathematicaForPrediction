@@ -215,6 +215,8 @@ LSAMonTakeWeightedMatrix::usage = "Gives SSparseMatrix object of the value of th
 FindMostImportantSentences::usage = "FindMostImportantSentences[sentences : ( _String | {_String ..} ), nTop_Integer : 5, opts : OptionsPattern[]] \
 finds the most important sentences in a text or a list of sentences.";
 
+LSAMonImportFromDirectory::usage = "LSAMonImportFromDirectory[dirName, prefix, infix] imports an LSA object from a directory";
+
 Begin["`Private`"];
 
 Needs["MathematicaForPredictionUtilities`"];
@@ -1968,6 +1970,134 @@ FindMostImportantSentences[sentences : {_String ..}, nTop_Integer : 5, opts : Op
       Grid[res, FilterRules[{opts}, Options[Grid]], Alignment -> Left]
     ];
 
+
+(*=========================================================*)
+(* Import LSA object from directory                        *)
+(*=========================================================*)
+
+Clear[LSAMonImportFromDirectory];
+
+SyntaxInformation[LSAMonImportFromDirectory] = { "ArgumentsPattern" -> {_, OptionsPattern[] } };
+
+LSAMonImportFromDirectory::uniq = "The `1` are expected to be unique.";
+LSAMonImportFromDirectory::nfix = "The values of the \"Prefix\" and \"Infix\" are expected to be strings or Automatic.";
+
+Options[LSAMonImportFromDirectory] = {"Prefix" -> "", "Infix" -> "", "Format" -> Automatic};
+
+LSAMonImportFromDirectory[dirName_String, opts : OptionsPattern[]] :=
+    Block[{prefix, infix, format, smat, dsRowNames, rowNames, dsColumnNames, columnNames, smat2,
+      dsGlobalWeights, dsStemRules, resContext},
+
+      (* Obtain prefix and infix  *)
+      prefix = OptionValue[LSAMonImportFromDirectory, "Prefix"];
+      If[ TrueQ[prefix === Automatic], prefix = ""];
+
+      infix = OptionValue[LSAMonImportFromDirectory, "Infix"];
+      If[ TrueQ[infix === Automatic], infix = ""];
+
+      If[ !StringQ[infix] || !StringQ[prefix],
+        Message[LSAMonImportFromDirectory::nfix];
+        Return[$Failed]
+      ];
+
+      If[ StringLength[prefix] > 0 && !StringMatchQ[prefix, __ ~~ "-"],
+        prefix = prefix <> "-";
+      ];
+
+      If[ StringLength[infix] > 0 && !StringMatchQ[infix, "-" ~~ __],
+        infix = "-" <> infix;
+      ];
+
+      (* Obtain format  *)
+      format = OptionValue[LSAMonImportFromDirectory, "Format"];
+      If[ TrueQ[format === Automatic], format = "CSVHarwellBoeing"];
+
+
+      (* Global weights *)
+      If[ StringQ[format] && MemberQ[ToLowerCase[{"CSV", "CSVHarwellBoeing"}], ToLowerCase[format]],
+        dsGlobalWeights = ImportCSVToDataset[ FileNameJoin[{dirName, prefix <> "LSAMon-GlobalWeights" <> infix <> ".csv"}]],
+        (*ELSE*)
+        Echo["Unknown format", "LSAMonImportFromDirectory:"];
+        Return[$LSAMonFailure];
+      ];
+
+      resContext = <| "globalWeights" -> Normal[dsGlobalWeights[Association, #Word -> #Weight &]] |>;
+
+      (* Stemming rules *)
+      If[ FileExistsQ[FileNameJoin[{dirName, prefix <> "SMR-M01" <> infix <> ".csv"}]] ||
+          FileExistsQ[FileNameJoin[{dirName, prefix <> "SMR-M01" <> infix <> ".feather"}]],
+
+        If[ MemberQ[ToLowerCase @ {"CSV", "CSVHarwellBoeing" }, ToLowerCase[format] ],
+          dsStemRules = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-StemRules" <> infix <> ".csv"}]],
+          (*ELSE*)
+          Echo["The format feather is not supported.", "LSAMonImportFromDirectory:"];
+          Return[$LSAMonFailure];
+        ];
+
+        resContext = Append[resContext, "stemRules" -> Normal[dsStemRules[Association, #Word -> #Stem &]] ];
+      ];
+
+      (* Document-term matrix *)
+      smat = Import[FileNameJoin[{dirName, prefix <> "LSAMon-DocumentTermMatrix" <> infix <> ".mm"}]];
+
+      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-DocumentTermMatrix-rownames" <> infix <> ".csv"}], "RowNames" -> True];
+      rowNames = ToString /@ Normal[dsRowNames[Values, "RowName"]];
+
+      If[Length[rowNames] != Length[Union[rowNames]],
+        Message[LSAMonImportFromDirectory::uniq, "row names"];
+        Return[$Failed]
+      ];
+
+      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-DocumentTermMatrix-colnames" <> infix <> ".csv"}], "RowNames" -> True];
+      columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
+
+      If[Length[columnNames] != Length[Union[columnNames]],
+        Message[LSAMonImportFromDirectory::uniq, "column names"];
+        Return[$Failed]
+      ];
+
+      (* Set doc-term matrix *)
+      smat2 = ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames];
+
+      resContext = Append[resContext, "documentTermMatrix" -> smat];
+
+      (* Topics matrix *)
+      If[ FileExistsQ[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix" <> infix <> ".mm"}]],
+
+        smat = Import[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix" <> infix <> ".mm"}]];
+
+        dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix-rownames" <> infix <> ".csv"}], "RowNames" -> True];
+        rowNames = ToString /@ Normal[dsRowNames[Values, "RowName"]];
+
+        If[Length[rowNames] != Length[Union[rowNames]],
+          Message[LSAMonImportFromDirectory::uniq, "row names"];
+          Return[$Failed]
+        ];
+
+        dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "LSAMon-TopicMatrix-colnames" <> infix <> ".csv"}], "RowNames" -> True];
+        columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
+
+        If[Length[columnNames] != Length[Union[columnNames]],
+          Message[LSAMonImportFromDirectory::uniq, "column names"];
+          Return[$Failed]
+        ];
+
+        (* Set topics matrix *)
+        smat2 = ToSSparseMatrix[smat, "RowNames" -> rowNames, "ColumnNames" -> columnNames];
+
+        resContext = Append[resContext, "H" -> smat];
+      ];
+
+      LSAMonBind[LSAMonUnit[], LSAMonSetContext[resContext]]
+    ];
+
+LSAMonImportFromDirectory[___] :=
+    Block[{},
+      Echo[
+        "The expected signature is LSAMonImportFromDirectory[ dirName_String, opts___ ].",
+        "LSAMonImportFromDirectory:"];
+      $LSAMonFailure
+    ];
 
 End[]; (*`Private`*)
 
