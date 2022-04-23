@@ -116,8 +116,10 @@ PrepareImageData[opts : OptionsPattern[]] :=
 
             Hold[ResourceFunction["RandomMandala"]["RotationalSymmetryOrder" -> 6,
               "ConnectingFunction" -> FilledCurve@*BezierCurve, ColorFunction -> None,
-              ImageSize -> Small]]
+              ImageSize -> Small]],
 
+            True,
+            generator
           ];
 
       PRINT["Make doodles:"];
