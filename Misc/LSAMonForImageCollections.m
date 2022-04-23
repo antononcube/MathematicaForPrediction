@@ -66,6 +66,8 @@ PrepareImageData::usage = "PrepareImageData";
 DimensionReductionWithLSA::usage = "DimensionReductionWithLSA";
 GetImageBasis::usage = "GetImageBasis";
 RepresentImage::usage = "RepresentImage";
+RandomCoefficientMutation::usage = "RandomCoefficientMutation";
+InterpolatedCoefficientMutation::usage = "InterpolatedCoefficientMutation";
 
 Begin["`Private`"];
 
@@ -247,6 +249,34 @@ RepresentImage[lsaObj_LSAMon, imgExample_?ImageQ, img_?ImageQ] :=
     ];
 RepresentImage[___] := $Failed;
 
+(*----------------------------------------------------------*)
+(* RandomCoefficientMutation                                *)
+(*----------------------------------------------------------*)
+
+Clear[RandomCoefficientMutation];
+RandomCoefficientMutation[coeffs_List, k_Integer, factor_?NumericQ,
+  exclusions_List : {}] :=
+    Block[{t = coeffs, inds},
+      inds = RandomSample[Range[Length[coeffs]], k];
+      inds = Complement[inds, exclusions];
+      If[Length[inds] > 0,
+        ReplacePart[coeffs, Thread[inds -> t[[inds]]*factor]],
+        coeffs
+      ]
+    ];
+RandomCoefficientMutation[___] := $Failed;
+
+(*----------------------------------------------------------*)
+(* RandomCoefficientMutation                                *)
+(*----------------------------------------------------------*)
+
+Clear[InterpolatedCoefficientMutation];
+InterpolatedCoefficientMutation[coeffs1_List, coeffs2_List, k_Integer] :=
+    Block[{},
+      Transpose[
+        MapThread[Range[#1, #2, (#2 - #1)/(k - 1)] &, {coeffs1, coeffs2}]]
+    ] /; Length[coeffs1] == Length[coeffs2] && k > 1;
+InterpolatedCoefficientMutation[___] := $Failed;
 
 End[]; (* `Private` *)
 
