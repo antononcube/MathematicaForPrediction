@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -358,7 +358,7 @@ GNNMonFindNearest[$GNNMonFailure] := $GNNMonFailure;
 
 GNNMonFindNearest[xs_, context_Association] := $GNNMonFailure ;
 
-GNNMonFindNearest[ point_?VectorQ, nTopNNs_Integer, prop_String : "Values" ][xs_, context_Association] :=
+GNNMonFindNearest[ pointSpec : (_?VectorQ | {_?VectorQ ..}), nTopNNs_Integer, prop_String : "Values" ][xs_, context_Association] :=
     Block[{data, nf, nns},
 
       data = Fold[ GNNMonBind, GNNMonUnit[xs, context], { GNNMonGetData, GNNMonTakeValue } ];
@@ -369,10 +369,10 @@ GNNMonFindNearest[ point_?VectorQ, nTopNNs_Integer, prop_String : "Values" ][xs_
 
       Which[
         MemberQ[ { "indices", "indexes", "ids" }, ToLowerCase[prop]],
-        nns = nf[point, nTopNNs],
+        nns = nf[pointSpec, nTopNNs],
 
         MemberQ[ { "values", "points" }, ToLowerCase[prop]],
-        nns = nf[point, nTopNNs];
+        nns = nf[pointSpec, nTopNNs];
         nns = data[[ nns ]],
 
         ToLowerCase[prop] == "properties",
