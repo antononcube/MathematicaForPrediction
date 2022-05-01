@@ -66,9 +66,8 @@ If[Length[DownValues[TileGraph`TileBins]] == 0,
 
 BeginPackage["TileGraph`"];
 
-TileGraph::usage = "TileGraph[ aLonLatValue, cellRadius, opts] \
-makes a rectangular tiling graph for specified data.
-(This is a \"legacy\" function; half of it relies on a undocumented features of GeoHistogram.)";
+TileGraph::usage = "TileGraph[aLonLatValue, cellRadius, opts] \
+makes a rectangular tiling graph for specified data.";
 
 Begin["`Private`"];
 
