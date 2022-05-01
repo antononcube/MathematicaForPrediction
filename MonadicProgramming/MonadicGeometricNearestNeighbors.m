@@ -137,6 +137,9 @@ GNNMonRescale::usage = "GNNMonRescale non-monadic rescaling.";
 GNNMonComputeProximityMatrix::usage = "GNNMonComputeProximityMatrix[n_Integer, opts] computes the proximity \
 (similarity) matrix using the matrix context[\"nearestNeighborsDistances\"].";
 
+GNNMonComputeAdjacencyMatrix::usage = "GNNMonComputeAdjacencyMatrix[ n_Integer | {n_Integer, r_?NumericQ}, opts] computes the adjacency \
+(distance) matrix for specified number of nearest neighbors and max radius.";
+
 Begin["`Private`"];
 
 Needs["MathematicaForPredictionUtilities`"];
@@ -630,6 +633,62 @@ GNNMonComputeProximityMatrix[___][xs_, context_Association] :=
       $GNNMonFailure
     ];
 
+
+(**************************************************************)
+(* Make adjacency matrix                                      *)
+(**************************************************************)
+
+Clear[GNNMonComputeAdjacencyMatrix];
+
+SyntaxInformation[GNNMonComputeAdjacencyMatrix] = { "ArgumentsPattern" -> { _} };
+
+GNNMonComputeAdjacencyMatrix[$GNNMonFailure] := $GNNMonFailure;
+
+GNNMonComputeAdjacencyMatrix[xs_, context_Association] := $GNNMonFailure;
+
+GNNMonComputeAdjacencyMatrix[ nTopNNs_Integer ][xs_, context_Association] :=
+      GNNMonComputeAdjacencyMatrix[{nTopNNs, Infinity}][xs, context];
+
+GNNMonComputeAdjacencyMatrix[ {nTopNNs_Integer, maxRadius : (_?NumericQ | Infinity) }][xs_, context_Association] :=
+    Block[{data, nns, nfd, nnsMat},
+
+      data = GNNMonTakeData[xs, context];
+      If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
+
+      nfd = GNNMonTakeNearestIndexDistanceFunction[xs, context];
+      If[ TrueQ[ nfd === $GNNMonFailure ], Return[$GNNMonFailure] ];
+
+      (* Using nfd in order to speed-up the computations. *)
+      nns = Map[ nfd[ #, {nTopNNs + 1, maxRadius}] &, Values[data] ];
+
+      If[ nTopNNs < 1,
+        Echo[
+          "The first argument is expected to specify number of nearest neighbors that is a positive integer.",
+          "GNNMonComputeAdjacencyMatrix:"
+        ];
+        $GNNMonFailure
+      ];
+
+      (* Using nfd in order to speed-up the computations. *)
+      nns = Map[ nfd[ #, {nTopNNs + 1, maxRadius} ] &, Values[data] ];
+
+      nns = Join @@ MapIndexed[ Flatten /@ Thread[{#2[[1]], #1}] &, nns ];
+
+      nns[[All, 1]] = Keys[ data ][[ nns[[All , 1]] ]];
+      nns[[All, 2]] = Keys[ data ][[ nns[[All, 2]] ]];
+      nnsMat = MakeSSparseMatrix[ nns ];
+
+      GNNMonUnit[ nnsMat, context ]
+    ];
+
+GNNMonComputeAdjacencyMatrix[___][xs_, context_Association] :=
+    Block[{},
+      Echo[
+        "The expected signatures is GNNMonComputeAdjacencyMatrix[ n_Integer | {n_Integer, r_?NumericQ}, opts:OptionsPattern[] ].",
+        "GNNMonComputeAdjacencyMatrix:"
+      ];
+      $GNNMonFailure
+    ];
 
 End[]; (* `Private` *)
 
