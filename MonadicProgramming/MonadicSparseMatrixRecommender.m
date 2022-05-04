@@ -3468,7 +3468,7 @@ SMRMonImportRecommender[dirName_String, opts : OptionsPattern[]] :=
 
       dsTagTypeRanges = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-TagTypeRanges" <> infix <> ".csv"}], "RowNames" -> True];
 
-      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-M01-rownames" <> infix <> ".csv"}], "RowNames" -> True];
+      dsRowNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-M01-rownames" <> infix <> ".csv"}], "RowNames" -> True, "Numeric" -> False];
       rowNames = ToString /@ Normal[dsRowNames[Values, "RowName"]];
 
       If[Length[rowNames] != Length[Union[rowNames]],
@@ -3476,7 +3476,7 @@ SMRMonImportRecommender[dirName_String, opts : OptionsPattern[]] :=
         Return[$Failed]
       ];
 
-      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-M01-colnames" <> infix <> ".csv"}], "RowNames" -> True];
+      dsColumnNames = ImportCSVToDataset[FileNameJoin[{dirName, prefix <> "SMR-M01-colnames" <> infix <> ".csv"}], "RowNames" -> True, "Numeric" -> False];
       columnNames = ToString /@ Normal[dsColumnNames[Values, "ColumnName"]];
 
       If[Length[columnNames] != Length[Union[columnNames]],
