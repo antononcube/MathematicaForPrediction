@@ -1113,7 +1113,10 @@ Clear[SMRMonRetrieveByQueryElements];
 
 SyntaxInformation[SMRMonRetrieveByQueryElements] = { "ArgumentsPattern" -> {_., _., _., OptionsPattern[]} };
 
-Options[SMRMonRetrieveByQueryElements] = { "Should" -> Automatic, "Must" -> Automatic, "MustNot" -> Automatic };
+Options[SMRMonRetrieveByQueryElements] = {
+  "Should" -> Automatic,
+  "Must" -> Automatic, "MustNot" -> Automatic,
+  "MustType" -> "Intersection", "MustNotType" -> "Union"};
 
 SMRMonRetrieveByQueryElements[$SMRMonFailure] := $SMRMonFailure;
 
@@ -1149,26 +1152,45 @@ SMRMonRetrieveByQueryElements[opts : OptionsPattern[]][xs_, context_Association]
         Return[$SMRMonFailure]
       ];
 
-      SMRMonRetrieveByQueryElements[ should, must, mustNot ][xs, context]
+      SMRMonRetrieveByQueryElements[should, must, mustNot, opts][xs, context]
     ];
 
 SMRMonRetrieveByQueryElements[should_?QueryElementSpecQ, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonRetrieveByQueryElements[
       should,
       OptionValue[SMRMonRetrieveByQueryElements, "Must"],
-      OptionValue[SMRMonRetrieveByQueryElements, "MustNot"] ][xs, context];
+      OptionValue[SMRMonRetrieveByQueryElements, "MustNot"], opts ][xs, context];
 
 SMRMonRetrieveByQueryElements[should_?QueryElementSpecQ, must_?QueryElementSpecQ, opts : OptionsPattern[] ][xs_, context_Association] :=
     SMRMonRetrieveByQueryElements[
       should,
       must,
-      OptionValue[SMRMonRetrieveByQueryElements, "MustNot"] ][xs, context];
+      OptionValue[SMRMonRetrieveByQueryElements, "MustNot"], opts ][xs, context];
 
 SMRMonRetrieveByQueryElements[
   shouldArg_?QueryElementSpecQ,
   mustArg_?QueryElementSpecQ,
-  mustNotArg_?QueryElementSpecQ ][xs_, context_Association] :=
-    Block[{ should = shouldArg, must = mustArg, mustNot = mustNotArg, pvecShould, pvecMust, shouldItems, mustItems, mustNotItems, res },
+  mustNotArg_?QueryElementSpecQ,
+  opts : OptionsPattern[] ][xs_, context_Association] :=
+    Block[{ should = shouldArg, must = mustArg, mustNot = mustNotArg,
+      mustType, mustNotType,
+      pvecShould, pvecMust, shouldItems, mustItems, mustNotItems, res },
+
+      mustType = OptionValue[ SMRMonRetrieveByQueryElements, "MustType" ];
+      If[ !( StringQ[mustType] && MemberQ[ToLowerCase /@ {"Intersection", "Union"}, ToLowerCase[mustType]]),
+        Echo[
+          "The value of the option \"MustType\" is expected to be one of \"Intersection\" or \"Union\".",
+          "SMRMonRetrieveByQueryElements:"];
+        Return[$SMRMonFailure]
+      ];
+
+      mustNotType = OptionValue[ SMRMonRetrieveByQueryElements, "MustNotType" ];
+      If[ !( StringQ[mustNotType] && MemberQ[ToLowerCase /@ {"Intersection", "Union"}, ToLowerCase[mustNotType]]),
+        Echo[
+          "The value of the option \"MustNotType\" is expected to be one of \"Intersection\" or \"Union\".",
+          "SMRMonRetrieveByQueryElements:"];
+        Return[$SMRMonFailure]
+      ];
 
       If[ TrueQ[should === Automatic] && QueryElementSpecQ[xs], should = xs ];
       should = QueryElementSpecConvert[should];
@@ -1195,7 +1217,7 @@ SMRMonRetrieveByQueryElements[
 
       (* Must *)
       If[ Length[must] > 0,
-        mustItems = Fold[SMRMonBind, SMRMonUnit[xs, context], {SMRMonFilterByProfile[must, "Type" -> "Intersection" ], SMRMonTakeValue}],
+        mustItems = Fold[SMRMonBind, SMRMonUnit[xs, context], {SMRMonFilterByProfile[must, "Type" -> mustType ], SMRMonTakeValue}],
         (*ELSE*)
         mustItems = <||>
       ];
@@ -1206,7 +1228,7 @@ SMRMonRetrieveByQueryElements[
 
       (* MustNot *)
       If[ Length[mustNot] > 0,
-        mustNotItems = Fold[SMRMonBind, SMRMonUnit[xs, context], {SMRMonFilterByProfile[mustNot, "Type" -> "Union" ], SMRMonTakeValue}],
+        mustNotItems = Fold[SMRMonBind, SMRMonUnit[xs, context], {SMRMonFilterByProfile[mustNot, "Type" -> mustNotType ], SMRMonTakeValue}],
         (*ELSE*)
         mustNotItems = <||>
       ];
