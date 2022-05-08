@@ -362,6 +362,9 @@ GNNMonFindNearest[$GNNMonFailure] := $GNNMonFailure;
 GNNMonFindNearest[xs_, context_Association] := $GNNMonFailure ;
 
 GNNMonFindNearest[ pointSpec : (_?VectorQ | {_?VectorQ ..}), nTopNNs_Integer, prop_String : "Values" ][xs_, context_Association] :=
+    GNNMonFindNearest[ pointSpec, {nTopNNs, Infinity}, prop][xs, context];
+
+GNNMonFindNearest[ pointSpec : (_?VectorQ | {_?VectorQ ..}), nnSpec : {_Integer, ( Infinity | _?NumericQ)}, prop_String : "Values" ][xs_, context_Association] :=
     Block[{data, nf, nns},
 
       data = Fold[ GNNMonBind, GNNMonUnit[xs, context], { GNNMonGetData, GNNMonTakeValue } ];
@@ -372,10 +375,10 @@ GNNMonFindNearest[ pointSpec : (_?VectorQ | {_?VectorQ ..}), nTopNNs_Integer, pr
 
       Which[
         MemberQ[ { "indices", "indexes", "ids" }, ToLowerCase[prop]],
-        nns = nf[pointSpec, nTopNNs],
+        nns = nf[pointSpec, nnSpec],
 
         MemberQ[ { "values", "points" }, ToLowerCase[prop]],
-        nns = nf[pointSpec, nTopNNs];
+        nns = nf[pointSpec, nnSpec];
         nns = data[[ nns ]],
 
         ToLowerCase[prop] == "properties",
