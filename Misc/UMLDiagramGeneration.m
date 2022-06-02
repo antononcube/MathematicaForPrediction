@@ -83,7 +83,7 @@
                       Museum \[DirectedEdge] Building,
                       Member \[DirectedEdge] Person},
                     {},
-                    {Library <-> Member,
+                    {Library \[DirectedEdge] Member,
                       Museum \[DirectedEdge] Member,
                       Client \[DirectedEdge] Building,
                       Client \[DirectedEdge] Person},
@@ -113,20 +113,20 @@
 
 *)
 
-BeginPackage["UMLDiagramGeneration`"]
+BeginPackage["UMLDiagramGeneration`"];
 
 UMLClassNode::usage = "UMLClassNode[classSymbol, opts] creates a Grid object with a class name and its methods \
-for the specified class symbol. The option \"Abstact\" can be used to specify abstract class names and methods. \
-The option \"EntityColumn\" can be used to turn on and off the explanations column."
+for the specified class symbol. The option \"Abstract\" can be used to specify abstract class names and methods. \
+The option \"EntityColumn\" can be used to turn on and off the explanations column.";
 
 UMLClassGraph::usage = "UMLClassGraph[symbols,abstractMethodsPerSymbol,symbolAssociations,symbolAggregations,opts] \
 creates an UML graph diagram for the specified symbols (representing classes) and their relationships. It takes \
-as options the options of UMLClassNode and Graph."
+as options the options of UMLClassNode and Graph.";
 
 SubValueReferenceRules::usage = "SubValueReferenceRules[symbols] gives a list of directed edge specifications that \
-correspond to references within the sub-values of the specified symbols."
+correspond to references within the sub-values of the specified symbols.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 
 (*********************************************************)
@@ -161,65 +161,65 @@ UMLClassNode[classSymbol_Symbol, opts : OptionsPattern[]] :=
 (* Graph edge functions                                  *)
 (*********************************************************)
 
-Clear[UMLInheritanceEdgeFunc]
+Clear[UMLInheritanceEdgeFunc];
 UMLInheritanceEdgeFunc[pts_List, e_] :=
     Block[{color =
         Darker[Blend[{Black, Cyan, Blue}]]}, {Arrowheads[{{0.015, 0.85, Graphics[{FaceForm[White], EdgeForm[color],
-        Polygon[{{-1.5, -1}, {1.5, 0}, {-1.5, 1}}]}]}}], {color, Arrow[pts]}}
+      Polygon[{{-1.5, -1}, {1.5, 0}, {-1.5, 1}}]}]}}], {color, Arrow[pts]}}
     ];
 
-Clear[UMLAssociationEdgeFunc]
+Clear[UMLAssociationEdgeFunc];
 UMLAssociationEdgeFunc[pts_List, e_] :=
     Block[{color = Darker[Blend[{Black, Cyan, Blue}]]}, {color, Line[pts]}];
 
-Clear[UMLDirectedAssociationEdgeFunc]
+Clear[UMLDirectedAssociationEdgeFunc];
 UMLDirectedAssociationEdgeFunc[pts_List, e_] :=
     Block[{color = Darker[Blend[{Black, Cyan, Blue}]]}, {color, Arrow[pts]}];
 
-Clear[UMLAggregationEdgeFunc]
+Clear[UMLAggregationEdgeFunc];
 UMLAggregationEdgeFunc[pts_List, e_] :=
     Block[{color =
         Darker[Blend[{Black, Cyan, Blue}]]}, {Arrowheads[{{0.015, 0.85, Graphics[{FaceForm[White], EdgeForm[color],
-        Polygon[{{-1, -1}, {1, 0}, {-1, 1}, {-3, 0}}]}]}}], {color, Arrow[pts]}}
+      Polygon[{{-1, -1}, {1, 0}, {-1, 1}, {-3, 0}}]}]}}], {color, Arrow[pts]}}
     ];
 
 (*********************************************************)
 (* SubValueReferenceRules                                *)
 (*********************************************************)
-Clear[SubValueReferenceRules]
+Clear[SubValueReferenceRules];
 
-SubValueReferenceRules[symbols:{_Symbol..}] :=
-  DeleteCases[#, None] &@
-      Flatten@Outer[
-        If[#1 =!= #2 && ! FreeQ[Cases[SubValues[#1][[All]],
+SubValueReferenceRules[symbols : {_Symbol..}] :=
+    DeleteCases[#, None] &@
+        Flatten@Outer[
+          If[#1 =!= #2 && ! FreeQ[Cases[SubValues[#1][[All]],
             RuleDelayed[x_, y_] :> HoldForm[y]], #2], #1 \[DirectedEdge] #2, None] &, symbols, symbols ];
 
 (*********************************************************)
 (* UMLClassGraph                                         *)
 (*********************************************************)
-Clear[UMLClassGraph]
-Options[UMLClassGraph] = Join[{"GraphFunction"->Graph}, Options[UMLClassNode], Options[Graph]];
+Clear[UMLClassGraph];
+Options[UMLClassGraph] = Join[{"GraphFunction" -> Graph}, Options[UMLClassNode], Options[Graph]];
 
-UMLClassGraph[symbols:{_Symbol..}, abstractMethodsPerSymbol : {_Rule ...} : {},
+UMLClassGraph[symbols : {_Symbol..}, abstractMethodsPerSymbol : {_Rule ...} : {},
   symbolAssociations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
   symbolAggregations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
   opts : OptionsPattern[]] :=
-    Block[{grRules, assocOpts},
+    Block[{grRules},
       grRules = SubValueReferenceRules[symbols];
       UMLClassGraph[grRules, abstractMethodsPerSymbol, symbolAssociations, symbolAggregations, opts]
     ];
 
 UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
-              abstractMethodsPerSymbol : {_Rule ...} : {},
-              symbolAssociations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
-              symbolAggregations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
-              opts : OptionsPattern[]] :=
-    Block[{grRules = inheritanceRules, assocOpts, symbols, graphFunc},
+  abstractMethodsPerSymbol : {_Rule ...} : {},
+  symbolAssociations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
+  symbolAggregations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
+  opts : OptionsPattern[]] :=
+    Block[{grRules = inheritanceRules, symbols, graphFunc},
 
-      graphFunc = OptionValue[UMLClassGraph,"GraphFunction"];
-      If[ TrueQ[ graphFunc === Automatic || !MemberQ[{Graph,Graph3D}, graphFunc]], graphFunc = Graph ];
+      graphFunc = OptionValue[UMLClassGraph, "GraphFunction"];
+      If[ TrueQ[ graphFunc === Automatic || !MemberQ[{Graph, Graph3D}, graphFunc]], graphFunc = Graph ];
 
-      symbols = Union[Flatten[List @@@ Join[inheritanceRules,symbolAssociations, symbolAggregations]]];
+      symbols = Union[Flatten[List @@@ Join[inheritanceRules, symbolAssociations, symbolAggregations]]];
       grRules = Map[
         Which[
           MemberQ[symbolAssociations, #],
@@ -243,6 +243,6 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
         Sequence @@ DeleteCases[{opts}, ("EntityColumn" -> _) | ("Abstract" -> _) | ("GraphFunction" -> _) ]]
     ];
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
-EndPackage[]
+EndPackage[];
