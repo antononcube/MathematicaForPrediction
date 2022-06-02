@@ -133,7 +133,7 @@ Begin["`Private`"];
 (* UMLClassNode                                          *)
 (*********************************************************)
 
-Clear[UMLClassNode]
+Clear[UMLClassNode];
 Options[UMLClassNode] = {"Abstract" -> {}, "EntityColumn" -> True};
 
 UMLClassNode[classSymbol_Symbol, opts : OptionsPattern[]] :=
