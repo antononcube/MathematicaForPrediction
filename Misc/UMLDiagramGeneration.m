@@ -134,13 +134,26 @@ Begin["`Private`"];
 (*********************************************************)
 
 Clear[UMLClassNode];
-Options[UMLClassNode] = {"Abstract" -> {}, "EntityColumn" -> True};
+Options[UMLClassNode] = {
+  "AbstractClass" -> False,
+  "Abstract" -> {},
+  "Regular" -> {},
+  "EntityColumn" -> True};
 
 UMLClassNode[classSymbol_Symbol, opts : OptionsPattern[]] :=
-    Block[{abstract = OptionValue["Abstract"],
+    Block[{abstract = OptionValue["Abstract"], res},
+      res = Cases[SubValues[Evaluate@classSymbol][[All, 1]], _String[___], Infinity];
+      UMLClassNode[SymbolName[classSymbol], "Regular" -> Complement[res, abstract], opts]
+    ];
+
+UMLClassNode[classSymbol_String, opts : OptionsPattern[]] :=
+    Block[{
+      abstractClassQ = TrueQ[OptionValue["AbstractClass"]],
+      abstract = OptionValue["Abstract"],
+      regular = OptionValue["Regular"],
       enColQ = TrueQ[OptionValue["EntityColumn"]], res, tbl},
-      res = Cases[
-        SubValues[Evaluate@classSymbol][[All, 1]], _String[___], Infinity];
+
+      res = Join[abstract, regular];
       res = res /. Map[# -> Style[#, Italic] &, abstract];
       (*Print[{abstract,MemberQ[abstract,classSymbol]}];*)
 
@@ -149,13 +162,12 @@ UMLClassNode[classSymbol_Symbol, opts : OptionsPattern[]] :=
           Transpose@{Join[Style[#, Gray] & /@ {"Class", "Methods"},
             Table[SpanFromAbove, {Length[res] - 1}]],
             Join[{Style[ToString[classSymbol], Bold,
-              FontSlant -> If[MemberQ[abstract, classSymbol], Italic, Plain]]},
+              FontSlant -> If[abstractClassQ, Italic, Plain]]},
               res]};
       If[res === {None}, tbl = Most[tbl]];
       Grid[If[enColQ, tbl, tbl[[All, {2}]]],
         Dividers -> {All, {True, True, False}, -1 -> True}, Alignment -> Left]
     ];
-
 
 (*********************************************************)
 (* Graph edge functions                                  *)
@@ -200,16 +212,17 @@ SubValueReferenceRules[symbols : {_Symbol..}] :=
 Clear[UMLClassGraph];
 Options[UMLClassGraph] = Join[{"GraphFunction" -> Graph}, Options[UMLClassNode], Options[Graph]];
 
-UMLClassGraph[symbols : {_Symbol..}, abstractMethodsPerSymbol : {_Rule ...} : {},
-  symbolAssociations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
-  symbolAggregations : {(_DirectedEdge | _UndirectedEdge) ...} : {},
+UMLClassGraph[symbols : {_Symbol..},
+  abstractMethodsPerSymbol : {_Rule ...} : {},
+  symbolAssociations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
+  symbolAggregations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
   opts : OptionsPattern[]] :=
     Block[{grRules},
       grRules = SubValueReferenceRules[symbols];
       UMLClassGraph[grRules, abstractMethodsPerSymbol, symbolAssociations, symbolAggregations, opts]
     ];
 
-UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
+UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol | _String, _Symbol | _String] ..},
   abstractMethodsPerSymbol : {_Rule ...} : {},
   symbolAssociations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
   symbolAggregations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
@@ -220,6 +233,7 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
       If[ TrueQ[ graphFunc === Automatic || !MemberQ[{Graph, Graph3D}, graphFunc]], graphFunc = Graph ];
 
       symbols = Union[Flatten[List @@@ Join[inheritanceRules, symbolAssociations, symbolAggregations]]];
+
       grRules = Map[
         Which[
           MemberQ[symbolAssociations, #],
@@ -229,17 +243,18 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol, _Symbol] ..},
           True,
           Property[#, EdgeShapeFunction -> UMLInheritanceEdgeFunc]
         ] &, Union[grRules, symbolAssociations]];
-      grRules =
-          Join[grRules,
-            Map[Property[#, EdgeShapeFunction -> UMLAggregationEdgeFunc] &,
-              symbolAggregations]];
+
+      grRules = Join[grRules, Map[Property[#, EdgeShapeFunction -> UMLAggregationEdgeFunc] &, symbolAggregations]];
+
       graphFunc[grRules,
         VertexLabels ->
             Map[# ->
-                UMLClassNode[#, "EntityColumn" -> OptionValue["EntityColumn"],
-                  "Abstract" ->
-                      Flatten[Join[{# /. Append[abstractMethodsPerSymbol, _ -> {}]},
-                        OptionValue["Abstract"]]]] &, symbols],
+                UMLClassNode[#,
+                  "EntityColumn" -> OptionValue["EntityColumn"],
+                  "Abstract" -> Flatten[Join[{# /. Append[abstractMethodsPerSymbol, _ -> {}]}]],
+                  "AbstractClass" -> MemberQ[OptionValue["Abstract"], #]
+                ] &,
+              symbols],
         Sequence @@ DeleteCases[{opts}, ("EntityColumn" -> _) | ("Abstract" -> _) | ("GraphFunction" -> _) ]]
     ];
 
