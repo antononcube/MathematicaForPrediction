@@ -79,18 +79,17 @@
 
     Here is an example of UML diagram generation without preliminary definitions for the class symbols:
 
-      UMLClassGraph[{Library \[DirectedEdge] Building,
-                      Museum \[DirectedEdge] Building,
-                      Member \[DirectedEdge] Person},
-                    {},
-                    {Library \[DirectedEdge] Member,
-                      Museum \[DirectedEdge] Member,
-                      Client \[DirectedEdge] Building,
-                      Client \[DirectedEdge] Person},
-                    {Library \[DirectedEdge] Book},
-                    "Abstract" -> {Building, Person},
-                    "EntityColumn" -> False, VertexLabelStyle -> "Text",
-                    ImageSize -> Large, GraphLayout -> "LayeredDigraphEmbedding"]
+       UMLClassGraph[
+         "Parents" -> {Library \[DirectedEdge] Building, Museum \[DirectedEdge] Building, Member \[DirectedEdge] Person},
+         "AbstractMethods" -> {Library -> {"Enroll"}, Museum -> {"Enroll"}, Member -> {"Visit"}},
+         "RegularMethods" -> {Library -> {"Borrow", "Return"}, Museum -> {"Exhibit"}},
+         "Associations" -> {Library \[DirectedEdge] Member, Museum \[DirectedEdge] Member, Client \[DirectedEdge] Building, Client \[DirectedEdge] Person},
+         "Aggregations" -> {Library \[DirectedEdge] Book},
+         "Abstract" -> {Building, Person},
+         "EntityColumn" -> True,
+         VertexLabelStyle -> "Text",
+         ImageSize -> Large,
+         GraphLayout -> "LayeredDigraphEmbedding"]
 
 
     The function UMLClassGraph takes all options of Graph.
@@ -141,9 +140,9 @@ Options[UMLClassNode] = {
   "EntityColumn" -> True};
 
 UMLClassNode[classSymbol_Symbol, opts : OptionsPattern[]] :=
-    Block[{abstract = OptionValue["Abstract"], res},
+    Block[{abstract = OptionValue["Abstract"], regular = OptionValue["Regular"], res},
       res = Cases[SubValues[Evaluate@classSymbol][[All, 1]], _String[___], Infinity];
-      UMLClassNode[SymbolName[classSymbol], "Regular" -> Complement[res, abstract], opts]
+      UMLClassNode[SymbolName[classSymbol], "Regular" -> Join[regular, Complement[res, abstract]], opts]
     ];
 
 UMLClassNode[classSymbol_String, opts : OptionsPattern[]] :=
@@ -252,10 +251,34 @@ UMLClassGraph[opts : OptionsPattern[]] :=
     Block[{parents, abstractMethodsPerSymbol, regularMethodsPerSymbol, symbolAssociations, symbolAggregations},
 
       parents = OptionValue[UMLClassGraph, "Parents"];
+      If[ !MatchQ[parents, {DirectedEdge[_Symbol | _String, _Symbol | _String] ..}],
+        Echo["The value of the option \"Parents\" is expected to match :" <> ToString[{DirectedEdge[_Symbol | _String, _Symbol | _String] ..}]];
+        Return[$Failed]
+      ];
+
       abstractMethodsPerSymbol = OptionValue[UMLClassGraph, "AbstractMethods"];
+      If[ !MatchQ[abstractMethodsPerSymbol, {_Rule...}],
+        Echo["The value of the option \"AbstractMethods\" is expected to match :" <> ToString[{_Rule...}]];
+        Return[$Failed]
+      ];
+
       regularMethodsPerSymbol = OptionValue[UMLClassGraph, "RegularMethods"];
+      If[ !MatchQ[regularMethodsPerSymbol, {_Rule...}],
+        Echo["The value of the option \"RegularMethods\" is expected to match :" <> ToString[{_Rule...}]];
+        Return[$Failed]
+      ];
+
       symbolAssociations = OptionValue[UMLClassGraph, "Associations"];
+      If[ !MatchQ[symbolAssociations, {(_DirectedEdge | _UndirectedEdge | _Rule) ...}],
+        Echo["The value of the option \"Associations\" is expected to match :" <> ToString[{(_DirectedEdge | _UndirectedEdge | _Rule) ...}]];
+        Return[$Failed]
+      ];
+
       symbolAggregations = OptionValue[UMLClassGraph, "Aggregations"];
+      If[ !MatchQ[symbolAggregations,  {(_DirectedEdge | _UndirectedEdge | _Rule) ...}],
+        Echo["The value of the option \"Aggregations\" is expected to match :" <> ToString[{(_DirectedEdge | _UndirectedEdge | _Rule) ...}]];
+        Return[$Failed]
+      ];
 
       UMLClassGraphFull[parents, abstractMethodsPerSymbol, regularMethodsPerSymbol, symbolAssociations, symbolAggregations, opts]
     ];
