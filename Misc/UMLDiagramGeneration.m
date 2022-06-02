@@ -165,7 +165,7 @@ UMLClassNode[classSymbol_String, opts : OptionsPattern[]] :=
               res]};
       If[res === {None}, tbl = Most[tbl]];
       Grid[If[enColQ, tbl, tbl[[All, {2}]]],
-        Dividers -> {All, {True, True, False}, -1 -> True}, Alignment -> Left]
+        Dividers -> {All, {{True, True, False}, -1 -> True}}, Alignment -> Left]
     ];
 
 (*********************************************************)
