@@ -175,9 +175,11 @@ UMLClassNode[classSymbol_String, opts : OptionsPattern[]] :=
 
 Clear[UMLInheritanceEdgeFunc];
 UMLInheritanceEdgeFunc[pts_List, e_] :=
-    Block[{color =
-        Darker[Blend[{Black, Cyan, Blue}]]}, {Arrowheads[{{0.015, 0.85, Graphics[{FaceForm[White], EdgeForm[color],
-      Polygon[{{-1.5, -1}, {1.5, 0}, {-1.5, 1}}]}]}}], {color, Arrow[pts]}}
+    Block[{color = Darker[Blend[{Black, Cyan, Blue}]]},
+      {
+        Arrowheads[{{0.015, 0.85, Graphics[{FaceForm[White], EdgeForm[color], Polygon[{{-1.5, -1}, {1.5, 0}, {-1.5, 1}}]}]}}],
+        {color, Arrow[pts]}
+      }
     ];
 
 Clear[UMLAssociationEdgeFunc];
@@ -190,9 +192,11 @@ UMLDirectedAssociationEdgeFunc[pts_List, e_] :=
 
 Clear[UMLAggregationEdgeFunc];
 UMLAggregationEdgeFunc[pts_List, e_] :=
-    Block[{color =
-        Darker[Blend[{Black, Cyan, Blue}]]}, {Arrowheads[{{0.015, 0.85, Graphics[{FaceForm[White], EdgeForm[color],
-      Polygon[{{-1, -1}, {1, 0}, {-1, 1}, {-3, 0}}]}]}}], {color, Arrow[pts]}}
+    Block[{color = Darker[Blend[{Black, Cyan, Blue}]]},
+      {
+        Arrowheads[{{0.015, 0.85, Graphics[{FaceForm[White], EdgeForm[color], Polygon[{{-1, -1}, {1, 0}, {-1, 1}, {-3, 0}}]}]}}],
+        {color, Arrow[pts]}
+      }
     ];
 
 (*********************************************************)
@@ -210,9 +214,17 @@ SubValueReferenceRules[symbols : {_Symbol..}] :=
 (* UMLClassGraph                                         *)
 (*********************************************************)
 Clear[UMLClassGraph];
-Options[UMLClassGraph] = Join[{"GraphFunction" -> Graph}, Options[UMLClassNode], Options[Graph]];
 
-UMLClassGraph[symbols : {_Symbol..},
+Options[UMLClassGraph] =
+    Join[
+      {"Parents" -> {}, "AbstractMethods" -> {}, "RegularMethods" -> {}, "Associations" -> {}, "Aggregations" -> {}},
+      {"GraphFunction" -> Graph},
+      Options[UMLClassNode],
+      Options[Graph]
+    ];
+
+UMLClassGraph[
+  symbols : {(_Symbol | _String) .. },
   abstractMethodsPerSymbol : {_Rule ...} : {},
   symbolAssociations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
   symbolAggregations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
@@ -222,17 +234,53 @@ UMLClassGraph[symbols : {_Symbol..},
       UMLClassGraph[grRules, abstractMethodsPerSymbol, symbolAssociations, symbolAggregations, opts]
     ];
 
-UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol | _String, _Symbol | _String] ..},
+UMLClassGraph[
+  parents : {DirectedEdge[_Symbol | _String, _Symbol | _String] ..},
   abstractMethodsPerSymbol : {_Rule ...} : {},
   symbolAssociations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
   symbolAggregations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...} : {},
   opts : OptionsPattern[]] :=
-    Block[{grRules = inheritanceRules, symbols, graphFunc},
+    UMLClassGraph[
+      "Parents" -> parents,
+      "AbstractMethods" -> abstractMethodsPerSymbol,
+      "RegularMethods" -> {},
+      "Associations" -> symbolAssociations,
+      "Aggregations" -> symbolAggregations,
+      opts];
 
-      graphFunc = OptionValue[UMLClassGraph, "GraphFunction"];
+UMLClassGraph[opts : OptionsPattern[]] :=
+    Block[{parents, abstractMethodsPerSymbol, regularMethodsPerSymbol, symbolAssociations, symbolAggregations},
+
+      parents = OptionValue[UMLClassGraph, "Parents"];
+      abstractMethodsPerSymbol = OptionValue[UMLClassGraph, "AbstractMethods"];
+      regularMethodsPerSymbol = OptionValue[UMLClassGraph, "RegularMethods"];
+      symbolAssociations = OptionValue[UMLClassGraph, "Associations"];
+      symbolAggregations = OptionValue[UMLClassGraph, "Aggregations"];
+
+      UMLClassGraphFull[parents, abstractMethodsPerSymbol, regularMethodsPerSymbol, symbolAssociations, symbolAggregations, opts]
+    ];
+
+(*********************************************************)
+(* UMLClassGraphFull                                     *)
+(*********************************************************)
+
+Clear[UMLClassGraphFull];
+
+Options[UMLClassGraphFull] = Options[UMLClassGraph];
+
+UMLClassGraphFull[
+  parents : {DirectedEdge[_Symbol | _String, _Symbol | _String] ..},
+  abstractMethodsPerSymbol : {_Rule ...},
+  regularMethodsPerSymbol : {_Rule ...},
+  symbolAssociations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...},
+  symbolAggregations : {(_DirectedEdge | _UndirectedEdge | _Rule) ...},
+  opts : OptionsPattern[]] :=
+    Block[{grRules = parents, symbols, graphFunc},
+
+      graphFunc = OptionValue[UMLClassGraphFull, "GraphFunction"];
       If[ TrueQ[ graphFunc === Automatic || !MemberQ[{Graph, Graph3D}, graphFunc]], graphFunc = Graph ];
 
-      symbols = Union[Flatten[List @@@ Join[inheritanceRules, symbolAssociations, symbolAggregations]]];
+      symbols = Union[Flatten[List @@@ Join[parents, symbolAssociations, symbolAggregations]]];
 
       grRules = Map[
         Which[
@@ -252,11 +300,13 @@ UMLClassGraph[inheritanceRules : {DirectedEdge[_Symbol | _String, _Symbol | _Str
                 UMLClassNode[#,
                   "EntityColumn" -> OptionValue["EntityColumn"],
                   "Abstract" -> Flatten[Join[{# /. Append[abstractMethodsPerSymbol, _ -> {}]}]],
+                  "Regular" -> Flatten[Join[{# /. Append[regularMethodsPerSymbol, _ -> {}]}]],
                   "AbstractClass" -> MemberQ[OptionValue["Abstract"], #]
                 ] &,
               symbols],
-        Sequence @@ DeleteCases[{opts}, ("EntityColumn" -> _) | ("Abstract" -> _) | ("GraphFunction" -> _) ]]
+        FilterRules[{opts}, Options[graphFunc]]]
     ];
+
 
 End[]; (* `Private` *)
 
