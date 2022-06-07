@@ -436,7 +436,6 @@ PythonWebPlantUML[pythonSession_, spec_String, opts : OptionsPattern[]] :=
       res = ExternalEvaluate[pythonSession, command];
 
       urlForSpec = ExternalEvaluate[pythonSession, "pumlObj.get_url(\"\"\"" <> spec <> "\"\"\")"];
-      Print[urlForSpec];
       request = HTTPRequest[urlForSpec];
       resWeb = URLRead[request];
 
