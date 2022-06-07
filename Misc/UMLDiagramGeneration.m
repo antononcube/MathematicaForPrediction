@@ -395,20 +395,24 @@ JavaPlantUML[spec_String, opts : OptionsPattern[]] :=
 (* PythonWebPlantUML                                     *)
 (*********************************************************)
 
-pythonSession =
-    If[Length[ExternalSessions["Python"]] == 0,
-      StartExternalSession["Python"],
-      (*ELSE*)
-      ExternalSessions["Python"][[1]]
-    ];
-
 Clear[PythonWebPlantUML];
 
 SyntaxInformation[PythonWebPlantUML] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
 
 Options[PythonWebPlantUML] = {"Type" -> "png", "URL" -> "http://www.plantuml.com/plantuml", "Attributes" -> False};
 
-PythonWebPlantUML[spec_String, opts : OptionsPattern[]] := PythonWebPlantUML[pythonSession, spec, opts];
+PythonWebPlantUML[spec_String, opts : OptionsPattern[]] :=
+    Block[{pythonSession},
+
+      pythonSession =
+          If[Length[ExternalSessions["Python"]] == 0,
+            StartExternalSession["Python"],
+            (*ELSE*)
+            ExternalSessions["Python"][[1]]
+          ];
+
+      PythonWebPlantUML[pythonSession, spec, opts]
+    ];
 
 PythonWebPlantUML[pythonSession_, spec_String, opts : OptionsPattern[]] :=
     Block[{type, url, command, urlForSpec, res, request, resWeb},
@@ -432,7 +436,7 @@ PythonWebPlantUML[pythonSession_, spec_String, opts : OptionsPattern[]] :=
       res = ExternalEvaluate[pythonSession, command];
 
       urlForSpec = ExternalEvaluate[pythonSession, "pumlObj.get_url(\"\"\"" <> spec <> "\"\"\")"];
-
+      Print[urlForSpec];
       request = HTTPRequest[urlForSpec];
       resWeb = URLRead[request];
 
