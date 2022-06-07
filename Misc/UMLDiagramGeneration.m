@@ -125,6 +125,10 @@ as options the options of UMLClassNode and Graph.";
 SubValueReferenceRules::usage = "SubValueReferenceRules[symbols] gives a list of directed edge specifications that \
 correspond to references within the sub-values of the specified symbols.";
 
+JavaPlantUML::usage = "JavaPlantUML[spec_String, opts___] produces UML diagram images from given specs using a PlantUML Java JAR file.";
+
+PythonWebPlantUML::usage = "PythonPlantUML[spec_String, opts___] produces UML diagram images from given specs using PlantUML web service.";
+
 Begin["`Private`"];
 
 
@@ -160,9 +164,7 @@ UMLClassNode[classSymbol_String, opts : OptionsPattern[]] :=
       tbl =
           Transpose@{Join[Style[#, Gray] & /@ {"Class", "Methods"},
             Table[SpanFromAbove, {Length[res] - 1}]],
-            Join[{Style[ToString[classSymbol], Bold,
-              FontSlant -> If[abstractClassQ, Italic, Plain]]},
-              res]};
+            Join[{Style[ToString[classSymbol], Bold, FontSlant -> If[abstractClassQ, Italic, Plain]]}, res]};
       If[res === {None}, tbl = Most[tbl]];
       Grid[If[enColQ, tbl, tbl[[All, {2}]]],
         Dividers -> {All, {{True, True, False}, -1 -> True}}, Alignment -> Left]
@@ -275,7 +277,7 @@ UMLClassGraph[opts : OptionsPattern[]] :=
       ];
 
       symbolAggregations = OptionValue[UMLClassGraph, "Aggregations"];
-      If[ !MatchQ[symbolAggregations,  {(_DirectedEdge | _UndirectedEdge | _Rule) ...}],
+      If[ !MatchQ[symbolAggregations, {(_DirectedEdge | _UndirectedEdge | _Rule) ...}],
         Echo["The value of the option \"Aggregations\" is expected to match :" <> ToString[{(_DirectedEdge | _UndirectedEdge | _Rule) ...}]];
         Return[$Failed]
       ];
@@ -330,6 +332,116 @@ UMLClassGraphFull[
         FilterRules[{opts}, Options[graphFunc]]]
     ];
 
+(*********************************************************)
+(* JavaPlantUML                                          *)
+(*********************************************************)
+
+Clear[JavaPlantUML];
+
+SyntaxInformation[JavaPlantUML] = { "ArgumentsPattern" -> {_, OptionsPattern[] } };
+
+Options[JavaPlantUML] = {"Type" -> "svg", "PlantUMLJAR" -> "~/PlantUML/plantuml-1.2022.5.jar", "Prefix" -> Automatic};
+
+JavaPlantUML[spec_String, opts : OptionsPattern[]] :=
+    Block[{command, type, jarArg, prefix, imgResFileName, resShell},
+
+      command =
+          StringTemplate["echo \"`spec`\" | java -jar `jarArg` -pipe -t`type` > `imgResFileName`"];
+
+      type = ToLowerCase[OptionValue[JavaPlantUML, "Type"]];
+      Which[
+        TrueQ[type === Automatic],
+        type = "svg",
+
+        !StringQ[type],
+        Echo["The value of the option \"Type\" is expected to be a string or Automatic."];
+        Return[$Failed]
+      ];
+
+      jarArg = OptionValue[JavaPlantUML, "PlantUMLJAR"];
+      If[ !FileExistsQ[jarArg],
+        Echo["The value of the option \"PlantUMLJAR\" is expected to be a path to an existing Java JAR file."];
+        Return[$Failed]
+      ];
+
+      prefix = OptionValue[JavaPlantUML, "Prefix"];
+      Which[
+        TrueQ[prefix === Automatic],
+        prefix = StringReplace[DateString["ISODateTime"], ":" -> "-"],
+
+        !StringQ[prefix],
+        Echo["The value of the option \"Prefix\" is expected to be a string or Automatic."];
+        Return[$Failed]
+      ];
+
+      imgResFileName = FileNameJoin[{NotebookDirectory[], prefix <> "-UML-diagram." <> type}];
+
+      resShell = ExternalEvaluate["Shell", command[<|"spec" -> StringReplace[spec, "\"" -> "\\\""], "jarArg" -> jarArg, "type" -> type, "imgResFileName" -> imgResFileName|>]];
+
+      Which[
+        ToLowerCase[type] == "svg",
+        ResourceFunction["SVGImport"][imgResFileName],
+
+        ToLowerCase[type] == "pdf",
+        Import[imgResFileName, "PDF", "PageGraphics"],
+
+        True,
+        Import[imgResFileName]
+      ]
+    ];
+
+
+(*********************************************************)
+(* PythonWebPlantUML                                     *)
+(*********************************************************)
+
+pythonSession =
+    If[Length[ExternalSessions["Python"]] == 0,
+      StartExternalSession["Python"],
+      (*ELSE*)
+      ExternalSessions["Python"][[1]]
+    ];
+
+Clear[PythonWebPlantUML];
+
+SyntaxInformation[PythonWebPlantUML] = { "ArgumentsPattern" -> {_, _., OptionsPattern[] } };
+
+Options[PythonWebPlantUML] = {"Type" -> "png", "URL" -> "http://www.plantuml.com/plantuml", "Attributes" -> False};
+
+PythonWebPlantUML[spec_String, opts : OptionsPattern[]] := PythonWebPlantUML[pythonSession, spec, opts];
+
+PythonWebPlantUML[pythonSession_, spec_String, opts : OptionsPattern[]] :=
+    Block[{type, url, command, urlForSpec, res, request, resWeb},
+
+      type = ToLowerCase[OptionValue[PythonWebPlantUML, "Type"]];
+      Which[
+        TrueQ[type === Automatic],
+        type = "png",
+
+        !StringQ[type],
+        Echo["The value of the option \"Type\" is expected to be a string or Automatic."];
+        Return[$Failed]
+      ];
+
+      url = OptionValue[PythonWebPlantUML, "URL"];
+
+      ExternalEvaluate[pythonSession, "import plantuml"];
+
+      command = "pumlObj=plantuml.PlantUML(url='" <> url <> "/" <> type <> "/')";
+
+      res = ExternalEvaluate[pythonSession, command];
+
+      urlForSpec = ExternalEvaluate[pythonSession, "pumlObj.get_url(\"\"\"" <> spec <> "\"\"\")"];
+
+      request = HTTPRequest[urlForSpec];
+      resWeb = URLRead[request];
+
+      If[TrueQ[resWeb["ContentType"] == "image/png"],
+        Import[resWeb],
+        (*ELSE*)
+        <|"HTTPRequest" -> request, "URL" -> urlForSpec, "URLRead" -> resWeb|>
+      ]
+    ];
 
 End[]; (* `Private` *)
 
