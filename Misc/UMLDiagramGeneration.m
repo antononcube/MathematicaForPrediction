@@ -340,10 +340,15 @@ Clear[JavaPlantUML];
 
 SyntaxInformation[JavaPlantUML] = { "ArgumentsPattern" -> {_, OptionsPattern[] } };
 
-Options[JavaPlantUML] = {"Type" -> "svg", "PlantUMLJAR" -> "~/PlantUML/plantuml-1.2022.5.jar", "Prefix" -> Automatic};
+Options[JavaPlantUML] = {
+  "Type" -> "svg",
+  "PlantUMLJAR" -> "~/PlantUML/plantuml-1.2022.5.jar",
+  "ExportPrefix" -> Automatic,
+  "ExportDirectory" -> Automatic
+};
 
 JavaPlantUML[spec_String, opts : OptionsPattern[]] :=
-    Block[{command, type, jarArg, prefix, imgResFileName, resShell},
+    Block[{command, type, jarArg, exportPrefix, exportDir, imgResFileName, resShell},
 
       command =
           StringTemplate["echo \"`spec`\" | java -jar `jarArg` -pipe -t`type` > `imgResFileName`"];
@@ -364,17 +369,27 @@ JavaPlantUML[spec_String, opts : OptionsPattern[]] :=
         Return[$Failed]
       ];
 
-      prefix = OptionValue[JavaPlantUML, "Prefix"];
+      exportPrefix = OptionValue[JavaPlantUML, "ExportPrefix"];
       Which[
-        TrueQ[prefix === Automatic],
-        prefix = StringReplace[DateString["ISODateTime"], ":" -> "-"],
+        TrueQ[exportPrefix === Automatic],
+        exportPrefix = StringReplace[DateString["ISODateTime"], ":" -> "-"],
 
-        !StringQ[prefix],
-        Echo["The value of the option \"Prefix\" is expected to be a string or Automatic."];
+        !StringQ[exportPrefix],
+        Echo["The value of the option \"ExportPrefix\" is expected to be a string or Automatic."];
         Return[$Failed]
       ];
 
-      imgResFileName = FileNameJoin[{NotebookDirectory[], prefix <> "-UML-diagram." <> type}];
+      exportDir = OptionValue[JavaPlantUML, "ExportDirectory"];
+      Which[
+        TrueQ[exportDir === Automatic],
+        exportDir = NotebookDirectory[],
+
+        ! ( StringQ[exportPrefix] && DirectoryQ[exportDir]),
+        Echo["The value of the option \"ExportDirectory\" is expected to be a string that is a path to a directory that exits."];
+        Return[$Failed]
+      ];
+
+      imgResFileName = FileNameJoin[{exportDir, exportPrefix <> "-UML-diagram." <> type}];
 
       resShell = ExternalEvaluate["Shell", command[<|"spec" -> StringReplace[spec, "\"" -> "\\\""], "jarArg" -> jarArg, "type" -> type, "imgResFileName" -> imgResFileName|>]];
 
