@@ -351,7 +351,7 @@ aROCFunctions =
 
 
 Clear[ROCFunctions];
-ROCFunctions["Methods"] := {"FunctionInterpretations", "FunctionNames", "Functions", "Methods", "Properties"};
+ROCFunctions["Methods"] := {"FunctionInterpretations", "FunctionsAssociation", "FunctionNames", "Functions", "Methods", "Properties"};
 ROCFunctions["Properties"] := ROCFunctions["Methods"];
 ROCFunctions["FunctionNames"] := Keys[aROCAcronyms];
 ROCFunctions["FunctionInterpretations"] := aROCAcronyms;
