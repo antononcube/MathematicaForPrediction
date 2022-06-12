@@ -118,12 +118,14 @@ UMLClassNode::usage = "UMLClassNode[classSymbol, opts] creates a Grid object wit
 for the specified class symbol. The option \"Abstract\" can be used to specify abstract class names and methods. \
 The option \"EntityColumn\" can be used to turn on and off the explanations column.";
 
-UMLClassGraph::usage = "UMLClassGraph[symbols,abstractMethodsPerSymbol,symbolAssociations,symbolAggregations,opts] \
+UMLClassGraph::usage = "UMLClassGraph[symbols, abstractMethodsPerSymbol, symbolAssociations, symbolAggregations, opts] \
 creates an UML graph diagram for the specified symbols (representing classes) and their relationships. It takes \
 as options the options of UMLClassNode and Graph.";
 
 SubValueReferenceRules::usage = "SubValueReferenceRules[symbols] gives a list of directed edge specifications that \
 correspond to references within the sub-values of the specified symbols.";
+
+PlantUMLSpec::usage = "PlantUMLSpec[opts__] converts UML-graph spec into PlantUML spec.";
 
 JavaPlantUML::usage = "JavaPlantUML[spec_String, opts___] produces UML diagram images from given specs using a PlantUML Java JAR file.";
 
@@ -330,6 +332,60 @@ UMLClassGraphFull[
                 ] &,
               symbols],
         FilterRules[{opts}, Options[graphFunc]]]
+    ];
+
+(*********************************************************)
+(* PlantUMLSpec                                          *)
+(*********************************************************)
+
+Clear[PlantUMLSpec];
+
+Options[PlantUMLSpec] = {
+  "Parents" -> {},
+  "AbstractMethods" -> {},
+  "RegularMethods" -> {},
+  "Associations" -> {},
+  "Aggregations" -> {},
+  "Abstract" -> {}
+};
+
+PlantUMLSpec[ opts: OptionsPattern[] ] :=
+    Block[{UMLClassGraphFull = List,
+      parents, abstractMethodsPerSymbol, regularMethodsPerSymbol, symbolAssociations, symbolAggregations,
+      abstractClasses,
+      aParents, aAbstractMethodsPerSymbol, aRegularMethodsPerSymbol,
+      resSpec, lsAllClasses},
+
+      abstractClasses = OptionValue[PlantUMLSpec, "Abstract"];
+
+      (* Process option values with UMLClassGraph *)
+      {parents, abstractMethodsPerSymbol, regularMethodsPerSymbol, symbolAssociations, symbolAggregations} = UMLClassGraph[opts][[1;;5]];
+
+      (* Find children per class *)
+      aParents = GroupBy[ ReplaceAll[parents, DirectedEdge[x___] :> Rule[x]], First, #[[All, 2]]&];
+
+      (* Find all classes *)
+      lsAllClasses = Union @ Flatten[ Join[ List @@@ parents, ReplaceAll[abstractMethodsPerSymbol, Rule[x_,y_] :> x ], ReplaceAll[regularMethodsPerSymbol, Rule[x_,y_] :> x ] ] ];
+
+      aAbstractMethodsPerSymbol = Association[abstractMethodsPerSymbol];
+      aAbstractMethodsPerSymbol = StringRiffle[Map[ " {abstract} " <> #&, #], {"\n", "\n", "\n"}]& /@ aAbstractMethodsPerSymbol;
+
+      aRegularMethodsPerSymbol = Association[regularMethodsPerSymbol];
+      aRegularMethodsPerSymbol = StringRiffle[Map[ " " <> #&, #], {"\n", "\n", "\n"}]& /@ aRegularMethodsPerSymbol;
+
+      (* Make the UML diagram *)
+      resSpec =
+          Fold[
+            Function[{a, c},
+              a <> "\n\n" <> If[ MemberQ[abstractClasses, c], "abstract ", "class "] <> c <>
+                  "{" <> Lookup[aAbstractMethodsPerSymbol, c, ""] <> Lookup[aRegularMethodsPerSymbol, c, ""] <> "}"
+                  <>
+                  If[ KeyExistsQ[aParents, c], "\n" <> StringRiffle[Map[ c <> " --> " <> # &, aParents[c] ], "\n"], ""]
+            ], "", lsAllClasses];
+
+      resSpec = StringTrim[resSpec];
+
+      "@startuml\n"  <> resSpec <> "\n@enduml"
     ];
 
 (*********************************************************)
