@@ -104,6 +104,14 @@
                {ec, {False, True}} ]
 
 
+    Here is an example of PlantUML usage:
+
+       PlantUMLSpec[
+         "Parents" -> {"MyPackageClass::D" \[DirectedEdge] "MyPackageClass::C", "MyPackageClass::D" \[DirectedEdge] "MyPackageClass::A",
+                       "MyPackageClass::D" \[DirectedEdge] "MyPackageClass::B", "MyPackageClass::C" \[DirectedEdge] "MyPackageClass::A"},
+         "AbstractMethods" -> {"MyPackageClass::A" -> {"a1"}, "MyPackageClass::B" -> {"b1"}},
+         "RegularMethods" -> {"MyPackageClass::D" -> {"BUILDALL", "b1", "d1"}, "MyPackageClass::C" -> {"BUILDALL", "a1", "c1"}},
+         "Abstract" -> {"MyPackageClass::A", "MyPackageClass::B", "MyPackageClass::A"}]
 
     This file was created using Mathematica Plugin for IntelliJ IDEA.
 
