@@ -102,38 +102,38 @@ Begin["`Private`"];
 (* Rymon tree *)
 Clear[RymonTree, RymonChildren];
 RymonChildren[set : {_Integer ...}, m_Integer, n_Integer] :=
-  Block[{},
-   If[m < n,
-    Map[Append[set, #] &, Range[m + 1, n]],
-    {}]
-   ];
+    Block[{},
+      If[m < n,
+        Map[Append[set, #] &, Range[m + 1, n]],
+        {}]
+    ];
 
 RymonTree[set : {_Integer ...}, n_Integer] :=
-  Block[{m},
-   m = If[set === {}, 0, Max[set]];
-   If[m < n,
-    Prepend[
-     DeleteCases[RymonTree[#, n] & /@ RymonChildren[set, m, n], {}], 
-     set],
-    {set}
-    ]
-   ];
+    Block[{m},
+      m = If[set === {}, 0, Max[set]];
+      If[m < n,
+        Prepend[
+          DeleteCases[RymonTree[#, n] & /@ RymonChildren[set, m, n], {}],
+          set],
+        {set}
+      ]
+    ];
 
 RymonTree[n_Integer] :=
-  Block[{},
-   RymonTree[{}, n]
-   ];
+    Block[{},
+      RymonTree[{}, n]
+    ];
 
 (* Convert to rules *)
 
 Clear[TreeToRules];
 TreeToRules[tree_] :=
-  Which[
-   tree === {}, {},
-   Rest[tree] === {}, {},
-   True, Join[Map[tree[[1]] -> #[[1]] &, Rest[tree], {1}], 
-    Flatten[TreeToRules[#] & /@ Rest[tree], 1]]
-   ];
+    Which[
+      tree === {}, {},
+      Rest[tree] === {}, {},
+      True, Join[Map[tree[[1]] -> #[[1]] &, Rest[tree], {1}],
+      Flatten[TreeToRules[#] & /@ Rest[tree], 1]]
+    ];
 
 (* AprioriGenerator *)
 
@@ -141,45 +141,45 @@ TreeToRules[tree_] :=
 
 Clear[AprioriGenerator];
 AprioriGenerator[Mu_, F_] :=
-  Block[{res},
-   res = {};
-   Do[
-    If[Most[F[[i]]] == Most[F[[j]]],
-     (*AppendTo[res,Union[F\[LeftDoubleBracket]i\[RightDoubleBracket],
-     F\[LeftDoubleBracket]j\[RightDoubleBracket]]]*) 
-     (* the line above is probably slower than the line below *)
-     
-     AppendTo[res, Join[Most[F[[i]]], {Last[F[[i]]]}, {Last[F[[j]]]}]]
-     ],
-    {i, 1, Length[F]}, {j, i + 1, Length[F]}];
-   PRINT[res];
-   Select[res, Apply[And, MemberQ[F, #] & /@ Subsets[#, {Length[#] - 1}]] &]
-   ];
+    Block[{res},
+      res = {};
+      Do[
+        If[Most[F[[i]]] == Most[F[[j]]],
+          (*AppendTo[res,Union[F\[LeftDoubleBracket]i\[RightDoubleBracket],
+          F\[LeftDoubleBracket]j\[RightDoubleBracket]]]*)
+          (* the line above is probably slower than the line below *)
+
+          AppendTo[res, Join[Most[F[[i]]], {Last[F[[i]]]}, {Last[F[[j]]]}]]
+        ],
+        {i, 1, Length[F]}, {j, i + 1, Length[F]}];
+      PRINT[res];
+      Select[res, Apply[And, MemberQ[F, #] & /@ Subsets[#, {Length[#] - 1}]] &]
+    ];
 
 (* AprioriAlgorithmOriginal *)
 
-Clear[Support, AprioriAlgorithmOriginal]
+Clear[Support, AprioriAlgorithmOriginal];
 
-Support[T_, s_] := 
-  Support[T, s] = Count[T, d_ /; Intersection[d, s] == s]/Length[T];
+Support[T_, s_] :=
+    Support[T, s] = Count[T, d_ /; Intersection[d, s] == s] / Length[T];
 
 Options[AprioriAlgorithmOriginal] = {"MaxNumberOfItems" -> All};
 AprioriAlgorithmOriginal[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
- Block[{CSet, FSet, i = 1, F = {}, contQ = True, 
-    maxNumberOfItems = OptionValue[AprioriAlgorithmOriginal, "MaxNumberOfItems"]},
-   If[maxNumberOfItems === All, maxNumberOfItems = \[Infinity]];
-   CSet = List /@ Range[Min[T], Max[T]];
-   While[CSet =!= {} && contQ,
-    FSet = Pick[CSet, Support[T, #] >= Mu & /@ CSet];
-    AppendTo[F, FSet];
-    If[FSet =!= {} && Length[FSet[[-1]]] < maxNumberOfItems,
-     CSet = AprioriGenerator[Mu, FSet],
-     contQ = False
-     ];
-    i++
-   ];
-   F
-  ];
+    Block[{CSet, FSet, i = 1, F = {}, contQ = True,
+      maxNumberOfItems = OptionValue[AprioriAlgorithmOriginal, "MaxNumberOfItems"]},
+      If[maxNumberOfItems === All, maxNumberOfItems = \[Infinity]];
+      CSet = List /@ Range[Min[T], Max[T]];
+      While[CSet =!= {} && contQ,
+        FSet = Pick[CSet, Support[T, #] >= Mu & /@ CSet];
+        AppendTo[F, FSet];
+        If[FSet =!= {} && Length[FSet[[-1]]] < maxNumberOfItems,
+          CSet = AprioriGenerator[Mu, FSet],
+          contQ = False
+        ];
+        i++
+      ];
+      F
+    ];
 
 
 (* AprioriAlgorithmOriginal *)
@@ -187,34 +187,34 @@ AprioriAlgorithmOriginal[T : {{_Integer ...} ...}, Mu_?NumberQ, opts : OptionsPa
 
 Clear[AprioriAlgorithm];
 
-(* I overloaded the non-sparse array Support definition with this one because Support is provided as package function. *) 
+(* I overloaded the non-sparse array Support definition with this one because Support is provided as package function. *)
 Support[Tcolumns : {_SparseArray ..}, s : {_Integer ..}] :=
-  Which[
-    Length[s] == 1, Total[Tcolumns[[s[[1]]]]],
-    Length[s] == 2, Tcolumns[[s[[1]]]].Tcolumns[[s[[2]]]],
-    True,
-    Total[Fold[Times[#1, Tcolumns[[#2]]] &, Tcolumns[[s[[1]]]], Rest[s]]]
-  ]/Length[Tcolumns[[1]]];
+    Which[
+      Length[s] == 1, Total[Tcolumns[[s[[1]]]]],
+      Length[s] == 2, Tcolumns[[s[[1]]]].Tcolumns[[s[[2]]]],
+      True,
+      Total[Fold[Times[#1, Tcolumns[[#2]]] &, Tcolumns[[s[[1]]]], Rest[s]]]
+    ] / Length[Tcolumns[[1]]];
 
 (* This definition is almost exact copy of the previous one, AprioriAlgorithmOriginal, given above. *)
 Options[AprioriAlgorithm] = {"MaxNumberOfItems" -> All};
 AprioriAlgorithm[Tcolumns : {_SparseArray ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
-  Block[{CSet, FSet, i = 1, F = {}, contQ = True, 
-    maxNumberOfItems = OptionValue[AprioriAlgorithm, "MaxNumberOfItems"]},
-   If[maxNumberOfItems === All, maxNumberOfItems = \[Infinity]];
-   CSet = List /@ Range[1, Length[Tcolumns]];
-   While[CSet =!= {} && contQ,
-    FSet = 
-     Pick[CSet, Support[Tcolumns, #] >= Mu & /@ CSet];
-    AppendTo[F, FSet];
-    If[FSet =!= {} && Length[FSet[[-1]]] < maxNumberOfItems,
-     CSet = AprioriGenerator[Mu, FSet],
-     contQ = False
+    Block[{CSet, FSet, i = 1, F = {}, contQ = True,
+      maxNumberOfItems = OptionValue[AprioriAlgorithm, "MaxNumberOfItems"]},
+      If[maxNumberOfItems === All, maxNumberOfItems = \[Infinity]];
+      CSet = List /@ Range[1, Length[Tcolumns]];
+      While[CSet =!= {} && contQ,
+        FSet =
+            Pick[CSet, Support[Tcolumns, #] >= Mu & /@ CSet];
+        AppendTo[F, FSet];
+        If[FSet =!= {} && Length[FSet[[-1]]] < maxNumberOfItems,
+          CSet = AprioriGenerator[Mu, FSet],
+          contQ = False
+        ];
+        i++
+      ];
+      F
     ];
-    i++
-   ];
-   F
-  ];
 
 
 (* AssociationRules *)
@@ -224,36 +224,42 @@ Confidence, Lift, Leverage, Conviction, Condition, Implication *)
 
 Clear[AssociationRules];
 AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), basketArg : {_Integer ...}, confidence_?NumberQ] :=
-  Block[{basket = Sort[basketArg], basketSupport, antecedents, consequents, t},
-   basketSupport = N[Support[T, basket]];
-   antecedents = Most@Rest@Subsets[basket];
-   consequents = Complement[basket, #] & /@ antecedents;
-   t =
-   SortBy[
-    Select[
-     MapThread[{N[basketSupport/Support[T, #1]], 
-        N[(basketSupport/Support[T, #1])/Support[T, #2]], 
-        N[basketSupport - Support[T, #1]*Support[T, #2]], 
-        N[If[(1 - basketSupport/Support[T, #1]) == 0, 
-          1000, (1 - Support[T, #2])/(1 - 
-             basketSupport/Support[T, #1])]], #1, #2} &, {antecedents, 
-       consequents}], #[[1]] >= confidence &],
-    -#[[1]] &];
-    Prepend[#,basketSupport]& /@ t
-   ]/; If[! MatchQ[T, {_SparseArray ..}], True, Apply[And, Map[1 <= # <= Length[T] &, basketArg]]];
+    Block[{basket = Sort[basketArg], basketSupport, antecedents, consequents, t},
+      basketSupport = N[Support[T, basket]];
+      antecedents = Most@Rest@Subsets[basket];
+      consequents = Complement[basket, #] & /@ antecedents;
+      t =
+          SortBy[
+            Select[
+              MapThread[{
+                N[basketSupport / Support[T, #1]],
+                N[(basketSupport / Support[T, #1]) / Support[T, #2]],
+                N[basketSupport - Support[T, #1] * Support[T, #2]],
+                N[If[(1 - basketSupport / Support[T, #1]) == 0,
+                  1000,
+                  (1 - Support[T, #2]) / (1 - basketSupport / Support[T, #1])
+                ]],
+                #1,
+                #2} &,
+                {antecedents, consequents}
+              ],
+              #[[1]] >= confidence &],
+            -#[[1]] &];
+      Prepend[#, basketSupport]& /@ t
+    ] /; If[! MatchQ[T, {_SparseArray ..}], True, Apply[And, Map[1 <= # <= Length[T] &, basketArg]]];
 
-AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), aprioriResRecsArg : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] := 
-   Block[{eligible,aprioriResRecs=Sort/@aprioriResRecsArg},
-    eligible = Select[Transpose[{aprioriResRecs, N[Support[T, #] & /@ aprioriResRecs]}], #[[2]] >= minSupport &];
-    If[Length[eligible] == 0, {},
-     Flatten[#,1]& @
-     MapThread[
-      Function[{assoc, supp},
-         DeleteCases[AssociationRules[T, assoc, minConfidence], {}]],
-      Transpose[eligible]
-     ]
-    ]
-   ];
+AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), aprioriResRecsArg : {{_Integer ..} ...}, minConfidence_? NumberQ, minSupport_?NumberQ] :=
+    Block[{eligible, aprioriResRecs = Sort /@ aprioriResRecsArg},
+      eligible = Select[Transpose[{aprioriResRecs, N[Support[T, #] & /@ aprioriResRecs]}], #[[2]] >= minSupport &];
+      If[Length[eligible] == 0, {},
+        Flatten[#, 1]& @
+            MapThread[
+              Function[{assoc, supp},
+                DeleteCases[AssociationRules[T, assoc, minConfidence], {}]],
+              Transpose[eligible]
+            ]
+      ]
+    ];
 
 (* AprioriApplcationOriginal *)
 
@@ -261,15 +267,15 @@ AssociationRules[T : ({{_Integer ...} ...} | {_SparseArray ..}), aprioriResRecsA
 (* This is the original implementation that does not use sparse algebra, hence it is much slower. *)
 
 Clear[AprioriApplicationOriginal];
-AprioriApplicationOriginal[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]] := 
-  Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs},
-    uniqueItems = Union[Flatten[itemLists]];
-    uniqueItemToIDRules = 
-     Dispatch[Thread[uniqueItems -> Range[1, Length[uniqueItems]]]];
-    dataWithIDs = itemLists /. uniqueItemToIDRules;
-    dataWithIDs = Sort /@ (dataWithIDs);
-    {AprioriAlgorithmOriginal[dataWithIDs, Mu, opts], uniqueItemToIDRules, 
-     Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
+AprioriApplicationOriginal[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
+    Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs},
+      uniqueItems = Union[Flatten[itemLists]];
+      uniqueItemToIDRules =
+          Dispatch[Thread[uniqueItems -> Range[1, Length[uniqueItems]]]];
+      dataWithIDs = itemLists /. uniqueItemToIDRules;
+      dataWithIDs = Sort /@ (dataWithIDs);
+      {AprioriAlgorithmOriginal[dataWithIDs, Mu, opts], uniqueItemToIDRules,
+        Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
     ] /; 0 < Mu < 1;
 
 (* AprioriApplcation *)
@@ -280,39 +286,39 @@ AprioriApplicationOriginal[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsP
 
 Clear[AprioriSparseArrayRepresentation];
 AprioriSparseArrayRepresentation[itemLists : {_List ...}] :=
-  Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs, arrayRules, Tcolumns},
-   uniqueItems = Union[Flatten[itemLists]];
-   uniqueItemToIDRules = 
-    Dispatch[Thread[uniqueItems -> Range[1, Length[uniqueItems]]]];
-   dataWithIDs = itemLists /. uniqueItemToIDRules;
-   dataWithIDs = Sort /@ (dataWithIDs);
-   arrayRules = 
-    Flatten[MapIndexed[Thread[Thread[{#2[[1]], #1}] -> 1] &, dataWithIDs], 1];
-   Tcolumns = Map[# &, Transpose[SparseArray[arrayRules]]];
-   {Tcolumns, uniqueItemToIDRules, Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
-  ];
+    Block[{uniqueItemToIDRules, uniqueItems, dataWithIDs, arrayRules, Tcolumns},
+      uniqueItems = Union[Flatten[itemLists]];
+      uniqueItemToIDRules =
+          Dispatch[Thread[uniqueItems -> Range[1, Length[uniqueItems]]]];
+      dataWithIDs = itemLists /. uniqueItemToIDRules;
+      dataWithIDs = Sort /@ (dataWithIDs);
+      arrayRules =
+          Flatten[MapIndexed[Thread[Thread[{#2[[1]], #1}] -> 1] &, dataWithIDs], 1];
+      Tcolumns = Map[# &, Transpose[SparseArray[arrayRules]]];
+      {Tcolumns, uniqueItemToIDRules, Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
+    ];
 
 Clear[AprioriApplication];
 Options[AprioriApplication] = {"MaxNumberOfItems" -> All};
 AprioriApplication[itemLists : {_List ...}, Mu_?NumberQ, opts : OptionsPattern[]] :=
-  Block[{Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules, mni},
-    mni = OptionValue[AprioriApplication, "MaxNumberOfItems"];
-    {Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules} = 
-     AprioriSparseArrayRepresentation[itemLists];
-    {AprioriAlgorithm[Tcolumns, Mu, "MaxNumberOfItems" -> mni], uniqueItemToIDRules, 
-     Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
+    Block[{Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules, mni},
+      mni = OptionValue[AprioriApplication, "MaxNumberOfItems"];
+      {Tcolumns, uniqueItemToIDRules, uniqueIDToItemRules} =
+          AprioriSparseArrayRepresentation[itemLists];
+      {AprioriAlgorithm[Tcolumns, Mu, "MaxNumberOfItems" -> mni], uniqueItemToIDRules,
+        Dispatch[Reverse /@ Normal[uniqueItemToIDRules]]}
     ] /; 0 < Mu < 1;
 
 (* Supporting Definitions *)
 
 Clear[QuantileReplacementFunc];
 QuantileReplacementFunc[qBoundaries : {_?NumberQ ...}] :=
-  Block[{XXX, t = Partition[Join[{-\[Infinity]}, qBoundaries, {\[Infinity]}], 2, 1]},
-   Function[
-    Evaluate[Piecewise[
-       MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t, 
-         Range[1, Length[t]]}]] /. {XXX -> #}]]
-   ];
+    Block[{XXX, t = Partition[Join[{-\[Infinity]}, qBoundaries, {\[Infinity]}], 2, 1]},
+      Function[
+        Evaluate[Piecewise[
+          MapThread[{#2, #1[[1]] < XXX <= #1[[2]]} &, {t,
+            Range[1, Length[t]]}]] /. {XXX -> #}]]
+    ];
 
 
 (* Item rules *)
@@ -334,7 +340,7 @@ ItemRules[setOfItemSets_, frequentSetsOfIDs : {{{_Integer ..} ..} ..},
       If[AtomQ[items],
         itemAprioriRes =
             Cases[#, {___, items /. itemToIDRules, ___}, Infinity] & /@ frequentSetsOfIDs,
-      (* ELSE *)
+        (* ELSE *)
         itemsInds = items /. itemToIDRules;
         itemAprioriRes =
             Cases[#, r_List /; Length[Intersection[r, itemsInds]] == Length[itemsInds], 3] & /@ frequentSetsOfIDs
@@ -344,6 +350,6 @@ ItemRules[setOfItemSets_, frequentSetsOfIDs : {{{_Integer ..} ..} ..},
       DeleteCases[t /. idToItemRules, {}, 2]
     ];
 
-End[]
+End[];
 
-EndPackage[]
+EndPackage[];
