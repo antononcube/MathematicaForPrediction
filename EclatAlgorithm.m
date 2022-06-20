@@ -84,7 +84,7 @@ EclatIntersect[aTransactions_?AssociationQ, items : {_String ..}] :=
     ];
 
 EclatIntersect[aTransactions_?AssociationQ, items1 : {_String ..}, items2 : {_String ..}] :=
-    EclatIntersect[aTransactions, items1]*EclatIntersect[aTransactions, items2];
+    EclatIntersect[aTransactions, items1] * EclatIntersect[aTransactions, items2];
 
 (***********************************************************)
 (* EclatExtendTransactions                                 *)
@@ -146,11 +146,11 @@ Eclat[matTransactions_SSparseMatrix, minSupport_?NumericQ, opts : OptionsPattern
     ];
 
 Eclat[aTransactions : Association[(_ -> _?SparseArrayQ) ..], minSupport_?NumericQ, opts : OptionsPattern[]] :=
-    Block[{P = List /@ Keys[aTransactions], res},
+    Block[{P = List /@ Sort[Keys[aTransactions]], res},
       P = Select[P, EclatSupport[aTransactions, #] >= minSupport &];
       aECLATTransactions = aTransactions;
       res = EclatRec[aTransactions, P, minSupport, {}, 0, opts];
-      AssociationThread[res, EclatSupport[aTransactions, #] & /@ res]
+      AssociationThread[res, EclatSupport[aECLATTransactions, #] & /@ res]
     ];
 
 (*---------------------------------------------------------*)
@@ -163,9 +163,11 @@ EclatRec[aTransactions_?AssociationQ, P_List, minSupport_?NumericQ, Farg_List, k
       PRINT[Style[Row[{"rec : ", k}], Purple, Bold]];
       PRINT["P: ", P];
       Do[
+
         AppendTo[F, Xa];
         PRINT["F: ", F];
         P2 = {};
+
         Do[
           Xab = Union[Xa, Xb];
           PRINT["{Xa,Xb} : ", {Xa, Xb}];
@@ -181,8 +183,11 @@ EclatRec[aTransactions_?AssociationQ, P_List, minSupport_?NumericQ, Farg_List, k
           ];
           PRINT["P2: ", P2]
           , {Xb, Select[P, Order[Xa, #] > 0 &]}];
+
         If[Length[P2] > 0,
-          F = EclatRec[aTransactions, P2, minSupport, F, k + 1, opts]]
+          F = EclatRec[aTransactions, P2, minSupport, F, k + 1, opts]
+        ]
+
         , {Xa, Select[P, Length[#] <= maxNumberOfItems &]}];
       F
     ];
