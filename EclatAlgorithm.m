@@ -56,7 +56,7 @@ If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
 ];
 
 (***********************************************************)
-(* Package defintion                                       *)
+(* Package definition                                      *)
 (***********************************************************)
 
 BeginPackage["EclatAlgorithm`"];
