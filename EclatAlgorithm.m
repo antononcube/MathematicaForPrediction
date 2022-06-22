@@ -122,11 +122,7 @@ aECLATTransactions = None;
 
 Eclat[dsTransactions_Dataset, minSupport_?NumberQ, opts : OptionsPattern[]] :=
     Block[{t, sep = OptionValue[Eclat, "Separator"]},
-      t = Normal[
-        dsTransactions[All,
-          Association @ KeyValueMap[#1 -> ToString[#1] <> sep <> ToString[#2] &, #] &][
-          Values]
-      ];
+      t = Normal[dsTransactions[All, Association @ KeyValueMap[#1 -> ToString[#1] <> sep <> ToString[#2] &, #] &][Values]];
       Eclat[t, minSupport, opts]
     ];
 
