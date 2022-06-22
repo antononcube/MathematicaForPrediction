@@ -124,22 +124,23 @@ Eclat[dsTransactions_Dataset, minSupport_?NumberQ, opts : OptionsPattern[]] :=
     Block[{t, sep = OptionValue[Eclat, "Separator"]},
       t = Normal[dsTransactions[All, Association @ KeyValueMap[#1 -> ToString[#1] <> sep <> ToString[#2] &, #] &][Values]];
       Eclat[t, minSupport, opts]
-    ];
+    ]/; minSupport > 0;
 
-Eclat[lsTransactions : {_List ..}, minSupport_?NumberQ,
-  opts : OptionsPattern[]] :=
-    Block[{t},
+Eclat[lsTransactions : {_List ..}, minSupportArg_?NumberQ, opts : OptionsPattern[]] :=
+    Block[{minSupport = minSupportArg, t},
+      If[minSupport < 1, minSupport = Floor[minSupport * Length[lsTransactions]]];
       t = Join @@ MapIndexed[Thread[{#2[[1]], #1}] &, lsTransactions];
       t = ToSSparseMatrix[CrossTabulate[t]];
       Eclat[t, minSupport, opts]
-    ];
+    ]/; minSupportArg > 0;
 
-Eclat[matTransactions_SSparseMatrix, minSupport_?NumericQ, opts : OptionsPattern[]] :=
-    Block[{P = List /@ ColumnNames[matTransactions], aTransactions, res},
+Eclat[matTransactions_SSparseMatrix, minSupportArg_?NumericQ, opts : OptionsPattern[]] :=
+    Block[{minSupport = minSupportArg, aTransactions},
+      If[minSupport < 1, minSupport = Floor[minSupport * RowsCount[matTransactions]]];
       aTransactions =
           AssociationThread[ColumnNames[matTransactions] -> Map[Identity, Transpose[SparseArray[matTransactions]]]];
       Eclat[aTransactions, minSupport, opts]
-    ];
+    ]/; minSupportArg > 0;
 
 Eclat[aTransactions : Association[(_ -> _?SparseArrayQ) ..], minSupport_?NumericQ, opts : OptionsPattern[]] :=
     Block[{P = List /@ Sort[Keys[aTransactions]], res},
@@ -147,7 +148,7 @@ Eclat[aTransactions : Association[(_ -> _?SparseArrayQ) ..], minSupport_?Numeric
       aECLATTransactions = aTransactions;
       res = EclatRec[aTransactions, P, minSupport, {}, 0, opts];
       AssociationThread[res, EclatSupport[aECLATTransactions, #] & /@ res]
-    ];
+    ]/; minSupport > 0;
 
 (*---------------------------------------------------------*)
 
