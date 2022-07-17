@@ -517,6 +517,7 @@ TrieLeafProbabilities[trieArg_?TrieQ] :=
       res =
           Which[
             TrueQ[trieArg[First@Keys@trieArg][$TrieValue] == 0],
+            (* This does not match any signature. *)
             TrieLeafProbabilitiesRec[trieArg],
 
             True,
@@ -1080,7 +1081,7 @@ SyntaxInformation[TrieClassify] = { "ArgumentsPattern" -> { _, _, _., OptionsPat
 
 TrieClassify::notkey = "The second argument is not key in the trie: `1`.";
 
-Options[TrieClassify] := {"Default" -> None};
+Options[TrieClassify] := {"Default" -> None, "VerifyKeyExistence" -> True};
 
 TrieClassify[tr_?TrieQ, record_, opts : OptionsPattern[]] :=
     TrieClassify[tr, record, "Decision", opts] /; FreeQ[{opts}, "Probability" | "TopProbabilities"];
@@ -1098,9 +1099,11 @@ TrieClassify[tr_?TrieQ, record_, "TopProbabilities" -> n_Integer, opts : Options
     Take[TrieClassify[tr, record, "Probabilities", opts], UpTo[n]];
 
 TrieClassify[tr_?TrieQ, record_, "Probabilities", opts : OptionsPattern[]] :=
-    Block[{res, dval = OptionValue[TrieClassify, "Default"]},
+    Block[{res,
+      dval = OptionValue[TrieClassify, "Default"],
+      verifyKeyQ = TrueQ[OptionValue[TrieClassify, "VerifyKeyExistence"]]},
 
-      If[ !TrieKeyExistsQ[ tr, record ],
+      If[ verifyKeyQ && !TrieKeyExistsQ[ tr, record ],
         Message[TrieClassify::notkey, record];
         Return[$Failed]
       ];
