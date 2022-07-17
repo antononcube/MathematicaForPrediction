@@ -312,7 +312,7 @@ Hence the trapezoidal formula integration is going to work correctly.
 AUROC[pROCs : {_?ROCAssociationQ..}] :=
     Total[Partition[ Sort @ Join[ { {0, 0}, {1, 1} }, Transpose[{ROCFunctions["FPR"] /@ pROCs, ROCFunctions["TPR"] /@ pROCs}] ], 2, 1]
         /. {{x1_, y1_}, {x2_, y2_}} :> (x2 - x1) (y1 + (y2 - y1) / 2)];
-AUROC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[AUROC, rocs];
+AUROC[rocs : Association[ (_ -> _?ROCAssociationQ) .. ] ] := AUROC @ Values @ rocs;
 
 MCC[rocAssoc_?ROCAssociationQ] :=
     Block[{tp, tn, fp, fn, tpfp, tpfn, tnfp, tnfn},
