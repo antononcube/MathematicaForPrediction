@@ -271,34 +271,34 @@ ROCAssociationQ[ obj_ ] :=
         Length[Intersection[Keys[obj], {"TruePositive", "FalsePositive", "TrueNegative", "FalseNegative"}]] == 4;
 
 TPR[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"]) / (rocAssoc["TruePositive"] + rocAssoc["FalseNegative"]);
-TPR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[TPR, rocs];
+TPR[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[TPR, rocs];
 
 SPC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TrueNegative"]) / (rocAssoc["FalsePositive"] + rocAssoc["TrueNegative"]);
-SPC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[SPC, rocs];
+SPC[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[SPC, rocs];
 
 PPV[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"]) / (rocAssoc["TruePositive"] + rocAssoc["FalsePositive"]);
-PPV[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[PPV, rocs];
+PPV[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[PPV, rocs];
 
 NPV[rocAssoc_?ROCAssociationQ] := (rocAssoc["TrueNegative"]) / (rocAssoc["TrueNegative"] + rocAssoc["FalseNegative"]);
-NPV[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[NPV, rocs];
+NPV[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[NPV, rocs];
 
 FPR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalsePositive"]) / (rocAssoc["FalsePositive"] + rocAssoc["TrueNegative"]);
-FPR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FPR, rocs];
+FPR[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[FPR, rocs];
 
 FDR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalsePositive"]) / (rocAssoc["FalsePositive"] + rocAssoc["TruePositive"]);
-FDR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FDR, rocs];
+FDR[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[FDR, rocs];
 
 FNR[rocAssoc_?ROCAssociationQ] := (rocAssoc["FalseNegative"]) / (rocAssoc["FalseNegative"] + rocAssoc["TruePositive"]);
-FNR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FNR, rocs];
+FNR[rocs : ({_?ROCAssociationQ..} | <|(_ -> _?ROCAssociationQ)..|> )] := Map[FNR, rocs];
 
 ACC[rocAssoc_?ROCAssociationQ] := (rocAssoc["TruePositive"] + rocAssoc["TrueNegative"]) / Total[Values[rocAssoc]];
-ACC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[ACC, rocs];
+ACC[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[ACC, rocs];
 
 FOR[rocAssoc_?ROCAssociationQ] := 1 - NPV[rocAssoc];
-FOR[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[FOR, rocs];
+FOR[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[FOR, rocs];
 
 F1[rocAssoc_?ROCAssociationQ] := 2 * PPV[rocAssoc] * TPR[rocAssoc] / ( PPV[rocAssoc] + TPR[rocAssoc] );
-F1[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[F1, rocs];
+F1[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[F1, rocs];
 
 (*
 Note the addition of the points {0,0} and {1,1}.
@@ -322,7 +322,7 @@ MCC[rocAssoc_?ROCAssociationQ] :=
 
       (tp * tn - fp * fn) / Sqrt[ tpfp * tpfn * tnfp * tnfn ]
     ];
-MCC[rocs : ({_?ROCAssociationQ..} | <|_?ROCAssociationQ..|> )] := Map[MCC, rocs];
+MCC[rocs : ({_?ROCAssociationQ..} | Association[ (_ -> _?ROCAssociationQ) .. ] )] := Map[MCC, rocs];
 
 
 aROCAcronyms =
