@@ -572,7 +572,7 @@ The second, optional argument is expected to be a list of two labels, {yesLabel,
 ConfusionMatrixPlot[ aROC_?ROCAssociationQ, labelNames : {yesLabel_, noLabel_} : {"True", "False"}, opts : OptionsPattern[] ] :=
     Block[{mat, refMat},
 
-      mat = { {aROC["FalseNegative"], aROC["TruePositive"]}, {aROC["TrueNegative"], aROC["FalsePositive"]}};
+      mat = { {aROC["TruePositive"], aROC["FalseNegative"]}, {aROC["FalsePositive"], aROC["TrueNegative"]}};
 
       refMat = mat;
 
