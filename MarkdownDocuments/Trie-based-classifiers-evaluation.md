@@ -7,9 +7,13 @@ July, August 2022
 
 ## Introduction
 
-In this notebook we show how to evaluate Machine Learning (ML) classifiers based on Tries with frequencies, [AA1, AA2, AAp1], created over a well known ML dataset. The computations are done with packages and functions from the Wolfram Language (WL) ecosystem.
+In this notebook we show how to evaluate Machine Learning (ML) classifiers based on [Tries](https://en.wikipedia.org/wiki/Trie) with frequencies, [AA1, AA2, AAp1], created over a well known ML dataset. 
+The computations are done with packages and functions from the Wolfram Language (WL) ecosystem.
 
-The classifiers based on Tries with frequencies can be seen as generalized [Naive Bayesian Classifiers (NBCs)](https://mathematicaforprediction.wordpress.com/2013/10/18/generation-of-naive-bayesian-classifiers/).
+The classifiers based on 
+[Tries with frequencies](https://mathematicaforprediction.wordpress.com/2013/12/06/tries-with-frequencies-for-data-mining/) 
+can be seen as generalized 
+[Naive Bayesian Classifiers (NBCs)](https://mathematicaforprediction.wordpress.com/2013/10/18/generation-of-naive-bayesian-classifiers/).
 
 We use the workflow summarized in this flowchart:
 
@@ -17,9 +21,9 @@ We use the workflow summarized in this flowchart:
 Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/A-monad-for-classification-workflows/Classification-workflow-horizontal-layout.jpg"]
 ```
 
-![08tac97m1v31b](./Diagrams/Trie-based-classifiers-evaluation/08tac97m1v31b.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/08tac97m1v31b.png)
 
-For more details on classification workflows see the article [“A monad for classification workflows”](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/), [AA3].
+For more details on classification workflows see the article [“A monad for classification workflows”](https://mathematicaforprediction.wordpress.com/2018/05/15/a-monad-for-classification-workflows/), [AA3].
 
 **Remark:** This notebook is the Mathematica counterpart of the Raku computable Markdown document with the same name [AA7, AA6]. 
 
@@ -38,7 +42,7 @@ dsTitanic0 = ResourceFunction["ExampleDataset"][{"MachineLearning", "Titanic"}];
 dsTitanic0[[1 ;; 4]]
 ```
 
-![0m4somgwuj73s](./Diagrams/Trie-based-classifiers-evaluation/0m4somgwuj73s.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/0m4somgwuj73s.png)
 
 **Remark:** ExampleDataset uses [ExampleData](https://reference.wolfram.com/language/ref/ExampleData.html). Datasets from the ExampleData's "MachineLearning" and "Statistics" collections are processed in order to obtain Dataset objects.
 
@@ -48,7 +52,7 @@ Instead of using the built-in Titanic data we use a version of it (which is used
 dsTitanic[[1 ;; 4]]
 ```
 
-![0yvrxcu8fjfuv](./Diagrams/Trie-based-classifiers-evaluation/0yvrxcu8fjfuv.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/0yvrxcu8fjfuv.png)
 
 Here is a summary of the data:
 
@@ -56,7 +60,7 @@ Here is a summary of the data:
 ResourceFunction["RecordsSummary"][dsTitanic]
 ```
 
-![1jqv1g8o5a2uw](./Diagrams/Trie-based-classifiers-evaluation/1jqv1g8o5a2uw.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/1jqv1g8o5a2uw.png)
 
 ------
 
@@ -85,7 +89,7 @@ trTitanic = TrieCreate[lsRecords[[All, {1, 2, 4}]]];
 TrieForm[trTitanic, AspectRatio -> 1/4, ImageSize -> 900]
 ```
 
-![0aczl0mnjpi4x](./Diagrams/Trie-based-classifiers-evaluation/0aczl0mnjpi4x.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/0aczl0mnjpi4x.png)
 
 Here is a corresponding mosaic plot, [AA4, AAp3]:
 
@@ -93,7 +97,7 @@ Here is a corresponding mosaic plot, [AA4, AAp3]:
 MosaicPlot[lsRecords[[All, {1, 2, 4}]]]
 ```
 
-![157jxydgclea9](./Diagrams/Trie-based-classifiers-evaluation/157jxydgclea9.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/157jxydgclea9.png)
 
 **Remark:** The function MosaicPlot uses tries with frequencies in its implementation. Observing and reasoning with mosaic plots should make it clear that tries with frequencies are (some sort of) generalized Naive Bayesian classifiers.
 
@@ -138,6 +142,14 @@ TrieNodeCounts[trTitanic]
 (*<|"total" -> 142, "internal" -> 60, "leaves" -> 82|>*)
 ```
 
+Here is the trie in tree form:
+
+```mathematica
+TrieForm[trTitanic, ImageSize -> 1200, AspectRatio -> 1/3]
+```
+
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/1hdocpn5z00u2.png)
+
 Here is an example *decision*-classification:
 
 ```mathematica
@@ -154,7 +166,7 @@ TrieClassify[trTitanic, {"1st", "female"}, "Probabilities"]
 (*<|"survived" -> 0.962264, "died" -> 0.0377358|>*)
 ```
 
-We want to classify across all testing data, but not all testing data records might be present in the trie. Let us check that such testing records are few (or none):
+We want to classify across all testing data, but not all testing data-records might be present in the trie. Let us check that such testing records are few (or none):
 
 ```mathematica
 Tally[Map[TrieKeyExistsQ[trTitanic, #] &, aSplit2["testing"]]]
@@ -186,7 +198,7 @@ Here we cross tabulate the actual vs predicted labels using WFR's [CrossTabulate
 ResourceFunction["CrossTabulate"][lsClassRes]
 ```
 
-![192nfe8h97k9k](./Diagrams/Trie-based-classifiers-evaluation/192nfe8h97k9k.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/192nfe8h97k9k.png)
 
 The cross-tabulation results look bad because the default decision threshold is used. We get better results by selecting a decision threshold via [Receiver Operating Characteristic (ROC)](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) plots.
 
@@ -208,7 +220,7 @@ Here we classify all testing data records. For each record:
 lsClassRes = Map[Join[<|"survived" -> 0, "died" -> 0, "actual" -> #[[-1]]|>, TrieClassify[trTitanic, #[[1 ;; -2]], "Probabilities"]] &, lsTesting];
 ```
 
-Here we make a ROC record, [AA5, AAp4]:
+Here we make a ROC record, [AA5, AAp4]:
 
 ```mathematica
 ToROCAssociation[{"survived", "died"}, #actual & /@ lsClassRes, Map[If[#survived >= 0.5, "survived", "died"] &, lsClassRes]]
@@ -227,7 +239,7 @@ MinMax[lsVals]
 
 Here we make list of decision thresholds:
 
-![0n9qun2v81o7r](./Diagrams/Trie-based-classifiers-evaluation/0n9qun2v81o7r.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/0n9qun2v81o7r.png)
 
 In the following code cell for each threshold:
 
@@ -247,7 +259,7 @@ Here is the obtained ROCs dataset:
 Dataset[MapThread[Prepend[#1, "Threshold" -> #2] &, {lsROCs, lsThresholds}]]
 ```
 
-![1xlmbkphhwhsf](./Diagrams/Trie-based-classifiers-evaluation/1xlmbkphhwhsf.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/1xlmbkphhwhsf.png)
 
 Here is the corresponding ROC plot:
 
@@ -255,7 +267,7 @@ Here is the corresponding ROC plot:
 ROCPlot["FPR", "TPR", lsThresholds, lsROCs, GridLines -> Automatic, ImageSize -> Large]
 ```
 
-![0jlvgunwaouqi](./Diagrams/Trie-based-classifiers-evaluation/0jlvgunwaouqi.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/0jlvgunwaouqi.png)
 
 We can see the Trie-based classifier has reasonable prediction abilities -- we get ≈ 80% True Positive Rate (TPR) for a relatively small False Positive Rate (FPR), ≈ 20%.
 
@@ -276,7 +288,7 @@ DynamicModule[{lsThresholds = lsThresholds, lsClassRes = lsClassRes, lsClassRes2
  ]
 ```
 
-![0e2tg6vw1ssh1](./Diagrams/Trie-based-classifiers-evaluation/0e2tg6vw1ssh1.png)
+![](https://github.com/antononcube/MathematicaForPrediction/raw/master/MarkdownDocuments/Diagrams/Trie-based-classifiers-evaluation/0e2tg6vw1ssh1.png)
 
 ------
 
