@@ -54,7 +54,7 @@
 (* Importing packages (if needed)                             *)
 (**************************************************************)
 
-If[Length[DownValues[TileGraph`TileBins]] == 0,
+If[Length[DownValues[TileBins`TileBins]] == 0,
   Echo["TileBins.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/TileBins.m"]
 ];
