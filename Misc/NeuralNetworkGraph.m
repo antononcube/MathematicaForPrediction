@@ -1,6 +1,6 @@
 (*
     Neural network graph Mathematica package
-    Copyright (C) 2018  Anton Antonov
+    Copyright (C) 2018-2022  Anton Antonov
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
