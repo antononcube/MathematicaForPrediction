@@ -761,7 +761,7 @@ QRMonNetRegression[splitRatio_?NumberQ, opts : OptionsPattern[]][xs_, context_] 
 
       {trainedNet, lowestVal} =
           NetTrain[
-            context["net"], trainingData, {"TrainedNet", "LowestValidationLoss"},
+            context["net"], trainingData, {"TrainedNet", "ValidationLoss"},
             ValidationSet -> testData,
             DeleteCases[ {opts}, HoldPattern[InterpolationOrder -> _] ]
           ];
