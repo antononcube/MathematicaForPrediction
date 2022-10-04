@@ -15,9 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	  Written by Anton Antonov,
-   	antononcube @@ posteo . n et,
-	  Windermere, Florida, USA.
+    Written by Anton Antonov,
+   	ʇǝu˙oǝʇsod@ǝqnɔouoʇuɐ,
+    Windermere, Florida, USA.
 *)
 
 (*
@@ -32,7 +32,10 @@
 *)
 
 (* Version 1.0 *)
-(* 
+(*
+
+## Introduction
+
    This package provides an implementation of a system of functional parsers. 
    The implementation follows closely the article:
 
@@ -44,7 +47,7 @@
    The combinator parsers allow sequential and alternative combinations of parsers.
    The transformer parsers change the input or the output of the parsers that are transformed.
 
-   A basic parse or a combinator parser takes a list of strings and returns a list of pairs, {{o1,r1},{o2,r2},...}.
+   A basic parser or a combinator parser takes a list of strings and returns a list of pairs, {{o1,r1},{o2,r2},...}.
    Each pair has as elements a parsed output and the rest of the input list.
 
    Functions for splitting the input text into tokens are provided.
@@ -77,11 +80,19 @@
       https://github.com/antononcube/MathematicaForPrediction/tree/master/R/FunctionalParsers (R), and
       https://github.com/antononcube/MathematicaForPrediction/tree/master/Lua/FunctionalParsers (Lua).
 
-TODO:
-   1. Add a simple concrete example in this file.
-   2. Re-implement with the new syntax for operators in Mathematica.
-   3. Provide unit tests.
+## Usage example
 
+```mathematica
+p = (Who\[CircleDot](ParseSymbol["I"]\[CirclePlus]ParseSymbol["we"]))\[CircleTimes](Verb\[CircleDot](ParseSymbol["love"]\[CirclePlus]ParseSymbol["crave"]))\[CircleTimes](What\[CircleDot](ParseSymbol["chocolate"]\[CirclePlus]ParseSymbol["coffee"]\[CirclePlus]ParseSymbol["ice"]\[CircleTimes]ParseSymbol["cream"]));
+   Grid[{#, p[ToTokens[#]]} & /@ {"we love ice cream", "I crave coffee"}, Dividers -> All, Alignment -> Left]
+```
+
+## TODO
+
+   1. [X] Add a simple concrete example in this file.
+   2. [ ] Re-implement with the new syntax for operators in Mathematica.
+   3. [ ] Provide unit tests.
+   4. [ ] Make a corresponding paclet for [WPR](https://resources.wolframcloud.com/PacletRepository/).
 *)
 
 BeginPackage["FunctionalParsers`"];
