@@ -56,12 +56,12 @@
          ClCon[ds, <||>] ⟹
            ClConSplitData[0.75] ⟹
            ClConMakeClassifier["NearestNeighbors"] ⟹
-           ClConEchoFunctionContext[ClassifierInformation[#["classifier"]] &] ⟹
+           ClConEchoFunctionContext[Information[#["classifier"]] &] ⟹
            ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}] ⟹
            ClConEchoValue ⟹
            (If[#1["Accuracy"] > 0.7, None, ClCon[#1, #2]] &) ⟹
            ClConMakeClassifier["RandomForest"] ⟹
-           ClConEchoFunctionContext[ClassifierInformation[#["classifier"]] &] ⟹
+           ClConEchoFunctionContext[Information[#["classifier"]] &] ⟹
            ClConClassifierMeasurements[{"Accuracy", "Precision", "Recall"}] ⟹
            ClConEchoValue;
 
@@ -1075,7 +1075,7 @@ ClConClassifierMeasurementsByThreshold[measures : (_String | {_String ..}), clas
       Which[
 
         KeyExistsQ[context, "classifier"] && TrueQ[ Head[ context["classifier"] ] === ClassifierFunction ],
-        aCl = <|ClassifierInformation[context["classifier"], Method] -> context["classifier"] |>;
+        aCl = <|Information[context["classifier"], Method] -> context["classifier"] |>;
         ClConBind[
           ClConUnit[ xs, Join[context, <|"classifier"-> aCl|>] ],
           ClConClassifierMeasurements[ measures, Method -> (EnsembleClassifyByThreshold[##, classLabel -> th]&), opts ]
@@ -1163,7 +1163,7 @@ ClConROCData[opts:OptionsPattern[]][xs_,context_]:=
         Return[$ClConFailure],
 
         MatchQ[ context["classifier"], _ClassifierFunction],
-        cl = <| ClassifierInformation[context["classifier"],Method] -> context["classifier"] |>,
+        cl = <| Information[context["classifier"], Method] -> context["classifier"] |>,
 
         True,
         cl = context["classifier"]
