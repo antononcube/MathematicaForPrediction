@@ -46,7 +46,7 @@ closely related to the "main directory" packages.
 Some of the packages listed above have:
 
 - Counterpart implementations in [Python](https://pypi.org/user/antononcube/), [R](https://github.com/antononcube/R-packages), or other languages
-- Related [Wolfram Function Repository functions](https://resources.wolframcloud.com/FunctionRepository/search/?i=Anton+Antonov) 
+- Related [Wolfram Function Repository functions](https://resources.wolframcloud.com/publishers/resources?PublisherID=antononcube) 
 
 (The code in the R directory in this repository though is not updated, it is just kept for references.
 See the corresponding, actively worked on, dedicated repository 
