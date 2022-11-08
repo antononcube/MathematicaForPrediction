@@ -269,7 +269,7 @@ MakeSSparseMatrix[triplets : _?MatrixQ, dims_, val_, opts : OptionsPattern[]] :=
       rules[[All, 1]] = rowNames /@ rules[[All, 1]];
       rules[[All, 2]] = colNames /@ rules[[All, 2]];
 
-      sarr = SparseArray[Most[#] -> Last[#]& /@ rules];
+      sarr = SparseArray[Most[#] -> Last[#]& /@ rules, dims, val];
       ToSSparseMatrix[sarr, "RowNames" -> Map[ToString, Keys[rowNames]], "ColumnNames" -> Map[ToString, Keys[colNames]], opts]
     ] /; Dimensions[triplets][[2]] == 3;
 
