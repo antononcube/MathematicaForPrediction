@@ -441,7 +441,8 @@ EnsembleClassifierMeasurements[cls_Association, testData_?ClassifierDataQ, measu
       clVals = cfMethod[cls, testData[[All, 1]]];
 
       (* It is assumed here that all ClassifierFunction objects have the same classes. *)
-      clClasses = ClassifierInformation[cls[[1]], "Classes"];
+      (* clClasses = ClassifierInformation[cls[[1]], "Classes"]; *)
+      clClasses = Information[cls[[1]], "Classes"];
 
       If[ targetClasses === Automatic,
         targetClasses = clClasses;
@@ -490,7 +491,7 @@ EnsembleClassifierROCData[aCL_Association,
     Block[{clClasses, clRes, testLabels, ccLabel, ccNotLabel, ccTestLabels, rocs},
 
       If[TrueQ[targetClasses === All || targetClasses === Automatic],
-        clClasses = ClassifierInformation[aCL[[1]], "Classes"],
+        clClasses = Information[aCL[[1]], "Classes"],
         clClasses = targetClasses
       ];
 
