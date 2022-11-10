@@ -643,17 +643,21 @@ GNNMonComputeProximityMatrix[___][xs_, context_Association] :=
 
 Clear[GNNMonComputeAdjacencyMatrix];
 
-SyntaxInformation[GNNMonComputeAdjacencyMatrix] = { "ArgumentsPattern" -> { _} };
+SyntaxInformation[GNNMonComputeAdjacencyMatrix] = { "ArgumentsPattern" -> { _, OptionsPattern[] } };
+
+Options[GNNMonComputeAdjacencyMatrix] = {"ImplicitValue" -> 0};
 
 GNNMonComputeAdjacencyMatrix[$GNNMonFailure] := $GNNMonFailure;
 
 GNNMonComputeAdjacencyMatrix[xs_, context_Association] := $GNNMonFailure;
 
-GNNMonComputeAdjacencyMatrix[ nTopNNs_Integer ][xs_, context_Association] :=
-      GNNMonComputeAdjacencyMatrix[{nTopNNs, Infinity}][xs, context];
+GNNMonComputeAdjacencyMatrix[ nTopNNs_Integer, opts : OptionsPattern[]][xs_, context_Association] :=
+    GNNMonComputeAdjacencyMatrix[{nTopNNs, Infinity}, opts][xs, context];
 
-GNNMonComputeAdjacencyMatrix[ {nTopNNs_Integer, maxRadius : (_?NumericQ | Infinity) }][xs_, context_Association] :=
-    Block[{data, nns, nfd, nnsMat},
+GNNMonComputeAdjacencyMatrix[ {nTopNNs_Integer, maxRadius : (_?NumericQ | Infinity) }, opts : OptionsPattern[]][xs_, context_Association] :=
+    Block[{data, nns, nfd, nnsMat, iv},
+
+      iv = OptionValue[GNNMonComputeAdjacencyMatrix, "ImplicitValue"];
 
       data = GNNMonTakeData[xs, context];
       If[ TrueQ[ data === $GNNMonFailure ], Return[$GNNMonFailure] ];
@@ -677,9 +681,9 @@ GNNMonComputeAdjacencyMatrix[ {nTopNNs_Integer, maxRadius : (_?NumericQ | Infini
 
       nns = Join @@ MapIndexed[ Flatten /@ Thread[{#2[[1]], #1}] &, nns ];
 
-      nns[[All, 1]] = Keys[ data ][[ nns[[All , 1]] ]];
+      nns[[All, 1]] = Keys[ data ][[ nns[[All, 1]] ]];
       nns[[All, 2]] = Keys[ data ][[ nns[[All, 2]] ]];
-      nnsMat = MakeSSparseMatrix[ nns ];
+      nnsMat = MakeSSparseMatrix[ nns, Automatic, iv];
 
       GNNMonUnit[ nnsMat, context ]
     ];
