@@ -161,7 +161,7 @@ a numeric vector, or a time series.";
 
 QuantileRegressionFit::"fvlen" = "The second argument is expected to be list of functions to be fitted with at least one element.";
 
-QuantileRegressionFit::"nvar" = "The third argument is expected to be a symbol.";
+QuantileRegressionFit::"nvar" = "The third argument is expected to be a symbol or a list of symbols.";
 
 QuantileRegressionFit::"nprobs" = "The fourth argument is expected to be a list of numbers representing probabilities.";
 
@@ -170,20 +170,24 @@ LinearProgramming, Minimize, NMinimize or a list with LinearProgramming, Minimiz
 
 QuantileRegressionFit::"mmslow" = "With the method Minimize the computations can be very slow for large data sets.";
 
+QuantileRegressionFit::"mnd" = "The methods Minimize and NMinimize do not work on more than one regressors (variables). Consider using the method LinearProgramming instead.";
+
 QuantileRegressionFit::"nargs" = "Four arguments are expected.";
 
 Clear[QuantileRegressionFit];
 
 Options[QuantileRegressionFit] = {Method -> LinearProgramming};
 
-QuantileRegressionFit[data_?VectorQ, funcs_, var_?AtomQ, probs_, opts : OptionsPattern[]] :=
-    QuantileRegressionFit[ Transpose[{ Range[Length[data]], data}], funcs, var, probs, opts];
+QuantileRegressionFit[data_?VectorQ, funcs_, varSpec : (_?AtomQ | {_?AtomQ..}), probs_, opts : OptionsPattern[]] :=
+    QuantileRegressionFit[ Transpose[{ Range[Length[data]], data}], funcs, varSpec, probs, opts];
 
-QuantileRegressionFit[data : (_TimeSeries | _TemporalData), funcs_, var_?AtomQ, probs_, opts : OptionsPattern[]] :=
-    QuantileRegressionFit[ QuantityMagnitude[data["Path"]], funcs, var, probs, opts];
+QuantileRegressionFit[data : (_TimeSeries | _TemporalData), funcs_, varSpec : (_?AtomQ | {_?AtomQ..}), probs_, opts : OptionsPattern[]] :=
+    QuantileRegressionFit[ QuantityMagnitude[data["Path"]], funcs, varSpec, probs, opts];
 
-QuantileRegressionFit[data_, funcs_, var_?AtomQ, probsArg_, opts : OptionsPattern[]] :=
-    Block[{mOptVal, probs = Flatten @ List @ probsArg},
+QuantileRegressionFit[data_, funcs_, varSpec : (_?AtomQ | {_?AtomQ..}), probsArg_, opts : OptionsPattern[]] :=
+    Block[{mOptVal, vars, probs = Flatten @ List @ probsArg},
+
+      vars = If[AtomQ[varSpec], {varSpec}, varSpec];
 
       (*This check should not be applied because the first function can be a constant.*)
       (*!Apply[And,Map[!FreeQ[#,var]&,funcs]],Message[QuantileRegressionFit::\"fvfree\"],*)
@@ -194,7 +198,7 @@ QuantileRegressionFit[data_, funcs_, var_?AtomQ, probsArg_, opts : OptionsPatter
         Length[funcs] < 1,
         Message[QuantileRegressionFit::"fvlen"]; Return[{}],
 
-        Head[var] =!= Symbol,
+        Not @ Apply[And, TrueQ[Head[#] === Symbol]& /@ vars],
         Message[QuantileRegressionFit::"nvar"]; Return[{}],
 
         ! VectorQ[probs, NumericQ[#] && 0 <= # <= 1 &],
@@ -205,16 +209,22 @@ QuantileRegressionFit[data_, funcs_, var_?AtomQ, probsArg_, opts : OptionsPatter
 
       Which[
         TrueQ[mOptVal === LinearProgramming],
-        LPQuantileRegressionFit[data, funcs, var, probs],
+        LPQuantileRegressionFit[data, funcs, vars, probs],
 
         ListQ[mOptVal] && TrueQ[mOptVal[[1]] === LinearProgramming],
-        LPQuantileRegressionFit[data, funcs, var, probs, Rest[mOptVal]],
+        LPQuantileRegressionFit[data, funcs, vars, probs, Rest[mOptVal]],
+
+        TrueQ[mOptVal === Minimize || mOptVal === NMinimize] && Length[vars] == 1,
+        MinimizeQuantileRegressionFit[mOptVal, data, funcs, vars[[1]], probs],
 
         TrueQ[mOptVal === Minimize || mOptVal === NMinimize],
-        MinimizeQuantileRegressionFit[mOptVal, data, funcs, var, probs],
+        Message[QuantileRegressionFit::"mnd"]; Return[{}],
+
+        ListQ[mOptVal] && TrueQ[mOptVal[[1]] === Minimize || mOptVal[[1]] === NMinimize] && Length[vars] == 1,
+        MinimizeQuantileRegressionFit[mOptVal[[1]], data, funcs, vars[[1]], probs, Rest[mOptVal]],
 
         ListQ[mOptVal] && TrueQ[mOptVal[[1]] === Minimize || mOptVal[[1]] === NMinimize],
-        MinimizeQuantileRegressionFit[mOptVal[[1]], data, funcs, var, probs, Rest[mOptVal]],
+        Message[QuantileRegressionFit::"mnd"]; Return[{}],
 
         True,
         Message[QuantileRegressionFit::"nmeth"]; Return[{}]
@@ -229,33 +239,39 @@ QuantileRegressionFit[___] :=
 
 Clear[LPQuantileRegressionFit];
 
-LPQuantileRegressionFit[dataArg_?MatrixQ, funcs_, var_Symbol, probs : {_?NumberQ ..}, opts : OptionsPattern[]] :=
+LPQuantileRegressionFit[dataArg_?MatrixQ, funcs_, vars : {_Symbol..}, probs : {_?NumberQ ..}, opts : OptionsPattern[]] :=
     Block[{data = dataArg, yMedian = 0, yFactor = 1, yShift = 0, mat, n = Dimensions[dataArg][[1]], pfuncs, c, t, qrSolutions},
-      If[Min[data[[All, 2]]] < 0,
-        yMedian = Median[data[[All, 2]]];
-        yFactor = InterquartileRange[data[[All, 2]]];
-        data[[All, 2]] = Standardize[data[[All, 2]], Median, InterquartileRange];
-        yShift = Abs[Min[data[[All, 2]]]];(*this is Min[dataArg[[All,2]]-Median[dataArg[[All,2]]*)
-
-        data[[All, 2]] = data[[All, 2]] + yShift ;
+      If[Min[data[[All, -1]]] < 0,
+        yMedian = Median[data[[All, -1]]];
+        yFactor = InterquartileRange[data[[All, -1]]];
+        data[[All, -1]] = Standardize[data[[All, -1]], Median, InterquartileRange];
+        yShift = Abs[Min[data[[All, -1]]]];(*this is Min[dataArg[[All,2]]-Median[dataArg[[All,2]]*)
+        data[[All, -1]] = data[[All, -1]] + yShift ;
       ];
 
-      pfuncs = Map[Function[{fb}, With[{f = fb /. (var -> Slot[1])}, f &]], funcs];
-      mat = Map[Function[{f}, f /@ data[[All, 1]]], pfuncs];
+      pfuncs =
+          Map[
+            Function[{fb},
+              With[{f = fb /. Thread[vars -> Map[Slot, Range[Length[vars]]]]}, f &]
+            ],
+            funcs
+          ];
+      mat = Map[Function[{f}, f @@@ data[[All, 1 ;; -2]]], pfuncs];
       mat = Map[Flatten, Transpose[Join[mat, {IdentityMatrix[n], -IdentityMatrix[n]}]]];
       mat = N[SparseArray[mat]];
 
       qrSolutions =
           Table[
-            c = Join[ConstantArray[0, Length[funcs]], ConstantArray[1, n] q, ConstantArray[1, n] (1 - q)];
-            t = LinearProgramming[c, mat, Transpose[{data[[All, 2]], ConstantArray[0, n]}], opts];
+            c = Join[ConstantArray[0, Length[funcs]], ConstantArray[1, n] * q, ConstantArray[1, n] * (1 - q)];
+            t = LinearProgramming[c, mat, Transpose[{data[[All, -1]], ConstantArray[0, n]}], opts];
             If[ !(VectorQ[t, NumberQ] && Length[t] > Length[funcs]), ConstantArray[0, Length[funcs]], t ]
             , {q, probs}];
 
 
       If[yMedian == 0 && yFactor == 1,
         Map[funcs.# &, qrSolutions[[All, 1 ;; Length[funcs]]]],
-        Map[Expand[yFactor ((funcs.#) - yShift) + yMedian] &, qrSolutions[[All, 1 ;; Length[funcs]]]]
+        (*ELSE*)
+        Map[Expand[yFactor * ((funcs.#) - yShift) + yMedian] &, qrSolutions[[All, 1 ;; Length[funcs]]]]
       ]
     ];
 
@@ -426,7 +442,7 @@ MinimizeSplineQuantileRegression[methodFunc_, data_?MatrixQ, npieces_Integer, or
     MinimizeSplineQuantileRegression[methodFunc, data, Rescale[Range[0, 1, 1 / npieces], {0, 1}, {Min[data[[All, 1]]], Max[data[[All, 1]]]}], order, probs, opts];
 
 MinimizeSplineQuantileRegression[methodFunc_, dataArg_?MatrixQ, knotsArg : {_?NumberQ ..}, order_Integer, probs : {_?NumberQ ..}, opts : OptionsPattern[]] :=
-    Block[{data = dataArg, knots = Sort[knotsArg], bvars, pfuncs, b, c, t, Tilted, QRModel, qrSolutions, minFunc},
+    Block[{data = dataArg, knots = Sort[knotsArg], bvars, pfuncs, b, t, Tilted, QRModel, qrSolutions, minFunc},
 
       If[Length[data] > 300,
         Message[QuantileRegression::"mmslow"]
