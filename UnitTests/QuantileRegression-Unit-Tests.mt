@@ -260,4 +260,31 @@ VerificationTest[(* 17 *)
 ];
 
 
+VerificationTest[(* 18 *)
+  c = 10;
+  lsData = RandomReal[{0, c}, {300, 2}];
+  matData = Map[Append[#, Sqrt[4 #[[1]] ] + 2 Sin[#[[1]] + #[[2]]/5] + RandomVariate[NormalDistribution[0, 0.6]]] &, lsData];
+  qFuncs = QuantileRegressionFit[matData, {1, x, y, x + y, x^2, y^2, x y}, {x, y}, probs, Method -> {LinearProgramming, Method -> "CLP"}];
+  ListQ[qFuncs] && Length[qFuncs] == Length[probs]
+  ,
+  True
+  ,
+  TestID -> "QuantileRegressionFit-3D-1"
+];
+
+VerificationTest[(* 19 *)
+  c = 10;
+  lsData = RandomReal[{0, c}, {300, 2}];
+  matData = Map[Append[#, Sqrt[4 #[[1]] ] + 2 Sin[#[[1]] + #[[2]]/5] + RandomVariate[NormalDistribution[0, 0.6]]] &, lsData];
+  qFuncs = QuantileRegressionFit[matData, {1, x, y, x + y, x^2, y^2, x y}, {x, y}, probs, Method -> {LinearProgramming, Method -> "CLP"}];
+  sepPointsFractions = Map[Function[{f}, Length[Select[matData, #[[-1]] < (f /. {x -> #[[1]], y -> #[[2]]}) &]]/ Length[matData] // N], qFuncs];
+  Norm[sepPointsFractions - probs, Infinity] <= 0.03
+  ,
+  True
+  ,
+  TestID -> "QuantileRegressionFit-3D-2"
+];
+
+
+
 EndTestSection[]
