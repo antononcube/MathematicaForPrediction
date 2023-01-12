@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmai l . c om,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -49,7 +49,7 @@ BeginTestSection["JavaTriesWithFrequencies-Unit-Tests"];
 
 VerificationTest[(* 1 *)
   CompoundExpression[
-    userDirName = "Users/antonov";
+    userDirName = $HomeDirectory;
     Set[$JavaTriesWithFrequenciesPath, FileNameJoin[ { userDirName, "MathematicaForPrediction/Java/TriesWithFrequencies"} ] ],
     Set[dirName, FileNameJoin[ { userDirName, "MathematicaForPrediction"} ] ],
     {
