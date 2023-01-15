@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -124,7 +124,7 @@ GenerateStateMonadCode[ "PhFillMon", "FailureSymbol" -> $PhFillMonFailure, "Stri
 
 ClearAll[PhFillMonMakeNGramTrie];
 PhFillMonMakeNGramTrie[___][None] := None;
-PhFillMonMakeNGramTrie[indexPermutation_: {_Integer ..}][xs_, context_] :=
+PhFillMonMakeNGramTrie[indexPermutation_ : {_Integer ..}][xs_, context_] :=
     Block[{jTr, p, ip},
 
       If[! TextAMonUnitQ[xs],
@@ -140,7 +140,7 @@ PhFillMonMakeNGramTrie[indexPermutation_: {_Integer ..}][xs_, context_] :=
 
       jTr = Fold[ TextAMonBind, xs, {TextAMonMakeNGramTrie[Length[indexPermutation], indexPermutation], TextAMonTakeValue} ];
 
-      PhFillMon[JavaTrieNodeCounts[jTr],
+      PhFillMon[TrieNodeCounts[jTr],
         Join[context, <|"trie" -> jTr, "indexPermutation" -> indexPermutation, "indexReversePermutation" -> ip|>]]
     ];
 
@@ -155,18 +155,17 @@ PhFillMonPhraseSuggestionPaths[phrase : {_String ..}, maxLength : (Automatic | _
         Return[None]
       ];
 
-      If[! JavaTrieKeyQ[context["trie"], phrase],
+      If[! TrieKeyQ[context["trie"], phrase],
         PhFillMon[{}, context],
-      (*ELSE*)
+        (*ELSE*)
         If[TrueQ[maxLength === Automatic],
           res =
               SortBy[Rest /@
-                  JavaTrieRootToLeafPaths[
-                    JavaTrieRetrieve[context["trie"], phrase]], -#[[All, 2]] &],
+                  TrieRootToLeafPaths[TrieSubTrie[context["trie"], phrase]], -#[[All, 2]] &],
+          (*ELSE*)
           res =
               SortBy[Rest /@
-                  JavaTrieRootToLeafPaths[
-                    JavaTriePrune[JavaTrieRetrieve[context["trie"], phrase], maxLength]], -#[[All, 2]] &]
+                  TrieRootToLeafPaths[TriePrune[TrieSubTrie[context["trie"], phrase], maxLength]], -#[[All, 2]] &]
         ];
 
         If[prependQ,
@@ -185,7 +184,7 @@ PhFillMonPhraseSuggestions[phrase : {_String ...}][xs_, context_] :=
       If[ Length[phrase] == 0,
 
         PhFillMon[Unit{}, context],
-      (*ELSE*)
+        (*ELSE*)
 
         res = Fold[ PhFillMonBind, PhFillMonUnit[xs, context], { PhFillMonPhraseSuggestionPaths[phrase, Automatic], PhFillMonTakeValue } ];
 
@@ -202,7 +201,7 @@ PhFillMonPhraseSuggestions[phrase : {_String ...}][xs_, context_] :=
 
 
 ClearAll[PhFillMonPredictedIndex];
-PhFillMonPredictedIndex[][xs_,context_] :=
+PhFillMonPredictedIndex[][xs_, context_] :=
     Block[{},
       If[! KeyExistsQ[context["indexPermutation"]],
         Echo["No n-gram trie is made.", "PhFillMonPredictedIndex:"];
