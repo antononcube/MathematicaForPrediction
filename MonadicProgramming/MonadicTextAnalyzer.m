@@ -395,21 +395,21 @@ TextAMonEchoPOSWordsInterface[ opts : OptionsPattern[] ][xs_, context_] :=
             Manipulate[
               DynamicModule[{posTag, jjTr, leafProbs, paretoLeafProbs},
                 posTag = posAbbr /. abbrTagRules;
-                jjTr = TrieRetrieve[trTagWord, {posTag}];
-                leafProbs = {"key", "value"} /. TrieLeafProbabilities[jjTr, "Normalized" -> True];
+                jjTr = TrieSubTrie[trTagWord, {posTag}];
+                leafProbs = List @@@ Normal[TrieLeafProbabilities[jjTr]];
                 If[ TrieNodeCounts[jjTr]["leaves"] > paretoApplicationThreshold && paretoFraction < 1,
-                  jjTr = TrieParetoFractionRemove[jjTr, paretoFraction, True, "LONG_TAIL_WORDS"]
+                  jjTr = TrieParetoFractionRemove[jjTr, paretoFraction, "Postfix" -> "LONG_TAIL_WORDS"]
                 ];
-                paretoLeafProbs = {"key", "value"} /. TrieLeafProbabilities[jjTr, "Normalized" -> True];
+                paretoLeafProbs = List @@@ Normal[TrieLeafProbabilities[jjTr]];
                 Grid[{
                   Map[
                     Style[#, GrayLevel[0.5], FontFamily -> "Times"] &,
                     {"Pareto principle adherence", "Word probabilities for " <> posTag}
                   ],
-                  {ParetoLawPlot[leafProbs[[All, 2]],
+                  {ResourceFunction["ParetoPrinciplePlot"][leafProbs[[All, 2]],
                     ImageSize -> Round[ 0.75 * imSize ]],
                     Pane[
-                      GridTableForm[SortBy[paretoLeafProbs, -#[[2]] &], TableHeadings -> {"Literal", "Probability"}],
+                      ResourceFunction["GridTableForm"][SortBy[paretoLeafProbs, -#[[2]] &], TableHeadings -> {"Literal", "Probability"}],
                       ImageSize -> {imSize, imSize}, Scrollbars -> {False, True}]
                   }}, Alignment -> {{Left, Left}, {Top, Top}}]
               ],
