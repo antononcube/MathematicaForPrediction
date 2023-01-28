@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ posteo . net,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -194,7 +194,6 @@ TrieComparisonGrid::usage = "Makes a grid trie plots for a specified list of tri
 TrieClassify::usage = "TrieClassify[tr_,record_] classifies a record using a trie. \
 The signature TrieClassify[tr_,record_,prop_] can take properties as the ones given to ClassifierFunction. \
 TrieClassify[tr_,record_] is the same as TrieClassify[tr_,record_,\"Decision\"].";
-
 
 Begin["`Private`"];
 
@@ -795,7 +794,10 @@ TrieRandomChoice::args = "The first argument is expected to be a trie. \
 The second, optional argument is expected to be a positive integer.";
 
 Clear[TrieRandomChoice];
-TrieRandomChoice[tr_?TrieQ, n_Integer : 1] :=
+TrieRandomChoice[tr_?TrieQ] :=
+    First @ TrieRandomChoice[tr,1];
+
+TrieRandomChoice[tr_?TrieQ, n_Integer] :=
     Table[TrieRandomChoiceRec[Normal[tr][[1]]][[1]], n];
 
 Clear[TrieRandomChoiceRec];
