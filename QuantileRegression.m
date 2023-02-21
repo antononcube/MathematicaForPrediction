@@ -150,6 +150,8 @@ experimental implementation of quantile envelopes points finding.";
 QuantileEnvelopeRegion::usage = "QuantileEnvelopeRegion[data_?MatrixQ,q_?NumberQ,ndir_Integer] \
 experimental implementation of 2D or 3D quantile envelope region finding.";
 
+NURBSBasis::usage = "NURBSBasis[data_?MatrixQ, n_]";
+
 Begin["`Private`"];
 
 (************************************************************)
@@ -299,6 +301,47 @@ MinimizeQuantileRegressionFit[methodFunc_, data_?MatrixQ, funcs_, var_Symbol, pr
       Map[funcs.# &, qrSolutions[[All, 2, All, 2]]]
     ];
 
+
+(************************************************************)
+(* NURBS basis                                              *)
+(************************************************************)
+
+Clear[NURBSBasis];
+
+Options[NURBSBasis] = {SplineClosed -> False};
+
+NURBSBasis[data_?MatrixQ, n_Integer, opts : OptionsPattern[]] :=
+    NURBSBasis[data, Table[n, Length @ data[[1]]] ];
+
+NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
+    Block[{ns = nsArg, dim = Dimensions[data][[2]],
+      lsMinMaxes, cpts0, inds, cpts, lsBasis},
+
+      Which[
+        dim - 1 < Length[ns],
+        ns = Take[ns, dim - 1],
+
+        dim - 1 > Length[ns],
+        Take[Flatten[Table[ns, dim]], dim - 1]
+      ];
+
+      lsMinMaxes = MinMax /@ Transpose[data];
+
+      cpts0 = Outer[{0} &, Sequence @@ Map[Table[i, {i, 0, 1, 1 / (# - 1)}] &, ns]];
+      inds = Outer[List, Sequence @@ Map[Range, ns]];
+
+      inds = Flatten[inds, dim - 2];
+
+      lsBasis = Map[(
+        cpts = cpts0;
+        cpts = ReplacePart[cpts, #1 -> {1}];
+        With[{f = BSplineFunction[cpts, Sequence @@ FilterRules[{opts}, Options[BSplineFunction]]]},
+          Evaluate[f @@ Table[ Rescale[Slot[i], lsMinMaxes[[i]]], {i, Length@lsMinMaxes}] ]&])&,
+        inds
+      ];
+
+      lsBasis
+    ];
 
 (************************************************************)
 (* QuantileRegression                                       *)
