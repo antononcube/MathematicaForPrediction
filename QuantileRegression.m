@@ -314,7 +314,7 @@ NURBSBasis[data_?MatrixQ, n_Integer, opts : OptionsPattern[]] :=
     NURBSBasis[data, Table[n, Length @ data[[1]]] ];
 
 NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
-    Block[{ns = nsArg, dim = Dimensions[data][[2]],
+     Module[{ns = nsArg, dim = Dimensions[data][[2]],
       lsMinMaxes, cpts0, inds, cpts, lsBasis},
 
       Which[
