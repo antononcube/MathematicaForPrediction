@@ -336,7 +336,7 @@ NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
         cpts = cpts0;
         cpts = ReplacePart[cpts, #1 -> {1}];
         With[{f = BSplineFunction[cpts, Sequence @@ FilterRules[{opts}, Options[BSplineFunction]]]},
-          Evaluate[f @@ Table[ Rescale[Slot[i], lsMinMaxes[[i]]], {i, Length@lsMinMaxes}] ]&])&,
+          Evaluate[f @@ Table[ Rescale[Slot[i], lsMinMaxes[[i]]], {i, Length[lsMinMaxes] - 1}] ]&])&,
         inds
       ];
 
