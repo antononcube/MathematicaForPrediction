@@ -318,11 +318,11 @@ NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
       lsMinMaxes, cpts0, inds, cpts, lsBasis},
 
       Which[
-        dim - 1 < Length[ns],
-        ns = Take[ns, dim - 1],
+        dim < Length[ns],
+        ns = Take[ns, dim],
 
-        dim - 1 > Length[ns],
-        Take[Flatten[Table[ns, dim]], dim - 1]
+        dim > Length[ns],
+        ns = Take[Flatten[Table[ns, dim]], dim]
       ];
 
       lsMinMaxes = MinMax /@ Transpose[data];
@@ -330,7 +330,7 @@ NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
       cpts0 = Outer[{0} &, Sequence @@ Map[Table[i, {i, 0, 1, 1 / (# - 1)}] &, ns]];
       inds = Outer[List, Sequence @@ Map[Range, ns]];
 
-      inds = Flatten[inds, dim - 2];
+      inds = Flatten[inds, dim - 1];
 
       lsBasis = Map[(
         cpts = cpts0;
