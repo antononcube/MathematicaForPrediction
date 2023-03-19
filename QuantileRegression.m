@@ -308,15 +308,19 @@ MinimizeQuantileRegressionFit[methodFunc_, data_?MatrixQ, funcs_, var_Symbol, pr
 
 Clear[NURBSBasis];
 
-Options[NURBSBasis] = {SplineClosed -> False};
+Options[NURBSBasis] = {SplineClosed -> False, "RelativeMargin" -> 0.05};
 
 NURBSBasis[data_?MatrixQ, n_Integer, opts : OptionsPattern[]] :=
     NURBSBasis[data, Table[n, Length @ data[[1]]] ];
 
 NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
-     Module[{ns = nsArg, dim = Dimensions[data][[2]],
-      lsMinMaxes, cpts0, inds, cpts, lsBasis},
+    Module[{ns = nsArg, dim = Dimensions[data][[2]],
+      lsMinMaxes, relMargin, cpts0, inds, cpts, lsBasis},
 
+      (* Process options *)
+      relMargin = OptionValue[NURBSBasis, "RelativeMargin"];
+
+      (* Extend number of points per side spec *)
       Which[
         dim < Length[ns],
         ns = Take[ns, dim],
@@ -325,8 +329,17 @@ NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
         ns = Take[Flatten[Table[ns, dim]], dim]
       ];
 
+      (* Min-max per column *)
       lsMinMaxes = MinMax /@ Transpose[data];
 
+      (* The application of margins is needed to prevent instabilities of the basis value computations. *)
+      lsMinMaxes =
+          Map[ {
+            #[[1]] - (#[[2]] - #[[1]]) * relMargin,
+            #[[2]] + (#[[2]] - #[[1]]) * relMargin
+          }&, lsMinMaxes];
+
+      (* Make the basis *)
       cpts0 = Outer[{0} &, Sequence @@ Map[Table[i, {i, 0, 1, 1 / (# - 1)}] &, ns]];
       inds = Outer[List, Sequence @@ Map[Range, ns]];
 
@@ -340,6 +353,7 @@ NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
         inds
       ];
 
+      (* Result *)
       lsBasis
     ];
 
