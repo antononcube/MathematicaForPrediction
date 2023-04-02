@@ -1,17 +1,15 @@
----
-
 # OpenAIMode demo
 
 **...for Mathematica notebooks**
 
-**Anton Antonov   
+Anton Antonov   
 [MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)   
 [MathematicaForPrediction at GitHub](https://github.com/antononcube/MathematicaForPrediction)   
-April 2023**  
+April 2023  
 
 ***[Video recording](https://youtu.be/htUIOqcS9uA)***
 
----
+-----
 
 ## Setup
 
