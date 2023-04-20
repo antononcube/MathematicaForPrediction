@@ -210,7 +210,7 @@ RowAssociations::usage = "RowAssociations[smat] converts into an associations ea
 
 ColumnAssociations::usage = "RowAssociations[smat] converts into an associations each column of smat.";
 
-SSparseMatrixImportFromDirectory::usage "SSparseMatrixImportFromDirectory[dirName, opts___] imports and SSparseMatrix from a directory.";
+SSparseMatrixImportFromDirectory::usage = "SSparseMatrixImportFromDirectory[dirName, opts___] imports and SSparseMatrix from a directory.";
 
 Begin["`Private`"];
 
