@@ -188,7 +188,7 @@
 
 
   TIPS: * When the number of unique values in a categorical column is
-  large the gaps between the rectangles might "eat" the recntagles
+  large the gaps between the rectangles might "eat" the rectangles
   areas. Use smaller gap size for the option "Gap".
 
 
