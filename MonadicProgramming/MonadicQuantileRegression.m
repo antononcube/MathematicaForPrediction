@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ posteo . net,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -108,10 +108,6 @@ If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
 If[Length[DownValues[QuantileRegression`QuantileRegression]] == 0,
   Echo["QuantileRegression.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/QuantileRegression.m"]
-];
-
-If[Length[DownValues[CrossTabulate`CrossTabulate]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/CrossTabulate.m"]
 ];
 
 If[Length[DownValues[OutlierIdentifiers`OutlierPosition]] == 0,
@@ -209,7 +205,6 @@ Begin["`Private`"];
 Needs["MathematicaForPredictionUtilities`"];
 Needs["StateMonadCodeGenerator`"];
 Needs["QuantileRegression`"];
-Needs["CrossTabulate`"];
 Needs["OutlierIdentifiers`"];
 
 
