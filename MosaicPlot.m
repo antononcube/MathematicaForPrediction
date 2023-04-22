@@ -47,7 +47,7 @@
   This package defines the function MosaicPlot that summarizes the
   conditional probabilities of co-occurrence of the categorical values
   in a Dataset object or a list of records of the same length.
-  (The list of records isassumed to be a full array and the columns to
+  (The list of records is assumed to be a full array and the columns to
   represent categorical values.) Note, that if a column is numerical
   but has a small number of different values it can be seen as categorical.
 
