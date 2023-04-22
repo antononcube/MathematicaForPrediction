@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -39,6 +39,11 @@
 (* :Package Version: 1.0 *)
 (* :Mathematica Version: 11.3 *)
 (*
+
+  This package is superseded with the paclet "AntonAntonov/MosaicPlot":
+
+    https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/MosaicPlot/
+
   This package defines the function MosaicPlot that summarizes the
   conditional probabilities of co-occurrence of the categorical values
   in a Dataset object or a list of records of the same length.
