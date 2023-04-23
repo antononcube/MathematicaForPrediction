@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail.com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 
 *)
@@ -45,10 +45,10 @@
 
     ## Introduction
 
-    The monadic implementations in this file (not a package yet) allow tracking of the pipeline execution
+    The monadic implementations in this package allow tracking of the pipeline execution
     of functions with other monads.
 
-    The primary reason for developing package was he desire to have the ability to print a tabulated trace
+    The primary reason for developing package was the desire to have the ability to print a tabulated trace
     of code and comments using the usual monad pipeline notation. (I.e. without conversion to strings etc.)
 
     From that perspective the main function is `TraceMonadEchoGrid`.
