@@ -315,7 +315,7 @@ NURBSBasis[data_?MatrixQ, n_Integer, opts : OptionsPattern[]] :=
 
 NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
     Module[{ns = nsArg, dim = Dimensions[data][[2]],
-      lsMinMaxes, relMargin, cpts0, inds, cpts, lsBasis},
+      lsMinMaxes, relMargin, cpts0, inds, inds01, cpts, aBasis},
 
       (* Process options *)
       relMargin = OptionValue[NURBSBasis, "RelativeMargin"];
@@ -342,19 +342,23 @@ NURBSBasis[data_?MatrixQ, nsArg : { _Integer .. }, opts : OptionsPattern[]] :=
       (* Make the basis *)
       cpts0 = Outer[{0} &, Sequence @@ Map[Table[i, {i, 0, 1, 1 / (# - 1)}] &, ns]];
       inds = Outer[List, Sequence @@ Map[Range, ns]];
-
       inds = Flatten[inds, dim - 1];
 
-      lsBasis = Map[(
-        cpts = cpts0;
-        cpts = ReplacePart[cpts, #1 -> {1}];
-        With[{f = BSplineFunction[cpts, Sequence @@ FilterRules[{opts}, Options[BSplineFunction]]]},
-          Evaluate[f @@ Table[ Rescale[Slot[i], lsMinMaxes[[i]]], {i, Length[lsMinMaxes]}] ]&])&,
-        inds
-      ];
+      inds01 = Transpose @ MapThread[ Rescale[#1, {1, #2}, #3]&, {Transpose @ inds, ns, lsMinMaxes}];
+
+      aBasis =
+          Association @ MapThread[
+            #2 -> (
+              cpts = cpts0;
+              cpts = ReplacePart[cpts, #1 -> {1}];
+              With[{f = BSplineFunction[cpts, Sequence @@ FilterRules[{opts}, Options[BSplineFunction]]]},
+                Evaluate[f @@ Table[ Rescale[Slot[i], lsMinMaxes[[i]]], {i, Length[lsMinMaxes]}] ]&]
+            )&,
+            {inds, inds01}
+          ];
 
       (* Result *)
-      lsBasis
+      aBasis
     ];
 
 (************************************************************)
