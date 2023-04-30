@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -40,7 +40,7 @@
 (* :Package Version: 1.0 *)
 (* :Mathematica Version: *)
 (* :Copyright: (c) 2016 Anton Antonov *)
-(* :Keywords: ROC, Reciever operating characteristic *)
+(* :Keywords: ROC, Receiver operating characteristic, Confusion matrix *)
 (* :Discussion:
 
 
