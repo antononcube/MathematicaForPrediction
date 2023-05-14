@@ -480,19 +480,25 @@ SyntaxInformation[TrieNodeProbabilities] = { "ArgumentsPattern" -> { _, OptionsP
 Options[TrieNodeProbabilities] = {"ProbabilityModifier" -> N};
 Options[TrieNodeProbabilitiesRec] = Options[TrieNodeProbabilities];
 
+TrieNodeProbabilities::nnr = "Non-numeric $TrieValue encountered.";
+
 TrieNodeProbabilities[tr_?TrieQ, opts : OptionsPattern[]] :=
     Block[{},
       <|First[Keys[tr]] -> Join[TrieNodeProbabilitiesRec[First@Values[tr], opts], <|$TrieValue -> 1|>]|>
     ];
 
 TrieNodeProbabilitiesRec[trb_?TrieBodyQ, opts : OptionsPattern[]] :=
-    Block[{sum, res, pm = OptionValue[TrieNodeProbabilitiesRec, "ProbabilityModifier"]},
+    Module[{sum, res, pm = OptionValue[TrieNodeProbabilitiesRec, "ProbabilityModifier"]},
       Which[
         Length[Keys[trb]] == 1, trb,
 
         True,
         If[trb[$TrieValue] == 0,
           sum = TrieValueTotal[trb],
+          (*ELSE*)
+          sum = trb[$TrieValue],
+          (*OTHER*)
+          Message[TrieNodeProbabilities::nnr];
           sum = trb[$TrieValue]
         ];
         res = Map[TrieNodeProbabilitiesRec[#] &, KeyDrop[trb, $TrieValue]];
