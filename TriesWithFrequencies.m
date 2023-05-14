@@ -350,7 +350,7 @@ TrieCreate[words : {_List ..}] :=
 Clear[TrieCreateBySplit];
 SyntaxInformation[TrieCreateBySplit] = { "ArgumentsPattern" -> { _, _. } };
 TrieCreateBySplit[words : {_String ..}, patt_ : ""] :=
-    TrieCreate[ Map[StringSplit[#, ""]&, words]];
+    TrieCreate[ Map[StringSplit[#, patt]&, words]];
 
 
 (************************************************************)
@@ -486,7 +486,7 @@ TrieNodeProbabilities[tr_?TrieQ, opts : OptionsPattern[]] :=
     ];
 
 TrieNodeProbabilitiesRec[trb_?TrieBodyQ, opts : OptionsPattern[]] :=
-    Block[{sum, res, pm = OptionValue["ProbabilityModifier"]},
+    Block[{sum, res, pm = OptionValue[TrieNodeProbabilitiesRec, "ProbabilityModifier"]},
       Which[
         Length[Keys[trb]] == 1, trb,
 
