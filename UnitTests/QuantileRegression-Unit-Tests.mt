@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ posteo . net,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -31,7 +31,7 @@
     Mathematica is a registered trademark of Wolfram Research, Inc.
 *)
 
-(* :Title: RecordsSummary-Unit-Tests *)
+(* :Title: QuantileRegression-Unit-Tests *)
 (* :Author: Anton Antonov *)
 (* :Date: 2019-10-17 *)
 
