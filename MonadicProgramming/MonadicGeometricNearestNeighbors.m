@@ -94,18 +94,6 @@ If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
 ];
 
-If[Length[DownValues[StateMonadCodeGenerator`GenerateStateMonadCode]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MonadicProgramming/StateMonadCodeGenerator.m"]
-];
-
-If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
-];
-
-If[Length[DownValues[OutlierIdentifiers`OutlierIdentifier]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/OutlierIdentifiers.m"]
-];
-
 
 (**************************************************************)
 (* Package definition                                         *)
@@ -139,6 +127,10 @@ GNNMonComputeProximityMatrix::usage = "GNNMonComputeProximityMatrix[n_Integer, o
 
 GNNMonComputeAdjacencyMatrix::usage = "GNNMonComputeAdjacencyMatrix[ n_Integer | {n_Integer, r_?NumericQ}, opts] computes the adjacency \
 (distance) matrix for specified number of nearest neighbors and max radius.";
+
+PacletInstall["AntonAntonov`StateMonadCodeGenerator`", AllowVersionUpdate -> False];
+PacletInstall["AntonAntonov`SSparseMatrix`", AllowVersionUpdate -> False];
+PacletInstall["AntonAntonov`OutlierIdentifiers`", AllowVersionUpdate -> False];
 
 Begin["`Private`"];
 
