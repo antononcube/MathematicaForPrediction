@@ -86,16 +86,6 @@
 *)
 
 (**************************************************************)
-(* Importing packages (if needed)                             *)
-(**************************************************************)
-
-If[Length[DownValues[MathematicaForPredictionUtilities`RecordsSummary]] == 0,
-  Echo["MathematicaForPredictionUtilities.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MathematicaForPredictionUtilities.m"]
-];
-
-
-(**************************************************************)
 (* Package definition                                         *)
 (**************************************************************)
 
@@ -128,16 +118,18 @@ GNNMonComputeProximityMatrix::usage = "GNNMonComputeProximityMatrix[n_Integer, o
 GNNMonComputeAdjacencyMatrix::usage = "GNNMonComputeAdjacencyMatrix[ n_Integer | {n_Integer, r_?NumericQ}, opts] computes the adjacency \
 (distance) matrix for specified number of nearest neighbors and max radius.";
 
-PacletInstall["AntonAntonov`StateMonadCodeGenerator`", AllowVersionUpdate -> False];
-PacletInstall["AntonAntonov`SSparseMatrix`", AllowVersionUpdate -> False];
-PacletInstall["AntonAntonov`OutlierIdentifiers`", AllowVersionUpdate -> False];
+PacletInstall["AntonAntonov/MonadMakers", AllowVersionUpdate -> False];
+PacletInstall["AntonAntonov/SSparseMatrix", AllowVersionUpdate -> False];
+PacletInstall["AntonAntonov/OutlierIdentifiers", AllowVersionUpdate -> False];
+PacletInstall["AntonAntonov/DataReshapers", AllowVersionUpdate -> False];
 
 Begin["`Private`"];
 
-Needs["MathematicaForPredictionUtilities`"];
-Needs["StateMonadCodeGenerator`"];
-Needs["OutlierIdentifiers`"];
-Needs["SSparseMatrix`"];
+(* Needs["MathematicaForPredictionUtilities`"]; *)
+Needs["AntonAntonov`MonadMakers`"];
+Needs["AntonAntonov`OutlierIdentifiers`"];
+Needs["AntonAntonov`SSparseMatrix`"];
+Needs["AntonAntonov`DataReshapers`"];
 
 (**************************************************************)
 (* Generation                                                 *)
@@ -183,7 +175,7 @@ GNNMonGetData[xs_, context_Association] :=
         GNNMonUnit[ AssociationThread[ Range @ Length @ xs, N @ Normal @ xs ], context ],
 
         TrueQ[ Head[xs] === Dataset ],
-        (* DatasetToMatrix is implemented in MathematicaForPredictionUtilities.m *)
+        (* DatasetToMatrix is implemented in the paclet "AntonAntnov/DataReshapers" *)
         mat =
             DatasetToMatrix[
               xs,
