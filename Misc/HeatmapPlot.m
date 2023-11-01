@@ -87,9 +87,9 @@
 (* Importing packages (if needed)                             *)
 (**************************************************************)
 
-If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]
-];
+(*If[Length[DownValues[SSparseMatrix`ToSSparseMatrix]] == 0,*)
+(*  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/SSparseMatrix.m"]*)
+(*];*)
 
 
 (**************************************************************)
@@ -103,10 +103,12 @@ MatrixPlotWithTooltips::usage = "MatrixPlotWithTooltips[data, rowNames, columnNa
 HeatmapPlot::usage = "HeatmapPlot[data_?MatrixQ, rowNames_List, columnNames_List] makes a heat-map plot based on MatrixPlot \
 and HierarchicalClustering`Agglomerate .";
 
+PacletInstall["AntonAntonov/SSparseMatrix"];
+
 Begin["`Private`"];
 
 Needs["HierarchicalClustering`"];
-Needs["SSparseMatrix`"];
+Needs["AntonAntonov`SSparseMatrix`"];
 
 MatrixPlotWithTooltips[mat_, rowNames_, columnNames_, opts : OptionsPattern[]] :=
     With[{dims = Dimensions[mat],
