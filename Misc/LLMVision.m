@@ -41,7 +41,7 @@ SOFTWARE.
 (* Importing packages (if needed)                             *)
 (**************************************************************)
 
-If[Length[DownValues[OpenAIRequest]] == 0,
+If[Length[DownValues[OpenAIRequest`OpenAIRequest]] == 0,
   Echo["OpenAIRequest.m", "Importing from GitHub:"];
   Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/OpenAIRequest.m"];
 ];
@@ -109,12 +109,15 @@ LLMVisionSynthesize[prompts : {_String ..},
 
       (*Import File objects and Strings that are paths and pick the images *)
       images = Map[
-        If[MatchQ[#, _File] || StringQ[#] && FileExistsQ[#],
+        Which[
+          MatchQ[#, _File] || StringQ[#] && FileExistsQ[#],
           t = Import[#];
-          If[! ImageQ[t], Message[LLMVisionSynthesize::nimg], t]
-          ,
-          (*ELSE*)
-          #
+          If[! ImageQ[t], Message[LLMVisionSynthesize::nimg], t],
+
+          TrueQ[Head[#] === Symbol],
+          Message[LLMVisionSynthesize::nimg],
+
+          True, #
         ] &, imageSpecs];
 
       (*Convert the images into Base64 strings*)
@@ -160,21 +163,28 @@ LLMVisionSynthesize[___] := (Message[LLMVisionSynthesize::nargs]; $Failed);
 
 Clear[LLMVisionFunction, LLMVisionFunctionTemplate];
 
+LLMVisionFunction::nargs =
+    "The first argument is expected to be a string or a string template. The \
+second argument is expected to be an image, image URL, image file path, or a \
+list of those objects.";
+
 Options[LLMVisionFunction] = Join[
   Options[StringTemplate],
   Options[LLMVisionSynthesize]
 ] // System`Private`SortOptions;
 
-LLMVisionFunction[prompt_, imageSpec_, opts : OptionsPattern[]] :=
-    LLMVisionFunction[prompt, {imageSpec}, opts];
-
 LLMVisionFunction[prompt_String, imageSpecs_, opts : OptionsPattern[]] :=
     LLMVisionFunction[StringTemplate[prompt], imageSpecs, opts];
+
+LLMVisionFunction[prompt : (_String | _TemplateObject), imageSpec : (_Image | _String | _File | _URL), opts : OptionsPattern[]] :=
+    LLMVisionFunction[prompt, {imageSpec}, opts];
 
 LLMVisionFunction[prompt_TemplateObject,
   imageSpecs : {(_Image | _String | _File | _URL) ..},
   opts : OptionsPattern[]] :=
     LLMVisionFunctionTemplate[prompt, imageSpecs, {opts}];
+
+LLMVisionFunction[___] := (Message[LLMVisionFunction::nargs]; $Failed);
 
 llmFunc_LLMVisionFunctionTemplate[args___] :=
     Block[{tres = TemplateApply[llmFunc[[1]], {args}]},
