@@ -43,7 +43,7 @@ SOFTWARE.
 
 If[Length[DownValues[OpenAIRequest]] == 0,
   Echo["OpenAIRequest.m", "Importing from GitHub:"];
-  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/LLMVision.m"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/OpenAIRequest.m"];
 ];
 
 (**************************************************************)
