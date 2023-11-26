@@ -36,6 +36,20 @@ SOFTWARE.
 (* :Keywords: LLM, OpenAI, ChatGPT, Vision, Images, Interpretation*)
 (* :Discussion: *)
 
+
+(**************************************************************)
+(* Importing packages (if needed)                             *)
+(**************************************************************)
+
+If[Length[DownValues[OpenAIRequest]] == 0,
+  Echo["OpenAIRequest.m", "Importing from GitHub:"];
+  Import["https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/Misc/LLMVision.m"];
+];
+
+(**************************************************************)
+(* Package definition                                         *)
+(**************************************************************)
+
 BeginPackage["LLMVision`"];
 (* Exported symbols added here with SymbolName::usage *)
 
@@ -47,8 +61,7 @@ LLMVisionFunctionTemplate::usage = "Head of LLMVisionFunction objects.";
 
 Begin["`Private`"];
 
-Needs["ChristopherWolfram`OpenAILink`"];
-Needs["ChristopherWolfram`OpenAILink`Request`"];
+Needs["OpenAIRequest`"];
 
 toVision = TemplateExpression[<|
   "model" -> "gpt-4-vision-preview",
