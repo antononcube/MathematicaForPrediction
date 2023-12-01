@@ -168,8 +168,11 @@ LLMVisionSynthesize["Give concise descriptions of the images.", {"https://i.imgu
 ```
 
 ```
-1. The first image depicts a single raccoon perched on a tree branch, surrounded by a plethora of vibrant, colorful butterflies in various shades of blue, orange, and other colors, set against a lush, multicolored foliage background.
-2. The second image shows three raccoons sitting together on a tree branch in a forest setting, with a warm, glowing light illuminating the scene from behind. The forest is teeming with butterflies, matching the one in the first image, creating a sense of continuity and shared environment between the two scenes.
+1. The first image depicts a single raccoon perched on a tree branch, surrounded by a plethora of vibrant,
+   colorful butterflies in various shades of blue, orange, and other colors, set against a lush, multicolored foliage background.
+2. The second image shows three raccoons sitting together on a tree branch in a forest setting, with a warm, 
+   glowing light illuminating the scene from behind. The forest is teeming with butterflies, 
+   matching the one in the first image, creating a sense of continuity and shared environment between the two scenes.
 ```
 
 ### Description of a mind-map
@@ -235,7 +238,8 @@ graph TB
     functions --> chatbooks[Chatbooks]
 ```
 
-Here is a diagram made with Mermaid-JS spec obtained above using the resource function of "MermaidInk", [AAf1]:
+Here is a diagram made with the Mermaid-JS spec obtained above using the resource function of 
+["MermaidInk"](https://resources.wolframcloud.com/FunctionRepository/resources/MermaidInk/), [AAf1]:
 
 ```mathematica
 ResourceFunction["MermaidInk"][mmdChart]
@@ -317,9 +321,12 @@ h7. The black bishop on f5 is active and could become a strong piece \
 depending on the continuation of the game.
 ```
 
-**Remark:** In the our few experiments with these kind of image narrations, fair amount of the individual pieces are described to be at wrong chessboard locations.
+**Remark:** In our few experiments with these kind of image narrations, a fair amount of the individual pieces 
+are described to be at wrong chessboard locations.
 
-**Remark:** In order to make the AI vision more successful, we increased the size of the chessboard frame tick labels, and turned the “a÷h” ticks uppercase (into “A÷H” ticks.) It is interesting  to compare the vision results over chess positions with and without that transformation.
+**Remark:** In order to make the AI vision more successful, we increased the size of the chessboard frame tick labels, 
+and turned the “a÷h” ticks uppercase (into “A÷H” ticks.) 
+It is interesting  to compare the vision results over chess positions with and without that transformation.
 
 ## LLM Functions
 
@@ -359,7 +366,7 @@ imgBarChart = Import[$HomeDirectory <> "/Downloads/Cyber-Week-Spending-Set-to-Hi
 
 ### Configuration and synthesis
 
-Here we synthesize a response of a image description request:
+Here we synthesize a response of an image description request:
 
 ```mathematica
 LLMVisionSynthesize["Describe the image.", imgBarChart, "MaxTokens" -> 600]
@@ -399,7 +406,7 @@ these key shopping dates, culminating in a forecasted peak for 2023.
 
 ### Repeated questioning
 
-Here we define an LLM function that allows the multiple question request invocations over the image:
+Here we define an LLM function that allows multiple question request invocations over the image:
 
 ```mathematica
 fst = LLMVisionFunction["For the given image answer the question: ``. Be as concise as possible in your answers.", imgBarChart, "MaxTokens" -> 300]
@@ -427,7 +434,7 @@ fst["Which year has the highest value? What is that value?"]
 
 ### Formatted output
 
-Here we make a function a specially formatted output that can be more easily integrated in (larger) workflows:
+Here we make a function with a specially formatted output that can be more easily integrated in (larger) workflows:
 
 ```mathematica
 fjs = LLMVisionFunction["How many `1` per `2`? " <> LLMPrompt["NothingElse"]["JSON"], imgBarChart, "MaxTokens" -> 300, "Temperature" -> 0.1]
