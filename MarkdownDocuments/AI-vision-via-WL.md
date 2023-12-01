@@ -165,8 +165,11 @@ Here is an image narration example with the two images above, again, one specifi
 
 ```mathematica
 LLMVisionSynthesize["Give concise descriptions of the images.", {"https://i.imgur.com/LEGfCeql.jpg", $HomeDirectory <> "/Downloads/ThreeHunters.jpg"}, "MaxTokens" -> 600]
+```
 
-(*"1. The first image depicts a single raccoon perched on a tree branch, surrounded by a plethora of vibrant, colorful butterflies in various shades of blue, orange, and other colors, set against a lush, multicolored foliage background.2. The second image shows three raccoons sitting together on a tree branch in a forest setting, with a warm, glowing light illuminating the scene from behind. The forest is teeming with butterflies, matching the one in the first image, creating a sense of continuity and shared environment between the two scenes."*)
+```
+1. The first image depicts a single raccoon perched on a tree branch, surrounded by a plethora of vibrant, colorful butterflies in various shades of blue, orange, and other colors, set against a lush, multicolored foliage background.
+2. The second image shows three raccoons sitting together on a tree branch in a forest setting, with a warm, glowing light illuminating the scene from behind. The forest is teeming with butterflies, matching the one in the first image, creating a sense of continuity and shared environment between the two scenes.
 ```
 
 ### Description of a mind-map
