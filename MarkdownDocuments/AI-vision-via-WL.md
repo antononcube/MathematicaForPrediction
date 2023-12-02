@@ -106,7 +106,14 @@ tblImgs = Map[Append[#[[1 ;; 1]], Hyperlink[#[[-1, 1, 1]]]] &, tblImgs];
 TableForm[tblImgs, TableHeadings -> {None, {"Name", "Link"}}] /. {ButtonBox[n_, BaseStyle -> "Hyperlink", ButtonData -> { URL[u_], None}] :> Hyperlink[n, URL[u]]}
 ```
 
-![1n90yjgjx3mkf](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/AI-vision-via-WL/1n90yjgjx3mkf.png)
+| Name                                             | Link                                                                                          |
+|--------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Wolf and ram running together in forest          | https://i.imgur.com/UIIKK9w.jpg                                                               |
+| LLM functionalities mind-map                     | https://i.imgur.com/kcUcWnql.jpg                                                              |
+| Single sightseer                                 | https://i.imgur.com/LEGfCeql.jpg                                                              |
+| Three hunters                                    | https://raw.githubusercontent.com/antononcube/Raku-WWW-OpenAI/main/resources/ThreeHunters.jpg |
+| Cyber Week Spending Set to Hit New Highs in 2023 | https://cdn.statcdn.com/Infographic/images/normal/7045.jpeg                                   |
+
 
 ### Document structure
 
@@ -283,7 +290,10 @@ ToExpression[%]
 
 Consider another "serious" example -- that of analyzing chess play positions. Here we get a chess position using the paclet ["Chess"](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/Chess/), [WRIp3]:
 
-![175o8ba3cxgoh](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/AI-vision-via-WL/175o8ba3cxgoh.png)
+```mathematica
+b = PacletSymbol["Wolfram/Chess", "Wolfram`Chess`Chessboard"]["2kr1b1r/ppp1qppp/2n2n2/3p1b2/3P1N2/2P1B3/PP1NQPPP/2KR1B1R b - - 3 11"]["Graphics"];
+b2 = b /. HoldPattern[(FrameTicks -> x_)] :> (FrameTicks -> (x /. y_String -> Style[ToUpperCase@y, FontSize -> 14]))
+```
 
 ![0scq7lbpp7xfs](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/AI-vision-via-WL/0scq7lbpp7xfs.png)
 
@@ -336,21 +346,24 @@ Here is the workflow we consider:
 
 1. Ingest an image file and encode it into a Base64 string
 
-1. Make an LLM configuration with that image string (and a suitable model)
+2. Make an LLM configuration with that image string (and a suitable model)
 
-1. Synthesize a response to a basic request (like, image description)
+3. Synthesize a response to a basic request (like, image description)
 
     - Using LLMSynthesize
 
-1. Make an LLM function for asking different questions over image
+4. Make an LLM function for asking different questions over image
 
     - Using LLMFunction
 
-1. Ask questions and verify results
+5. Ask questions and verify results
 
     - ⚠️ *Answers to "hard" numerical questions are often wrong.*
 
     - It might be useful to get formatted outputs
+
+**Remark:** The function `LLMVisionSynthesize` combines `LLMSynthesize` and step 2. 
+The function `LLMVisionFunction` combines `LLMFunction` and step 2.
 
 ### Image ingestion and encoding
 
@@ -430,7 +443,8 @@ fst["Which year has the highest value? What is that value?"]
 "2023 has the highest value, which is approximately $11B on Cyber Monday."
 ```
 
-**Remark:** Numerical value readings over technical plots or charts seem to be often wrong. OpenAI's vision model warns about this in the responses often enough.
+**Remark:** Numerical value readings over technical plots or charts seem to be often wrong. 
+OpenAI's vision model warns about this in the responses often enough.
 
 ### Formatted output
 
@@ -442,7 +456,7 @@ fjs = LLMVisionFunction["How many `1` per `2`? " <> LLMPrompt["NothingElse"]["JS
 
 ![032vcq74auyv9](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/AI-vision-via-WL/032vcq74auyv9.png)
 
-Here we invoke the that function (in order to get the money per year "seen" OpenAI's vision):
+Here we invoke that function (in order to get the money per year "seen" by OpenAI's vision):
 
 ```mathematica
 res = fjs["money", "shopping day"]
@@ -476,7 +490,9 @@ res = fjs["money", "shopping day"]
 ```
 ````
 
-**Remark:**  The above result should be structured as shopping-day:year:value. But occasionally ig might be structured as year::shopping-day::value. In the latter case just re-run LLM invocation.
+**Remark:**  The above result should be structured as shopping-day:year:value. 
+But occasionally it might be structured as year::shopping-day::value. 
+In the latter case just re-run LLM invocation.
 
 Here we parse the obtained JSON into WL association structure:
 
@@ -493,7 +509,8 @@ aMoney = ImportString[StringReplace[res, {"```json" -> "", "```" -> ""}], "RawJS
    "2021" -> "$11B", "2022" -> "$12B", "2023" -> "$13B"|>|>
 ```
 
-**Remark:** Currently LLMVisionFunction does not have an interpreter (or "form") parameter as LLMFunction does. This can be seen as one of the reasons to include LLFVisionFunction in the "LLMFunctions" framework.
+**Remark:** Currently `LLMVisionFunction` does not have an interpreter (or "form") parameter as `LLMFunction` does. 
+This can be seen as one of the reasons to include `LLMVisionFunction` in the "LLMFunctions" framework.
 
 Here we convert the money strings into money quantities:
 
@@ -507,7 +524,13 @@ AbsoluteTiming[
 
 Here is the corresponding bar chart and the original bar chart (for comparison):
 
-![0rt43fezbbp4b](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/AI-vision-via-WL/0rt43fezbbp4b.png)
+```mathematica
+ColumnForm[{BarChart[aMoney2,
+  ChartLabels -> {Placed[(Style[#1, White, Bold, FontSize -> 16] &) /@ Keys[aMoney2], Center], Keys[aMoney2[[1]]]},
+  PlotTheme -> "Scientific", GridLines -> Automatic,
+  ImageSize -> 600], Spacer[10],
+  Show[ImageTake[imgBarChart, {200, -100}], ImageSize -> 650]}]
+```
 
 ![1lpfhko7c2g6e](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/master/MarkdownDocuments/Diagrams/AI-vision-via-WL/1lpfhko7c2g6e.png)
 
