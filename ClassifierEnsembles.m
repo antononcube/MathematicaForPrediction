@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     Written by Anton Antonov,
-    antononcube @ gmail . com,
+    ʇǝu˙oǝʇsod@ǝqnɔuouoʇuɐ,
     Windermere, Florida, USA.
 *)
 
@@ -80,7 +80,7 @@
 
     ## Create a classifier ensemble
 
-      aCLs = EnsembleClassify[Automatic, trainingData[[All, 1 ;; -2]] -> trainingData[[All, -1]]]
+      aCLs = EnsembleClassifier[Automatic, trainingData[[All, 1 ;; -2]] -> trainingData[[All, -1]]]
 
 
     ## Classify a record
