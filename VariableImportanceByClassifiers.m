@@ -176,13 +176,13 @@ BeginPackage["VariableImportanceByClassifiers`"]
 (* Exported symbols added here with SymbolName::usage *)
 
 AccuracyByVariableShuffling::usage = "AccuracyByVariableShuffling[clFunc, testData, variableNames, opts] computes classification \
-accuracies with the ClassiferFunction object clFunc over damaged versions of the data testData. The accuracies can be used \
+accuracies with the ClassifierFunction object clFunc over damaged versions of the data testData. The accuracies can be used \
 in variable importance finding. The names of the variables can be specified with variableNames. \
 With the option \"Classes\" the accuracies can be computed over a specific list of class labels. \
 The result is an Association object with keys the damaged column names of testData (variables) and with values the corresponding \
-accuracies."
+accuracies.";
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 (*Needs["ClassifierEnsembles`"]*)
 
@@ -289,6 +289,6 @@ AccuracyByVariableShuffling[ clFunc_?ClassifierQ, testData_?ClassifierDataQ, var
 
 
 
-End[] (* `Private` *)
+End[]; (* `Private` *)
 
 EndPackage[]
