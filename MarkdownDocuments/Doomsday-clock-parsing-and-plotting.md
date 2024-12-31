@@ -205,7 +205,7 @@ ParsingTestTable[pDD, lsPhrases]
 
 ![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-doomsdat.png)
 
-In order to include the misspelling handling into the grammar we manually the grammar. (The grammar is small, so, it is not that hard to do.)
+In order to include the misspelling handling into the grammar we manually rewrite the grammar. (The grammar is small, so, it is not that hard to do.)
 
 ```
 pANY = ParsePredicate[StringQ[#] && EditDistance[#, "clock"] > 1 &];
