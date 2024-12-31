@@ -483,7 +483,7 @@ DateListPlot[ts3,
 ]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-time-series.png)
+![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-time-series-tooltip.png)
 
 **Remark:** By hovering with the mouse over the black points the corresponding descriptions can be seen. We considered using clock-gauges as tooltips, but showing clock-settings reasons is more informative.
 
