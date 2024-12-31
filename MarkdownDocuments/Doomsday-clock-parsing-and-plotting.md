@@ -40,7 +40,7 @@ The data extraction and visualization in the notebook serve educational purposes
 
 Here we ingest the Doomsday Clock timeline page and show corresponding statistics:
 
-```mathematica
+```
 url = "https://thebulletin.org/doomsday-clock/timeline/";
 txtEN = Import[url, "Plaintext"];
 TextStats[txtEN]
@@ -50,7 +50,7 @@ TextStats[txtEN]
 
 By observing the (plain) text of that page we see the Doomsday Clock time setting can be extracted from the sentence(s) that begin with the following phrase:
 
-```mathematica
+```
 startPhrase = "Bulletin of the Atomic Scientists";
 sentence = Select[Map[StringTrim, StringSplit[txtEN, "\n"]], StringStartsQ[#, startPhrase] &] // First
 
@@ -61,7 +61,7 @@ sentence = Select[Map[StringTrim, StringSplit[txtEN, "\n"]], StringStartsQ[#, st
 
 Here is a grammar in [Extended Backus-Naur Form (EBNF)](https://en.wikipedia.org/wiki/Extended_Backus–Naur_form) for parsing Doomsday Clock statements:
 
-```mathematica
+```
 ebnf = "
 <TOP> = <clock-reading>  ;
 <clock-reading> = <opening> , ( <minutes> | [ <minutes> , [ 'and' | ',' ] ] , <seconds> ) , 'to' , 'midnight' ;
@@ -75,7 +75,7 @@ ebnf = "
 
 Here the parsing functions are generated from the EBNF string above:
 
-```mathematica
+```
 ClearAll["p*"]
 res = GenerateParsersFromEBNF[ParseToEBNFTokens[ebnf]];
 res // LeafCount
@@ -85,13 +85,13 @@ res // LeafCount
 
 We must redefine the parser pANY (corresponding to the EBNF rule “<any>”) in order to prevent pANY of gobbling the word “clock” and in that way making the parser pOPENING fail.
 
-```mathematica
+```
 pANY = ParsePredicate[StringQ[#] && # != "clock" &];
 ```
 
 Here are random sentences generated with the grammar:
 
-```mathematica
+```
 SeedRandom[32];
 GrammarRandomSentences[GrammarNormalize[ebnf], 6] // Sort // ColumnForm
 ```
@@ -107,13 +107,13 @@ jdsf5at clock reading 488 seconds to midnight
 
 Verifications of the (sub-)parsers:
 
-```mathematica
+```
 pSECONDS[{"90", "seconds"}]
 
 (*{{{}, "Seconds" -> 90}}*)
 ```
 
-```mathematica
+```
 pOPENING[ToTokens@"That doomsday clock is reading"]
 
 (*{{{}, {{"That", "doomsday"}, {"clock", {"is", "reading"}}}}}*)
@@ -121,7 +121,7 @@ pOPENING[ToTokens@"That doomsday clock is reading"]
 
 Here the “top” parser is applied:
 
-```mathematica
+```
 str = "the doomsday clock is reading 90 seconds to midnight";
 pTOP[ToTokens@str]
 
@@ -130,7 +130,7 @@ pTOP[ToTokens@str]
 
 Here the sentence extracted above is parsed and interpreted into an association with keys “Minutes” and “Seconds”:
 
-```mathematica
+```
 aDoomReading = Association@Cases[Flatten[pTOP[ToTokens@sentence]], _Rule]
 
 (*<|"Seconds" -> 90|>*)
@@ -140,7 +140,7 @@ aDoomReading = Association@Cases[Flatten[pTOP[ToTokens@sentence]], _Rule]
 
 Using the interpretation derived above here we make a list suitable for ClockGauge:
 
-```mathematica
+```
 clockShow = DatePlus[{0, 0, 0, 12, 0, 0}, {-(Lookup[aDoomReading, "Minutes", 0]*60 + aDoomReading["Seconds"]), "Seconds"}]
 
 (*{-2, 11, 30, 11, 58, 30}*)
@@ -148,15 +148,15 @@ clockShow = DatePlus[{0, 0, 0, 12, 0, 0}, {-(Lookup[aDoomReading, "Minutes", 0]*
 
 In that list, plotting of a Doomsday Clock image (or gauge) is trivial.
 
-```mathematica
+```
 ClockGauge[clockShow, GaugeLabels -> Automatic]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClockGauge-first.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClockGauge-first.png)
 
 Let us define a function that makes the clock-gauge plot for a given association.
 
-```mathematica
+```
 Clear[DoomsdayClockGauge];
 Options[DoomsdayClockGauge] = Options[ClockGauge];
 DoomsdayClockGauge[m_Integer, s_Integer, opts : OptionsPattern[]] := DoomsdayClockGauge[<|"Minutes" -> m, "Seconds" -> s|>, opts];
@@ -169,7 +169,7 @@ DoomsdayClockGauge[a_Association, opts : OptionsPattern[]] :=
 
 Here are examples:
 
-```mathematica
+```
 Row[{
    DoomsdayClockGauge[17, 0], 
    DoomsdayClockGauge[1, 40, GaugeLabels -> Automatic, PlotTheme -> "Scientific"], 
@@ -177,7 +177,7 @@ Row[{
   }]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClockGauge-examples.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClockGauge-examples.png)
 
 ## More robust parsing
 
@@ -197,17 +197,17 @@ More robust parsing of Doomsday Clock statements can be obtained in these three 
 
 The parser ParseFuzzySymbol can be used to handle misspellings (via EditDistance):
 
-```mathematica
+```
 pDD = ParseFuzzySymbol["doomsday", 2];
 lsPhrases = {"doomsdat", "doomsday", "dumzday"};
 ParsingTestTable[pDD, lsPhrases]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-doomsdat.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-doomsdat.png)
 
 In order to include the misspelling handling into the grammar we manually the grammar. (The grammar is small, so, it is not that hard to do.)
 
-```mathematica
+```
 pANY = ParsePredicate[StringQ[#] && EditDistance[#, "clock"] > 1 &];
 pOPENING = ParseOption[ParseMany[pANY]]\[CircleTimes]ParseFuzzySymbol["clock", 1]\[CircleTimes]ParseOption[ParseSymbol["is"]]\[CircleTimes]ParseFuzzySymbol["reading", 2];
 pMINUTES = "Minutes" -> # &\[CircleDot](pINTEGER \[LeftTriangle] ParseFuzzySymbol["minutes", 3]);
@@ -217,14 +217,14 @@ pCLOCKREADING = Cases[#, _Rule, \[Infinity]] &\[CircleDot](pOPENING\[CircleTimes
 
 Here is a verification table with correct- and incorrect spellings:
 
-```mathematica
+```
 lsPhrases = {
     "doomsday clock is reading 2 seconds to midnight", 
     "dooms day cloc is readding 2 minute and 22 sekonds to mildnight"};
 ParsingTestTable[pCLOCKREADING, lsPhrases, "Layout" -> "Vertical"]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-robust-parser.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-robust-parser.png)
 
 ### Parsing of numeric word forms
 
@@ -234,7 +234,7 @@ One way to make the parsing more robust is to implement the ability to parse int
 
 First, we make an association that connects integer names with corresponding integer values
 
-```mathematica
+```
 aWordedValues = Association[IntegerName[#, "Words"] -> # & /@ Range[0, 100]];
 aWordedValues = KeyMap[StringRiffle[StringSplit[#, RegularExpression["\\W"]], " "] &, aWordedValues];
 Length[aWordedValues]
@@ -244,7 +244,7 @@ Length[aWordedValues]
 
 Here is how the rules look like:
 
-```mathematica
+```
 aWordedValues[[1 ;; -1 ;; 20]]
 
 (*<|"zero" -> 0, "twenty" -> 20, "forty" -> 40, "sixty" -> 60, "eighty" -> 80, "one hundred" -> 100|>*)
@@ -252,7 +252,7 @@ aWordedValues[[1 ;; -1 ;; 20]]
 
 Here we program the integer names parser:
 
-```mathematica
+```
 pUpTo10 = ParseChoice @@ Map[ParseSymbol[IntegerName[#, {"English", "Words"}]] &, Range[0, 9]];
 p10s = ParseChoice @@ Map[ParseSymbol[IntegerName[#, {"English", "Words"}]] &, Range[10, 100, 10]];
 pWordedInteger = ParseApply[aWordedValues[StringRiffle[Flatten@{#}, " "]] &, p10s\[CircleTimes]pUpTo10\[CirclePlus]p10s\[CirclePlus]pUpTo10];
@@ -260,35 +260,35 @@ pWordedInteger = ParseApply[aWordedValues[StringRiffle[Flatten@{#}, " "]] &, p10
 
 Here is a verification table of that parser:
 
-```mathematica
+```
 lsPhrases = {"three", "fifty seven", "thirti one"};
 ParsingTestTable[pWordedInteger, lsPhrases]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-integer-names-1.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-integer-names-1.png)
 
 There are two parsing results for “fifty seven”, because pWordedInteger is defined with p10s⊗pUpTo10⊕p10s... . This can be remedied by using ParseJust or ParseShortest:
 
-```mathematica
+```
 lsPhrases = {"three", "fifty seven", "thirti one"};
 ParsingTestTable[ParseJust@pWordedInteger, lsPhrases]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-integer-names-2.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-integer-names-2.png)
 
 Let us change pINTEGER to parse both integers and integer names:
 
-```mathematica
+```
 pINTEGER = (ToExpression\[CircleDot]ParsePredicate[StringMatchQ[#, NumberString] &])\[CirclePlus]pWordedInteger;
 lsPhrases = {"12", "3", "three", "forty five"};
 ParsingTestTable[pINTEGER, lsPhrases]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-integer-names-3.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-verification-table-integer-names-3.png)
 
 Let us try the new parser using integer names for the clock time:
 
-```mathematica
+```
 str = "the doomsday clock is reading two minutes and forty five seconds to midnight";
 pTOP[ToTokens@str]
 
@@ -299,7 +299,7 @@ pTOP[ToTokens@str]
 
 There are multiple ways to employ LLMs for extracting “clock readings” from arbitrary statements for Doomsday Clock readings, readouts, and measures. Here we use [LLM few-shot training](https://en.wikipedia.org/wiki/Prompt_engineering#Other_techniques):
 
-```mathematica
+```
 flop = LLMExampleFunction[{
     "the doomsday clock is reading two minutes and forty five seconds to midnight" -> "{\"Minutes\":2, \"Seconds\": 45}", 
     "the clock of the doomsday gives 92 seconds to midnight" -> "{\"Minutes\":0, \"Seconds\": 92}", 
@@ -307,12 +307,12 @@ flop = LLMExampleFunction[{
    }, "JSON"]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-LLM-example-function.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/Parsing-LLM-example-function.png)
 
 
 Here is an example invocation:
 
-```mathematica
+```
 flop["Maybe the doomsday watch is at 23:58:03"]
 
 (*{"Minutes" -> 1, "Seconds" -> 57}*)
@@ -320,7 +320,7 @@ flop["Maybe the doomsday watch is at 23:58:03"]
 
 The following function combines the parsing with the grammar and the LLM example function -- the latter is used for fallback parsing:
 
-```mathematica
+```
 Clear[GetClockReading];
 GetClockReading[st_String] := 
    Block[{op}, 
@@ -338,7 +338,7 @@ GetClockReading[st_String] :=
 
 Here is the application of the combine function above over a certain “random” Doomsday Clock statement:
 
-```mathematica
+```
 s = "You know, sort of, that dooms-day watch is 1 and half minute be... before the big boom. (Of doom...)";
 GetClockReading[s]
 
@@ -355,20 +355,20 @@ In this section we extract Doomsday Clock timeline data and make a corresponding
 
 Instead of using the [official Doomsday clock timeline page](https://thebulletin.org/doomsday-clock/timeline/) we use [Wikipedia](https://en.wikipedia.org/wiki/Doomsday_Clock):
 
-```mathematica
+```
 url = "https://en.wikipedia.org/wiki/Doomsday_Clock";
 data = Import[url, "Data"];
 ```
 
 Get timeline table:
 
-```mathematica
+```
 tbl = Cases[data, {"Timeline of the Doomsday Clock [ 13 ] ", x__} :> x, Infinity] // First;
 ```
 
 Show table’s columns:
 
-```mathematica
+```
 First[tbl]
 
 (*{"Year", "Minutes to midnight", "Time ( 24-h )", "Change (minutes)", "Reason", "Clock"}*)
@@ -376,17 +376,17 @@ First[tbl]
 
 Make a dataset:
 
-```mathematica
+```
 dsTbl = Dataset[Rest[tbl]][All, AssociationThread[{"Year", "MinutesToMidnight", "Time", "Change", "Reason"}, #] &];
 dsTbl = dsTbl[All, Append[#, "Date" -> DateObject[{#Year, 7, 1}]] &];
 dsTbl[[1 ;; 4]]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-data-table-with-Date-sample.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-data-table-with-Date-sample.png)
 
 Here is an association used to retrieve the descriptions from the date objects:
 
-```mathematica
+```
 aDateToDescr = Normal@dsTbl[Association, #Date -> BreakStringIntoLines[#Reason] &];
 ```
 
@@ -394,7 +394,7 @@ aDateToDescr = Normal@dsTbl[Association, #Date -> BreakStringIntoLines[#Reason] 
 
 Alternatively, we can extract the Doomsday Clock timeline using LLMs. Here we get the plaintext of the Wikipedia page and show statistics:
 
-```mathematica
+```
 txtWk = Import[url, "Plaintext"];
 TextStats[txtWk]
 
@@ -403,7 +403,7 @@ TextStats[txtWk]
 
 Here we get the Doomsday Clock timeline table from that page in JSON format using an LLM:
 
-```mathematica
+```
 res = 
   LLMSynthesize[{
     "Give the time table of the doomsday clock as a time series that is a JSON array.", 
@@ -419,7 +419,7 @@ res =
 
 Post process the LLM result:
 
-```mathematica
+```
 res2 = ToString[res, CharacterEncoding -> "UTF-8"];
 res3 = StringReplace[res2, {"```json", "```"} -> ""];
 res4 = ImportString[res3, "JSON"];
@@ -430,17 +430,17 @@ res4[[1 ;; 3]]
 
 Make a dataset with the additional column “Date” (having date-objects):
 
-```mathematica
+```
 dsDoomsdayTimes = Dataset[Association /@ res4];
 dsDoomsdayTimes = dsDoomsdayTimes[All, Append[#, "Date" -> DateObject[{#Year, 7, 1}]] &];
 dsDoomsdayTimes[[1 ;; 4]]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-LLM-table-with-Date-sample.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-LLM-table-with-Date-sample.png)
 
 Here is an association that is used to retrieve the descriptions from the date objects:
 
-```mathematica
+```
 aDateToDescr2 = Normal@dsDoomsdayTimes[Association, #Date -> #Description &];
 ```
 
@@ -450,28 +450,28 @@ aDateToDescr2 = Normal@dsDoomsdayTimes[Association, #Date -> #Description &];
 
 In order to have informative Doomsday Clock evolution plot we obtain and partition dataset’s time series into step-function pairs:
 
-```mathematica
+```
 ts0 = Normal@dsDoomsdayTimes[All, {#Date, #MinutesToMidnight} &];
 ts2 = Append[Flatten[MapThread[Thread[{#1, #2}] &, {Partition[ts0[[All, 1]], 2, 1], Most@ts0[[All, 2]]}], 1], ts0[[-1]]];
 ```
 
 Here are corresponding rule wrappers indicating the year and the minutes before midnight:
 
-```mathematica
+```
 lbls = Map[Row[{#Year, Spacer[3], "\n", IntegerPart[#MinutesToMidnight], Spacer[2], "m", Spacer[2], Round[FractionalPart[#MinutesToMidnight]*60], Spacer[2], "s"}] &, Normal@dsDoomsdayTimes];
 lbls = Map[If[#[[1, -3]] == 0, Row@Take[#[[1]], 6], #] &, lbls];
 ```
 
 Here the points “known” by the original time series are given callouts:
 
-```mathematica
+```
 aRules = Association@MapThread[#1 -> Callout[Tooltip[#1, aDateToDescr[#1[[1]]]], #2] &, {ts0, lbls}];
 ts3 = Lookup[aRules, Key[#], #] & /@ ts2;
 ```
 
 Finally, here is the plot:
 
-```mathematica
+```
 DateListPlot[ts3, 
   PlotStyle -> Directive[{Thickness[0.007`], Orange}],
   Epilog -> {PointSize[0.01`], Black, Point[ts0]}, 
@@ -483,7 +483,7 @@ DateListPlot[ts3,
 ]
 ```
 
-![](./Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-time-series-tooltip.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Doomsday-clock-parsing-and-plotting/DoomsdayClock-time-series-tooltip.png)
 
 **Remark:** By hovering with the mouse over the black points the corresponding descriptions can be seen. We considered using clock-gauges as tooltips, but showing clock-settings reasons is more informative.
 
@@ -499,16 +499,16 @@ One possible application of the code in this notebook is to make a “web servic
 
 ## Setup
 
-```mathematica
+```
 Needs["AntonAntonov`FunctionalParsers`"]
 ```
 
-```mathematica
+```
 Clear[TextStats];
 TextStats[s_String] := AssociationThread[{"Characters", "Words", "Lines"}, Through[{StringLength, Length@*TextWords, Length@StringSplit[#, "\n"] &}[s]]];
 ```
 
-```mathematica
+```
 BreakStringIntoLines[str_String, maxLength_Integer : 60] := Module[
     {words, lines, currentLine}, 
     words = StringSplit[StringReplace[str, RegularExpression["\\v+"] -> " "]]; 
