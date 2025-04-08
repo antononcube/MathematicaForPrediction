@@ -67,7 +67,7 @@ In this notebook we show how make neat chord plots of primitive roots generation
 
 It is fairly easy to program a chord plot using Graph:
 
-```mathematica
+```wl
 (* Modulus and primivite root*)
 n = 509; r = 128; 
 (* Coordinates of the chords plot*)
@@ -78,36 +78,36 @@ edges = UndirectedEdge @@@ Partition[PowerMod[r, #, n] & /@ Range[n], 2, 1];
 Graph[edges, VertexCoordinates -> coords, VertexSize -> 0, EdgeStyle -> AbsoluteThickness[0.6]]
 ```
 
-![0ja9nttj7gvy9](./Diagrams/Primitive-root-generation-trails/0ja9nttj7gvy9.png)
+![0ja9nttj7gvy9](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/0ja9nttj7gvy9.png)
 
 We make the function ChordTrailsGraph (see Section “Setup” below) encapsulating the code above. Here is an example:
 
-```mathematica
+```wl
 ChordTrailsGraph[509, 47, EdgeStyle -> {AbsoluteThickness[0.8`]}, 
  VertexSize -> 0, VertexStyle -> EdgeForm[None], 
  EdgeStyle -> RGBColor[0.6093762755665056`, 0.7055193578067459`, 0.8512829338493225`]]
 ```
 
-![0w93mw9n87rvn](./Diagrams/Primitive-root-generation-trails/0w93mw9n87rvn.png)
+![0w93mw9n87rvn](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/0w93mw9n87rvn.png)
 
 Instead of using Graph we can just a Graphics plot -- again see the definition in “Setup”. Here is an example:
 
-```mathematica
+```wl
 ChordTrails[509, 75, "Color" -> Automatic]
 ```
 
-![05fw4gbxvzil3](./Diagrams/Primitive-root-generation-trails/05fw4gbxvzil3.png)
+![05fw4gbxvzil3](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/05fw4gbxvzil3.png)
 
 Note that the modular inverse is going to produce the same chord trails plot:
 
-```mathematica
+```wl
 Row[{
    ChordTrails[257, 3, ImageSize -> 300], 
    ChordTrails[257, ModularInverse[3, 257], ImageSize -> 300] 
   }]
 ```
 
-![0ir0c5f83rko2](./Diagrams/Primitive-root-generation-trails/0ir0c5f83rko2.png)
+![0ir0c5f83rko2](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/0ir0c5f83rko2.png)
 
 ------
 
@@ -115,7 +115,7 @@ Row[{
 
 Here w pick a large enough modulus, we find the primitive roots, and keep only primitive roots that will produce unique chord trail plots:
 
-```mathematica
+```wl
 n = 509;
 rs = PrimitiveRootList[n];
 Length[rs]
@@ -129,7 +129,7 @@ urs // Length
 
 Here is the collection using Graph:
 
-```mathematica
+```wl
 AbsoluteTiming[
   gs1 = Association@
       Map[# ->
@@ -144,15 +144,15 @@ AbsoluteTiming[
 
 Here is a sample of plots from the collection:
 
-```mathematica
+```wl
 KeyTake[gs1, {2, 48, 69}]
 ```
 
-![1aa33rtlvkbnh](./Diagrams/Primitive-root-generation-trails/1aa33rtlvkbnh.png)
+![1aa33rtlvkbnh](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/1aa33rtlvkbnh.png)
 
 Here is the collection using Graphics:
 
-```mathematica
+```wl
 AbsoluteTiming[
   gs2 = Association@Map[# -> ChordTrails[n, #, ImageSize -> 300] &, urs]; 
  ]
@@ -162,17 +162,17 @@ AbsoluteTiming[
 
 Here is a sample of plots from the collection (same indexes as above):
 
-```mathematica
+```wl
 KeyTake[gs2, {2, 48, 69}]
 ```
 
-![1qeiu9fz57as7](./Diagrams/Primitive-root-generation-trails/1qeiu9fz57as7.png)
+![1qeiu9fz57as7](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/1qeiu9fz57as7.png)
 
 **Remark:** It looks like that using Graph is faster and produces (admittedly, with tweaking options) better looking plots.
 
 Since we want to make an animation of chord-trail plots, we convert the collection of plots into a collection of images:
 
-```mathematica
+```wl
 AbsoluteTiming[
   imgs = Map[Rasterize[#, "Image", RasterSize -> 500, ImageSize -> 600] &, gs2]; 
  ]
@@ -186,13 +186,13 @@ AbsoluteTiming[
 
 The function ChordTrails can be generalized to take a (pre-computed) chords argument. Here is an example of chords plot that connects integers that are modular inverses of each other: 
 
-```mathematica
+```wl
 m = 4000;
 chords = Map[If[NumericQ@Quiet@ModularInverse[#, m], {#, ModularInverse[#, m]},Nothing] &, Range[m]];
 ChordTrails[m, chords, PlotStyle -> AbsoluteThickness[0.01], ImageSize -> 400]
 ```
 
-![03q03q9hobjx5](./Diagrams/Primitive-root-generation-trails/03q03q9hobjx5.png)
+![03q03q9hobjx5](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/03q03q9hobjx5.png)
 
 -----
 
@@ -200,7 +200,7 @@ ChordTrails[m, chords, PlotStyle -> AbsoluteThickness[0.01], ImageSize -> 400]
 
 In order to sort the plots we find dimension reduction basis representation of the corresponding images and sort using that representation. For more details see [“Re-exploring the structure of Chinese character images”](https://community.wolfram.com/groups/-/m/t/2516662), [AAn1].
 
-```mathematica
+```wl
 Clear[ImagePreProcessing, ImageToVector];
 ImagePreProcessing[img_Image] := ColorNegate@Binarize[img, 0.9];
 ImageToVector[img_Image] := Flatten[ImageData[ImagePreProcessing[img]]];
@@ -208,30 +208,30 @@ ImageToVector[img_Image, imgSize_] := Flatten[ImageData[ColorConvert[ImageResize
 ImageToVector[___] := $Failed;
 ```
 
-```mathematica
+```wl
 aCImages = imgs;
 ```
 
-```mathematica
+```wl
 AbsoluteTiming[aCImageVecs = ParallelMap[ImageToVector, aCImages];]
 
 (*{0.184429, Null}*)
 ```
 
-```mathematica
+```wl
 SeedRandom[32];
 MatrixPlot[Partition[#, ImageDimensions[aCImages[[1]]][[2]]]] & /@ RandomSample[aCImageVecs, 3]
 ```
 
-![1tavxw8a8s8c7](./Diagrams/Primitive-root-generation-trails/1tavxw8a8s8c7.png)
+![1tavxw8a8s8c7](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/1tavxw8a8s8c7.png)
 
-```mathematica
+```wl
 mat = ToSSparseMatrix[SparseArray[Values@aCImageVecs], "RowNames" -> Map[ToString, Keys[aCImageVecs]], "ColumnNames" -> Automatic]
 ```
 
-![1wjcl3g3a3wd5](./Diagrams/Primitive-root-generation-trails/1wjcl3g3a3wd5.png)
+![1wjcl3g3a3wd5](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/1wjcl3g3a3wd5.png)
 
-```mathematica
+```wl
 SeedRandom[777];
 AbsoluteTiming[
   lsaAllObj = 
@@ -247,31 +247,31 @@ AbsoluteTiming[
 
 In case you want to see the basis (we show just a sample):
 
-```mathematica
+```wl
 lsaAllObj⟹
    LSAMonEcho[Style["Sample of the obtained basis:", Bold, Purple]]⟹
    LSAMonEchoFunctionContext[ImageAdjust[Image[Partition[#, ImageDimensions[aCImages[[1]]][[1]]], ImageSize -> Tiny]] & /@ SparseArray[#H[[{2, 11, 60}, All]]] &];
 ```
 
-![0vmbr8ahsrf68](./Diagrams/Primitive-root-generation-trails/0vmbr8ahsrf68.png)
+![0vmbr8ahsrf68](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/0vmbr8ahsrf68.png)
 
-![1s2uag61bl0wu](./Diagrams/Primitive-root-generation-trails/1s2uag61bl0wu.png)
+![1s2uag61bl0wu](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/1s2uag61bl0wu.png)
 
-```mathematica
+```wl
 W2 = lsaAllObj⟹LSAMonNormalizeMatrixProduct[Normalized -> Right]⟹LSAMonTakeW;
 Dimensions[W2]
 
 (*{126, 120}*)
 ```
 
-```mathematica
+```wl
 H = lsaAllObj⟹LSAMonNormalizeMatrixProduct[Normalized -> Right]⟹LSAMonTakeH;
 Dimensions[H]
 
 (*{120, 250000}*)
 ```
 
-```mathematica
+```wl
 AbsoluteTiming[lsClusters = FindClusters[Normal[SparseArray[W2]] -> RowNames[W2], 40, Method -> {"KMeans"}];]
 Length@lsClusters
 ResourceFunction["RecordsSummary"][Length /@ lsClusters]
@@ -281,14 +281,14 @@ ResourceFunction["RecordsSummary"][Length /@ lsClusters]
 (*40*)
 ```
 
-![0i5ilivzw0nl5](./Diagrams/Primitive-root-generation-trails/0i5ilivzw0nl5.png)
+![0i5ilivzw0nl5](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/0i5ilivzw0nl5.png)
 
-```mathematica
+```wl
 matPixels = WeightTermsOfSSparseMatrix[lsaAllObj⟹LSAMonTakeWeightedDocumentTermMatrix, "IDF", "None", "Cosine"];
 matTopics = WeightTermsOfSSparseMatrix[lsaAllObj⟹LSAMonNormalizeMatrixProduct[Normalized -> Left]⟹LSAMonTakeW, "None", "None", "Cosine"];
 ```
 
-```mathematica
+```wl
 SeedRandom[33];
 ind = RandomChoice[Keys[aCImages]];
 imgTest = ImagePreProcessing@aCImages[ind];
@@ -296,47 +296,47 @@ matImageTest = ToSSparseMatrix[SparseArray@List@ImageToVector[imgTest, ImageDime
 (*imgTest*)
 ```
 
-```mathematica
+```wl
 H = lsaAllObj⟹LSAMonNormalizeMatrixProduct[Normalized -> Right]⟹LSAMonTakeH;
 lsBasis = ImageAdjust[Image[Partition[#, ImageDimensions[aCImages[[1]]][[1]]]]] & /@ SparseArray[H];
 ```
 
-```mathematica
+```wl
 matReprsentation = lsaAllObj⟹LSAMonRepresentByTopics[matImageTest]⟹LSAMonTakeValue;
 lsCoeff = Normal@SparseArray[matReprsentation[[1, All]]];
 ListPlot[MapIndexed[Tooltip[#1, lsBasis[[#2[[1]]]]] &, lsCoeff], Filling -> Axis, PlotRange -> All]
 ```
 
-```mathematica
+```wl
 vecReprsentation = lsCoeff . SparseArray[H];
 reprImg = Image[Unitize@Clip[#, {0.45, 1}, {0, 1}] &@Rescale[Partition[vecReprsentation, ImageDimensions[aCImages[[1]]][[1]]]]];
 GridTableForm[Binarize@Show[#, ImageSize -> 350] & /@ {imgTest, reprImg}, TableHeadings -> {"Test", "Approximated"}]
 ```
 
-![19gvpmjp7dx8d](./Diagrams/Primitive-root-generation-trails/19gvpmjp7dx8d.png)
+![19gvpmjp7dx8d](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/19gvpmjp7dx8d.png)
 
-```mathematica
+```wl
 W = lsaAllObj⟹LSAMonNormalizeMatrixProduct[Normalized -> Left]⟹LSAMonTakeW;
 Dimensions[W]
 
 (*{126, 120}*)
 ```
 
-```mathematica
+```wl
 aWVecs = KeyMap[ToExpression, AssociationThread[RowNames[W], Normal[SparseArray[W]]]];
 ```
 
-```mathematica
+```wl
 ListPlot[Values@aWVecs[[1 ;; 3]], Filling -> Axis, PlotRange -> All]
 ```
 
-![0ajyn6ixlitgd](./Diagrams/Primitive-root-generation-trails/0ajyn6ixlitgd.png)
+![0ajyn6ixlitgd](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/0ajyn6ixlitgd.png)
 
-```mathematica
+```wl
 aWVecs2 = Sort[aWVecs];
 ```
 
-```mathematica
+```wl
 aWVecs3 = aWVecs[[Ordering[Values@aWVecs]]];
 ```
 
@@ -344,17 +344,17 @@ aWVecs3 = aWVecs[[Ordering[Values@aWVecs]]];
 
 Here we make the animation of sorted chord trail plots:
 
-```mathematica
+```wl
 ListAnimate[Join[Values[KeyTake[gs, Keys[aWVecs3]]], Reverse@Values[KeyTake[gs, Keys[aWVecs3]]]], DefaultDuration -> 24]
 ```
 
 Playing the [link to an uploaded movie](https://imgur.com/rleSJqX):
 
-```mathematica
+```wl
 Video["https://www.wolframcloud.com/obj/25b58db2-16f0-4148-9498-d73062387ebb"]
 ```
 
-[![](./Diagrams/Primitive-root-generation-trails/Animation-snapshot-1.png)](https://imgur.com/rleSJqX.mp4)
+[![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Primitive-root-generation-trails/Animation-snapshot-1.png)](https://imgur.com/rleSJqX.mp4)
 
 -----
 
@@ -366,11 +366,11 @@ Video["https://www.wolframcloud.com/obj/25b58db2-16f0-4148-9498-d73062387ebb"]
 
 #### Export to MP4 (white background)
 
-```mathematica
+```wl
 lsExportImgs = Join[Values[KeyTake[imgs, Keys[aWVecs2]]], Reverse@Values[KeyTake[imgs, Keys[aWVecs2]]]];
 ```
 
-```mathematica
+```wl
 AbsoluteTiming[
   Export[FileNameJoin[{NotebookDirectory[], "AnimatedGIFs", "PrimitiveRoots-" <> ToString[n] <> ".mp4"}], lsExportImgs, "MP4","DisplayDurations" -> 0.05]; 
  ]
@@ -378,22 +378,22 @@ AbsoluteTiming[
 
 #### Export to GIF (black background)
 
-```mathematica
+```wl
 AbsoluteTiming[
   lsExportImgs2 = ColorNegate[ImageEffect[#, "Decolorization"]] & /@ Values[KeyTake[imgs, Keys[aWVecs2]]]; 
  ]
 ```
 
-```mathematica
+```wl
 lsExportImgs2 = Join[lsExportImgs2, Reverse@lsExportImgs2];
 lsExportImgs2 // Length
 ```
 
-```mathematica
+```wl
 lsExportImgs2[[12]]
 ```
 
-```mathematica
+```wl
 AbsoluteTiming[
   Export[FileNameJoin[{NotebookDirectory[], "AnimatedGIFs", "PrimitiveRoots-" <> ToString[n] <> ".gif"}], lsExportImgs2, "GIF", "AnimationRepetitions" -> Infinity, "DisplayDurations" -> 0.05]; 
  ]
@@ -401,7 +401,7 @@ AbsoluteTiming[
 
 Optionally, open the animations directory:
 
-```mathematica
+```wl
 (*FileNameJoin[{NotebookDirectory[],"AnimatedGIFs"}]//SystemOpen*)
 ```
 
@@ -411,7 +411,7 @@ Optionally, open the animations directory:
 
 ### Load paclets
 
-```mathematica
+```wl
 Needs["AntonAntonov`SSparseMatrix`"];
 Needs["AntonAntonov`MonadicLatentSemanticAnalysis`"];
 Needs["AntonAntonov`MonadicSparseMatrixRecommender`"];
@@ -421,7 +421,7 @@ Needs["AntonAntonov`DataReshapers`"];
 
 ### Chord plots definitions
 
-```mathematica
+```wl
 Clear[ChordTrailsGraph];
 Options[ChordTrailsGraph] = Options[Graph];
 ChordTrailsGraph[n_Integer, r_Integer, opts : OptionsPattern[]] := 
@@ -433,7 +433,7 @@ ChordTrailsGraph[n_Integer, r_Integer, opts : OptionsPattern[]] :=
    ];
 ```
 
-```mathematica
+```wl
 Clear[ChordTrails];
 Options[ChordTrails] = Join[{"Color" -> RGBColor[0.4659039108257499, 0.5977704831063181, 0.7964303267504351], PlotStyle -> {}}, Options[Graphics]];
 ChordTrails[n_Integer, r_Integer, opts : OptionsPattern[]] :=
