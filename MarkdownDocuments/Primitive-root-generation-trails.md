@@ -71,7 +71,7 @@ It is fairly easy to program a chord plot using Graph:
 (* Modulus and primivite root*)
 n = 509; r = 128; 
 (* Coordinates of the chords plot*)
-coords = AssociationThread[Range[n], Table[{Cos[2 \[Pi] k/(n - 1) + \[Pi]/2], Sin[2 \[Pi] k/(n - 1) + \[Pi]/2]}, {k, 0, n - 1}]]; 
+coords = AssociationThread[Range[n], Table[{Cos[2 Pi k/(n - 1) + Pi/2], Sin[2 Pi k/(n - 1) + Pi/2]}, {k, 0, n - 1}]]; 
 (* Graph edges *) 
 edges = UndirectedEdge @@@ Partition[PowerMod[r, #, n] & /@ Range[n], 2, 1]; 
 (*Graph*) 
@@ -426,7 +426,7 @@ Clear[ChordTrailsGraph];
 Options[ChordTrailsGraph] = Options[Graph];
 ChordTrailsGraph[n_Integer, r_Integer, opts : OptionsPattern[]] := 
    Block[{coords, edges, g}, 
-    coords = AssociationThread[Range[n], Table[{Cos[2 \[Pi] k/(n - 1) + \[Pi]/2], Sin[2 \[Pi] k/(n - 1) + \[Pi]/2]}, {k, 0, n - 1}]]; 
+    coords = AssociationThread[Range[n], Table[{Cos[2 Pi k/(n - 1) + Pi/2], Sin[2 Pi k/(n - 1) + Pi/2]}, {k, 0, n - 1}]]; 
     edges = UndirectedEdge @@@ Partition[PowerMod[r, #, n] & /@ Range[n], 2, 1]; 
     g = Graph[edges, opts, VertexCoordinates -> coords]; 
     g 
@@ -454,8 +454,7 @@ ChordTrails[n_Integer, chordsArg : {{_?IntegerQ, _?IntegerQ} ..}, opts : Options
    
    coords = 
     AssociationThread[Range[n], 
-     Table[{Cos[2 \[Pi] k/(n - 1) + \[Pi]/2], 
-       Sin[2 \[Pi] k/(n - 1) + \[Pi]/2]}, {k, 0, n - 1}]];
+     Table[{Cos[2 Pi k/(n - 1) + Pi/2], Sin[2 Pi k/(n - 1) + Pi/2]}, {k, 0, n - 1}]];
    chords = chords /. {i_Integer :> coords[[i]]};
    Which[
     ColorQ[color],
