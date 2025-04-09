@@ -7,7 +7,7 @@ April 2025
 
 ## Introduction
 
-In this notebook we show how make neat chord plots of primitive roots generation sequences. [Primitive roots](https://en.wikipedia.org/wiki/Primitive_root_modulo_n) a generators of cyclic [multiplicative integer groups modulo ](https://en.wikipedia.org/wiki/Multiplicative_group_of_integers_modulo_n)$\underline{n}$. See the built-in Wolfram Language functions [PrimitiveRoot](https://reference.wolfram.com/language/ref/PrimitiveRoot.html) and [PrimitiveRootList](https://reference.wolfram.com/language/ref/PrimitiveRootList.html). We follow the ideas presented in [“Modular Arithmetic Visualizations”](http://inversed.ru/Blog_1.htm) by [Peter Karpov](http://inversed.ru/index.htm).
+In this notebook we show how to make neat chord plots of primitive roots generation sequences. [Primitive roots](https://en.wikipedia.org/wiki/Primitive_root_modulo_n) a generators of cyclic [multiplicative integer groups modulo ](https://en.wikipedia.org/wiki/Multiplicative_group_of_integers_modulo_n)$\underline{n}$. See the built-in Wolfram Language functions [PrimitiveRoot](https://reference.wolfram.com/language/ref/PrimitiveRoot.html) and [PrimitiveRootList](https://reference.wolfram.com/language/ref/PrimitiveRootList.html). We follow the ideas presented in [“Modular Arithmetic Visualizations”](http://inversed.ru/Blog_1.htm) by [Peter Karpov](http://inversed.ru/index.htm).
 
 **Remark:** The basis representation section follows ["Re-exploring the structure of Chinese character images"](https://community.wolfram.com/groups/-/m/t/2516662), [AAn1]; the movie exporting section follows [“Rorschach mask animations projected over 3D surfaces”](https://community.wolfram.com/groups/-/m/t/2679216), [AAn2]. 
 
