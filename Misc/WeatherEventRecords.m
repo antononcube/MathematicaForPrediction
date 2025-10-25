@@ -116,7 +116,7 @@ Needs["DataReshape`"];
 Clear[WeatherEventRecords];
 
 WeatherEventRecords[
-  citiesSpec_: {{_String, _String}..},
+  citiesSpec: {{_String, _String}..},
   dateRange:{{_Integer, _Integer, _Integer}, {_Integer, _Integer, _Integer}},
   wProps:{_String..} : {"Temperature"},
   nStations_Integer : 1 ] :=
