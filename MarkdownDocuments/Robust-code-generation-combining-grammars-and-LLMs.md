@@ -151,13 +151,9 @@ tbl = Dataset[{<|"ID" -> 1, "CombinationPattern" -> "Parallel Race: Grammar + LL
 
 - That said, the fallback pattern implemented below can be considered the "best option" from certain development perspectives because it is simple, effective, and has fast execution times.
 
-See the corresponding [Morphological Analysis table](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/Grammar-LLM-combintations-morphological-analysis-table.md) which correspond to this taxonomy mind-map:
+See the corresponding [Morphological Analysis table](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/Grammar-LLM-combintations-morphological-analysis-table.md) which correspond to this taxonomy mind-map:
 
-```wl
-" mindmap   root(Grammar-LLM Integration Taxonomy)      %% Grammar-first strategies     Grammar-first       Deterministic-Parse         L2-Fallback         L3-Normalization         L8-Racing       Grammar-as-Validator         L1-Checks         L2-Checks         L6-Disambiguation       Partial-Parse         Declarative-only         Procedural-to-LLM      %% LLM-first strategies     LLM-first       Full-Parse         G3-Validated         G8-Prompt-Guided       LLM-Normalizer         Grammar-Retry         Canonicalization-Loops       LLM-Semantic-Interpreter         After-AST         Gap-Filling      %% Coupled / hybrid strategies     Hybrid       Rule-level-Collaboration         L5-Rule-Level-LLM         G5-Outsourcing       Ambiguity-Resolution         L6-LLM-Ranking         G7-Grammar-Enumerates       Iterative-Repair         Normalizer -> Grammar -> LLM         Grammar -> LLM-Completion      %% Evolutionary strategies     Evolutionary       Grammar-Induction         L7-LLM-Suggested-Rules         Grammar-Refinement       Grammar-Generated-Tests         Fuzzing-for-LLMs         Validator-Driven-LLM " // ResourceFunction["MermaidInk"]
-```
-
-![0fw1fag2sme2s](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0fw1fag2sme2s.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/Grammar-LLM-Integration-Taxonomy-mind-map.png)
 
 ### Setup
 
@@ -165,10 +161,10 @@ Here are the packages used in this document (notebook):
 
 ```wl
 Needs["AntonAntonov`DSLTranslation`"];
- Needs["AntonAntonov`NLPTemplateEngine`"];
- Needs["AntonAntonov`DSLExamples`"];
- Needs["AntonAntonov`MermaidJS`"];
- Needs["AntonAntonov`MonadicSparseMatrixRecommender`"];
+Needs["AntonAntonov`NLPTemplateEngine`"];
+Needs["AntonAntonov`DSLExamples`"];
+Needs["AntonAntonov`MermaidJS`"];
+Needs["AntonAntonov`MonadicSparseMatrixRecommender`"];
 ```
 
 ### Three DSL translations
@@ -364,7 +360,7 @@ JudgeFunction[spec_, lang_, dslGrammar_, llmExamples_, nlpTemplateEngine_] :=
 tmplJudge = StringTemplate["Choose the generated code that most fully adheres to the spec:\\n\\n\\n`spec`\\n\\n\\nfrom the following `lang` generation results:\\n\\n\\n1) DSL-grammar:\\n`dslGrammar`\\n\\n\\n2) LLM-examples:\\n`llmExamples`\\n\\n\\n3) NLP-template-engine:\\n`nlpTemplateEngine`\\n\\n\\nand copy it:"]
 ```
 
-![1sk1d044my02q](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/1sk1d044my02q.png)
+![1sk1d044my02q](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/1sk1d044my02q.png)
 
 ```wl
 JudgementReport[spec_, lang_, dslGrammar_, llmExamples_, nlpTemplateEngine_, judge_] := 
@@ -406,13 +402,8 @@ Corresponding LLM-graph construction:
 gBestCode = LLMGraph[rules]
 ```
 
-![1l626dkgaymsq](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/1l626dkgaymsq.png)
+![1l626dkgaymsq](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/1l626dkgaymsq.png)
 
-Visualization:
-
-```wl
-
-```
 
 Here is a recommender workflow specification:
 
@@ -428,7 +419,7 @@ res = gBestCode[<|"spec" -> spec, "lang" -> "R", "split" -> True|>];
 
 Here is a screenshot of the LLM-graph result:
 
-![06f4ydsityl4c](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/06f4ydsityl4c.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/LLMGraph-Parallel-race-result.png)
 
 #### LLM-graph visualization
 
@@ -436,7 +427,7 @@ Here is a screenshot of the LLM-graph result:
 Information[gBestCode, "Graph"]
 ```
 
-![0xs5ymshqgefl](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0xs5ymshqgefl.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0xs5ymshqgefl.png)
 
 For details on LLM-graphs design see the video:
 
@@ -493,7 +484,7 @@ Corresponding LLM-graph construction:
 gRobust = LLMGraph[rules]
 ```
 
-![0az5o0wdkdl46](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0az5o0wdkdl46.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0az5o0wdkdl46.png)
 
 Here the LLM graph is run over a spec that can be parsed by DSL-grammar (notice the very short computation time):
 
@@ -521,7 +512,7 @@ Here is the corresponding graph plot:
 Information[gRobust, "Graph"]
 ```
 
-![0hr53jml8u7v4](./Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0hr53jml8u7v4.png)
+![](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Robust-code-generation-combining-grammars-and-LLMs/0hr53jml8u7v4.png)
 
 Let us specify another workflow -- for ML-classification with Wolfram Language -- and run the graph:
 
