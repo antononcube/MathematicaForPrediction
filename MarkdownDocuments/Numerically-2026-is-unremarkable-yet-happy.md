@@ -86,19 +86,19 @@ ds = Dataset[{<|"Property" -> "Prime or Composite", "2025" -> "Composite", "2026
  ResourceFunction["GridTableForm"][ds]
 ```
 
-|  |  |  |  |  |  |
-| - | - | - | - | - | - |
-| # | Prime or Composite | Property | 2025 | 2026 | Notes |
-| 1 | **Prime or Composite** | Prime or Composite | Composite | Composite | Both non-prime. |
-| 2 | **Prime Factorization** | Prime Factorization | 3^4 * 5^2 (81 * 25) | 2 * 1013 | 2025 has repeated small primes; 2026 is a semiprime (product of two distinct primes). |
-| 3 | **Number of Divisors** | Number of Divisors | 15 (highly composite for its size) | 4 (1, 2, 1013, 2026) | 2025 has many divisors; 2026 has very few. |
-| 4 | **Perfect Square** | Perfect Square | Yes (45^2 = 2025) | No | Major highlight for 2025---rare square year. |
-| 5 | **Sum of Cubes** | Sum of Cubes | Yes (1^3 + 2^3 + ... + 9^3 = (1 + ... + 9)^2 = 2025) | No | Iconic property for 2025 (Nicomachus's theorem). |
-| 6 | **Happy Number** | Happy Number | No (process leads to cycle including 4) | Yes (repeated squared digit sums reach 1) | Key point for 2026---its main "happy" trait. |
-| 7 | **Harshad Number** | Harshad Number | Yes (divisible by 9) | No (not divisible by 10) | 2025 qualifies; 2026 does not. |
-| 8 | **Primitive Roots** | Primitive Roots | No | Yes | This is a relatively rare property to have. |
-| 9 | **Other Notable Traits** | Other Notable Traits | {(20 + 25)^2 = 2025, Sum of first 45 odd numbers, Deficient number, Many pattern-based representations} | {Even number, Deficient number, Few special patterns} | 2025 is packed with elegant properties; 2026 is more "plain" beyond being happy. |
-| 10 | **Overall "Interest" Level** | Overall "Interest" Level | Highly interesting---celebrated in math communities for squares, cubes, and patterns | Relatively uninteresting---basic semiprime with no standout geometric or sum properties | Reinforces blog's angle. |
+|  |  |  |  |
+| - | - | - | - |
+| Property | 2025 | 2026 | Notes |
+| Prime or Composite | Composite | Composite | Both non-prime. |
+| Prime Factorization | 3^4 * 5^2 (81 * 25) | 2 * 1013 | 2025 has repeated small primes; 2026 is a semiprime (product of two distinct primes). |
+| Number of Divisors | 15 (highly composite for its size) | 4 (1, 2, 1013, 2026) | 2025 has many divisors; 2026 has very few. |
+| Perfect Square | Yes (45^2 = 2025) | No | Major highlight for 2025---rare square year. |
+| Sum of Cubes | Yes (1^3 + 2^3 + ... + 9^3 = (1 + ... + 9)^2 = 2025) | No | Iconic property for 2025 (Nicomachus's theorem). |
+| Happy Number | No (process leads to cycle including 4) | Yes (repeated squared digit sums reach 1) | Key point for 2026---its main "happy" trait. |
+| Harshad Number | Yes (divisible by 9) | No (not divisible by 10) | 2025 qualifies; 2026 does not. |
+| Primitive Roots | No | Yes | This is a relatively rare property to have. |
+| Other Notable Traits | {(20 + 25)^2 = 2025, Sum of first 45 odd numbers, Deficient number, Many pattern-based representations} | {Even number, Deficient number, Few special patterns} | 2025 is packed with elegant properties; 2026 is more "plain" beyond being happy. |
+| Overall "Interest" Level | Highly interesting---celebrated in math communities for squares, cubes, and patterns | Relatively uninteresting---basic semiprime with no standout geometric or sum properties | Reinforces blog's angle. |
 
 To summarize:
 
