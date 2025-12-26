@@ -71,7 +71,7 @@ RandomSeed[3021];
  Information[gWeighted]
 ```
 
-![0s0wsdfzitdzq](./Diagrams/Maze-making-using-graphs/0s0wsdfzitdzq.png)
+![0s0wsdfzitdzq](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0s0wsdfzitdzq.png)
 
 Find the spanning tree of the graph:
 
@@ -103,7 +103,7 @@ simpleMaze = Graph[VertexList[mazeTree], EdgeList[mazeTree], VertexCoordinates -
  Show[grCheat, PlotRange -> range]
 ```
 
-![1bc8vj9fmf5ro](./Diagrams/Maze-making-using-graphs/1bc8vj9fmf5ro.png)
+![1bc8vj9fmf5ro](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1bc8vj9fmf5ro.png)
 
 The "maze" above looks like a maze because the vertices and edges are rectangular with matching sizes, and they are thicker than the spaces between them. In other words, we are cheating.
 
@@ -120,7 +120,7 @@ gPath = PathGraph[path, VertexCoordinates -> GraphEmbedding[g][[path]]];
    SwatchLegend[{Red, Pink, DarkBlue}, {"Shortest path vertices", "Shortest path edges", "Image background"}]]
 ```
 
-![1q29onggyuwcc](./Diagrams/Maze-making-using-graphs/1q29onggyuwcc.png)
+![1q29onggyuwcc](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1q29onggyuwcc.png)
 
 ----
 
@@ -143,7 +143,7 @@ Make two regular graphs: one for the maze walls and the other for the maze paths
 ```
 
 
-![0t91asf2eugz2](./Diagrams/Maze-making-using-graphs/simple-maze-graphs.png)
+![0t91asf2eugz2](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/simple-maze-graphs.png)
 
 See how the graph "interlace":
 
@@ -159,7 +159,7 @@ mazePath = Graph[EdgeList[g2], EdgeWeight -> RandomReal[{10, 10000}, EdgeCount[g
  Information[mazePath]
 ```
 
-![0t91asf2eugz2](./Diagrams/Maze-making-using-graphs/0t91asf2eugz2.png)
+![0t91asf2eugz2](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0t91asf2eugz2.png)
 
 Combined Graph:
 
@@ -170,7 +170,7 @@ g3 = Graph[
  Information[g3]
 ```
 
-![0mdi2hih68mqo](./Diagrams/Maze-making-using-graphs/0mdi2hih68mqo.png)
+![0mdi2hih68mqo](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0mdi2hih68mqo.png)
 
 Plot the combined graph:
 
@@ -178,7 +178,7 @@ Plot the combined graph:
 HighlightGraph[g3, mazePath, ImageSize -> 800]
 ```
 
-![1kndzl5jned4z](./Diagrams/Maze-making-using-graphs/1kndzl5jned4z.png)
+![1kndzl5jned4z](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1kndzl5jned4z.png)
 
 Remove wall edges using a formula:
 
@@ -203,7 +203,7 @@ g4 = Graph[g3, VertexLabels -> None];
  Information[g4]
 ```
 
-![0s9eo0feadbo8](./Diagrams/Maze-making-using-graphs/0s9eo0feadbo8.png)
+![0s9eo0feadbo8](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0s9eo0feadbo8.png)
 
 Plot wall graph and maze paths (maze space) graph:
 
@@ -211,7 +211,7 @@ Plot wall graph and maze paths (maze space) graph:
 HighlightGraph[g4, mazePath, ImageSize -> 800]
 ```
 
-![05ekkh85mpfro](./Diagrams/Maze-making-using-graphs/05ekkh85mpfro.png)
+![05ekkh85mpfro](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/05ekkh85mpfro.png)
 
 Fancier maze presentation with rectangular vertices and edges (with matching sizes):
 
@@ -221,7 +221,7 @@ g5 = Subgraph[g4, VertexList[g1]];
  g6 = Graph[g5, VertexShapeFunction -> None, EdgeShapeFunction -> ({Opacity[1], DarkBlue, AbsoluteThickness[30], Line[#1]} &), ImageSize -> 800]
 ```
 
-![0arq97krotgni](./Diagrams/Maze-making-using-graphs/0arq97krotgni.png)
+![0arq97krotgni](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0arq97krotgni.png)
 
 Here is how a solution can found and plotted:
 
@@ -232,7 +232,7 @@ Here is how a solution can found and plotted:
 
 Here is a (more challenging to solve) maze generated with $n=12$ and $m=40$:
 
-![1tmgs2lmz563k](./Diagrams/Maze-making-using-graphs/1tmgs2lmz563k.png)
+![1tmgs2lmz563k](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1tmgs2lmz563k.png)
 
 ----
 
@@ -253,13 +253,13 @@ g2 = Graph[g2, VertexCoordinates -> (#1 + {Sqrt[3], 1} & ) /@ GraphEmbedding[g2]
 {Information[g1], Information[g2]}
 ```
 
-![0eyicaepipiwo](./Diagrams/Maze-making-using-graphs/0eyicaepipiwo.png)
+![0eyicaepipiwo](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0eyicaepipiwo.png)
 
 ```wl
 Show[g1, HighlightGraph[g2, g2], ImageSize -> 800]
 ```
 
-![0bfc3uk2c4uw3](./Diagrams/Maze-making-using-graphs/0bfc3uk2c4uw3.png)
+![0bfc3uk2c4uw3](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0bfc3uk2c4uw3.png)
 
 Maze Path Graph:
 
@@ -269,7 +269,7 @@ mazePath = Graph[EdgeList[g2], EdgeWeight -> RandomReal[{10, 10000}, EdgeCount[g
  Information[mazePath]
 ```
 
-![0937puga1ahjz](./Diagrams/Maze-making-using-graphs/0937puga1ahjz.png)
+![0937puga1ahjz](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0937puga1ahjz.png)
 
 Combine the walls-maze and the maze-path graphs (i.e., make a union of them), and plot the resulting graph:
 
@@ -278,13 +278,13 @@ g3 = GraphUnion[g1, mazePath, VertexCoordinates -> Join[Thread[VertexList[g1] ->
  Information[g3]
 ```
 
-![1foiaesyk9d5s](./Diagrams/Maze-making-using-graphs/1foiaesyk9d5s.png)
+![1foiaesyk9d5s](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1foiaesyk9d5s.png)
 
 ```wl
 HighlightGraph[g3, mazePath, ImageSize -> 800]
 ```
 
-![1t4t24o8zwj7p](./Diagrams/Maze-making-using-graphs/1t4t24o8zwj7p.png)
+![1t4t24o8zwj7p](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1t4t24o8zwj7p.png)
 
 Make a nearest neighbor points finder functor:
 
@@ -292,7 +292,7 @@ Make a nearest neighbor points finder functor:
 finder = Nearest[Thread[GraphEmbedding[g1] -> VertexList[g1]]]
 ```
 
-![045ypuvgpbrq4](./Diagrams/Maze-making-using-graphs/045ypuvgpbrq4.png)
+![045ypuvgpbrq4](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/045ypuvgpbrq4.png)
 
 Take a maze edge and its vertex points:
 
@@ -302,7 +302,7 @@ e = First@EdgeList[mazePath];
  points = List @@ (e /. aMazePathCoords)
 ```
 
-![17k4mshnxw0tf](./Diagrams/Maze-making-using-graphs/17k4mshnxw0tf.png)
+![17k4mshnxw0tf](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/17k4mshnxw0tf.png)
 
 Find the edge's midpoint and the nearest wall-graph vertices:
 
@@ -311,9 +311,9 @@ Print["Middle edge point: ", Mean[points]]
 Print["Edge to remove: ", UndirectedEdge @@ finder[Mean[points]]]
 ```
 
-![0b52fvogi84bf](./Diagrams/Maze-making-using-graphs/0b52fvogi84bf.png)
+![0b52fvogi84bf](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0b52fvogi84bf.png)
 
-![1xlaj83jf90c6](./Diagrams/Maze-making-using-graphs/1xlaj83jf90c6.png)
+![1xlaj83jf90c6](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/1xlaj83jf90c6.png)
 
 Loop over all maze edges, removing wall-maze edges:
 
@@ -329,7 +329,7 @@ g4 = g1;
  Information[g4]
 ```
 
-![11uvhhgtj2da4](./Diagrams/Maze-making-using-graphs/11uvhhgtj2da4.png)
+![11uvhhgtj2da4](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/11uvhhgtj2da4.png)
 
 Here is the obtained graph
 
@@ -337,7 +337,7 @@ Here is the obtained graph
 Show[g4, ImageSize -> 800]
 ```
 
-![0zih3bdnlu25c](./Diagrams/Maze-making-using-graphs/0zih3bdnlu25c.png)
+![0zih3bdnlu25c](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0zih3bdnlu25c.png)
 
 The start and end points of the maze:
 
@@ -368,9 +368,9 @@ g5 = Graph[g4, VertexShapeFunction -> None, EdgeShapeFunction -> ({Opacity[1], D
  g5 = VertexDelete[g5, {start, end}]
 ```
 
-![0lpxgk7luqu30](./Diagrams/Maze-making-using-graphs/0lpxgk7luqu30.png)
+![0lpxgk7luqu30](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/0lpxgk7luqu30.png)
 
-Here is [the solution of the maze](./Diagrams/Maze-making-using-graphs/099kgbigxiuac.png):
+Here is [the solution of the maze](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Maze-making-using-graphs/099kgbigxiuac.png):
 
 ```wl
 Show[g5, HighlightGraph[solution, solution]]
