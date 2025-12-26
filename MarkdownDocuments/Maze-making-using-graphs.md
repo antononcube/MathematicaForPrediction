@@ -142,10 +142,8 @@ Make two regular graphs: one for the maze walls and the other for the maze paths
  Grid[{{"Wall graph", "Paths graph"}, {Information[g1], Information[g2]}}]
 ```
 
-|  |  |
-| - | - |
-| Wall graph | Paths graph |
-| -InformationData- | -InformationData- |
+
+![0t91asf2eugz2](./Diagrams/Maze-making-using-graphs/simple-maze-graphs.png)
 
 See how the graph "interlace":
 
