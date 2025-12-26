@@ -1,8 +1,8 @@
 # Maze Making Using Graphs
 
-Anton Antonov
-[RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com) 
-[MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)
+Anton Antonov   
+[RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com)    
+[MathematicaForPrediction at WordPress](https://mathematicaforprediction.wordpress.com)   
 December 2025
 
 ---
