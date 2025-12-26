@@ -1,5 +1,3 @@
-![00mn79cyxf7nc](./Diagrams/Maze-making-using-graphs/00mn79cyxf7nc.png)
-
 # Maze Making Using Graphs
 
 Anton Antonov
