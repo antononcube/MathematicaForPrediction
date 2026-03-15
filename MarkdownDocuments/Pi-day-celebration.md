@@ -1,4 +1,4 @@
-![0p5yf6ixmdvcy](./Diagrams/Pi-day-celebration/0p5yf6ixmdvcy.png)
+![0p5yf6ixmdvcy](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/0p5yf6ixmdvcy.png)
 
 # Pi Day 2026: Formulas, Series, and Plots for π
 
@@ -75,7 +75,7 @@ Here is the summary:
 ResourceFunction["RecordsSummary"][terms]
 ```
 
-![1n16eusjlod5s](./Diagrams/Pi-day-celebration/1n16eusjlod5s.png)
+![1n16eusjlod5s](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/1n16eusjlod5s.png)
 
 Here is an array plot of the first 128 terms of the continued fraction approximating *\pi* :
 
@@ -89,7 +89,7 @@ mat = Map[Join[Table[0, maxDigits - Length[#]], #] &, mat];
 ArrayPlot[Transpose[mat], Mesh -> True, ImageSize -> 1000]
 ```
 
-![1oesdxgitoh1u](./Diagrams/Pi-day-celebration/1oesdxgitoh1u.png)
+![1oesdxgitoh1u](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/1oesdxgitoh1u.png)
 
 Next, we show the Pareto principle manifestation of for the continued fraction terms. First we observe that the terms a distribution similar to [Benford's law](https://en.wikipedia.org/wiki/Benford%27s_law) :
 
@@ -115,7 +115,7 @@ BarChart[data2,
    PlotTheme -> "Detailed", ImageSize -> Large]
 ```
 
-![1fyfg7jl5cjof](./Diagrams/Pi-day-celebration/1fyfg7jl5cjof.png)
+![1fyfg7jl5cjof](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/1fyfg7jl5cjof.png)
 
 Here is the Pareto principle plot -- ≈5% of the unique term values correspond to ≈80% of the terms:
 
@@ -126,7 +126,7 @@ ResourceFunction["ParetoPrinciplePlot"][
    ImageSize -> Large]
 ```
 
-![1cq0xm0gz37sk](./Diagrams/Pi-day-celebration/1cq0xm0gz37sk.png)
+![1cq0xm0gz37sk](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/1cq0xm0gz37sk.png)
 
 ### 3. Classic Infinite Series
 
@@ -164,7 +164,7 @@ N[Pi, 100] - N[PiLeibniz[1000], 1000]
 
 **[Nilakantha series](https://vixra.org/pdf/2302.0056v1.pdf)**[ ](https://vixra.org/pdf/2302.0056v1.pdf)(faster convergence):
 
-![0293dofrmrlwe](./Diagrams/Pi-day-celebration/0293dofrmrlwe.png)
+![0293dofrmrlwe](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/0293dofrmrlwe.png)
 
 WL:
 
@@ -194,7 +194,7 @@ N[Pi, 40] - N[PiNilakantha[1000], 40]
 
 **[Wallis product](https://en.wikipedia.org/wiki/Wallis_product)**[ (1655)](https://en.wikipedia.org/wiki/Wallis_product) --- elegant infinite product:
 
-![1q0c5okxvywr4](./Diagrams/Pi-day-celebration/1q0c5okxvywr4.png)
+![1q0c5okxvywr4](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/1q0c5okxvywr4.png)
 
 WL running product:
 
@@ -225,7 +225,7 @@ WL running product:
 
 One of the fastest-converging series used in record computations:
 
-![0b32wzezevyz0](./Diagrams/Pi-day-celebration/0b32wzezevyz0.png)
+![0b32wzezevyz0](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/0b32wzezevyz0.png)
 
 Each term adds roughly 14 correct digits.
 
@@ -342,7 +342,7 @@ Let us plot a "random walk" using the terms of continued fraction of Pi -- the 2
 ListLinePlot[Reverse /@ AnglePath[terms], PlotStyle -> (AbsoluteThickness[0.6]), ImageSize -> Large, Axes -> False]
 ```
 
-![0q6uxinid6l9a](./Diagrams/Pi-day-celebration/0q6uxinid6l9a.png)
+![0q6uxinid6l9a](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/0q6uxinid6l9a.png)
 
 Here is a bubble chart based on the path points and term values:
 
@@ -352,7 +352,7 @@ pathWithValues = Flatten /@ Thread[{Reverse /@ Rest[path], terms}];
  Rasterize[gr, ImageSize -> 900, ImageResolution -> 72]
 ```
 
-![0q5w8txmqf5en](./Diagrams/Pi-day-celebration/0q5w8txmqf5en.png)
+![0q5w8txmqf5en](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/0q5w8txmqf5en.png)
 
 **Remark:** The bubble sizes indicate that some of terms are fairly large, but the majority of them are relatively small.
 
@@ -363,7 +363,7 @@ pathWithValuesLog = MapAt[N@*Log10, pathWithValues, {All, 3}];
  ListLinePlot3D[MovingAverage[pathWithValuesLog, 200], AspectRatio -> Automatic, PlotRange -> All, ImageSize -> Large, Ticks -> None]
 ```
 
-![1w4cc4bgx9odc](./Diagrams/Pi-day-celebration/1w4cc4bgx9odc.png)
+![1w4cc4bgx9odc](https://raw.githubusercontent.com/antononcube/MathematicaForPrediction/refs/heads/master/MarkdownDocuments/Diagrams/Pi-day-celebration/1w4cc4bgx9odc.png)
 
 ### References
 
