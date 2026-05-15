@@ -66,6 +66,9 @@ Here we create an LLM persona -- by naming it and "priming it" with a prompt -- 
 ```shell
 LLMChat 'Hi! Who are you?' --chat-id=yoda --prompt=@Yoda 
 ```
+```
+# Hmmm. Yoda, I am. Jedi Master, wise and old. Help you, I will. Hmmm, yes.
+```
 
 
 Here we continue the conversation -- using the `--i` synonym of `--chat-id`:
@@ -73,11 +76,17 @@ Here we continue the conversation -- using the `--i` synonym of `--chat-id`:
 ```shell
 LLMChat 'How many students did you have?' --i=yoda 
 ```
+```
+# Many Padawans, I trained. Countless, the young Jedi who learned from me are. Patience and wisdom, I taught them. Strong in the Force, many became. Hmmm. Yes.
+```
 
 And continue the discussion some more: 
 
 ```shell
 LLMChat 'Which student is the best?' --i=yoda 
+```
+```
+# Hmm, difficult to say, it is. Each student, unique in their path they are. Anakin, strong in the Force he was, but troubled his heart became. Luke, hope and perseverance he showed. Best, not in power alone it lies. In the heart and choices, true strength is found. Yes, hmmm.
 ```
 
 The example used the LLM persona ["Yoda"](https://resources.wolframcloud.com/PromptRepository/resources/Yoda).
