@@ -167,8 +167,8 @@ this document was copy-edited with the prompt ["CopyEdit"](https://resources.wol
 using the following commands:
 
 ```
-cat Chatnik-LLM-Host-in-the-Shell-Part-1.md | llm-chat -i=ce --prompt=@CopyEdit --model=gpt-5.4-mini --max-tokens=16384
-llm-chat-meta -i=ce last-message > Chatnik-LLM-Host-in-the-Shell-Part-1_edited.md
+cat Chatnik-LLM-Host-in-the-Shell-Part-1.md | LLMChat - --i=ce --prompt=@CopyEdit --model=gpt-5.4-mini --max-tokens=16384
+LLMChatMeta  last-message --i=ce > Chatnik-LLM-Host-in-the-Shell-Part-1_edited.md
 open Chatnik-LLM-Host-in-the-Shell-Part-1_edited.md
 ```
 
@@ -397,6 +397,8 @@ We can see the outcome of the `LLMChat` pipeline above with:
 LLMChatMeta last-message --i=fb | cat > chat.md
 ```
 
+### Parsing of CLI arguments 
+
 The paclet ["CommandLineParser"](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/CommandLineParser/), [MSp1],
 is used to parse the CLI arguments of the "Chatnik" scripts. The parser has certain limitations:
 
@@ -405,6 +407,18 @@ is used to parse the CLI arguments of the "Chatnik" scripts. The parser has cert
 
 Because [`$ScriptInputString` is not very reliable](https://mathematica.stackexchange.com/q/204021) the positional argument `-` 
 can be used to specify that the pipeline value as the input to `LLMChat`.
+
+### Including `wolframscript`
+
+Of course, we can utilize "full power" of `wolframscript` (or WL) by making pipelines that combine
+LLM generations with WL computations. For example, here we get LLM-retrieved statistics and plot them
+(using the last message of the chat with "beta" above):
+
+```
+LLMChatMeta last-message --i=beta | sed '1d; $d' | wolframscript -code 'gr=ImportString[Import["!cat", "String"],"RawJSON"]//ReverseSort//ListPlot[#, ImageSize->600, PlotTheme -> "Detailed", PlotRange->All]&; Export["./beta.png", gr]' && open ./beta.png 
+```
+
+![](./Diagrams/Chatnik-LLM-Host-in-the-Shell-Part-1/beta.png)
 
 ----
 

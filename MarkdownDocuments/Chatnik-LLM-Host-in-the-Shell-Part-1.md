@@ -1,3 +1,5 @@
+![](./Diagrams/Chatnik-LLM-Host-in-the-Shell-Part-1/Chatnik-Androids-shelf-11-conveyor-clean-lab-WL-styled-Gemini-3.png)
+
 # Chatnik: LLM Host in the Shell -- Part 1: First Examples & Design Principles
 
 ## Introduction
@@ -67,7 +69,7 @@ Here we create an LLM persona -- by naming it and "priming it" with a prompt -- 
 LLMChat 'Hi! Who are you?' --chat-id=yoda --prompt=@Yoda 
 ```
 ```
-# Yoda, I am. Wise and old Jedi Master, yes. Guide you, I can. Help, you seek?
+# Yoda, I am. Wise and old Jedi Master, yes. Help you with the Force, I will. Hmm.
 ```
 
 
@@ -77,7 +79,7 @@ Here we continue the conversation -- using the `--i` synonym of `--chat-id`:
 LLMChat 'How many students did you have?' --i=yoda 
 ```
 ```
-# Many students, I had. Countless, their lessons and destinies were. Luke Skywalker, among them, powerful Jedi he became. Teach, I did, those ready were. Hmm. Yes.
+# Many students, I have trained in my long life. Countless, they are. Luke Skywalker, young Anakin, and others, yes. Teach them the ways of the Force, I did. Hmm. Important balance, training Jedi is. Patience and wisdom, the path to success they are.
 ```
 
 And continue the discussion some more: 
@@ -86,7 +88,7 @@ And continue the discussion some more:
 LLMChat 'Which student is the best?' --i=yoda 
 ```
 ```
-# Best student, difficult to say it is. Each, unique journey they have. Luke Skywalker, strong in the Force he is. But compassion, patience, and wisdom, important they are. Judge by these, you must. Hmm. Yes.
+# Best student, difficult to say, it is. Each has strengths and weaknesses, hmmm. Luke Skywalker, strong in the Force he is. Anakin, powerful but troubled, hmmm. Learn from mistakes, all must. Judge by heart and actions, we should. Humble and wise, the true measure of a Jedi is. Yes.
 ```
 
 The example used the LLM persona ["Yoda"](https://resources.wolframcloud.com/PromptRepository/resources/Yoda).
@@ -176,8 +178,8 @@ this document was copy-edited with the prompt ["CopyEdit"](https://resources.wol
 using the following commands:
 
 ```
-cat Chatnik-LLM-Host-in-the-Shell-Part-1.md | llm-chat -i=ce --prompt=@CopyEdit --model=gpt-5.4-mini --max-tokens=16384
-llm-chat-meta -i=ce last-message > Chatnik-LLM-Host-in-the-Shell-Part-1_edited.md
+cat Chatnik-LLM-Host-in-the-Shell-Part-1.md | LLMChat - --i=ce --prompt=@CopyEdit --model=gpt-5.4-mini --max-tokens=16384
+LLMChatMeta  last-message --i=ce > Chatnik-LLM-Host-in-the-Shell-Part-1_edited.md
 open Chatnik-LLM-Host-in-the-Shell-Part-1_edited.md
 ```
 
@@ -406,6 +408,8 @@ We can see the outcome of the `LLMChat` pipeline above with:
 LLMChatMeta last-message --i=fb | cat > chat.md
 ```
 
+### Parsing of CLI arguments 
+
 The paclet ["CommandLineParser"](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/CommandLineParser/), [MSp1],
 is used to parse the CLI arguments of the "Chatnik" scripts. The parser has certain limitations:
 
@@ -414,6 +418,18 @@ is used to parse the CLI arguments of the "Chatnik" scripts. The parser has cert
 
 Because [`$ScriptInputString` is not very reliable](https://mathematica.stackexchange.com/q/204021) the positional argument `-` 
 can be used to specify that the pipeline value as the input to `LLMChat`.
+
+### Including `wolframscript`
+
+Of course, we can utilize "full power" of `wolframscript` (or WL) by making pipelines that combine
+LLM generations with WL computations. For example, here we get LLM-retrieved statistics and plot them
+(using the last message of the chat with "beta" above):
+
+```
+LLMChatMeta last-message --i=beta | sed '1d; $d' | wolframscript -code 'gr=ImportString[Import["!cat", "String"],"RawJSON"]//ReverseSort//ListPlot[#, ImageSize->600, PlotTheme -> "Detailed", PlotRange->All]&; Export["./beta.png", gr]' && open ./beta.png 
+```
+
+![](./Diagrams/Chatnik-LLM-Host-in-the-Shell-Part-1/beta.png)
 
 ----
 
@@ -454,7 +470,7 @@ can be used to specify that the pipeline value as the input to `LLMChat`.
 [AAp4] Anton Antonov, [Chatnik, Python package](https://github.com/antononcube/Python-Chatnik), (2026), [GitHub/antononcube](https://github.com/antononcube).
 
 
-#### Raku 
+#### Raku
 
 [AAp5] Anton Antonov, [LLM::Functions, Raku package](https://github.com/antononcube/Raku-LLM-Functions), (2023-2026), [GitHub/antononcube](https://github.com/antononcube).
 
