@@ -369,7 +369,7 @@ The LLM-chat object functionalities (creation and interaction) are provided by t
 [`LLMConfiguration`](https://reference.wolfram.com/language/ref/LLMConfiguration.html), [WRIf1],
 [`LLMPrompt`](https://raku.land/zef:antononcube/LLM::Functions), [WRIf2], and
 [`LLMSynthesize`](https://reference.wolfram.com/language/ref/LLMSynthesize.html), [WRIf3].
-In addition, the expansion of the [prompt DSL](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm/#applying-functions-in-a-chat-notebook) is done by the function
+In addition, the expansion of the [prompt DSL](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm/#applying-functions-in-a-chat-notebook), [SW1], is done by the function
 [`ChatnikPromptExpand`](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/ref/ChatnikPromptExpand.html).
 
 The CLI script `LLMPrompt` of "Chatnik" can be used to examine, retrieve, and concretize prompts. 
@@ -422,11 +422,6 @@ can be used to specify that the pipeline value as the input to `LLMChat`.
 (2026),
 [RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
 
-[SW1] Stephen Wolfram,
-["Introducing Chat Notebooks: Integrating LLMs into the Notebook Paradigm"](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm),
-(2023),
-[Stephen Wolfram Writings](https://writings.stephenwolfram.com).
-
 [AA3] Anton Antonov,
 ["Jupyter Chatbook Cheatsheet"](https://pythonforprediction.wordpress.com/2026/03/12/jupyter-chatbook-cheatsheet),
 (2026),
@@ -442,6 +437,10 @@ can be used to specify that the pipeline value as the input to `LLMChat`.
 (2026),
 [PythonForPrediction at WordPress](https://pythonforprediction.wordpress.com).
 
+[SW1] Stephen Wolfram,
+["Introducing Chat Notebooks: Integrating LLMs into the Notebook Paradigm"](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm),
+(2023),
+[Stephen Wolfram Writings](https://writings.stephenwolfram.com).
 
 ### Functions
 

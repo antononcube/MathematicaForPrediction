@@ -378,7 +378,7 @@ The LLM-chat object functionalities (creation and interaction) are provided by t
 [`LLMConfiguration`](https://reference.wolfram.com/language/ref/LLMConfiguration.html), [WRIf1],
 [`LLMPrompt`](https://raku.land/zef:antononcube/LLM::Functions), [WRIf2], and
 [`LLMSynthesize`](https://reference.wolfram.com/language/ref/LLMSynthesize.html), [WRIf3].
-In addition, the expansion of the [prompt DSL](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm/#applying-functions-in-a-chat-notebook) is done by the function
+In addition, the expansion of the [prompt DSL](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm/#applying-functions-in-a-chat-notebook), [SW1], is done by the function
 [`ChatnikPromptExpand`](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/ref/ChatnikPromptExpand.html).
 
 The CLI script `LLMPrompt` of "Chatnik" can be used to examine, retrieve, and concretize prompts. 
@@ -421,119 +421,57 @@ can be used to specify that the pipeline value as the input to `LLMChat`.
 
 ### Articles, blog posts
 
-[AA1] Anton Antonov,
-["Jupyter::Chatbook"](https://rakuforprediction.wordpress.com/2023/09/03/jupyterchatbook),
-(2023),
-[RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
+[AA1] Anton Antonov, ["Jupyter::Chatbook"](https://rakuforprediction.wordpress.com/2023/09/03/jupyterchatbook), (2023), [RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
 
-[AA2] Anton Antonov,
-["Jupyter::Chatbook Cheatsheet"](https://rakuforprediction.wordpress.com/2026/03/14/jupyterchatbook-cheatsheet),
-(2026),
-[RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
+[AA2] Anton Antonov, ["Jupyter::Chatbook Cheatsheet"](https://rakuforprediction.wordpress.com/2026/03/14/jupyterchatbook-cheatsheet), (2026), [RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
 
-[SW1] Stephen Wolfram,
-["Introducing Chat Notebooks: Integrating LLMs into the Notebook Paradigm"](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm),
-(2023),
-[Stephen Wolfram Writings](https://writings.stephenwolfram.com).
+[AA3] Anton Antonov, ["Jupyter Chatbook Cheatsheet"](https://pythonforprediction.wordpress.com/2026/03/12/jupyter-chatbook-cheatsheet), (2026), [PythonForPrediction at WordPress](https://rakuforprediction.wordpress.com).
 
-[AA3] Anton Antonov,
-["Jupyter Chatbook Cheatsheet"](https://pythonforprediction.wordpress.com/2026/03/12/jupyter-chatbook-cheatsheet),
-(2026),
-[PythonForPrediction at WordPress](https://rakuforprediction.wordpress.com).
+[AA4] Anton Antonov, ["Chatnik: LLM Host in the Shell — Part 1: First Examples & Design Principles"](https://rakuforprediction.wordpress.com/2026/04/25/chatnik-llm-host-in-the-shell-part-1-first-examples-design-principles/), (2026), [RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
 
-[AA4] Anton Antonov,
-["Chatnik: LLM Host in the Shell — Part 1: First Examples & Design Principles"](https://rakuforprediction.wordpress.com/2026/04/25/chatnik-llm-host-in-the-shell-part-1-first-examples-design-principles/),
-(2026),
-[RakuForPrediction at WordPress](https://rakuforprediction.wordpress.com).
+[AA5] Anton Antonov, ["Chatnik: LLM Host in the Shell — Part 1: First Examples & Design Principles"](https://pythonforprediction.wordpress.com/2026/05/04/chatnik-llm-host-in-the-shell-part-1-first-examples-design-principles/), (2026), [PythonForPrediction at WordPress](https://pythonforprediction.wordpress.com).
 
-[AA5] Anton Antonov,
-["Chatnik: LLM Host in the Shell — Part 1: First Examples & Design Principles"](https://pythonforprediction.wordpress.com/2026/05/04/chatnik-llm-host-in-the-shell-part-1-first-examples-design-principles/),
-(2026),
-[PythonForPrediction at WordPress](https://pythonforprediction.wordpress.com).
-
+[SW1] Stephen Wolfram, ["Introducing Chat Notebooks: Integrating LLMs into the Notebook Paradigm"](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm), (2023), [Stephen Wolfram Writings](https://writings.stephenwolfram.com).
 
 ### Functions
 
-[WRIf1] Wolfram Research, Inc., 
-[LLMConfiguration](https://reference.wolfram.com/language/ref/LLMConfiguration.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/), (updated 2025).
+[WRIf1] Wolfram Research, Inc., [LLMConfiguration](https://reference.wolfram.com/language/ref/LLMConfiguration.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/), (updated 2025).
 
-[WRIf2] Wolfram Research, Inc.,
-[LLMPrompt](https://reference.wolfram.com/language/ref/LLMPrompt.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/).
+[WRIf2] Wolfram Research, Inc., [LLMPrompt](https://reference.wolfram.com/language/ref/LLMPrompt.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/).
 
-[WRIf3] Wolfram Research, Inc.,
-[LLMSynthesize](https://reference.wolfram.com/language/ref/LLMSynthesize.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/), (updated 2025).
+[WRIf3] Wolfram Research, Inc., [LLMSynthesize](https://reference.wolfram.com/language/ref/LLMSynthesize.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/), (updated 2025).
 
 ### Packages
 
 #### Python
 
-[AAp1] Anton Antonov,
-[LLMFunctionObjects, Python package](https://github.com/antononcube/Python-packages/tree/main/LLMFunctionObjects),
-(2023-2026),
-[GitHub/antononcube](https://github.com/antononcube).
-([PyPI.org page](https://pypi.org/project/LLMFunctionObjects).)
+[AAp1] Anton Antonov, [LLMFunctionObjects, Python package](https://github.com/antononcube/Python-packages/tree/main/LLMFunctionObjects), (2023-2026), [GitHub/antononcube](https://github.com/antononcube). ([PyPI.org page](https://pypi.org/project/LLMFunctionObjects).)
 
-[AAp2] Anton Antonov,
-[LLMPrompts, Python package](https://github.com/antononcube/Python-packages/tree/main/LLMPrompts),
-(2023-2025),
-[GitHub/antononcube](https://github.com/antononcube).
-([PyPI.org page](https://pypi.org/project/LLMPrompts).)
+[AAp2] Anton Antonov, [LLMPrompts, Python package](https://github.com/antononcube/Python-packages/tree/main/LLMPrompts), (2023-2025), [GitHub/antononcube](https://github.com/antononcube). ([PyPI.org page](https://pypi.org/project/LLMPrompts).)
 
-[AAp3] Anton Antonov,
-[JupyterChatbook, Python package](https://github.com/antononcube/Python-JupyterChatbook),
-(2023-2026),
-[GitHub/antononcube](https://github.com/antononcube).
-([PyPI.org page](https://pypi.org/project/JupyterChatbook).)
+[AAp3] Anton Antonov, [JupyterChatbook, Python package](https://github.com/antononcube/Python-JupyterChatbook), (2023-2026), [GitHub/antononcube](https://github.com/antononcube). ([PyPI.org page](https://pypi.org/project/JupyterChatbook).)
 
-[AAp4] Anton Antonov,
-[Chatnik, Python package](https://github.com/antononcube/Python-Chatnik),
-(2026),
-[GitHub/antononcube](https://github.com/antononcube).
+[AAp4] Anton Antonov, [Chatnik, Python package](https://github.com/antononcube/Python-Chatnik), (2026), [GitHub/antononcube](https://github.com/antononcube).
 
 
 #### Raku 
 
-[AAp5] Anton Antonov,
-[LLM::Functions, Raku package](https://github.com/antononcube/Raku-LLM-Functions),
-(2023-2026),
-[GitHub/antononcube](https://github.com/antononcube).
+[AAp5] Anton Antonov, [LLM::Functions, Raku package](https://github.com/antononcube/Raku-LLM-Functions), (2023-2026), [GitHub/antononcube](https://github.com/antononcube).
 
-[AAp6] Anton Antonov,
-[LLM::Prompts, Raku package](https://github.com/antononcube/Raku-LLM-Prompts),
-(2023-2025),
-[GitHub/antononcube](https://github.com/antononcube).
+[AAp6] Anton Antonov, [LLM::Prompts, Raku package](https://github.com/antononcube/Raku-LLM-Prompts), (2023-2025), [GitHub/antononcube](https://github.com/antononcube).
 
-[AAp7] Anton Antonov,
-[Jupyter::Chatbook, Raku package](https://github.com/antononcube/Raku-Jupyter-Chatbook),
-(2023-2026),
-[GitHub/antononcube](https://github.com/antononcube).
+[AAp7] Anton Antonov, [Jupyter::Chatbook, Raku package](https://github.com/antononcube/Raku-Jupyter-Chatbook), (2023-2026), [GitHub/antononcube](https://github.com/antononcube).
 
-[AAp8] Anton Antonov,
-[Chatnik, Raku package](https://github.com/antononcube/Raku-Chatnik),
-(2026),
-[GitHub/antononcube](https://github.com/antononcube).
+[AAp8] Anton Antonov, [Chatnik, Raku package](https://github.com/antononcube/Raku-Chatnik), (2026), [GitHub/antononcube](https://github.com/antononcube).
 
 #### Wolfram Language
 
-[AAp9] Anton Antonov,
-[Chatnik, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/),
-(2026),
-[Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
+[AAp9] Anton Antonov, [Chatnik, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/), (2026), [Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
 
-[MSp1] Matteo Salvarezza,
-[CommandLineParser, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/CommandLineParser/),
-(2024),
-[Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
+[MSp1] Matteo Salvarezza, [CommandLineParser, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/CommandLineParser/), (2024), [Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
 
-[CGp1] Connor Gray, et al.,
-[Chatbook, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/Chatbook),
-(2023-2024),
-[Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
+[CGp1] Connor Gray, et al., [Chatbook, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/Chatbook), (2023-2024), [Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
 
 ### Videos
 
-[AAv1] Anton Antonov,
-["Integrating Large Language Models with Raku"](https://youtu.be/-OxKqRrQvh0?si=5LEj8-Dtcxjn-0QR&t=548),
-(2023),
-[The Raku Conference 2023 at YouTube](https://www.youtube.com/@therakuconference6823).
-
+[AAv1] Anton Antonov, ["Integrating Large Language Models with Raku"](https://youtu.be/-OxKqRrQvh0?si=5LEj8-Dtcxjn-0QR&t=548), (2023), [The Raku Conference 2023 at YouTube](https://www.youtube.com/@therakuconference6823).
