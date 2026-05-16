@@ -67,7 +67,7 @@ Here we create an LLM persona -- by naming it and "priming it" with a prompt -- 
 LLMChat 'Hi! Who are you?' --chat-id=yoda --prompt=@Yoda 
 ```
 ```
-# Hmmm. Yoda, I am. Jedi Master, wise and old. Help you, I will. Hmmm, yes.
+# Yoda, I am. Wise and old Jedi Master, yes. Guide you, I can. Help, you seek?
 ```
 
 
@@ -77,7 +77,7 @@ Here we continue the conversation -- using the `--i` synonym of `--chat-id`:
 LLMChat 'How many students did you have?' --i=yoda 
 ```
 ```
-# Many Padawans, I trained. Countless, the young Jedi who learned from me are. Patience and wisdom, I taught them. Strong in the Force, many became. Hmmm. Yes.
+# Many students, I had. Countless, their lessons and destinies were. Luke Skywalker, among them, powerful Jedi he became. Teach, I did, those ready were. Hmm. Yes.
 ```
 
 And continue the discussion some more: 
@@ -86,7 +86,7 @@ And continue the discussion some more:
 LLMChat 'Which student is the best?' --i=yoda 
 ```
 ```
-# Hmm, difficult to say, it is. Each student, unique in their path they are. Anakin, strong in the Force he was, but troubled his heart became. Luke, hope and perseverance he showed. Best, not in power alone it lies. In the heart and choices, true strength is found. Yes, hmmm.
+# Best student, difficult to say it is. Each, unique journey they have. Luke Skywalker, strong in the Force he is. But compassion, patience, and wisdom, important they are. Judge by these, you must. Hmm. Yes.
 ```
 
 The example used the LLM persona ["Yoda"](https://resources.wolframcloud.com/PromptRepository/resources/Yoda).
@@ -105,16 +105,15 @@ fortune | tee /dev/tty | LLMChat --prompt="Make a limerick from the given text:"
 ```
 
 ```text
-Space is big.  You just won't believe how vastly, hugely, mind-bogglingly
-big it is.  I mean, you may think it's a long way down the road to the
-drug store, but that's just peanuts to space.
-		-- The Hitchhiker's Guide to the Galaxy
+I have made this letter longer than usual because I lack the time to
+make it shorter.
+		-- Blaise Pascal
 		
-There once was a space vast and wide,  
-Whose scale no one could quite abide.  
-Though the drug store seems near,  
-Space’s size is sincere—  
-Mind-bogglingly big can’t be denied!
+There once was a note, quite verbose,  
+Longer than needed, I suppose.  
+Pascal said with a grin,  
+“To be short takes more spin,”  
+So brevity’s craft he chose to oppose.
 ```
 
 **Remark:** In the shell command above, `LLMChat` created (or reused) a chat object with the default identifier "NONE". 
@@ -125,18 +124,20 @@ Here we use prompt expansion to request the creation of a [Mermaid-JS diagram](h
 prompt ["CodeWriterX"](https://www.wolframcloud.com/obj/antononcube/DeployedResources/Prompt/CodeWriterX/):
 
 ```
-LLMChat '!CodeWriterX|"Mermaid-JS code of the concepts"^'
+LLMChatMeta last-message --i=NONE | LLMChat - --i=mmd --prompt='Make a mermaid.js sequence diagram #NothingElse|"mermaid.js code"'
 ```
 
 ````
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Space
-    User->>Space: Thinks space is big
-    Note right of Space: Space is vastly, hugely, mind-bogglingly big
-    User->>Space: Compares to drug store distance
-    Note right of Space: Drug store distance is just peanuts to space
+    participant Blaise as Blaise Pascal
+    participant Note as Note
+    participant Reader as Reader
+
+    Blaise->>Note: Write verbose letter
+    Note->>Reader: Deliver longer-than-usual message
+    Blaise->>Reader: "To be short takes more spin"
+    Note->>Reader: "Brevity's craft opposed"
 ```
 ````
 
@@ -145,27 +146,22 @@ then use `sed` to remove the first and last lines, and then pass that text to th
 Mermaid-JS visualizer [`mmdflux`](https://github.com/kevinswiber/mmdflux):
 
 ```
-llm-chat-meta last-message | sed '1d; $d' | mmdflux
+LLMChatMeta last-message --i=mmd | sed '1d; $d' | mmdflux
 ```
 
 ```text
-
-┌──────┐                           ┌───────┐
-│ User │                           │ Space │
-└───┬──┘                           └───┬───┘
-    │                                  │
-    │─Thinks space is big─────────────>│
-    │                                  │
-    │                                  │ ┌──────────────────────────────────────────────┐
-    │                                  │ │ Space is vastly, hugely, mind-bogglingly big │
-    │                                  │ └──────────────────────────────────────────────┘
-    │                                  │
-    │─Compares to drug store distance─>│
-    │                                  │
-    │                                  │ ┌──────────────────────────────────────────────┐
-    │                                  │ │ Drug store distance is just peanuts to space │
-    │                                  │ └──────────────────────────────────────────────┘
-    │                                  │
+┌───────────────┐                        ┌──────┐                            ┌────────┐
+│ Blaise Pascal │                        │ Note │                            │ Reader │
+└───────┬───────┘                        └───┬──┘                            └────┬───┘
+        │                                    │                                    │
+        │─Write verbose letter──────────────>│                                    │
+        │                                    │                                    │
+        │                                    │─Deliver longer-than-usual message─>│
+        │                                    │                                    │
+        │─"To be short takes more spin"──────────────────────────────────────────>│
+        │                                    │                                    │
+        │                                    │─"Brevity's craft opposed"─────────>│
+        │                                    │                                    │
 ```
 
 **Remark:** Since the result is usually given in Markdown code fences, we did not make a pipeline to plot the diagram.
@@ -372,16 +368,16 @@ aligning conversational AI with the philosophy of UNIX pipelines rather than app
 
 -----
 
-## Related and alternative packages
+## Related functions and packages
 
 In this section, we point to Raku packages that are both ingredients of, and alternatives to, "Chatnik".
 
 ### Main ingredients
 
 The LLM-chat object functionalities (creation and interaction) are provided by the Wolfram Language functions
-[`LLMConfiguration`](https://raku.land/zef:antononcube/LLM::Functions), [WRIf1],
-[`LLMFunction`](https://raku.land/zef:antononcube/LLM::Functions), [WRIf2], and
-[`LLMPrompt`](https://raku.land/zef:antononcube/LLM::Functions), [WRIf3].
+[`LLMConfiguration`](https://reference.wolfram.com/language/ref/LLMConfiguration.html), [WRIf1],
+[`LLMPrompt`](https://raku.land/zef:antononcube/LLM::Functions), [WRIf2], and
+[`LLMSynthesize`](https://reference.wolfram.com/language/ref/LLMSynthesize.html), [WRIf3].
 In addition, the expansion of the [prompt DSL](https://writings.stephenwolfram.com/2023/06/introducing-chat-notebooks-integrating-llms-into-the-notebook-paradigm/#applying-functions-in-a-chat-notebook) is done by the function
 [`ChatnikPromptExpand`](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/ref/ChatnikPromptExpand.html).
 
@@ -409,6 +405,15 @@ We can see the outcome of the `LLMChat` pipeline above with:
 ```
 LLMChatMeta last-message --i=fb | cat > chat.md
 ```
+
+The paclet ["CommandLineParser"](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/CommandLineParser/), [MSp1],
+is used to parse the CLI arguments of the "Chatnik" scripts. The parser has certain limitations:
+
+- The non-named CLI arguments must be placed before the named ones.
+- The named arguments allways start with `--`. (I.e. `-i` does not work, `--i` does.)
+
+Because [`$ScriptInputString` is not very reliable](https://mathematica.stackexchange.com/q/204021) the positional argument `-` 
+can be used to specify that the pipeline value as the input to `LLMChat`.
 
 ----
 
@@ -447,9 +452,20 @@ LLMChatMeta last-message --i=fb | cat > chat.md
 [PythonForPrediction at WordPress](https://pythonforprediction.wordpress.com).
 
 
+### Functions
+
+[WRIf1] Wolfram Research, Inc., 
+[LLMConfiguration](https://reference.wolfram.com/language/ref/LLMConfiguration.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/), (updated 2025).
+
+[WRIf2] Wolfram Research, Inc.,
+[LLMPrompt](https://reference.wolfram.com/language/ref/LLMPrompt.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/).
+
+[WRIf3] Wolfram Research, Inc.,
+[LLMSynthesize](https://reference.wolfram.com/language/ref/LLMSynthesize.html), (2023), [Wolfram Language function](https://reference.wolfram.com/language/), (updated 2025).
+
 ### Packages
 
-### Python
+#### Python
 
 [AAp1] Anton Antonov,
 [LLMFunctionObjects, Python package](https://github.com/antononcube/Python-packages/tree/main/LLMFunctionObjects),
@@ -502,6 +518,11 @@ LLMChatMeta last-message --i=fb | cat > chat.md
 [AAp9] Anton Antonov,
 [Chatnik, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/),
 (2026),
+[Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
+
+[MSp1] Matteo Salvarezza,
+[CommandLineParser, Wolfram Language paclet](https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/CommandLineParser/),
+(2024),
 [Wolfram Language Paclet Repository](https://resources.wolframcloud.com/PacletRepository).
 
 [CGp1] Connor Gray, et al.,
