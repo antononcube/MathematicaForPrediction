@@ -1,4 +1,4 @@
-![](./Diagrams/Chatnik-LLM-Host-in-the-Shell-Part-1/Chatnik-Androids-shelf-11-conveyor-clean-lab-WL-styled-Gemini-3.png)
+[![](./Diagrams/Chatnik-LLM-Host-in-the-Shell-Part-1/Chatnik-Androids-shelf-11-conveyor-clean-lab-WL-styled-Gemini-3.png)](https://resources.wolframcloud.com/PacletRepository/resources/AntonAntonov/Chatnik/)
 
 # Chatnik: LLM Host in the Shell -- Part 1: First Examples & Design Principles
 
